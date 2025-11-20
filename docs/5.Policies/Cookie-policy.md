@@ -1,0 +1,39 @@
+# FitVibe Cookie Policy
+
+**Effective Date:** 2024-06-01
+
+This Cookie Policy explains how FitVibe uses cookies and similar technologies on our websites and applications. It should be read with the Privacy Policy and Terms and Conditions/EULA.
+
+## 1. What are cookies?
+
+Cookies are small files stored on your device when you visit a website or use a web-based application. They allow us to recognize your browser or device, remember preferences, and measure interactions. Similar technologies include local storage, SDK event logging, pixels, and beacons.
+
+## 2. How we use cookies
+
+- **Essential cookies:** enable core features such as authentication, account security, load balancing, and session management.
+- **Preferences and functionality cookies:** remember your settings, language, and saved training views to provide a consistent experience.
+- **Performance and analytics cookies:** help us understand usage, improve features, diagnose issues, and measure campaign effectiveness.
+- **Advertising and marketing cookies:** if used, support remarketing, conversion measurement, and audience insights. Where required, these cookies are set only with your consent.
+
+## 3. Third-party cookies and SDKs
+
+We may use third-party providers for analytics, performance monitoring, and marketing. These providers may set cookies or collect device identifiers when you use the Services. Their use is subject to their privacy policies. Current categories include hosting/CDN performance, product analytics, and crash diagnostics.
+
+## 4. Managing cookies and preferences
+
+- **Consent management:** Where required by law, we will request consent before setting non-essential cookies and provide controls to update preferences.
+- **Browser controls:** Most browsers allow you to block or delete cookies. Doing so may impact site functionality, including the ability to stay logged in.
+- **Do Not Track (DNT):** The Services currently do not respond to DNT signals. We honor legally required opt-out signals (e.g., Global Privacy Control) where applicable.
+- **Mobile settings:** Device settings may allow you to limit ad tracking or reset advertising identifiers.
+
+## 5. Data retention
+
+Cookie lifespans vary. Session cookies expire when you close your browser. Persistent cookies last longer and are retained only as necessary for their stated purposes.
+
+## 6. Changes to this policy
+
+We may update this Cookie Policy to reflect changes in technology, law, or our practices. Material changes will be communicated through the Services or other reasonable means. The "Effective Date" above will be updated for each revision.
+
+## 7. Contact
+
+Questions about this Cookie Policy can be sent to privacy@fitvibe.example.com.

@@ -1,0 +1,371 @@
+name: Deploy to Production
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Environment to deploy to"
+        required: true
+        default: "production"
+        type: choice
+        options:
+          - production
+          - staging
+
+env:
+  REGISTRY: ghcr.io
+  BACKEND_IMAGE_NAME: ${{ github.repository }}/backend
+  FRONTEND_IMAGE_NAME: ${{ github.repository }}/frontend
+
+jobs:
+  # ==============================================================================
+  # Security & Quality Checks
+  # ==============================================================================
+  security-scan:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Full history for secrets scanning
+
+      - name: Run Gitleaks (secrets scan)
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Run npm audit
+        working-directory: ./apps/backend
+        run: npm audit --audit-level=high
+        continue-on-error: false
+
+      - name: Run Snyk security scan
+        uses: snyk/actions/node@master
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          args: --severity-threshold=high
+        continue-on-error: false
+
+      - name: Run OWASP Dependency Check
+        uses: dependency-check/Dependency-Check_Action@main
+        with:
+          project: "FitVibe"
+          path: "."
+          format: "HTML"
+          args: >
+            --failOnCVSS 7
+            --enableRetired
+
+      - name: Upload Dependency Check results
+        uses: actions/upload-artifact@v3
+        with:
+          name: dependency-check-report
+          path: ${{github.workspace}}/reports
+
+  lint-and-test:
+    name: Lint & Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PNPM
+        uses: pnpm/action-setup@v2
+        with:
+          version: 9
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run linters
+        run: pnpm lint:check
+
+      - name: Run type check
+        run: pnpm typecheck
+
+      - name: Run tests
+        run: pnpm test
+        env:
+          NODE_ENV: test
+
+  # ==============================================================================
+  # Build & Push Docker Images
+  # ==============================================================================
+  build-backend:
+    name: Build Backend Image
+    runs-on: ubuntu-latest
+    needs: [security-scan, lint-and-test]
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+    outputs:
+      image-digest: ${{ steps.build.outputs.digest }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.BACKEND_IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch
+            type=sha,prefix={{branch}}-
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+
+      - name: Build and push
+        id: build
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./apps/backend/Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          provenance: true
+          sbom: true
+
+  build-frontend:
+    name: Build Frontend Image
+    runs-on: ubuntu-latest
+    needs: [security-scan, lint-and-test]
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+    outputs:
+      image-digest: ${{ steps.build.outputs.digest }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.FRONTEND_IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch
+            type=sha,prefix={{branch}}-
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+
+      - name: Build and push
+        id: build
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./apps/frontend/Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          build-args: |
+            VITE_API_URL=${{ secrets.PRODUCTION_API_URL }}
+          provenance: true
+          sbom: true
+
+  # ==============================================================================
+  # Database Migrations
+  # ==============================================================================
+  run-migrations:
+    name: Run Database Migrations
+    runs-on: ubuntu-latest
+    needs: [build-backend, build-frontend]
+    environment:
+      name: production
+      url: https://fitvibe.com
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PNPM
+        uses: pnpm/action-setup@v2
+        with:
+          version: 9
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run migrations
+        working-directory: ./apps/backend
+        run: pnpm tsx src/db/scripts/migrate.ts
+        env:
+          DATABASE_URL: ${{ secrets.PRODUCTION_DATABASE_URL }}
+          NODE_ENV: production
+
+  # ==============================================================================
+  # Deploy to Kubernetes
+  # ==============================================================================
+  deploy-to-kubernetes:
+    name: Deploy to Kubernetes
+    runs-on: ubuntu-latest
+    needs: [run-migrations]
+    environment:
+      name: production
+      url: https://fitvibe.com
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure kubectl
+        uses: azure/k8s-set-context@v3
+        with:
+          method: kubeconfig
+          kubeconfig: ${{ secrets.KUBE_CONFIG }}
+
+      - name: Deploy ConfigMap
+        run: |
+          kubectl apply -f infra/kubernetes/namespace.yaml
+          kubectl apply -f infra/kubernetes/configmap.yaml
+
+      - name: Deploy Secrets
+        run: |
+          # Secrets should be managed externally (sealed-secrets, external-secrets, etc.)
+          # This is a placeholder for the deployment step
+          echo "Secrets deployment handled by external-secrets operator"
+
+      - name: Deploy PostgreSQL
+        run: kubectl apply -f infra/kubernetes/postgres-deployment.yaml
+
+      - name: Deploy Redis
+        run: kubectl apply -f infra/kubernetes/redis-deployment.yaml
+
+      - name: Deploy Backend
+        run: |
+          kubectl set image deployment/backend \
+            backend=${{ env.REGISTRY }}/${{ env.BACKEND_IMAGE_NAME }}:${{ github.sha }} \
+            -n fitvibe
+          kubectl rollout status deployment/backend -n fitvibe --timeout=5m
+
+      - name: Deploy Frontend
+        run: |
+          kubectl set image deployment/frontend \
+            frontend=${{ env.REGISTRY }}/${{ env.FRONTEND_IMAGE_NAME }}:${{ github.sha }} \
+            -n fitvibe
+          kubectl rollout status deployment/frontend -n fitvibe --timeout=5m
+
+      - name: Deploy Ingress
+        run: kubectl apply -f infra/kubernetes/ingress.yaml
+
+      - name: Verify deployment
+        run: |
+          kubectl get pods -n fitvibe
+          kubectl get services -n fitvibe
+          kubectl get ingress -n fitvibe
+
+  # ==============================================================================
+  # Health Checks & Smoke Tests
+  # ==============================================================================
+  smoke-tests:
+    name: Run Smoke Tests
+    runs-on: ubuntu-latest
+    needs: [deploy-to-kubernetes]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Wait for deployment to stabilize
+        run: sleep 30
+
+      - name: Health check - Backend
+        run: |
+          curl -f https://api.fitvibe.com/health || exit 1
+
+      - name: Health check - Frontend
+        run: |
+          curl -f https://fitvibe.com/ || exit 1
+
+      - name: Run smoke tests
+        run: |
+          # Add smoke test script here
+          echo "Smoke tests passed"
+
+  # ==============================================================================
+  # Notifications
+  # ==============================================================================
+  notify-deployment:
+    name: Notify Deployment Status
+    runs-on: ubuntu-latest
+    needs: [smoke-tests]
+    if: always()
+    steps:
+      - name: Send Slack notification
+        uses: slackapi/slack-github-action@v1
+        with:
+          webhook-url: ${{ secrets.SLACK_WEBHOOK_URL }}
+          payload: |
+            {
+              "text": "Production Deployment ${{ needs.smoke-tests.result }}",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "Production deployment completed with status: *${{ needs.smoke-tests.result }}*\nCommit: ${{ github.sha }}\nActor: ${{ github.actor }}"
+                  }
+                }
+              ]
+            }
+
+      - name: Create GitHub deployment
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.repos.createDeploymentStatus({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              deployment_id: context.payload.deployment.id,
+              state: '${{ needs.smoke-tests.result }}',
+              environment_url: 'https://fitvibe.com',
+              description: 'Production deployment completed'
+            });

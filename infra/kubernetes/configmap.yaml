@@ -1,0 +1,43 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: fitvibe-config
+  namespace: fitvibe
+  labels:
+    app: fitvibe
+data:
+  # API Configuration
+  api-url: "https://api.fitvibe.com"
+  node-env: "production"
+  port: "4000"
+
+  # Database Configuration
+  postgres-database: "fitvibe"
+  postgres-host: "postgres"
+  postgres-port: "5432"
+
+  # Redis Configuration
+  redis-host: "redis"
+  redis-port: "6379"
+
+  # CORS Configuration
+  allowed-origins: "https://fitvibe.com,https://www.fitvibe.com"
+  csrf-allowed-origins: "https://fitvibe.com,https://www.fitvibe.com"
+
+  # Rate Limiting
+  global-rate-limit-points: "120"
+  global-rate-limit-duration: "60"
+
+  # JWT Configuration
+  access-token-ttl-sec: "900"
+  refresh-token-ttl-sec: "1209600"
+
+  # Feature Flags
+  csrf-enabled: "true"
+  metrics-enabled: "true"
+
+  # Logging
+  log-level: "info"
+
+  # Storage
+  media-storage-root: "/var/lib/fitvibe/media"

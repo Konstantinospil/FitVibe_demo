@@ -1,0 +1,84 @@
+# FitVibe Terms and Conditions / End User License Agreement (EULA)
+
+**Effective Date:** 2024-06-01
+
+These Terms and Conditions / End User License Agreement ("Terms") govern your access to and use of the FitVibe websites, mobile applications, APIs, and related services (collectively, the "Services"). By using the Services, you agree to these Terms and to the Privacy Policy and Cookie Policy.
+
+## 1. Eligibility and account registration
+
+- You must be at least 16 years old or the age required by your jurisdiction. If you are agreeing on behalf of an organization, you represent that you have authority to bind it.
+- You are responsible for maintaining accurate account information and for safeguarding login credentials. Notify FitVibe immediately of unauthorized use.
+
+## 2. License grant and intellectual property
+
+- FitVibe grants you a limited, revocable, non-exclusive, non-transferable license to install and use the Services for personal or authorized organizational use in accordance with these Terms.
+- The Services and all related intellectual property are owned by FitVibe and its licensors. No rights are granted except as expressly stated.
+
+## 3. Acceptable use
+
+You agree not to:
+
+- Reverse engineer, modify, or create derivative works of the Services except as permitted by law.
+- Circumvent security measures, access non-public areas, or interfere with system integrity.
+- Upload unlawful, defamatory, or infringing content, or content that includes personal data of others without permission.
+- Use the Services to provide medical diagnosis or emergency response or to engage in harassment, discrimination, or abusive conduct.
+- Use automated means to access or extract data except through approved APIs and rate limits.
+
+## 4. User content
+
+- You retain ownership of content you submit (e.g., training logs, comments, media). You grant FitVibe a worldwide, royalty-free license to host, use, reproduce, modify, publish, and display that content solely to operate and improve the Services.
+- You represent that you have the rights to share content you submit and that it does not violate the rights of others or applicable law.
+
+## 5. Health and safety notice
+
+- FitVibe provides training and wellness tools and does not provide medical advice. Consult a physician before beginning new training programs. Stop using the Services and seek medical attention if you experience adverse symptoms.
+
+## 6. Third-party services and integrations
+
+- Some features rely on third-party services (e.g., analytics, payment processors, device integrations). Your use of those services may be subject to their terms. FitVibe is not responsible for third-party services.
+
+## 7. Fees and subscriptions
+
+- If subscription or paid features are offered, pricing and billing terms will be presented in the Services. Taxes may apply. Payments are processed by third-party processors; you authorize FitVibe and processors to charge applicable fees.
+- FitVibe may change pricing with reasonable notice, subject to applicable law. If you do not agree to changes, you may cancel before the new pricing takes effect.
+
+## 8. Termination
+
+- You may stop using the Services at any time. You may request account deletion as described in the Privacy Policy.
+- FitVibe may suspend or terminate access for breach of these Terms, legal requirements, or to protect the Services or users. We may provide notice where feasible.
+
+## 9. Disclaimers
+
+- The Services are provided "as is" and "as available" without warranties of any kind, express or implied, including merchantability, fitness for a particular purpose, non-infringement, and accuracy. Some jurisdictions do not allow exclusions of certain warranties, so these exclusions may not apply.
+
+## 10. Limitation of liability
+
+- To the fullest extent permitted by law, FitVibe will not be liable for indirect, incidental, special, consequential, or punitive damages, or for loss of profits, data, goodwill, or business interruption, even if advised of the possibility of such damages.
+- FitVibe's total liability for claims arising out of or related to the Services will not exceed the greater of (a) amounts you paid to FitVibe for the Services in the twelve months before the claim or (b) USD $100, except where prohibited by law.
+
+## 11. Indemnification
+
+You agree to indemnify and hold harmless FitVibe, its affiliates, and their officers, employees, and agents from any claims, damages, losses, or expenses arising from your use of the Services or breach of these Terms.
+
+## 12. Governing law and dispute resolution
+
+- These Terms are governed by the laws of the State of Delaware, USA, without regard to conflict of laws principles, except where mandatory local law applies.
+- Disputes should first be raised with FitVibe support. Where permitted by law, disputes will be resolved through binding arbitration in Delaware on an individual basis, and you waive class actions. If arbitration is not permitted, disputes will be resolved in the courts located in Delaware. Consumers may have statutory rights to bring claims in their home jurisdictions; these Terms do not limit such rights.
+
+## 13. Export and sanctions compliance
+
+You must comply with applicable export control and sanctions laws. You may not use the Services if you are located in, or are ordinarily resident in, countries embargoed by the U.S. or if you are on applicable sanctions lists.
+
+## 14. Changes to the Services and Terms
+
+- We may modify or discontinue features to improve performance, security, or compliance. We will provide notice of material changes where required.
+- Continued use after changes become effective constitutes acceptance. If you do not agree, stop using the Services.
+
+## 15. Notices
+
+- Notices to FitVibe: legal@fitvibe.example.com.
+- Notices to you: via email, in-product messages, or other reasonable means. You are responsible for keeping contact details current.
+
+## 16. Contact
+
+Questions about these Terms can be sent to legal@fitvibe.example.com.

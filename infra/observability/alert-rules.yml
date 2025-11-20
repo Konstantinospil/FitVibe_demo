@@ -1,0 +1,265 @@
+groups:
+  # O-4: Alert rules for performance and errors
+  - name: performance_alerts
+    interval: 30s
+    rules:
+      # Warn when p95 > 400ms for 10 minutes
+      - alert: HighP95Latency
+        expr: histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket[5m])) by (le, route)) > 0.4
+        for: 10m
+        labels:
+          severity: warning
+          category: performance
+        annotations:
+          summary: "High P95 latency detected"
+          description: "P95 latency for route {{ $labels.route }} is {{ $value }}s (threshold: 400ms)"
+          runbook_url: "https://docs.fitvibe.app/runbooks/high-latency"
+
+      # Critical when error rate > 0.5% for 5 minutes
+      - alert: HighErrorRate
+        expr: |
+          sum(rate(http_requests_total{status_code=~"5.."}[5m])) by (route)
+          /
+          sum(rate(http_requests_total[5m])) by (route)
+          > 0.005
+        for: 5m
+        labels:
+          severity: critical
+          category: reliability
+        annotations:
+          summary: "High error rate detected"
+          description: "Error rate for route {{ $labels.route }} is {{ $value | humanizePercentage }} (threshold: 0.5%)"
+          runbook_url: "https://docs.fitvibe.app/runbooks/high-error-rate"
+
+      # Database pool saturation
+      - alert: DatabasePoolSaturation
+        expr: |
+          (pg_stat_database_numbackends / pg_settings_max_connections) > 0.8
+        for: 5m
+        labels:
+          severity: warning
+          category: database
+        annotations:
+          summary: "Database connection pool near saturation"
+          description: "Database pool usage is at {{ $value | humanizePercentage }} (threshold: 80%)"
+          runbook_url: "https://docs.fitvibe.app/runbooks/db-pool-saturation"
+
+  # O-9: Auth anomaly alerts
+  - name: auth_anomaly_alerts
+    interval: 30s
+    rules:
+      # Brute force spike detection
+      - alert: AuthBruteForceSpike
+        expr: |
+          sum(rate(http_requests_total{route=~"/api/v1/auth/login", status_code="401"}[5m]))
+          > 10
+        for: 2m
+        labels:
+          severity: warning
+          category: security
+        annotations:
+          summary: "Potential brute force attack detected"
+          description: "Failed login attempts rate: {{ $value }} per second"
+          runbook_url: "https://docs.fitvibe.app/runbooks/brute-force"
+
+      # Refresh token reuse detection
+      - alert: RefreshTokenReuseDetected
+        expr: increase(jwt_refresh_reuse_total[5m]) > 0
+        for: 1m
+        labels:
+          severity: critical
+          category: security
+        annotations:
+          summary: "Refresh token reuse detected"
+          description: "{{ $value }} refresh token reuse incidents detected in last 5 minutes"
+          runbook_url: "https://docs.fitvibe.app/runbooks/token-reuse"
+
+      # Excessive registration attempts
+      - alert: HighRegistrationRate
+        expr: |
+          sum(rate(http_requests_total{route="/api/v1/auth/register", status_code=~"2.."}[5m]))
+          > 5
+        for: 10m
+        labels:
+          severity: warning
+          category: security
+        annotations:
+          summary: "Unusual registration activity"
+          description: "Registration rate: {{ $value }} per second (sustained for 10 minutes)"
+          runbook_url: "https://docs.fitvibe.app/runbooks/registration-spike"
+
+  # O-10: AV scan failure alert
+  - name: av_scan_alerts
+    interval: 30s
+    rules:
+      - alert: AVScanFailure
+        expr: increase(av_scan_failures_total[10m]) > 0
+        for: 1m
+        labels:
+          severity: critical
+          category: security
+        annotations:
+          summary: "Antivirus scan failures detected"
+          description: "{{ $value }} AV scan failures in last 10 minutes"
+          runbook_url: "https://docs.fitvibe.app/runbooks/av-scan-failure"
+
+      - alert: MalwareDetected
+        expr: increase(av_malware_detected_total[10m]) > 0
+        for: 1m
+        labels:
+          severity: critical
+          category: security
+        annotations:
+          summary: "Malware detected in upload"
+          description: "{{ $value }} malware detections in last 10 minutes"
+          runbook_url: "https://docs.fitvibe.app/runbooks/malware-detected"
+
+  # Database health alerts
+  - name: database_alerts
+    interval: 30s
+    rules:
+      - alert: DatabaseDown
+        expr: pg_up == 0
+        for: 1m
+        labels:
+          severity: critical
+          category: database
+        annotations:
+          summary: "PostgreSQL is down"
+          description: "PostgreSQL database is unreachable"
+          runbook_url: "https://docs.fitvibe.app/runbooks/db-down"
+
+      - alert: DatabaseHighConnections
+        expr: sum(pg_stat_database_numbackends) > 80
+        for: 5m
+        labels:
+          severity: warning
+          category: database
+        annotations:
+          summary: "High number of database connections"
+          description: "{{ $value }} active database connections"
+          runbook_url: "https://docs.fitvibe.app/runbooks/db-high-conn"
+
+      - alert: DatabaseReplicationLag
+        expr: pg_replication_lag > 10
+        for: 5m
+        labels:
+          severity: warning
+          category: database
+        annotations:
+          summary: "Database replication lag detected"
+          description: "Replication lag is {{ $value }} seconds"
+          runbook_url: "https://docs.fitvibe.app/runbooks/replication-lag"
+
+  # Service health alerts
+  - name: service_health_alerts
+    interval: 30s
+    rules:
+      - alert: ServiceDown
+        expr: up == 0
+        for: 2m
+        labels:
+          severity: critical
+          category: availability
+        annotations:
+          summary: "Service {{ $labels.job }} is down"
+          description: "Service {{ $labels.job }} has been unreachable for 2 minutes"
+          runbook_url: "https://docs.fitvibe.app/runbooks/service-down"
+
+      - alert: HighMemoryUsage
+        expr: |
+          (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) > 0.9
+        for: 5m
+        labels:
+          severity: warning
+          category: resources
+        annotations:
+          summary: "High memory usage detected"
+          description: "Memory usage is {{ $value | humanizePercentage }}"
+          runbook_url: "https://docs.fitvibe.app/runbooks/high-memory"
+
+      - alert: HighCPUUsage
+        expr: |
+          100 - (avg by (instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 80
+        for: 10m
+        labels:
+          severity: warning
+          category: resources
+        annotations:
+          summary: "High CPU usage detected"
+          description: "CPU usage is {{ $value }}%"
+          runbook_url: "https://docs.fitvibe.app/runbooks/high-cpu"
+
+      - alert: DiskSpaceRunningOut
+        expr: |
+          (node_filesystem_avail_bytes / node_filesystem_size_bytes) < 0.1
+        for: 5m
+        labels:
+          severity: warning
+          category: resources
+        annotations:
+          summary: "Disk space running low"
+          description: "Available disk space: {{ $value | humanizePercentage }} on {{ $labels.mountpoint }}"
+          runbook_url: "https://docs.fitvibe.app/runbooks/low-disk"
+
+  # O-6: JWT key rotation monitoring
+  - name: jwt_key_rotation_alerts
+    interval: 1h
+    rules:
+      - alert: JWTKeyRotationDue
+        expr: (time() - jwt_key_created_timestamp) > (90 * 24 * 3600)  # 90 days
+        for: 1h
+        labels:
+          severity: warning
+          category: security
+        annotations:
+          summary: "JWT signing key rotation due soon"
+          description: "Current JWT key is {{ $value | humanizeDuration }} old (quarterly rotation policy)"
+          runbook_url: "https://docs.fitvibe.app/runbooks/jwt-key-rotation"
+
+      - alert: JWTKeyRotationOverdue
+        expr: (time() - jwt_key_created_timestamp) > (105 * 24 * 3600)  # 105 days (14 day grace)
+        for: 1h
+        labels:
+          severity: critical
+          category: security
+        annotations:
+          summary: "JWT signing key rotation overdue"
+          description: "Current JWT key is {{ $value | humanizeDuration }} old (grace period exceeded)"
+          runbook_url: "https://docs.fitvibe.app/runbooks/jwt-key-rotation"
+
+  # SLO-based alerts (O-7)
+  - name: slo_alerts
+    interval: 5m
+    rules:
+      # Availability SLO: >= 99.5%
+      - alert: AvailabilitySLOViolation
+        expr: |
+          (
+            sum(rate(http_requests_total{status_code!~"5.."}[30d]))
+            /
+            sum(rate(http_requests_total[30d]))
+          ) < 0.995
+        for: 5m
+        labels:
+          severity: critical
+          category: slo
+        annotations:
+          summary: "Availability SLO violation"
+          description: "30-day availability is {{ $value | humanizePercentage }} (SLO: 99.5%)"
+          runbook_url: "https://docs.fitvibe.app/runbooks/slo-availability"
+
+      # Latency SLO: p95 < 300ms for general endpoints
+      - alert: LatencySLOViolation
+        expr: |
+          histogram_quantile(0.95,
+            sum(rate(http_request_duration_seconds_bucket{route!~"/api/v1/progress/.*"}[30d])) by (le)
+          ) > 0.3
+        for: 10m
+        labels:
+          severity: warning
+          category: slo
+        annotations:
+          summary: "Latency SLO violation"
+          description: "30-day P95 latency is {{ $value }}s (SLO: 300ms)"
+          runbook_url: "https://docs.fitvibe.app/runbooks/slo-latency"

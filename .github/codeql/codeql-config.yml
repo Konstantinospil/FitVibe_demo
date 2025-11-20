@@ -1,0 +1,28 @@
+name: "CodeQL Config"
+
+# Disable problematic queries that produce false positives
+queries:
+  - uses: security-and-quality
+
+# Query filters to suppress false positives
+query-filters:
+  # Suppress missing CSRF middleware false positives
+  # CSRF is applied globally in app.ts after cookieParser
+  - exclude:
+      id: js/missing-csrf-middleware
+
+  # Suppress missing rate limiting false positives
+  # Global rate limiting is applied in app.ts line 83
+  - exclude:
+      id: js/missing-rate-limiting
+
+# Path filters - exclude test files from security scans
+paths-ignore:
+  - "**/__tests__/**"
+  - "**/*.test.ts"
+  - "**/*.test.js"
+  - "**/*.spec.ts"
+  - "**/*.spec.js"
+  - "**/tests/**"
+  - "**/*.config.ts"
+  - "**/*.config.js"

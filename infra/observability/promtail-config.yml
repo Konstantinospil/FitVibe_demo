@@ -1,0 +1,180 @@
+server:
+  http_listen_port: 9080
+  grpc_listen_port: 0
+
+positions:
+  filename: /tmp/positions.yaml
+
+clients:
+  - url: http://loki:3100/loki/api/v1/push
+
+scrape_configs:
+  # Backend application logs (JSON format from Pino)
+  - job_name: backend
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: fitvibe-backend
+          environment: ${ENVIRONMENT:-development}
+          __path__: /var/log/fitvibe/backend/*.log
+
+    pipeline_stages:
+      # Parse JSON logs from Pino
+      - json:
+          expressions:
+            level: level
+            msg: msg
+            time: time
+            requestId: requestId
+            userId: userId
+            method: method
+            route: route
+            status: status
+
+      # Extract timestamp
+      - timestamp:
+          source: time
+          format: RFC3339
+
+      # Set log level label
+      - labels:
+          level:
+          requestId:
+          environment:
+
+      # Drop health check and metrics logs (reduce noise)
+      - drop:
+          source: route
+          expression: "^/(health|metrics)$"
+
+      # Redact sensitive information (defense in depth)
+      - replace:
+          expression: '(?i)(password|token|secret|authorization|cookie)[\s:=]+[^\s]+'
+          replace: '${1}=[REDACTED]'
+
+  # NGINX access logs
+  - job_name: nginx-access
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: nginx-access
+          environment: ${ENVIRONMENT:-development}
+          __path__: /var/log/nginx/*-access.log
+
+    pipeline_stages:
+      # Parse NGINX combined log format
+      - regex:
+          expression: '^(?P<remote_addr>\S+) - (?P<remote_user>\S+) \[(?P<time_local>[^\]]+)\] "(?P<method>\S+) (?P<request>\S+) (?P<protocol>\S+)" (?P<status>\d+) (?P<body_bytes_sent>\d+) "(?P<http_referer>[^"]*)" "(?P<http_user_agent>[^"]*)"'
+
+      # Extract timestamp
+      - timestamp:
+          source: time_local
+          format: '02/Jan/2006:15:04:05 -0700'
+
+      # Set labels
+      - labels:
+          method:
+          status:
+          environment:
+
+      # Drop health checks
+      - drop:
+          source: request
+          expression: "^/health$"
+
+  # NGINX error logs
+  - job_name: nginx-error
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: nginx-error
+          environment: ${ENVIRONMENT:-development}
+          log_level: error
+          __path__: /var/log/nginx/*-error.log
+
+    pipeline_stages:
+      # Parse NGINX error log format
+      - regex:
+          expression: '^(?P<timestamp>\d{4}/\d{2}/\d{2} \d{2}:\d{2}:\d{2}) \[(?P<level>\w+)\] (?P<pid>\d+)#(?P<tid>\d+): \*(?P<cid>\d+) (?P<message>.*)$'
+
+      # Extract timestamp
+      - timestamp:
+          source: timestamp
+          format: '2006/01/02 15:04:05'
+
+      # Set labels
+      - labels:
+          level:
+          environment:
+
+  # PostgreSQL logs (for production monitoring)
+  - job_name: postgres
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: postgres
+          environment: ${ENVIRONMENT:-development}
+          __path__: /var/log/postgresql/*.log
+
+    pipeline_stages:
+      # Parse PostgreSQL log format
+      - regex:
+          expression: '^(?P<timestamp>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3} \w+) \[(?P<pid>\d+)\] (?P<level>\w+):  (?P<message>.*)$'
+
+      # Extract timestamp
+      - timestamp:
+          source: timestamp
+          format: '2006-01-02 15:04:05.000 MST'
+
+      # Set labels
+      - labels:
+          level:
+          environment:
+
+      # Drop connection logs (reduce noise)
+      - drop:
+          source: message
+          expression: '^(connection received|connection authorized|disconnection)'
+
+  # Docker container logs (for development)
+  - job_name: docker
+    docker_sd_configs:
+      - host: unix:///var/run/docker.sock
+        refresh_interval: 5s
+        filters:
+          - name: label
+            values: ["logging=promtail"]
+
+    relabel_configs:
+      - source_labels: ['__meta_docker_container_name']
+        regex: '/(.*)'
+        target_label: 'container'
+      - source_labels: ['__meta_docker_container_log_stream']
+        target_label: 'stream'
+      - source_labels: ['__meta_docker_container_label_com_docker_compose_project']
+        target_label: 'project'
+      - source_labels: ['__meta_docker_container_label_com_docker_compose_service']
+        target_label: 'service'
+
+    pipeline_stages:
+      # Attempt to parse JSON logs
+      - json:
+          expressions:
+            level: level
+            msg: msg
+            time: time
+          source: message
+
+      # Set timestamp if available
+      - timestamp:
+          source: time
+          format: RFC3339
+
+      # Set labels
+      - labels:
+          level:
+          stream:

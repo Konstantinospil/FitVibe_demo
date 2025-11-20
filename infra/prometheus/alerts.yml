@@ -1,0 +1,153 @@
+# Prometheus Alert Rules for FitVibe
+# Based on SLOs and performance budgets defined in CLAUDE.md
+
+groups:
+  - name: api_alerts
+    interval: 30s
+    rules:
+      # High Error Rate Alert (5xx rate > 1%)
+      - alert: HighErrorRate
+        expr: |
+          (
+            sum(rate(http_requests_total{status_code=~"5.."}[5m]))
+            /
+            sum(rate(http_requests_total[5m]))
+          ) > 0.01
+        for: 5m
+        labels:
+          severity: critical
+          component: backend
+        annotations:
+          summary: "High 5xx error rate detected"
+          description: "5xx error rate is {{ $value | humanizePercentage }} (threshold: 1%)"
+
+      # High Latency Alert (p95 > 600ms for analytics, > 300ms for CRUD)
+      - alert: HighAPILatency
+        expr: |
+          histogram_quantile(0.95,
+            sum(rate(http_request_duration_seconds_bucket[5m])) by (le, route)
+          ) > 0.6
+        for: 10m
+        labels:
+          severity: warning
+          component: backend
+        annotations:
+          summary: "API p95 latency above threshold"
+          description: "Route {{ $labels.route }} p95 latency is {{ $value }}s (threshold: 600ms)"
+
+      # Database Connection Pool Saturation (> 80%)
+      - alert: DatabaseConnectionPoolHigh
+        expr: pg_stat_database_numbackends / pg_settings_max_connections > 0.8
+        for: 5m
+        labels:
+          severity: warning
+          component: database
+        annotations:
+          summary: "Database connection pool usage high"
+          description: "Connection pool at {{ $value | humanizePercentage }} capacity"
+
+      # JWT Signing Key Age (> 14 days)
+      - alert: JWTKeyRotationDue
+        expr: (time() - jwt_key_created_timestamp) / 86400 > 14
+        for: 1h
+        labels:
+          severity: warning
+          component: security
+        annotations:
+          summary: "JWT signing key rotation overdue"
+          description: "JWT key is {{ $value }} days old (threshold: 14 days)"
+
+  - name: infrastructure_alerts
+    interval: 30s
+    rules:
+      # Service Down Alert
+      - alert: ServiceDown
+        expr: up == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Service {{ $labels.job }} is down"
+          description: "{{ $labels.instance }} has been down for more than 2 minutes"
+
+      # High Memory Usage
+      - alert: HighMemoryUsage
+        expr: |
+          (
+            node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes
+          ) / node_memory_MemTotal_bytes > 0.9
+        for: 5m
+        labels:
+          severity: warning
+          component: infrastructure
+        annotations:
+          summary: "High memory usage detected"
+          description: "Memory usage is {{ $value | humanizePercentage }}"
+
+      # High Disk Usage
+      - alert: HighDiskUsage
+        expr: |
+          (
+            node_filesystem_size_bytes - node_filesystem_avail_bytes
+          ) / node_filesystem_size_bytes > 0.85
+        for: 10m
+        labels:
+          severity: warning
+          component: infrastructure
+        annotations:
+          summary: "High disk usage detected"
+          description: "Disk usage on {{ $labels.mountpoint }} is {{ $value | humanizePercentage }}"
+
+      # Redis Down
+      - alert: RedisDown
+        expr: redis_up == 0
+        for: 2m
+        labels:
+          severity: critical
+          component: cache
+        annotations:
+          summary: "Redis is down"
+          description: "Redis cache is unavailable"
+
+  - name: security_alerts
+    interval: 1m
+    rules:
+      # Failed Login Spike (> 3 sigma from baseline)
+      - alert: FailedLoginSpike
+        expr: |
+          (
+            rate(auth_failed_login_total[5m])
+            - avg_over_time(auth_failed_login_total[1h])
+          ) / stddev_over_time(auth_failed_login_total[1h]) > 3
+        for: 5m
+        labels:
+          severity: warning
+          component: security
+        annotations:
+          summary: "Unusual failed login activity detected"
+          description: "Failed login rate is {{ $value }} standard deviations above baseline"
+
+      # JWT Refresh Token Reuse Detected
+      - alert: RefreshTokenReuseDetected
+        expr: increase(jwt_refresh_reuse_total[5m]) > 0
+        for: 1m
+        labels:
+          severity: critical
+          component: security
+        annotations:
+          summary: "JWT refresh token reuse detected"
+          description: "{{ $value }} refresh token reuse attempts in last 5 minutes"
+
+  - name: business_alerts
+    interval: 1m
+    rules:
+      # Low User Activity (for anomaly detection)
+      - alert: LowUserActivity
+        expr: rate(http_requests_total[5m]) < 0.1
+        for: 15m
+        labels:
+          severity: info
+          component: business
+        annotations:
+          summary: "Unusually low user activity"
+          description: "Request rate is {{ $value }} req/s (may indicate service issue)"
