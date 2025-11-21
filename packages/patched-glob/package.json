@@ -1,0 +1,35 @@
+{
+  "name": "glob",
+  "version": "10.5.1",
+  "description": "Patched glob CLI shipped with FitVibe to mitigate GHSA-5j98-mcp5-4vw2.",
+  "license": "ISC",
+  "type": "module",
+  "bin": "./dist/esm/bin.mjs",
+  "main": "./dist/commonjs/index.js",
+  "module": "./dist/esm/index.js",
+  "types": "./dist/commonjs/index.d.ts",
+  "exports": {
+    "./package.json": "./package.json",
+    ".": {
+      "import": {
+        "types": "./dist/esm/index.d.ts",
+        "default": "./dist/esm/index.js"
+      },
+      "require": {
+        "types": "./dist/commonjs/index.d.ts",
+        "default": "./dist/commonjs/index.js"
+      }
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "dependencies": {
+    "foreground-child": "^3.1.0",
+    "jackspeak": "^3.1.2",
+    "minimatch": "^9.0.4",
+    "minipass": "^7.1.2",
+    "package-json-from-dist": "^1.0.0",
+    "path-scurry": "^1.11.1"
+  }
+}

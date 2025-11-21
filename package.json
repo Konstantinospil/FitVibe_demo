@@ -1,0 +1,75 @@
+{
+  "name": "fitvibe",
+  "version": "2.0.0",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@9.14.4",
+  "engines": {
+    "node": ">=18.19"
+  },
+  "scripts": {
+    "dev": "turbo run dev --parallel",
+    "build": "turbo run build",
+    "lint": "turbo run lint --continue",
+    "lint:check": "turbo run lint --concurrency=1 -- --max-warnings=0",
+    "test": "turbo run test --",
+    "test:backend": "turbo run test --filter=@fitvibe/backend -- --coverage --runInBand",
+    "test:frontend": "turbo run test --filter=@fitvibe/frontend -- --coverage",
+    "test:a11y": "pnpm --filter @fitvibe/frontend run build && playwright test tests/frontend/e2e/accessibility.spec.cjs --config tests/frontend/e2e/playwright.config.cjs --reporter=line",
+    "test:coverage:gate": "node tests/qa/check-coverage.cjs",
+    "perf:test": "node tests/perf/run-local-perf.mjs",
+    "qa:summary": "node tests/qa/generate-summary.mjs",
+    "i18n:check": "node tests/qa/check-i18n.cjs",
+    "security:scan": "node tests/security/run-security-checks.mjs",
+    "typecheck": "turbo run typecheck",
+    "openapi:build": "pnpm --filter @fitvibe/backend run openapi:build",
+    "retention:run": "pnpm --filter @fitvibe/backend run db:retention",
+    "secrets:rotate": "pnpm --filter @fitvibe/backend run db:rotate-secrets",
+    "clean": "rimraf node_modules .turbo && pnpm install",
+    "prepare": "husky install",
+    "fmt": "prettier \"**/*.{ts,tsx,js,jsx,cjs,mjs,json,md,yml,yaml}\" --write"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "^4.11.0",
+    "@eslint/js": "^9.37.0",
+    "@lhci/cli": "^0.15.1",
+    "@playwright/test": "^1.56.1",
+    "@types/jest": "^30.0.0",
+    "@types/react": "^18.3.26",
+    "@types/react-dom": "^18.3.7",
+    "istanbul-lib-coverage": "^3.2.2",
+    "dotenv-cli": "^7.4.4",
+    "eslint": "^9.37.0",
+    "eslint-plugin-import": "^2.32.0",
+    "eslint-plugin-jsx-a11y": "^6.10.2",
+    "eslint-plugin-prettier": "^5.5.4",
+    "eslint-plugin-react": "^7.37.5",
+    "eslint-plugin-react-hooks": "^5.2.0",
+    "globals": "^16.4.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^15.5.2",
+    "pnpm": "^10.20.0",
+    "prettier": "^3.6.2",
+    "rimraf": "^6.0.1",
+    "ts-node": "^10.9.2",
+    "turbo": "^2.5.8",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.46.0"
+  },
+  "pnpm": {
+    "overrides": {
+      "chrome-launcher": "^1.2.1",
+      "tmp": "^0.2.4",
+      "glob": "link:packages/patched-glob",
+      "esbuild": "^0.25.0",
+      "js-yaml": "^4.1.1"
+    }
+  },
+  "overrides": {
+    "js-yaml": "^4.1.1"
+  },
+  "dependencies": {
+    "@anthropic-ai/claude-agent-sdk": "^0.1.30",
+    "snyk": "^1.1300.2"
+  }
+}

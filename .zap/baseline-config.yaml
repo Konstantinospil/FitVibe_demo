@@ -1,0 +1,163 @@
+# OWASP ZAP Baseline Scan Configuration
+# This configuration defines the security scanning policy for FitVibe
+
+# ==============================================================================
+# Scan Configuration
+# ==============================================================================
+
+# Target URL
+target: https://api.fitvibe.com
+
+# Scan Policy
+policy: baseline
+
+# Authentication Configuration
+authentication:
+  type: jwt
+  loginUrl: https://api.fitvibe.com/api/v1/auth/login
+  username: security-test@fitvibe.com
+  password: ${SECURITY_TEST_PASSWORD}
+  tokenLocation: header
+  tokenName: Authorization
+  tokenPrefix: Bearer
+
+# Contexts
+contexts:
+  - name: Public
+    urls:
+      - https://api.fitvibe.com/health
+      - https://api.fitvibe.com/.well-known/*
+      - https://api.fitvibe.com/api/v1/auth/login
+      - https://api.fitvibe.com/api/v1/auth/register
+    excludeUrls: []
+
+  - name: Authenticated
+    urls:
+      - https://api.fitvibe.com/api/v1/*
+    excludeUrls:
+      - https://api.fitvibe.com/api/v1/auth/login
+      - https://api.fitvibe.com/api/v1/auth/register
+      - https://api.fitvibe.com/api/v1/users/me # Exclude destructive actions
+    authentication: required
+
+# ==============================================================================
+# Scanning Rules
+# ==============================================================================
+
+rules:
+  # High Priority
+  - id: 10021 # X-Content-Type-Options Header Missing
+    threshold: LOW
+    strength: MEDIUM
+
+  - id: 10016 # Web Browser XSS Protection Not Enabled
+    threshold: LOW
+    strength: MEDIUM
+
+  - id: 10020 # X-Frame-Options Header Not Set
+    threshold: LOW
+    strength: MEDIUM
+
+  - id: 10035 # Strict-Transport-Security Header Not Set
+    threshold: LOW
+    strength: MEDIUM
+
+  - id: 10098 # Cross-Domain Misconfiguration
+    threshold: LOW
+    strength: HIGH
+
+  - id: 90022 # Application Error Disclosure
+    threshold: LOW
+    strength: MEDIUM
+
+  - id: 10038 # Content Security Policy (CSP) Header Not Set
+    threshold: LOW
+    strength: MEDIUM
+
+  # SQL Injection
+  - id: 40018 # SQL Injection
+    threshold: LOW
+    strength: HIGH
+
+  # XSS
+  - id: 40012 # Cross Site Scripting (Reflected)
+    threshold: LOW
+    strength: HIGH
+
+  - id: 40014 # Cross Site Scripting (Persistent)
+    threshold: LOW
+    strength: HIGH
+
+  - id: 40016 # Cross Site Scripting (DOM Based)
+    threshold: LOW
+    strength: HIGH
+
+  # Authentication
+  - id: 10105 # Weak Authentication Method
+    threshold: LOW
+    strength: MEDIUM
+
+  # Path Traversal
+  - id: 6 # Path Traversal
+    threshold: LOW
+    strength: HIGH
+
+  # Remote Code Execution
+  - id: 90019 # Server Side Code Injection
+    threshold: LOW
+    strength: HIGH
+
+  # Information Disclosure
+  - id: 10037 # Server Leaks Information via "X-Powered-By" HTTP Response Header
+    threshold: LOW
+    strength: MEDIUM
+
+  - id: 10096 # Timestamp Disclosure
+    threshold: LOW
+    strength: LOW
+
+# ==============================================================================
+# Exclusions
+# ==============================================================================
+
+# Exclude logout endpoints to prevent session termination during scan
+excludeUrls:
+  - https://api.fitvibe.com/api/v1/auth/logout
+  - https://api.fitvibe.com/api/v1/users/me$ # DELETE endpoint
+
+# Exclude rate-limited endpoints to prevent lockout
+rateLimitedUrls:
+  - https://api.fitvibe.com/api/v1/auth/login
+  - https://api.fitvibe.com/api/v1/auth/register
+  - https://api.fitvibe.com/api/v1/auth/forgot-password
+
+# ==============================================================================
+# Reporting
+# ==============================================================================
+
+reporting:
+  format:
+    - html
+    - json
+    - xml
+  outputDir: ./security-reports
+  includePassedRules: false
+  minRisk: LOW
+
+# ==============================================================================
+# CI/CD Integration
+# ==============================================================================
+
+ci:
+  # Fail build on findings
+  failOnRisk:
+    high: true
+    medium: true
+    low: false
+    informational: false
+
+  # Maximum allowed warnings
+  maxWarnings:
+    high: 0
+    medium: 5
+    low: 10

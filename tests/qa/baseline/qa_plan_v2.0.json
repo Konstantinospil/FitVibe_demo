@@ -1,0 +1,133 @@
+{
+  "version": "v2.0",
+  "generatedAt": "2025-11-04T00:00:00Z",
+  "source": "apps/docs/4a.Testing_and_Quality_Assurance_Plan.md#L24",
+  "statusLegend": {
+    "met": "Objective validated within agreed gate and evidence captured.",
+    "not_met": "Objective measured and gate failed; follow-up required.",
+    "not_measured": "Measurement pending because enabling automation is not yet in place.",
+    "waived": "Formal waiver approved (recorded with expiry and mitigation)."
+  },
+  "objectives": [
+    {
+      "id": "functional_correctness",
+      "objective": "Functional correctness",
+      "target": "100% pass for Register → Verify → Login → Plan → Complete → Analytics Export",
+      "gate": "Playwright E2E report + traces",
+      "status": "not_measured",
+      "linkedTasks": ["Q-4", "Q-9"],
+      "evidence": [],
+      "notes": "Baseline awaits end-to-end flow automation and summary generator."
+    },
+    {
+      "id": "test_coverage",
+      "objective": "Test coverage",
+      "target": "≥80% lines & branches repo-wide; ≥90% on auth/session/points critical code",
+      "gate": "Coverage HTML + CI thresholds",
+      "status": "not_measured",
+      "linkedTasks": ["Q-2", "Q-8"],
+      "evidence": [],
+      "notes": "Coverage instrumentation pending Jest/Supertest scaffolding."
+    },
+    {
+      "id": "api_performance",
+      "objective": "API performance (p95 by group)",
+      "target": "auth ≤200 ms, crud ≤300 ms, feed ≤400 ms, analytics ≤600 ms; ≤10% regression",
+      "gate": "k6 grouped scenario comparison vs tests/perf/baselines/main.json",
+      "status": "not_measured",
+      "linkedTasks": ["Q-6", "Q-12"],
+      "evidence": [],
+      "notes": "Requires grouped k6 suite and baseline artifact."
+    },
+    {
+      "id": "cold_start",
+      "objective": "Cold start",
+      "target": "/health returns 200 in ≤5 s from container start",
+      "gate": "Startup smoke in CI",
+      "status": "not_measured",
+      "linkedTasks": ["Q-9"],
+      "evidence": [],
+      "notes": "Startup probe for backend container still to be scripted."
+    },
+    {
+      "id": "payload_sizes",
+      "objective": "Request/Response sizes",
+      "target": "Request body ≤2 MB; response body ≤1 MB; gzip/Brotli for >1 KB",
+      "gate": "API contract + integration assertions",
+      "status": "not_measured",
+      "linkedTasks": ["Q-2", "Q-3"],
+      "evidence": [],
+      "notes": "Need contract tests to enforce payload budgets."
+    },
+    {
+      "id": "telemetry_hygiene",
+      "objective": "Telemetry hygiene",
+      "target": "No PII in logs/metrics/labels (lint & sample scan)",
+      "gate": "Log redaction lint + sampling script",
+      "status": "not_measured",
+      "linkedTasks": ["Q-7", "O-1"],
+      "evidence": [],
+      "notes": "Log sampling and lint automation not yet committed."
+    },
+    {
+      "id": "web_performance",
+      "objective": "Web performance",
+      "target": "LCP P75 < 2.5 s (mid-tier 4G); ≤5 API calls on first paint (key screens)",
+      "gate": "Lighthouse CI + Playwright network assertions",
+      "status": "not_measured",
+      "linkedTasks": ["Q-5", "Q-6"],
+      "evidence": [],
+      "notes": "Requires Lighthouse CI wiring and Playwright network budgets."
+    },
+    {
+      "id": "accessibility",
+      "objective": "Accessibility",
+      "target": "WCAG 2.1 AA; axe/Lighthouse score ≥90 (Auth, Planner, Logger, Dashboard)",
+      "gate": "axe-core + Lighthouse CI reports",
+      "status": "not_measured",
+      "linkedTasks": ["Q-5", "Q-18"],
+      "evidence": [],
+      "notes": "Pending a11y suite implementation."
+    },
+    {
+      "id": "security_supply_chain",
+      "objective": "Security & supply chain",
+      "target": "0 High/Critical SCA; ZAP baseline no High; SBOM per build; images signed & pinned",
+      "gate": "SCA & ZAP reports, SBOM, cosign verify log",
+      "status": "not_measured",
+      "linkedTasks": ["Q-7", "I-13"],
+      "evidence": [],
+      "notes": "Security automation hooks yet to run in CI."
+    },
+    {
+      "id": "privacy_gdpr",
+      "objective": "Privacy & GDPR",
+      "target": "DSR export/delete ≤30 days; backup purge ≤14 days",
+      "gate": "DSR runbook evidence + DR drill",
+      "status": "not_measured",
+      "linkedTasks": ["Q-13", "O-5"],
+      "evidence": [],
+      "notes": "Requires DSR E2E automation and DR reporting."
+    },
+    {
+      "id": "availability",
+      "objective": "Availability",
+      "target": "SLO ≥99.5% monthly (error budget 0.5%)",
+      "gate": "SLO dashboard snapshot",
+      "status": "not_measured",
+      "linkedTasks": ["O-7"],
+      "evidence": [],
+      "notes": "Observability stack not yet deployed."
+    },
+    {
+      "id": "visual_integrity",
+      "objective": "Visual integrity",
+      "target": "Tokens contract passes; visual diff ≤0.2% on critical pages (light/dark × xs/sm/md/lg)",
+      "gate": "Visual snapshot diffs from Playwright",
+      "status": "not_measured",
+      "linkedTasks": ["Q-15"],
+      "evidence": [],
+      "notes": "Visual regression suite pending baseline generation."
+    }
+  ]
+}

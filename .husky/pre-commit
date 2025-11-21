@@ -1,0 +1,10 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+# Run lint-staged (formats and lints staged files)
+pnpm lint-staged
+
+# Run secret scan on staged files
+echo "🔍 Scanning for secrets..."
+node tests/security/secret-scan.cjs
+

@@ -1,0 +1,462 @@
+{
+  "navigation": {
+    "home": "Home",
+    "sessions": "Sessions",
+    "insights": "Insights",
+    "profile": "Profile",
+    "signOut": "Sign out",
+    "you": "You",
+    "activeSession": "Active session",
+    "skipToContent": "Skip to main content"
+  },
+  "language": {
+    "label": "Language",
+    "english": "English",
+    "german": "German"
+  },
+  "status": {
+    "checking": "Checking server…",
+    "online": "Server online",
+    "offline": "Server offline"
+  },
+  "visibility": {
+    "labels": {
+      "private": "Private",
+      "link": "Link-only",
+      "public": "Public"
+    },
+    "guards": {
+      "private": "Only you can view this session.",
+      "link": "Anyone with the link can view.",
+      "public": "Visible to everyone on FitVibe."
+    }
+  },
+  "home": {
+    "eyebrow": "FitVibe",
+    "title": "Train smarter. Share progress. Celebrate consistency.",
+    "description": "Plan, log, and analyse your training with coach‑ready detail. Track streaks, compare blocks, and spot recovery trends with zero fluff.",
+    "subtitleOnline": "API connection healthy — status: {{status}}.",
+    "subtitleOnlineFallback": "API connection healthy — ready when you are.",
+    "subtitleOffline": "Working offline. Your changes will sync when the server returns.",
+    "subtitleChecking": "Verifying API health and warming caches…",
+    "ctaPrimary": "Join the private beta",
+    "ctaSecondary": "Talk to the team",
+    "chartTitle": "Consistency trend",
+    "chartDescription": "Seven‑day completion rate across planned sessions.",
+    "chartLabel": "Day: {{label}}",
+    "chartValue": "{{value}}%"
+  },
+  "profile": {
+    "eyebrow": "Athlete profile",
+    "title": "Preferences, privacy, and performance goals.",
+    "description": "Set default visibility, preferred units, and personal best targets so every shared session tells your story.",
+    "edit": "Edit profile",
+    "sections": {
+      "visibility": {
+        "title": "Visibility",
+        "description": "Default session visibility: Followers. Switch to Public for competition recaps."
+      },
+      "units": {
+        "title": "Preferred units",
+        "description": "Weight in kilograms • Distance in kilometers • Pace in min/km."
+      },
+      "achievements": {
+        "title": "Signature achievements",
+        "description": "Back squat 180 kg • Bench 115 kg • Deadlift 210 kg • Boston Marathon qualifier."
+      }
+    },
+    "share": {
+      "title": "Share links",
+      "description": "Create personal share links for coaches or judges. Revoke access instantly at any time.",
+      "create": "Create share link",
+      "empty": "No active share links yet.",
+      "copy": "Copy link",
+      "copyAria": "Copy link",
+      "revoke": "Revoke",
+      "revoked": "Revoked",
+      "copied": "Link copied",
+      "copiedAria": "Link copied to clipboard",
+      "guards": {
+        "active": "Share this URL only with people you trust.",
+        "revoked": "This link is no longer accessible."
+      }
+    }
+  },
+  "feed": {
+    "eyebrow": "Community stream",
+    "title": "Share progress with teammates and followers.",
+    "description": "Private work stays private. Public achievements are discoverable and easy to celebrate.",
+    "timestamp": "moments ago",
+    "button": "Open session",
+    "items": {
+      "leah": {
+        "user": "Leah",
+        "note": "New 5RM deadlift at 170 kg — grip work is paying off!",
+        "stats": "17 likes • 6 comments",
+        "visibility": "public"
+      },
+      "marco": {
+        "user": "Marco",
+        "note": "Shared a deload plan with ankle‑rehab protocol.",
+        "stats": "Coach view • Unlisted",
+        "visibility": "link"
+      },
+      "team": {
+        "user": "Team Nordic Velocity",
+        "note": "Weekly leaderboard: Emma reclaimed #1 with 98 streak points.",
+        "stats": "Pinned • Team feed",
+        "visibility": "private"
+      }
+    }
+  },
+  "footer": {
+    "note": "Built for athletes who love data‑driven progress — Fitvibe"
+  },
+  "errors": {
+    "WEAK_PASSWORD": "Password must be at least 12 characters and include uppercase, lowercase, digit, and symbol",
+    "PASSWORD_CONTAINS_USERNAME": "Password cannot contain your username",
+    "PASSWORD_CONTAINS_EMAIL": "Password cannot contain your email address",
+    "AUTH_INVALID_TOKEN": "Invalid verification token",
+    "AUTH_TOKEN_EXPIRED": "Your verification link has expired. Please request a new one",
+    "AUTH_TOO_MANY_REQUESTS": "Verification limit reached. Please try again later",
+    "AUTH_CONFLICT": "Unable to complete registration",
+    "AUTH_USER_NOT_FOUND": "User not found",
+    "AUTH_INVALID_CREDENTIALS": "Invalid credentials",
+    "AUTH_INVALID_REFRESH": "Invalid refresh token",
+    "AUTH_SESSION_REVOKED": "Session revoked",
+    "AUTH_REFRESH_EXPIRED": "Refresh token expired",
+    "AUTH_INVALID_SCOPE": "Specify a sessionId or revoke scope",
+    "AUTH_SESSION_NOT_FOUND": "Session not found",
+    "UNAUTHENTICATED": "Missing authentication context",
+    "USER_USERNAME_TAKEN": "Username already in use",
+    "USER_USERNAME_INVALID": "Username must be 3–50 characters and may include letters, numbers, dots, underscores, and dashes",
+    "USER_STATUS_INVALID": "Cannot transition status",
+    "USER_DISPLAY_NAME_REQUIRED": "Display name is required",
+    "USER_EMAIL_INVALID": "Email is required",
+    "USER_ROLE_INVALID": "Role is required",
+    "USER_NOT_FOUND": "User not found",
+    "USER_EMAIL_TAKEN": "Email already in use",
+    "USER_REFRESH_FAILED": "Unable to load user data",
+    "USER_INVALID_PASSWORD": "Invalid current password",
+    "USER_CONTACT_NOT_FOUND": "Contact not found",
+    "USER_CONTACT_ALREADY_VERIFIED": "Contact already verified",
+    "USER_PHONE_INVALID": "Phone number is required",
+    "USER_PHONE_TAKEN": "Phone number already in use",
+    "USER_CONTACT_TOKEN_REQUIRED": "Verification token is required",
+    "USER_CONTACT_TOKEN_INVALID": "Invalid verification token",
+    "USER_CONTACT_TOKEN_EXPIRED": "Verification token expired",
+    "USER_CONTACT_REFRESH_FAILED": "Unable to load contact",
+    "USER_CONTACT_REMOVE_PRIMARY": "Cannot remove primary email",
+    "EXERCISE_INVALID_TYPE": "Invalid exercise type",
+    "EXERCISE_DUPLICATE": "Exercise name already exists in this library scope",
+    "EXERCISE_NOT_FOUND": "Exercise not found",
+    "EXERCISE_FORBIDDEN": "You do not have permission to modify this exercise",
+    "EXERCISE_CREATE_FAILED": "Unable to load created exercise",
+    "EXERCISE_REFRESH_FAILED": "Unable to load updated exercise",
+    "SESSION_INVALID_SET": "Invalid set data",
+    "SESSION_INVALID_PLAN": "Invalid plan",
+    "SESSION_NOT_FOUND": "Session not found",
+    "SESSION_CREATE_FAILED": "Unable to load created session",
+    "SESSION_UPDATE_FAILED": "Unable to load updated session",
+    "SESSION_CLONE_FAILED": "Unable to load cloned session",
+    "SESSION_RECURRENCE_INVALID": "Recurrence horizon exceeds one year",
+    "SESSION_INVALID_SOURCE": "Source session has an invalid planned date",
+    "FEED_AUTH_REQUIRED": "Authentication required for the requested feed",
+    "FEED_ITEM_NOT_FOUND": "Feed item not found",
+    "FEED_BLOCKED": "Interaction blocked by privacy settings",
+    "FEED_NOT_PUBLIC": "Feed item is not public",
+    "FEED_SESSION_NOT_FOUND": "Session not found",
+    "FEED_REPORT_REASON_REQUIRED": "Report reason is required",
+    "FEED_REPORT_REASON_TOO_LONG": "Reason exceeds 200 characters",
+    "FEED_NOT_OWNER": "You do not own this session",
+    "FEED_INVALID_STATUS": "Only completed sessions can be shared",
+    "FEED_LINK_REVOKED": "Share link has been revoked",
+    "FEED_LINK_EXPIRED": "Share link has expired",
+    "FEED_LINK_EXHAUSTED": "Share link view limit reached",
+    "FEED_LINK_NOT_FOUND": "Share link not found",
+    "FEED_USER_NOT_FOUND": "User not found",
+    "FEED_CANNOT_FOLLOW_SELF": "You cannot follow yourself",
+    "FEED_CANNOT_BLOCK_SELF": "You cannot block yourself",
+    "FEED_COMMENT_NOT_FOUND": "Comment not found",
+    "FEED_INVALID_EXPIRES_AT": "expiresAt must be a valid ISO date",
+    "SOCIAL_COMMENT_EMPTY": "Comment body is required",
+    "SOCIAL_COMMENT_TOO_LONG": "Comment exceeds 500 characters",
+    "SOCIAL_COMMENT_FORBIDDEN": "Comment failed moderation",
+    "SOCIAL_COMMENT_LOAD_FAILED": "Failed to load comment",
+    "POINTS_INVALID_CURSOR": "Cursor is malformed",
+    "POINTS_INVALID_LIMIT": "Limit must be a positive integer",
+    "POINTS_INVALID_FROM": "From must be a valid ISO timestamp",
+    "POINTS_INVALID_TO": "To must be a valid ISO timestamp",
+    "POINTS_SESSION_NOT_COMPLETED": "Session is not completed",
+    "IDEMPOTENCY_STATE": "Unable to initialize idempotency record",
+    "IDEMPOTENCY_MISMATCH": "Idempotency key already used with a different payload",
+    "IDEMPOTENCY_INVALID": "Idempotency-Key header must not be empty",
+    "VALIDATION_ERROR": "Validation failed",
+    "INTERNAL_SERVER_ERROR": "Unexpected error",
+    "UPLOAD_NO_FILE": "No file uploaded",
+    "UPLOAD_UNSUPPORTED_TYPE": "Unsupported file type",
+    "UPLOAD_TOO_LARGE": "File too large (max 5 MB)",
+    "UPLOAD_MALWARE_DETECTED": "File failed security scan",
+    "UPLOAD_NOT_FOUND": "File not found",
+    "EMAIL_SERVICE_UNAVAILABLE": "Email service unavailable"
+  },
+  "validation": {
+    "passwordMinLength": "Password must be at least 12 characters long",
+    "passwordLowercase": "Password must include a lowercase letter",
+    "passwordUppercase": "Password must include an uppercase letter",
+    "passwordDigit": "Password must include a digit",
+    "passwordSymbol": "Password must include a symbol",
+    "usernameFormat": "Username may only contain letters, numbers, underscores, dots, or dashes",
+    "sessionIdRequired": "Provide sessionId or revoke scope",
+    "revokeConflict": "Cannot combine revokeAll and revokeOthers"
+  },
+  "dashboard": {
+    "eyebrow": "Readiness pulse",
+    "title": "Your training command centre",
+    "description": "Monitor streaks, readiness, and leaderboard changes at a glance. Metrics update in real time after sync or manual logs.",
+    "errorRefresh": "Couldn’t refresh analytics. Showing the last snapshot.",
+    "retry": "Retry",
+    "personalBests": "Personal bests",
+    "volumeAggregates": "Volume aggregates",
+    "selectRange": "Select range",
+    "last4Weeks": "Last 4 weeks",
+    "last8Weeks": "Last 8 weeks",
+    "weekly": "Weekly",
+    "monthly": "Monthly",
+    "refreshing": "Refreshing…",
+    "period": "Period",
+    "volume": "Volume",
+    "sessions": "Sessions",
+    "helperText": "Showing up to 5 periods to keep shared dashboards fast."
+  },
+  "progress": {
+    "eyebrow": "Trends & insights",
+    "title": "Visualise progression with context",
+    "description": "Compare volume, velocity, and readiness across blocks to see how programming changes drive results.",
+    "exportFailed": "Failed to export progress data",
+    "chartRenderFailed": "Failed to render chart",
+    "reloadPage": "Reload page",
+    "presetRange": "Preset range",
+    "customRange": "Custom range",
+    "period": "Period:",
+    "7days": "7 days",
+    "30days": "30 days",
+    "90days": "90 days",
+    "groupBy": "Group by:",
+    "daily": "Daily",
+    "weekly": "Weekly",
+    "exportCsv": "Export CSV",
+    "volumeTrend": "Volume trend",
+    "sessionsTrend": "Sessions trend",
+    "intensityTrend": "Average intensity (RPE)",
+    "exerciseBreakdown": "Exercise breakdown",
+    "failedToLoad": "Failed to load trend data",
+    "failedToLoadExercise": "Failed to load exercise data",
+    "retry": "Retry",
+    "noData": "No data for this period",
+    "noExerciseData": "No exercise data for this period",
+    "exercise": "Exercise",
+    "totalVolume": "Total volume",
+    "avgVolume": "Avg volume",
+    "maxWeight": "Max weight",
+    "trend": "Trend",
+    "trendUp": "Up",
+    "trendDown": "Down",
+    "trendStable": "Stable",
+    "session": "session",
+    "sessions": "sessions"
+  },
+  "verifyEmail": {
+    "eyebrow": "Email verification",
+    "titleVerifying": "Verifying your email…",
+    "titleSuccess": "Email verified",
+    "titleFailed": "Verification failed",
+    "descVerifying": "Please wait while we verify your email address.",
+    "descSuccess": "Your email has been verified. Redirecting to login…",
+    "descFailed": "We couldn’t verify your email. The link may have expired or is invalid.",
+    "noToken": "No verification token provided",
+    "goToLogin": "Go to login",
+    "backToRegister": "Back to register"
+  },
+  "forgotPassword": {
+    "eyebrow": "Password reset",
+    "titleSuccess": "Check your email",
+    "title": "Forgot your password?",
+    "descSuccess": "If an account exists for that email, we sent reset instructions.",
+    "description": "Enter your email and we’ll send a reset link.",
+    "emailLabel": "Email address",
+    "emailPlaceholder": "you@example.com",
+    "sending": "Sending…",
+    "sendLink": "Send reset link",
+    "backToLogin": "Back to login",
+    "successMessage": "Check your email for the password reset link.",
+    "errorSend": "Failed to send reset email"
+  },
+  "resetPassword": {
+    "eyebrow": "Password reset",
+    "titleSuccess": "Password reset successful",
+    "title": "Reset your password",
+    "descSuccess": "Your password was reset. Redirecting to login…",
+    "description": "Enter your new password below.",
+    "newPasswordLabel": "New password",
+    "newPasswordPlaceholder": "Enter new password",
+    "confirmPasswordLabel": "Confirm new password",
+    "confirmPasswordPlaceholder": "Confirm new password",
+    "resetting": "Resetting…",
+    "resetButton": "Reset password",
+    "backToLogin": "Back to login",
+    "successText": "You can now log in with your new password.",
+    "passwordMismatch": "Passwords do not match",
+    "invalidToken": "Invalid reset token. Please request a new one.",
+    "errorReset": "Failed to reset password"
+  },
+  "logger": {
+    "eyebrow": "Logbook",
+    "title": "Capture every rep without breaking flow.",
+    "description": "Track sets, load, tempo, and RPE. Sync with wearables or log manually—your data stays coach‑ready.",
+    "exercise": "Exercise",
+    "sets": "Sets",
+    "reps": "Reps",
+    "load": "Load"
+  },
+  "planner": {
+    "eyebrow": "Session architecture",
+    "title": "Design training blocks with intent.",
+    "description": "Drag, duplicate, and periodise workouts. Planner keeps intensity, volume, and deload ratios on target.",
+    "editBlock": "Edit block"
+  },
+  "sessions": {
+    "eyebrow": "Training management",
+    "title": "Plan and log your workouts",
+    "description": "Design training blocks and capture every rep without breaking flow.",
+    "plannerTab": "Planner",
+    "loggerTab": "Logger"
+  },
+  "insights": {
+    "eyebrow": "Analytics & trends",
+    "title": "Your performance dashboard",
+    "description": "Monitor readiness, visualise progression, and track your journey with data-driven insights.",
+    "dashboardTab": "Dashboard",
+    "progressTab": "Progress"
+  },
+  "notFound": {
+    "eyebrow": "Navigation",
+    "title": "We couldn’t find that page.",
+    "description": "The route is private or not yet available. Return to the dashboard or contact the team for early access.",
+    "takeMeHome": "Take me home",
+    "goToLanding": "Go to landing"
+  },
+  "components": {
+    "dateRangePicker": {
+      "from": "From:",
+      "to": "To:"
+    },
+    "maintenanceBanner": {
+      "message": "The system is in read-only mode. Write operations are disabled."
+    },
+    "errorBoundary": {
+      "title": "Something went wrong",
+      "message": "An unexpected error occurred",
+      "tryAgain": "Try again"
+    },
+    "mainLayout": {
+      "logo": "FV",
+      "brand": "FitVibe"
+    }
+  },
+  "common": {
+    "retry": "Retry",
+    "loading": "Loading…",
+    "error": "Error",
+    "success": "Success",
+    "cancel": "Cancel",
+    "save": "Save",
+    "delete": "Delete",
+    "edit": "Edit",
+    "close": "Close",
+    "back": "Back",
+    "next": "Next",
+    "previous": "Previous",
+    "submit": "Submit",
+    "confirm": "Confirm"
+  },
+  "vibes": {
+    "strength": {
+      "name": "Strength",
+      "element": "Earth",
+      "activities": "Lifting, strongman, body building"
+    },
+    "agility": {
+      "name": "Agility",
+      "element": "Air",
+      "activities": "Juggling, climbing, bouldering, gymnastics, parkour"
+    },
+    "endurance": {
+      "name": "Endurance",
+      "element": "Water",
+      "activities": "Running, hiking, cycling, rowing, jump rope"
+    },
+    "explosivity": {
+      "name": "Explosivity",
+      "element": "Fire",
+      "activities": "Sprints, jumps, throws"
+    },
+    "intelligence": {
+      "name": "Intelligence",
+      "element": "Shadow",
+      "activities": "Chess, shooting, sailing"
+    },
+    "regeneration": {
+      "name": "Regeneration",
+      "element": "Aether",
+      "activities": "Yoga, stretching, fasting"
+    }
+  },
+  "vibesHome": {
+    "title": "Choose Your Vibe",
+    "subtitle": "Select an element to add a new exercise",
+    "addExercise": {
+      "title": "Add Exercise",
+      "selectExisting": "Select Existing Exercise",
+      "createNew": "Create New Exercise",
+      "exerciseName": "Exercise Name",
+      "exerciseNamePlaceholder": "Enter exercise name",
+      "selectVibe": "Selected Vibe",
+      "exerciseDetails": "Exercise Details",
+      "sets": "Sets",
+      "setsPlaceholder": "e.g., 3",
+      "reps": "Reps",
+      "repsPlaceholder": "e.g., 10",
+      "duration": "Duration (minutes)",
+      "durationPlaceholder": "e.g., 30",
+      "resistance": "Resistance / Watts",
+      "resistancePlaceholder": "e.g., 100",
+      "speed": "Speed / Pace",
+      "speedPlaceholder": "e.g., 10 km/h",
+      "distance": "Distance (km)",
+      "distancePlaceholder": "e.g., 5",
+      "rpe": "RPE (1-10)",
+      "rpePlaceholder": "Rate of perceived exertion",
+      "weight": "Weight (kg)",
+      "weightPlaceholder": "e.g., 80",
+      "notes": "Notes (optional)",
+      "notesPlaceholder": "Add any notes...",
+      "cancel": "Cancel",
+      "add": "Log Exercise"
+    },
+    "history": {
+      "title": "Exercise History",
+      "period": "Period",
+      "day": "Day",
+      "week": "Week",
+      "month": "Month",
+      "quarter": "Quarter",
+      "semester": "Semester",
+      "year": "Year",
+      "noExercises": "No exercises found for this period",
+      "exercise": "Exercise",
+      "vibe": "Vibe",
+      "date": "Date"
+    }
+  }
+}

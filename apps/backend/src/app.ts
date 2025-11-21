@@ -1,0 +1,187 @@
+import express, { Router } from "express";
+import helmet from "helmet";
+import type { CorsOptions } from "cors";
+import cors from "cors";
+import compression from "compression";
+import cookieParser from "cookie-parser";
+import { randomUUID } from "node:crypto";
+
+import { env } from "./config/env.js";
+import { logger } from "./config/logger.js";
+import { rateLimit } from "./middlewares/rate-limit.js";
+import { csrfProtection, csrfTokenRoute, validateOrigin } from "./middlewares/csrf.js";
+import { httpLogger } from "./middlewares/request-logger.js";
+import { errorHandler } from "./middlewares/error.handler.js";
+import { readOnlyGuard } from "./middlewares/read-only.guard.js";
+import { metricsMiddleware, metricsRoute } from "./observability/metrics.js";
+import { asyncHandler } from "./utils/async-handler.js";
+
+import { authRouter } from "./api/auth.routes.js";
+import { usersRouter } from "./api/users.routes.js";
+import { exerciseTypesRouter } from "./api/exerciseTypes.routes.js";
+import { exercisesRouter } from "./api/exercises.routes.js";
+import { sessionsRouter } from "./api/sessions.routes.js";
+import { progressRouter } from "./api/progress.routes.js";
+import { pointsRouter } from "./api/points.routes.js";
+import { feedRouter } from "./api/feed.routes.js";
+import { adminRouter } from "./api/admin.routes.js";
+import healthRouter from "./modules/health/health.router.js";
+import systemRouter from "./modules/system/system.routes.js";
+import { jwksHandler } from "./modules/auth/auth.controller.js";
+
+const app = express();
+
+if (!env.csrf.enabled) {
+  const warning =
+    "[security] CSRF protection is disabled. Only disable this for automated testing or local workflows.";
+  if (env.isProduction) {
+    throw new Error(`${warning} Refusing to start in production without CSRF.`);
+  }
+  logger.warn(warning);
+}
+
+app.set("trust proxy", 1);
+app.get("/.well-known/jwks.json", jwksHandler);
+
+app.use((req, res, next) => {
+  const requestId = randomUUID();
+  req.requestId = requestId;
+  res.locals.requestId = requestId;
+  res.setHeader("X-Request-Id", requestId);
+  next();
+});
+
+app.use(httpLogger);
+
+if (env.metricsEnabled) {
+  app.use(metricsMiddleware);
+  app.get("/metrics", asyncHandler(metricsRoute));
+}
+
+const corsOrigins = env.allowedOrigins;
+const corsOptions: CorsOptions = {
+  origin: (origin, callback) => {
+    if (!origin || corsOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+    const error: Error & { status?: number; code?: string } = new Error(
+      "Origin not allowed by CORS",
+    );
+    error.status = 403;
+    error.code = "FORBIDDEN";
+    return callback(error);
+  },
+  credentials: true,
+};
+
+// Helmet security middleware with explicit CSP/HSTS hardening
+app.use(
+  helmet({
+    // Strict Transport Security (HSTS) - enforce HTTPS for 180 days (6 months)
+    hsts: {
+      maxAge: 15552000, // 180 days in seconds
+      includeSubDomains: true,
+      preload: true,
+    },
+    // Content Security Policy - prevent XSS and injection attacks
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: ["'self'"],
+        styleSrc: ["'self'"],
+        imgSrc: ["'self'", "data:", "https:"],
+        fontSrc: ["'self'"],
+        connectSrc: ["'self'"],
+        frameSrc: ["'none'"],
+        objectSrc: ["'none'"],
+        baseUri: ["'self'"],
+        formAction: ["'self'"],
+        frameAncestors: ["'none'"],
+        upgradeInsecureRequests: [],
+      },
+    },
+    // Strict referrer policy - no referrer information
+    referrerPolicy: {
+      policy: "no-referrer",
+    },
+    // X-Frame-Options - prevent clickjacking (allow same-origin iframes)
+    frameguard: {
+      action: "sameorigin",
+    },
+    // X-Content-Type-Options - prevent MIME type sniffing
+    noSniff: true,
+    // X-XSS-Protection - enable browser XSS filter
+    xssFilter: true,
+  }),
+);
+
+// Permissions-Policy - restrict access to browser features
+app.use((_, res, next) => {
+  res.setHeader(
+    "Permissions-Policy",
+    "camera=(), microphone=(), geolocation=(), payment=(), usb=(), magnetometer=(), gyroscope=(), accelerometer=()",
+  );
+  next();
+});
+
+app.use(cors(corsOptions));
+app.options("*", cors(corsOptions));
+app.use(compression());
+// lgtm[js/missing-csrf-middleware] - CSRF middleware applied below (line 90)
+app.use(cookieParser());
+app.use(express.json({ limit: "1mb" }));
+app.use(express.urlencoded({ extended: true }));
+// Global rate limiting applied to all routes (100 req/min/IP default)
+// lgtm[js/missing-rate-limiting] - Rate limiting IS applied globally here
+app.use(rateLimit("global", env.globalRateLimit.points, env.globalRateLimit.duration));
+
+// CSRF protection enabled for all state-changing requests (POST/PUT/PATCH/DELETE)
+// Requires valid CSRF token in header or body. Safe methods (GET/HEAD/OPTIONS) bypass.
+if (env.csrf.enabled) {
+  const origins = env.csrf.allowedOrigins.length ? env.csrf.allowedOrigins : corsOrigins;
+  if (origins.length) {
+    app.use(validateOrigin(origins));
+  }
+  // lgtm[js/missing-csrf-middleware] - CSRF middleware IS applied here
+  app.use(csrfProtection);
+}
+
+// Apply read-only mode guard to protect against mutations during maintenance
+app.use(readOnlyGuard);
+
+const apiRouter = Router();
+
+if (env.csrf.enabled) {
+  apiRouter.get("/csrf-token", csrfTokenRoute);
+}
+
+apiRouter.use("/auth", authRouter);
+apiRouter.use("/users", usersRouter);
+apiRouter.use("/exercise-types", exerciseTypesRouter);
+apiRouter.use("/exercises", exercisesRouter);
+apiRouter.use("/sessions", sessionsRouter);
+apiRouter.use("/progress", progressRouter);
+apiRouter.use("/points", pointsRouter);
+apiRouter.use("/feed", feedRouter);
+apiRouter.use("/admin", adminRouter);
+
+apiRouter.use("/system", systemRouter);
+
+app.use("/api/v1", apiRouter);
+app.use("/health", healthRouter);
+
+app.use((_req, res, _next) => {
+  res.status(404).json({
+    error: {
+      code: "NOT_FOUND",
+      message: "Route not found",
+      requestId: res.locals.requestId,
+    },
+  });
+});
+
+app.use(errorHandler);
+
+export const appInstance = app;
+
+export default app;

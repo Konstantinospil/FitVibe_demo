@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+    <style>
+      .login-fallback {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem;
+        background: #0b0c10;
+        color: #ffffff;
+        font-family: "Segoe UI", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+      }
+      .login-fallback__card {
+        max-width: 640px;
+        width: 100%;
+        border-radius: 24px;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        padding: clamp(1.5rem, 4vw, 3rem);
+        background: rgba(11, 12, 16, 0.9);
+        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.35);
+      }
+      .login-fallback__eyebrow {
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        font-size: 0.85rem;
+        color: rgba(255, 255, 255, 0.7);
+      }
+      .login-fallback__title {
+        font-size: clamp(2rem, 4vw, 2.8rem);
+        margin: 0.5rem 0;
+      }
+      .login-fallback__desc {
+        color: rgba(255, 255, 255, 0.7);
+        margin-bottom: 2rem;
+        line-height: 1.5;
+      }
+      .login-fallback__form {
+        display: grid;
+        gap: 1rem;
+      }
+      .login-fallback__field,
+      .login-fallback__button {
+        height: 48px;
+        border-radius: 12px;
+        background: rgba(255, 255, 255, 0.08);
+      }
+      .login-fallback__button {
+        height: 52px;
+        background: linear-gradient(90deg, #fb951d, #fdd835);
+      }
+    </style>
+    <title>FitVibe</title>
+  </head>
+  <body>
+    <div id="root">
+      <div class="login-fallback login-fallback--mounted" id="login-shell">
+        <article class="login-fallback__card" aria-live="polite">
+          <div class="login-fallback__eyebrow">Secure access</div>
+          <h1 class="login-fallback__title">Welcome back. Keep your streak going.</h1>
+          <p class="login-fallback__desc">
+            We rotate tokens and enforce session hygiene so your account stays secure.
+          </p>
+          <form class="login-fallback__form" id="login-form" novalidate>
+            <label class="login-fallback__label">
+              <span>Email</span>
+              <input
+                class="login-fallback__field"
+                name="email"
+                type="email"
+                autocomplete="email"
+                required
+                placeholder="you@fitvibe.app"
+              />
+            </label>
+            <label class="login-fallback__label login-fallback__label--password">
+              <span>Password</span>
+              <div class="login-fallback__password">
+                <input
+                  class="login-fallback__field"
+                  name="password"
+                  type="password"
+                  autocomplete="current-password"
+                  required
+                  placeholder="••••••••"
+                />
+                <button
+                  type="button"
+                  class="login-fallback__toggle"
+                  data-role="toggle-password"
+                  aria-label="Show password"
+                >
+                  Show
+                </button>
+              </div>
+            </label>
+            <div class="login-fallback__error" role="alert" aria-live="assertive" hidden></div>
+            <button class="login-fallback__button" type="submit">
+              <span>Sign in</span>
+            </button>
+            <div class="login-fallback__links">
+              <a href="/register">Need an account?</a>
+              <a href="/forgot-password">Forgot password?</a>
+            </div>
+          </form>
+        </article>
+      </div>
+    </div>
+    <script type="module" src="/src/bootstrap.ts"></script>
+  </body>
+</html>

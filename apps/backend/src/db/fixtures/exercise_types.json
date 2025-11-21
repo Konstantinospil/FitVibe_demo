@@ -1,0 +1,10 @@
+[
+  { "code": "strength", "description": "Strength & resistance training" },
+  { "code": "cardio", "description": "Cardiovascular and endurance work" },
+  { "code": "flexibility", "description": "Mobility and flexibility drills" },
+  {
+    "code": "balance",
+    "description": "Balance, coordination, and stability work"
+  },
+  { "code": "sport", "description": "Sport-specific or skill sessions" }
+]

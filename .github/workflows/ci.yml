@@ -48,9 +48,11 @@ jobs:
           --health-timeout 5s
           --health-retries 5
     env:
+      DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/fitvibe_test
       CLAMAV_ENABLED: "true"
       CLAMAV_HOST: "127.0.0.1"
       CLAMAV_PORT: "3310"
+      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
       REAL_CLAMD: "1"
     steps:
       - name: Checkout
@@ -112,7 +114,7 @@ jobs:
         run: pnpm test -- --coverage --runInBand
 
       - name: Enforce coverage gate
-        run: pnpm test:coverage:gate ./coverage/coverage-summary.json
+        run: pnpm test:coverage:gate
 
       - name: Validate QA baseline snapshot
         run: node tests/qa/assert-baseline.js
@@ -130,8 +132,19 @@ jobs:
           path: coverage
           if-no-files-found: ignore
 
-      - name: Upload coverage to Codecov
+      - name: Aggregate coverage files
         if: success()
+        run: |
+          # Create root coverage directory and aggregate lcov files
+          mkdir -p coverage
+          find apps packages -name "lcov.info" -exec cat {} \; > coverage/lcov.info || true
+          # If no lcov files found, create empty file to prevent Codecov error
+          if [ ! -s coverage/lcov.info ]; then
+            echo "No coverage files found" > coverage/lcov.info
+          fi
+
+      - name: Upload coverage to Codecov
+        if: success() && env.CODECOV_TOKEN != ''
         uses: codecov/codecov-action@v4
         with:
           files: ./coverage/lcov.info
@@ -185,6 +198,7 @@ jobs:
         run: pnpm -w openapi:build
 
       - name: Upload OpenAPI artifact
+        if: success()
         uses: actions/upload-artifact@v4
         with:
           name: openapi
@@ -197,7 +211,7 @@ jobs:
     needs: quality
     services:
       postgres:
-        image: postgres:15
+        image: postgres:16
         env:
           POSTGRES_DB: fitvibe
           POSTGRES_USER: fitvibe
@@ -289,6 +303,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
       - name: Validate metrics exposure
         run: node tests/metrics/assert-prom.cjs
 
@@ -338,13 +357,13 @@ jobs:
             --format=json
 
       - name: Snyk scan
-        if: ${{ env.SNYK_TOKEN != '' }}
+        if: env.SNYK_TOKEN != ''
         uses: snyk/actions/node@master
         with:
           command: test
           args: --all-projects
         env:
-          SNYK_TOKEN: ${{ env.SNYK_TOKEN }}
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
 
       - name: TruffleHog OSS scan
         uses: trufflesecurity/trufflehog@v3.90.13
@@ -378,7 +397,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Run ZAP baseline scan
-        if: ${{ env.ZAP_TARGET_URL != '' }}
+        if: env.ZAP_TARGET_URL != ''
         uses: zaproxy/action-baseline@v0.12.0
         with:
           target: ${{ env.ZAP_TARGET_URL }}
@@ -448,17 +467,21 @@ jobs:
         run: pnpm exec lhci autorun --config=tests/perf/lighthouserc.json --exit-on-error
 
       - name: Upload performance artifacts
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: perf-metrics
           path: |
             tests/perf/k6-summary.json
             tests/perf/lhci-output
-          if-no-files-found: error
+          if-no-files-found: ignore
 
       - name: Stop mock services
         if: always()
         run: |
+          # Kill by process name first (more reliable)
+          pkill -f "mock-server.mjs" || true
+          # Also try to kill by PID if file exists
           if [ -f mock-server.pid ]; then
             kill "$(cat mock-server.pid)" 2>/dev/null || true
             rm -f mock-server.pid
@@ -474,10 +497,19 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.14.4
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
 
       - name: Download coverage artifact
         uses: actions/download-artifact@v4
@@ -589,20 +621,14 @@ jobs:
       - name: Install project dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Install Playwright test runner
-        run: npm install -g @playwright/test@1.48.2
-
-      - name: Expose global node modules
-        run: echo "NODE_PATH=$(npm root -g)" >> "$GITHUB_ENV"
-
       - name: Install Playwright browsers
-        run: npx playwright install --with-deps
+        run: pnpm exec playwright install --with-deps
 
       - name: Build frontend
         run: pnpm --filter @fitvibe/frontend exec pnpm run build
 
       - name: Run Playwright smoke tests
-        run: npx playwright test --config tests/frontend/e2e/playwright.config.cjs --reporter=line
+        run: pnpm exec playwright test --config tests/frontend/e2e/playwright.config.cjs --reporter=line
 
       - name: Upload Playwright artifacts
         if: always()
@@ -634,6 +660,10 @@ jobs:
       - name: Determine package versions
         id: versions
         run: |
+          if [ ! -f apps/backend/package.json ] || [ ! -f apps/frontend/package.json ]; then
+            echo "Error: package.json files not found"
+            exit 1
+          fi
           echo "backend=$(node -p \"require('./apps/backend/package.json').version\")" >> "$GITHUB_OUTPUT"
           echo "frontend=$(node -p \"require('./apps/frontend/package.json').version\")" >> "$GITHUB_OUTPUT"
 
