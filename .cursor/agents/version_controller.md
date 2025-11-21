@@ -68,6 +68,7 @@ The Version Controller integrates with Cursor slash commands:
   - Pushes to remote with validation
 
 **Usage**: When users request commits, use the `/commit` slash command which follows the workflow defined in `.cursor/commands/commit.md`. The command ensures:
+
 - Changes are reviewed before committing
 - Conventional commit format is used
 - Security checks pass (via pre-commit hooks)
@@ -78,10 +79,12 @@ The Version Controller integrates with Cursor slash commands:
 - `git status` - Check repository state
 - `git diff` - Review changes before committing
 - `git add` - Stage files for commit
-- `git commit` - Create conventional commits
+- `git commit` - Create conventional commits with branch directives
 - `git push` - Push to remote (with pre-push validation)
 - `git branch` - Manage branches
 - `git log` - Review commit history
+- `./scripts/git-push-branch.sh` - Push to branch based on commit message directive
+- `./scripts/git-commit-and-push.sh` - Commit and push in one command
 
 ### Security Scanning
 
@@ -146,19 +149,28 @@ git diff
 
 ---
 
-## Workflow: Creating Pull Requests
+## Workflow: Branch-Based Development and Deployment
+
+### Development Flow
+
+1. **Local Development** → Work on feature branches locally
+2. **Dev Branch** → Push frequently for CI feedback `[push:dev]`
+3. **Stage Branch** → Push when feature complete `[push:stage]`
+4. **Main Branch** → Push after staging validation `[push:main]`
 
 ### Step 1: Branch Management
 
 ```bash
-# Create feature branch from develop
-git checkout develop
-git pull origin develop
+# Create feature branch from dev (or current branch)
+git checkout dev
+git pull origin dev
 git checkout -b feat/feature-name
 
 # Or for bug fixes
 git checkout -b fix/bug-description
 ```
+
+**Note**: Feature branches can be created from `dev`, `stage`, or `main` depending on the context.
 
 ### Step 2: Make Changes
 
@@ -167,29 +179,45 @@ git checkout -b fix/bug-description
 - Update documentation
 - Run quality checks
 
-### Step 3: Commit Changes
+### Step 3: Commit Changes with Branch Directive
 
-**Recommended**: Use the `/commit` slash command for automated conventional commit creation.
+**Recommended**: Use the `/commit` slash command for automated conventional commit creation, then use `./scripts/git-push-branch.sh` to push to the appropriate branch.
 
 **Manual Alternative**:
+
 ```bash
 # Stage changes
 git add .
 
-# Create conventional commit
-git commit -m "feat: add new feature"
+# Create conventional commit with branch directive
+git commit -m "feat: add new feature [push:dev]"
 # or
-git commit -m "fix: resolve bug in authentication"
+git commit -m "fix: resolve bug in authentication [push:stage]"
+# or for production
+git commit -m "chore: release v1.0.0 [push:main]"
+```
+
+**Using Push Script**:
+
+```bash
+# After committing with directive
+git commit -m "feat: add new feature [push:dev]"
+./scripts/git-push-branch.sh
+
+# Or use combined script
+./scripts/git-commit-and-push.sh "feat: add new feature" dev
 ```
 
 **Note**: The `/commit` command (see `.cursor/commands/commit.md`) automatically:
+
 - Reviews changes with `git status` and `git diff`
 - Determines appropriate commit type
 - Creates conventional commit message
 - Stages and commits changes
-- Pushes to remote (with pre-push validation)
+- You can then use `./scripts/git-push-branch.sh` to push to the branch specified in the commit message
 
 **Conventional Commit Types:**
+
 - `feat:` - New features
 - `fix:` - Bug fixes
 - `docs:` - Documentation changes
@@ -201,19 +229,64 @@ git commit -m "fix: resolve bug in authentication"
 - `ci:` - CI/CD changes
 - `security:` - Security fixes
 
-### Step 4: Push and Create PR
+### Step 4: Push to Target Branch
+
+**Option A: Using Branch Push Script (Recommended)**
 
 ```bash
-# Push branch
+# Commit with directive
+git commit -m "feat: add new feature [push:dev]"
+
+# Push to specified branch (automatically switches and pushes)
+./scripts/git-push-branch.sh
+```
+
+**Option B: Using Combined Script**
+
+```bash
+# Commit and push in one command
+./scripts/git-commit-and-push.sh "feat: add new feature" dev
+```
+
+**Option C: Manual Push**
+
+```bash
+# Manually push to target branch
+git push origin dev
+# or
+git push origin stage
+# or
+git push origin main
+```
+
+**Branch Selection Guidelines:**
+
+- **`dev`**: For development work, frequent commits, rapid iteration
+- **`stage`**: For feature-complete code ready for integration testing
+- **`main`**: For production releases after staging validation
+
+### Step 5: Create Pull Request (Optional)
+
+For feature branches, you may still create PRs for code review:
+
+```bash
+# Push feature branch
 git push origin feat/feature-name
 
 # Create PR using GitHub CLI (if available)
 gh pr create --title "feat: add new feature" --body-file .github/pull_request_template.md
 ```
 
-### Step 5: PR Template Completion
+**Note**: PRs are optional for direct pushes to `dev`, `stage`, or `main` branches. Consider using PRs for:
+
+- Code review before merging to `stage` or `main`
+- Collaborative feature development
+- Documentation and discussion
+
+### Step 6: PR Template Completion (If Creating PR)
 
 Ensure PR includes:
+
 - Clear description
 - Type of change marked
 - Related issues linked
@@ -222,6 +295,7 @@ Ensure PR includes:
 - Security checklist completed
 - Documentation updated
 - Screenshots if applicable
+- Target branch specified (`dev`, `stage`, or `main`)
 
 ---
 
@@ -230,6 +304,7 @@ Ensure PR includes:
 ### What Gets Scanned
 
 The secret scanner detects:
+
 - AWS Access Keys (`AKIA...`, `A3T...`)
 - AWS Secret Keys
 - GitHub Tokens (`ghp_...`, `gho_...`, etc.)
@@ -242,6 +317,7 @@ The secret scanner detects:
 ### .gitignore Protection
 
 The repository's `.gitignore` excludes:
+
 - `.env` files and environment variables
 - Private keys (`.pem`, `.key`, `.p12`, `.pfx`)
 - Certificates (`.crt`)
@@ -266,11 +342,12 @@ The repository's `.gitignore` excludes:
 
 ## Common Tasks
 
-### Task 1: Safe Commit and Push
+### Task 1: Safe Commit and Push with Branch Directive
 
-**Recommended**: Use the `/commit` slash command which automates this workflow.
+**Recommended**: Use the `/commit` slash command, then `./scripts/git-push-branch.sh` to push to the appropriate branch.
 
 **Manual Alternative**:
+
 ```bash
 # 1. Review changes
 git status
@@ -279,24 +356,37 @@ git diff
 # 2. Stage files
 git add .
 
-# 3. Commit (pre-commit hook runs automatically)
-git commit -m "feat: add feature"
+# 3. Commit with branch directive (pre-commit hook runs automatically)
+git commit -m "feat: add feature [push:dev]"
+# or
+git commit -m "feat: add feature [push:stage]"
+# or
+git commit -m "chore: release v1.0.0 [push:main]"
 
-# 4. Push (pre-push hook runs automatically)
-git push origin branch-name
+# 4. Push using branch push script (pre-push hook runs automatically)
+./scripts/git-push-branch.sh
 ```
 
-**Note**: The `/commit` slash command (`.cursor/commands/commit.md`) handles steps 1-5 automatically, including change review, commit type determination, and conventional commit message creation.
+**Using Combined Script**:
+
+```bash
+# Commit and push in one command
+./scripts/git-commit-and-push.sh "feat: add feature" dev
+```
+
+**Note**: The `/commit` slash command (`.cursor/commands/commit.md`) handles steps 1-3 automatically. Then use `./scripts/git-push-branch.sh` to push to the branch specified in your commit message.
 
 ### Task 2: Create Feature Branch
 
 ```bash
-# From develop
-git checkout develop
-git pull origin develop
+# From dev (or stage/main depending on context)
+git checkout dev
+git pull origin dev
 git checkout -b feat/feature-name
 
-# Make changes, then commit and push
+# Make changes, then commit with branch directive and push
+git commit -m "feat: add feature [push:dev]"
+./scripts/git-push-branch.sh
 ```
 
 ### Task 3: Security Scan Before Push
@@ -342,6 +432,7 @@ git commit -m "fix: remove accidentally committed secret"
 Before committing/pushing, verify:
 
 ### Security
+
 - [ ] No `.env` files in staged changes
 - [ ] No private keys (`.pem`, `.key`) in staged changes
 - [ ] No hardcoded passwords, API keys, or tokens
@@ -350,6 +441,7 @@ Before committing/pushing, verify:
 - [ ] `pnpm security:scan` passes
 
 ### Code Quality
+
 - [ ] Code follows project style guidelines
 - [ ] ESLint passes (`pnpm lint`)
 - [ ] TypeScript compilation passes (`pnpm typecheck`)
@@ -357,6 +449,7 @@ Before committing/pushing, verify:
 - [ ] Prettier formatting applied
 
 ### Git Hygiene
+
 - [ ] Conventional commit format used
 - [ ] Descriptive commit message
 - [ ] Branch name follows convention (`feat/`, `fix/`, `docs/`, etc.)
@@ -364,6 +457,7 @@ Before committing/pushing, verify:
 - [ ] No merge conflicts
 
 ### Documentation
+
 - [ ] PR description is clear and complete
 - [ ] PR template checklist completed
 - [ ] Related issues linked
@@ -377,12 +471,14 @@ Before committing/pushing, verify:
 ### Pre-commit Hook (`.husky/pre-commit`)
 
 Automatically runs:
+
 1. `pnpm lint-staged` - Formats and lints staged files
 2. `node tests/security/secret-scan.cjs` - Scans for secrets
 
 ### Pre-push Hook (`.husky/pre-push`)
 
 Automatically runs:
+
 1. `pnpm security:scan` - Comprehensive security checks
 2. `pnpm audit --audit-level=high` - Dependency vulnerability check
 
@@ -402,10 +498,51 @@ git push --no-verify
 
 ## Branching Strategy
 
-### Branch Types
+### Primary Branches (CI/CD Integration)
 
-- `main` - Production-ready code
-- `develop` - Integration branch for features
+The project uses a branch-based CI/CD strategy where different branches trigger different workflows:
+
+- **`dev`** - Development branch
+  - **Triggers**: CI workflow only (tests, linting, quality checks)
+  - **Does NOT**: Build images or deploy
+  - **Use case**: Daily development work, rapid iteration, feature development
+  - **Workflow**: Fast feedback loop for code quality validation
+  - **When to use**:
+    - Frequent commits during development
+    - Testing if code compiles and tests pass
+    - Validating linting/type errors
+    - Quick iterations before staging
+    - Experimental features
+  - **Best practice**: Push frequently for rapid CI feedback
+
+- **`stage`** - Staging branch
+  - **Triggers**: CI workflow, then CD Staging workflow
+  - **Runs**: Full CI pipeline + image building + deployment to staging
+  - **Use case**: Pre-production testing, integration validation, UAT
+  - **Workflow**: Complete testing in production-like environment
+  - **When to use**:
+    - Feature is complete and tested locally
+    - Ready for integration testing
+    - Need to test in production-like environment
+    - Performance testing
+    - Security validation
+    - Stakeholder demos
+  - **Best practice**: Only push when feature-complete, validate thoroughly before main
+
+- **`main`** - Production branch
+  - **Triggers**: CD workflow only (deployment to production)
+  - **Runs**: Deployment using images from CI (assumes CI already passed)
+  - **Use case**: Production releases, stable code
+  - **Workflow**: Production deployment after staging validation
+  - **When to use**:
+    - After successful staging validation
+    - Production-ready code only
+    - Release candidates
+    - Critical hotfixes (with extra caution)
+  - **Best practice**: Always validate in staging first, monitor deployment closely
+
+### Feature Branches
+
 - `feat/feature-name` - New features
 - `fix/bug-description` - Bug fixes
 - `docs/documentation-update` - Documentation changes
@@ -417,6 +554,33 @@ git push --no-verify
 - Use kebab-case
 - Prefix with type: `feat/`, `fix/`, `docs/`, `chore/`, `hotfix/`
 - Be descriptive: `feat/user-authentication` not `feat/auth`
+
+### Commit Message Directives for Branch Push
+
+You can specify which branch to push to using commit message directives:
+
+**Format 1: Directive Tag**
+
+```
+fix: update tests [push:dev]
+feat: add new feature [push:stage]
+chore: release v1.0.0 [push:main]
+```
+
+**Format 2: Natural Language**
+
+```
+fix: update tests - push to dev
+feat: add new feature - deploy to stage
+chore: release v1.0.0 - push to main
+```
+
+**Supported Scripts:**
+
+- `./scripts/git-push-branch.sh` - Parses commit message and pushes to specified branch
+- `./scripts/git-commit-and-push.sh "message" [branch]` - Commit and push in one command
+
+See `docs/DEVELOPMENT.md` for detailed workflow documentation.
 
 ---
 
@@ -436,6 +600,7 @@ git push --no-verify
 ### PR Review Checklist
 
 Before requesting review:
+
 - [ ] All CI checks pass
 - [ ] Self-review completed
 - [ ] Tests added/updated
@@ -453,6 +618,7 @@ Before requesting review:
 **Problem**: Secret scanner detects false positives in documentation.
 
 **Solution**: The scanner is configured to ignore documentation files. If you see false positives:
+
 1. Verify the file is in `docs/` directory
 2. Check if it's a markdown file (`.md`)
 3. Ensure the pattern is in a comment or documentation context
@@ -462,6 +628,7 @@ Before requesting review:
 **Problem**: Dependency audit finds vulnerabilities.
 
 **Solution**:
+
 1. Review the vulnerabilities: `pnpm audit`
 2. Update dependencies: `pnpm update <package>`
 3. If vulnerabilities can't be fixed, document why in PR
@@ -472,6 +639,7 @@ Before requesting review:
 **Problem**: Accidentally committed secrets.
 
 **Solution**:
+
 1. **If not pushed**: Use `git reset HEAD~1` and recommit
 2. **If pushed**: Rotate the secret immediately and contact maintainers
 3. Consider using `git filter-branch` or BFG Repo-Cleaner (advanced)
@@ -481,19 +649,44 @@ Before requesting review:
 **Problem**: Branch has conflicts with base branch.
 
 **Solution**:
+
 ```bash
-# Update local branch
-git checkout develop
-git pull origin develop
+# Update local branch (dev, stage, or main depending on context)
+git checkout dev
+git pull origin dev
 
 # Rebase feature branch
 git checkout feat/feature-name
-git rebase develop
+git rebase dev
 
 # Resolve conflicts, then continue
 git add .
 git rebase --continue
 ```
+
+### Issue: Branch Push Script Not Working
+
+**Problem**: `./scripts/git-push-branch.sh` doesn't find branch directive.
+
+**Solution**:
+
+1. Verify commit message includes directive: `[push:dev]`, `[push:stage]`, or `[push:main]`
+2. Check script is executable: `chmod +x scripts/git-push-branch.sh`
+3. Ensure you're in repository root
+4. Verify branch exists or script will create it
+5. Check git remote is configured: `git remote -v`
+
+### Issue: CI/CD Not Triggering
+
+**Problem**: Workflows not running after push.
+
+**Solution**:
+
+1. Verify branch name matches exactly: `dev`, `stage`, or `main`
+2. Check commit message includes valid directive
+3. Verify GitHub Actions workflows are enabled
+4. Check workflow files in `.github/workflows/` for correct branch triggers
+5. Ensure you have push permissions to the branch
 
 ---
 
@@ -505,15 +698,22 @@ git rebase --continue
 4. **Review diffs before committing** - `git diff` shows what you're committing
 5. **Use secrets manager in production** - Vault or AWS Secrets Manager
 6. **Keep dependencies updated** - Run `pnpm audit` regularly
-7. **Write descriptive commits** - Clear, conventional commit messages
+7. **Write descriptive commits** - Clear, conventional commit messages with branch directives
 8. **Keep branches focused** - One feature per branch
-9. **Update PRs promptly** - Address review feedback quickly
+9. **Use appropriate branch for context**:
+   - `dev` for rapid iteration and development
+   - `stage` for integration testing and validation
+   - `main` for production releases only
 10. **Test before pushing** - Run tests locally before pushing
+11. **Validate in staging before production** - Always test in `stage` before pushing to `main`
+12. **Use branch push scripts** - Leverage `./scripts/git-push-branch.sh` for consistent workflow
 
 ---
 
 ## Related Documentation
 
+- [Development Workflow](../../docs/DEVELOPMENT.md) - Branch-based CI/CD workflow guide
+- [Scripts README](../../scripts/README.md) - Git push branch scripts documentation
 - [Safe Git Push Guide](../../docs/5.Policies/5.b.Security/SAFE_GIT_PUSH_GUIDE.md)
 - [Key Management Policy](../../docs/5.Policies/5.a.Ops/KEY_MANAGEMENT_POLICY.md)
 - [Security Policy](../../docs/5.Policies/5.b.Security/SECURITY.md)
@@ -523,6 +723,13 @@ git rebase --continue
 ---
 
 ## Version History
+
+- **v1.1** (2025-01-XX): Branch-based CI/CD workflow integration
+  - Added dev/stage/main branch strategy
+  - Integrated commit message directives (`[push:dev]`, `[push:stage]`, `[push:main]`)
+  - Added git-push-branch.sh and git-commit-and-push.sh script support
+  - Updated workflows for branch-based deployment
+  - Enhanced documentation for branch selection guidelines
 
 - **v1.0** (2025-01-21): Initial Version Controller agent
   - Git workflow management
@@ -535,18 +742,21 @@ git rebase --continue
 ## Notes for Agent Lifecycle Manager
 
 **Optimization Opportunities**:
+
 - Monitor security scan false positive rates
 - Track commit message quality
 - Analyze PR review turnaround times
 - Review bypass hook usage patterns
 
 **Replacement Triggers**:
+
 - Security incidents due to missed secrets
 - High false positive rates in scans
 - Poor commit message quality
 - Frequent hook bypasses
 
 **Success Metrics**:
+
 - Zero secrets committed
 - Zero high/critical vulnerabilities pushed
 - 100% conventional commit compliance
@@ -555,4 +765,3 @@ git rebase --continue
 ---
 
 **END OF AGENT CONFIGURATION**
-
