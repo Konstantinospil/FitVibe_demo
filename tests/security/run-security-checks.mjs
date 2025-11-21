@@ -5,6 +5,12 @@ import process from "node:process";
 
 const pnpmCmd = process.platform === "win32" ? "corepack pnpm" : "pnpm";
 
+// Quote node path for Windows (handles spaces in path like "C:\Program Files\...")
+const nodePath =
+  process.platform === "win32" && process.execPath.includes(" ")
+    ? `"${process.execPath}"`
+    : process.execPath;
+
 const commands = [
   {
     title: "Dependency audit (pnpm)",
@@ -12,7 +18,7 @@ const commands = [
   },
   {
     title: "Static secret scan",
-    command: `${process.execPath} tests/security/secret-scan.cjs`,
+    command: `${nodePath} tests/security/secret-scan.cjs`,
   },
 ];
 
