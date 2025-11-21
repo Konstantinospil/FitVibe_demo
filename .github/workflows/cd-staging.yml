@@ -5,6 +5,8 @@ on:
     workflows: ["CI"]
     types:
       - completed
+  push:
+    branches: ["stage"]
 
 permissions:
   contents: read
@@ -13,9 +15,11 @@ permissions:
 jobs:
   deploy:
     if: >
-      github.event.workflow_run.conclusion == 'success' &&
-      github.event.workflow_run.event == 'push' &&
-      github.event.workflow_run.head_branch == 'main'
+      (github.event_name == 'push' && github.ref == 'refs/heads/stage') ||
+      (github.event_name == 'workflow_run' &&
+       github.event.workflow_run.conclusion == 'success' &&
+       github.event.workflow_run.event == 'push' &&
+       github.event.workflow_run.head_branch == 'stage')
     name: Deploy to Staging
     runs-on: ubuntu-latest
     environment:

@@ -1,6 +1,12 @@
 name: CD
 
 on:
+  push:
+    branches: ["main"]
+  workflow_run:
+    workflows: ["CI"]
+    types:
+      - completed
   workflow_dispatch:
     inputs:
       backend_digest:
@@ -24,19 +30,107 @@ env:
   IMAGE_PREFIX: ghcr.io/${{ github.repository_owner }}
 
 jobs:
+  get-artifacts:
+    name: Get CI Artifacts
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    outputs:
+      workflow_run_id: ${{ steps.find.outputs.run_id }}
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - name: Find latest successful CI run
+        id: find
+        uses: actions/github-script@v7
+        with:
+          script: |
+            // Try to find CI run on main first
+            const { data: mainRuns } = await github.rest.actions.listWorkflowRuns({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: 'ci.yml',
+              branch: 'main',
+              status: 'success',
+              per_page: 1
+            });
+
+            if (mainRuns.workflow_runs.length > 0) {
+              core.setOutput('run_id', mainRuns.workflow_runs[0].id);
+              return;
+            }
+
+            // Fallback: try to find from stage branch
+            const { data: stageRuns } = await github.rest.actions.listWorkflowRuns({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: 'ci.yml',
+              branch: 'stage',
+              status: 'success',
+              per_page: 1
+            });
+
+            if (stageRuns.workflow_runs.length > 0) {
+              core.setOutput('run_id', stageRuns.workflow_runs[0].id);
+              return;
+            }
+
+            core.setFailed('No successful CI run found on main or stage branches. Please ensure CI has run successfully before deploying to production.');
+
   deploy:
     name: Deploy to Production
     runs-on: ubuntu-latest
+    needs: [get-artifacts]
+    if: >
+      always() &&
+      (needs.get-artifacts.result == 'success' || needs.get-artifacts.result == 'skipped' || github.event_name == 'workflow_dispatch' || github.event_name == 'workflow_run') &&
+      (
+        (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
+        (github.event_name == 'workflow_run' &&
+         github.event.workflow_run.conclusion == 'success' &&
+         github.event.workflow_run.event == 'push' &&
+         github.event.workflow_run.head_branch == 'main') ||
+        github.event_name == 'workflow_dispatch'
+      )
     environment:
       name: production
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.ref }}
+
+      - name: Download container artifacts from CI
+        if: github.event_name != 'workflow_dispatch'
+        uses: actions/download-artifact@v4
+        with:
+          name: container-artifacts
+          path: artifacts
+          run-id: ${{ needs.get-artifacts.outputs.workflow_run_id || github.event.workflow_run.id }}
 
       - name: Prepare deployment values
         id: vars
         shell: bash
         run: |
+          # If triggered by push to main or workflow_run, get digests from artifacts
+          if [ "${{ github.event_name }}" == "push" ] || [ "${{ github.event_name }}" == "workflow_run" ]; then
+            if [ -f artifacts/image-digests.txt ]; then
+              backend=$(grep '^backend=' artifacts/image-digests.txt | cut -d= -f2)
+              frontend=$(grep '^frontend=' artifacts/image-digests.txt | cut -d= -f2)
+              if [[ -n "$backend" && -n "$frontend" ]]; then
+                echo "backend_image=$backend" >> "$GITHUB_OUTPUT"
+                echo "frontend_image=$frontend" >> "$GITHUB_OUTPUT"
+                echo "rollback_image=" >> "$GITHUB_OUTPUT"
+                # Get version from package.json
+                version=$(node -p "require('./apps/backend/package.json').version")
+                echo "release_tag=v$version" >> "$GITHUB_OUTPUT"
+                exit 0
+              fi
+            fi
+            echo "⚠️ Could not find image digests from CI artifacts." >&2
+            exit 1
+          fi
+          # Manual workflow_dispatch path
           echo "backend_image=${{ env.IMAGE_PREFIX }}/fitvibe-backend@${{ inputs.backend_digest }}" >> "$GITHUB_OUTPUT"
           echo "frontend_image=${{ env.IMAGE_PREFIX }}/fitvibe-frontend@${{ inputs.frontend_digest }}" >> "$GITHUB_OUTPUT"
           if [ -n "${{ inputs.previous_backend_digest }}" ]; then
@@ -44,6 +138,7 @@ jobs:
           else
             echo "rollback_image=" >> "$GITHUB_OUTPUT"
           fi
+          echo "release_tag=${{ inputs.release_tag }}" >> "$GITHUB_OUTPUT"
 
       - name: Install cosign
         uses: sigstore/cosign-installer@v3
@@ -99,4 +194,4 @@ jobs:
           BACKEND_IMAGE: ${{ steps.vars.outputs.backend_image }}
           FRONTEND_IMAGE: ${{ steps.vars.outputs.frontend_image }}
           ROLLBACK_IMAGE: ${{ steps.vars.outputs.rollback_image }}
-          STACK_VERSION: ${{ inputs.release_tag }}
+          STACK_VERSION: ${{ steps.vars.outputs.release_tag || inputs.release_tag }}

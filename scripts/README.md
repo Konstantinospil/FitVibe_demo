@@ -4,14 +4,16 @@ This directory contains utility scripts used for development, maintenance, and q
 
 ## Scripts Overview
 
-| Script                     | Purpose                                                  | Usage                                     |
-| -------------------------- | -------------------------------------------------------- | ----------------------------------------- |
-| `dependency-audit.sh`      | Audits dependencies for known vulnerabilities            | `./scripts/dependency-audit.sh`           |
-| `gdpr-compliance-check.sh` | Validates GDPR compliance requirements                   | `./scripts/gdpr-compliance-check.sh`      |
-| `generate_requirements.py` | Generates requirement documents from structured data     | `python scripts/generate_requirements.py` |
-| `organize_requirements.py` | Organizes requirement documents by implementation status | `python scripts/organize_requirements.py` |
-| `secrets-scan.sh`          | Scans the codebase for potential secrets and credentials | `./scripts/secrets-scan.sh`               |
-| `security-scan.sh`         | Runs comprehensive security scans                        | `./scripts/security-scan.sh`              |
+| Script                     | Purpose                                                    | Usage                                        |
+| -------------------------- | ---------------------------------------------------------- | -------------------------------------------- |
+| `git-push-branch.sh`       | Pushes commits to specified branch based on commit message | `./scripts/git-push-branch.sh`               |
+| `git-commit-and-push.sh`   | Commits and pushes to specified branch in one command      | `./scripts/git-commit-and-push.sh "msg" dev` |
+| `dependency-audit.sh`      | Audits dependencies for known vulnerabilities              | `./scripts/dependency-audit.sh`              |
+| `gdpr-compliance-check.sh` | Validates GDPR compliance requirements                     | `./scripts/gdpr-compliance-check.sh`         |
+| `generate_requirements.py` | Generates requirement documents from structured data       | `python scripts/generate_requirements.py`    |
+| `organize_requirements.py` | Organizes requirement documents by implementation status   | `python scripts/organize_requirements.py`    |
+| `secrets-scan.sh`          | Scans the codebase for potential secrets and credentials   | `./scripts/secrets-scan.sh`                  |
+| `security-scan.sh`         | Runs comprehensive security scans                          | `./scripts/security-scan.sh`                 |
 
 ## Prerequisites
 
@@ -19,6 +21,36 @@ This directory contains utility scripts used for development, maintenance, and q
 - **Python scripts**: Python 3.8+ with required dependencies
 
 ## Usage
+
+### Git Branch Management
+
+#### Push to Branch Based on Commit Message
+
+```bash
+# Commit with directive
+git commit -m "fix: update tests [push:dev]"
+./scripts/git-push-branch.sh
+```
+
+**Commit Message Formats:**
+
+- `[push:dev]` - Push to dev branch (triggers CI only)
+- `[push:stage]` - Push to stage branch (triggers CI + CD)
+- `[push:main]` - Push to main branch (triggers CD only)
+
+Alternative formats: `push to dev`, `deploy to stage`, `push to main`, etc.
+
+#### Commit and Push in One Command
+
+```bash
+# Specify branch as argument
+./scripts/git-commit-and-push.sh "fix: update tests" dev
+
+# Or include directive in message
+./scripts/git-commit-and-push.sh "fix: update tests [push:stage]"
+```
+
+See [`docs/DEVELOPMENT.md`](../docs/DEVELOPMENT.md) for detailed workflow documentation.
 
 ### Dependency Auditing
 
