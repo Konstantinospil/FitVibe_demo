@@ -33,7 +33,11 @@ jobs:
   get-artifacts:
     name: Get CI Artifacts
     runs-on: ubuntu-latest
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: >
+      (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
+      (github.event_name == 'workflow_run' &&
+       github.event.workflow_run.head_branch == 'main' &&
+       github.event.workflow_run.event == 'push')
     outputs:
       workflow_run_id: ${{ steps.find.outputs.run_id }}
     permissions:
@@ -45,6 +49,15 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
+            // Determine which branch we're looking for
+            const targetBranch = '${{ github.event.workflow_run.head_branch || github.ref_name }}';
+
+            // Only look for CI runs on main or stage, never dev
+            if (targetBranch === 'dev') {
+              core.setFailed('CD workflow should not run for dev branch. Only CI should run for dev.');
+              return;
+            }
+
             // Try to find CI run on main first
             const { data: mainRuns } = await github.rest.actions.listWorkflowRuns({
               owner: context.repo.owner,
@@ -55,27 +68,30 @@ jobs:
               per_page: 1
             });
 
-            if (mainRuns.workflow_runs.length > 0) {
+            if (mainRuns.workflow_runs.length > 0 && targetBranch === 'main') {
               core.setOutput('run_id', mainRuns.workflow_runs[0].id);
               return;
             }
 
-            // Fallback: try to find from stage branch
-            const { data: stageRuns } = await github.rest.actions.listWorkflowRuns({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              workflow_id: 'ci.yml',
-              branch: 'stage',
-              status: 'success',
-              per_page: 1
-            });
+            // Only fallback to stage if we're actually deploying from main (production deploy)
+            // For staging, we should only use stage branch runs
+            if (targetBranch === 'main') {
+              const { data: stageRuns } = await github.rest.actions.listWorkflowRuns({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                workflow_id: 'ci.yml',
+                branch: 'stage',
+                status: 'success',
+                per_page: 1
+              });
 
-            if (stageRuns.workflow_runs.length > 0) {
-              core.setOutput('run_id', stageRuns.workflow_runs[0].id);
-              return;
+              if (stageRuns.workflow_runs.length > 0) {
+                core.setOutput('run_id', stageRuns.workflow_runs[0].id);
+                return;
+              }
             }
 
-            core.setFailed('No successful CI run found on main or stage branches. Please ensure CI has run successfully before deploying to production.');
+            core.setFailed(`No successful CI run found on ${targetBranch} branch. Please ensure CI has run successfully before deploying.`);
 
   deploy:
     name: Deploy to Production
@@ -89,6 +105,8 @@ jobs:
         (github.event_name == 'workflow_run' &&
          github.event.workflow_run.conclusion == 'success' &&
          github.event.workflow_run.event == 'push' &&
+         github.event.workflow_run.head_branch != 'dev' &&
+         github.event.workflow_run.head_branch != 'stage' &&
          github.event.workflow_run.head_branch == 'main') ||
         github.event_name == 'workflow_dispatch'
       )
@@ -104,9 +122,11 @@ jobs:
         if: github.event_name != 'workflow_dispatch'
         uses: actions/download-artifact@v4
         with:
-          name: container-artifacts
+          name: container-artifacts-${{ needs.get-artifacts.outputs.workflow_run_id || github.event.workflow_run.id }}
           path: artifacts
           run-id: ${{ needs.get-artifacts.outputs.workflow_run_id || github.event.workflow_run.id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          fail-on-collision: false
 
       - name: Prepare deployment values
         id: vars
