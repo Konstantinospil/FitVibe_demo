@@ -154,7 +154,7 @@ describe("BullMQQueueService", () => {
     for (const service of services) {
       try {
         await service.shutdown();
-      } catch (error) {
+      } catch {
         // Ignore shutdown errors in tests
       }
     }

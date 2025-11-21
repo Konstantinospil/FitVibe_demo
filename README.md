@@ -90,7 +90,6 @@ FitVibe V2/
    ```
 
 3. **Set up environment variables:**
-
    - Copy `.env.example` files in the root, `app/backend`, `app/frontend`, and `infra/` to `.env`
    - Adjust values as needed
 
@@ -123,14 +122,17 @@ pnpm lint --fix
 
 ## 📁 Project Structure
 
-| Directory   | Description                                           |
-| ----------- | ----------------------------------------------------- |
-| `app/backend/`  | FitVibe REST API (Express + Knex + PostgreSQL)        |
-| `app/frontend/` | React single-page application built with Vite         |
-| `docs/`     | Authoritative product, design, and governance content |
-| `infra/`    | Infrastructure configurations, Docker, Kubernetes     |
+| Directory        | Description                                           | README                                     |
+| ---------------- | ----------------------------------------------------- | ------------------------------------------ |
+| `apps/backend/`  | FitVibe REST API (Express + Knex + PostgreSQL)        | [Backend README](apps/backend/README.md)   |
+| `apps/frontend/` | React single-page application built with Vite         | [Frontend README](apps/frontend/README.md) |
+| `docs/`          | Authoritative product, design, and governance content | [Docs README](docs/README.md)              |
+| `infra/`         | Infrastructure configurations, Docker, Kubernetes     | [Infra README](infra/README.md)            |
+| `packages/`      | Shared tooling, lint rules, TypeScript config         | [Packages README](packages/README.md)      |
+| `scripts/`       | Utility scripts for development and maintenance       | [Scripts README](scripts/README.md)        |
+| `tests/`         | Test suites (E2E, integration, performance)           | [Tests README](tests/README.md)            |
 
-Refer to the individual READMEs inside each app for setup and workflow details.
+Refer to the individual READMEs inside each directory for detailed setup and workflow information.
 
 ## Documentation
 
@@ -143,7 +145,16 @@ Comprehensive documentation is available in the `docs/` directory:
 - **[Design System](docs/3.Sensory_Design_System/)** - Personas, visual design, and user flows
 - **[Policies](docs/5.Policies/)** - Security, privacy, legal, and operational policies
 
-See the [Documentation Hub README](docs/README.md) for more details.
+See the [Documentation Hub README](docs/README.md) for a complete guide to all documentation.
+
+### Infrastructure Documentation
+
+- **[Docker Configurations](infra/docker/README.md)** - Docker Compose and Dockerfile documentation
+- **[Kubernetes Configurations](infra/kubernetes/README.md)** - K8s deployment manifests and guides
+- **[Observability Stack](infra/observability/README.md)** - Prometheus, Grafana, Loki, Tempo setup
+- **[NGINX Configuration](infra/nginx/README.md)** - Reverse proxy and security headers
+- **[Security Policies](infra/security/README.md)** - Security procedures and incident management
+- **[Infrastructure Scripts](infra/scripts/README.md)** - Database and operational scripts
 
 ## 🤝 Contributing
 

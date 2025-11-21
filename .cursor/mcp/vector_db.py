@@ -30,13 +30,13 @@ def sanitize_search_results(
 ) -> List[Dict[str, Any]]:
     """
     Sanitize search results to prevent prompt injection and limit size.
-    
+
     Args:
         results: List of search result dictionaries
         source: Source identifier for logging
         max_results: Maximum number of results to return
         max_text_length: Maximum text length per result
-        
+
     Returns:
         Sanitized list of results
     """
@@ -45,7 +45,7 @@ def sanitize_search_results(
         text = result.get("text", "")
         if len(text) > max_text_length:
             text = text[:max_text_length] + "... [truncated]"
-        
+
         sanitized.append({
             "id": result.get("id", ""),
             "text": text,
