@@ -6,7 +6,7 @@ import { exerciseTypesRouter } from "./exercise-types/exerciseTypes.routes.js";
 import { exercisesRouter } from "./exercises/exercise.routes.js";
 import { sessionsRouter } from "./sessions/sessions.routes.js";
 import { plansRouter } from "./plans/plans.routes.js";
-import logsRouter from "./logs/logs.routes.js";
+import { logsRouter } from "./logs/logs.routes.js";
 import { pointsRouter } from "./points/points.routes.js";
 import { progressRouter } from "./progress/progress.routes.js";
 import { feedRouter } from "./feed/feed.routes.js";
