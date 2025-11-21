@@ -158,44 +158,101 @@ export function validateForwardedIP(req: Request, res: Response, next: NextFunct
  * Suspicious Pattern Detector
  * Detect common attack patterns in request parameters
  *
- * SECURITY FIX: ReDoS prevention - replaced patterns with .* to avoid polynomial backtracking
- * SECURITY FIX: Improved HTML/XSS detection to avoid bypasses
+ * SECURITY FIX: ReDoS prevention - Using safer string matching with length limits
+ * to avoid polynomial backtracking in regex patterns
  */
 export function detectSuspiciousPatterns(req: Request, res: Response, next: NextFunction) {
-  const suspiciousPatterns = [
-    // SQL Injection - Fixed: Removed .* to prevent ReDoS
-    /\bUNION\b[\s\S]{0,100}\bSELECT\b/i,
-    /\bINSERT\b[\s\S]{0,100}\bINTO\b/i,
-    /\bDELETE\b[\s\S]{0,100}\bFROM\b/i,
-    /\bUPDATE\b[\s\S]{0,100}\bSET\b/i,
+  // SECURITY: Limit input length to prevent ReDoS attacks
+  const MAX_CHECK_LENGTH = 10000; // 10KB max per string
 
-    // XSS - Fixed: More specific patterns, limited length to prevent ReDoS
-    /<script[\s\S]{0,500}>/i,
-    /<\/script>/i,
-    /javascript:/i,
-    /on\w+\s*=/i, // Event handlers
-    /<iframe[\s\S]{0,500}>/i,
-    /onerror\s*=/i,
-    /onload\s*=/i,
+  // Helper to safely check for patterns using string methods instead of regex
+  const containsPattern = (text: string, patterns: string[]): boolean => {
+    const upperText = text.toUpperCase();
+    for (const pattern of patterns) {
+      if (upperText.includes(pattern)) {
+        return true;
+      }
+    }
+    return false;
+  };
 
-    // Path Traversal
-    /\.\.[/\\]/,
-    /\.\.[\\]/,
+  // SQL Injection - Use simple string matching instead of regex
+  const sqlPatterns = ["UNION SELECT", "INSERT INTO", "DELETE FROM", "UPDATE SET"];
 
-    // Command Injection
-    /[;&|`$()]/,
-  ];
+  // XSS patterns - Check for specific strings
+  const xssPatterns = ["<SCRIPT", "</SCRIPT>", "JAVASCRIPT:", "<IFRAME"];
 
   const checkString = (value: any): boolean => {
     if (typeof value !== "string") {
       return false;
     }
 
-    for (const pattern of suspiciousPatterns) {
-      if (pattern.test(value)) {
-        return true;
+    // Limit length to prevent ReDoS
+    const trimmed = value.length > MAX_CHECK_LENGTH ? value.substring(0, MAX_CHECK_LENGTH) : value;
+
+    // Check for SQL injection patterns
+    if (containsPattern(trimmed, sqlPatterns)) {
+      return true;
+    }
+
+    // Check for XSS patterns
+    if (containsPattern(trimmed, xssPatterns)) {
+      return true;
+    }
+
+    // Check for event handlers (onxxx=) - Use string search only, no regex to prevent ReDoS
+    const lowerText = trimmed.toLowerCase();
+    const eventHandlerPatterns = [
+      "onerror=",
+      "onload=",
+      "onclick=",
+      "onmouseover=",
+      "onfocus=",
+      "onblur=",
+      "onchange=",
+      "onsubmit=",
+      "onkeydown=",
+      "onkeyup=",
+      "onmousedown=",
+      "onmouseup=",
+      "ondblclick=",
+      "onscroll=",
+    ];
+    if (eventHandlerPatterns.some((pattern) => lowerText.includes(pattern))) {
+      return true;
+    }
+    // Check for generic "on" followed by alphanumeric and "=" (simple string check)
+    // Limit scope to prevent ReDoS by only checking first 1000 chars
+    const searchWindow = lowerText.substring(0, Math.min(1000, lowerText.length));
+    for (let i = 0; i < searchWindow.length - 4; i++) {
+      if (searchWindow.substring(i, i + 2) === "on") {
+        // Check next 2-10 chars for alphanumeric followed by =
+        const after = searchWindow.substring(i + 2, Math.min(i + 12, searchWindow.length));
+        let foundAlnum = false;
+        for (let j = 0; j < after.length && j < 10; j++) {
+          const char = after[j];
+          if ((char >= "a" && char <= "z") || (char >= "0" && char <= "9")) {
+            foundAlnum = true;
+          } else if (char === "=" && foundAlnum) {
+            return true;
+          } else if (char !== " ") {
+            break;
+          }
+        }
       }
     }
+
+    // Check for path traversal - Simple string check
+    if (trimmed.includes("../") || trimmed.includes("..\\")) {
+      return true;
+    }
+
+    // Check for command injection characters - Simple character check (no regex)
+    const dangerousChars = [";", "&", "|", "`", "$", "(", ")"];
+    if (dangerousChars.some((char) => trimmed.includes(char))) {
+      return true;
+    }
+
     return false;
   };
 

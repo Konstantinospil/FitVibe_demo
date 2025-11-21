@@ -80,6 +80,8 @@ jobs:
         with:
           repository: ${{ github.repository }}
           ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+          persist-credentials: false
+          fetch-depth: 1
 
       - name: Verify branch before downloading artifacts
         if: github.event_name == 'workflow_run'

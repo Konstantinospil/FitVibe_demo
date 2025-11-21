@@ -32,12 +32,12 @@ if [ -z "$TARGET_BRANCH" ]; then
   fi
 fi
 
-# If still no branch found, exit with message
+# If still no branch found, exit with message and failure status
 if [ -z "$TARGET_BRANCH" ]; then
   echo -e "${YELLOW}No branch directive found in commit message.${NC}"
   echo -e "${YELLOW}Use format: [push:dev], [push:stage], or [push:main]${NC}"
   echo -e "${YELLOW}Or include: 'push to dev', 'push to stage', or 'push to main'${NC}"
-  exit 0
+  exit 1
 fi
 
 # Get current branch
