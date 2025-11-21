@@ -32,5 +32,5 @@
 5. Backups older than 14 days are removed automatically; ad-hoc purge tickets
    track accelerated deletion if needed.
 
-See `apps/docs/2c.Technical_Design_Document _Data.md` §6.8 for detailed table
+See [docs\2c.Technical_Design_Document_Data.md](/docs/2c.Technical_Design_Document_Data.md) §6.8 for detailed table
 retention requirements.

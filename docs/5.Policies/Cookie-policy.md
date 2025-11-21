@@ -36,4 +36,4 @@ We may update this Cookie Policy to reflect changes in technology, law, or our p
 
 ## 7. Contact
 
-Questions about this Cookie Policy can be sent to privacy@fitvibe.example.com.
+Questions about this Cookie Policy can be sent to kpilpilidis@gmail.com.
