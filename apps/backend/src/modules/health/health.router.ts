@@ -1,9 +1,10 @@
 import { Router } from "express";
+import type { Request, Response } from "express";
 
-const router = Router();
+export const healthRouter = Router();
 
-router.get("/", (_req, res) => {
+healthRouter.get("/", (_req: Request, res: Response) => {
   res.json({ status: "ok", timestamp: new Date().toISOString() });
 });
 
-export default router;
+export default healthRouter;
