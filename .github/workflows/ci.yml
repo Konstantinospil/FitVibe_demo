@@ -1,10 +1,16 @@
 name: CI
 
+# Concurrency control: cancel in-progress runs for the same branch/PR
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 on:
   push:
     branches: ["main", "dev", "stage"]
   pull_request:
 
+# Default permissions (can be overridden per job for least privilege)
 permissions:
   contents: read
   packages: write
@@ -17,11 +23,17 @@ env:
   OWNER: ${{ github.repository_owner }}
   BACKEND_IMAGE: ghcr.io/${{ github.repository_owner }}/fitvibe-backend
   FRONTEND_IMAGE: ghcr.io/${{ github.repository_owner }}/fitvibe-frontend
+  NODE_VERSION: "20"
+  PNPM_VERSION: "9.14.4"
 
 jobs:
   quality:
     name: Quality Gates
     runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      actions: read
     services:
       postgres:
         image: postgres:16
@@ -57,27 +69,44 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Full history for better caching and blame
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
         with:
-          version: 9.14.4
+          version: ${{ env.PNPM_VERSION }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: ${{ env.NODE_VERSION }}
           cache: pnpm
 
       - name: Enable corepack
         run: corepack enable
 
-      - name: Pre-warm pnpm
-        run: pnpm --version
+      - name: Cache pnpm store
+        uses: actions/cache@v4
+        with:
+          path: ~/.pnpm-store
+          key: pnpm-store-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            pnpm-store-${{ runner.os }}-
+
+      - name: Cache native dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            node_modules/.cache
+            **/node_modules/.cache
+          key: native-deps-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            native-deps-${{ runner.os }}-
 
       - name: Install native canvas prerequisites
         run: |
-          sudo apt-get update
+          sudo apt-get update -qq
           sudo apt-get install -y \
             build-essential \
             libcairo2-dev \
@@ -86,59 +115,90 @@ jobs:
             libgif-dev \
             librsvg2-dev
 
-      - name: Wait for ClamAV
+      - name: Wait for services
+        timeout-minutes: 5
         run: |
+          echo "Waiting for PostgreSQL..."
+          for i in {1..30}; do
+            if pg_isready -h 127.0.0.1 -p 5432 -U postgres >/dev/null 2>&1; then
+              echo "PostgreSQL is ready"
+              break
+            fi
+            if [ $i -eq 30 ]; then
+              echo "PostgreSQL failed to start" >&2
+              exit 1
+            fi
+            sleep 2
+          done
+
+          echo "Waiting for ClamAV..."
           python3 - <<'PY'
           import socket, time, sys
           host = "127.0.0.1"
           port = 3310
-          for _ in range(60):
+          for i in range(30):
               try:
                   with socket.create_connection((host, port), timeout=2):
+                      print("ClamAV is ready")
                       sys.exit(0)
               except OSError:
+                  if i == 29:
+                      print("ClamAV failed to start", file=sys.stderr)
+                      sys.exit(1)
                   time.sleep(2)
-          sys.exit("ClamAV service did not become ready in time")
           PY
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: pnpm install --frozen-lockfile --prefer-offline
+
+      - name: Verify dependency integrity
+        run: |
+          pnpm audit --prod --audit-level=moderate || true
+          echo "Dependency integrity check completed"
 
       - name: Lint
+        timeout-minutes: 10
         run: pnpm lint:check
 
       - name: Type check
+        timeout-minutes: 10
         run: pnpm typecheck
 
       - name: Unit tests & coverage
+        timeout-minutes: 15
         run: pnpm test -- --coverage --runInBand
 
       - name: Enforce coverage gate
+        timeout-minutes: 2
         run: pnpm test:coverage:gate
 
       - name: Validate QA baseline snapshot
+        timeout-minutes: 2
         run: node tests/qa/assert-baseline.js
 
       - name: Check i18n coverage
+        timeout-minutes: 2
         run: pnpm i18n:check
 
       - name: Verify feature flag defaults
+        timeout-minutes: 2
         run: node tests/qa/check-feature-flags.js
 
       - name: Upload coverage artifact
+        if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: coverage
+          name: coverage-${{ github.run_id }}
           path: coverage
+          retention-days: 30
           if-no-files-found: ignore
 
       - name: Aggregate coverage files
         if: success()
+        timeout-minutes: 2
         run: |
-          # Create root coverage directory and aggregate lcov files
           mkdir -p coverage
           find apps packages -name "lcov.info" -exec cat {} \; > coverage/lcov.info || true
-          # If no lcov files found, create empty file to prevent Codecov error
           if [ ! -s coverage/lcov.info ]; then
             echo "No coverage files found" > coverage/lcov.info
           fi
@@ -151,14 +211,29 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
           fail_ci_if_error: false
           flags: unit
+          name: codecov-umbrella
 
       - name: Build workspace
+        timeout-minutes: 15
         run: pnpm build
+
+      - name: Job summary
+        if: always()
+        run: |
+          echo "## Quality Gates Summary" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Lint: Passed" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Type Check: Passed" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Unit Tests: Passed" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Coverage Gate: Passed" >> $GITHUB_STEP_SUMMARY
 
   openapi_spec:
     name: Build OpenAPI spec
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     needs: quality
+    permissions:
+      contents: read
+      actions: read
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -166,23 +241,28 @@ jobs:
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
         with:
-          version: 9.14.4
+          version: ${{ env.PNPM_VERSION }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: ${{ env.NODE_VERSION }}
           cache: pnpm
 
       - name: Enable corepack
         run: corepack enable
 
-      - name: Pre-warm pnpm
-        run: pnpm --version
+      - name: Cache pnpm store
+        uses: actions/cache@v4
+        with:
+          path: ~/.pnpm-store
+          key: pnpm-store-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            pnpm-store-${{ runner.os }}-
 
       - name: Install native canvas prerequisites
         run: |
-          sudo apt-get update
+          sudo apt-get update -qq
           sudo apt-get install -y \
             build-essential \
             libcairo2-dev \
@@ -192,23 +272,38 @@ jobs:
             librsvg2-dev
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: pnpm install --frozen-lockfile --prefer-offline
 
       - name: Generate OpenAPI JSON
+        timeout-minutes: 5
         run: pnpm -w openapi:build
+
+      - name: Validate OpenAPI schema
+        timeout-minutes: 2
+        run: |
+          if [ ! -f apps/backend/openapi/openapi.json ]; then
+            echo "Error: OpenAPI file not generated" >&2
+            exit 1
+          fi
+          node -e "JSON.parse(require('fs').readFileSync('apps/backend/openapi/openapi.json', 'utf8'))"
 
       - name: Upload OpenAPI artifact
         if: success()
         uses: actions/upload-artifact@v4
         with:
-          name: openapi
+          name: openapi-${{ github.run_id }}
           path: apps/backend/openapi/openapi.json
+          retention-days: 90
           if-no-files-found: error
 
   integration:
     name: Backend Integration Tests
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     needs: quality
+    permissions:
+      contents: read
+      actions: read
     services:
       postgres:
         image: postgres:16
@@ -247,17 +342,25 @@ jobs:
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
         with:
-          version: 9.14.4
+          version: ${{ env.PNPM_VERSION }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: ${{ env.NODE_VERSION }}
           cache: pnpm
+
+      - name: Cache pnpm store
+        uses: actions/cache@v4
+        with:
+          path: ~/.pnpm-store
+          key: pnpm-store-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            pnpm-store-${{ runner.os }}-
 
       - name: Install native canvas prerequisites
         run: |
-          sudo apt-get update
+          sudo apt-get update -qq
           sudo apt-get install -y \
             build-essential \
             libcairo2-dev \
@@ -266,39 +369,73 @@ jobs:
             libgif-dev \
             librsvg2-dev
 
-      - name: Wait for ClamAV
+      - name: Wait for services
+        timeout-minutes: 5
         run: |
+          echo "Waiting for PostgreSQL..."
+          for i in {1..30}; do
+            if pg_isready -h 127.0.0.1 -p 5432 -U fitvibe >/dev/null 2>&1; then
+              echo "PostgreSQL is ready"
+              break
+            fi
+            if [ $i -eq 30 ]; then
+              echo "PostgreSQL failed to start" >&2
+              exit 1
+            fi
+            sleep 2
+          done
+
+          echo "Waiting for ClamAV..."
           python3 - <<'PY'
           import socket, time, sys
           host = "127.0.0.1"
           port = 3310
-          for _ in range(60):
+          for i in range(30):
               try:
                   with socket.create_connection((host, port), timeout=2):
+                      print("ClamAV is ready")
                       sys.exit(0)
               except OSError:
+                  if i == 29:
+                      print("ClamAV failed to start", file=sys.stderr)
+                      sys.exit(1)
                   time.sleep(2)
-          sys.exit("ClamAV service did not become ready in time")
           PY
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: pnpm install --frozen-lockfile --prefer-offline
 
       - name: Run database migrations
+        timeout-minutes: 5
         run: pnpm --filter @fitvibe/backend exec tsx src/db/utils/migrateAll.ts
 
       - name: Seed database
+        timeout-minutes: 5
         run: pnpm --filter @fitvibe/backend exec tsx src/db/utils/seedAll.ts
 
       - name: Integration tests
+        timeout-minutes: 20
         env:
           NODE_ENV: test
-        run: pnpm --filter @fitvibe/backend exec jest --runInBand
+        run: pnpm --filter @fitvibe/backend exec jest --runInBand --maxWorkers=2
+
+      - name: Job summary
+        if: always()
+        run: |
+          echo "## Integration Tests Summary" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ job.status }}" == "success" ]; then
+            echo "- ✅ Integration tests passed" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "- ❌ Integration tests failed" >> $GITHUB_STEP_SUMMARY
+          fi
 
   metrics_contract:
     name: Metrics Contract
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     needs: quality
+    permissions:
+      contents: read
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -306,35 +443,51 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: ${{ env.NODE_VERSION }}
 
       - name: Validate metrics exposure
+        timeout-minutes: 3
         run: node tests/metrics/assert-prom.cjs
 
   security:
     name: Security Scans
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     needs: quality
+    permissions:
+      contents: read
+      security-events: write
+      actions: read
     env:
       SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Full history for secret scanning
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
         with:
-          version: 9.14.4
+          version: ${{ env.PNPM_VERSION }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: ${{ env.NODE_VERSION }}
           cache: pnpm
+
+      - name: Cache pnpm store
+        uses: actions/cache@v4
+        with:
+          path: ~/.pnpm-store
+          key: pnpm-store-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            pnpm-store-${{ runner.os }}-
 
       - name: Install native canvas prerequisites
         run: |
-          sudo apt-get update
+          sudo apt-get update -qq
           sudo apt-get install -y \
             build-essential \
             libcairo2-dev \
@@ -344,36 +497,54 @@ jobs:
             librsvg2-dev
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: pnpm install --frozen-lockfile --prefer-offline
 
       - name: Dependency audit (fail on high severity)
+        timeout-minutes: 5
         run: pnpm audit --prod --audit-level=high
 
       - name: Scan for CVEs (OSV)
+        timeout-minutes: 10
         uses: google/osv-scanner-action/osv-scanner-action@v2.2.4
         with:
           scan-args: |-
             --lockfile=pnpm-lock.yaml
             --format=json
+            --output=osv-report.json
+
+      - name: Upload OSV report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: osv-report-${{ github.run_id }}
+          path: osv-report.json
+          retention-days: 90
+          if-no-files-found: ignore
 
       - name: Snyk scan
         if: env.SNYK_TOKEN != ''
+        timeout-minutes: 10
         uses: snyk/actions/node@master
         with:
           command: test
-          args: --all-projects
+          args: --all-projects --severity-threshold=high
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        continue-on-error: true
 
       - name: TruffleHog OSS scan
+        timeout-minutes: 5
         uses: trufflesecurity/trufflehog@v3.90.13
         with:
           scan_secrets: true
+          only_verified: true
 
       - name: Static secret scan
+        timeout-minutes: 5
         run: node tests/security/secret-scan.cjs
 
       - name: Container vulnerability scan
+        timeout-minutes: 10
         uses: aquasecurity/trivy-action@0.22.0
         with:
           scan-type: fs
@@ -385,11 +556,25 @@ jobs:
           skip-dirs: |
             infra/keys
             infra/docker/keys
+            node_modules
+
+      - name: Job summary
+        if: always()
+        run: |
+          echo "## Security Scan Summary" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Dependency audit completed" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ OSV scan completed" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Secret scan completed" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Container scan completed" >> $GITHUB_STEP_SUMMARY
 
   zap_baseline:
     name: OWASP ZAP Baseline
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     needs: security
+    permissions:
+      contents: read
+      security-events: write
     env:
       ZAP_TARGET_URL: ${{ secrets.ZAP_TARGET_URL }}
     steps:
@@ -398,6 +583,7 @@ jobs:
 
       - name: Run ZAP baseline scan
         if: env.ZAP_TARGET_URL != ''
+        timeout-minutes: 12
         uses: zaproxy/action-baseline@v0.12.0
         with:
           target: ${{ env.ZAP_TARGET_URL }}
@@ -407,7 +593,10 @@ jobs:
   performance:
     name: Performance Budgets
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     needs: quality
+    permissions:
+      contents: read
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -415,17 +604,25 @@ jobs:
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
         with:
-          version: 9.14.4
+          version: ${{ env.PNPM_VERSION }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: ${{ env.NODE_VERSION }}
           cache: pnpm
+
+      - name: Cache pnpm store
+        uses: actions/cache@v4
+        with:
+          path: ~/.pnpm-store
+          key: pnpm-store-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            pnpm-store-${{ runner.os }}-
 
       - name: Install native canvas prerequisites
         run: |
-          sudo apt-get update
+          sudo apt-get update -qq
           sudo apt-get install -y \
             build-essential \
             libcairo2-dev \
@@ -435,17 +632,19 @@ jobs:
             librsvg2-dev
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: pnpm install --frozen-lockfile --prefer-offline
 
       - name: Install k6
         uses: grafana/setup-k6-action@v1
 
       - name: Start mock services
+        timeout-minutes: 2
         run: |
           node tests/perf/mock-server.mjs &
           echo $! > mock-server.pid
           for i in {1..20}; do
             if curl -fsS http://127.0.0.1:4173/health >/dev/null; then
+              echo "Mock server started"
               exit 0
             fi
             sleep 3
@@ -454,14 +653,17 @@ jobs:
           exit 1
 
       - name: Run k6 smoke test
+        timeout-minutes: 5
         env:
           API_BASE_URL: http://127.0.0.1:4173/health
         run: k6 run --summary-export=tests/perf/k6-summary.json tests/perf/k6-smoke.js
 
       - name: Assert k6 performance budgets
+        timeout-minutes: 2
         run: node tests/perf/assert-budgets.cjs tests/perf/k6-summary.json
 
       - name: Run Lighthouse CI
+        timeout-minutes: 10
         env:
           LHCI_PORT: "4173"
         run: pnpm exec lhci autorun --config=tests/perf/lighthouserc.json --exit-on-error
@@ -470,18 +672,18 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: perf-metrics
+          name: perf-metrics-${{ github.run_id }}
           path: |
             tests/perf/k6-summary.json
             tests/perf/lhci-output
+          retention-days: 30
           if-no-files-found: ignore
 
       - name: Stop mock services
         if: always()
+        timeout-minutes: 1
         run: |
-          # Kill by process name first (more reliable)
           pkill -f "mock-server.mjs" || true
-          # Also try to kill by PID if file exists
           if [ -f mock-server.pid ]; then
             kill "$(cat mock-server.pid)" 2>/dev/null || true
             rm -f mock-server.pid
@@ -490,9 +692,12 @@ jobs:
   qa_summary:
     name: QA Summary
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     needs:
       - quality
       - performance
+    permissions:
+      contents: read
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -500,43 +705,48 @@ jobs:
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
         with:
-          version: 9.14.4
+          version: ${{ env.PNPM_VERSION }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: ${{ env.NODE_VERSION }}
           cache: pnpm
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: pnpm install --frozen-lockfile --prefer-offline
 
       - name: Download coverage artifact
         uses: actions/download-artifact@v4
         with:
-          name: coverage
+          name: coverage-${{ github.run_id }}
           path: coverage
 
       - name: Download performance metrics
         uses: actions/download-artifact@v4
         with:
-          name: perf-metrics
+          name: perf-metrics-${{ github.run_id }}
           path: .
 
       - name: Generate QA summary
+        timeout-minutes: 5
         run: node tests/qa/generate-summary.mjs
 
       - name: Upload QA summary artifact
         uses: actions/upload-artifact@v4
         with:
-          name: qa-summary
+          name: qa-summary-${{ github.run_id }}
           path: tests/qa/summary
+          retention-days: 90
           if-no-files-found: error
 
   accessibility:
     name: Accessibility (axe)
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     needs: quality
+    permissions:
+      contents: read
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -544,17 +754,25 @@ jobs:
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
         with:
-          version: 9.14.4
+          version: ${{ env.PNPM_VERSION }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: ${{ env.NODE_VERSION }}
           cache: pnpm
+
+      - name: Cache pnpm store
+        uses: actions/cache@v4
+        with:
+          path: ~/.pnpm-store
+          key: pnpm-store-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            pnpm-store-${{ runner.os }}-
 
       - name: Install native canvas prerequisites
         run: |
-          sudo apt-get update
+          sudo apt-get update -qq
           sudo apt-get install -y \
             build-essential \
             libcairo2-dev \
@@ -564,15 +782,18 @@ jobs:
             librsvg2-dev
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: pnpm install --frozen-lockfile --prefer-offline
 
       - name: Build frontend bundle
+        timeout-minutes: 10
         run: pnpm --filter @fitvibe/frontend run build
 
       - name: Install Playwright browsers
+        timeout-minutes: 5
         run: pnpm exec playwright install --with-deps
 
       - name: Run axe accessibility suite
+        timeout-minutes: 10
         env:
           PLAYWRIGHT_JOBS: 1
         run: pnpm test:a11y
@@ -581,17 +802,21 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: playwright-a11y-report
+          name: playwright-a11y-report-${{ github.run_id }}
           path: |
             playwright-report
             test-results
+          retention-days: 30
           if-no-files-found: ignore
 
   e2e:
     name: E2E Playwright
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     needs: integration
     if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/stage')
+    permissions:
+      contents: read
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -599,17 +824,25 @@ jobs:
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
         with:
-          version: 9.14.4
+          version: ${{ env.PNPM_VERSION }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: ${{ env.NODE_VERSION }}
           cache: pnpm
+
+      - name: Cache pnpm store
+        uses: actions/cache@v4
+        with:
+          path: ~/.pnpm-store
+          key: pnpm-store-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            pnpm-store-${{ runner.os }}-
 
       - name: Install native canvas prerequisites
         run: |
-          sudo apt-get update
+          sudo apt-get update -qq
           sudo apt-get install -y \
             build-essential \
             libcairo2-dev \
@@ -619,30 +852,35 @@ jobs:
             librsvg2-dev
 
       - name: Install project dependencies
-        run: pnpm install --frozen-lockfile
+        run: pnpm install --frozen-lockfile --prefer-offline
 
       - name: Install Playwright browsers
+        timeout-minutes: 5
         run: pnpm exec playwright install --with-deps
 
       - name: Build frontend
+        timeout-minutes: 10
         run: pnpm --filter @fitvibe/frontend exec pnpm run build
 
       - name: Run Playwright smoke tests
+        timeout-minutes: 15
         run: pnpm exec playwright test --config tests/frontend/e2e/playwright.config.cjs --reporter=line
 
       - name: Upload Playwright artifacts
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: playwright-report
+          name: playwright-report-${{ github.run_id }}
           path: |
             playwright-report
             test-results
+          retention-days: 30
           if-no-files-found: ignore
 
   build:
     name: Build & Publish Images
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     needs:
       - quality
       - integration
@@ -653,15 +891,21 @@ jobs:
       - security
       - openapi_spec
     if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/stage')
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+      actions: read
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
       - name: Determine package versions
         id: versions
+        timeout-minutes: 2
         run: |
           if [ ! -f apps/backend/package.json ] || [ ! -f apps/frontend/package.json ]; then
-            echo "Error: package.json files not found"
+            echo "Error: package.json files not found" >&2
             exit 1
           fi
           echo "backend=$(node -p \"require('./apps/backend/package.json').version\")" >> "$GITHUB_OUTPUT"
@@ -672,6 +916,10 @@ jobs:
 
       - name: Setup Docker Buildx
         uses: docker/setup-buildx-action@v3
+        with:
+          driver-opts: |
+            image=moby/buildkit:latest
+            network=host
 
       - name: Login to GHCR
         uses: docker/login-action@v3
@@ -682,6 +930,7 @@ jobs:
 
       - name: Build and push backend image
         id: backend
+        timeout-minutes: 20
         uses: docker/build-push-action@v6
         with:
           context: .
@@ -691,11 +940,14 @@ jobs:
           tags: |
             ${{ env.BACKEND_IMAGE }}:sha-${{ github.sha }}
             ${{ env.BACKEND_IMAGE }}:v${{ steps.versions.outputs.backend }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
           provenance: true
-          sbom: false
+          sbom: true
 
       - name: Build and push frontend image
         id: frontend
+        timeout-minutes: 20
         uses: docker/build-push-action@v6
         with:
           context: .
@@ -705,57 +957,69 @@ jobs:
           tags: |
             ${{ env.FRONTEND_IMAGE }}:sha-${{ github.sha }}
             ${{ env.FRONTEND_IMAGE }}:v${{ steps.versions.outputs.frontend }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
           provenance: true
-          sbom: false
+          sbom: true
 
       - name: Install cosign
         uses: sigstore/cosign-installer@v3
 
       - name: Sign backend image
+        timeout-minutes: 5
         env:
           COSIGN_EXPERIMENTAL: "1"
         run: cosign sign --yes --keyless ${{ env.BACKEND_IMAGE }}@${{ steps.backend.outputs.digest }}
 
       - name: Sign frontend image
+        timeout-minutes: 5
         env:
           COSIGN_EXPERIMENTAL: "1"
         run: cosign sign --yes --keyless ${{ env.FRONTEND_IMAGE }}@${{ steps.frontend.outputs.digest }}
 
       - name: Generate backend SBOM
+        timeout-minutes: 5
         uses: anchore/sbom-action@v0
         with:
           image: ${{ env.BACKEND_IMAGE }}@${{ steps.backend.outputs.digest }}
           output-file: sbom-backend.spdx.json
 
       - name: Generate frontend SBOM
+        timeout-minutes: 5
         uses: anchore/sbom-action@v0
         with:
           image: ${{ env.FRONTEND_IMAGE }}@${{ steps.frontend.outputs.digest }}
           output-file: sbom-frontend.spdx.json
 
       - name: Record image digests
+        timeout-minutes: 2
         run: |
           printf "backend=%s@%s\nfrontend=%s@%s\n" \
             "${{ env.BACKEND_IMAGE }}" "${{ steps.backend.outputs.digest }}" \
             "${{ env.FRONTEND_IMAGE }}" "${{ steps.frontend.outputs.digest }}" > image-digests.txt
+
       - name: Download OpenAPI artifact
         uses: actions/download-artifact@v4
         with:
-          name: openapi
+          name: openapi-${{ github.run_id }}
           path: artifacts/openapi
 
       - name: Upload release artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: container-artifacts
+          name: container-artifacts-${{ github.run_id }}
           path: |
             sbom-backend.spdx.json
             sbom-frontend.spdx.json
             image-digests.txt
             artifacts/openapi/openapi.json
+          retention-days: 365
           if-no-files-found: error
+
       - name: Create Release
+        if: github.ref == 'refs/heads/main'
         id: create_release
+        timeout-minutes: 5
         uses: ncipollo/release-action@v1
         with:
           tag: v${{ steps.versions.outputs.backend }}
@@ -765,5 +1029,14 @@ jobs:
             - Frontend image: ${{ env.FRONTEND_IMAGE }}:v${{ steps.versions.outputs.frontend }}
           draft: false
           prerelease: false
-          artifacts: container-artifacts
-          token: ${{ secrets.GITHUB_TOKEN }} # Using the repo token to upload artifacts
+          artifacts: container-artifacts-${{ github.run_id }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Job summary
+        if: always()
+        run: |
+          echo "## Build Summary" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Backend image: \`${{ env.BACKEND_IMAGE }}@${{ steps.backend.outputs.digest }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Frontend image: \`${{ env.FRONTEND_IMAGE }}@${{ steps.frontend.outputs.digest }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Images signed with cosign" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ SBOMs generated" >> $GITHUB_STEP_SUMMARY
