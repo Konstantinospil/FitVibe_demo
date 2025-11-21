@@ -6,7 +6,7 @@
     "dev": "vite",
     "build": "tsc -p tsconfig.json && vite build",
     "preview": "vite preview",
-    "lint": "eslint \"src\"",
+    "lint": "eslint \"src\" --max-warnings=0",
     "lint:check": "turbo run lint -- --max-warnings=0",
     "typecheck": "tsc --noEmit",
     "test": "node ./scripts/run-vitest.mjs",
