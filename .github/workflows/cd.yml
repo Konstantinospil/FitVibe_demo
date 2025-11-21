@@ -58,40 +58,31 @@ jobs:
               return;
             }
 
-            // Try to find CI run on main first
-            const { data: mainRuns } = await github.rest.actions.listWorkflowRuns({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              workflow_id: 'ci.yml',
-              branch: 'main',
-              status: 'success',
-              per_page: 1
-            });
-
-            if (mainRuns.workflow_runs.length > 0 && targetBranch === 'main') {
-              core.setOutput('run_id', mainRuns.workflow_runs[0].id);
-              return;
-            }
-
-            // Only fallback to stage if we're actually deploying from main (production deploy)
-            // For staging, we should only use stage branch runs
+            // For production deployments (main branch), ONLY use main branch CI runs
+            // Production must not use artifacts from stage branch to ensure code has been tested on main
             if (targetBranch === 'main') {
-              const { data: stageRuns } = await github.rest.actions.listWorkflowRuns({
+              const { data: mainRuns } = await github.rest.actions.listWorkflowRuns({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 workflow_id: 'ci.yml',
-                branch: 'stage',
+                branch: 'main',
                 status: 'success',
                 per_page: 1
               });
 
-              if (stageRuns.workflow_runs.length > 0) {
-                core.setOutput('run_id', stageRuns.workflow_runs[0].id);
+              if (mainRuns.workflow_runs.length > 0) {
+                core.setOutput('run_id', mainRuns.workflow_runs[0].id);
                 return;
               }
+
+              // Production deployments require successful CI on main branch
+              // Do NOT fallback to stage branch - this ensures production only deploys code that passed main CI
+              core.setFailed(`No successful CI run found on main branch. Production deployments require successful CI on main branch. Please ensure CI has run successfully on main before deploying to production.`);
+              return;
             }
 
-            core.setFailed(`No successful CI run found on ${targetBranch} branch. Please ensure CI has run successfully before deploying.`);
+            // For other branches (should not reach here since job only runs for main, but included for safety)
+            core.setFailed(`Unexpected target branch: ${targetBranch}. CD workflow should only run for main branch.`);
 
   deploy:
     name: Deploy to Production
@@ -99,7 +90,10 @@ jobs:
     needs: [get-artifacts]
     if: >
       always() &&
-      (needs.get-artifacts.result == 'success' || needs.get-artifacts.result == 'skipped' || github.event_name == 'workflow_dispatch' || github.event_name == 'workflow_run') &&
+      (
+        (github.event_name == 'workflow_dispatch') ||
+        (needs.get-artifacts.result == 'success' && (github.event_name == 'push' || github.event_name == 'workflow_run'))
+      ) &&
       (
         (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
         (github.event_name == 'workflow_run' &&
@@ -122,9 +116,9 @@ jobs:
         if: github.event_name != 'workflow_dispatch'
         uses: actions/download-artifact@v4
         with:
-          name: container-artifacts-${{ needs.get-artifacts.outputs.workflow_run_id || github.event.workflow_run.id }}
+          name: container-artifacts-${{ needs.get-artifacts.outputs.workflow_run_id || github.run_id }}
           path: artifacts
-          run-id: ${{ needs.get-artifacts.outputs.workflow_run_id || github.event.workflow_run.id }}
+          run-id: ${{ needs.get-artifacts.outputs.workflow_run_id || github.run_id }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
           fail-on-collision: false
 

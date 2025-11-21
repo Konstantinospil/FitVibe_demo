@@ -13,16 +13,64 @@ permissions:
   id-token: write
 
 jobs:
-  deploy:
+  get-artifacts:
+    name: Get CI Artifacts
+    runs-on: ubuntu-latest
     if: >
       (github.event_name == 'push' && github.ref == 'refs/heads/stage') ||
       (github.event_name == 'workflow_run' &&
-       github.event.workflow_run.conclusion == 'success' &&
-       github.event.workflow_run.event == 'push' &&
-       github.event.workflow_run.head_branch != 'dev' &&
-       github.event.workflow_run.head_branch != 'main' &&
-       (github.event.workflow_run.head_branch == 'stage' || github.event.workflow_run.head_branch == 'refs/heads/stage'))
+       github.event.workflow_run.head_branch == 'stage' &&
+       github.event.workflow_run.event == 'push')
+    outputs:
+      workflow_run_id: ${{ steps.find.outputs.run_id || github.event.workflow_run.id }}
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - name: Find CI workflow run ID
+        id: find
+        uses: actions/github-script@v7
+        with:
+          script: |
+            // For workflow_run events, use the existing workflow run ID
+            if (context.eventName === 'workflow_run') {
+              const workflowRunId = context.payload.workflow_run.id;
+              core.setOutput('run_id', workflowRunId);
+              return;
+            }
+
+            // For push events, find the latest successful CI run on stage branch
+            const { data: stageRuns } = await github.rest.actions.listWorkflowRuns({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: 'ci.yml',
+              branch: 'stage',
+              status: 'success',
+              per_page: 1
+            });
+
+            if (stageRuns.workflow_runs.length > 0) {
+              core.setOutput('run_id', stageRuns.workflow_runs[0].id);
+              return;
+            }
+
+            core.setFailed('No successful CI run found on stage branch. Please ensure CI has run successfully before deploying to staging.');
+
+  deploy:
     name: Deploy to Staging
+    needs: [get-artifacts]
+    if: >
+      always() &&
+      (
+        (github.event_name == 'push' && github.ref == 'refs/heads/stage' && needs.get-artifacts.result == 'success') ||
+        (github.event_name == 'workflow_run' &&
+         github.event.workflow_run.conclusion == 'success' &&
+         github.event.workflow_run.event == 'push' &&
+         github.event.workflow_run.head_branch != 'dev' &&
+         github.event.workflow_run.head_branch != 'main' &&
+         (github.event.workflow_run.head_branch == 'stage' || github.event.workflow_run.head_branch == 'refs/heads/stage') &&
+         needs.get-artifacts.result == 'success')
+      )
     runs-on: ubuntu-latest
     environment:
       name: staging
@@ -31,25 +79,33 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: ${{ github.repository }}
-          ref: ${{ github.event.workflow_run.head_sha }}
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
 
       - name: Verify branch before downloading artifacts
         if: github.event_name == 'workflow_run'
+        id: verify_branch
         run: |
-          if [ "${{ github.event.workflow_run.head_branch }}" != "stage" ]; then
-            echo "❌ CD Staging should only run for stage branch. Detected branch: ${{ github.event.workflow_run.head_branch }}"
+          # Normalize branch name (remove refs/heads/ prefix if present)
+          BRANCH_NAME="${{ github.event.workflow_run.head_branch }}"
+          BRANCH_NAME="${BRANCH_NAME#refs/heads/}"  # Remove prefix if present
+
+          if [ "$BRANCH_NAME" != "stage" ]; then
+            echo "❌ CD Staging should only run for stage branch. Detected branch: ${{ github.event.workflow_run.head_branch }} (normalized: $BRANCH_NAME)"
             echo "Skipping deployment - only CI should run for this branch."
             exit 1
           fi
-          echo "✅ Branch verified: ${{ github.event.workflow_run.head_branch }}"
+          echo "✅ Branch verified: ${{ github.event.workflow_run.head_branch }} (normalized: $BRANCH_NAME)"
+          echo "branch=$BRANCH_NAME" >> "$GITHUB_OUTPUT"
 
       - name: Download container artifacts
-        if: github.event_name == 'workflow_run' && github.event.workflow_run.head_branch == 'stage'
+        if: >
+          (github.event_name == 'push' && github.ref == 'refs/heads/stage') ||
+          (github.event_name == 'workflow_run' && steps.verify_branch.outcome == 'success')
         uses: actions/download-artifact@v4
         with:
-          name: container-artifacts-${{ github.event.workflow_run.id }}
+          name: container-artifacts-${{ needs.get-artifacts.outputs.workflow_run_id }}
           path: artifacts
-          run-id: ${{ github.event.workflow_run.id }}
+          run-id: ${{ needs.get-artifacts.outputs.workflow_run_id }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
           fail-on-collision: false
 
