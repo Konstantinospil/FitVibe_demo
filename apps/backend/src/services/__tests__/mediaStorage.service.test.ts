@@ -66,8 +66,27 @@ describe("mediaStorage.service", () => {
     await fs.writeFile(outsidePath, "super-secret");
 
     try {
-      await expect(readStorageObject("../sensitive.txt")).rejects.toThrow(/ENOENT/);
-      await deleteStorageObject("../sensitive.txt");
+      // Path traversal is sanitized, so it resolves to a non-existent file within the root
+      // This is the expected behavior - sanitization prevents the attack
+      // The sanitized path becomes "sensitive.txt" which doesn't exist in the storage root
+      await expect(readStorageObject("../sensitive.txt")).rejects.toThrow();
+      await expect(deleteStorageObject("../sensitive.txt")).rejects.toThrow();
+      // The outside file should remain untouched
+      await expect(fs.readFile(outsidePath, "utf8")).resolves.toBe("super-secret");
+    } finally {
+      await fs.rm(outsidePath, { force: true });
+    }
+  });
+
+  it("prevents path traversal with backslashes", async () => {
+    const outsidePath = path.join(path.dirname(TEMP_ROOT), "sensitive.txt");
+    await fs.writeFile(outsidePath, "super-secret");
+
+    try {
+      // Path traversal with backslashes is sanitized the same way
+      await expect(readStorageObject("..\\..\\..\\sensitive.txt")).rejects.toThrow();
+      await expect(deleteStorageObject("..\\..\\..\\sensitive.txt")).rejects.toThrow();
+      // The outside file should remain untouched
       await expect(fs.readFile(outsidePath, "utf8")).resolves.toBe("super-secret");
     } finally {
       await fs.rm(outsidePath, { force: true });
@@ -82,5 +101,32 @@ describe("mediaStorage.service", () => {
     await deleteStorageObject("avatars/user-789/remove.me");
 
     await expect(fs.access(deletePath)).rejects.toThrow();
+  });
+
+  it("handles jpeg mime type correctly", async () => {
+    const buffer = Buffer.from("jpeg-data");
+    jest.spyOn(crypto, "randomUUID").mockReturnValue("jpeg-file-id");
+
+    const result = await saveUserAvatarFile("user-123", buffer, "image/jpeg");
+
+    expect(result.storageKey).toMatch(/\.jpg$/);
+  });
+
+  it("handles webp mime type correctly", async () => {
+    const buffer = Buffer.from("webp-data");
+    jest.spyOn(crypto, "randomUUID").mockReturnValue("webp-file-id");
+
+    const result = await saveUserAvatarFile("user-123", buffer, "image/webp");
+
+    expect(result.storageKey).toMatch(/\.webp$/);
+  });
+
+  it("uses .bin extension for unknown mime types", async () => {
+    const buffer = Buffer.from("unknown-data");
+    jest.spyOn(crypto, "randomUUID").mockReturnValue("unknown-file-id");
+
+    const result = await saveUserAvatarFile("user-123", buffer, "image/unknown");
+
+    expect(result.storageKey).toMatch(/\.bin$/);
   });
 });

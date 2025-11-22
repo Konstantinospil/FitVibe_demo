@@ -1,4 +1,5 @@
 import type { Request, Response } from "express";
+import { HttpError } from "../../../utils/http.js";
 import * as feedController from "../feed.controller.js";
 import * as feedService from "../feed.service.js";
 import * as tokensService from "../../../services/tokens.js";
@@ -6,9 +7,26 @@ import * as tokensService from "../../../services/tokens.js";
 // Mock dependencies
 jest.mock("../feed.service.js");
 jest.mock("../../../services/tokens.js");
+jest.mock("../../common/idempotency.helpers", () => ({
+  getIdempotencyKey: jest.fn(),
+  getRouteTemplate: jest.fn(),
+}));
+jest.mock("../../common/idempotency.service", () => ({
+  resolveIdempotency: jest.fn(),
+  persistIdempotencyResult: jest.fn(),
+}));
 
 const mockFeedService = jest.mocked(feedService);
 const mockTokensService = jest.mocked(tokensService);
+
+// Import mocked modules
+import { getIdempotencyKey, getRouteTemplate } from "../../common/idempotency.helpers";
+import { resolveIdempotency, persistIdempotencyResult } from "../../common/idempotency.service";
+
+const mockGetIdempotencyKey = jest.mocked(getIdempotencyKey);
+const mockGetRouteTemplate = jest.mocked(getRouteTemplate);
+const mockResolveIdempotency = jest.mocked(resolveIdempotency);
+const mockPersistIdempotencyResult = jest.mocked(persistIdempotencyResult);
 
 describe("Feed Controller", () => {
   let mockRequest: Partial<Request>;
@@ -24,12 +42,18 @@ describe("Feed Controller", () => {
       get: jest.fn((headerName: string) => {
         return (mockRequest.headers as Record<string, string>)?.[headerName.toLowerCase()];
       }),
+      method: "POST",
     };
     mockResponse = {
       status: jest.fn().mockReturnThis(),
       json: jest.fn().mockReturnThis(),
+      set: jest.fn().mockReturnThis(),
     };
     jest.clearAllMocks();
+    mockGetIdempotencyKey.mockReturnValue(undefined);
+    mockGetRouteTemplate.mockReturnValue("/feed/items/:feedItemId/like");
+    mockResolveIdempotency.mockResolvedValue({ type: "new", recordId: "rec-1" });
+    mockPersistIdempotencyResult.mockResolvedValue();
   });
 
   describe("getFeedHandler", () => {
@@ -549,6 +573,812 @@ describe("Feed Controller", () => {
 
       expect(mockFeedService.listUserFollowing).toHaveBeenCalledWith("user-123");
       expect(mockResponse.json).toHaveBeenCalledWith({ following: mockFollowing });
+    });
+  });
+
+  describe("getFeedHandler edge cases", () => {
+    it("should handle 'me' scope", async () => {
+      mockRequest.query = { scope: "me" };
+      mockRequest.headers = { authorization: "Bearer token" };
+      mockTokensService.verifyAccess.mockReturnValue({ sub: "user-123" } as never);
+
+      mockFeedService.getFeed.mockResolvedValue({ items: [], hasMore: false } as never);
+
+      await feedController.getFeedHandler(mockRequest as Request, mockResponse as Response);
+
+      expect(mockFeedService.getFeed).toHaveBeenCalledWith({
+        viewerId: "user-123",
+        scope: "me",
+        limit: 20,
+        offset: 0,
+      });
+    });
+
+    it("should handle resolveViewerId with invalid token", async () => {
+      mockRequest.query = { scope: "me" };
+      mockRequest.headers = { authorization: "Bearer invalid-token" };
+      mockTokensService.verifyAccess.mockImplementation(() => {
+        throw new Error("Invalid token");
+      });
+
+      mockFeedService.getFeed.mockResolvedValue({ items: [], hasMore: false } as never);
+
+      await feedController.getFeedHandler(mockRequest as Request, mockResponse as Response);
+
+      expect(mockFeedService.getFeed).toHaveBeenCalledWith({
+        viewerId: null,
+        scope: "public",
+        limit: 20,
+        offset: 0,
+      });
+    });
+
+    it("should handle resolveViewerId with non-Bearer authorization", async () => {
+      mockRequest.query = { scope: "me" };
+      mockRequest.headers = { authorization: "Basic token" };
+
+      mockFeedService.getFeed.mockResolvedValue({ items: [], hasMore: false } as never);
+
+      await feedController.getFeedHandler(mockRequest as Request, mockResponse as Response);
+
+      expect(mockFeedService.getFeed).toHaveBeenCalledWith({
+        viewerId: null,
+        scope: "public",
+        limit: 20,
+        offset: 0,
+      });
+    });
+
+    it("should handle resolveViewerId with missing authorization header", async () => {
+      mockRequest.query = { scope: "me" };
+      mockRequest.headers = {};
+
+      mockFeedService.getFeed.mockResolvedValue({ items: [], hasMore: false } as never);
+
+      await feedController.getFeedHandler(mockRequest as Request, mockResponse as Response);
+
+      expect(mockFeedService.getFeed).toHaveBeenCalledWith({
+        viewerId: null,
+        scope: "public",
+        limit: 20,
+        offset: 0,
+      });
+    });
+
+    it("should handle 'following' scope", async () => {
+      mockRequest.query = { scope: "following" };
+      mockRequest.headers = { authorization: "Bearer token" };
+      mockTokensService.verifyAccess.mockReturnValue({ sub: "user-123" } as never);
+
+      mockFeedService.getFeed.mockResolvedValue({ items: [], hasMore: false } as never);
+
+      await feedController.getFeedHandler(mockRequest as Request, mockResponse as Response);
+
+      expect(mockFeedService.getFeed).toHaveBeenCalledWith({
+        viewerId: "user-123",
+        scope: "following",
+        limit: 20,
+        offset: 0,
+      });
+    });
+
+    it("should handle invalid scope by defaulting to public", async () => {
+      mockRequest.query = { scope: "invalid" };
+      mockRequest.headers = {};
+
+      mockFeedService.getFeed.mockResolvedValue({ items: [], hasMore: false } as never);
+
+      await feedController.getFeedHandler(mockRequest as Request, mockResponse as Response);
+
+      expect(mockFeedService.getFeed).toHaveBeenCalledWith({
+        viewerId: null,
+        scope: "public",
+        limit: 20,
+        offset: 0,
+      });
+    });
+
+    it("should handle array query values", async () => {
+      mockRequest.query = { limit: ["50", "100"], offset: ["10"] };
+      mockRequest.headers = {};
+
+      mockFeedService.getFeed.mockResolvedValue({ items: [], hasMore: false } as never);
+
+      await feedController.getFeedHandler(mockRequest as Request, mockResponse as Response);
+
+      expect(mockFeedService.getFeed).toHaveBeenCalledWith({
+        viewerId: null,
+        scope: "public",
+        limit: 50,
+        offset: 10,
+      });
+    });
+
+    it("should handle invalid limit values", async () => {
+      mockRequest.query = { limit: "invalid" };
+      mockRequest.headers = {};
+
+      mockFeedService.getFeed.mockResolvedValue({ items: [], hasMore: false } as never);
+
+      await feedController.getFeedHandler(mockRequest as Request, mockResponse as Response);
+
+      expect(mockFeedService.getFeed).toHaveBeenCalledWith({
+        viewerId: null,
+        scope: "public",
+        limit: 20, // default
+        offset: 0,
+      });
+    });
+
+    it("should handle negative offset", async () => {
+      mockRequest.query = { offset: "-10" };
+      mockRequest.headers = {};
+
+      mockFeedService.getFeed.mockResolvedValue({ items: [], hasMore: false } as never);
+
+      await feedController.getFeedHandler(mockRequest as Request, mockResponse as Response);
+
+      expect(mockFeedService.getFeed).toHaveBeenCalledWith({
+        viewerId: null,
+        scope: "public",
+        limit: 20,
+        offset: 0, // default for negative
+      });
+    });
+  });
+
+  describe("likeFeedItemHandler error cases", () => {
+    it("should throw 401 when user is not authenticated", async () => {
+      mockRequest.user = undefined;
+      mockRequest.params = { feedItemId: "item-1" };
+
+      await expect(
+        feedController.likeFeedItemHandler(mockRequest as Request, mockResponse as Response),
+      ).rejects.toThrow("UNAUTHENTICATED");
+
+      expect(mockFeedService.likeFeedItem).not.toHaveBeenCalled();
+    });
+
+    it("should handle service errors", async () => {
+      mockRequest.params = { feedItemId: "item-1" };
+      mockFeedService.likeFeedItem.mockRejectedValue(new Error("Service error"));
+
+      await expect(
+        feedController.likeFeedItemHandler(mockRequest as Request, mockResponse as Response),
+      ).rejects.toThrow("Service error");
+    });
+  });
+
+  describe("unlikeFeedItemHandler error cases", () => {
+    it("should throw 401 when user is not authenticated", async () => {
+      mockRequest.user = undefined;
+      mockRequest.params = { feedItemId: "item-1" };
+
+      await expect(
+        feedController.unlikeFeedItemHandler(mockRequest as Request, mockResponse as Response),
+      ).rejects.toThrow("UNAUTHENTICATED");
+
+      expect(mockFeedService.unlikeFeedItem).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("bookmarkSessionHandler error cases", () => {
+    it("should throw 401 when user is not authenticated", async () => {
+      mockRequest.user = undefined;
+      mockRequest.params = { sessionId: "session-1" };
+
+      await expect(
+        feedController.bookmarkSessionHandler(mockRequest as Request, mockResponse as Response),
+      ).rejects.toThrow("UNAUTHENTICATED");
+
+      expect(mockFeedService.bookmarkSession).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("removeBookmarkHandler error cases", () => {
+    it("should throw 401 when user is not authenticated", async () => {
+      mockRequest.user = undefined;
+      mockRequest.params = { sessionId: "session-1" };
+
+      await expect(
+        feedController.removeBookmarkHandler(mockRequest as Request, mockResponse as Response),
+      ).rejects.toThrow("UNAUTHENTICATED");
+
+      expect(mockFeedService.removeBookmark).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("createCommentHandler error cases", () => {
+    it("should throw 401 when user is not authenticated", async () => {
+      mockRequest.user = undefined;
+      mockRequest.params = { feedItemId: "item-1" };
+      mockRequest.body = { content: "Test comment" };
+
+      await expect(
+        feedController.createCommentHandler(mockRequest as Request, mockResponse as Response),
+      ).rejects.toThrow("UNAUTHENTICATED");
+
+      expect(mockFeedService.createComment).not.toHaveBeenCalled();
+    });
+
+    it("should handle missing content in body", async () => {
+      mockRequest.body = {};
+      mockRequest.params = { feedItemId: "item-1" };
+
+      mockFeedService.createComment.mockResolvedValue({
+        id: "comment-1",
+        content: "",
+      } as never);
+
+      await feedController.createCommentHandler(mockRequest as Request, mockResponse as Response);
+
+      expect(mockFeedService.createComment).toHaveBeenCalledWith("user-123", "item-1", "");
+    });
+
+    it("should handle number body value", async () => {
+      mockRequest.body = { body: 123 };
+      mockRequest.params = { feedItemId: "item-1" };
+
+      mockFeedService.createComment.mockResolvedValue({
+        id: "comment-1",
+        content: "123",
+      } as never);
+
+      await feedController.createCommentHandler(mockRequest as Request, mockResponse as Response);
+
+      expect(mockFeedService.createComment).toHaveBeenCalledWith("user-123", "item-1", "123");
+    });
+
+    it("should handle boolean body value", async () => {
+      mockRequest.body = { body: true };
+      mockRequest.params = { feedItemId: "item-1" };
+
+      mockFeedService.createComment.mockResolvedValue({
+        id: "comment-1",
+        content: "true",
+      } as never);
+
+      await feedController.createCommentHandler(mockRequest as Request, mockResponse as Response);
+
+      expect(mockFeedService.createComment).toHaveBeenCalledWith("user-123", "item-1", "true");
+    });
+
+    it("should handle Date body value", async () => {
+      const date = new Date("2025-01-20T10:00:00Z");
+      mockRequest.body = { body: date };
+      mockRequest.params = { feedItemId: "item-1" };
+
+      mockFeedService.createComment.mockResolvedValue({
+        id: "comment-1",
+        content: date.toISOString(),
+      } as never);
+
+      await feedController.createCommentHandler(mockRequest as Request, mockResponse as Response);
+
+      expect(mockFeedService.createComment).toHaveBeenCalledWith(
+        "user-123",
+        "item-1",
+        date.toISOString(),
+      );
+    });
+
+    it("should handle object body value by stringifying", async () => {
+      mockRequest.body = { body: { nested: "value" } };
+      mockRequest.params = { feedItemId: "item-1" };
+
+      mockFeedService.createComment.mockResolvedValue({
+        id: "comment-1",
+        content: '{"nested":"value"}',
+      } as never);
+
+      await feedController.createCommentHandler(mockRequest as Request, mockResponse as Response);
+
+      expect(mockFeedService.createComment).toHaveBeenCalledWith(
+        "user-123",
+        "item-1",
+        '{"nested":"value"}',
+      );
+    });
+
+    it("should handle non-record body", async () => {
+      mockRequest.body = "not an object";
+      mockRequest.params = { feedItemId: "item-1" };
+
+      mockFeedService.createComment.mockResolvedValue({
+        id: "comment-1",
+        content: "",
+      } as never);
+
+      await feedController.createCommentHandler(mockRequest as Request, mockResponse as Response);
+
+      expect(mockFeedService.createComment).toHaveBeenCalledWith("user-123", "item-1", "");
+    });
+
+    it("should handle null body value", async () => {
+      mockRequest.body = { body: null };
+      mockRequest.params = { feedItemId: "item-1" };
+
+      mockFeedService.createComment.mockResolvedValue({
+        id: "comment-1",
+        content: "",
+      } as never);
+
+      await feedController.createCommentHandler(mockRequest as Request, mockResponse as Response);
+
+      expect(mockFeedService.createComment).toHaveBeenCalledWith("user-123", "item-1", "");
+    });
+
+    it("should handle undefined body value", async () => {
+      mockRequest.body = { body: undefined };
+      mockRequest.params = { feedItemId: "item-1" };
+
+      mockFeedService.createComment.mockResolvedValue({
+        id: "comment-1",
+        content: "",
+      } as never);
+
+      await feedController.createCommentHandler(mockRequest as Request, mockResponse as Response);
+
+      expect(mockFeedService.createComment).toHaveBeenCalledWith("user-123", "item-1", "");
+    });
+
+    it("should handle array body value by stringifying", async () => {
+      mockRequest.body = { body: ["item1", "item2"] };
+      mockRequest.params = { feedItemId: "item-1" };
+
+      mockFeedService.createComment.mockResolvedValue({
+        id: "comment-1",
+        content: '["item1","item2"]',
+      } as never);
+
+      await feedController.createCommentHandler(mockRequest as Request, mockResponse as Response);
+
+      expect(mockFeedService.createComment).toHaveBeenCalledWith(
+        "user-123",
+        "item-1",
+        '["item1","item2"]',
+      );
+    });
+  });
+
+  describe("deleteCommentHandler error cases", () => {
+    it("should throw 401 when user is not authenticated", async () => {
+      mockRequest.user = undefined;
+      mockRequest.params = { commentId: "comment-1" };
+
+      await expect(
+        feedController.deleteCommentHandler(mockRequest as Request, mockResponse as Response),
+      ).rejects.toThrow("UNAUTHENTICATED");
+
+      expect(mockFeedService.deleteComment).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("blockUserHandler error cases", () => {
+    it("should throw 401 when user is not authenticated", async () => {
+      mockRequest.user = undefined;
+      mockRequest.params = { alias: "user-123" };
+
+      await expect(
+        feedController.blockUserHandler(mockRequest as Request, mockResponse as Response),
+      ).rejects.toThrow("UNAUTHENTICATED");
+
+      expect(mockFeedService.blockUserByAlias).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("unblockUserHandler error cases", () => {
+    it("should throw 401 when user is not authenticated", async () => {
+      mockRequest.user = undefined;
+      mockRequest.params = { alias: "user-123" };
+
+      await expect(
+        feedController.unblockUserHandler(mockRequest as Request, mockResponse as Response),
+      ).rejects.toThrow("UNAUTHENTICATED");
+
+      expect(mockFeedService.unblockUserByAlias).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("reportFeedItemHandler error cases", () => {
+    it("should throw 401 when user is not authenticated", async () => {
+      mockRequest.user = undefined;
+      mockRequest.params = { feedItemId: "item-1" };
+      mockRequest.body = { reason: "spam" };
+
+      await expect(
+        feedController.reportFeedItemHandler(mockRequest as Request, mockResponse as Response),
+      ).rejects.toThrow("UNAUTHENTICATED");
+
+      expect(mockFeedService.reportFeedItem).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("reportCommentHandler error cases", () => {
+    it("should throw 401 when user is not authenticated", async () => {
+      mockRequest.user = undefined;
+      mockRequest.params = { commentId: "comment-1" };
+      mockRequest.body = { reason: "spam" };
+
+      await expect(
+        feedController.reportCommentHandler(mockRequest as Request, mockResponse as Response),
+      ).rejects.toThrow("UNAUTHENTICATED");
+
+      expect(mockFeedService.reportComment).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("followUserHandler error cases", () => {
+    it("should throw 401 when user is not authenticated", async () => {
+      mockRequest.user = undefined;
+      mockRequest.params = { alias: "user-123" };
+
+      await expect(
+        feedController.followUserHandler(mockRequest as Request, mockResponse as Response),
+      ).rejects.toThrow("UNAUTHENTICATED");
+
+      expect(mockFeedService.followUserByAlias).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("createShareLinkHandler error cases", () => {
+    it("should throw 401 when user is not authenticated", async () => {
+      mockRequest.user = undefined;
+      mockRequest.params = { sessionId: "session-1" };
+
+      await expect(
+        feedController.createShareLinkHandler(mockRequest as Request, mockResponse as Response),
+      ).rejects.toThrow("UNAUTHENTICATED");
+
+      expect(mockFeedService.createShareLink).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("revokeShareLinkHandler error cases", () => {
+    it("should throw 401 when user is not authenticated", async () => {
+      mockRequest.user = undefined;
+      mockRequest.params = { sessionId: "session-1" };
+
+      await expect(
+        feedController.revokeShareLinkHandler(mockRequest as Request, mockResponse as Response),
+      ).rejects.toThrow("UNAUTHENTICATED");
+
+      expect(mockFeedService.revokeShareLink).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("cloneSessionFromFeedHandler error cases", () => {
+    it("should throw 401 when user is not authenticated", async () => {
+      mockRequest.user = undefined;
+      mockRequest.params = { sessionId: "session-1" };
+
+      await expect(
+        feedController.cloneSessionFromFeedHandler(
+          mockRequest as Request,
+          mockResponse as Response,
+        ),
+      ).rejects.toThrow("UNAUTHENTICATED");
+
+      expect(mockFeedService.cloneSessionFromFeed).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("getSharedSessionHandler error cases", () => {
+    it("should handle service errors", async () => {
+      mockRequest.params = { token: "invalid-token" };
+      mockFeedService.getSharedSession.mockRejectedValue(
+        new HttpError(404, "E.NOT_FOUND", "Share link not found"),
+      );
+
+      await expect(
+        feedController.getSharedSessionHandler(mockRequest as Request, mockResponse as Response),
+      ).rejects.toThrow("Share link not found");
+    });
+  });
+
+  describe("idempotency scenarios", () => {
+    it("should replay idempotent like request", async () => {
+      mockRequest.params = { feedItemId: "item-1" };
+      mockRequest.headers = { "idempotency-key": "key-123" };
+      mockGetIdempotencyKey.mockReturnValue("key-123");
+      mockResolveIdempotency.mockResolvedValue({
+        type: "replay",
+        status: 200,
+        body: { liked: true },
+      });
+
+      await feedController.likeFeedItemHandler(mockRequest as Request, mockResponse as Response);
+
+      expect(mockResponse.set).toHaveBeenCalledWith("Idempotency-Key", "key-123");
+      expect(mockResponse.set).toHaveBeenCalledWith("Idempotent-Replayed", "true");
+      expect(mockResponse.status).toHaveBeenCalledWith(200);
+      expect(mockResponse.json).toHaveBeenCalledWith({ liked: true });
+      expect(mockFeedService.likeFeedItem).not.toHaveBeenCalled();
+    });
+
+    it("should handle idempotent unlike request with pending resolution", async () => {
+      mockRequest.params = { feedItemId: "item-1" };
+      mockRequest.headers = { "idempotency-key": "key-123" };
+      mockGetIdempotencyKey.mockReturnValue("key-123");
+      mockResolveIdempotency.mockResolvedValue({
+        type: "pending",
+        recordId: "rec-1",
+      });
+      mockFeedService.unlikeFeedItem.mockResolvedValue({ unliked: true } as never);
+
+      await feedController.unlikeFeedItemHandler(mockRequest as Request, mockResponse as Response);
+
+      expect(mockFeedService.unlikeFeedItem).toHaveBeenCalledWith("user-123", "item-1");
+      expect(mockPersistIdempotencyResult).toHaveBeenCalledWith("rec-1", 200, { unliked: true });
+      expect(mockResponse.set).toHaveBeenCalledWith("Idempotency-Key", "key-123");
+    });
+
+    it("should handle idempotent bookmark request", async () => {
+      mockRequest.params = { sessionId: "session-1" };
+      mockRequest.headers = { "idempotency-key": "key-123" };
+      mockGetIdempotencyKey.mockReturnValue("key-123");
+      mockResolveIdempotency.mockResolvedValue({
+        type: "new",
+        recordId: "rec-1",
+      });
+      mockFeedService.bookmarkSession.mockResolvedValue({ bookmarked: true } as never);
+
+      await feedController.bookmarkSessionHandler(mockRequest as Request, mockResponse as Response);
+
+      expect(mockFeedService.bookmarkSession).toHaveBeenCalledWith("user-123", "session-1");
+      expect(mockPersistIdempotencyResult).toHaveBeenCalledWith("rec-1", 200, { bookmarked: true });
+    });
+  });
+
+  describe("reportFeedItemHandler body parsing", () => {
+    it("should handle missing reason in body", async () => {
+      mockRequest.params = { feedItemId: "item-1" };
+      mockRequest.body = {};
+
+      mockFeedService.reportFeedItem.mockResolvedValue({
+        id: "report-1",
+        reason: "",
+      } as never);
+
+      await feedController.reportFeedItemHandler(mockRequest as Request, mockResponse as Response);
+
+      expect(mockFeedService.reportFeedItem).toHaveBeenCalledWith(
+        "user-123",
+        "item-1",
+        "",
+        undefined,
+      );
+    });
+
+    it("should handle details in body", async () => {
+      mockRequest.params = { feedItemId: "item-1" };
+      mockRequest.body = { reason: "spam", details: "This is spam content" };
+
+      mockFeedService.reportFeedItem.mockResolvedValue({
+        id: "report-1",
+        reason: "spam",
+        details: "This is spam content",
+      } as never);
+
+      await feedController.reportFeedItemHandler(mockRequest as Request, mockResponse as Response);
+
+      expect(mockFeedService.reportFeedItem).toHaveBeenCalledWith(
+        "user-123",
+        "item-1",
+        "spam",
+        "This is spam content",
+      );
+    });
+
+    it("should handle non-string reason", async () => {
+      mockRequest.params = { feedItemId: "item-1" };
+      mockRequest.body = { reason: 123 };
+
+      mockFeedService.reportFeedItem.mockResolvedValue({
+        id: "report-1",
+        reason: "",
+      } as never);
+
+      await feedController.reportFeedItemHandler(mockRequest as Request, mockResponse as Response);
+
+      expect(mockFeedService.reportFeedItem).toHaveBeenCalledWith(
+        "user-123",
+        "item-1",
+        "",
+        undefined,
+      );
+    });
+
+    it("should handle non-string details", async () => {
+      mockRequest.params = { feedItemId: "item-1" };
+      mockRequest.body = { reason: "spam", details: 123 };
+
+      mockFeedService.reportFeedItem.mockResolvedValue({
+        id: "report-1",
+        reason: "spam",
+      } as never);
+
+      await feedController.reportFeedItemHandler(mockRequest as Request, mockResponse as Response);
+
+      expect(mockFeedService.reportFeedItem).toHaveBeenCalledWith(
+        "user-123",
+        "item-1",
+        "spam",
+        undefined,
+      );
+    });
+
+    it("should handle missing reason and details", async () => {
+      mockRequest.params = { feedItemId: "item-1" };
+      mockRequest.body = {};
+
+      mockFeedService.reportFeedItem.mockResolvedValue({
+        id: "report-1",
+        reason: "",
+      } as never);
+
+      await feedController.reportFeedItemHandler(mockRequest as Request, mockResponse as Response);
+
+      expect(mockFeedService.reportFeedItem).toHaveBeenCalledWith(
+        "user-123",
+        "item-1",
+        "",
+        undefined,
+      );
+    });
+
+    it("should handle non-string reason value", async () => {
+      mockRequest.params = { feedItemId: "item-1" };
+      mockRequest.body = { reason: { nested: "object" } };
+
+      mockFeedService.reportFeedItem.mockResolvedValue({
+        id: "report-1",
+        reason: "",
+      } as never);
+
+      await feedController.reportFeedItemHandler(mockRequest as Request, mockResponse as Response);
+
+      expect(mockFeedService.reportFeedItem).toHaveBeenCalledWith(
+        "user-123",
+        "item-1",
+        "",
+        undefined,
+      );
+    });
+
+    it("should handle non-string details value", async () => {
+      mockRequest.params = { feedItemId: "item-1" };
+      mockRequest.body = { reason: "spam", details: { nested: "object" } };
+
+      mockFeedService.reportFeedItem.mockResolvedValue({
+        id: "report-1",
+        reason: "spam",
+      } as never);
+
+      await feedController.reportFeedItemHandler(mockRequest as Request, mockResponse as Response);
+
+      expect(mockFeedService.reportFeedItem).toHaveBeenCalledWith(
+        "user-123",
+        "item-1",
+        "spam",
+        undefined,
+      );
+    });
+  });
+
+  describe("listBookmarksHandler edge cases", () => {
+    it("should handle pagination parameters", async () => {
+      mockRequest.query = { limit: "75", offset: "25" };
+
+      mockFeedService.listBookmarks.mockResolvedValue([] as never);
+
+      await feedController.listBookmarksHandler(mockRequest as Request, mockResponse as Response);
+
+      expect(mockFeedService.listBookmarks).toHaveBeenCalledWith("user-123", {
+        limit: 75,
+        offset: 25,
+      });
+    });
+
+    it("should cap limit at 100", async () => {
+      mockRequest.query = { limit: "200" };
+
+      mockFeedService.listBookmarks.mockResolvedValue([] as never);
+
+      await feedController.listBookmarksHandler(mockRequest as Request, mockResponse as Response);
+
+      expect(mockFeedService.listBookmarks).toHaveBeenCalledWith("user-123", {
+        limit: 100,
+        offset: 0,
+      });
+    });
+  });
+
+  describe("listCommentsHandler edge cases", () => {
+    it("should handle authenticated viewer", async () => {
+      mockRequest.params = { feedItemId: "item-1" };
+      mockRequest.headers = { authorization: "Bearer token" };
+      mockTokensService.verifyAccess.mockReturnValue({ sub: "viewer-123" } as never);
+
+      mockFeedService.listComments.mockResolvedValue([] as never);
+
+      await feedController.listCommentsHandler(mockRequest as Request, mockResponse as Response);
+
+      expect(mockFeedService.listComments).toHaveBeenCalledWith("item-1", {
+        limit: 50,
+        offset: 0,
+        viewerId: "viewer-123",
+      });
+    });
+
+    it("should cap limit at 200", async () => {
+      mockRequest.params = { feedItemId: "item-1" };
+      mockRequest.query = { limit: "300" };
+      mockRequest.headers = {};
+
+      mockFeedService.listComments.mockResolvedValue([] as never);
+
+      await feedController.listCommentsHandler(mockRequest as Request, mockResponse as Response);
+
+      expect(mockFeedService.listComments).toHaveBeenCalledWith("item-1", {
+        limit: 200,
+        offset: 0,
+        viewerId: undefined,
+      });
+    });
+  });
+
+  describe("getLeaderboardHandler edge cases", () => {
+    it("should handle 'global' scope", async () => {
+      mockRequest.query = { scope: "global" };
+      mockRequest.headers = {};
+
+      mockFeedService.getLeaderboard.mockResolvedValue({
+        entries: [],
+        period: "all-time",
+      } as never);
+
+      await feedController.getLeaderboardHandler(mockRequest as Request, mockResponse as Response);
+
+      expect(mockFeedService.getLeaderboard).toHaveBeenCalledWith({
+        viewerId: null,
+        scope: "global",
+      });
+    });
+
+    it("should handle 'friends' scope", async () => {
+      mockRequest.query = { scope: "friends" };
+      mockRequest.headers = { authorization: "Bearer token" };
+      mockTokensService.verifyAccess.mockReturnValue({ sub: "user-123" } as never);
+
+      mockFeedService.getLeaderboard.mockResolvedValue({
+        entries: [],
+        period: "all-time",
+      } as never);
+
+      await feedController.getLeaderboardHandler(mockRequest as Request, mockResponse as Response);
+
+      expect(mockFeedService.getLeaderboard).toHaveBeenCalledWith({
+        viewerId: "user-123",
+        scope: "friends",
+      });
+    });
+
+    it("should default to 'global' scope when invalid", async () => {
+      mockRequest.query = { scope: "invalid" };
+      mockRequest.headers = {};
+
+      mockFeedService.getLeaderboard.mockResolvedValue({
+        entries: [],
+        period: "all-time",
+      } as never);
+
+      await feedController.getLeaderboardHandler(mockRequest as Request, mockResponse as Response);
+
+      expect(mockFeedService.getLeaderboard).toHaveBeenCalledWith({
+        viewerId: null,
+        scope: "global",
+      });
     });
   });
 });

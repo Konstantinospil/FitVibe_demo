@@ -163,7 +163,48 @@ const MainLayout: React.FC = () => {
           color: "var(--color-text-muted)",
         }}
       >
-        {t("footer.note")}
+        <div style={{ marginBottom: "0.5rem" }}>{t("footer.note")}</div>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            gap: "1.5rem",
+            flexWrap: "wrap",
+          }}
+        >
+          <NavLink
+            to="/terms"
+            style={{
+              color: "var(--color-text-muted)",
+              textDecoration: "none",
+              transition: "color 150ms ease",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.color = "var(--color-text-secondary)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.color = "var(--color-text-muted)";
+            }}
+          >
+            {t("footer.terms")}
+          </NavLink>
+          <NavLink
+            to="/privacy"
+            style={{
+              color: "var(--color-text-muted)",
+              textDecoration: "none",
+              transition: "color 150ms ease",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.color = "var(--color-text-secondary)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.color = "var(--color-text-muted)";
+            }}
+          >
+            {t("footer.privacy")}
+          </NavLink>
+        </div>
       </footer>
     </div>
   );

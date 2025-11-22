@@ -72,61 +72,65 @@ describe("Q-10 email verification policies", () => {
 
   it("issues a verification token with 15 minute TTL and purges stale tokens older than 7 days", async () => {
     jest.useRealTimers(); // Use real timers for this test to avoid async hangs
-    mockCountAuthTokensSince.mockResolvedValue(2); // within resend window
+    try {
+      mockCountAuthTokensSince.mockResolvedValue(2); // within resend window
 
-    const result = await register({
-      email: pendingUser.primary_email ?? "",
-      username: pendingUser.username,
-      password: "StrongPassw0rd!",
-    });
+      const result = await register({
+        email: pendingUser.primary_email ?? "",
+        username: pendingUser.username,
+        password: "StrongPassw0rd!",
+      });
 
-    expect(result.user?.id).toBe(pendingUser.id);
-    expect(result.verificationToken).toEqual(expect.any(String));
+      expect(result.user?.id).toBe(pendingUser.id);
+      expect(result.verificationToken).toEqual(expect.any(String));
 
-    expect(mockCountAuthTokensSince).toHaveBeenCalledWith(
-      pendingUser.id,
-      "email_verification",
-      expect.any(Date),
-    );
+      expect(mockCountAuthTokensSince).toHaveBeenCalledWith(
+        pendingUser.id,
+        "email_verification",
+        expect.any(Date),
+      );
 
-    expect(mockPurgeAuthTokensOlderThan).toHaveBeenCalledWith(
-      "email_verification",
-      expect.any(Date),
-    );
+      expect(mockPurgeAuthTokensOlderThan).toHaveBeenCalledWith(
+        "email_verification",
+        expect.any(Date),
+      );
 
-    expect(mockMarkAuthTokensConsumed).toHaveBeenCalledWith(pendingUser.id, "email_verification");
+      expect(mockMarkAuthTokensConsumed).toHaveBeenCalledWith(pendingUser.id, "email_verification");
 
-    expect(mockCreateAuthToken).toHaveBeenCalledTimes(1);
-    const [[createPayload]] = mockCreateAuthToken.mock.calls;
-    const createdAt = new Date(createPayload.created_at);
-    const expiresAt = new Date(createPayload.expires_at);
-    const ttlSeconds = Math.round((expiresAt.getTime() - createdAt.getTime()) / 1000);
-    expect(ttlSeconds).toBe(15 * 60);
-
-    jest.useFakeTimers().setSystemTime(BASE_TIME); // Restore fake timers for other tests
+      expect(mockCreateAuthToken).toHaveBeenCalledTimes(1);
+      const [[createPayload]] = mockCreateAuthToken.mock.calls;
+      const createdAt = new Date(createPayload.created_at);
+      const expiresAt = new Date(createPayload.expires_at);
+      const ttlSeconds = Math.round((expiresAt.getTime() - createdAt.getTime()) / 1000);
+      expect(ttlSeconds).toBe(15 * 60);
+    } finally {
+      jest.useFakeTimers().setSystemTime(BASE_TIME); // Restore fake timers for other tests
+    }
   }, 60000); // 60 second timeout
 
   it("rejects verification resends when limit (3 per hour) is exceeded", async () => {
     jest.useRealTimers(); // Use real timers for this test to avoid async hangs
-    mockCountAuthTokensSince.mockResolvedValue(3);
+    try {
+      mockCountAuthTokensSince.mockResolvedValue(3);
 
-    await expect(
-      register({
-        email: pendingUser.primary_email ?? "",
-        username: pendingUser.username,
-        password: "StrongPassw0rd!",
-      }),
-    ).rejects.toMatchObject({
-      status: 429,
-      code: "AUTH_TOO_MANY_REQUESTS",
-    });
+      await expect(
+        register({
+          email: pendingUser.primary_email ?? "",
+          username: pendingUser.username,
+          password: "StrongPassw0rd!",
+        }),
+      ).rejects.toMatchObject({
+        status: 429,
+        code: "AUTH_TOO_MANY_REQUESTS",
+      });
 
-    expect(mockPurgeAuthTokensOlderThan).toHaveBeenCalledWith(
-      "email_verification",
-      expect.any(Date),
-    );
-    expect(mockCreateAuthToken).not.toHaveBeenCalled();
-
-    jest.useFakeTimers().setSystemTime(BASE_TIME); // Restore fake timers for other tests
+      expect(mockPurgeAuthTokensOlderThan).toHaveBeenCalledWith(
+        "email_verification",
+        expect.any(Date),
+      );
+      expect(mockCreateAuthToken).not.toHaveBeenCalled();
+    } finally {
+      jest.useFakeTimers().setSystemTime(BASE_TIME); // Restore fake timers for other tests
+    }
   }, 60000); // 60 second timeout
 });

@@ -10,6 +10,7 @@ import {
   resetPassword,
   listSessions,
   revokeSessions,
+  acceptTerms,
   jwksHandler,
 } from "./auth.controller.js";
 import {
@@ -28,6 +29,7 @@ import {
   ForgotPasswordSchema,
   ResetPasswordSchema,
   RevokeSessionsSchema,
+  AcceptTermsSchema,
 } from "./auth.schemas.js";
 import { requireAccessToken } from "./auth.middleware.js";
 import { asyncHandler } from "../../utils/async-handler.js";
@@ -81,6 +83,13 @@ authRouter.post(
   requireAccessToken,
   validate(RevokeSessionsSchema),
   asyncHandler(revokeSessions),
+);
+authRouter.post(
+  "/terms/accept",
+  rateLimit("auth_terms_accept", 5, 60),
+  requireAccessToken,
+  validate(AcceptTermsSchema),
+  asyncHandler(acceptTerms),
 );
 
 authRouter.get("/jwks", asyncHandler(jwksHandler));

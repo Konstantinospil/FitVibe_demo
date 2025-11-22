@@ -110,9 +110,25 @@
     }
   },
   "footer": {
-    "note": "Built for athletes who love data‑driven progress — Fitvibe"
+    "note": "Built for athletes who love data‑driven progress — Fitvibe",
+    "terms": "Terms and Conditions",
+    "privacy": "Privacy Policy"
+  },
+  "terms": {
+    "eyebrow": "Legal",
+    "title": "Terms and Conditions",
+    "description": "Please read our Terms and Conditions carefully before using FitVibe.",
+    "effectiveDate": "Effective Date"
+  },
+  "privacy": {
+    "eyebrow": "Legal",
+    "title": "Privacy Policy",
+    "description": "Learn how we collect, use, and protect your personal data.",
+    "effectiveDate": "Effective date"
   },
   "errors": {
+    "TERMS_ACCEPTANCE_REQUIRED": "You must accept the Terms and Conditions and Privacy Policy to create an account",
+    "TERMS_VERSION_OUTDATED": "Terms and Conditions have been updated. Please accept the new terms to continue.",
     "WEAK_PASSWORD": "Password must be at least 12 characters and include uppercase, lowercase, digit, and symbol",
     "PASSWORD_CONTAINS_USERNAME": "Password cannot contain your username",
     "PASSWORD_CONTAINS_EMAIL": "Password cannot contain your email address",

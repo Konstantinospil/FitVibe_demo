@@ -50,6 +50,7 @@ describe("Auth Controller", () => {
         email: "test@example.com",
         username: "testuser",
         password: "SecureP@ssw0rd123",
+        terms_accepted: true,
       };
 
       mockRequest.body = registerData;

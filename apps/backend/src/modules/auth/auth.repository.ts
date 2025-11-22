@@ -62,6 +62,9 @@ export interface AuthUserRecord {
   updated_at: string;
   primary_email: string | null;
   email_verified: boolean;
+  terms_accepted: boolean;
+  terms_accepted_at: string | null;
+  terms_version: string | null;
 }
 
 function userQuery() {
@@ -82,6 +85,9 @@ function userQuery() {
       "u.password_hash",
       "u.created_at",
       "u.updated_at",
+      "u.terms_accepted",
+      "u.terms_accepted_at",
+      "u.terms_version",
       db.raw("c.value as primary_email"),
       db.raw("COALESCE(c.is_verified, false) as email_verified"),
     ) satisfies Knex.QueryBuilder<AuthUserRecord, AuthUserRecord[]>;
@@ -113,6 +119,9 @@ export async function createUser(input: {
   password_hash: string;
   primaryEmail: string;
   emailVerified?: boolean;
+  terms_accepted?: boolean;
+  terms_accepted_at?: string;
+  terms_version?: string;
 }): Promise<AuthUserRecord | undefined> {
   const now = new Date().toISOString();
   return db.transaction(async (trx) => {
@@ -125,6 +134,9 @@ export async function createUser(input: {
       status: input.status,
       role_code: input.role_code,
       password_hash: input.password_hash,
+      terms_accepted: input.terms_accepted ?? false,
+      terms_accepted_at: input.terms_accepted_at ?? null,
+      terms_version: input.terms_version ?? null,
       created_at: now,
       updated_at: now,
     });

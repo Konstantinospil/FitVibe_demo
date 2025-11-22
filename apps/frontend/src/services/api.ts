@@ -108,6 +108,25 @@ apiClient.interceptors.response.use(
       // Retry the original request with fresh cookies
       return apiClient(originalRequest);
     } catch (refreshError) {
+      // Check if error is due to outdated terms
+      if (refreshError && typeof refreshError === "object" && "response" in refreshError) {
+        const axiosError = refreshError as {
+          response?: { data?: { error?: { code?: string } } };
+        };
+        const errorCode = axiosError.response?.data?.error?.code;
+
+        if (errorCode === "TERMS_VERSION_OUTDATED") {
+          // Redirect to terms re-acceptance page
+          processQueue(refreshError);
+          window.location.href = "/terms-reacceptance";
+          const error =
+            refreshError instanceof Error
+              ? refreshError
+              : new Error(refreshError ? JSON.stringify(refreshError) : "Unknown error");
+          return Promise.reject(error);
+        }
+      }
+
       // Refresh failed - sign out and clear cookies
       processQueue(refreshError);
       useAuthStore.getState().signOut();
@@ -119,9 +138,8 @@ apiClient.interceptors.response.use(
         // Ignore logout errors during error handling
       }
 
-      return Promise.reject(
-        refreshError instanceof Error ? refreshError : new Error(String(refreshError)),
-      );
+      const error = refreshError instanceof Error ? refreshError : new Error(String(refreshError));
+      return Promise.reject(error);
     } finally {
       isRefreshing = false;
     }
@@ -142,6 +160,7 @@ export type RegisterRequest = {
   email: string;
   password: string;
   username: string;
+  terms_accepted: boolean;
   profile?: {
     display_name?: string;
   };
@@ -195,6 +214,19 @@ export async function verify2FALogin(payload: Verify2FALoginRequest): Promise<Ve
 export async function register(payload: RegisterRequest): Promise<RegisterResponse> {
   // Backend sets HttpOnly cookies (accessToken, refreshToken) and returns user data
   const res = await rawHttpClient.post<RegisterResponse>("/api/v1/auth/register", payload);
+  return res.data;
+}
+
+export type AcceptTermsRequest = {
+  terms_accepted: boolean;
+};
+
+export type AcceptTermsResponse = {
+  message: string;
+};
+
+export async function acceptTerms(payload: AcceptTermsRequest): Promise<AcceptTermsResponse> {
+  const res = await apiClient.post<AcceptTermsResponse>("/api/v1/auth/terms/accept", payload);
   return res.data;
 }
 

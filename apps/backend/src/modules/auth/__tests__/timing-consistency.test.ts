@@ -108,6 +108,12 @@ describe("AC-1.12: Timing Consistency for User Enumeration Protection", () => {
     jest.clearAllMocks();
   });
 
+  afterEach(async () => {
+    // Ensure all pending timers complete before test suite exits
+    // This prevents Jest from hanging on open handles
+    await new Promise((resolve) => setTimeout(resolve, 0));
+  });
+
   describe("Login Endpoint Timing", () => {
     const loginDto: LoginDTO = {
       email: "test@example.com",

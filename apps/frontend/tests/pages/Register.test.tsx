@@ -41,6 +41,12 @@ void testI18n.use(initReactI18next).init({
         "auth.hidePassword": "Hide password",
         "auth.register.passwordMismatch": "Passwords do not match",
         "auth.register.error": "Registration failed. Please try again.",
+        "auth.register.acceptTerms": "I have read and accept the",
+        "auth.register.termsLink": "Terms and Conditions",
+        "auth.register.and": "and",
+        "auth.register.privacyLink": "Privacy Policy",
+        "auth.register.termsRequired":
+          "You must accept the Terms and Conditions and Privacy Policy to create an account",
         "auth.placeholders.name": "John Doe",
         "auth.placeholders.email": "you@example.com",
         "auth.placeholders.password": "Create a strong password",
@@ -136,11 +142,15 @@ describe("Register", () => {
     fireEvent.change(confirmPasswordInput, { target: { value: "password123" } });
     fireEvent.click(submitButton);
 
+    const termsCheckbox = screen.getByRole("checkbox", { name: /accept the/i });
+    fireEvent.click(termsCheckbox);
+
     await waitFor(() => {
       expect(api.register).toHaveBeenCalledWith({
         email: "john@example.com",
         password: "password123",
         username: "john",
+        terms_accepted: true,
         profile: {
           display_name: "John Doe",
         },
@@ -168,6 +178,8 @@ describe("Register", () => {
     fireEvent.change(emailInput, { target: { value: "john@example.com" } });
     fireEvent.change(passwordInput, { target: { value: "password123" } });
     fireEvent.change(confirmPasswordInput, { target: { value: "password123" } });
+    const termsCheckbox = screen.getByRole("checkbox", { name: /accept the/i });
+    fireEvent.click(termsCheckbox);
     fireEvent.click(submitButton);
 
     await waitFor(() => {
@@ -199,6 +211,8 @@ describe("Register", () => {
     fireEvent.change(emailInput, { target: { value: "existing@example.com" } });
     fireEvent.change(passwordInput, { target: { value: "password123" } });
     fireEvent.change(confirmPasswordInput, { target: { value: "password123" } });
+    const termsCheckbox = screen.getByRole("checkbox", { name: /accept the/i });
+    fireEvent.click(termsCheckbox);
     fireEvent.click(submitButton);
 
     await waitFor(() => {
@@ -225,6 +239,8 @@ describe("Register", () => {
     fireEvent.change(emailInput, { target: { value: "john@example.com" } });
     fireEvent.change(passwordInput, { target: { value: "password123" } });
     fireEvent.change(confirmPasswordInput, { target: { value: "password123" } });
+    const termsCheckbox = screen.getByRole("checkbox", { name: /accept the/i });
+    fireEvent.click(termsCheckbox);
     fireEvent.click(submitButton);
 
     await waitFor(() => {
@@ -233,6 +249,7 @@ describe("Register", () => {
       expect(emailInput).toBeDisabled();
       expect(passwordInput).toBeDisabled();
       expect(confirmPasswordInput).toBeDisabled();
+      expect(termsCheckbox).toBeDisabled();
     });
   });
 

@@ -472,6 +472,42 @@ describe("idempotency.helpers", () => {
       expect(idempotencyService.persistIdempotencyResult).not.toHaveBeenCalled();
       expect(statusMock).toHaveBeenCalledWith(200);
     });
+
+    it("should execute handler and persist result for pending request", async () => {
+      const idempotencyKey = "key-pending";
+      (mockRequest.get as jest.Mock).mockReturnValue(idempotencyKey);
+
+      const recordId = "pending-record-123";
+      (idempotencyService.resolveIdempotency as jest.Mock).mockResolvedValue({
+        type: "pending",
+        recordId,
+      });
+
+      const handlerResult = {
+        status: 200,
+        body: { id: "result-456", completed: true },
+      };
+      handlerMock.mockResolvedValue(handlerResult);
+
+      const result = await handleIdempotentRequest(
+        mockRequest as Request,
+        mockResponse as Response,
+        userId,
+        payload,
+        handlerMock,
+      );
+
+      expect(result).toBe(true);
+      expect(handlerMock).toHaveBeenCalledTimes(1);
+      expect(idempotencyService.persistIdempotencyResult).toHaveBeenCalledWith(
+        recordId,
+        200,
+        handlerResult.body,
+      );
+      expect(setMock).toHaveBeenCalledWith("Idempotency-Key", idempotencyKey);
+      expect(statusMock).toHaveBeenCalledWith(200);
+      expect(jsonMock).toHaveBeenCalledWith(handlerResult.body);
+    });
   });
 
   describe("withIdempotency", () => {
@@ -590,6 +626,35 @@ describe("idempotency.helpers", () => {
 
         expect(result.userId).toBe(userId);
       }
+    });
+
+    it("should execute handler and return handled=true for pending request", async () => {
+      const idempotencyKey = "key-pending";
+      (mockRequest.get as jest.Mock).mockReturnValue(idempotencyKey);
+
+      (idempotencyService.resolveIdempotency as jest.Mock).mockResolvedValue({
+        type: "pending",
+        recordId: "rec-pending-123",
+      });
+
+      const handlerResult = { status: 200, body: { processed: true } };
+      handlerMock.mockResolvedValue(handlerResult);
+
+      const result = await withIdempotency(
+        mockRequest as Request,
+        mockResponse as Response,
+        payload,
+        handlerMock,
+      );
+
+      expect(result).toEqual({ handled: true, userId: "user-123" });
+      expect(handlerMock).toHaveBeenCalledWith("user-123");
+      expect(idempotencyService.persistIdempotencyResult).toHaveBeenCalledWith(
+        "rec-pending-123",
+        200,
+        handlerResult.body,
+      );
+      expect(statusMock).toHaveBeenCalledWith(200);
     });
   });
 });

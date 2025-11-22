@@ -2,7 +2,8 @@ import path from "node:path";
 import { spawnSync } from "node:child_process";
 import knex from "knex";
 
-const { connectionString: DATABASE_URL, isAvailable: isDatabaseAvailable } = resolveDatabaseConnection();
+const { connectionString: DATABASE_URL, isAvailable: isDatabaseAvailable } =
+  resolveDatabaseConnection();
 const describeFn = isDatabaseAvailable ? describe : describe.skip;
 
 describeFn("database migrations", () => {
@@ -247,10 +248,8 @@ describeFn("database migrations", () => {
 });
 
 if (!isDatabaseAvailable) {
-  test.skip(
-    "Database unavailable. Set TEST_DATABASE_URL or start a local Postgres instance before running migration tests.",
-    () => undefined,
-  );
+  test.skip("Database unavailable. Set TEST_DATABASE_URL or start a local Postgres instance before running migration tests.", () =>
+    undefined);
 }
 
 async function ensureDatabaseExtensions(admin: knex.Knex): Promise<void> {
@@ -330,17 +329,31 @@ function checkDatabaseAvailability(connectionString: string): boolean {
   const probeScript = `
 const knex = require('knex');
 (async () => {
-  const client = knex({
-    client: 'pg',
-    connection: process.env.__TEST_DB_CONN__,
-    pool: { min: 0, max: 1 },
-  });
+  let client;
   try {
+    client = knex({
+      client: 'pg',
+      connection: process.env.__TEST_DB_CONN__,
+      pool: { min: 0, max: 1 },
+      acquireConnectionTimeout: 2000,
+    });
+    
+    // Set a timeout for the connection attempt
+    const timeout = setTimeout(() => {
+      if (client) {
+        client.destroy().catch(() => undefined);
+      }
+      process.exit(1);
+    }, 3000);
+    
     await client.raw('select 1');
+    clearTimeout(timeout);
     await client.destroy();
     process.exit(0);
   } catch (error) {
-    await client.destroy().catch(() => undefined);
+    if (client) {
+      await client.destroy().catch(() => undefined);
+    }
     process.exit(1);
   }
 })();`;
@@ -348,7 +361,14 @@ const knex = require('knex');
   const result = spawnSync(process.execPath, ["-e", probeScript], {
     env: { ...process.env, __TEST_DB_CONN__: connectionString },
     stdio: "ignore",
+    timeout: 5000, // 5 second timeout for the entire spawn
+    killSignal: "SIGTERM", // Ensure process is killed on timeout
   });
+
+  // If the process was killed due to timeout, ensure it's terminated
+  if (result.signal) {
+    return false;
+  }
 
   return result.status === 0;
 }

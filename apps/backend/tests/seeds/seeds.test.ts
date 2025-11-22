@@ -2,7 +2,8 @@ import path from "node:path";
 import { spawnSync } from "node:child_process";
 import knex from "knex";
 
-const { connectionString: DATABASE_URL, isAvailable: isDatabaseAvailable } = resolveDatabaseConnection();
+const { connectionString: DATABASE_URL, isAvailable: isDatabaseAvailable } =
+  resolveDatabaseConnection();
 const describeFn = isDatabaseAvailable ? describe : describe.skip;
 
 describeFn("database seeds", () => {
@@ -90,8 +91,8 @@ describeFn("database seeds", () => {
 
       it("has timestamps on role records", async () => {
         const role = await client("roles").where({ code: "admin" }).first();
-        expect(role.created_at).toBeDefined();
-        expect(new Date(role.created_at)).toBeInstanceOf(Date);
+        expect(role?.created_at).toBeDefined();
+        expect(new Date(role?.created_at as string | number | Date)).toBeInstanceOf(Date);
       });
     });
 
@@ -132,7 +133,7 @@ describeFn("database seeds", () => {
       it("has timestamps on gender records", async () => {
         const gender = await client("genders").where({ code: "woman" }).first();
         expect(gender.created_at).toBeDefined();
-        expect(new Date(gender.created_at)).toBeInstanceOf(Date);
+        expect(new Date(gender.created_at as string | number | Date)).toBeInstanceOf(Date);
       });
     });
 
@@ -172,8 +173,8 @@ describeFn("database seeds", () => {
 
       it("has timestamps on fitness level records", async () => {
         const level = await client("fitness_levels").where({ code: "beginner" }).first();
-        expect(level.created_at).toBeDefined();
-        expect(new Date(level.created_at)).toBeInstanceOf(Date);
+        expect(level?.created_at).toBeDefined();
+        expect(new Date(level?.created_at as string | number | Date)).toBeInstanceOf(Date);
       });
     });
 
@@ -241,8 +242,8 @@ describeFn("database seeds", () => {
 
       it("has timestamps on exercise type records", async () => {
         const type = await client("exercise_types").where({ code: "strength" }).first();
-        expect(type.created_at).toBeDefined();
-        expect(new Date(type.created_at)).toBeInstanceOf(Date);
+        expect(type?.created_at).toBeDefined();
+        expect(new Date(type?.created_at as string | number | Date)).toBeInstanceOf(Date);
       });
     });
 
@@ -284,10 +285,10 @@ describeFn("database seeds", () => {
 
       it("has timestamps on user records", async () => {
         const admin = await client("users").where({ username: "admin" }).first();
-        expect(admin.created_at).toBeDefined();
-        expect(admin.updated_at).toBeDefined();
-        expect(new Date(admin.created_at)).toBeInstanceOf(Date);
-        expect(new Date(admin.updated_at)).toBeInstanceOf(Date);
+        expect(admin?.created_at).toBeDefined();
+        expect(admin?.updated_at).toBeDefined();
+        expect(new Date(admin?.created_at as string | number | Date)).toBeInstanceOf(Date);
+        expect(new Date(admin?.updated_at as string | number | Date)).toBeInstanceOf(Date);
       });
     });
 
@@ -314,17 +315,15 @@ describeFn("database seeds", () => {
 });
 
 if (!isDatabaseAvailable) {
-  test.skip(
-    "Database unavailable. Set TEST_DATABASE_URL or start a local Postgres instance before running seed tests.",
-    () => undefined,
-  );
+  test.skip("Database unavailable. Set TEST_DATABASE_URL or start a local Postgres instance before running seed tests.", () =>
+    undefined);
 }
 
 async function ensureDatabaseExtensions(admin: knex.Knex): Promise<void> {
   await admin.raw('CREATE EXTENSION IF NOT EXISTS "pgcrypto";');
   try {
     await admin.raw('CREATE EXTENSION IF NOT EXISTS "citext";');
-  } catch (error) {
+  } catch {
     await admin.raw(`
       DO $$
       BEGIN
@@ -397,17 +396,31 @@ function checkDatabaseAvailability(connectionString: string): boolean {
   const probeScript = `
 const knex = require('knex');
 (async () => {
-  const client = knex({
-    client: 'pg',
-    connection: process.env.__TEST_DB_CONN__,
-    pool: { min: 0, max: 1 },
-  });
+  let client;
   try {
+    client = knex({
+      client: 'pg',
+      connection: process.env.__TEST_DB_CONN__,
+      pool: { min: 0, max: 1 },
+      acquireConnectionTimeout: 2000,
+    });
+    
+    // Set a timeout for the connection attempt
+    const timeout = setTimeout(() => {
+      if (client) {
+        client.destroy().catch(() => undefined);
+      }
+      process.exit(1);
+    }, 3000);
+    
     await client.raw('select 1');
+    clearTimeout(timeout);
     await client.destroy();
     process.exit(0);
   } catch (error) {
-    await client.destroy().catch(() => undefined);
+    if (client) {
+      await client.destroy().catch(() => undefined);
+    }
     process.exit(1);
   }
 })();`;
@@ -415,7 +428,14 @@ const knex = require('knex');
   const result = spawnSync(process.execPath, ["-e", probeScript], {
     env: { ...process.env, __TEST_DB_CONN__: connectionString },
     stdio: "ignore",
+    timeout: 5000, // 5 second timeout for the entire spawn
+    killSignal: "SIGTERM", // Ensure process is killed on timeout
   });
+
+  // If the process was killed due to timeout, ensure it's terminated
+  if (result.signal) {
+    return false;
+  }
 
   return result.status === 0;
 }

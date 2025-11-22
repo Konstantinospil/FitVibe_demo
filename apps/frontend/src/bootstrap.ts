@@ -6,6 +6,9 @@ const PUBLIC_ROUTES = new Set<string>([
   "/reset-password",
   "/login/verify-2fa",
   "/verify",
+  "/terms",
+  "/privacy",
+  "/terms-reacceptance",
 ]);
 const AUTH_STORAGE_KEY = "fitvibe:auth";
 

@@ -110,9 +110,25 @@
     }
   },
   "footer": {
-    "note": "Für Athletinnen und Athleten, die datengetriebenen Fortschritt lieben — Fitvibe"
+    "note": "Für Athletinnen und Athleten, die datengetriebenen Fortschritt lieben — Fitvibe",
+    "terms": "Allgemeine Geschäftsbedingungen",
+    "privacy": "Datenschutzerklärung"
+  },
+  "terms": {
+    "eyebrow": "Rechtliches",
+    "title": "Allgemeine Geschäftsbedingungen",
+    "description": "Bitte lesen Sie unsere Allgemeinen Geschäftsbedingungen sorgfältig, bevor Sie FitVibe verwenden.",
+    "effectiveDate": "Gültigkeitsdatum"
+  },
+  "privacy": {
+    "eyebrow": "Rechtliches",
+    "title": "Datenschutzerklärung",
+    "description": "Erfahren Sie, wie wir Ihre persönlichen Daten sammeln, verwenden und schützen.",
+    "effectiveDate": "Gültigkeitsdatum"
   },
   "errors": {
+    "TERMS_ACCEPTANCE_REQUIRED": "Sie müssen die Allgemeinen Geschäftsbedingungen und die Datenschutzerklärung akzeptieren, um ein Konto zu erstellen",
+    "TERMS_VERSION_OUTDATED": "Die Allgemeinen Geschäftsbedingungen wurden aktualisiert. Bitte akzeptieren Sie die neuen Bedingungen, um fortzufahren.",
     "WEAK_PASSWORD": "Passwort muss mindestens 12 Zeichen lang sein und Großbuchstaben, Kleinbuchstaben, Ziffern und Sonderzeichen enthalten",
     "PASSWORD_CONTAINS_USERNAME": "Passwort darf deinen Benutzernamen nicht enthalten",
     "PASSWORD_CONTAINS_EMAIL": "Passwort darf deine E-Mail-Adresse nicht enthalten",

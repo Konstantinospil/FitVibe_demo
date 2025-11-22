@@ -108,12 +108,15 @@ describe("Logs Service", () => {
       const mockLogs: AuditLogEntry[] = [
         {
           id: "log-1",
-          userId: "admin-1",
-          action: "user.status.updated",
-          resourceType: "user",
-          resourceId: "user-2",
+          actorUserId: "admin-1",
+          actorUsername: "admin",
+          entityType: "user",
+          action: "user_suspended",
+          entityId: "user-2",
+          outcome: "success",
+          requestId: "req-1",
           metadata: {},
-          createdAt: new Date(),
+          createdAt: new Date().toISOString(),
         },
       ];
 

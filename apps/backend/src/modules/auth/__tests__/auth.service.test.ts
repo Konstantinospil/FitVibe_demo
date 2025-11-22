@@ -137,6 +137,7 @@ describe("Auth Service", () => {
       email: "test@example.com",
       username: "testuser",
       password: "SecureP@ssw0rd123",
+      terms_accepted: true,
       profile: {
         display_name: "Test User",
       },
@@ -160,6 +161,9 @@ describe("Auth Service", () => {
         status: "pending_verification",
         created_at: "2024-01-01T00:00:00Z",
         password_hash: "hashed-password",
+        terms_accepted: true,
+        terms_accepted_at: new Date().toISOString(),
+        terms_version: "2024-06-01",
       } as AuthUserRecord);
 
       mockMailer.send.mockResolvedValue(undefined);
@@ -171,8 +175,28 @@ describe("Auth Service", () => {
       expect(result.user?.email).toBe("test@example.com");
       expect(result.user?.username).toBe("testuser");
       expect(mockAuthRepo.createUser).toHaveBeenCalled();
+      expect(mockAuthRepo.createUser).toHaveBeenCalledWith(
+        expect.objectContaining({
+          terms_accepted: true,
+          terms_accepted_at: expect.any(String),
+          terms_version: expect.any(String),
+        }),
+      );
       // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(mockMailer.send).toHaveBeenCalled();
+    });
+
+    it("should reject registration without terms acceptance", async () => {
+      const invalidDto: RegisterDTO = {
+        ...validRegisterDto,
+        terms_accepted: false,
+      };
+
+      await expect(() => authService.register(invalidDto)).rejects.toThrow(HttpError);
+      await expect(() => authService.register(invalidDto)).rejects.toThrow(
+        "TERMS_ACCEPTANCE_REQUIRED",
+      );
+      expect(mockAuthRepo.createUser).not.toHaveBeenCalled();
     });
 
     it("should resend verification email if user exists with pending_verification status", async () => {
@@ -367,6 +391,9 @@ describe("Auth Service", () => {
         status: "active",
         created_at: "2024-01-01T00:00:00Z",
         password_hash: "hashed-password",
+        terms_accepted: true,
+        terms_accepted_at: new Date().toISOString(),
+        terms_version: "2024-06-01",
       };
 
       mockAuthRepo.findUserByEmail.mockResolvedValue(mockUser);
@@ -387,6 +414,30 @@ describe("Auth Service", () => {
       }
       expect(mockAuthRepo.createAuthSession).toHaveBeenCalled();
       expect(mockAuthRepo.insertRefreshToken).toHaveBeenCalled();
+    });
+
+    it("should reject login if terms version is outdated", async () => {
+      const mockUser: AuthUserRecord = {
+        id: "user-123",
+        username: "testuser",
+        primary_email: "test@example.com",
+        role_code: "athlete",
+        status: "active",
+        created_at: "2024-01-01T00:00:00Z",
+        password_hash: "hashed-password",
+        terms_accepted: true,
+        terms_accepted_at: new Date().toISOString(),
+        terms_version: "2024-01-01", // Old version
+      };
+
+      mockAuthRepo.findUserByEmail.mockResolvedValue(mockUser);
+      mockBcrypt.compare.mockResolvedValue(true as never);
+
+      await expect(authService.login(validLoginDto, loginContext)).rejects.toThrow(HttpError);
+      await expect(authService.login(validLoginDto, loginContext)).rejects.toThrow(
+        "TERMS_VERSION_OUTDATED",
+      );
+      expect(mockAuthRepo.createAuthSession).not.toHaveBeenCalled();
     });
 
     it("should throw error if user not found", async () => {
@@ -428,6 +479,9 @@ describe("Auth Service", () => {
         status: "active",
         created_at: "2024-01-01T00:00:00Z",
         password_hash: "hashed-password",
+        terms_accepted: true,
+        terms_accepted_at: new Date().toISOString(),
+        terms_version: "2024-06-01",
       };
 
       mockAuthRepo.findUserByEmail.mockResolvedValue(mockUser);
@@ -479,6 +533,9 @@ describe("Auth Service", () => {
         status: "active",
         created_at: "2024-01-01T00:00:00Z",
         password_hash: "hashed-password",
+        terms_accepted: true,
+        terms_accepted_at: new Date().toISOString(),
+        terms_version: "2024-06-01",
       };
 
       mockJwt.verify.mockReturnValue(mockPayload as never);
@@ -497,6 +554,55 @@ describe("Auth Service", () => {
       expect(result.accessToken).toBe("new-token");
       expect(mockAuthRepo.revokeRefreshByHash).toHaveBeenCalled();
       expect(mockAuthRepo.insertRefreshToken).toHaveBeenCalled();
+    });
+
+    it("should reject refresh if terms version is outdated", async () => {
+      const mockPayload = {
+        sub: "user-123",
+        sid: mockSessionId,
+        typ: "refresh",
+      };
+
+      const mockRefreshRecord = {
+        id: "refresh-123",
+        user_id: "user-123",
+        token_hash: "mock-hash",
+        session_jti: mockSessionId,
+        expires_at: new Date(Date.now() + 60000).toISOString(),
+        created_at: "2024-01-01T00:00:00Z",
+        revoked_at: null,
+      };
+
+      const mockSession = {
+        jti: mockSessionId,
+        user_id: "user-123",
+        user_agent: "Mozilla/5.0",
+        ip: "127.0.0.1",
+        created_at: "2024-01-01T00:00:00Z",
+        expires_at: new Date(Date.now() + 60000).toISOString(),
+        revoked_at: null,
+      };
+
+      const mockUser: AuthUserRecord = {
+        id: "user-123",
+        username: "testuser",
+        primary_email: "test@example.com",
+        role_code: "athlete",
+        status: "active",
+        created_at: "2024-01-01T00:00:00Z",
+        password_hash: "hashed-password",
+        terms_accepted: true,
+        terms_accepted_at: new Date().toISOString(),
+        terms_version: "2024-01-01", // Old version
+      };
+
+      mockJwt.verify.mockReturnValue(mockPayload as never);
+      mockAuthRepo.getRefreshByHash.mockResolvedValue(mockRefreshRecord);
+      mockAuthRepo.findSessionById.mockResolvedValue(mockSession);
+      mockAuthRepo.findUserById.mockResolvedValue(mockUser);
+
+      await expect(authService.refresh(mockRefreshToken)).rejects.toThrow(HttpError);
+      await expect(authService.refresh(mockRefreshToken)).rejects.toThrow("TERMS_VERSION_OUTDATED");
     });
 
     it("should throw error if refresh token is invalid", async () => {
@@ -975,6 +1081,34 @@ describe("Auth Service", () => {
       );
       await expect(authService.revokeSessions("user-123", { revokeOthers: true })).rejects.toThrow(
         "Current session id required",
+      );
+    });
+  });
+
+  describe("acceptTerms", () => {
+    const userId = "user-123";
+
+    it("should accept terms and update user record", async () => {
+      const mockDb = await import("../../../db/index.js");
+      const mockUpdate = jest.fn().mockResolvedValue(1);
+      const mockWhere = jest.fn().mockReturnValue({
+        update: mockUpdate,
+      });
+      (mockDb.db as jest.Mock).mockReturnValue({
+        where: mockWhere,
+      });
+
+      await authService.acceptTerms(userId);
+
+      expect(mockDb.db).toHaveBeenCalledWith("users");
+      expect(mockWhere).toHaveBeenCalledWith({ id: userId });
+      expect(mockUpdate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          terms_accepted: true,
+          terms_accepted_at: expect.any(String),
+          terms_version: expect.any(String),
+          updated_at: expect.any(String),
+        }),
       );
     });
   });

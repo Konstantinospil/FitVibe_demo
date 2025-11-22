@@ -72,6 +72,11 @@ const TwoFactorVerificationLogin: React.FC = () => {
         const axiosError = err as { response?: { data?: { error?: { code?: string } } } };
         const errorCode = axiosError.response?.data?.error?.code;
 
+        if (errorCode === "TERMS_VERSION_OUTDATED") {
+          navigate("/terms-reacceptance", { replace: true });
+          return;
+        }
+
         if (errorCode === "AUTH_INVALID_2FA_CODE") {
           setError(t("auth.twoFactor.invalidCode") || "Invalid 2FA code. Please try again.");
         } else if (errorCode === "AUTH_2FA_SESSION_EXPIRED") {

@@ -6,6 +6,7 @@ import { describe, it, expect, jest, beforeEach } from "@jest/globals";
 import type { Request, Response } from "express";
 import * as controller from "../logs.controller";
 import * as service from "../logs.service";
+import type { AuditLogEntry } from "../logs.types";
 
 // Mock the service
 jest.mock("../logs.service", () => ({
@@ -36,12 +37,15 @@ describe("Logs Controller", () => {
       const mockLogs = [
         {
           id: "log-1",
-          userId: "user-1",
+          actorUserId: "user-1",
+          actorUsername: "testuser",
+          entityType: "user",
           action: "user.login",
-          resourceType: "user",
-          resourceId: "user-1",
+          entityId: "user-1",
+          outcome: "success",
+          requestId: "req-1",
           metadata: {},
-          createdAt: new Date(),
+          createdAt: new Date().toISOString(),
         },
       ];
 
@@ -53,22 +57,71 @@ describe("Logs Controller", () => {
 
       await controller.listLogsHandler(mockReq as Request, mockRes as Response);
 
-      expect(service.listLogs).toHaveBeenCalled();
+      expect(service.listLogs).toHaveBeenCalledWith({
+        limit: 10,
+        offset: 0,
+      });
       expect(jsonMock).toHaveBeenCalledWith({ logs: mockLogs });
+    });
+
+    it("should parse query parameters correctly", async () => {
+      const mockLogs: AuditLogEntry[] = [];
+      jest.mocked(service.listLogs).mockResolvedValue(mockLogs);
+
+      mockReq = {
+        query: {
+          action: "user.login",
+          entityType: "user",
+          actorUserId: "user-123",
+          outcome: "success",
+          limit: "25",
+          offset: "5",
+        },
+      };
+
+      await controller.listLogsHandler(mockReq as Request, mockRes as Response);
+
+      expect(service.listLogs).toHaveBeenCalledWith({
+        action: "user.login",
+        entityType: "user",
+        actorUserId: "user-123",
+        outcome: "success",
+        limit: 25,
+        offset: 5,
+      });
+    });
+
+    it("should use default values when query params are missing", async () => {
+      const mockLogs: AuditLogEntry[] = [];
+      jest.mocked(service.listLogs).mockResolvedValue(mockLogs);
+
+      mockReq = {
+        query: {},
+      };
+
+      await controller.listLogsHandler(mockReq as Request, mockRes as Response);
+
+      expect(service.listLogs).toHaveBeenCalledWith({
+        limit: 100,
+        offset: 0,
+      });
     });
   });
 
   describe("recentActivityHandler", () => {
     it("should return recent admin activity", async () => {
-      const mockLogs = [
+      const mockLogs: AuditLogEntry[] = [
         {
           id: "log-1",
-          userId: "admin-1",
-          action: "user.status.updated",
-          resourceType: "user",
-          resourceId: "user-2",
+          actorUserId: "admin-1",
+          actorUsername: "admin",
+          entityType: "user",
+          action: "user_suspended",
+          entityId: "user-2",
+          outcome: "success",
+          requestId: "req-1",
           metadata: {},
-          createdAt: new Date(),
+          createdAt: new Date().toISOString(),
         },
       ];
 
@@ -81,6 +134,20 @@ describe("Logs Controller", () => {
       await controller.recentActivityHandler(mockReq as Request, mockRes as Response);
 
       expect(service.getRecentActivity).toHaveBeenCalledWith(5);
+      expect(jsonMock).toHaveBeenCalledWith({ activity: mockLogs });
+    });
+
+    it("should use default limit when not provided", async () => {
+      const mockLogs: AuditLogEntry[] = [];
+      jest.mocked(service.getRecentActivity).mockResolvedValue(mockLogs);
+
+      mockReq = {
+        query: {},
+      };
+
+      await controller.recentActivityHandler(mockReq as Request, mockRes as Response);
+
+      expect(service.getRecentActivity).toHaveBeenCalledWith(20);
       expect(jsonMock).toHaveBeenCalledWith({ activity: mockLogs });
     });
   });

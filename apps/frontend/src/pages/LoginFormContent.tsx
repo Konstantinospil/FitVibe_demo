@@ -62,7 +62,18 @@ const LoginFormContent: React.FC = () => {
 
       signIn(response.user);
       navigate(from, { replace: true });
-    } catch {
+    } catch (err) {
+      // Handle terms version outdated error
+      if (err && typeof err === "object" && "response" in err) {
+        const axiosError = err as { response?: { data?: { error?: { code?: string } } } };
+        const errorCode = axiosError.response?.data?.error?.code;
+
+        if (errorCode === "TERMS_VERSION_OUTDATED") {
+          // Redirect to terms re-acceptance page
+          navigate("/terms-reacceptance", { replace: true });
+          return;
+        }
+      }
       setError(t("auth.login.error"));
     } finally {
       setIsSubmitting(false);

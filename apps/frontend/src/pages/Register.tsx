@@ -27,10 +27,17 @@ const Register: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setError(null);
+
+    // Check if terms are accepted
+    if (!acceptedTerms) {
+      setError(t("auth.register.termsRequired"));
+      return;
+    }
 
     // Check if passwords match
     if (password !== confirmPassword) {
@@ -48,6 +55,7 @@ const Register: React.FC = () => {
         email,
         password,
         username,
+        terms_accepted: acceptedTerms,
         profile: {
           display_name: name,
         },
@@ -260,6 +268,69 @@ const Register: React.FC = () => {
             </button>
           </div>
         </label>
+        <label
+          style={{
+            display: "flex",
+            alignItems: "flex-start",
+            gap: "0.75rem",
+            cursor: "pointer",
+            padding: "0.75rem",
+            borderRadius: "8px",
+            background: "var(--color-surface-glass)",
+            border:
+              error && !acceptedTerms
+                ? "1px solid rgba(248, 113, 113, 0.5)"
+                : "1px solid var(--color-border)",
+            transition: "border-color 150ms ease",
+          }}
+        >
+          <input
+            type="checkbox"
+            checked={acceptedTerms}
+            onChange={(e) => setAcceptedTerms(e.target.checked)}
+            required
+            disabled={isSubmitting}
+            style={{
+              marginTop: "0.2rem",
+              cursor: "pointer",
+              width: "18px",
+              height: "18px",
+              accentColor: "var(--color-accent)",
+            }}
+            aria-required="true"
+            aria-invalid={error && !acceptedTerms ? "true" : "false"}
+          />
+          <span
+            style={{ fontSize: "0.9rem", color: "var(--color-text-secondary)", lineHeight: 1.5 }}
+          >
+            {t("auth.register.acceptTerms")}{" "}
+            <NavLink
+              to="/terms"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                color: "var(--color-accent)",
+                textDecoration: "underline",
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              {t("auth.register.termsLink")}
+            </NavLink>{" "}
+            {t("auth.register.and")}{" "}
+            <NavLink
+              to="/privacy"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                color: "var(--color-accent)",
+                textDecoration: "underline",
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              {t("auth.register.privacyLink")}
+            </NavLink>
+          </span>
+        </label>
         {error ? (
           <div
             role="alert"
@@ -274,7 +345,12 @@ const Register: React.FC = () => {
             {error}
           </div>
         ) : null}
-        <Button type="submit" fullWidth isLoading={isSubmitting} disabled={isSubmitting}>
+        <Button
+          type="submit"
+          fullWidth
+          isLoading={isSubmitting}
+          disabled={isSubmitting || !acceptedTerms}
+        >
           {isSubmitting ? t("auth.register.submitting") : t("auth.register.submit")}
         </Button>
         <p

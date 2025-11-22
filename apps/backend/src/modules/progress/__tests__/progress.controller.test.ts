@@ -244,5 +244,161 @@ describe("progress.controller", () => {
       expect(res.status).toHaveBeenCalledWith(401);
       expect(mockedService.buildProgressReport).not.toHaveBeenCalled();
     });
+
+    it("returns 400 when query validation fails", async () => {
+      const { exportHandler } = await import("../progress.controller");
+      const req = createRequest({
+        query: { format: "invalid", period: "30" },
+      });
+      const res = createResponse();
+
+      await exportHandler(req, asResponse(res));
+
+      expect(res.status).toHaveBeenCalledWith(400);
+      expect(mockedService.buildProgressReport).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("summaryHandler", () => {
+    it("returns summary with default 30-day period", async () => {
+      const summary = {
+        period: 30,
+        sessions_completed: 5,
+        total_reps: 100,
+        total_volume: 5000,
+        total_duration_min: 120,
+        avg_volume_per_session: 1000,
+      };
+
+      mockedService.getSummary.mockResolvedValue(summary);
+
+      const { summaryHandler } = await import("../progress.controller");
+
+      const req = createRequest();
+      const res = createResponse();
+
+      await summaryHandler(req, asResponse(res));
+
+      expect(mockedService.getSummary).toHaveBeenCalledWith(USER_ID, 30);
+      expect(res.json).toHaveBeenCalledWith(summary);
+      expect(res.status).not.toHaveBeenCalled();
+    });
+
+    it("accepts custom period parameter", async () => {
+      const summary = {
+        period: 7,
+        sessions_completed: 2,
+        total_reps: 40,
+        total_volume: 2000,
+        total_duration_min: 50,
+        avg_volume_per_session: 1000,
+      };
+
+      mockedService.getSummary.mockResolvedValue(summary);
+
+      const { summaryHandler } = await import("../progress.controller");
+
+      const req = createRequest({ query: { period: "7" } });
+      const res = createResponse();
+
+      await summaryHandler(req, asResponse(res));
+
+      expect(mockedService.getSummary).toHaveBeenCalledWith(USER_ID, 7);
+      expect(res.json).toHaveBeenCalledWith(summary);
+    });
+
+    it("returns 400 when period validation fails", async () => {
+      const { summaryHandler } = await import("../progress.controller");
+
+      const req = createRequest({ query: { period: "invalid" } });
+      const res = createResponse();
+
+      await summaryHandler(req, asResponse(res));
+
+      expect(res.status).toHaveBeenCalledWith(400);
+      expect(mockedService.getSummary).not.toHaveBeenCalled();
+    });
+
+    it("returns 401 when user is not authenticated", async () => {
+      const { summaryHandler } = await import("../progress.controller");
+
+      const req = createRequest({ user: undefined });
+      const res = createResponse();
+
+      await summaryHandler(req, asResponse(res));
+
+      expect(res.status).toHaveBeenCalledWith(401);
+      expect(mockedService.getSummary).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("trendsHandler", () => {
+    it("returns trends with default parameters", async () => {
+      const trends = {
+        period: 30,
+        group_by: "day",
+        data: [
+          { date: "2025-01-01", sessions: 1, volume: 1000 },
+          { date: "2025-01-02", sessions: 2, volume: 2000 },
+        ],
+      };
+
+      mockedService.getTrends.mockResolvedValue(trends);
+
+      const { trendsHandler } = await import("../progress.controller");
+
+      const req = createRequest();
+      const res = createResponse();
+
+      await trendsHandler(req, asResponse(res));
+
+      expect(mockedService.getTrends).toHaveBeenCalledWith(USER_ID, 30, "day");
+      expect(res.json).toHaveBeenCalledWith(trends);
+      expect(res.status).not.toHaveBeenCalled();
+    });
+
+    it("accepts custom period and group_by parameters", async () => {
+      const trends = {
+        period: 90,
+        group_by: "week",
+        data: [],
+      };
+
+      mockedService.getTrends.mockResolvedValue(trends);
+
+      const { trendsHandler } = await import("../progress.controller");
+
+      const req = createRequest({ query: { period: "90", group_by: "week" } });
+      const res = createResponse();
+
+      await trendsHandler(req, asResponse(res));
+
+      expect(mockedService.getTrends).toHaveBeenCalledWith(USER_ID, 90, "week");
+      expect(res.json).toHaveBeenCalledWith(trends);
+    });
+
+    it("returns 400 when validation fails", async () => {
+      const { trendsHandler } = await import("../progress.controller");
+
+      const req = createRequest({ query: { period: "invalid", group_by: "day" } });
+      const res = createResponse();
+
+      await trendsHandler(req, asResponse(res));
+
+      expect(res.status).toHaveBeenCalledWith(400);
+      expect(mockedService.getTrends).not.toHaveBeenCalled();
+    });
+
+    it("returns 401 when user is not authenticated", async () => {
+      const { trendsHandler } = await import("../progress.controller");
+
+      const req = createRequest({ user: undefined });
+      const res = createResponse();
+
+      await trendsHandler(req, asResponse(res));
+
+      expect(res.status).toHaveBeenCalledWith(401);
+      expect(mockedService.getTrends).not.toHaveBeenCalled();
+    });
   });
 });

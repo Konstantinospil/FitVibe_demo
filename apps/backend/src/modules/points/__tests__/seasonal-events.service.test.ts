@@ -336,9 +336,13 @@ describe("seasonal-events.service", () => {
     it("should check for existing bonus using correct query", async () => {
       jest.setSystemTime(new Date("2025-01-15T12:00:00Z"));
 
-      mockQueryBuilder.first.mockResolvedValue({
-        count: "12",
-      });
+      // Mock first() to return undefined for hasReceivedEventBonus (no existing bonus)
+      // and { count: "12" } for countEventSessions
+      mockQueryBuilder.first
+        .mockResolvedValueOnce(undefined) // hasReceivedEventBonus returns undefined (no existing bonus)
+        .mockResolvedValueOnce({
+          count: "12",
+        }); // countEventSessions returns count
 
       await evaluateSeasonalEvents("user-123", "session-123", new Date("2025-01-15T12:00:00Z"));
 

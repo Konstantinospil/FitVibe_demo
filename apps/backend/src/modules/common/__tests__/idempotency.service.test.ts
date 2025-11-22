@@ -110,6 +110,23 @@ describe("idempotency.service", () => {
     await expect(resolveIdempotency(context, payload)).rejects.toBeInstanceOf(HttpError);
   });
 
+  it("handles race condition when retry insert returns empty", async () => {
+    const payload = { foo: "bar" };
+    dbMock
+      .mockReturnValueOnce({
+        insert: () => buildInsertBuilder([]),
+      } as unknown)
+      .mockReturnValueOnce({
+        where: () => buildWhereBuilder(undefined),
+      } as unknown)
+      .mockReturnValueOnce({
+        insert: () => buildInsertBuilder([]), // retry also returns empty
+      } as unknown);
+
+    await expect(resolveIdempotency(context, payload)).rejects.toBeInstanceOf(HttpError);
+    await expect(resolveIdempotency(context, payload)).rejects.toThrow("IDEMPOTENCY_STATE");
+  });
+
   it("persists mutation results", async () => {
     const update = jest.fn().mockResolvedValue(1);
     dbMock.mockReturnValueOnce({
@@ -124,5 +141,83 @@ describe("idempotency.service", () => {
         response_body: { id: "session-99" },
       }),
     );
+  });
+
+  it("returns pending when record exists but no response yet", async () => {
+    const payload = { foo: "bar" };
+    const sanitize = (_: string, value: unknown): unknown => (value === undefined ? null : value);
+    const sameHash = createHash("sha256")
+      .update(JSON.stringify(payload, sanitize) ?? "null")
+      .digest("hex");
+
+    dbMock
+      .mockReturnValueOnce({
+        insert: () => buildInsertBuilder([]),
+      } as unknown)
+      .mockReturnValueOnce({
+        where: () =>
+          buildWhereBuilder({
+            id: "rec-5",
+            request_hash: sameHash,
+            response_status: null,
+            response_body: null,
+          }),
+      } as unknown);
+
+    const result = await resolveIdempotency(context, payload);
+
+    expect(result).toEqual({ type: "pending", recordId: "rec-5" });
+  });
+
+  it("returns pending when record exists with null response_status but non-null response_body", async () => {
+    const payload = { foo: "bar" };
+    const sanitize = (_: string, value: unknown): unknown => (value === undefined ? null : value);
+    const sameHash = createHash("sha256")
+      .update(JSON.stringify(payload, sanitize) ?? "null")
+      .digest("hex");
+
+    dbMock
+      .mockReturnValueOnce({
+        insert: () => buildInsertBuilder([]),
+      } as unknown)
+      .mockReturnValueOnce({
+        where: () =>
+          buildWhereBuilder({
+            id: "rec-6",
+            request_hash: sameHash,
+            response_status: null,
+            response_body: { partial: "data" },
+          }),
+      } as unknown);
+
+    const result = await resolveIdempotency(context, payload);
+
+    expect(result).toEqual({ type: "pending", recordId: "rec-6" });
+  });
+
+  it("returns pending when record exists with non-null response_status but null response_body", async () => {
+    const payload = { foo: "bar" };
+    const sanitize = (_: string, value: unknown): unknown => (value === undefined ? null : value);
+    const sameHash = createHash("sha256")
+      .update(JSON.stringify(payload, sanitize) ?? "null")
+      .digest("hex");
+
+    dbMock
+      .mockReturnValueOnce({
+        insert: () => buildInsertBuilder([]),
+      } as unknown)
+      .mockReturnValueOnce({
+        where: () =>
+          buildWhereBuilder({
+            id: "rec-7",
+            request_hash: sameHash,
+            response_status: 200,
+            response_body: null,
+          }),
+      } as unknown);
+
+    const result = await resolveIdempotency(context, payload);
+
+    expect(result).toEqual({ type: "pending", recordId: "rec-7" });
   });
 });

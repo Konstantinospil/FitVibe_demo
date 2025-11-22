@@ -53,6 +53,7 @@ import type {
 } from "./auth.types.js";
 import type { AuthUserRecord } from "./auth.repository.js";
 import { env, RSA_KEYS } from "../../config/env.js";
+import { getCurrentTermsVersion, isTermsVersionOutdated } from "../../config/terms.js";
 import { HttpError } from "../../utils/http.js";
 import { assertPasswordPolicy } from "./passwordPolicy.js";
 import { incrementRefreshReuse } from "../../observability/metrics.js";
@@ -232,8 +233,15 @@ export async function register(
       throw new HttpError(409, "AUTH_CONFLICT", "AUTH_CONFLICT");
     }
 
+    // Validate terms acceptance
+    if (!dto.terms_accepted) {
+      throw new HttpError(400, "TERMS_ACCEPTANCE_REQUIRED", "TERMS_ACCEPTANCE_REQUIRED");
+    }
+
     const id = uuidv4();
     const password_hash = await bcrypt.hash(dto.password, 12);
+    const now = new Date().toISOString();
+    const termsVersion = getCurrentTermsVersion();
 
     await createUser({
       id,
@@ -243,6 +251,9 @@ export async function register(
       role_code: "athlete",
       password_hash,
       primaryEmail: email,
+      terms_accepted: true,
+      terms_accepted_at: now,
+      terms_version: termsVersion,
     });
 
     const verificationToken = await issueAuthToken(
@@ -409,6 +420,11 @@ export async function login(
     // Successful password authentication - reset failed attempts
     await resetFailedAttempts(identifier, ipAddress);
 
+    // Check if user has accepted current terms version
+    if (isTermsVersionOutdated(user.terms_version)) {
+      throw new HttpError(403, "TERMS_VERSION_OUTDATED", "TERMS_VERSION_OUTDATED");
+    }
+
     // Check if user has 2FA enabled
     const has2FA = await is2FAEnabled(user.id);
     if (has2FA) {
@@ -556,6 +572,11 @@ export async function verify2FALogin(
     throw new HttpError(401, "AUTH_INVALID_USER", "User not found or inactive");
   }
 
+  // Check if user has accepted current terms version
+  if (isTermsVersionOutdated(user.terms_version)) {
+    throw new HttpError(403, "TERMS_VERSION_OUTDATED", "TERMS_VERSION_OUTDATED");
+  }
+
   // Create full session and issue tokens
   const sessionId = uuidv4();
   const issuedAtIso = new Date().toISOString();
@@ -682,6 +703,11 @@ export async function refresh(
     const user = await findUserById(decoded.sub);
     if (!user || user.status !== "active") {
       throw new HttpError(401, "AUTH_USER_NOT_FOUND", "User not found");
+    }
+
+    // Check if user has accepted current terms version
+    if (isTermsVersionOutdated(user.terms_version)) {
+      throw new HttpError(403, "TERMS_VERSION_OUTDATED", "TERMS_VERSION_OUTDATED");
     }
 
     await revokeRefreshByHash(token_hash);
@@ -942,4 +968,21 @@ export async function revokeSessions(
   }
 
   return { revoked: revokedCount };
+}
+
+export async function acceptTerms(userId: string): Promise<void> {
+  const now = new Date().toISOString();
+  const termsVersion = getCurrentTermsVersion();
+
+  await db("users").where({ id: userId }).update({
+    terms_accepted: true,
+    terms_accepted_at: now,
+    terms_version: termsVersion,
+    updated_at: now,
+  });
+
+  await recordAuditEvent(userId, "auth.terms_accepted", {
+    termsVersion,
+    acceptedAt: now,
+  });
 }

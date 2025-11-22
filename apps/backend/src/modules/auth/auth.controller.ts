@@ -10,6 +10,7 @@ import {
   resetPassword as doResetPassword,
   listSessions as doListSessions,
   revokeSessions as doRevokeSessions,
+  acceptTerms as doAcceptTerms,
 } from "./auth.service.js";
 import { env, JWKS } from "../../config/env.js";
 import {
@@ -19,6 +20,7 @@ import {
   ForgotPasswordSchema,
   ResetPasswordSchema,
   RevokeSessionsSchema,
+  AcceptTermsSchema,
 } from "./auth.schemas.js";
 import type { z } from "zod";
 import type { LoginContext } from "./auth.types.js";
@@ -426,6 +428,22 @@ export async function revokeSessions(
     }
 
     res.json({ revoked: result.revoked });
+    return;
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function acceptTerms(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    const authUser = getAuthenticatedUser(req);
+    const userId = authUser?.sub;
+    if (!userId) {
+      throw new HttpError(401, "UNAUTHENTICATED", "UNAUTHENTICATED");
+    }
+    AcceptTermsSchema.parse(req.body); // Validate payload
+    await doAcceptTerms(userId);
+    res.status(200).json({ message: "Terms accepted successfully" });
     return;
   } catch (error) {
     next(error);

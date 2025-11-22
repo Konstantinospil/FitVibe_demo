@@ -144,74 +144,90 @@ describe("timing.utils", () => {
   describe("withNormalizedTiming", () => {
     it("should execute function and normalize timing", async () => {
       jest.useRealTimers();
-      const mockFn = jest.fn().mockImplementation(async () => {
-        await new Promise((resolve) => setTimeout(resolve, 50));
-        return "result";
-      });
-      mockedCrypto.randomInt.mockReturnValue(0);
+      try {
+        const mockFn = jest.fn().mockImplementation(async () => {
+          await new Promise((resolve) => setTimeout(resolve, 50));
+          return "result";
+        });
+        mockedCrypto.randomInt.mockReturnValue(0);
 
-      const startTime = Date.now();
-      const result = await withNormalizedTiming(mockFn, 300);
-      const duration = Date.now() - startTime;
+        const startTime = Date.now();
+        const result = await withNormalizedTiming(mockFn, 300);
+        const duration = Date.now() - startTime;
 
-      expect(result).toBe("result");
-      expect(mockFn).toHaveBeenCalledTimes(1);
-      // Should take at least 300ms due to normalization
-      expect(duration).toBeGreaterThanOrEqual(290);
+        expect(result).toBe("result");
+        expect(mockFn).toHaveBeenCalledTimes(1);
+        // Should take at least 300ms due to normalization
+        expect(duration).toBeGreaterThanOrEqual(290);
+      } finally {
+        jest.useFakeTimers();
+      }
     });
 
     it("should normalize timing even when function throws", async () => {
       jest.useRealTimers();
-      const mockFn = jest.fn().mockImplementation(async () => {
-        await new Promise((resolve) => setTimeout(resolve, 50));
-        throw new Error("Test error");
-      });
-      mockedCrypto.randomInt.mockReturnValue(0);
+      try {
+        const mockFn = jest.fn().mockImplementation(async () => {
+          await new Promise((resolve) => setTimeout(resolve, 50));
+          throw new Error("Test error");
+        });
+        mockedCrypto.randomInt.mockReturnValue(0);
 
-      const startTime = Date.now();
-      await expect(withNormalizedTiming(mockFn, 300)).rejects.toThrow("Test error");
-      const duration = Date.now() - startTime;
+        const startTime = Date.now();
+        await expect(withNormalizedTiming(mockFn, 300)).rejects.toThrow("Test error");
+        const duration = Date.now() - startTime;
 
-      expect(mockFn).toHaveBeenCalledTimes(1);
-      // Should take at least 300ms due to normalization
-      expect(duration).toBeGreaterThanOrEqual(290);
+        expect(mockFn).toHaveBeenCalledTimes(1);
+        // Should take at least 300ms due to normalization
+        expect(duration).toBeGreaterThanOrEqual(290);
+      } finally {
+        jest.useFakeTimers();
+      }
     });
 
     it("should use default minimum time when not specified", async () => {
       jest.useRealTimers();
-      const mockFn = jest.fn().mockImplementation(async () => {
-        await new Promise((resolve) => setTimeout(resolve, 50));
-        return "result";
-      });
-      mockedCrypto.randomInt.mockReturnValue(0);
+      try {
+        const mockFn = jest.fn().mockImplementation(async () => {
+          await new Promise((resolve) => setTimeout(resolve, 50));
+          return "result";
+        });
+        mockedCrypto.randomInt.mockReturnValue(0);
 
-      const startTime = Date.now();
-      await withNormalizedTiming(mockFn);
-      const duration = Date.now() - startTime;
+        const startTime = Date.now();
+        await withNormalizedTiming(mockFn);
+        const duration = Date.now() - startTime;
 
-      expect(mockFn).toHaveBeenCalledTimes(1);
-      // Should use default MIN_AUTH_OPERATION_TIME_MS (300ms)
-      expect(duration).toBeGreaterThanOrEqual(290);
+        expect(mockFn).toHaveBeenCalledTimes(1);
+        // Should use default MIN_AUTH_OPERATION_TIME_MS (300ms)
+        expect(duration).toBeGreaterThanOrEqual(290);
+      } finally {
+        jest.useFakeTimers();
+      }
     });
 
     it("should handle async function that takes longer than minimum", async () => {
       jest.useRealTimers();
-      const mockFn = jest.fn().mockImplementation(async () => {
-        await new Promise((resolve) => setTimeout(resolve, 400));
-        return "result";
-      });
-      mockedCrypto.randomInt.mockReturnValue(0);
+      try {
+        const mockFn = jest.fn().mockImplementation(async () => {
+          await new Promise((resolve) => setTimeout(resolve, 400));
+          return "result";
+        });
+        mockedCrypto.randomInt.mockReturnValue(0);
 
-      const startTime = Date.now();
-      const result = await withNormalizedTiming(mockFn, 300);
-      const duration = Date.now() - startTime;
+        const startTime = Date.now();
+        const result = await withNormalizedTiming(mockFn, 300);
+        const duration = Date.now() - startTime;
 
-      expect(result).toBe("result");
-      expect(mockFn).toHaveBeenCalledTimes(1);
-      // Should take at least 400ms (function time), but normalization should not add delay
-      expect(duration).toBeGreaterThanOrEqual(390);
-      // Allow slightly higher threshold (470ms) to account for test environment variability
-      expect(duration).toBeLessThan(470); // Should not add significant delay
+        expect(result).toBe("result");
+        expect(mockFn).toHaveBeenCalledTimes(1);
+        // Should take at least 400ms (function time), but normalization should not add delay
+        expect(duration).toBeGreaterThanOrEqual(390);
+        // Allow slightly higher threshold (470ms) to account for test environment variability
+        expect(duration).toBeLessThan(470); // Should not add significant delay
+      } finally {
+        jest.useFakeTimers();
+      }
     });
 
     it("should preserve function return value", async () => {
