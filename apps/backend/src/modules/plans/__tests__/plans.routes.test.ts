@@ -11,7 +11,7 @@ jest.mock("../../auth/auth.middleware", () => ({
   requireAccessToken: jest.fn((req: Request, res: Response, next: NextFunction) => next()),
 }));
 
-jest.mock("../../utils/async-handler", () => ({
+jest.mock("../../../utils/async-handler.js", () => ({
   asyncHandler: jest.fn((fn) => fn),
 }));
 

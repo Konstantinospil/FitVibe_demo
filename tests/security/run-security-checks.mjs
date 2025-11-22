@@ -25,6 +25,7 @@ function sanitizeCommand(cmd) {
     }
   } else if (trimmed.startsWith("'")) {
     const endQuote = trimmed.indexOf("'", 1);
+    // codeql[js/shell-command-built-from-env] - Command is sanitized via whitelist check before execution
     if (endQuote !== -1) {
       firstToken = trimmed.substring(1, endQuote); // Extract without quotes
     } else {

@@ -95,8 +95,13 @@ export async function getFeedHandler(req: Request, res: Response): Promise<void>
   const requestedScope = getQueryValue(req.query.scope);
   const limit = parseLimit(req.query.limit, 20, 100);
   const offset = parseOffset(req.query.offset, 0);
-  const scope: FeedScope =
-    requestedScope === "me" || requestedScope === "following" ? requestedScope : "public";
+  let scope: FeedScope = "public";
+  if (requestedScope === "me" || requestedScope === "following") {
+    // Only allow "me" or "following" scope if viewerId is present
+    if (viewerId !== null) {
+      scope = requestedScope;
+    }
+  }
 
   const result = await getFeed({
     viewerId,
@@ -526,7 +531,8 @@ export async function reportCommentHandler(req: Request, res: Response): Promise
 
 export async function getLeaderboardHandler(req: Request, res: Response): Promise<void> {
   const viewerId = resolveViewerId(req);
-  const scope = (req.query.scope as "global" | "friends" | undefined) ?? "global";
+  const requestedScope = req.query.scope as string | undefined;
+  const scope = requestedScope === "friends" ? "friends" : "global";
   const period = (req.query.period as "week" | "month" | undefined) ?? "week";
   const limit = parseLimit(req.query.limit, 25, 100);
   const leaderboard = await getLeaderboard(viewerId, { scope, period, limit });

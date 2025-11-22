@@ -32,6 +32,7 @@ function ensureSecret(req: CsrfRequest, res: Response): string {
     // The secret is stored in an HttpOnly cookie (not accessible to JavaScript),
     // sent only over HTTPS in production (secure flag), and uses SameSite to prevent CSRF.
     // This is the standard OWASP-recommended pattern and is NOT clear-text storage.
+    // codeql[js/clear-text-storage-of-sensitive-data] - HttpOnly + Secure + SameSite cookie is secure
     // lgtm[js/clear-text-storage-of-sensitive-data] - HttpOnly + Secure + SameSite cookie is secure
     res.cookie(CSRF_COOKIE_NAME, secret, {
       httpOnly: true, // Prevents JavaScript access (XSS protection)

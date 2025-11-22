@@ -1340,8 +1340,9 @@ describe("Feed Controller", () => {
 
       await feedController.getLeaderboardHandler(mockRequest as Request, mockResponse as Response);
 
-      expect(mockFeedService.getLeaderboard).toHaveBeenCalledWith({
-        viewerId: null,
+      expect(mockFeedService.getLeaderboard).toHaveBeenCalledWith(null, {
+        limit: 25,
+        period: "week",
         scope: "global",
       });
     });
@@ -1358,8 +1359,9 @@ describe("Feed Controller", () => {
 
       await feedController.getLeaderboardHandler(mockRequest as Request, mockResponse as Response);
 
-      expect(mockFeedService.getLeaderboard).toHaveBeenCalledWith({
-        viewerId: "user-123",
+      expect(mockFeedService.getLeaderboard).toHaveBeenCalledWith("user-123", {
+        limit: 25,
+        period: "week",
         scope: "friends",
       });
     });
@@ -1375,8 +1377,9 @@ describe("Feed Controller", () => {
 
       await feedController.getLeaderboardHandler(mockRequest as Request, mockResponse as Response);
 
-      expect(mockFeedService.getLeaderboard).toHaveBeenCalledWith({
-        viewerId: null,
+      expect(mockFeedService.getLeaderboard).toHaveBeenCalledWith(null, {
+        limit: 25,
+        period: "week",
         scope: "global",
       });
     });

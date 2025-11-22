@@ -75,6 +75,19 @@ jobs:
     environment:
       name: staging
     steps:
+      - name: Verify workflow run repository
+        if: github.event_name == 'workflow_run'
+        run: |
+          # SECURITY: Verify that the workflow run is from the same repository
+          # This prevents checkout of untrusted code from external repositories
+          if [ "${{ github.event.workflow_run.repository.full_name }}" != "${{ github.repository }}" ]; then
+            echo "❌ Security check failed: Workflow run is from a different repository"
+            echo "Expected: ${{ github.repository }}"
+            echo "Got: ${{ github.event.workflow_run.repository.full_name }}"
+            exit 1
+          fi
+          echo "✅ Repository verified: ${{ github.event.workflow_run.repository.full_name }}"
+
       - name: Checkout revision
         uses: actions/checkout@v4
         with:

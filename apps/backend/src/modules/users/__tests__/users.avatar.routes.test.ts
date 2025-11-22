@@ -16,7 +16,7 @@ jest.mock("../../common/rateLimiter.js", () => ({
   rateLimit: jest.fn(() => (req: Request, res: Response, next: NextFunction) => next()),
 }));
 
-jest.mock("../../utils/async-handler", () => ({
+jest.mock("../../../utils/async-handler.js", () => ({
   asyncHandler: jest.fn((fn) => fn),
 }));
 
@@ -24,6 +24,7 @@ jest.mock("multer", () => {
   const mockMulter = jest.fn(() => ({
     single: jest.fn(() => (req: Request, res: Response, next: NextFunction) => next()),
   }));
+  mockMulter.memoryStorage = jest.fn(() => ({}));
   return {
     __esModule: true,
     default: mockMulter,

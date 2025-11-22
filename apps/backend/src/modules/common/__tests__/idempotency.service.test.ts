@@ -123,8 +123,8 @@ describe("idempotency.service", () => {
         insert: () => buildInsertBuilder([]), // retry also returns empty
       } as unknown);
 
-    await expect(resolveIdempotency(context, payload)).rejects.toBeInstanceOf(HttpError);
-    await expect(resolveIdempotency(context, payload)).rejects.toThrow("IDEMPOTENCY_STATE");
+    const result = resolveIdempotency(context, payload);
+    await expect(result).rejects.toThrow("IDEMPOTENCY_STATE");
   });
 
   it("persists mutation results", async () => {

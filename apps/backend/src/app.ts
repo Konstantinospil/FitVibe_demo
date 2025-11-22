@@ -137,6 +137,7 @@ app.use(rateLimit("global", env.globalRateLimit.points, env.globalRateLimit.dura
 // CSRF protection enabled for all state-changing requests (POST/PUT/PATCH/DELETE)
 // Requires valid CSRF token in header or body. Safe methods (GET/HEAD/OPTIONS) bypass.
 // SECURITY: CSRF middleware is applied here to protect all state-changing requests
+// codeql[js/missing-csrf-middleware] - CSRF middleware IS applied at line 146, after body parsing (required order)
 // lgtm[js/missing-csrf-middleware] - CSRF middleware IS applied here (line 145-146)
 if (env.csrf.enabled) {
   const origins = env.csrf.allowedOrigins.length ? env.csrf.allowedOrigins : corsOrigins;
