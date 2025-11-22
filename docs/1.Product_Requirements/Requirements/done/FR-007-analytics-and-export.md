@@ -128,5 +128,16 @@ Each acceptance criterion must be met for this requirement to be considered comp
 ## Risks & Issues
 
 - **Risk**: Large exports may timeout
+  - **Mitigation**: Pagination, async job processing, progress indicators
 - **Risk**: Analytics calculation errors may mislead users
+  - **Mitigation**: Comprehensive testing, validation against DB-level checks
 - **Risk**: Privacy concerns with data export
+  - **Mitigation**: Private sessions excluded by default, explicit consent for inclusion
+
+## Open Questions
+
+- What is the maximum export size before requiring async processing?
+- Should there be scheduled exports (weekly/monthly)?
+- What analytics visualizations are needed (charts, graphs)?
+- Should analytics support comparison with previous periods?
+- What is the retention policy for exported data links?

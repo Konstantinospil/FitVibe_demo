@@ -9,7 +9,9 @@ The vector database enables semantic search over FitVibe documentation, allowing
 ## Components
 
 ### `vector_db.py`
+
 Core vector database implementation using ChromaDB:
+
 - **Model**: `paraphrase-multilingual-MiniLM-L12-v2` (multilingual sentence embeddings)
 - **Storage**: Persistent ChromaDB collection
 - **Features**:
@@ -20,7 +22,9 @@ Core vector database implementation using ChromaDB:
   - Result sanitization
 
 ### `load_vector_db.py`
+
 Script to load chunked documents from JSONL files:
+
 - Batch processing for efficiency
 - Skip existing documents (idempotent)
 - Category override support
@@ -28,13 +32,17 @@ Script to load chunked documents from JSONL files:
 - Progress logging
 
 ### `test_search.py`
+
 Simple test script to verify search functionality:
+
 - Quick query testing
 - Result preview
 - Basic validation
 
 ### `verify_search_quality.py`
+
 Comprehensive quality verification:
+
 - Ground truth validation
 - Category filter enforcement
 - Ranking consistency checks
@@ -110,11 +118,13 @@ results = db.search_by_category(
 ## Configuration
 
 ### Default Paths
+
 - **Persistence**: `.cursor/mcp/chromadb`
 - **Data Directory**: `.cursor/mcp/knowledge-base/data`
 - **Collection Name**: `fitvibe_knowledge`
 
 ### Environment Variables
+
 None required - all configuration is via script arguments or code.
 
 ## Data Format
@@ -138,6 +148,7 @@ Documents should be in JSONL format with the following structure:
 ## Integration with Agents
 
 The vector database can be used by agents to:
+
 - Search domain knowledge
 - Find code examples
 - Access standards and best practices
@@ -146,6 +157,7 @@ The vector database can be used by agents to:
 ## Quality Metrics
 
 The verification script checks:
+
 - **P@1**: Precision at rank 1 (top result relevance)
 - **Recall@k**: Percentage of expected documents found in top-k
 - **Latency**: Query response time (target: P95 < 800ms)
@@ -154,16 +166,19 @@ The verification script checks:
 ## Troubleshooting
 
 ### Model Loading Issues
+
 - Ensure `sentence-transformers` is installed
 - First load may take time to download the model
 - Use `lazy_model=True` for faster startup in tests
 
 ### ChromaDB Issues
+
 - Check persistence directory permissions
 - Clear and rebuild if collection is corrupted: `--reset`
 - Verify ChromaDB version compatibility
 
 ### Search Quality Issues
+
 - Run `verify_search_quality.py` to diagnose
 - Check if documents are properly loaded
 - Verify category metadata is correct
@@ -175,4 +190,3 @@ The verification script checks:
 - These scripts are utility tools for managing the knowledge base
 - For production use, consider adding these as MCP server tools
 - Results are sanitized to prevent prompt injection attacks
-

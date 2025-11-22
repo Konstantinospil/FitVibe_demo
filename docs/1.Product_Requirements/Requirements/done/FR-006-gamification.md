@@ -128,5 +128,16 @@ Each acceptance criterion must be met for this requirement to be considered comp
 ## Risks & Issues
 
 - **Risk**: Users may attempt to exploit points system
+  - **Mitigation**: Anti-gaming measures (bounds checking, device/IP heuristics, manual admin adjustments)
 - **Risk**: Badge criteria changes may frustrate users
+  - **Mitigation**: Clear communication and grandfathering where appropriate
 - **Risk**: Points calculation errors may reduce trust
+  - **Mitigation**: Comprehensive testing and property-based validation
+
+## Open Questions
+
+- What is the points formula? (Hidden from users per PRD)
+- What are the badge categories and criteria?
+- Should there be leaderboards for points?
+- How are points displayed to users (total, weekly, monthly)?
+- What is the strategy for handling points disputes?

@@ -137,5 +137,16 @@ Each acceptance criterion must be met for this requirement to be considered comp
 ## Risks & Issues
 
 - **Risk**: Data deletion may be incomplete
+  - **Mitigation**: Comprehensive deletion pipeline with verification and audit trail
 - **Risk**: Export delays may violate GDPR
+  - **Mitigation**: Job monitoring, alerting, and SLA enforcement
 - **Risk**: Log redaction may miss edge cases
+  - **Mitigation**: Automated PII scanning and manual audit processes
+
+## Open Questions
+
+- What is the retention policy for audit logs containing user actions?
+- How are legal holds handled when user requests deletion?
+- What is the process for handling data subject access requests (DSAR)?
+- Should there be a data processing register (Article 30 GDPR)?
+- What is the consent withdrawal process for different data types?

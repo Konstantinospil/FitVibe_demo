@@ -1,0 +1,365 @@
+/**
+ * Unit tests for admin repository
+ */
+
+import { describe, it, expect, jest, beforeEach } from "@jest/globals";
+import * as repo from "../admin.repository.js";
+import { db } from "../../../db/index.js";
+import type { FeedReport, UserSearchResult } from "../admin.types.js";
+
+// Mock the database
+jest.mock("../../../db/index.js", () => ({
+  db: jest.fn(),
+}));
+
+const mockDb = jest.mocked(db);
+
+// Add fn and raw helpers to mock db (must be done before beforeEach)
+(mockDb as unknown as { fn: { now: jest.Mock }; raw: jest.Mock }).fn = {
+  now: jest.fn().mockReturnValue("NOW()"),
+};
+(mockDb as unknown as { raw: jest.Mock }).raw = jest.fn((sql: string) => sql);
+
+describe("Admin Repository", () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+
+    const createQueryBuilder = () => {
+      const builder = {
+        select: jest.fn().mockReturnThis(),
+        leftJoin: jest.fn().mockReturnThis(),
+        where: jest.fn().mockReturnThis(),
+        whereNull: jest.fn().mockReturnThis(),
+        whereIn: jest.fn().mockReturnThis(),
+        orderBy: jest.fn().mockReturnThis(),
+        limit: jest.fn().mockReturnThis(),
+        offset: jest.fn().mockReturnThis(),
+        update: jest.fn().mockReturnThis(),
+        first: jest.fn().mockResolvedValue(undefined),
+      };
+      // Make update return a promise that resolves to maintain chain
+      builder.update.mockResolvedValue(1);
+      return builder;
+    };
+
+    mockQueryBuilder = createQueryBuilder();
+
+    // Default: db() returns a new mock query builder instance
+    mockDb.mockImplementation(() => createQueryBuilder() as never);
+  });
+
+  describe("listFeedReports", () => {
+    it("should list feed reports with default status", async () => {
+      const mockReports: FeedReport[] = [
+        {
+          id: "report-1",
+          reporterId: "user-1",
+          reporterUsername: "reporter",
+          feedItemId: "item-1",
+          commentId: null,
+          reason: "spam",
+          details: null,
+          status: "pending",
+          createdAt: new Date().toISOString(),
+          resolvedAt: null,
+          resolvedBy: null,
+          contentPreview: "test",
+          contentAuthor: "author",
+        },
+      ];
+
+      const createChainableBuilder = () => {
+        const builder: {
+          select: jest.Mock;
+          leftJoin: jest.Mock;
+          where: jest.Mock;
+          orderBy: jest.Mock;
+          limit: jest.Mock;
+          offset: jest.Mock;
+          then: jest.Mock;
+        } = {
+          select: jest.fn().mockReturnThis(),
+          leftJoin: jest.fn().mockReturnThis(),
+          where: jest.fn().mockReturnThis(),
+          orderBy: jest.fn().mockReturnThis(),
+          limit: jest.fn().mockReturnThis(),
+          offset: jest.fn().mockReturnThis(),
+          then: jest.fn(
+            (resolve: (value: FeedReport[]) => FeedReport[] | PromiseLike<FeedReport[]>) =>
+              Promise.resolve(mockReports).then(resolve),
+          ),
+        };
+        // Make the builder awaitable by implementing then
+        return builder;
+      };
+
+      const queryBuilder = createChainableBuilder();
+      mockDb.mockReturnValueOnce(queryBuilder as never);
+
+      const result = await repo.listFeedReports({ status: "pending", limit: 10, offset: 0 });
+
+      expect(result).toEqual(mockReports);
+      expect(mockDb).toHaveBeenCalledWith("feed_reports as fr");
+      expect(queryBuilder.where).toHaveBeenCalledWith("fr.status", "pending");
+    });
+
+    it("should handle all status filter", async () => {
+      const mockReports: FeedReport[] = [];
+      const queryBuilder: {
+        select: jest.Mock;
+        leftJoin: jest.Mock;
+        where: jest.Mock;
+        orderBy: jest.Mock;
+        limit: jest.Mock;
+        offset: jest.Mock;
+        then: jest.Mock;
+      } = {
+        select: jest.fn().mockReturnThis(),
+        leftJoin: jest.fn().mockReturnThis(),
+        where: jest.fn().mockReturnThis(),
+        orderBy: jest.fn().mockReturnThis(),
+        limit: jest.fn().mockReturnThis(),
+        offset: jest.fn().mockReturnThis(),
+        then: jest.fn(
+          (resolve: (value: FeedReport[]) => FeedReport[] | PromiseLike<FeedReport[]>) =>
+            Promise.resolve(mockReports).then(resolve),
+        ),
+      };
+      mockDb.mockReturnValueOnce(queryBuilder as never);
+
+      const result = await repo.listFeedReports({ status: "all", limit: 10, offset: 0 });
+
+      expect(result).toEqual(mockReports);
+      // Should not call where when status is "all"
+      expect(queryBuilder.where).not.toHaveBeenCalledWith("fr.status", "all");
+    });
+  });
+
+  describe("getFeedReportById", () => {
+    it("should get feed report by id", async () => {
+      const mockReport: FeedReport = {
+        id: "report-1",
+        reporterId: "user-1",
+        reporterUsername: "reporter",
+        feedItemId: "item-1",
+        commentId: null,
+        reason: "spam",
+        details: null,
+        status: "pending",
+        createdAt: new Date().toISOString(),
+        resolvedAt: null,
+        resolvedBy: null,
+        contentPreview: "test",
+        contentAuthor: "author",
+      };
+
+      const queryBuilder = {
+        select: jest.fn().mockReturnThis(),
+        leftJoin: jest.fn().mockReturnThis(),
+        where: jest.fn().mockReturnThis(),
+        first: jest.fn().mockResolvedValue(mockReport),
+      };
+      mockDb.mockReturnValueOnce(queryBuilder as never);
+
+      const result = await repo.getFeedReportById("report-1");
+
+      expect(result).toEqual(mockReport);
+      expect(queryBuilder.where).toHaveBeenCalledWith("fr.id", "report-1");
+    });
+
+    it("should return null if report not found", async () => {
+      const queryBuilder = {
+        select: jest.fn().mockReturnThis(),
+        leftJoin: jest.fn().mockReturnThis(),
+        where: jest.fn().mockReturnThis(),
+        first: jest.fn().mockResolvedValue(undefined),
+      };
+      mockDb.mockReturnValueOnce(queryBuilder as never);
+
+      const result = await repo.getFeedReportById("report-1");
+
+      expect(result).toBeNull();
+    });
+  });
+
+  describe("updateReportStatus", () => {
+    it("should update report status", async () => {
+      const updateBuilder = {
+        where: jest.fn().mockReturnThis(),
+        update: jest.fn().mockResolvedValue(1),
+      };
+      mockDb.mockReturnValueOnce(updateBuilder as never);
+
+      await repo.updateReportStatus("report-1", "dismissed", "admin-1");
+
+      expect(mockDb).toHaveBeenCalledWith("feed_reports");
+      expect(updateBuilder.where).toHaveBeenCalledWith("id", "report-1");
+      expect(updateBuilder.update).toHaveBeenCalledWith({
+        status: "dismissed",
+        resolved_at: "NOW()",
+        resolved_by: "admin-1",
+      });
+    });
+  });
+
+  describe("hideFeedItem", () => {
+    it("should hide feed item", async () => {
+      const updateBuilder = {
+        where: jest.fn().mockReturnThis(),
+        update: jest.fn().mockResolvedValue(1),
+      };
+      mockDb.mockReturnValueOnce(updateBuilder as never);
+
+      await repo.hideFeedItem("item-1");
+
+      expect(mockDb).toHaveBeenCalledWith("feed_items");
+      expect(updateBuilder.where).toHaveBeenCalledWith("id", "item-1");
+      expect(updateBuilder.update).toHaveBeenCalledWith({ visibility: "private" });
+    });
+  });
+
+  describe("hideComment", () => {
+    it("should hide comment", async () => {
+      const updateBuilder = {
+        where: jest.fn().mockReturnThis(),
+        update: jest.fn().mockResolvedValue(1),
+      };
+      mockDb.mockReturnValueOnce(updateBuilder as never);
+
+      await repo.hideComment("comment-1");
+
+      expect(mockDb).toHaveBeenCalledWith("feed_comments");
+      expect(updateBuilder.where).toHaveBeenCalledWith("id", "comment-1");
+      expect(updateBuilder.update).toHaveBeenCalledWith({
+        deleted_at: "NOW()",
+      });
+    });
+  });
+
+  describe("searchUsers", () => {
+    it("should search users", async () => {
+      const mockUsers: UserSearchResult[] = [
+        {
+          id: "user-1",
+          username: "testuser",
+          email: "test@example.com",
+          roleCode: "user",
+          status: "active",
+          createdAt: new Date().toISOString(),
+          lastLoginAt: null,
+          sessionCount: 10,
+          reportCount: 0,
+        },
+      ];
+
+      const queryBuilder: {
+        select: jest.Mock;
+        where: jest.Mock;
+        whereNull: jest.Mock;
+        orderBy: jest.Mock;
+        limit: jest.Mock;
+        offset: jest.Mock;
+        then: jest.Mock;
+      } = {
+        select: jest.fn().mockReturnThis(),
+        where: jest.fn().mockReturnThis(),
+        whereNull: jest.fn().mockReturnThis(),
+        orderBy: jest.fn().mockReturnThis(),
+        limit: jest.fn().mockReturnThis(),
+        offset: jest.fn().mockReturnThis(),
+        then: jest.fn(
+          (
+            resolve: (
+              value: UserSearchResult[],
+            ) => UserSearchResult[] | PromiseLike<UserSearchResult[]>,
+          ) => Promise.resolve(mockUsers).then(resolve),
+        ),
+      };
+      mockDb.mockReturnValueOnce(queryBuilder as never);
+
+      const result = await repo.searchUsers({ query: "test", limit: 10, offset: 0 });
+
+      expect(result).toEqual(mockUsers);
+      expect(mockDb).toHaveBeenCalledWith("users as u");
+    });
+  });
+
+  describe("updateUserStatus", () => {
+    it("should update user status", async () => {
+      const updateBuilder = {
+        where: jest.fn().mockReturnThis(),
+        update: jest.fn().mockResolvedValue(1),
+      };
+      mockDb.mockReturnValueOnce(updateBuilder as never);
+
+      await repo.updateUserStatus("user-1", "banned");
+
+      expect(mockDb).toHaveBeenCalledWith("users");
+      expect(updateBuilder.where).toHaveBeenCalledWith("id", "user-1");
+      expect(updateBuilder.update).toHaveBeenCalledWith({ status: "banned" });
+    });
+  });
+
+  describe("softDeleteUser", () => {
+    it("should soft delete user", async () => {
+      const updateBuilder = {
+        where: jest.fn().mockReturnThis(),
+        update: jest.fn().mockResolvedValue(1),
+      };
+      mockDb.mockReturnValueOnce(updateBuilder as never);
+
+      await repo.softDeleteUser("user-1");
+
+      expect(mockDb).toHaveBeenCalledWith("users");
+      expect(updateBuilder.where).toHaveBeenCalledWith("id", "user-1");
+      expect(updateBuilder.update).toHaveBeenCalledWith({
+        deleted_at: "NOW()",
+        status: "banned",
+      });
+    });
+  });
+
+  describe("getUserForAdmin", () => {
+    it("should get user for admin", async () => {
+      const mockUser: UserSearchResult = {
+        id: "user-1",
+        username: "testuser",
+        email: "test@example.com",
+        roleCode: "user",
+        status: "active",
+        createdAt: new Date().toISOString(),
+        lastLoginAt: null,
+        sessionCount: 10,
+        reportCount: 0,
+      };
+
+      // Need to recreate query builder for this test to handle select with raw
+      const newQueryBuilder = {
+        select: jest.fn().mockReturnThis(),
+        where: jest.fn().mockReturnThis(),
+        whereNull: jest.fn().mockReturnThis(),
+        first: jest.fn().mockResolvedValue(mockUser),
+      };
+      mockDb.mockReturnValueOnce(newQueryBuilder as never);
+
+      const result = await repo.getUserForAdmin("user-1");
+
+      expect(result).toEqual(mockUser);
+      expect(newQueryBuilder.where).toHaveBeenCalledWith("u.id", "user-1");
+    });
+
+    it("should return null if user not found", async () => {
+      const queryBuilder = {
+        select: jest.fn().mockReturnThis(),
+        where: jest.fn().mockReturnThis(),
+        whereNull: jest.fn().mockReturnThis(),
+        first: jest.fn().mockResolvedValue(undefined),
+      };
+      mockDb.mockReturnValueOnce(queryBuilder as never);
+
+      const result = await repo.getUserForAdmin("user-1");
+
+      expect(result).toBeNull();
+    });
+  });
+});

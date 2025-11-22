@@ -58,9 +58,13 @@ Requirements in this folder are:
 - NFR-004: Accessibility (WCAG compliance in progress)
 - NFR-005: Availability & Backups (SLO monitoring may be incomplete)
 
-**Open (0 requirements):**
+**Open (5 requirements):**
 
-- None currently
+- FR-009: Profile & Settings
+- FR-010: Exercise Library
+- FR-011: Sharing & Community
+- NFR-007: Observability
+- REQ-2025-01-20-001: Terms and Conditions
 
 ## Updating Status
 

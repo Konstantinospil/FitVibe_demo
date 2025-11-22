@@ -145,5 +145,16 @@ Each acceptance criterion must be met for this requirement to be considered comp
 ## Risks & Issues
 
 - **Risk**: Malformed files may crash parser
+  - **Mitigation**: Comprehensive error handling and validation
 - **Risk**: Offline data loss if device fails before sync
+  - **Mitigation**: Local persistence with sync queue and retry logic
 - **Risk**: Metric calculation errors may confuse users
+  - **Mitigation**: Comprehensive testing and validation of calculation formulas
+
+## Open Questions
+
+- What is the maximum file size for GPX/FIT imports?
+- Should there be a limit on number of offline sessions before sync?
+- What happens if timezone data is missing from imported files?
+- Should users be able to import multiple files in batch?
+- What is the strategy for handling duplicate imports?

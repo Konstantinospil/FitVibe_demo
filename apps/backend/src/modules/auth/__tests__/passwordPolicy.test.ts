@@ -57,7 +57,7 @@ describe("passwordPolicy", () => {
     });
 
     it("should reject password containing username (case-insensitive)", () => {
-      const password = "MyUs3rname!@#";
+      const password = "MyUsername123!@#";
       const context = { username: "myusername" };
 
       expect(() => assertPasswordPolicy(password, context)).toThrow(HttpError);
@@ -65,7 +65,7 @@ describe("passwordPolicy", () => {
     });
 
     it("should reject password containing username with different case", () => {
-      const password = "JohnD0e!@#123";
+      const password = "JohnDoe123!@#Pass";
       const context = { username: "johndoe" };
 
       expect(() => assertPasswordPolicy(password, context)).toThrow(HttpError);
@@ -80,7 +80,7 @@ describe("passwordPolicy", () => {
     });
 
     it("should reject password containing email local part (case-insensitive)", () => {
-      const password = "MyEm@il!123";
+      const password = "MyEmail123!@#Pass";
       const context = { email: "myemail@example.com" };
 
       expect(() => assertPasswordPolicy(password, context)).toThrow(HttpError);
@@ -88,7 +88,7 @@ describe("passwordPolicy", () => {
     });
 
     it("should reject password containing email local part with different case", () => {
-      const password = "TestUs3r!@#123";
+      const password = "TestUser123!@#Pass";
       const context = { email: "testuser@example.com" };
 
       expect(() => assertPasswordPolicy(password, context)).toThrow(HttpError);
@@ -103,7 +103,7 @@ describe("passwordPolicy", () => {
     });
 
     it("should handle email with complex local part", () => {
-      const password = "User.Name+Tag@123";
+      const password = "User.Name+Tag123!@#Pass";
       const context = { email: "user.name+tag@example.com" };
 
       expect(() => assertPasswordPolicy(password, context)).toThrow(HttpError);
@@ -111,7 +111,7 @@ describe("passwordPolicy", () => {
     });
 
     it("should handle context with both username and email", () => {
-      const password = "MyUs3rname!@#123";
+      const password = "MyUsername123!@#Pass";
       const context = { username: "myusername", email: "different@example.com" };
 
       expect(() => assertPasswordPolicy(password, context)).toThrow(HttpError);
@@ -143,8 +143,10 @@ describe("passwordPolicy", () => {
       const specialChars = ["!", "@", "#", "$", "%", "^", "&", "*", "(", ")", "-", "_", "+", "="];
 
       for (const char of specialChars) {
-        const password = `Str0ngP${char}ssw0rd`;
+        const password = `Str0ngP${char}ssw0rd1`;
         // All should be valid (have lowercase, uppercase, digit, special char, >=12 chars)
+        // Ensure password is at least 12 chars and has all required components
+        expect(password.length).toBeGreaterThanOrEqual(12);
         expect(() => assertPasswordPolicy(password)).not.toThrow();
       }
     });
