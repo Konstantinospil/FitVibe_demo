@@ -128,33 +128,47 @@ jobs:
         id: vars
         shell: bash
         run: |
-          # If triggered by push to main or workflow_run, get digests from artifacts
-          if [ "${{ github.event_name }}" == "push" ] || [ "${{ github.event_name }}" == "workflow_run" ]; then
-            if [ -f artifacts/image-digests.txt ]; then
-              backend=$(grep '^backend=' artifacts/image-digests.txt | cut -d= -f2)
-              frontend=$(grep '^frontend=' artifacts/image-digests.txt | cut -d= -f2)
-              if [[ -n "$backend" && -n "$frontend" ]]; then
-                echo "backend_image=$backend" >> "$GITHUB_OUTPUT"
-                echo "frontend_image=$frontend" >> "$GITHUB_OUTPUT"
-                echo "rollback_image=" >> "$GITHUB_OUTPUT"
-                # Get version from package.json
-                version=$(node -p "require('./apps/backend/package.json').version")
-                echo "release_tag=v$version" >> "$GITHUB_OUTPUT"
-                exit 0
-              fi
+          # Handle manual workflow_dispatch with user-provided inputs
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            echo "Using manual deployment inputs from workflow_dispatch"
+            echo "backend_image=${{ env.IMAGE_PREFIX }}/fitvibe-backend@${{ inputs.backend_digest }}" >> "$GITHUB_OUTPUT"
+            echo "frontend_image=${{ env.IMAGE_PREFIX }}/fitvibe-frontend@${{ inputs.frontend_digest }}" >> "$GITHUB_OUTPUT"
+            if [ -n "${{ inputs.previous_backend_digest }}" ]; then
+              echo "rollback_image=${{ env.IMAGE_PREFIX }}/fitvibe-backend@${{ inputs.previous_backend_digest }}" >> "$GITHUB_OUTPUT"
+            else
+              echo "rollback_image=" >> "$GITHUB_OUTPUT"
             fi
-            echo "⚠️ Could not find image digests from CI artifacts." >&2
-            exit 1
+            echo "release_tag=${{ inputs.release_tag }}" >> "$GITHUB_OUTPUT"
+            exit 0
           fi
-          # Manual workflow_dispatch path
-          echo "backend_image=${{ env.IMAGE_PREFIX }}/fitvibe-backend@${{ inputs.backend_digest }}" >> "$GITHUB_OUTPUT"
-          echo "frontend_image=${{ env.IMAGE_PREFIX }}/fitvibe-frontend@${{ inputs.frontend_digest }}" >> "$GITHUB_OUTPUT"
-          if [ -n "${{ inputs.previous_backend_digest }}" ]; then
-            echo "rollback_image=${{ env.IMAGE_PREFIX }}/fitvibe-backend@${{ inputs.previous_backend_digest }}" >> "$GITHUB_OUTPUT"
-          else
+
+          # For push or workflow_run events, get digests from CI artifacts
+          if [ "${{ github.event_name }}" == "push" ] || [ "${{ github.event_name }}" == "workflow_run" ]; then
+            if [ ! -f artifacts/image-digests.txt ]; then
+              echo "⚠️ Could not find image digests from CI artifacts: artifacts/image-digests.txt does not exist." >&2
+              exit 1
+            fi
+
+            backend=$(grep '^backend=' artifacts/image-digests.txt | cut -d= -f2)
+            frontend=$(grep '^frontend=' artifacts/image-digests.txt | cut -d= -f2)
+
+            if [[ -z "$backend" || -z "$frontend" ]]; then
+              echo "⚠️ Could not find image digests from CI artifacts: missing backend or frontend digest in artifacts/image-digests.txt." >&2
+              exit 1
+            fi
+
+            echo "backend_image=$backend" >> "$GITHUB_OUTPUT"
+            echo "frontend_image=$frontend" >> "$GITHUB_OUTPUT"
             echo "rollback_image=" >> "$GITHUB_OUTPUT"
+            # Get version from package.json
+            version=$(node -p "require('./apps/backend/package.json').version")
+            echo "release_tag=v$version" >> "$GITHUB_OUTPUT"
+            exit 0
           fi
-          echo "release_tag=${{ inputs.release_tag }}" >> "$GITHUB_OUTPUT"
+
+          # Should not reach here, but handle unknown event types gracefully
+          echo "⚠️ Unsupported event type: ${{ github.event_name }}" >&2
+          exit 1
 
       - name: Install cosign
         uses: sigstore/cosign-installer@v3

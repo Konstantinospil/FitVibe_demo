@@ -74,7 +74,7 @@ function normalizeTagsInput(tags?: unknown): string[] | undefined {
   return Array.from(new Set(flattened));
 }
 
-export async function listExercisesHandler(req: Request, res: Response) {
+export async function listExercisesHandler(req: Request, res: Response): Promise<void> {
   const authUser = ensureAuthUser(req, res);
   if (!authUser) {
     return;
@@ -83,7 +83,8 @@ export async function listExercisesHandler(req: Request, res: Response) {
   const isAdmin = authUser.role === "admin";
   const parsed = querySchema.safeParse(req.query);
   if (!parsed.success) {
-    return res.status(400).json({ error: parsed.error.flatten() });
+    res.status(400).json({ error: parsed.error.flatten() });
+    return;
   }
 
   const { q, type_code, muscle_group, equipment, limit, offset } = parsed.data;
@@ -120,7 +121,7 @@ export async function listExercisesHandler(req: Request, res: Response) {
   res.json(data);
 }
 
-export async function getExerciseHandler(req: Request, res: Response) {
+export async function getExerciseHandler(req: Request, res: Response): Promise<void> {
   const authUser = ensureAuthUser(req, res);
   if (!authUser) {
     return;
@@ -132,10 +133,11 @@ export async function getExerciseHandler(req: Request, res: Response) {
   res.json(data);
 }
 
-export async function createExerciseHandler(req: Request, res: Response) {
+export async function createExerciseHandler(req: Request, res: Response): Promise<void> {
   const parsed = createSchema.safeParse(req.body);
   if (!parsed.success) {
-    return res.status(400).json({ error: parsed.error.flatten() });
+    res.status(400).json({ error: parsed.error.flatten() });
+    return;
   }
   const authUser = ensureAuthUser(req, res);
   if (!authUser) {
@@ -164,7 +166,8 @@ export async function createExerciseHandler(req: Request, res: Response) {
     if (resolution.type === "replay") {
       res.set("Idempotency-Key", idempotencyKey);
       res.set("Idempotent-Replayed", "true");
-      return res.status(resolution.status).json(resolution.body);
+      res.status(resolution.status).json(resolution.body);
+      return;
     }
 
     recordId = resolution.recordId;
@@ -178,7 +181,8 @@ export async function createExerciseHandler(req: Request, res: Response) {
     }
 
     res.set("Idempotency-Key", idempotencyKey);
-    return res.status(201).json(data);
+    res.status(201).json(data);
+    return;
   }
 
   // No idempotency key - proceed normally
@@ -186,10 +190,11 @@ export async function createExerciseHandler(req: Request, res: Response) {
   res.status(201).json(data);
 }
 
-export async function updateExerciseHandler(req: Request, res: Response) {
+export async function updateExerciseHandler(req: Request, res: Response): Promise<void> {
   const parsed = updateSchema.safeParse(req.body);
   if (!parsed.success) {
-    return res.status(400).json({ error: parsed.error.flatten() });
+    res.status(400).json({ error: parsed.error.flatten() });
+    return;
   }
   const authUser = ensureAuthUser(req, res);
   if (!authUser) {
@@ -219,7 +224,8 @@ export async function updateExerciseHandler(req: Request, res: Response) {
     if (resolution.type === "replay") {
       res.set("Idempotency-Key", idempotencyKey);
       res.set("Idempotent-Replayed", "true");
-      return res.status(resolution.status).json(resolution.body);
+      res.status(resolution.status).json(resolution.body);
+      return;
     }
 
     recordId = resolution.recordId;
@@ -233,7 +239,8 @@ export async function updateExerciseHandler(req: Request, res: Response) {
     }
 
     res.set("Idempotency-Key", idempotencyKey);
-    return res.json(data);
+    res.json(data);
+    return;
   }
 
   // No idempotency key - proceed normally
@@ -241,7 +248,7 @@ export async function updateExerciseHandler(req: Request, res: Response) {
   res.json(data);
 }
 
-export async function deleteExerciseHandler(req: Request, res: Response) {
+export async function deleteExerciseHandler(req: Request, res: Response): Promise<void> {
   const authUser = ensureAuthUser(req, res);
   if (!authUser) {
     return;
@@ -270,7 +277,8 @@ export async function deleteExerciseHandler(req: Request, res: Response) {
     if (resolution.type === "replay") {
       res.set("Idempotency-Key", idempotencyKey);
       res.set("Idempotent-Replayed", "true");
-      return res.status(resolution.status).send();
+      res.status(resolution.status).send();
+      return;
     }
 
     recordId = resolution.recordId;
@@ -284,7 +292,8 @@ export async function deleteExerciseHandler(req: Request, res: Response) {
     }
 
     res.set("Idempotency-Key", idempotencyKey);
-    return res.status(204).send();
+    res.status(204).send();
+    return;
   }
 
   // No idempotency key - proceed normally

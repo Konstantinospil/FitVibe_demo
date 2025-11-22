@@ -88,7 +88,7 @@ export async function findUserByUsername(username: string): Promise<UserRow | un
   return db<UserRow>(USERS_TABLE).whereRaw("LOWER(username) = ?", [username.toLowerCase()]).first();
 }
 
-export async function listUsers(limit = 50, offset = 0) {
+export async function listUsers(limit = 50, offset = 0): Promise<UserRow[]> {
   return db(USERS_TABLE)
     .select(
       `${USERS_TABLE}.id`,
@@ -125,7 +125,7 @@ export async function listUsers(limit = 50, offset = 0) {
     .offset(offset);
 }
 
-export async function changePassword(id: string, password_hash: string) {
+export async function changePassword(id: string, password_hash: string): Promise<number> {
   return db(USERS_TABLE)
     .where({ id })
     .update({ password_hash, updated_at: new Date().toISOString() });
@@ -164,7 +164,10 @@ export async function updateUserProfile(
   return withDb(trx)(USERS_TABLE).where({ id: userId }).update(patch);
 }
 
-export async function createUserRecord(input: CreateUserRecordInput, trx?: Knex.Transaction) {
+export async function createUserRecord(
+  input: CreateUserRecordInput,
+  trx?: Knex.Transaction,
+): Promise<number> {
   const now = new Date().toISOString();
   return withDb(trx)(USERS_TABLE).insert({
     id: input.id,
@@ -180,7 +183,11 @@ export async function createUserRecord(input: CreateUserRecordInput, trx?: Knex.
   });
 }
 
-export async function setUserStatus(userId: string, status: string, trx?: Knex.Transaction) {
+export async function setUserStatus(
+  userId: string,
+  status: string,
+  trx?: Knex.Transaction,
+): Promise<number> {
   return withDb(trx)(USERS_TABLE)
     .where({ id: userId })
     .update({ status, updated_at: new Date().toISOString() });
@@ -234,7 +241,14 @@ export async function getContactById(
   return withDb(trx)<ContactRow>(CONTACTS_TABLE).where({ id: contactId }).first();
 }
 
-export async function fetchUserWithContacts(userId: string, trx?: Knex.Transaction) {
+export async function fetchUserWithContacts(
+  userId: string,
+  trx?: Knex.Transaction,
+): Promise<{
+  user: UserRow;
+  contacts: ContactRow[];
+  avatar: AvatarRow | null;
+} | null> {
   const user = await (trx ?? db)<UserRow>(USERS_TABLE).where({ id: userId }).first();
   if (!user) {
     return null;
@@ -244,7 +258,11 @@ export async function fetchUserWithContacts(userId: string, trx?: Knex.Transacti
   return { user, contacts, avatar };
 }
 
-export async function upsertContact(userId: string, dto: ContactUpsertDTO, trx?: Knex.Transaction) {
+export async function upsertContact(
+  userId: string,
+  dto: ContactUpsertDTO,
+  trx?: Knex.Transaction,
+): Promise<number> {
   const dbOrTrx = withDb(trx);
   const now = new Date().toISOString();
   const trimmedValue = dto.value.trim();
@@ -289,13 +307,20 @@ export async function upsertContact(userId: string, dto: ContactUpsertDTO, trx?:
   });
 }
 
-export async function markContactVerified(contactId: string, trx?: Knex.Transaction) {
+export async function markContactVerified(
+  contactId: string,
+  trx?: Knex.Transaction,
+): Promise<number> {
   return withDb(trx)(CONTACTS_TABLE)
     .where({ id: contactId })
     .update({ is_verified: true, verified_at: new Date().toISOString() });
 }
 
-export async function deleteContact(userId: string, contactId: string, trx?: Knex.Transaction) {
+export async function deleteContact(
+  userId: string,
+  contactId: string,
+  trx?: Knex.Transaction,
+): Promise<number> {
   return withDb(trx)(CONTACTS_TABLE).where({ id: contactId, user_id: userId }).del();
 }
 

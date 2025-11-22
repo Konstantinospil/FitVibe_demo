@@ -52,7 +52,15 @@ export async function moderateReportHandler(req: Request, res: Response): Promis
     adminId: req.user.sub,
   });
 
-  res.json({ success: true, message: `Report ${action}ed successfully` });
+  // Handle past tense for actions
+  const actionPastTense: Record<string, string> = {
+    dismiss: "dismissed",
+    hide: "hidden",
+    ban: "banned",
+  };
+  const pastTense = actionPastTense[action] || `${action}ed`;
+
+  res.json({ success: true, message: `Report ${pastTense} successfully` });
 }
 
 /**
@@ -107,5 +115,14 @@ export async function userActionHandler(req: Request, res: Response): Promise<vo
     reason,
   });
 
-  res.json({ success: true, message: `User ${action}d successfully` });
+  // Handle past tense for actions
+  const actionPastTense: Record<string, string> = {
+    suspend: "suspended",
+    ban: "banned",
+    activate: "activated",
+    delete: "deleted",
+  };
+  const pastTense = actionPastTense[action] || `${action}d`;
+
+  res.json({ success: true, message: `User ${pastTense} successfully` });
 }

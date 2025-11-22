@@ -179,7 +179,7 @@ describe("Admin Controller", () => {
       });
       expect(jsonMock).toHaveBeenCalledWith({
         success: true,
-        message: expect.stringContaining("Report"),
+        message: "Report hidden successfully",
       });
     });
 
@@ -201,7 +201,7 @@ describe("Admin Controller", () => {
       });
       expect(jsonMock).toHaveBeenCalledWith({
         success: true,
-        message: expect.stringContaining("Report"),
+        message: "Report banned successfully",
       });
     });
   });

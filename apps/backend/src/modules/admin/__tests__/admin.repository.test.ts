@@ -42,8 +42,6 @@ describe("Admin Repository", () => {
       return builder;
     };
 
-    mockQueryBuilder = createQueryBuilder();
-
     // Default: db() returns a new mock query builder instance
     mockDb.mockImplementation(() => createQueryBuilder() as never);
   });
@@ -133,6 +131,112 @@ describe("Admin Repository", () => {
       // Should not call where when status is "all"
       expect(queryBuilder.where).not.toHaveBeenCalledWith("fr.status", "all");
     });
+
+    it("should list feed reports with dismissed status", async () => {
+      const mockReports: FeedReport[] = [
+        {
+          id: "report-2",
+          reporterId: "user-2",
+          reporterUsername: "reporter2",
+          feedItemId: "item-2",
+          commentId: null,
+          reason: "inappropriate",
+          details: null,
+          status: "dismissed",
+          createdAt: new Date().toISOString(),
+          resolvedAt: new Date().toISOString(),
+          resolvedBy: "admin-1",
+          contentPreview: "test content",
+          contentAuthor: "author2",
+        },
+      ];
+
+      const createChainableBuilder = () => {
+        const builder: {
+          select: jest.Mock;
+          leftJoin: jest.Mock;
+          where: jest.Mock;
+          orderBy: jest.Mock;
+          limit: jest.Mock;
+          offset: jest.Mock;
+          then: jest.Mock;
+        } = {
+          select: jest.fn().mockReturnThis(),
+          leftJoin: jest.fn().mockReturnThis(),
+          where: jest.fn().mockReturnThis(),
+          orderBy: jest.fn().mockReturnThis(),
+          limit: jest.fn().mockReturnThis(),
+          offset: jest.fn().mockReturnThis(),
+          then: jest.fn(
+            (resolve: (value: FeedReport[]) => FeedReport[] | PromiseLike<FeedReport[]>) =>
+              Promise.resolve(mockReports).then(resolve),
+          ),
+        };
+        return builder;
+      };
+
+      const queryBuilder = createChainableBuilder();
+      mockDb.mockReturnValueOnce(queryBuilder as never);
+
+      const result = await repo.listFeedReports({ status: "dismissed", limit: 10, offset: 0 });
+
+      expect(result).toEqual(mockReports);
+      expect(mockDb).toHaveBeenCalledWith("feed_reports as fr");
+      expect(queryBuilder.where).toHaveBeenCalledWith("fr.status", "dismissed");
+    });
+
+    it("should list feed reports with reviewed status", async () => {
+      const mockReports: FeedReport[] = [
+        {
+          id: "report-3",
+          reporterId: "user-3",
+          reporterUsername: "reporter3",
+          feedItemId: "item-3",
+          commentId: null,
+          reason: "harassment",
+          details: "Details here",
+          status: "reviewed",
+          createdAt: new Date().toISOString(),
+          resolvedAt: new Date().toISOString(),
+          resolvedBy: "admin-2",
+          contentPreview: "reviewed content",
+          contentAuthor: "author3",
+        },
+      ];
+
+      const createChainableBuilder = () => {
+        const builder: {
+          select: jest.Mock;
+          leftJoin: jest.Mock;
+          where: jest.Mock;
+          orderBy: jest.Mock;
+          limit: jest.Mock;
+          offset: jest.Mock;
+          then: jest.Mock;
+        } = {
+          select: jest.fn().mockReturnThis(),
+          leftJoin: jest.fn().mockReturnThis(),
+          where: jest.fn().mockReturnThis(),
+          orderBy: jest.fn().mockReturnThis(),
+          limit: jest.fn().mockReturnThis(),
+          offset: jest.fn().mockReturnThis(),
+          then: jest.fn(
+            (resolve: (value: FeedReport[]) => FeedReport[] | PromiseLike<FeedReport[]>) =>
+              Promise.resolve(mockReports).then(resolve),
+          ),
+        };
+        return builder;
+      };
+
+      const queryBuilder = createChainableBuilder();
+      mockDb.mockReturnValueOnce(queryBuilder as never);
+
+      const result = await repo.listFeedReports({ status: "reviewed", limit: 10, offset: 0 });
+
+      expect(result).toEqual(mockReports);
+      expect(mockDb).toHaveBeenCalledWith("feed_reports as fr");
+      expect(queryBuilder.where).toHaveBeenCalledWith("fr.status", "reviewed");
+    });
   });
 
   describe("getFeedReportById", () => {
@@ -183,7 +287,7 @@ describe("Admin Repository", () => {
   });
 
   describe("updateReportStatus", () => {
-    it("should update report status", async () => {
+    it("should update report status to dismissed", async () => {
       const updateBuilder = {
         where: jest.fn().mockReturnThis(),
         update: jest.fn().mockResolvedValue(1),
@@ -198,6 +302,24 @@ describe("Admin Repository", () => {
         status: "dismissed",
         resolved_at: "NOW()",
         resolved_by: "admin-1",
+      });
+    });
+
+    it("should update report status to reviewed", async () => {
+      const updateBuilder = {
+        where: jest.fn().mockReturnThis(),
+        update: jest.fn().mockResolvedValue(1),
+      };
+      mockDb.mockReturnValueOnce(updateBuilder as never);
+
+      await repo.updateReportStatus("report-2", "reviewed", "admin-2");
+
+      expect(mockDb).toHaveBeenCalledWith("feed_reports");
+      expect(updateBuilder.where).toHaveBeenCalledWith("id", "report-2");
+      expect(updateBuilder.update).toHaveBeenCalledWith({
+        status: "reviewed",
+        resolved_at: "NOW()",
+        resolved_by: "admin-2",
       });
     });
   });
@@ -237,7 +359,7 @@ describe("Admin Repository", () => {
   });
 
   describe("searchUsers", () => {
-    it("should search users", async () => {
+    it("should search users by email", async () => {
       const mockUsers: UserSearchResult[] = [
         {
           id: "user-1",
@@ -277,15 +399,110 @@ describe("Admin Repository", () => {
       };
       mockDb.mockReturnValueOnce(queryBuilder as never);
 
-      const result = await repo.searchUsers({ query: "test", limit: 10, offset: 0 });
+      const result = await repo.searchUsers({ query: "test@example.com", limit: 10, offset: 0 });
 
       expect(result).toEqual(mockUsers);
       expect(mockDb).toHaveBeenCalledWith("users as u");
+      expect(queryBuilder.where).toHaveBeenCalled();
+    });
+
+    it("should search users by username", async () => {
+      const mockUsers: UserSearchResult[] = [
+        {
+          id: "user-2",
+          username: "johndoe",
+          email: "john@example.com",
+          roleCode: "user",
+          status: "active",
+          createdAt: new Date().toISOString(),
+          lastLoginAt: null,
+          sessionCount: 5,
+          reportCount: 2,
+        },
+      ];
+
+      const queryBuilder: {
+        select: jest.Mock;
+        where: jest.Mock;
+        whereNull: jest.Mock;
+        orderBy: jest.Mock;
+        limit: jest.Mock;
+        offset: jest.Mock;
+        then: jest.Mock;
+      } = {
+        select: jest.fn().mockReturnThis(),
+        where: jest.fn().mockReturnThis(),
+        whereNull: jest.fn().mockReturnThis(),
+        orderBy: jest.fn().mockReturnThis(),
+        limit: jest.fn().mockReturnThis(),
+        offset: jest.fn().mockReturnThis(),
+        then: jest.fn(
+          (
+            resolve: (
+              value: UserSearchResult[],
+            ) => UserSearchResult[] | PromiseLike<UserSearchResult[]>,
+          ) => Promise.resolve(mockUsers).then(resolve),
+        ),
+      };
+      mockDb.mockReturnValueOnce(queryBuilder as never);
+
+      const result = await repo.searchUsers({ query: "johndoe", limit: 10, offset: 0 });
+
+      expect(result).toEqual(mockUsers);
+      expect(mockDb).toHaveBeenCalledWith("users as u");
+      expect(queryBuilder.where).toHaveBeenCalled();
+    });
+
+    it("should search users by ID", async () => {
+      const mockUsers: UserSearchResult[] = [
+        {
+          id: "user-3",
+          username: "janedoe",
+          email: "jane@example.com",
+          roleCode: "user",
+          status: "active",
+          createdAt: new Date().toISOString(),
+          lastLoginAt: new Date().toISOString(),
+          sessionCount: 20,
+          reportCount: 0,
+        },
+      ];
+
+      const queryBuilder: {
+        select: jest.Mock;
+        where: jest.Mock;
+        whereNull: jest.Mock;
+        orderBy: jest.Mock;
+        limit: jest.Mock;
+        offset: jest.Mock;
+        then: jest.Mock;
+      } = {
+        select: jest.fn().mockReturnThis(),
+        where: jest.fn().mockReturnThis(),
+        whereNull: jest.fn().mockReturnThis(),
+        orderBy: jest.fn().mockReturnThis(),
+        limit: jest.fn().mockReturnThis(),
+        offset: jest.fn().mockReturnThis(),
+        then: jest.fn(
+          (
+            resolve: (
+              value: UserSearchResult[],
+            ) => UserSearchResult[] | PromiseLike<UserSearchResult[]>,
+          ) => Promise.resolve(mockUsers).then(resolve),
+        ),
+      };
+      mockDb.mockReturnValueOnce(queryBuilder as never);
+
+      const result = await repo.searchUsers({ query: "user-3", limit: 10, offset: 0 });
+
+      expect(result).toEqual(mockUsers);
+      expect(mockDb).toHaveBeenCalledWith("users as u");
+      expect(queryBuilder.where).toHaveBeenCalled();
     });
   });
 
   describe("updateUserStatus", () => {
-    it("should update user status", async () => {
+    it("should update user status to banned", async () => {
       const updateBuilder = {
         where: jest.fn().mockReturnThis(),
         update: jest.fn().mockResolvedValue(1),
@@ -297,6 +514,34 @@ describe("Admin Repository", () => {
       expect(mockDb).toHaveBeenCalledWith("users");
       expect(updateBuilder.where).toHaveBeenCalledWith("id", "user-1");
       expect(updateBuilder.update).toHaveBeenCalledWith({ status: "banned" });
+    });
+
+    it("should update user status to active", async () => {
+      const updateBuilder = {
+        where: jest.fn().mockReturnThis(),
+        update: jest.fn().mockResolvedValue(1),
+      };
+      mockDb.mockReturnValueOnce(updateBuilder as never);
+
+      await repo.updateUserStatus("user-2", "active");
+
+      expect(mockDb).toHaveBeenCalledWith("users");
+      expect(updateBuilder.where).toHaveBeenCalledWith("id", "user-2");
+      expect(updateBuilder.update).toHaveBeenCalledWith({ status: "active" });
+    });
+
+    it("should update user status to suspended", async () => {
+      const updateBuilder = {
+        where: jest.fn().mockReturnThis(),
+        update: jest.fn().mockResolvedValue(1),
+      };
+      mockDb.mockReturnValueOnce(updateBuilder as never);
+
+      await repo.updateUserStatus("user-3", "suspended");
+
+      expect(mockDb).toHaveBeenCalledWith("users");
+      expect(updateBuilder.where).toHaveBeenCalledWith("id", "user-3");
+      expect(updateBuilder.update).toHaveBeenCalledWith({ status: "suspended" });
     });
   });
 

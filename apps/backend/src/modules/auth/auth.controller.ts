@@ -102,7 +102,7 @@ type LoginInput = z.infer<typeof LoginSchema>;
 type ForgotPasswordInput = z.infer<typeof ForgotPasswordSchema>;
 type ResetPasswordInput = z.infer<typeof ResetPasswordSchema>;
 
-export async function register(req: Request, res: Response, next: NextFunction) {
+export async function register(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     const payload: RegisterInput = RegisterSchema.parse(req.body);
 
@@ -127,7 +127,8 @@ export async function register(req: Request, res: Response, next: NextFunction) 
       if (resolution.type === "replay") {
         res.set("Idempotency-Key", idempotencyKey);
         res.set("Idempotent-Replayed", "true");
-        return res.status(resolution.status).json(resolution.body);
+        res.status(resolution.status).json(resolution.body);
+        return;
       }
 
       recordId = resolution.recordId;
@@ -149,7 +150,8 @@ export async function register(req: Request, res: Response, next: NextFunction) 
       }
 
       res.set("Idempotency-Key", idempotencyKey);
-      return res.status(202).json(response);
+      res.status(202).json(response);
+      return;
     }
 
     // No idempotency key - proceed normally
@@ -162,13 +164,14 @@ export async function register(req: Request, res: Response, next: NextFunction) 
       response.debugVerificationToken = verificationToken;
       response.verificationUrl = `${env.frontendUrl}/verify?token=${verificationToken}`;
     }
-    return res.status(202).json(response);
+    res.status(202).json(response);
+    return;
   } catch (error) {
     next(error);
   }
 }
 
-export async function verifyEmail(req: Request, res: Response, next: NextFunction) {
+export async function verifyEmail(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     const queryToken = typeof req.query.token === "string" ? req.query.token : undefined;
     const bodyToken =
@@ -180,13 +183,14 @@ export async function verifyEmail(req: Request, res: Response, next: NextFunctio
       throw new HttpError(400, "AUTH_INVALID_TOKEN", "AUTH_INVALID_TOKEN");
     }
     const user = await doVerifyEmail(token);
-    return res.json({ user });
+    res.json({ user });
+    return;
   } catch (error) {
     next(error);
   }
 }
 
-export async function login(req: Request, res: Response, next: NextFunction) {
+export async function login(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     const credentials: LoginInput = LoginSchema.parse(req.body);
     const context = buildAuthContext(req, res);
@@ -194,27 +198,33 @@ export async function login(req: Request, res: Response, next: NextFunction) {
 
     // Check if 2FA is required
     if (result.requires2FA) {
-      return res.json({
+      res.json({
         requires2FA: true,
         pendingSessionId: result.pendingSessionId,
       });
+      return;
     }
 
     // Normal login flow (no 2FA)
     // SECURITY: Tokens are ONLY set in HttpOnly cookies, never exposed to JavaScript
     setAccessCookie(res, result.tokens.accessToken);
     setRefreshCookie(res, result.tokens.refreshToken);
-    return res.json({
+    res.json({
       requires2FA: false,
       user: result.user,
       session: result.session,
     });
+    return;
   } catch (error) {
     next(error);
   }
 }
 
-export async function verify2FALogin(req: Request, res: Response, next: NextFunction) {
+export async function verify2FALogin(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> {
   try {
     const payload = Verify2FALoginSchema.parse(req.body);
     const context = buildAuthContext(req, res);
@@ -227,16 +237,17 @@ export async function verify2FALogin(req: Request, res: Response, next: NextFunc
     // SECURITY: Tokens are ONLY set in HttpOnly cookies, never exposed to JavaScript
     setAccessCookie(res, tokens.accessToken);
     setRefreshCookie(res, tokens.refreshToken);
-    return res.json({
+    res.json({
       user,
       session,
     });
+    return;
   } catch (error) {
     next(error);
   }
 }
 
-export async function refresh(req: Request, res: Response, next: NextFunction) {
+export async function refresh(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     const token = req.cookies?.[env.REFRESH_COOKIE_NAME] as string | undefined;
     if (!token) {
@@ -246,25 +257,31 @@ export async function refresh(req: Request, res: Response, next: NextFunction) {
     const { user, newRefresh, accessToken } = await doRefresh(token, context);
     setRefreshCookie(res, newRefresh);
     setAccessCookie(res, accessToken);
-    return res.json({ user });
+    res.json({ user });
+    return;
   } catch (error) {
     next(error);
   }
 }
 
-export async function logout(req: Request, res: Response, next: NextFunction) {
+export async function logout(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     const token = req.cookies?.[env.REFRESH_COOKIE_NAME] as string | undefined;
     const context = buildAuthContext(req, res);
     await doLogout(token, context);
     clearAuthCookies(res);
-    return res.status(204).send();
+    res.status(204).send();
+    return;
   } catch (error) {
     next(error);
   }
 }
 
-export async function forgotPassword(req: Request, res: Response, next: NextFunction) {
+export async function forgotPassword(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> {
   try {
     const payload: ForgotPasswordInput = ForgotPasswordSchema.parse(req.body);
 
@@ -289,7 +306,8 @@ export async function forgotPassword(req: Request, res: Response, next: NextFunc
       if (resolution.type === "replay") {
         res.set("Idempotency-Key", idempotencyKey);
         res.set("Idempotent-Replayed", "true");
-        return res.status(resolution.status).json(resolution.body);
+        res.status(resolution.status).json(resolution.body);
+        return;
       }
 
       recordId = resolution.recordId;
@@ -310,7 +328,8 @@ export async function forgotPassword(req: Request, res: Response, next: NextFunc
       }
 
       res.set("Idempotency-Key", idempotencyKey);
-      return res.status(202).json(response);
+      res.status(202).json(response);
+      return;
     }
 
     // No idempotency key - proceed normally
@@ -322,13 +341,18 @@ export async function forgotPassword(req: Request, res: Response, next: NextFunc
       response.debugResetToken = resetToken;
       response.resetUrl = `${env.appBaseUrl}/auth/password/reset?token=${resetToken}`;
     }
-    return res.status(202).json(response);
+    res.status(202).json(response);
+    return;
   } catch (error) {
     next(error);
   }
 }
 
-export async function resetPassword(req: Request, res: Response, next: NextFunction) {
+export async function resetPassword(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> {
   try {
     const payload: ResetPasswordInput = ResetPasswordSchema.parse(req.body);
 
@@ -340,13 +364,14 @@ export async function resetPassword(req: Request, res: Response, next: NextFunct
 
     await doResetPassword(payload.token, payload.newPassword);
     clearAuthCookies(res);
-    return res.status(204).send();
+    res.status(204).send();
+    return;
   } catch (error) {
     next(error);
   }
 }
 
-export async function listSessions(req: Request, res: Response, next: NextFunction) {
+export async function listSessions(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     const authUser = getAuthenticatedUser(req);
     const userId = authUser?.sub;
@@ -355,13 +380,18 @@ export async function listSessions(req: Request, res: Response, next: NextFuncti
     }
     const sessionId = authUser?.sid ?? currentSessionId(req);
     const sessions = await doListSessions(userId, sessionId ?? null);
-    return res.json({ sessions });
+    res.json({ sessions });
+    return;
   } catch (error) {
     next(error);
   }
 }
 
-export async function revokeSessions(req: Request, res: Response, next: NextFunction) {
+export async function revokeSessions(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> {
   try {
     const authUser = getAuthenticatedUser(req);
     const userId = authUser?.sub;
@@ -391,10 +421,12 @@ export async function revokeSessions(req: Request, res: Response, next: NextFunc
 
     if (revokingCurrent || payload.revokeAll) {
       clearAuthCookies(res);
-      return res.status(204).send();
+      res.status(204).send();
+      return;
     }
 
-    return res.json({ revoked: result.revoked });
+    res.json({ revoked: result.revoked });
+    return;
   } catch (error) {
     next(error);
   }

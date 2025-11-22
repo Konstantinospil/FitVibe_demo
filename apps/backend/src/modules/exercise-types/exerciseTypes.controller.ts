@@ -14,25 +14,27 @@ const updateTypeSchema = z.object({
   description: z.string().max(255).optional(),
 });
 
-export async function listTypes(req: Request, res: Response) {
+export async function listTypes(req: Request, res: Response): Promise<void> {
   const locale = (req.query.locale as string) || undefined;
   const types = await getAllTypes(locale);
   res.json(types);
 }
 
-export async function getType(req: Request, res: Response) {
+export async function getType(req: Request, res: Response): Promise<void> {
   const { code } = req.params;
   const type = await getOneType(code);
   if (!type) {
-    return res.status(404).json({ error: "Not found" });
+    res.status(404).json({ error: "Not found" });
+    return;
   }
   res.json(type);
 }
 
-export async function createType(req: Request, res: Response) {
+export async function createType(req: Request, res: Response): Promise<void> {
   const parsed = createTypeSchema.safeParse(req.body);
   if (!parsed.success) {
-    return res.status(400).json({ error: parsed.error.flatten() });
+    res.status(400).json({ error: parsed.error.flatten() });
+    return;
   }
 
   const adminId = req.user?.sub;
@@ -40,11 +42,12 @@ export async function createType(req: Request, res: Response) {
   res.status(201).json(type);
 }
 
-export async function updateType(req: Request, res: Response) {
+export async function updateType(req: Request, res: Response): Promise<void> {
   const { code } = req.params;
   const parsed = updateTypeSchema.safeParse(req.body);
   if (!parsed.success) {
-    return res.status(400).json({ error: parsed.error.flatten() });
+    res.status(400).json({ error: parsed.error.flatten() });
+    return;
   }
 
   const adminId = req.user?.sub;
@@ -52,7 +55,7 @@ export async function updateType(req: Request, res: Response) {
   res.json(type);
 }
 
-export async function deleteType(req: Request, res: Response) {
+export async function deleteType(req: Request, res: Response): Promise<void> {
   const { code } = req.params;
   const adminId = req.user?.sub;
   await removeType(code, adminId);

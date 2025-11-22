@@ -21,10 +21,11 @@ function requireUserId(req: Request, res: Response): string | null {
   return userId;
 }
 
-export async function summaryHandler(req: Request, res: Response) {
+export async function summaryHandler(req: Request, res: Response): Promise<void> {
   const parsed = z.object({ period: periodEnum.default("30") }).safeParse(req.query);
   if (!parsed.success) {
-    return res.status(400).json({ error: parsed.error.flatten() });
+    res.status(400).json({ error: parsed.error.flatten() });
+    return;
   }
   const userId = requireUserId(req, res);
   if (!userId) {
@@ -34,7 +35,7 @@ export async function summaryHandler(req: Request, res: Response) {
   res.json(result);
 }
 
-export async function trendsHandler(req: Request, res: Response) {
+export async function trendsHandler(req: Request, res: Response): Promise<void> {
   const parsed = z
     .object({
       period: periodEnum.default("30"),
@@ -42,7 +43,8 @@ export async function trendsHandler(req: Request, res: Response) {
     })
     .safeParse(req.query);
   if (!parsed.success) {
-    return res.status(400).json({ error: parsed.error.flatten() });
+    res.status(400).json({ error: parsed.error.flatten() });
+    return;
   }
   const userId = requireUserId(req, res);
   if (!userId) {
@@ -52,10 +54,11 @@ export async function trendsHandler(req: Request, res: Response) {
   res.json(result);
 }
 
-export async function exercisesHandler(req: Request, res: Response) {
+export async function exercisesHandler(req: Request, res: Response): Promise<void> {
   const parsed = z.object({ period: periodEnum.default("90") }).safeParse(req.query);
   if (!parsed.success) {
-    return res.status(400).json({ error: parsed.error.flatten() });
+    res.status(400).json({ error: parsed.error.flatten() });
+    return;
   }
   const userId = requireUserId(req, res);
   if (!userId) {
@@ -65,7 +68,7 @@ export async function exercisesHandler(req: Request, res: Response) {
   res.json(result);
 }
 
-export async function plansHandler(req: Request, res: Response) {
+export async function plansHandler(req: Request, res: Response): Promise<void> {
   const userId = requireUserId(req, res);
   if (!userId) {
     return;
@@ -82,10 +85,11 @@ const exportParams = z
   })
   .strict();
 
-export async function exportHandler(req: Request, res: Response) {
+export async function exportHandler(req: Request, res: Response): Promise<void> {
   const parsed = exportParams.safeParse(req.query);
   if (!parsed.success) {
-    return res.status(400).json({ error: parsed.error.flatten() });
+    res.status(400).json({ error: parsed.error.flatten() });
+    return;
   }
   const userId = requireUserId(req, res);
   if (!userId) {

@@ -19,16 +19,19 @@ import { resolveIdempotency, persistIdempotencyResult } from "../common/idempote
 const ALLOWED_MIME = new Set(["image/png", "image/jpeg", "image/webp", "image/jpg"]);
 const MAX_BYTES = 5 * 1024 * 1024; // 5 MB per PRD
 
-export async function uploadAvatarHandler(req: Request, res: Response) {
+export async function uploadAvatarHandler(req: Request, res: Response): Promise<void> {
   const userId = req.user?.sub as string;
   if (!req.file) {
-    return res.status(400).json({ error: "UPLOAD_NO_FILE" });
+    res.status(400).json({ error: "UPLOAD_NO_FILE" });
+    return;
   }
   if (!ALLOWED_MIME.has(req.file.mimetype)) {
-    return res.status(400).json({ error: "UPLOAD_UNSUPPORTED_TYPE" });
+    res.status(400).json({ error: "UPLOAD_UNSUPPORTED_TYPE" });
+    return;
   }
   if (req.file.size > MAX_BYTES) {
-    return res.status(400).json({ error: "UPLOAD_TOO_LARGE" });
+    res.status(400).json({ error: "UPLOAD_TOO_LARGE" });
+    return;
   }
 
   // Idempotency support (using file metadata, not full buffer)
@@ -47,7 +50,8 @@ export async function uploadAvatarHandler(req: Request, res: Response) {
     if (resolution.type === "replay") {
       res.set("Idempotency-Key", idempotencyKey);
       res.set("Idempotent-Replayed", "true");
-      return res.status(resolution.status).json(resolution.body);
+      res.status(resolution.status).json(resolution.body);
+      return;
     }
 
     // B-USR-5: Antivirus scanning before processing
@@ -94,7 +98,8 @@ export async function uploadAvatarHandler(req: Request, res: Response) {
       }
 
       res.set("Idempotency-Key", idempotencyKey);
-      return res.status(422).json(errorResponse);
+      res.status(422).json(errorResponse);
+      return;
     }
 
     const processed = await sharp(req.file.buffer)
@@ -139,7 +144,8 @@ export async function uploadAvatarHandler(req: Request, res: Response) {
     }
 
     res.set("Idempotency-Key", idempotencyKey);
-    return res.status(201).json(response);
+    res.status(201).json(response);
+    return;
   }
 
   // No idempotency key - proceed normally
@@ -171,7 +177,7 @@ export async function uploadAvatarHandler(req: Request, res: Response) {
       },
     });
 
-    return res.status(422).json({
+    res.status(422).json({
       error: {
         code: "E.UPLOAD.MALWARE_DETECTED",
         message: "UPLOAD_MALWARE_DETECTED",
@@ -180,6 +186,7 @@ export async function uploadAvatarHandler(req: Request, res: Response) {
         },
       },
     });
+    return;
   }
 
   const processed = await sharp(req.file.buffer)
@@ -219,24 +226,27 @@ export async function uploadAvatarHandler(req: Request, res: Response) {
   });
 }
 
-export async function getAvatarHandler(req: Request, res: Response) {
+export async function getAvatarHandler(req: Request, res: Response): Promise<void> {
   const { id } = req.params;
   const metadata = await getUserAvatarMetadata(id);
   if (!metadata) {
-    return res.status(404).send("UPLOAD_NOT_FOUND");
+    res.status(404).send("UPLOAD_NOT_FOUND");
+    return;
   }
   try {
     const buffer = await readStorageObject(metadata.storage_key);
     res.set("Content-Type", metadata.mime_type ?? "image/png");
     res.set("Cache-Control", "private, max-age=300");
-    return res.send(buffer);
+    res.send(buffer);
+    return;
   } catch (error) {
     logger.error({ err: error }, "[avatar] read failed");
-    return res.status(404).send("UPLOAD_NOT_FOUND");
+    res.status(404).send("UPLOAD_NOT_FOUND");
+    return;
   }
 }
 
-export async function deleteAvatarHandler(req: Request, res: Response) {
+export async function deleteAvatarHandler(req: Request, res: Response): Promise<void> {
   const userId = req.user?.sub as string;
 
   // Idempotency support
@@ -251,7 +261,8 @@ export async function deleteAvatarHandler(req: Request, res: Response) {
     if (resolution.type === "replay") {
       res.set("Idempotency-Key", idempotencyKey);
       res.set("Idempotent-Replayed", "true");
-      return res.status(resolution.status).send();
+      res.status(resolution.status).send();
+      return;
     }
 
     const metadata = await deleteUserAvatarMetadata(userId);
@@ -270,7 +281,8 @@ export async function deleteAvatarHandler(req: Request, res: Response) {
     }
 
     res.set("Idempotency-Key", idempotencyKey);
-    return res.status(204).send();
+    res.status(204).send();
+    return;
   }
 
   const metadata = await deleteUserAvatarMetadata(userId);

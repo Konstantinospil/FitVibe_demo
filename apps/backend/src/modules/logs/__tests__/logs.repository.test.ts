@@ -9,20 +9,9 @@ jest.mock("../../../db/index.js", () => ({
 const mockDb = jest.mocked(db);
 
 describe("Logs Repository", () => {
-  let mockQueryBuilder: {
-    select: jest.Mock;
-    leftJoin: jest.Mock;
-    where: jest.Mock;
-    whereIn: jest.Mock;
-    orderBy: jest.Mock;
-    limit: jest.Mock;
-    offset: jest.Mock;
-  };
-
-  beforeEach(() => {
-    jest.clearAllMocks();
-
-    const createQueryBuilder = () => ({
+  // Helper to create a query builder that returns mock data
+  const createTestQueryBuilder = (mockData: AuditLogEntry[] = []) => {
+    const builder = {
       select: jest.fn().mockReturnThis(),
       leftJoin: jest.fn().mockReturnThis(),
       where: jest.fn().mockReturnThis(),
@@ -30,10 +19,17 @@ describe("Logs Repository", () => {
       orderBy: jest.fn().mockReturnThis(),
       limit: jest.fn().mockReturnThis(),
       offset: jest.fn().mockReturnThis(),
-    });
+      then: jest.fn(
+        (resolve: (value: AuditLogEntry[]) => AuditLogEntry[] | PromiseLike<AuditLogEntry[]>) =>
+          Promise.resolve(mockData).then(resolve),
+      ),
+    };
+    return builder;
+  };
 
-    mockQueryBuilder = createQueryBuilder();
-    mockDb.mockImplementation(() => createQueryBuilder() as never);
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockDb.mockImplementation(() => createTestQueryBuilder() as never);
   });
 
   describe("listAuditLogs", () => {
@@ -53,75 +49,84 @@ describe("Logs Repository", () => {
         },
       ];
 
-      mockQueryBuilder.offset.mockResolvedValue(mockLogs);
+      // Create a new query builder that returns the mock data
+      const testQueryBuilder = createTestQueryBuilder(mockLogs);
+      mockDb.mockReturnValueOnce(testQueryBuilder as never);
 
       const result = await logsRepository.listAuditLogs({});
 
       expect(result).toEqual(mockLogs);
       expect(mockDb).toHaveBeenCalledWith("audit_log as al");
-      expect(mockQueryBuilder.limit).toHaveBeenCalledWith(100);
-      expect(mockQueryBuilder.offset).toHaveBeenCalledWith(0);
-      expect(mockQueryBuilder.orderBy).toHaveBeenCalledWith("al.created_at", "desc");
+      expect(testQueryBuilder.limit).toHaveBeenCalledWith(100);
+      expect(testQueryBuilder.offset).toHaveBeenCalledWith(0);
+      expect(testQueryBuilder.orderBy).toHaveBeenCalledWith("al.created_at", "desc");
     });
 
     it("should filter by action", async () => {
       const mockLogs: AuditLogEntry[] = [];
-      mockQueryBuilder.offset.mockResolvedValue(mockLogs);
+      const testQueryBuilder = createTestQueryBuilder(mockLogs);
+      mockDb.mockReturnValueOnce(testQueryBuilder as never);
 
       await logsRepository.listAuditLogs({ action: "user.login" });
 
-      expect(mockQueryBuilder.where).toHaveBeenCalledWith("al.action", "user.login");
+      expect(testQueryBuilder.where).toHaveBeenCalledWith("al.action", "user.login");
     });
 
     it("should filter by entityType", async () => {
       const mockLogs: AuditLogEntry[] = [];
-      mockQueryBuilder.offset.mockResolvedValue(mockLogs);
+      const testQueryBuilder = createTestQueryBuilder(mockLogs);
+      mockDb.mockReturnValueOnce(testQueryBuilder as never);
 
       await logsRepository.listAuditLogs({ entityType: "user" });
 
-      expect(mockQueryBuilder.where).toHaveBeenCalledWith("al.entity_type", "user");
+      expect(testQueryBuilder.where).toHaveBeenCalledWith("al.entity_type", "user");
     });
 
     it("should filter by actorUserId", async () => {
       const mockLogs: AuditLogEntry[] = [];
-      mockQueryBuilder.offset.mockResolvedValue(mockLogs);
+      const testQueryBuilder = createTestQueryBuilder(mockLogs);
+      mockDb.mockReturnValueOnce(testQueryBuilder as never);
 
       await logsRepository.listAuditLogs({ actorUserId: "user-123" });
 
-      expect(mockQueryBuilder.where).toHaveBeenCalledWith("al.actor_user_id", "user-123");
+      expect(testQueryBuilder.where).toHaveBeenCalledWith("al.actor_user_id", "user-123");
     });
 
     it("should filter by outcome", async () => {
       const mockLogs: AuditLogEntry[] = [];
-      mockQueryBuilder.offset.mockResolvedValue(mockLogs);
+      const testQueryBuilder = createTestQueryBuilder(mockLogs);
+      mockDb.mockReturnValueOnce(testQueryBuilder as never);
 
       await logsRepository.listAuditLogs({ outcome: "success" });
 
-      expect(mockQueryBuilder.where).toHaveBeenCalledWith("al.outcome", "success");
+      expect(testQueryBuilder.where).toHaveBeenCalledWith("al.outcome", "success");
     });
 
     it("should apply custom limit and offset", async () => {
       const mockLogs: AuditLogEntry[] = [];
-      mockQueryBuilder.offset.mockResolvedValue(mockLogs);
+      const testQueryBuilder = createTestQueryBuilder(mockLogs);
+      mockDb.mockReturnValueOnce(testQueryBuilder as never);
 
       await logsRepository.listAuditLogs({ limit: 50, offset: 10 });
 
-      expect(mockQueryBuilder.limit).toHaveBeenCalledWith(50);
-      expect(mockQueryBuilder.offset).toHaveBeenCalledWith(10);
+      expect(testQueryBuilder.limit).toHaveBeenCalledWith(50);
+      expect(testQueryBuilder.offset).toHaveBeenCalledWith(10);
     });
 
     it("should cap limit at 500", async () => {
       const mockLogs: AuditLogEntry[] = [];
-      mockQueryBuilder.offset.mockResolvedValue(mockLogs);
+      const testQueryBuilder = createTestQueryBuilder(mockLogs);
+      mockDb.mockReturnValueOnce(testQueryBuilder as never);
 
       await logsRepository.listAuditLogs({ limit: 1000 });
 
-      expect(mockQueryBuilder.limit).toHaveBeenCalledWith(500);
+      expect(testQueryBuilder.limit).toHaveBeenCalledWith(500);
     });
 
     it("should apply multiple filters", async () => {
       const mockLogs: AuditLogEntry[] = [];
-      mockQueryBuilder.offset.mockResolvedValue(mockLogs);
+      const testQueryBuilder = createTestQueryBuilder(mockLogs);
+      mockDb.mockReturnValueOnce(testQueryBuilder as never);
 
       await logsRepository.listAuditLogs({
         action: "user.login",
@@ -132,26 +137,27 @@ describe("Logs Repository", () => {
         offset: 5,
       });
 
-      expect(mockQueryBuilder.where).toHaveBeenCalledWith("al.action", "user.login");
-      expect(mockQueryBuilder.where).toHaveBeenCalledWith("al.entity_type", "user");
-      expect(mockQueryBuilder.where).toHaveBeenCalledWith("al.actor_user_id", "user-123");
-      expect(mockQueryBuilder.where).toHaveBeenCalledWith("al.outcome", "success");
-      expect(mockQueryBuilder.limit).toHaveBeenCalledWith(25);
-      expect(mockQueryBuilder.offset).toHaveBeenCalledWith(5);
+      expect(testQueryBuilder.where).toHaveBeenCalledWith("al.action", "user.login");
+      expect(testQueryBuilder.where).toHaveBeenCalledWith("al.entity_type", "user");
+      expect(testQueryBuilder.where).toHaveBeenCalledWith("al.actor_user_id", "user-123");
+      expect(testQueryBuilder.where).toHaveBeenCalledWith("al.outcome", "success");
+      expect(testQueryBuilder.limit).toHaveBeenCalledWith(25);
+      expect(testQueryBuilder.offset).toHaveBeenCalledWith(5);
     });
 
     it("should join with users table for actorUsername", async () => {
       const mockLogs: AuditLogEntry[] = [];
-      mockQueryBuilder.offset.mockResolvedValue(mockLogs);
+      const testQueryBuilder = createTestQueryBuilder(mockLogs);
+      mockDb.mockReturnValueOnce(testQueryBuilder as never);
 
       await logsRepository.listAuditLogs({});
 
-      expect(mockQueryBuilder.leftJoin).toHaveBeenCalledWith(
+      expect(testQueryBuilder.leftJoin).toHaveBeenCalledWith(
         "users as u",
         "al.actor_user_id",
         "u.id",
       );
-      expect(mockQueryBuilder.select).toHaveBeenCalledWith("u.username as actorUsername");
+      expect(testQueryBuilder.select).toHaveBeenCalledWith("u.username as actorUsername");
     });
   });
 
@@ -172,12 +178,13 @@ describe("Logs Repository", () => {
         },
       ];
 
-      mockQueryBuilder.limit.mockResolvedValue(mockLogs);
+      const testQueryBuilder = createTestQueryBuilder(mockLogs);
+      mockDb.mockReturnValueOnce(testQueryBuilder as never);
 
       const result = await logsRepository.getRecentAdminActivity();
 
       expect(result).toEqual(mockLogs);
-      expect(mockQueryBuilder.whereIn).toHaveBeenCalledWith("al.action", [
+      expect(testQueryBuilder.whereIn).toHaveBeenCalledWith("al.action", [
         "user_suspended",
         "user_banned",
         "user_activated",
@@ -187,26 +194,35 @@ describe("Logs Repository", () => {
         "system_maintenance_enabled",
         "system_maintenance_disabled",
       ]);
-      expect(mockQueryBuilder.limit).toHaveBeenCalledWith(20);
-      expect(mockQueryBuilder.orderBy).toHaveBeenCalledWith("al.created_at", "desc");
+      expect(testQueryBuilder.limit).toHaveBeenCalledWith(20);
+      expect(testQueryBuilder.orderBy).toHaveBeenCalledWith("al.created_at", "desc");
     });
 
     it("should use custom limit when provided", async () => {
       const mockLogs: AuditLogEntry[] = [];
-      mockQueryBuilder.limit.mockResolvedValue(mockLogs);
+      const testQueryBuilder = createTestQueryBuilder(mockLogs);
+      mockDb.mockReturnValueOnce(testQueryBuilder as never);
 
       await logsRepository.getRecentAdminActivity(50);
 
-      expect(mockQueryBuilder.limit).toHaveBeenCalledWith(50);
+      expect(testQueryBuilder.limit).toHaveBeenCalledWith(50);
     });
 
     it("should filter only admin actions", async () => {
       const mockLogs: AuditLogEntry[] = [];
-      mockQueryBuilder.limit.mockResolvedValue(mockLogs);
+      // Create a new query builder instance for this test to capture the actual calls
+      const testQueryBuilder = {
+        select: jest.fn().mockReturnThis(),
+        leftJoin: jest.fn().mockReturnThis(),
+        whereIn: jest.fn().mockReturnThis(),
+        orderBy: jest.fn().mockReturnThis(),
+        limit: jest.fn().mockResolvedValue(mockLogs),
+      };
+      mockDb.mockReturnValueOnce(testQueryBuilder as never);
 
       await logsRepository.getRecentAdminActivity();
 
-      expect(mockQueryBuilder.whereIn).toHaveBeenCalledWith(
+      expect(testQueryBuilder.whereIn).toHaveBeenCalledWith(
         "al.action",
         expect.arrayContaining(["user_suspended", "user_banned", "user_activated", "user_deleted"]),
       );
@@ -214,11 +230,19 @@ describe("Logs Repository", () => {
 
     it("should join with users table for actorUsername", async () => {
       const mockLogs: AuditLogEntry[] = [];
-      mockQueryBuilder.limit.mockResolvedValue(mockLogs);
+      // Create a new query builder instance for this test to capture the actual calls
+      const testQueryBuilder = {
+        select: jest.fn().mockReturnThis(),
+        leftJoin: jest.fn().mockReturnThis(),
+        whereIn: jest.fn().mockReturnThis(),
+        orderBy: jest.fn().mockReturnThis(),
+        limit: jest.fn().mockResolvedValue(mockLogs),
+      };
+      mockDb.mockReturnValueOnce(testQueryBuilder as never);
 
       await logsRepository.getRecentAdminActivity();
 
-      expect(mockQueryBuilder.leftJoin).toHaveBeenCalledWith(
+      expect(testQueryBuilder.leftJoin).toHaveBeenCalledWith(
         "users as u",
         "al.actor_user_id",
         "u.id",

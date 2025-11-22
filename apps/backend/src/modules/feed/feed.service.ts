@@ -42,6 +42,7 @@ import {
 } from "./feed.repository.js";
 import { updateSession } from "../sessions/sessions.repository.js";
 import { cloneOne } from "../sessions/sessions.service.js";
+import type { SessionWithExercises } from "../sessions/sessions.types.js";
 import { findUserByUsername } from "../users/users.repository.js";
 
 export interface FeedListResult {
@@ -284,7 +285,11 @@ function ensureShareLinkIsActive(link: {
   }
 }
 
-export async function getSharedSession(token: string) {
+export async function getSharedSession(token: string): Promise<{
+  link: { id: string; view_count: number; [key: string]: unknown };
+  feedItem: unknown;
+  session: SessionRow;
+}> {
   const link = await findShareLinkByToken(token);
   if (!link) {
     throw new HttpError(404, "E.FEED.LINK_NOT_FOUND", "FEED_LINK_NOT_FOUND");
@@ -326,7 +331,7 @@ export async function getSharedSession(token: string) {
   };
 }
 
-export async function revokeShareLink(userId: string, sessionId: string) {
+export async function revokeShareLink(userId: string, sessionId: string): Promise<number> {
   const session = await findSessionById(sessionId);
   if (!session) {
     throw new HttpError(404, "E.FEED.SESSION_NOT_FOUND", "FEED_SESSION_NOT_FOUND");
@@ -362,7 +367,7 @@ export async function cloneSessionFromFeed(
   userId: string,
   sourceSessionId: string,
   payload: Record<string, unknown> = {},
-) {
+): Promise<SessionWithExercises> {
   return cloneOne(userId, sourceSessionId, {
     ...payload,
   });
@@ -402,7 +407,14 @@ export async function unfollowUserByAlias(
   return { unfollowedId: targetUser.id };
 }
 
-export async function listUserFollowers(alias: string) {
+export async function listUserFollowers(alias: string): Promise<
+  Array<{
+    id: string;
+    username: string;
+    displayName: string;
+    followedAt: string;
+  }>
+> {
   const targetUser = await findUserByUsername(alias);
   if (!targetUser) {
     throw new HttpError(404, "E.FEED.USER_NOT_FOUND", "FEED_USER_NOT_FOUND");
@@ -416,7 +428,14 @@ export async function listUserFollowers(alias: string) {
   }));
 }
 
-export async function listUserFollowing(alias: string) {
+export async function listUserFollowing(alias: string): Promise<
+  Array<{
+    id: string;
+    username: string;
+    displayName: string;
+    followedAt: string;
+  }>
+> {
   const targetUser = await findUserByUsername(alias);
   if (!targetUser) {
     throw new HttpError(404, "E.FEED.USER_NOT_FOUND", "FEED_USER_NOT_FOUND");
@@ -522,7 +541,21 @@ export async function removeBookmark(
   return { bookmarked: false };
 }
 
-export async function listBookmarks(userId: string, options: { limit?: number; offset?: number }) {
+export async function listBookmarks(
+  userId: string,
+  options: { limit?: number; offset?: number },
+): Promise<
+  Array<{
+    sessionId: string;
+    feedItemId: string | null;
+    title: string | null;
+    completedAt: string | null;
+    visibility: string;
+    owner: { id: string; username: string; displayName: string };
+    points: number | null;
+    bookmarkedAt: string;
+  }>
+> {
   const rows = await listBookmarkedSessions(userId, options.limit, options.offset);
   return rows.map((row) => ({
     sessionId: row.session_id,
@@ -543,7 +576,16 @@ export async function listBookmarks(userId: string, options: { limit?: number; o
 export async function listComments(
   feedItemId: string,
   options: { limit?: number; offset?: number; viewerId?: string } = {},
-) {
+): Promise<
+  Array<{
+    id: string;
+    feedItemId: string;
+    author: { id: string; username: string; displayName: string };
+    body: string;
+    createdAt: string;
+    editedAt: string | null;
+  }>
+> {
   const feedItem = await loadFeedItemOrThrow(feedItemId);
   if (options.viewerId) {
     await ensureFeedInteractionAllowed(options.viewerId, feedItem.owner_id, feedItem.visibility);
@@ -567,7 +609,18 @@ export async function listComments(
   }));
 }
 
-export async function createComment(userId: string, feedItemId: string, body: string) {
+export async function createComment(
+  userId: string,
+  feedItemId: string,
+  body: string,
+): Promise<{
+  id: string;
+  feedItemId: string;
+  author: { id: string; username: string; displayName: string };
+  body: string;
+  createdAt: string;
+  editedAt: string | null;
+}> {
   const feedItem = await loadFeedItemOrThrow(feedItemId);
   await ensureFeedInteractionAllowed(userId, feedItem.owner_id, feedItem.visibility);
 
@@ -621,7 +674,10 @@ export async function createComment(userId: string, feedItemId: string, body: st
   };
 }
 
-export async function deleteComment(userId: string, commentId: string) {
+export async function deleteComment(
+  userId: string,
+  commentId: string,
+): Promise<{ deleted: boolean }> {
   const comment = await findCommentById(commentId);
   if (!comment || comment.deleted_at) {
     return { deleted: false };
@@ -646,7 +702,10 @@ export async function deleteComment(userId: string, commentId: string) {
   return { deleted: true };
 }
 
-export async function blockUserByAlias(blockerId: string, alias: string) {
+export async function blockUserByAlias(
+  blockerId: string,
+  alias: string,
+): Promise<{ blockedId: string }> {
   const target = await findUserByUsername(alias);
   if (!target) {
     throw new HttpError(404, "E.FEED.USER_NOT_FOUND", "FEED_USER_NOT_FOUND");
@@ -667,7 +726,10 @@ export async function blockUserByAlias(blockerId: string, alias: string) {
   return { blockedId: target.id };
 }
 
-export async function unblockUserByAlias(blockerId: string, alias: string) {
+export async function unblockUserByAlias(
+  blockerId: string,
+  alias: string,
+): Promise<{ unblockedId: string }> {
   const target = await findUserByUsername(alias);
   if (!target) {
     throw new HttpError(404, "E.FEED.USER_NOT_FOUND", "FEED_USER_NOT_FOUND");
@@ -693,7 +755,7 @@ export async function reportFeedItem(
   feedItemId: string,
   reason: string,
   details?: string,
-) {
+): Promise<{ reported: boolean }> {
   const feedItem = await loadFeedItemOrThrow(feedItemId);
   await ensureFeedInteractionAllowed(reporterId, feedItem.owner_id, feedItem.visibility);
 
@@ -725,7 +787,7 @@ export async function reportComment(
   commentId: string,
   reason: string,
   details?: string,
-) {
+): Promise<{ reported: boolean }> {
   const comment = await findCommentById(commentId);
   if (!comment || comment.deleted_at) {
     throw new HttpError(404, "E.FEED.COMMENT_NOT_FOUND", "FEED_COMMENT_NOT_FOUND");
@@ -761,7 +823,14 @@ export async function reportComment(
 export async function getLeaderboard(
   viewerId: string | null,
   options: { scope?: "global" | "friends"; period?: "week" | "month"; limit?: number } = {},
-) {
+): Promise<
+  Array<{
+    rank: number;
+    user: { id: string; username: string; displayName: string };
+    points: number;
+    badges: number;
+  }>
+> {
   const scope = options.scope ?? "global";
   const period = options.period ?? "week";
 

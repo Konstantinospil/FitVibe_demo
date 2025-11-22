@@ -1,4 +1,5 @@
 import { v4 as uuidv4 } from "uuid";
+import type { Knex } from "knex";
 import * as plansService from "../plans.service.js";
 import * as plansRepository from "../plans.repository.js";
 import { db } from "../../../db/connection.js";
@@ -49,6 +50,10 @@ const mockedCountUserPlans = plansRepository.countUserPlans as jest.MockedFuncti
 >;
 const mockedDb = db as jest.MockedFunction<typeof db>;
 const mockedUuid = uuidv4 as jest.MockedFunction<typeof uuidv4>;
+
+// Add raw method to db mock
+const mockDbRaw = jest.fn((sql: string) => sql);
+(mockedDb as unknown as { raw: jest.Mock }).raw = mockDbRaw;
 
 describe("Plans Service", () => {
   beforeEach(() => {
@@ -278,17 +283,12 @@ describe("Plans Service", () => {
         archived_at: null,
       };
 
-      mockedFindPlanById
-        .mockResolvedValueOnce(existingPlan) // For ownership check
-        .mockResolvedValueOnce(undefined); // Plan not found after update
-      mockedUpdatePlan.mockResolvedValue(0);
+      mockedFindPlanById.mockResolvedValueOnce(existingPlan); // For ownership check
+      mockedUpdatePlan.mockResolvedValue(0); // Update returns 0 (plan not found or archived)
 
-      await expect(
-        plansService.updateUserPlan("user-123", "plan-1", { name: "Updated Plan" }),
-      ).rejects.toThrow(HttpError);
-      await expect(
-        plansService.updateUserPlan("user-123", "plan-1", { name: "Updated Plan" }),
-      ).rejects.toThrow("Plan not found or already archived");
+      const promise = plansService.updateUserPlan("user-123", "plan-1", { name: "Updated Plan" });
+      await expect(promise).rejects.toThrow(HttpError);
+      await expect(promise).rejects.toThrow("Plan not found or already archived");
     });
 
     it("should throw 500 when updated plan cannot be retrieved", async () => {
@@ -311,12 +311,9 @@ describe("Plans Service", () => {
         .mockResolvedValueOnce(undefined); // Plan not found after update
       mockedUpdatePlan.mockResolvedValue(1); // Update succeeded but plan not found
 
-      await expect(
-        plansService.updateUserPlan("user-123", "plan-1", { name: "Updated Plan" }),
-      ).rejects.toThrow(HttpError);
-      await expect(
-        plansService.updateUserPlan("user-123", "plan-1", { name: "Updated Plan" }),
-      ).rejects.toThrow("Failed to retrieve updated plan");
+      const promise = plansService.updateUserPlan("user-123", "plan-1", { name: "Updated Plan" });
+      await expect(promise).rejects.toThrow(HttpError);
+      await expect(promise).rejects.toThrow("Failed to retrieve updated plan");
     });
   });
 
@@ -464,7 +461,8 @@ describe("Plans Service", () => {
     });
 
     it("should work with transaction", async () => {
-      const mockTrx = {} as never;
+      // Create a callable transaction mock
+      const mockTrx = ((_table: string) => mockQueryBuilder) as unknown as Knex.Transaction;
       mockQueryBuilder.first.mockResolvedValue({
         total: "5",
         completed: "3",

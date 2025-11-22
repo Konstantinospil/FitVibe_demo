@@ -72,6 +72,8 @@ describe("seasonal-events.service", () => {
 
     // Create a mock transaction that behaves like db (callable function)
     const mockTrx = ((_table: string) => mockQueryBuilder) as unknown as Knex.Transaction;
+    // Make the transaction itself callable
+    (mockTrx as unknown as jest.Mock).mockImplementation = jest.fn();
     mockedTransaction.mockImplementation((handler: TransactionHandler) =>
       Promise.resolve(handler(mockTrx)),
     );
@@ -269,7 +271,7 @@ describe("seasonal-events.service", () => {
             sessions_required: 12,
           }),
         }),
-        expect.any(Object),
+        expect.anything(),
       );
     });
 
@@ -314,18 +316,17 @@ describe("seasonal-events.service", () => {
     it("should execute within a transaction", async () => {
       jest.setSystemTime(new Date("2025-01-15T12:00:00Z"));
 
-      const transactionHandler = jest.fn();
+      // Create a callable transaction mock
+      const mockTrxCallable = ((_table: string) => mockQueryBuilder) as unknown as Knex.Transaction;
       mockedTransaction.mockImplementation((handler: TransactionHandler) => {
-        transactionHandler(handler);
-        return Promise.resolve(handler({} as unknown as Knex.Transaction));
+        return Promise.resolve(handler(mockTrxCallable));
       });
 
-      mockQueryBuilder.first.mockResolvedValue(undefined);
-      mockQueryBuilder.count.mockResolvedValue([
-        {
+      mockQueryBuilder.first
+        .mockResolvedValueOnce(undefined) // hasReceivedEventBonus returns undefined
+        .mockResolvedValueOnce({
           count: "12",
-        },
-      ]);
+        }); // countEventSessions returns count
 
       await evaluateSeasonalEvents("user-123", "session-123", new Date("2025-01-15T12:00:00Z"));
 
@@ -335,12 +336,9 @@ describe("seasonal-events.service", () => {
     it("should check for existing bonus using correct query", async () => {
       jest.setSystemTime(new Date("2025-01-15T12:00:00Z"));
 
-      mockQueryBuilder.first.mockResolvedValue(undefined);
-      mockQueryBuilder.count.mockResolvedValue([
-        {
-          count: "12",
-        },
-      ]);
+      mockQueryBuilder.first.mockResolvedValue({
+        count: "12",
+      });
 
       await evaluateSeasonalEvents("user-123", "session-123", new Date("2025-01-15T12:00:00Z"));
 
@@ -355,17 +353,16 @@ describe("seasonal-events.service", () => {
     it("should count sessions within event date range", async () => {
       jest.setSystemTime(new Date("2025-01-15T12:00:00Z"));
 
-      mockQueryBuilder.first.mockResolvedValue(undefined);
-      mockQueryBuilder.count.mockResolvedValue([
-        {
+      mockQueryBuilder.first
+        .mockResolvedValueOnce(undefined) // hasReceivedEventBonus returns undefined
+        .mockResolvedValueOnce({
           count: "12",
-        },
-      ]);
+        }); // countEventSessions returns count
 
       await evaluateSeasonalEvents("user-123", "session-123", new Date("2025-01-15T12:00:00Z"));
 
-      // Verify session count query
-      // The function uses db("sessions") internally within transaction
+      // Verify session count query - check that where was called with sessions query params
+      // The function calls where multiple times, so we check it was called with the sessions params
       expect(mockQueryBuilder.where).toHaveBeenCalledWith({
         owner_id: "user-123",
         status: "completed",
@@ -377,12 +374,11 @@ describe("seasonal-events.service", () => {
 
       mockedUuid.mockReturnValue("test-uuid-456");
 
-      mockQueryBuilder.first.mockResolvedValue(undefined);
-      mockQueryBuilder.count.mockResolvedValue([
-        {
+      mockQueryBuilder.first
+        .mockResolvedValueOnce(undefined) // hasReceivedEventBonus returns undefined (no existing bonus)
+        .mockResolvedValueOnce({
           count: "12",
-        },
-      ]);
+        }); // countEventSessions returns 12 (meets requirement)
 
       await evaluateSeasonalEvents("user-123", "session-123", new Date("2025-01-15T12:00:00Z"));
 
@@ -390,7 +386,7 @@ describe("seasonal-events.service", () => {
         expect.objectContaining({
           id: "test-uuid-456",
         }),
-        expect.any(Object),
+        expect.anything(),
       );
     });
 

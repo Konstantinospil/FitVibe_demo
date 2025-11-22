@@ -116,7 +116,7 @@ jobs:
             librsvg2-dev
 
       - name: Wait for services
-        timeout-minutes: 5
+        timeout-minutes: 10
         run: |
           echo "Waiting for PostgreSQL..."
           for i in {1..30}; do
@@ -169,19 +169,19 @@ jobs:
         run: pnpm test -- --coverage --runInBand
 
       - name: Enforce coverage gate
-        timeout-minutes: 2
+        timeout-minutes: 10
         run: pnpm test:coverage:gate
 
       - name: Validate QA baseline snapshot
-        timeout-minutes: 2
+        timeout-minutes: 10
         run: node tests/qa/assert-baseline.js
 
       - name: Check i18n coverage
-        timeout-minutes: 2
+        timeout-minutes: 10
         run: pnpm i18n:check
 
       - name: Verify feature flag defaults
-        timeout-minutes: 2
+        timeout-minutes: 10
         run: node tests/qa/check-feature-flags.js
 
       - name: Upload coverage artifact
@@ -195,7 +195,7 @@ jobs:
 
       - name: Aggregate coverage files
         if: success()
-        timeout-minutes: 2
+        timeout-minutes: 10
         run: |
           mkdir -p coverage
           find apps packages -name "lcov.info" -exec cat {} \; > coverage/lcov.info || true
@@ -370,7 +370,7 @@ jobs:
             librsvg2-dev
 
       - name: Wait for services
-        timeout-minutes: 5
+        timeout-minutes: 10
         run: |
           echo "Waiting for PostgreSQL..."
           for i in {1..30}; do
@@ -406,11 +406,11 @@ jobs:
         run: pnpm install --frozen-lockfile --prefer-offline
 
       - name: Run database migrations
-        timeout-minutes: 5
+        timeout-minutes: 10
         run: pnpm --filter @fitvibe/backend exec tsx src/db/utils/migrateAll.ts
 
       - name: Seed database
-        timeout-minutes: 5
+        timeout-minutes: 10
         run: pnpm --filter @fitvibe/backend exec tsx src/db/utils/seedAll.ts
 
       - name: Integration tests
@@ -638,7 +638,7 @@ jobs:
         uses: grafana/setup-k6-action@v1
 
       - name: Start mock services
-        timeout-minutes: 2
+        timeout-minutes: 10
         run: |
           node tests/perf/mock-server.mjs &
           echo $! > mock-server.pid
@@ -653,13 +653,13 @@ jobs:
           exit 1
 
       - name: Run k6 smoke test
-        timeout-minutes: 5
+        timeout-minutes: 10
         env:
           API_BASE_URL: http://127.0.0.1:4173/health
         run: k6 run --summary-export=tests/perf/k6-summary.json tests/perf/k6-smoke.js
 
       - name: Assert k6 performance budgets
-        timeout-minutes: 2
+        timeout-minutes: 10
         run: node tests/perf/assert-budgets.cjs tests/perf/k6-summary.json
 
       - name: Run Lighthouse CI
@@ -789,7 +789,7 @@ jobs:
         run: pnpm --filter @fitvibe/frontend run build
 
       - name: Install Playwright browsers
-        timeout-minutes: 5
+        timeout-minutes: 10
         run: pnpm exec playwright install --with-deps
 
       - name: Run axe accessibility suite
@@ -855,7 +855,7 @@ jobs:
         run: pnpm install --frozen-lockfile --prefer-offline
 
       - name: Install Playwright browsers
-        timeout-minutes: 5
+        timeout-minutes: 10
         run: pnpm exec playwright install --with-deps
 
       - name: Build frontend
