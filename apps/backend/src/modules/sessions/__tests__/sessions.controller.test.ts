@@ -8,6 +8,22 @@ jest.mock("../../common/idempotency.service.js");
 
 const mockSessionsService = jest.mocked(sessionsService);
 
+// Import mocked modules
+import { resolveIdempotency, persistIdempotencyResult } from "../../common/idempotency.service";
+
+const mockResolveIdempotency = jest.mocked(resolveIdempotency);
+const mockPersistIdempotencyResult = jest.mocked(persistIdempotencyResult);
+
+// Helper function to create getIdempotencyKey mock
+function createGetIdempotencyKeyMock(key: string | null) {
+  return jest.fn((header: string) => {
+    if (header === "Idempotency-Key") {
+      return key;
+    }
+    return null;
+  });
+}
+
 describe("Sessions Controller", () => {
   let mockRequest: Partial<Request>;
   let mockResponse: Partial<Response>;
@@ -25,11 +41,43 @@ describe("Sessions Controller", () => {
       status: jest.fn().mockReturnThis(),
       json: jest.fn().mockReturnThis(),
       send: jest.fn().mockReturnThis(),
+      set: jest.fn().mockReturnThis(),
     };
     jest.clearAllMocks();
+    mockResolveIdempotency.mockResolvedValue({ type: "new", recordId: "rec-1" });
+    mockPersistIdempotencyResult.mockResolvedValue();
   });
 
   describe("listSessionsHandler", () => {
+    it("should return 401 when user is not authenticated", async () => {
+      mockRequest.user = undefined;
+
+      await sessionsController.listSessionsHandler(
+        mockRequest as Request,
+        mockResponse as Response,
+      );
+
+      expect(mockResponse.status).toHaveBeenCalledWith(401);
+      expect(mockResponse.json).toHaveBeenCalledWith({ error: "Unauthorized" });
+      expect(mockSessionsService.getAll).not.toHaveBeenCalled();
+    });
+
+    it("should return 400 when query validation fails", async () => {
+      mockRequest.query = { limit: "invalid" };
+
+      await sessionsController.listSessionsHandler(
+        mockRequest as Request,
+        mockResponse as Response,
+      );
+
+      expect(mockResponse.status).toHaveBeenCalledWith(400);
+      expect(mockResponse.json).toHaveBeenCalledWith(
+        expect.objectContaining({
+          error: expect.any(Object),
+        }),
+      );
+    });
+
     it("should list user sessions", async () => {
       const mockSessions = [
         {
@@ -87,6 +135,16 @@ describe("Sessions Controller", () => {
   });
 
   describe("getSessionHandler", () => {
+    it("should return 401 when user is not authenticated", async () => {
+      mockRequest.user = undefined;
+      mockRequest.params = { id: "session-123" };
+
+      await sessionsController.getSessionHandler(mockRequest as Request, mockResponse as Response);
+
+      expect(mockResponse.status).toHaveBeenCalledWith(401);
+      expect(mockSessionsService.getOne).not.toHaveBeenCalled();
+    });
+
     it("should get session by ID", async () => {
       mockRequest.params = { id: "session-123" };
 
@@ -116,6 +174,135 @@ describe("Sessions Controller", () => {
   });
 
   describe("createSessionHandler", () => {
+    it("should return 401 when user is not authenticated", async () => {
+      mockRequest.user = undefined;
+      mockRequest.body = { title: "Test Session" };
+
+      await sessionsController.createSessionHandler(
+        mockRequest as Request,
+        mockResponse as Response,
+      );
+
+      expect(mockResponse.status).toHaveBeenCalledWith(401);
+      expect(mockSessionsService.createOne).not.toHaveBeenCalled();
+    });
+
+    it("should return 400 when body validation fails", async () => {
+      mockRequest.body = { invalid: "data" };
+
+      await sessionsController.createSessionHandler(
+        mockRequest as Request,
+        mockResponse as Response,
+      );
+
+      expect(mockResponse.status).toHaveBeenCalledWith(400);
+      expect(mockSessionsService.createOne).not.toHaveBeenCalled();
+    });
+
+    it("should handle idempotent session creation with replay", async () => {
+      mockRequest.body = { title: "Test Session" };
+      mockRequest.headers = { "idempotency-key": "key-123" };
+      mockRequest.get = createGetIdempotencyKeyMock("key-123");
+      mockRequest.baseUrl = "/api/v1";
+      mockRequest.route = { path: "/sessions" };
+      mockRequest.method = "POST";
+
+      mockResolveIdempotency.mockResolvedValue({
+        type: "replay",
+        status: 201,
+        body: { id: "session-123", title: "Test Session" },
+      });
+
+      await sessionsController.createSessionHandler(
+        mockRequest as Request,
+        mockResponse as Response,
+      );
+
+      expect(mockSessionsService.createOne).not.toHaveBeenCalled();
+      expect(mockResponse.set).toHaveBeenCalledWith("Idempotency-Key", "key-123");
+      expect(mockResponse.set).toHaveBeenCalledWith("Idempotent-Replayed", "true");
+      expect(mockResponse.status).toHaveBeenCalledWith(201);
+    });
+
+    it("should handle idempotent session creation with new record", async () => {
+      mockRequest.body = { title: "Test Session" };
+      mockRequest.headers = { "idempotency-key": "key-123" };
+      mockRequest.get = createGetIdempotencyKeyMock("key-123");
+      mockRequest.baseUrl = "/api/v1";
+      mockRequest.route = { path: "/sessions" };
+      mockRequest.method = "POST";
+
+      mockResolveIdempotency.mockResolvedValue({
+        type: "new",
+        recordId: "rec-1",
+      });
+      const mockCreated = { id: "session-123", title: "Test Session" };
+      mockSessionsService.createOne.mockResolvedValue(mockCreated as never);
+
+      await sessionsController.createSessionHandler(
+        mockRequest as Request,
+        mockResponse as Response,
+      );
+
+      expect(mockSessionsService.createOne).toHaveBeenCalled();
+      expect(mockPersistIdempotencyResult).toHaveBeenCalledWith("rec-1", 201, mockCreated);
+      expect(mockResponse.set).toHaveBeenCalledWith("Idempotency-Key", "key-123");
+    });
+
+    it("should handle idempotent session creation with key but no recordId", async () => {
+      mockRequest.body = { title: "Test Session" };
+      mockRequest.headers = { "idempotency-key": "key-123" };
+      mockRequest.get = createGetIdempotencyKeyMock("key-123");
+      mockRequest.baseUrl = "/api/v1";
+      mockRequest.route = { path: "/sessions" };
+      mockRequest.method = "POST";
+
+      mockResolveIdempotency.mockResolvedValue({
+        type: "new",
+        recordId: null,
+      });
+      const mockCreated = { id: "session-123", title: "Test Session" };
+      mockSessionsService.createOne.mockResolvedValue(mockCreated as never);
+
+      await sessionsController.createSessionHandler(
+        mockRequest as Request,
+        mockResponse as Response,
+      );
+
+      expect(mockSessionsService.createOne).toHaveBeenCalled();
+      expect(mockPersistIdempotencyResult).not.toHaveBeenCalled();
+      expect(mockResponse.set).toHaveBeenCalledWith("Idempotency-Key", "key-123");
+    });
+
+    it("should throw error when idempotency key is empty", async () => {
+      mockRequest.body = { title: "Test Session" };
+      mockRequest.get = jest.fn((header: string) => {
+        if (header === "Idempotency-Key") {
+          return "   ";
+        }
+        return null;
+      });
+
+      await expect(
+        sessionsController.createSessionHandler(mockRequest as Request, mockResponse as Response),
+      ).rejects.toThrow("IDEMPOTENCY_INVALID");
+    });
+
+    it("should throw error when idempotency key is too long", async () => {
+      mockRequest.body = { title: "Test Session" };
+      const longKey = "a".repeat(201);
+      mockRequest.get = jest.fn((header: string) => {
+        if (header === "Idempotency-Key") {
+          return longKey;
+        }
+        return null;
+      });
+
+      await expect(
+        sessionsController.createSessionHandler(mockRequest as Request, mockResponse as Response),
+      ).rejects.toThrow("Idempotency-Key header must be 200 characters or fewer");
+    });
+
     it("should create session with valid data", async () => {
       const plannedAt = new Date().toISOString();
       mockRequest.body = {
@@ -158,6 +345,33 @@ describe("Sessions Controller", () => {
   });
 
   describe("updateSessionHandler", () => {
+    it("should return 401 when user is not authenticated", async () => {
+      mockRequest.user = undefined;
+      mockRequest.params = { id: "session-123" };
+      mockRequest.body = { title: "Updated" };
+
+      await sessionsController.updateSessionHandler(
+        mockRequest as Request,
+        mockResponse as Response,
+      );
+
+      expect(mockResponse.status).toHaveBeenCalledWith(401);
+      expect(mockSessionsService.updateOne).not.toHaveBeenCalled();
+    });
+
+    it("should return 400 when validation fails", async () => {
+      mockRequest.params = { id: "session-123" };
+      mockRequest.body = { invalid: "data" };
+
+      await sessionsController.updateSessionHandler(
+        mockRequest as Request,
+        mockResponse as Response,
+      );
+
+      expect(mockResponse.status).toHaveBeenCalledWith(400);
+      expect(mockSessionsService.updateOne).not.toHaveBeenCalled();
+    });
+
     it("should update session", async () => {
       mockRequest.params = { id: "session-123" };
       mockRequest.body = {
@@ -206,6 +420,108 @@ describe("Sessions Controller", () => {
   });
 
   describe("cloneSessionHandler", () => {
+    it("should return 401 when user is not authenticated", async () => {
+      mockRequest.user = undefined;
+      mockRequest.params = { id: "session-123" };
+
+      await sessionsController.cloneSessionHandler(
+        mockRequest as Request,
+        mockResponse as Response,
+      );
+
+      expect(mockResponse.status).toHaveBeenCalledWith(401);
+      expect(mockSessionsService.cloneOne).not.toHaveBeenCalled();
+    });
+
+    it("should return 400 when body validation fails", async () => {
+      mockRequest.params = { id: "session-123" };
+      mockRequest.body = { invalid: "data" };
+
+      await sessionsController.cloneSessionHandler(
+        mockRequest as Request,
+        mockResponse as Response,
+      );
+
+      expect(mockResponse.status).toHaveBeenCalledWith(400);
+      expect(mockSessionsService.cloneOne).not.toHaveBeenCalled();
+    });
+
+    it("should handle idempotent clone with replay", async () => {
+      mockRequest.params = { id: "session-123" };
+      mockRequest.body = { planned_at: new Date().toISOString() };
+      mockRequest.headers = { "idempotency-key": "key-123" };
+      mockRequest.get = createGetIdempotencyKeyMock("key-123");
+      mockRequest.baseUrl = "/api/v1";
+      mockRequest.route = { path: "/sessions/:id/clone" };
+      mockRequest.method = "POST";
+
+      mockResolveIdempotency.mockResolvedValue({
+        type: "replay",
+        status: 201,
+        body: { id: "cloned-123" },
+      });
+
+      await sessionsController.cloneSessionHandler(
+        mockRequest as Request,
+        mockResponse as Response,
+      );
+
+      expect(mockSessionsService.cloneOne).not.toHaveBeenCalled();
+      expect(mockResponse.set).toHaveBeenCalledWith("Idempotency-Key", "key-123");
+    });
+
+    it("should handle idempotent clone with new record", async () => {
+      mockRequest.params = { id: "session-123" };
+      mockRequest.body = { planned_at: new Date().toISOString() };
+      mockRequest.headers = { "idempotency-key": "key-123" };
+      mockRequest.get = createGetIdempotencyKeyMock("key-123");
+      mockRequest.baseUrl = "/api/v1";
+      mockRequest.route = { path: "/sessions/:id/clone" };
+      mockRequest.method = "POST";
+
+      mockResolveIdempotency.mockResolvedValue({
+        type: "new",
+        recordId: "rec-1",
+      });
+      const mockCloned = { id: "cloned-123", title: "Cloned Session" };
+      mockSessionsService.cloneOne.mockResolvedValue(mockCloned as never);
+
+      await sessionsController.cloneSessionHandler(
+        mockRequest as Request,
+        mockResponse as Response,
+      );
+
+      expect(mockSessionsService.cloneOne).toHaveBeenCalled();
+      expect(mockPersistIdempotencyResult).toHaveBeenCalledWith("rec-1", 201, mockCloned);
+      expect(mockResponse.set).toHaveBeenCalledWith("Idempotency-Key", "key-123");
+    });
+
+    it("should handle idempotent clone with key but no recordId", async () => {
+      mockRequest.params = { id: "session-123" };
+      mockRequest.body = { planned_at: new Date().toISOString() };
+      mockRequest.headers = { "idempotency-key": "key-123" };
+      mockRequest.get = createGetIdempotencyKeyMock("key-123");
+      mockRequest.baseUrl = "/api/v1";
+      mockRequest.route = { path: "/sessions/:id/clone" };
+      mockRequest.method = "POST";
+
+      mockResolveIdempotency.mockResolvedValue({
+        type: "new",
+        recordId: null,
+      });
+      const mockCloned = { id: "cloned-123", title: "Cloned Session" };
+      mockSessionsService.cloneOne.mockResolvedValue(mockCloned as never);
+
+      await sessionsController.cloneSessionHandler(
+        mockRequest as Request,
+        mockResponse as Response,
+      );
+
+      expect(mockSessionsService.cloneOne).toHaveBeenCalled();
+      expect(mockPersistIdempotencyResult).not.toHaveBeenCalled();
+      expect(mockResponse.set).toHaveBeenCalledWith("Idempotency-Key", "key-123");
+    });
+
     it("should clone existing session", async () => {
       mockRequest.params = { id: "session-123" };
       mockRequest.body = {
@@ -251,6 +567,110 @@ describe("Sessions Controller", () => {
   });
 
   describe("applyRecurrenceHandler", () => {
+    it("should return 401 when user is not authenticated", async () => {
+      mockRequest.user = undefined;
+      mockRequest.params = { id: "session-123" };
+
+      await sessionsController.applyRecurrenceHandler(
+        mockRequest as Request,
+        mockResponse as Response,
+      );
+
+      expect(mockResponse.status).toHaveBeenCalledWith(401);
+      expect(mockSessionsService.applyRecurrence).not.toHaveBeenCalled();
+    });
+
+    it("should return 400 when body validation fails", async () => {
+      mockRequest.params = { id: "session-123" };
+      mockRequest.body = { occurrences: -1 };
+
+      await sessionsController.applyRecurrenceHandler(
+        mockRequest as Request,
+        mockResponse as Response,
+      );
+
+      expect(mockResponse.status).toHaveBeenCalledWith(400);
+      expect(mockSessionsService.applyRecurrence).not.toHaveBeenCalled();
+    });
+
+    it("should handle idempotent recurrence with replay", async () => {
+      mockRequest.params = { id: "session-123" };
+      mockRequest.body = { occurrences: 5 };
+      mockRequest.headers = { "idempotency-key": "key-123" };
+      mockRequest.get = createGetIdempotencyKeyMock("key-123");
+      mockRequest.baseUrl = "/api/v1";
+      mockRequest.route = { path: "/sessions/:id/recurrence" };
+      mockRequest.method = "POST";
+
+      mockResolveIdempotency.mockResolvedValue({
+        type: "replay",
+        status: 201,
+        body: { sessions: [] },
+      });
+
+      await sessionsController.applyRecurrenceHandler(
+        mockRequest as Request,
+        mockResponse as Response,
+      );
+
+      expect(mockSessionsService.applyRecurrence).not.toHaveBeenCalled();
+      expect(mockResponse.set).toHaveBeenCalledWith("Idempotency-Key", "key-123");
+    });
+
+    it("should handle idempotent recurrence with new record", async () => {
+      mockRequest.params = { id: "session-123" };
+      mockRequest.body = { occurrences: 5 };
+      mockRequest.headers = { "idempotency-key": "key-123" };
+      mockRequest.get = createGetIdempotencyKeyMock("key-123");
+      mockRequest.baseUrl = "/api/v1";
+      mockRequest.route = { path: "/sessions/:id/recurrence" };
+      mockRequest.method = "POST";
+
+      mockResolveIdempotency.mockResolvedValue({
+        type: "new",
+        recordId: "rec-1",
+      });
+      const mockSessions = [{ id: "session-1" }, { id: "session-2" }];
+      mockSessionsService.applyRecurrence.mockResolvedValue(mockSessions as never);
+
+      await sessionsController.applyRecurrenceHandler(
+        mockRequest as Request,
+        mockResponse as Response,
+      );
+
+      expect(mockSessionsService.applyRecurrence).toHaveBeenCalled();
+      expect(mockPersistIdempotencyResult).toHaveBeenCalledWith("rec-1", 201, {
+        sessions: mockSessions,
+      });
+      expect(mockResponse.set).toHaveBeenCalledWith("Idempotency-Key", "key-123");
+    });
+
+    it("should handle idempotent recurrence with key but no recordId", async () => {
+      mockRequest.params = { id: "session-123" };
+      mockRequest.body = { occurrences: 5 };
+      mockRequest.headers = { "idempotency-key": "key-123" };
+      mockRequest.get = createGetIdempotencyKeyMock("key-123");
+      mockRequest.baseUrl = "/api/v1";
+      mockRequest.route = { path: "/sessions/:id/recurrence" };
+      mockRequest.method = "POST";
+
+      mockResolveIdempotency.mockResolvedValue({
+        type: "new",
+        recordId: null,
+      });
+      const mockSessions = [{ id: "session-1" }];
+      mockSessionsService.applyRecurrence.mockResolvedValue(mockSessions as never);
+
+      await sessionsController.applyRecurrenceHandler(
+        mockRequest as Request,
+        mockResponse as Response,
+      );
+
+      expect(mockSessionsService.applyRecurrence).toHaveBeenCalled();
+      expect(mockPersistIdempotencyResult).not.toHaveBeenCalled();
+      expect(mockResponse.set).toHaveBeenCalledWith("Idempotency-Key", "key-123");
+    });
+
     it("should apply recurrence to session", async () => {
       mockRequest.params = { id: "session-123" };
       mockRequest.body = {
@@ -293,6 +713,19 @@ describe("Sessions Controller", () => {
   });
 
   describe("deleteSessionHandler", () => {
+    it("should return 401 when user is not authenticated", async () => {
+      mockRequest.user = undefined;
+      mockRequest.params = { id: "session-123" };
+
+      await sessionsController.deleteSessionHandler(
+        mockRequest as Request,
+        mockResponse as Response,
+      );
+
+      expect(mockResponse.status).toHaveBeenCalledWith(401);
+      expect(mockSessionsService.cancelOne).not.toHaveBeenCalled();
+    });
+
     it("should cancel session", async () => {
       mockRequest.params = { id: "session-123" };
 

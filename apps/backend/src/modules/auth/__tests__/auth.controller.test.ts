@@ -6,8 +6,25 @@ import { HttpError } from "../../../utils/http.js";
 // Mock dependencies
 jest.mock("../auth.service.js");
 jest.mock("../../../services/tokens.js");
+jest.mock("../../common/idempotency.helpers", () => ({
+  getIdempotencyKey: jest.fn(),
+  getRouteTemplate: jest.fn(),
+}));
+jest.mock("../../common/idempotency.service", () => ({
+  resolveIdempotency: jest.fn(),
+  persistIdempotencyResult: jest.fn(),
+}));
 
 const mockAuthService = jest.mocked(authService);
+
+// Import mocked modules
+import { getIdempotencyKey, getRouteTemplate } from "../../common/idempotency.helpers";
+import { resolveIdempotency, persistIdempotencyResult } from "../../common/idempotency.service";
+
+const mockGetIdempotencyKey = jest.mocked(getIdempotencyKey);
+const mockGetRouteTemplate = jest.mocked(getRouteTemplate);
+const mockResolveIdempotency = jest.mocked(resolveIdempotency);
+const mockPersistIdempotencyResult = jest.mocked(persistIdempotencyResult);
 
 describe("Auth Controller", () => {
   let mockRequest: Partial<Request>;
@@ -38,10 +55,15 @@ describe("Auth Controller", () => {
       send: jest.fn().mockReturnThis(),
       cookie: jest.fn().mockReturnThis(),
       clearCookie: jest.fn().mockReturnThis(),
+      set: jest.fn().mockReturnThis(),
       locals: {},
     };
     mockNext = jest.fn();
     jest.clearAllMocks();
+    mockGetIdempotencyKey.mockReturnValue(undefined);
+    mockGetRouteTemplate.mockReturnValue("/api/v1/auth/register");
+    mockResolveIdempotency.mockResolvedValue({ type: "new", recordId: "rec-1" });
+    mockPersistIdempotencyResult.mockResolvedValue();
   });
 
   describe("register", () => {
@@ -81,6 +103,62 @@ describe("Auth Controller", () => {
 
       // Should be called with ZodError due to password policy violation
       expect(mockNext).toHaveBeenCalledWith(expect.any(Error));
+    });
+
+    it("should handle idempotent registration", async () => {
+      const registerData = {
+        email: "test@example.com",
+        username: "testuser",
+        password: "SecureP@ssw0rd123",
+        terms_accepted: true,
+      };
+      mockRequest.body = registerData;
+      mockRequest.headers = { "idempotency-key": "key-123" };
+      mockGetIdempotencyKey.mockReturnValue("key-123");
+      mockResolveIdempotency.mockResolvedValue({
+        type: "new",
+        recordId: "rec-1",
+      });
+      mockAuthService.register.mockResolvedValue({
+        verificationToken: "verification-token-123",
+      });
+
+      await authController.register(mockRequest as Request, mockResponse as Response, mockNext);
+
+      expect(mockResolveIdempotency).toHaveBeenCalled();
+      expect(mockAuthService.register).toHaveBeenCalledWith(registerData);
+      expect(mockPersistIdempotencyResult).toHaveBeenCalledWith(
+        "rec-1",
+        202,
+        expect.objectContaining({
+          message: expect.any(String),
+        }),
+      );
+      expect(mockResponse.set).toHaveBeenCalledWith("Idempotency-Key", "key-123");
+    });
+
+    it("should replay idempotent registration", async () => {
+      const registerData = {
+        email: "test@example.com",
+        username: "testuser",
+        password: "SecureP@ssw0rd123",
+        terms_accepted: true,
+      };
+      mockRequest.body = registerData;
+      mockRequest.headers = { "idempotency-key": "key-123" };
+      mockGetIdempotencyKey.mockReturnValue("key-123");
+      mockResolveIdempotency.mockResolvedValue({
+        type: "replay",
+        status: 202,
+        body: { message: "If the email is valid, a verification link will be sent shortly." },
+      });
+
+      await authController.register(mockRequest as Request, mockResponse as Response, mockNext);
+
+      expect(mockAuthService.register).not.toHaveBeenCalled();
+      expect(mockResponse.set).toHaveBeenCalledWith("Idempotency-Key", "key-123");
+      expect(mockResponse.set).toHaveBeenCalledWith("Idempotent-Replayed", "true");
+      expect(mockResponse.status).toHaveBeenCalledWith(202);
     });
   });
 
@@ -131,6 +209,84 @@ describe("Auth Controller", () => {
       mockAuthService.login.mockRejectedValue(error);
 
       await authController.login(mockRequest as Request, mockResponse as Response, mockNext);
+
+      expect(mockNext).toHaveBeenCalledWith(error);
+    });
+
+    it("should handle login with 2FA required", async () => {
+      const loginData = {
+        email: "test@example.com",
+        password: "password123",
+      };
+      mockRequest.body = loginData;
+
+      mockAuthService.login.mockResolvedValue({
+        requires2FA: true,
+        pendingSessionId: "pending-session-123",
+      } as never);
+
+      await authController.login(mockRequest as Request, mockResponse as Response, mockNext);
+
+      expect(mockResponse.json).toHaveBeenCalledWith({
+        requires2FA: true,
+        pendingSessionId: "pending-session-123",
+      });
+      expect(mockResponse.cookie).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("verify2FALogin", () => {
+    it("should verify 2FA and complete login", async () => {
+      mockRequest.body = {
+        pendingSessionId: "550e8400-e29b-41d4-a716-446655440000",
+        code: "123456",
+      };
+
+      mockAuthService.verify2FALogin.mockResolvedValue({
+        user: { id: "user-123", email: "test@example.com" },
+        tokens: {
+          accessToken: "access-token",
+          refreshToken: "refresh-token",
+        },
+        session: { id: "session-123" },
+      } as never);
+
+      await authController.verify2FALogin(
+        mockRequest as Request,
+        mockResponse as Response,
+        mockNext,
+      );
+
+      expect(mockAuthService.verify2FALogin).toHaveBeenCalledWith(
+        "550e8400-e29b-41d4-a716-446655440000",
+        "123456",
+        expect.objectContaining({
+          userAgent: "test-user-agent",
+          ip: "127.0.0.1",
+          requestId: "test-request-id",
+        }),
+      );
+      expect(mockResponse.cookie).toHaveBeenCalledTimes(2);
+      expect(mockResponse.json).toHaveBeenCalledWith({
+        user: expect.any(Object),
+        session: expect.any(Object),
+      });
+    });
+
+    it("should handle invalid 2FA code", async () => {
+      mockRequest.body = {
+        pendingSessionId: "550e8400-e29b-41d4-a716-446655440000",
+        code: "000000",
+      };
+
+      const error = new HttpError(401, "INVALID_2FA_CODE", "Invalid 2FA code");
+      mockAuthService.verify2FALogin.mockRejectedValue(error);
+
+      await authController.verify2FALogin(
+        mockRequest as Request,
+        mockResponse as Response,
+        mockNext,
+      );
 
       expect(mockNext).toHaveBeenCalledWith(error);
     });
@@ -231,6 +387,19 @@ describe("Auth Controller", () => {
       expect(mockResponse.status).toHaveBeenCalledWith(204);
       expect(mockResponse.send).toHaveBeenCalled();
     });
+
+    it("should handle logout errors", async () => {
+      mockRequest.cookies = {
+        fitvibe_refresh: "valid-refresh-token",
+      };
+
+      const error = new HttpError(500, "LOGOUT_ERROR", "Logout failed");
+      mockAuthService.logout.mockRejectedValue(error);
+
+      await authController.logout(mockRequest as Request, mockResponse as Response, mockNext);
+
+      expect(mockNext).toHaveBeenCalledWith(error);
+    });
   });
 
   describe("verifyEmail", () => {
@@ -297,11 +466,62 @@ describe("Auth Controller", () => {
       );
 
       expect(mockAuthService.requestPasswordReset).toHaveBeenCalledWith("test@example.com");
-      expect(mockResponse.json).toHaveBeenCalledWith(
+    });
+
+    it("should handle idempotent password reset request", async () => {
+      mockRequest.body = {
+        email: "test@example.com",
+      };
+      mockRequest.headers = { "idempotency-key": "key-123" };
+      mockGetIdempotencyKey.mockReturnValue("key-123");
+      mockResolveIdempotency.mockResolvedValue({
+        type: "new",
+        recordId: "rec-1",
+      });
+      mockAuthService.requestPasswordReset.mockResolvedValue({
+        expiresAt: new Date(Date.now() + 15 * 60 * 1000).toISOString(),
+      } as never);
+
+      await authController.forgotPassword(
+        mockRequest as Request,
+        mockResponse as Response,
+        mockNext,
+      );
+
+      expect(mockResolveIdempotency).toHaveBeenCalled();
+      expect(mockAuthService.requestPasswordReset).toHaveBeenCalledWith("test@example.com");
+      expect(mockPersistIdempotencyResult).toHaveBeenCalledWith(
+        "rec-1",
+        202,
         expect.objectContaining({
           message: expect.any(String),
         }),
       );
+      expect(mockResponse.status).toHaveBeenCalledWith(202);
+    });
+
+    it("should replay idempotent password reset request", async () => {
+      mockRequest.body = {
+        email: "test@example.com",
+      };
+      mockRequest.headers = { "idempotency-key": "key-123" };
+      mockGetIdempotencyKey.mockReturnValue("key-123");
+      mockResolveIdempotency.mockResolvedValue({
+        type: "replay",
+        status: 202,
+        body: { message: "If the email is registered, a reset link will be sent shortly." },
+      });
+
+      await authController.forgotPassword(
+        mockRequest as Request,
+        mockResponse as Response,
+        mockNext,
+      );
+
+      expect(mockAuthService.requestPasswordReset).not.toHaveBeenCalled();
+      expect(mockResponse.set).toHaveBeenCalledWith("Idempotency-Key", "key-123");
+      expect(mockResponse.set).toHaveBeenCalledWith("Idempotent-Replayed", "true");
+      expect(mockResponse.status).toHaveBeenCalledWith(202);
     });
 
     it("should handle missing email", async () => {
@@ -456,6 +676,128 @@ describe("Auth Controller", () => {
       const error = mockNext.mock.calls[0][0] as HttpError;
       expect(error.status).toBe(401);
       expect(error.code).toBe("UNAUTHENTICATED");
+    });
+
+    it("should throw error when revokeOthers is true but no current session", async () => {
+      mockRequest.user = {
+        sub: "user-123",
+      };
+      mockRequest.body = {
+        revokeOthers: true,
+      };
+      mockRequest.cookies = {};
+      mockRequest.headers = {};
+
+      await authController.revokeSessions(
+        mockRequest as Request,
+        mockResponse as Response,
+        mockNext,
+      );
+
+      expect(mockNext).toHaveBeenCalled();
+      const error = mockNext.mock.calls[0][0] as HttpError;
+      expect(error.status).toBe(400);
+      expect(error.code).toBe("AUTH_SESSION_UNKNOWN");
+    });
+
+    it("should clear cookies when revoking current session", async () => {
+      const currentSessionId = "session-123";
+      mockRequest.user = {
+        sub: "user-123",
+        sid: currentSessionId,
+      };
+      mockRequest.body = {
+        sessionId: currentSessionId,
+      };
+      mockRequest.cookies = {
+        fitvibe_access: "access-token",
+      };
+
+      mockAuthService.revokeSessions.mockResolvedValue({ revoked: 1 } as never);
+
+      await authController.revokeSessions(
+        mockRequest as Request,
+        mockResponse as Response,
+        mockNext,
+      );
+
+      expect(mockResponse.clearCookie).toHaveBeenCalledTimes(2);
+      expect(mockResponse.status).toHaveBeenCalledWith(204);
+      expect(mockResponse.send).toHaveBeenCalled();
+    });
+
+    it("should clear cookies when revoking all sessions", async () => {
+      const currentSessionId = "session-123";
+      mockRequest.user = {
+        sub: "user-123",
+        sid: currentSessionId,
+      };
+      mockRequest.body = {
+        revokeAll: true,
+      };
+
+      mockAuthService.revokeSessions.mockResolvedValue({ revoked: 5 } as never);
+
+      await authController.revokeSessions(
+        mockRequest as Request,
+        mockResponse as Response,
+        mockNext,
+      );
+
+      expect(mockResponse.clearCookie).toHaveBeenCalledTimes(2);
+      expect(mockResponse.status).toHaveBeenCalledWith(204);
+    });
+  });
+
+  describe("acceptTerms", () => {
+    it("should accept terms for authenticated user", async () => {
+      mockRequest.user = {
+        sub: "user-123",
+      };
+      mockRequest.body = {
+        terms_accepted: true,
+      };
+
+      mockAuthService.acceptTerms.mockResolvedValue();
+
+      await authController.acceptTerms(mockRequest as Request, mockResponse as Response, mockNext);
+
+      expect(mockAuthService.acceptTerms).toHaveBeenCalledWith("user-123");
+      expect(mockResponse.status).toHaveBeenCalledWith(200);
+      expect(mockResponse.json).toHaveBeenCalledWith({
+        message: "Terms accepted successfully",
+      });
+    });
+
+    it("should handle unauthenticated accept terms request", async () => {
+      mockRequest.user = undefined;
+      mockRequest.body = {
+        terms_accepted: true,
+      };
+
+      await authController.acceptTerms(mockRequest as Request, mockResponse as Response, mockNext);
+
+      expect(mockNext).toHaveBeenCalled();
+      const error = mockNext.mock.calls[0][0] as HttpError;
+      expect(error.status).toBe(401);
+      expect(error.code).toBe("UNAUTHENTICATED");
+      expect(mockAuthService.acceptTerms).not.toHaveBeenCalled();
+    });
+
+    it("should handle accept terms errors", async () => {
+      mockRequest.user = {
+        sub: "user-123",
+      };
+      mockRequest.body = {
+        terms_accepted: true,
+      };
+
+      const error = new HttpError(500, "TERMS_ERROR", "Failed to accept terms");
+      mockAuthService.acceptTerms.mockRejectedValue(error);
+
+      await authController.acceptTerms(mockRequest as Request, mockResponse as Response, mockNext);
+
+      expect(mockNext).toHaveBeenCalledWith(error);
     });
   });
 

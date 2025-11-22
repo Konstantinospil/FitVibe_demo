@@ -2,7 +2,7 @@
  * Unit tests for logs routes
  */
 
-import { describe, it, expect, jest, beforeEach } from "@jest/globals";
+import { describe, it, expect, jest, beforeEach, afterAll } from "@jest/globals";
 import type { Request, Response, NextFunction } from "express";
 import { logsRouter } from "../logs.routes.js";
 import { requireAuth } from "../../users/users.middleware.js";
@@ -17,12 +17,20 @@ jest.mock("../../common/rbac.middleware.js", () => ({
   requireRole: jest.fn(() => (req: Request, res: Response, next: NextFunction) => next()),
 }));
 
+// Mock the rate limiter to prevent actual rate limiter instantiation (which creates timers)
 jest.mock("../../common/rateLimiter.js", () => ({
   rateLimit: jest.fn(() => (req: Request, res: Response, next: NextFunction) => next()),
 }));
 
+// Also mock the underlying rate-limiter-flexible to prevent any timer creation
+jest.mock("rate-limiter-flexible", () => ({
+  RateLimiterMemory: jest.fn(() => ({
+    consume: jest.fn().mockResolvedValue({ remainingPoints: 1 }),
+  })),
+}));
+
 jest.mock("../../../utils/async-handler.js", () => ({
-  asyncHandler: jest.fn((fn) => fn),
+  asyncHandler: jest.fn((fn: unknown) => fn),
 }));
 
 jest.mock("../logs.controller.js", () => ({
@@ -31,6 +39,19 @@ jest.mock("../logs.controller.js", () => ({
 }));
 
 describe("Logs Routes", () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  afterAll(async () => {
+    // Clean up any pending async operations
+    // Wait for all microtasks and timers to complete
+    await new Promise((resolve) => process.nextTick(resolve));
+    await new Promise((resolve) => setImmediate(resolve));
+    // Clear any remaining mocks
+    jest.clearAllMocks();
+  });
+
   it("should register GET / route", () => {
     const routes = logsRouter.stack;
     const getRoute = routes.find((layer) => layer.route?.path === "/" && layer.route?.methods?.get);
