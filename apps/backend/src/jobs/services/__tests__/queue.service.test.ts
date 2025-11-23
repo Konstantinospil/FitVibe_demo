@@ -50,6 +50,10 @@ describe("QueueService", () => {
   });
 
   afterEach(() => {
+    // Clean up the service to clear any pending timers
+    if (service) {
+      service.shutdown();
+    }
     timeoutSpy.mockRestore();
   });
 

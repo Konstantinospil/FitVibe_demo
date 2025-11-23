@@ -12,6 +12,13 @@ function getLimiter(key: string, points = 60, duration = 60) {
 }
 
 /**
+ * Clear all rate limiters (for test cleanup)
+ */
+export function clearRateLimiters(): void {
+  limiters.clear();
+}
+
+/**
  * Apply a per-IP rate limit with secure IP extraction.
  * Prevents X-Forwarded-For header spoofing (OWASP A07:2021).
  *

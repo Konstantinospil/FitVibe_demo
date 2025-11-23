@@ -33,6 +33,7 @@ export class QueueService {
   private deadLetterQueue: DeadLetterJob[] = [];
   private handlers: Map<string, JobHandler> = new Map();
   private processing = false;
+  private activeTimers: Set<NodeJS.Timeout> = new Set();
 
   constructor() {
     this.registerDefaultHandlers();
@@ -166,12 +167,14 @@ export class QueueService {
       "[queue] Scheduling job retry",
     );
 
-    setTimeout(() => {
+    const timerId = setTimeout(() => {
+      this.activeTimers.delete(timerId);
       this.enqueue({
         ...job,
         attemptCount,
       });
     }, delay);
+    this.activeTimers.add(timerId);
   }
 
   /**
@@ -311,6 +314,24 @@ export class QueueService {
     logger.info({ job: retryJob.name }, "[queue] Dead-letter job manually retried");
 
     return true;
+  }
+
+  /**
+   * Shutdown the queue service and clear all pending timers
+   * This should be called during test teardown to prevent open handles
+   */
+  shutdown(): void {
+    // Clear all active timers
+    for (const timerId of this.activeTimers) {
+      clearTimeout(timerId);
+    }
+    this.activeTimers.clear();
+
+    // Clear queues
+    this.queue = [];
+    this.deadLetterQueue = [];
+
+    logger.info("[queue] Queue service shut down");
   }
 }
 

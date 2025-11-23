@@ -45,6 +45,9 @@ export async function shutdownQueue(): Promise<void> {
 
   if (redisEnabled) {
     await shutdownBullMQ();
+  } else {
+    // Shutdown in-memory queue service to clear timers
+    inMemoryQueue.shutdown();
   }
 
   logger.info("[queue] Queue service shutdown complete");
