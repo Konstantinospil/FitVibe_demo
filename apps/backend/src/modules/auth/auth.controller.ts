@@ -418,10 +418,18 @@ export async function revokeSessions(
       context,
     });
 
-    const revokingCurrent =
-      Boolean(payload.revokeAll) || (payload.sessionId ? payload.sessionId === sessionId : false);
+    // Check if we're revoking the current session
+    // This happens when:
+    // 1. revokeAll is true, OR
+    // 2. A specific sessionId is provided and it matches the current session
+    const isRevokingCurrentSession =
+      payload.revokeAll === true ||
+      (payload.sessionId !== undefined &&
+        payload.sessionId !== null &&
+        sessionId !== null &&
+        String(payload.sessionId) === String(sessionId));
 
-    if (revokingCurrent || payload.revokeAll) {
+    if (isRevokingCurrentSession) {
       clearAuthCookies(res);
       res.status(204).send();
       return;

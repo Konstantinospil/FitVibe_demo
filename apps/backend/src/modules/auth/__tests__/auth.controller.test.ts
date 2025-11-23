@@ -701,7 +701,7 @@ describe("Auth Controller", () => {
     });
 
     it("should clear cookies when revoking current session", async () => {
-      const currentSessionId = "session-123";
+      const currentSessionId = "550e8400-e29b-41d4-a716-446655440000";
       mockRequest.user = {
         sub: "user-123",
         sid: currentSessionId,

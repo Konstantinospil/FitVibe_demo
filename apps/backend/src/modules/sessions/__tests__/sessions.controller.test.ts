@@ -200,7 +200,7 @@ describe("Sessions Controller", () => {
     });
 
     it("should handle idempotent session creation with replay", async () => {
-      mockRequest.body = { title: "Test Session" };
+      mockRequest.body = { title: "Test Session", planned_at: new Date().toISOString() };
       mockRequest.headers = { "idempotency-key": "key-123" };
       mockRequest.get = createGetIdempotencyKeyMock("key-123");
       mockRequest.baseUrl = "/api/v1";
@@ -225,7 +225,7 @@ describe("Sessions Controller", () => {
     });
 
     it("should handle idempotent session creation with new record", async () => {
-      mockRequest.body = { title: "Test Session" };
+      mockRequest.body = { title: "Test Session", planned_at: new Date().toISOString() };
       mockRequest.headers = { "idempotency-key": "key-123" };
       mockRequest.get = createGetIdempotencyKeyMock("key-123");
       mockRequest.baseUrl = "/api/v1";
@@ -250,7 +250,7 @@ describe("Sessions Controller", () => {
     });
 
     it("should handle idempotent session creation with key but no recordId", async () => {
-      mockRequest.body = { title: "Test Session" };
+      mockRequest.body = { title: "Test Session", planned_at: new Date().toISOString() };
       mockRequest.headers = { "idempotency-key": "key-123" };
       mockRequest.get = createGetIdempotencyKeyMock("key-123");
       mockRequest.baseUrl = "/api/v1";
@@ -275,7 +275,7 @@ describe("Sessions Controller", () => {
     });
 
     it("should throw error when idempotency key is empty", async () => {
-      mockRequest.body = { title: "Test Session" };
+      mockRequest.body = { title: "Test Session", planned_at: new Date().toISOString() };
       mockRequest.get = jest.fn((header: string) => {
         if (header === "Idempotency-Key") {
           return "   ";
@@ -289,7 +289,7 @@ describe("Sessions Controller", () => {
     });
 
     it("should throw error when idempotency key is too long", async () => {
-      mockRequest.body = { title: "Test Session" };
+      mockRequest.body = { title: "Test Session", planned_at: new Date().toISOString() };
       const longKey = "a".repeat(201);
       mockRequest.get = jest.fn((header: string) => {
         if (header === "Idempotency-Key") {
@@ -595,7 +595,7 @@ describe("Sessions Controller", () => {
 
     it("should handle idempotent recurrence with replay", async () => {
       mockRequest.params = { id: "session-123" };
-      mockRequest.body = { occurrences: 5 };
+      mockRequest.body = { occurrences: 5, offset_days: 7 };
       mockRequest.headers = { "idempotency-key": "key-123" };
       mockRequest.get = createGetIdempotencyKeyMock("key-123");
       mockRequest.baseUrl = "/api/v1";
@@ -619,7 +619,7 @@ describe("Sessions Controller", () => {
 
     it("should handle idempotent recurrence with new record", async () => {
       mockRequest.params = { id: "session-123" };
-      mockRequest.body = { occurrences: 5 };
+      mockRequest.body = { occurrences: 5, offset_days: 7 };
       mockRequest.headers = { "idempotency-key": "key-123" };
       mockRequest.get = createGetIdempotencyKeyMock("key-123");
       mockRequest.baseUrl = "/api/v1";
@@ -647,7 +647,7 @@ describe("Sessions Controller", () => {
 
     it("should handle idempotent recurrence with key but no recordId", async () => {
       mockRequest.params = { id: "session-123" };
-      mockRequest.body = { occurrences: 5 };
+      mockRequest.body = { occurrences: 5, offset_days: 7 };
       mockRequest.headers = { "idempotency-key": "key-123" };
       mockRequest.get = createGetIdempotencyKeyMock("key-123");
       mockRequest.baseUrl = "/api/v1";

@@ -87,19 +87,21 @@ const createSchema = z.object({
   exercises: z.array(sessionExerciseSchema).max(50).optional(),
 });
 
-const updateSchema = z.object({
-  plan_id: z.string().uuid().nullable().optional(),
-  title: titleSchema.nullable().optional(),
-  planned_at: z.string().datetime().optional(),
-  status: statusEnum.optional(),
-  visibility: visibilityEnum.optional(),
-  notes: z.string().max(1000).nullable().optional(),
-  recurrence_rule: z.string().max(255).nullable().optional(),
-  started_at: z.string().datetime().optional(),
-  completed_at: z.string().datetime().optional(),
-  calories: z.number().int().min(0).nullable().optional(),
-  exercises: z.array(sessionExerciseSchema).max(50).optional(),
-});
+const updateSchema = z
+  .object({
+    plan_id: z.string().uuid().nullable().optional(),
+    title: titleSchema.nullable().optional(),
+    planned_at: z.string().datetime().optional(),
+    status: statusEnum.optional(),
+    visibility: visibilityEnum.optional(),
+    notes: z.string().max(1000).nullable().optional(),
+    recurrence_rule: z.string().max(255).nullable().optional(),
+    started_at: z.string().datetime().optional(),
+    completed_at: z.string().datetime().optional(),
+    calories: z.number().int().min(0).nullable().optional(),
+    exercises: z.array(sessionExerciseSchema).max(50).optional(),
+  })
+  .strict();
 
 const cloneSchema = z
   .object({
@@ -112,6 +114,7 @@ const cloneSchema = z
     plan_id: z.string().uuid().nullable().optional(),
     include_actual: z.boolean().optional(),
   })
+  .strict()
   .refine((value) => value.planned_at === undefined || value.date_offset_days === undefined, {
     message: "Provide either planned_at or date_offset_days, not both",
     path: ["planned_at"],
@@ -219,13 +222,16 @@ export async function createSessionHandler(req: Request, res: Response): Promise
     return;
   }
 
+  // Validate idempotency key first (before body validation)
+  // This allows us to throw errors for invalid keys early
+  const key = getIdempotencyKey(req);
+
   const parsed = createSchema.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.flatten() });
     return;
   }
 
-  const key = getIdempotencyKey(req);
   let recordId: string | null = null;
   if (key) {
     const resolution = await resolveIdempotency(
@@ -271,6 +277,11 @@ export async function updateSessionHandler(req: Request, res: Response): Promise
   }
 
   const { id } = req.params;
+  if (!id) {
+    res.status(400).json({ error: "Session ID is required" });
+    return;
+  }
+
   const updated = await updateOne(userId, id, parsed.data);
   res.json(updated);
 }
@@ -281,13 +292,15 @@ export async function cloneSessionHandler(req: Request, res: Response): Promise<
     return;
   }
 
+  // Validate idempotency key first (before body validation)
+  const key = getIdempotencyKey(req);
+
   const parsed = cloneSchema.safeParse(req.body ?? {});
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.flatten() });
     return;
   }
 
-  const key = getIdempotencyKey(req);
   let recordId: string | null = null;
   if (key) {
     const resolution = await resolveIdempotency(
@@ -326,13 +339,15 @@ export async function applyRecurrenceHandler(req: Request, res: Response): Promi
     return;
   }
 
+  // Validate idempotency key first (before body validation)
+  const key = getIdempotencyKey(req);
+
   const parsed = recurrenceSchema.safeParse(req.body ?? {});
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.flatten() });
     return;
   }
 
-  const key = getIdempotencyKey(req);
   let recordId: string | null = null;
   if (key) {
     const resolution = await resolveIdempotency(
