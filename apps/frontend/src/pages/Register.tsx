@@ -9,11 +9,13 @@ import { Eye, EyeOff } from "lucide-react";
 const inputStyle: React.CSSProperties = {
   width: "100%",
   borderRadius: "12px",
-  border: "1px solid var(--color-border)",
-  background: "var(--color-surface-glass)",
-  color: "var(--color-text-primary)",
+  border: "1px solid var(--color-border, rgba(46, 91, 73, 0.2))",
+  background: "var(--color-surface-glass, rgba(22, 44, 34, 0.45))",
+  color: "var(--color-text-primary, #FFFFFF)",
   padding: "0.85rem 1rem",
   fontSize: "1rem",
+  fontFamily: "var(--font-family-base, 'Inter', sans-serif)",
+  transition: "border-color 150ms ease, background-color 150ms ease",
 };
 
 const Register: React.FC = () => {
@@ -33,15 +35,27 @@ const Register: React.FC = () => {
     event.preventDefault();
     setError(null);
 
+    // Validate inputs
+    if (!name.trim() || !email.trim() || !password || !confirmPassword) {
+      setError("Please fill in all fields");
+      return;
+    }
+
     // Check if terms are accepted
     if (!acceptedTerms) {
-      setError(t("auth.register.termsRequired"));
+      setError("You must accept the terms and conditions");
       return;
     }
 
     // Check if passwords match
     if (password !== confirmPassword) {
-      setError(t("auth.register.passwordMismatch"));
+      setError("Passwords do not match");
+      return;
+    }
+
+    // Validate password strength (basic check)
+    if (password.length < 12) {
+      setError("Password must be at least 12 characters");
       return;
     }
 
@@ -52,27 +66,44 @@ const Register: React.FC = () => {
       const username = email.split("@")[0].replace(/[^a-zA-Z0-9_.-]/g, "_");
 
       await registerAccount({
-        email,
+        email: email.trim(),
         password,
         username,
         terms_accepted: acceptedTerms,
         profile: {
-          display_name: name,
+          display_name: name.trim(),
         },
       });
 
       // Registration successful - show success message
       setSuccess(true);
     } catch (err: unknown) {
+      console.error("Registration error:", err);
+
       // Show more specific error if available
       if (err && typeof err === "object" && "response" in err) {
         const axiosError = err as {
           response?: { data?: { error?: { code?: string; message?: string } } };
         };
         const errorCode = axiosError.response?.data?.error?.code;
-        setError(errorCode ? t(`errors.${errorCode}`) : t("auth.register.error"));
+        const errorMessage = axiosError.response?.data?.error?.message;
+
+        if (errorMessage) {
+          setError(errorMessage);
+        } else if (errorCode) {
+          const translatedError = t(`errors.${errorCode}`);
+          setError(
+            translatedError !== `errors.${errorCode}` ? translatedError : t("auth.register.error"),
+          );
+        } else {
+          setError(t("auth.register.error") || "Registration failed. Please try again.");
+        }
       } else {
-        setError(t("auth.register.error"));
+        // Network error or other issues
+        setError(
+          t("auth.register.error") ||
+            "Unable to connect to server. Please check if the backend is running.",
+        );
       }
     } finally {
       setIsSubmitting(false);
@@ -156,6 +187,14 @@ const Register: React.FC = () => {
             onChange={(event) => setName(event.target.value)}
             autoComplete="name"
             disabled={isSubmitting}
+            onFocus={(e) => {
+              e.currentTarget.style.borderColor = "var(--color-accent, #34d399)";
+              e.currentTarget.style.boxShadow = "0 0 0 2px rgba(52, 211, 153, 0.2)";
+            }}
+            onBlur={(e) => {
+              e.currentTarget.style.borderColor = "var(--color-border, rgba(46, 91, 73, 0.2))";
+              e.currentTarget.style.boxShadow = "none";
+            }}
           />
         </label>
         <label style={{ display: "grid", gap: "0.35rem" }}>
@@ -172,6 +211,14 @@ const Register: React.FC = () => {
             onChange={(event) => setEmail(event.target.value)}
             autoComplete="email"
             disabled={isSubmitting}
+            onFocus={(e) => {
+              e.currentTarget.style.borderColor = "var(--color-accent, #34d399)";
+              e.currentTarget.style.boxShadow = "0 0 0 2px rgba(52, 211, 153, 0.2)";
+            }}
+            onBlur={(e) => {
+              e.currentTarget.style.borderColor = "var(--color-border, rgba(46, 91, 73, 0.2))";
+              e.currentTarget.style.boxShadow = "none";
+            }}
           />
         </label>
         <label style={{ display: "grid", gap: "0.35rem" }}>
@@ -189,6 +236,14 @@ const Register: React.FC = () => {
               onChange={(event) => setPassword(event.target.value)}
               autoComplete="new-password"
               disabled={isSubmitting}
+              onFocus={(e) => {
+                e.currentTarget.style.borderColor = "var(--color-accent, #34d399)";
+                e.currentTarget.style.boxShadow = "0 0 0 2px rgba(52, 211, 153, 0.2)";
+              }}
+              onBlur={(e) => {
+                e.currentTarget.style.borderColor = "var(--color-border, rgba(46, 91, 73, 0.2))";
+                e.currentTarget.style.boxShadow = "none";
+              }}
             />
             <button
               type="button"
@@ -236,6 +291,14 @@ const Register: React.FC = () => {
               onChange={(event) => setConfirmPassword(event.target.value)}
               autoComplete="new-password"
               disabled={isSubmitting}
+              onFocus={(e) => {
+                e.currentTarget.style.borderColor = "var(--color-accent, #34d399)";
+                e.currentTarget.style.boxShadow = "0 0 0 2px rgba(52, 211, 153, 0.2)";
+              }}
+              onBlur={(e) => {
+                e.currentTarget.style.borderColor = "var(--color-border, rgba(46, 91, 73, 0.2))";
+                e.currentTarget.style.boxShadow = "none";
+              }}
             />
             <button
               type="button"

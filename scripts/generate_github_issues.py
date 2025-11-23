@@ -127,6 +127,44 @@ def parse_user_stories(file_path: Path) -> List[Dict]:
                 deps = [d.strip() for d in deps_match.group(1).split(",")]
                 story["dependencies"] = deps
 
+            # Extract acceptance criteria
+            # Match from "**Acceptance Criteria:**" until "---" or end of story
+            ac_match = re.search(
+                r"\*\*Acceptance Criteria:\*\*\s*\n((?:(?!---).)*?)(?=\n---|\Z)",
+                story_content,
+                re.DOTALL,
+            )
+            if ac_match:
+                ac_text = ac_match.group(1).strip()
+                # Parse individual AC items
+                ac_items = []
+                # Find all AC items using finditer to capture all matches including first one
+                # Pattern: "- **US-X.Y-AC##**: description\n  - Test Method: ...\n  - Evidence: ..."
+                # Note: First AC may not have newline before it
+                ac_pattern = r"(?:^|\n)- \*\*(US-\d+\.\d+-AC\d+)\*\*: (.+?)(?=\n- \*\*US-|\n---|\Z)"
+                for ac_item_match in re.finditer(ac_pattern, ac_text, re.DOTALL):
+                    ac_id = ac_item_match.group(1)
+                    ac_content = ac_item_match.group(2).strip()
+                    # Extract description (first line, before test method/evidence)
+                    lines = ac_content.split("\n")
+                    description = lines[0].strip()
+                    # Extract test method and evidence
+                    test_method = None
+                    evidence = None
+                    for line in lines[1:]:
+                        line = line.strip()
+                        if line.startswith("- Test Method:"):
+                            test_method = line.replace("- Test Method:", "").strip()
+                        elif line.startswith("- Evidence:"):
+                            evidence = line.replace("- Evidence:", "").strip()
+                    ac_items.append({
+                        "id": ac_id,
+                        "description": description,
+                        "test_method": test_method,
+                        "evidence": evidence,
+                    })
+                story["acceptance_criteria"] = ac_items
+
             stories.append(story)
 
     return stories
@@ -187,9 +225,17 @@ def generate_issue_body(story: Dict) -> str:
             body_parts.append(f"- {dep}")
         body_parts.append("")
 
-    # Acceptance Criteria placeholder
+    # Acceptance Criteria
     body_parts.append("## Acceptance Criteria")
-    body_parts.append("- [ ] TBD")
+    if "acceptance_criteria" in story and story["acceptance_criteria"]:
+        for ac in story["acceptance_criteria"]:
+            body_parts.append(f"- [ ] **{ac['id']}**: {ac['description']}")
+            if ac.get("test_method"):
+                body_parts.append(f"  - Test Method: {ac['test_method']}")
+            if ac.get("evidence"):
+                body_parts.append(f"  - Evidence: {ac['evidence']}")
+    else:
+        body_parts.append("- [ ] TBD")
     body_parts.append("")
 
     # Related Documentation

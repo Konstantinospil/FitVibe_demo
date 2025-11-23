@@ -124,12 +124,14 @@ jobs:
             librsvg2-dev
 
       - name: Wait for services
-        timeout-minutes: 10
+        timeout-minutes: 15
         run: |
           echo "Waiting for PostgreSQL..."
           for i in {1..30}; do
             if pg_isready -h 127.0.0.1 -p 5432 -U postgres >/dev/null 2>&1; then
               echo "PostgreSQL is ready"
+              echo "✓ Database is automatically provided by GitHub Actions service container"
+              echo "  Connection: postgresql://postgres:postgres@127.0.0.1:5432/fitvibe_test"
               break
             fi
             if [ $i -eq 30 ]; then
@@ -386,6 +388,7 @@ jobs:
           for i in {1..30}; do
             if pg_isready -h 127.0.0.1 -p 5432 -U fitvibe >/dev/null 2>&1; then
               echo "PostgreSQL is ready"
+
               break
             fi
             if [ $i -eq 30 ]; then

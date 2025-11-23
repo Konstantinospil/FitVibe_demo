@@ -2,7 +2,10 @@ import type { AxiosError, InternalAxiosRequestConfig } from "axios";
 import axios from "axios";
 import { useAuthStore } from "../store/auth.store";
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4000";
+// Use relative URLs in development (Vite proxy handles /api -> localhost:4000)
+// Use full URL in production or when VITE_API_URL is explicitly set
+const API_URL =
+  import.meta.env.VITE_API_URL || (import.meta.env.DEV ? "" : "http://localhost:4000");
 
 /**
  * SECURITY FIX (CWE-922): Cookie-based authentication

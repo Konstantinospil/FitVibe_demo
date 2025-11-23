@@ -58,6 +58,7 @@ Create a conventional commit with all current changes and push to the remote rep
    ```
 
 6. **Push to Remote**
+
    ```bash
    git push
    ```

@@ -4,15 +4,18 @@ import { useTranslation } from "react-i18next";
 import { Eye, EyeOff } from "lucide-react";
 import { Button } from "../components/ui";
 import { useAuth } from "../contexts/AuthContext";
+import { login } from "../services/api";
 
 const inputStyle: React.CSSProperties = {
   width: "100%",
   borderRadius: "12px",
-  border: "1px solid var(--color-border)",
-  background: "var(--color-surface-glass)",
-  color: "var(--color-text-primary)",
+  border: "1px solid var(--color-border, rgba(46, 91, 73, 0.2))",
+  background: "var(--color-surface-glass, rgba(22, 44, 34, 0.45))",
+  color: "var(--color-text-primary, #FFFFFF)",
   padding: "0.85rem 1rem",
   fontSize: "1rem",
+  fontFamily: "var(--font-family-base, 'Inter', sans-serif)",
+  transition: "border-color 150ms ease, background-color 150ms ease",
 };
 
 const LoginFormContent: React.FC = () => {
@@ -43,12 +46,18 @@ const LoginFormContent: React.FC = () => {
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+
+    // Validate inputs
+    if (!email.trim() || !password) {
+      setError("Please fill in all fields");
+      return;
+    }
+
     setIsSubmitting(true);
     setError(null);
 
     try {
-      const { login } = await import("../services/api");
-      const response = await login({ email, password });
+      const response = await login({ email: email.trim(), password });
 
       if (response.requires2FA) {
         navigate("/login/verify-2fa", {
@@ -62,19 +71,47 @@ const LoginFormContent: React.FC = () => {
 
       signIn(response.user);
       navigate(from, { replace: true });
-    } catch (err) {
+    } catch (err: unknown) {
+      console.error("Login error:", err);
+
       // Handle terms version outdated error
       if (err && typeof err === "object" && "response" in err) {
-        const axiosError = err as { response?: { data?: { error?: { code?: string } } } };
+        const axiosError = err as {
+          response?: {
+            data?: {
+              error?: {
+                code?: string;
+                message?: string;
+              };
+            };
+          };
+        };
         const errorCode = axiosError.response?.data?.error?.code;
+        const errorMessage = axiosError.response?.data?.error?.message;
 
         if (errorCode === "TERMS_VERSION_OUTDATED") {
-          // Redirect to terms re-acceptance page
           navigate("/terms-reacceptance", { replace: true });
           return;
         }
+
+        // Show specific error message if available
+        if (errorMessage) {
+          setError(errorMessage);
+        } else if (errorCode) {
+          const translatedError = t(`errors.${errorCode}`);
+          setError(
+            translatedError !== `errors.${errorCode}` ? translatedError : t("auth.login.error"),
+          );
+        } else {
+          setError(t("auth.login.error") || "Login failed. Please check your credentials.");
+        }
+      } else {
+        // Network error or other issues
+        setError(
+          t("auth.login.error") ||
+            "Unable to connect to server. Please check if the backend is running.",
+        );
       }
-      setError(t("auth.login.error"));
     } finally {
       setIsSubmitting(false);
     }
@@ -97,6 +134,14 @@ const LoginFormContent: React.FC = () => {
           onChange={(event) => setEmail(event.target.value)}
           autoComplete="email"
           disabled={isSubmitting}
+          onFocus={(e) => {
+            e.currentTarget.style.borderColor = "var(--color-accent, #34d399)";
+            e.currentTarget.style.boxShadow = "0 0 0 2px rgba(52, 211, 153, 0.2)";
+          }}
+          onBlur={(e) => {
+            e.currentTarget.style.borderColor = "var(--color-border, rgba(46, 91, 73, 0.2))";
+            e.currentTarget.style.boxShadow = "none";
+          }}
         />
       </label>
       <label style={{ display: "grid", gap: "0.35rem" }}>
@@ -114,6 +159,14 @@ const LoginFormContent: React.FC = () => {
             onChange={(event) => setPassword(event.target.value)}
             autoComplete="current-password"
             disabled={isSubmitting}
+            onFocus={(e) => {
+              e.currentTarget.style.borderColor = "var(--color-accent, #34d399)";
+              e.currentTarget.style.boxShadow = "0 0 0 2px rgba(52, 211, 153, 0.2)";
+            }}
+            onBlur={(e) => {
+              e.currentTarget.style.borderColor = "var(--color-border, rgba(46, 91, 73, 0.2))";
+              e.currentTarget.style.boxShadow = "none";
+            }}
           />
           <button
             type="button"
