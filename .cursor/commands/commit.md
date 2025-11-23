@@ -30,14 +30,34 @@ Create a conventional commit with all current changes and push to the remote rep
    - Optionally add body for more details
    - Optionally add footer for breaking changes or issue references
 
-4. **Stage and Commit**
+4. **Stage Changes Selectively**
+
+   **IMPORTANT**: Stage only related changes for atomic commits. Avoid `git add -A` unless all changes are truly related.
 
    ```bash
+   # Option 1: Stage specific files (RECOMMENDED for atomic commits)
+   git add <file1> <file2> <file3>
+
+   # Option 2: Stage by directory
+   git add apps/backend/src/modules/auth/
+
+   # Option 3: Stage all (ONLY if all changes are related)
    git add -A
+   ```
+
+   **Best Practice**: Make separate commits for:
+   - Different features
+   - Bug fixes vs. new features
+   - Code changes vs. documentation
+   - CI/CD changes vs. application code
+
+5. **Commit**
+
+   ```bash
    git commit -m "<type>: <description>"
    ```
 
-5. **Push to Remote**
+6. **Push to Remote**
    ```bash
    git push
    ```
@@ -69,5 +89,6 @@ chore: update dependencies to latest versions
 - **Conventional Commits**: This project follows the [Conventional Commits](https://www.conventionalcommits.org/) specification
 - **No Co-authors**: Do NOT add co-authors to the commit message
 - **Descriptive Messages**: Write clear, descriptive commit messages
-- **Atomic Commits**: Commit related changes together
+- **Atomic Commits**: Commit related changes together - one logical change per commit
 - **Review Before Commit**: Always review changes with `git diff` before committing
+- **Selective Staging**: Use `git add <files>` instead of `git add -A` to create focused, reviewable commits
