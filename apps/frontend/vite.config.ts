@@ -27,11 +27,21 @@ export default defineConfig(() => {
       environment: "jsdom",
       setupFiles: "./tests/setupTests.ts",
       css: true,
+      pool: "threads",
+      poolOptions: {
+        threads: {
+          // Explicitly set thread limits to avoid minThreads/maxThreads conflict
+          // In CI, use fewer threads to avoid resource contention
+          // Ensure minThreads <= maxThreads to prevent RangeError
+          minThreads: 1,
+          maxThreads: process.env.CI ? 2 : 4,
+        },
+      },
       coverage: {
-        provider: "istanbul",
+        provider: "istanbul" as const,
         reporter: ["text", "html", "json", "json-summary"],
         include: ["src/**/*.{ts,tsx}"],
-        exclude: [...configDefaults.coverage.exclude, "src/main.tsx"],
+        exclude: [...(configDefaults.coverage.exclude || []), "src/main.tsx"],
       },
     },
     server: {
