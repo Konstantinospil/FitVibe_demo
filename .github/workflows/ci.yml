@@ -174,11 +174,17 @@ jobs:
         timeout-minutes: 10
         run: pnpm typecheck
 
-      - name: Unit tests & coverage
-        timeout-minutes: 20
+      - name: Backend unit tests & coverage
+        timeout-minutes: 15
         env:
           CI: "true"
-        run: pnpm test -- --coverage --maxWorkers=2 --testPathIgnorePatterns="tests/migrations/migrations\\.test\\.ts|tests/seeds/seeds\\.test\\.ts"
+        run: pnpm --filter @fitvibe/backend test -- --coverage --maxWorkers=2 --testPathIgnorePatterns="tests/migrations/migrations\\.test\\.ts|tests/seeds/seeds\\.test\\.ts"
+
+      - name: Frontend unit tests & coverage
+        timeout-minutes: 10
+        env:
+          CI: "true"
+        run: pnpm --filter @fitvibe/frontend test -- --coverage --maxWorkers=2
 
       - name: Enforce coverage gate
         timeout-minutes: 10
