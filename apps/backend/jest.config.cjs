@@ -50,7 +50,8 @@ module.exports = {
     "login-enumeration\\.test\\.ts$",
   ],
   clearMocks: true,
-  // Removed forceExit: true to allow proper cleanup detection
-  // Use --detectOpenHandles to identify what's keeping the process alive
-  // forceExit: true,
+  // Enable forceExit in CI to prevent timeout issues
+  // In local development, we keep it disabled to detect open handles
+  // Use --detectOpenHandles locally to identify what's keeping the process alive
+  forceExit: process.env.CI === "true",
 };

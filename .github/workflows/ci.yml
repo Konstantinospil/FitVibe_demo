@@ -173,8 +173,10 @@ jobs:
         run: pnpm typecheck
 
       - name: Unit tests & coverage
-        timeout-minutes: 15
-        run: pnpm test -- --coverage --runInBand
+        timeout-minutes: 20
+        env:
+          CI: "true"
+        run: pnpm test -- --coverage --maxWorkers=2
 
       - name: Enforce coverage gate
         timeout-minutes: 10
@@ -339,14 +341,6 @@ jobs:
           --health-retries 5
     env:
       DATABASE_URL: postgresql://fitvibe:fitvibe@127.0.0.1:5432/fitvibe
-      # Individual PG env vars for test files to detect database
-      PGHOST: 127.0.0.1
-      PGPORT: 5432
-      PGUSER: fitvibe
-      PGPASSWORD: fitvibe
-      PGDATABASE: fitvibe
-      # Highest priority - test files check this first
-      TEST_DATABASE_URL: postgresql://fitvibe:fitvibe@127.0.0.1:5432/fitvibe
       CLAMAV_ENABLED: "true"
       CLAMAV_HOST: "127.0.0.1"
       CLAMAV_PORT: "3310"
@@ -433,7 +427,7 @@ jobs:
         timeout-minutes: 20
         env:
           NODE_ENV: test
-        run: pnpm --filter @fitvibe/backend exec jest --runInBand --maxWorkers=2
+        run: pnpm --filter @fitvibe/backend exec jest --maxWorkers=2
 
       - name: Job summary
         if: always()
