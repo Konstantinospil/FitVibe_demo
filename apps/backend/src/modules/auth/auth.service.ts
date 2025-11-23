@@ -38,7 +38,7 @@ import {
   revokeSessionById,
   revokeSessionsByUserId,
   markEmailVerified,
-} from "./auth.repository";
+} from "./auth.repository.js";
 import type {
   JwtPayload,
   LoginDTO,

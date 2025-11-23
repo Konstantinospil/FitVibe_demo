@@ -8,7 +8,7 @@ import {
   cancelOne,
   cloneOne,
   applyRecurrence,
-} from "./sessions.service";
+} from "./sessions.service.js";
 import { resolveIdempotency, persistIdempotencyResult } from "../common/idempotency.service.js";
 import { HttpError } from "../../utils/http.js";
 

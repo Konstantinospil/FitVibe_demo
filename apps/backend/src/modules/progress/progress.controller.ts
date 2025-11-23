@@ -7,7 +7,7 @@ import {
   getSummary,
   getTrends,
   renderProgressReportCsv,
-} from "./progress.service";
+} from "./progress.service.js";
 
 const periodEnum = z.enum(["7", "30", "90"]).transform((v) => parseInt(v, 10));
 const groupByEnum = z.enum(["day", "week"]);

@@ -13,7 +13,7 @@ import {
   fetchPlansProgress,
   fetchSummary,
   fetchTrends,
-} from "./progress.repository";
+} from "./progress.repository.js";
 
 const cache = new NodeCache({ stdTTL: 60 });
 

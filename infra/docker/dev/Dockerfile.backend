@@ -21,14 +21,28 @@ RUN pnpm deploy --filter @fitvibe/backend --prod /app/backend-deploy
 FROM node:20-alpine AS runtime
 WORKDIR /app
 
+# Copy deployed backend
 COPY --from=builder /app/backend-deploy/ ./
-COPY --from=builder /app/apps/backend/node_modules ./apps/backend/node_modules
-# Copy workspace configuration and patched-glob package to ensure glob override works
-COPY --from=builder /app/package.json ./package.json
+
+# Override package.json with backend's version (which has type: commonjs)
+COPY --from=builder /app/apps/backend/package.json ./package.json
+
+# Copy workspace files needed for pnpm to resolve the glob override
 COPY --from=builder /app/pnpm-workspace.yaml ./pnpm-workspace.yaml
+COPY --from=builder /app/pnpm-workspace.yaml ./pnpm-workspace.yaml
+COPY --from=builder /app/pnpm-lock.yaml ./pnpm-lock.yaml
 COPY --from=builder /app/packages/patched-glob ./packages/patched-glob
-# Copy root node_modules to ensure workspace links are resolved
-COPY --from=builder /app/node_modules ./node_modules
+
+# Install production dependencies to ensure workspace overrides are resolved
+# This will install minimatch and other dependencies needed by patched-glob
+RUN corepack enable && corepack prepare pnpm@9.0.0 --activate && \
+    pnpm install --prod --frozen-lockfile --offline --no-optional && \
+    # Ensure glob resolves to patched-glob by creating symlink if needed
+    if [ ! -L node_modules/glob ] && [ -d packages/patched-glob ]; then \
+      ln -sf ../packages/patched-glob node_modules/glob; \
+    fi && \
+    # Ensure patched-glob's dependencies are available in node_modules
+    cd packages/patched-glob && pnpm install --prod --frozen-lockfile --offline || true
 
 RUN addgroup -S nodeapp && adduser -S nodeapp -G nodeapp
 USER nodeapp

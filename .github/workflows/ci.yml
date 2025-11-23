@@ -178,7 +178,7 @@ jobs:
         timeout-minutes: 20
         env:
           CI: "true"
-        run: pnpm test -- --coverage --maxWorkers=2
+        run: pnpm test -- --coverage --maxWorkers=2 --testPathIgnorePatterns="tests/migrations/migrations\\.test\\.ts|tests/seeds/seeds\\.test\\.ts"
 
       - name: Enforce coverage gate
         timeout-minutes: 10
@@ -238,11 +238,135 @@ jobs:
           echo "- ✅ Unit Tests: Passed" >> $GITHUB_STEP_SUMMARY
           echo "- ✅ Coverage Gate: Passed" >> $GITHUB_STEP_SUMMARY
 
+  database_tests:
+    name: Database Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      actions: read
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: fitvibe_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U postgres"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/fitvibe_test
+      # Individual PG env vars for test files to detect database
+      PGHOST: 127.0.0.1
+      PGPORT: 5432
+      PGUSER: postgres
+      PGPASSWORD: postgres
+      PGDATABASE: fitvibe_test
+      # Highest priority - test files check this first
+      TEST_DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/fitvibe_test
+      CI: "true"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - name: Enable corepack
+        run: corepack enable
+
+      - name: Cache pnpm store
+        uses: actions/cache@v4
+        with:
+          path: ~/.pnpm-store
+          key: pnpm-store-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            pnpm-store-${{ runner.os }}-
+
+      - name: Install native canvas prerequisites
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y \
+            build-essential \
+            libcairo2-dev \
+            libpango1.0-dev \
+            libjpeg-dev \
+            libgif-dev \
+            librsvg2-dev \
+            postgresql-client
+
+      - name: Wait for PostgreSQL
+        timeout-minutes: 10
+        run: |
+          echo "Waiting for PostgreSQL..."
+          for i in {1..30}; do
+            if pg_isready -h 127.0.0.1 -p 5432 -U postgres >/dev/null 2>&1; then
+              echo "PostgreSQL is ready"
+              echo "✓ Database is automatically provided by GitHub Actions service container"
+              echo "  Connection: postgresql://postgres:postgres@127.0.0.1:5432/fitvibe_test"
+              break
+            fi
+            if [ $i -eq 30 ]; then
+              echo "PostgreSQL failed to start" >&2
+              exit 1
+            fi
+            sleep 2
+          done
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile --prefer-offline
+
+      - name: Run database migration tests
+        timeout-minutes: 10
+        run: |
+          pnpm --filter @fitvibe/backend exec jest tests/migrations/migrations.test.ts --maxWorkers=1 --forceExit
+
+      - name: Run database seed tests
+        timeout-minutes: 10
+        run: |
+          pnpm --filter @fitvibe/backend exec jest tests/seeds/seeds.test.ts --maxWorkers=1 --forceExit
+
+      - name: Force close database connections
+        if: always()
+        timeout-minutes: 2
+        run: |
+          echo "Closing all database connections..."
+          PGPASSWORD=postgres psql -h 127.0.0.1 -p 5432 -U postgres -d fitvibe_test -c "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = 'fitvibe_test' AND pid <> pg_backend_pid();" || true
+          echo "Database connections closed"
+
+      - name: Job summary
+        if: always()
+        run: |
+          echo "## Database Tests Summary" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ job.status }}" == "success" ]; then
+            echo "- ✅ Migration tests passed" >> $GITHUB_STEP_SUMMARY
+            echo "- ✅ Seed tests passed" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "- ❌ Database tests failed" >> $GITHUB_STEP_SUMMARY
+          fi
+
   openapi_spec:
     name: Build OpenAPI spec
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    needs: quality
+    needs:
+      - quality
+      - database_tests
     permissions:
       contents: read
       actions: read
@@ -312,7 +436,9 @@ jobs:
     name: Backend Integration Tests
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    needs: quality
+    needs:
+      - quality
+      - database_tests
     permissions:
       contents: read
       actions: read
@@ -446,7 +572,9 @@ jobs:
     name: Metrics Contract
     runs-on: ubuntu-latest
     timeout-minutes: 5
-    needs: quality
+    needs:
+      - quality
+      - database_tests
     permissions:
       contents: read
     steps:
@@ -466,7 +594,9 @@ jobs:
     name: Security Scans
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    needs: quality
+    needs:
+      - quality
+      - database_tests
     permissions:
       contents: read
       security-events: write
@@ -607,7 +737,9 @@ jobs:
     name: Performance Budgets
     runs-on: ubuntu-latest
     timeout-minutes: 20
-    needs: quality
+    needs:
+      - quality
+      - database_tests
     permissions:
       contents: read
     steps:
@@ -708,6 +840,7 @@ jobs:
     timeout-minutes: 10
     needs:
       - quality
+      - database_tests
       - performance
     permissions:
       contents: read
@@ -757,7 +890,9 @@ jobs:
     name: Accessibility (axe)
     runs-on: ubuntu-latest
     timeout-minutes: 20
-    needs: quality
+    needs:
+      - quality
+      - database_tests
     permissions:
       contents: read
     steps:
@@ -896,6 +1031,7 @@ jobs:
     timeout-minutes: 45
     needs:
       - quality
+      - database_tests
       - integration
       - metrics_contract
       - accessibility
