@@ -148,7 +148,9 @@ describe("Settings", () => {
       expect(screen.getByLabelText("Default Session Visibility")).toBeInTheDocument();
     });
 
-    const visibilitySelect = screen.getByLabelText("Default Session Visibility");
+    const visibilitySelect = screen.getByLabelText(
+      "Default Session Visibility",
+    ) as HTMLSelectElement;
     fireEvent.change(visibilitySelect, { target: { value: "public" } });
 
     expect(visibilitySelect.value).toBe("public");
@@ -161,7 +163,7 @@ describe("Settings", () => {
       expect(screen.getByLabelText("Units")).toBeInTheDocument();
     });
 
-    const unitsSelect = screen.getByLabelText("Units");
+    const unitsSelect = screen.getByLabelText("Units") as HTMLSelectElement;
     fireEvent.change(unitsSelect, { target: { value: "imperial" } });
 
     expect(unitsSelect.value).toBe("imperial");
@@ -174,7 +176,7 @@ describe("Settings", () => {
       expect(screen.getByLabelText("Language")).toBeInTheDocument();
     });
 
-    const languageSelect = screen.getByLabelText("Language");
+    const languageSelect = screen.getByLabelText("Language") as HTMLSelectElement;
     fireEvent.change(languageSelect, { target: { value: "de" } });
 
     expect(languageSelect.value).toBe("de");
