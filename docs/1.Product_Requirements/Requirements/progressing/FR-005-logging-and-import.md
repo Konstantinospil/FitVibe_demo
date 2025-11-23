@@ -38,47 +38,125 @@ Enable users to log workouts manually or import from external sources (GPX/FIT f
 
 Each acceptance criterion must be met for this requirement to be considered complete.
 
-### FR-005-AC01-A
+### US-5.1-AC01
 
-**Criterion**: Start/stop records duration, distance, HR; edits audit‑logged (who/when/what).
+**Criterion**: Users can log session metrics (duration, distance, heart rate, sets, reps, weight) via PATCH /api/v1/sessions/:id with status='completed'; metrics saved within ≤500ms.
+
+- **Test Method**: Integration + E2E
+- **Evidence Required**: Logging tests, DB records, API response times
+- **Related Story**: US-5.1
+
+### US-5.1-AC02
+
+**Criterion**: Session edits are audit-logged with who/when/what; audit records include field changes and timestamps.
 
 - **Test Method**: Unit + Integration
-- **Evidence Required**: Audit excerpts
+- **Evidence Required**: Audit log excerpts, edit history verification
+- **Related Story**: US-5.1
 
-### FR-005-AC01-B
+### US-5.1-AC03
 
-**Criterion**: Offline logging buffers events and syncs within **≤5s** after reconnect.
+**Criterion**: Logger frontend allows manual entry of all metrics with proper validation and unit conversion.
 
-- **Test Method**: E2E (PWA offline)
-- **Evidence Required**: Network trace
+- **Test Method**: E2E
+- **Evidence Required**: Logger UI screenshots, form validation tests
+- **Related Story**: US-5.1
 
-### FR-005-AC02-A
+### US-5.2-AC01
 
-**Criterion**: Import GPX/FIT parses **≥99%** valid samples; malformed inputs produce user-facing error without crash.
+**Criterion**: Users can import GPX files via POST /api/v1/sessions/import with file upload; GPX parser extracts track points, elevation, and timestamps.
 
 - **Test Method**: Fuzz + fixtures
-- **Evidence Required**: Corpus results
+- **Evidence Required**: GPX parser test results, import success/failure logs
+- **Related Story**: US-5.2
 
-### FR-005-AC02-B
+### US-5.2-AC02
 
-**Criterion**: FIT file EXIF/metadata with GPS/HR respected; timezone normalization applied.
+**Criterion**: GPX parser handles ≥99% valid GPX samples; malformed GPX files produce user-facing error (422) without application crash.
+
+- **Test Method**: Fuzz + fixtures
+- **Evidence Required**: Corpus results, error handling tests
+- **Related Story**: US-5.2
+
+### US-5.2-AC03
+
+**Criterion**: Imported GPX data creates session with proper metrics (distance, duration, elevation gain/loss); timezone normalization applied.
 
 - **Test Method**: Unit
-- **Evidence Required**: Parser snapshots
+- **Evidence Required**: Parser snapshots, imported session verification
+- **Related Story**: US-5.2
 
-### FR-005-AC03-A
+### US-5.3-AC01
 
-**Criterion**: Editing pace/elevation recomputes derived metrics consistently within **≤200 ms**.
+**Criterion**: Users can import FIT files via POST /api/v1/sessions/import; FIT parser extracts GPS, heart rate, power, and other device metrics.
+
+- **Test Method**: Fuzz + fixtures
+- **Evidence Required**: FIT parser test results, import success/failure logs
+- **Related Story**: US-5.3
+
+### US-5.3-AC02
+
+**Criterion**: FIT parser handles ≥99% valid FIT samples; malformed FIT files produce user-facing error (422) without crash.
+
+- **Test Method**: Fuzz + fixtures
+- **Evidence Required**: Corpus results, error handling tests
+- **Related Story**: US-5.3
+
+### US-5.3-AC03
+
+**Criterion**: FIT file metadata (GPS coordinates, heart rate zones, timezone) respected; timezone normalization applied correctly.
+
+- **Test Method**: Unit
+- **Evidence Required**: Parser snapshots, metadata extraction verification
+- **Related Story**: US-5.3
+
+### US-5.4-AC01
+
+**Criterion**: Editing pace or elevation triggers automatic recalculation of derived metrics (average pace, elevation gain/loss, normalized power) within ≤200ms.
 
 - **Test Method**: Integration
-- **Evidence Required**: Recalc logs
+- **Evidence Required**: Recalculation logs, metric update verification
+- **Related Story**: US-5.4
 
-### FR-005-AC03-B
+### US-5.4-AC02
 
-**Criterion**: Recalculation is idempotent for the same inputs; snapshot tests stable.
+**Criterion**: Metric recalculation is idempotent: same inputs produce same outputs; snapshot tests remain stable across runs.
 
 - **Test Method**: Unit
-- **Evidence Required**: Snapshots
+- **Evidence Required**: Snapshot tests, idempotency verification
+- **Related Story**: US-5.4
+
+### US-5.5-AC01
+
+**Criterion**: Offline logging buffers session events in local storage (IndexedDB); events sync to server within ≤5s after network reconnect.
+
+- **Test Method**: E2E (PWA offline)
+- **Evidence Required**: Network traces, sync verification, offline storage tests
+- **Related Story**: US-5.5
+
+### US-5.5-AC02
+
+**Criterion**: Service worker enables offline functionality; sync queue handles failed syncs with retry logic (exponential backoff).
+
+- **Test Method**: E2E (PWA offline)
+- **Evidence Required**: Service worker tests, sync queue verification
+- **Related Story**: US-5.5
+
+### US-5.6-AC01
+
+**Criterion**: Fuzz tests cover GPX and FIT parsers with diverse file samples; parser handles edge cases (empty files, malformed XML/binary, missing fields).
+
+- **Test Method**: Fuzz + fixtures
+- **Evidence Required**: Fuzz test results, corpus coverage
+- **Related Story**: US-5.6
+
+### US-5.6-AC02
+
+**Criterion**: Import tests verify file validation, parsing accuracy, error handling, and metric calculation correctness.
+
+- **Test Method**: Unit + Integration
+- **Evidence Required**: Import test results, accuracy verification
+- **Related Story**: US-5.6
 
 ## Test Strategy
 

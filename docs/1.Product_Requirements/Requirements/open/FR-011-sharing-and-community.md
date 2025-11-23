@@ -109,75 +109,215 @@ Enable users to share their training sessions, discover content from others, and
 
 ## Acceptance Criteria
 
-### FR-011-AC01: Public Feed Access
+Each acceptance criterion must be met for this requirement to be considered complete.
 
-**Criterion**: Authenticated users can access the public feed and view public sessions with pagination (20 items per page).
+### US-3.1-AC01
+
+**Criterion**: Authenticated users can access public feed via GET /api/v1/feed?scope=public with pagination (default 20 items per page, max 100); feed returns public sessions only.
 
 - **Test Method**: Integration + E2E
-- **Evidence Required**: Feed UI screenshots, pagination tests, API response times
+- **Evidence Required**: Feed API responses, pagination tests, UI screenshots
+- **Related Story**: US-3.1
 
-### FR-011-AC02: Feed Search & Sort
+### US-3.1-AC02
 
-**Criterion**: Users can search feed content by keywords and sort by date, popularity, or relevance.
+**Criterion**: Feed supports search via ?q=keyword parameter; search matches session titles, exercise names, and user aliases.
 
 - **Test Method**: E2E
-- **Evidence Required**: Search UI screenshots, sort functionality tests
+- **Evidence Required**: Search functionality tests, search result screenshots
+- **Related Story**: US-3.1
 
-### FR-011-AC03: Session Sharing
+### US-3.1-AC03
 
-**Criterion**: Users can make sessions public, and public sessions appear in the feed within **≤2s**; switching visibility never leaks past private data.
-
-- **Test Method**: Integration + E2E
-- **Evidence Required**: Visibility toggle tests, feed update tests, privacy verification
-
-### FR-011-AC04: Like Functionality
-
-**Criterion**: Users can like/unlike public sessions, and like counts update in real-time within **≤500ms**.
-
-- **Test Method**: Integration + E2E
-- **Evidence Required**: Like button tests, count update tests, API response times
-
-### FR-011-AC05: Bookmark Functionality
-
-**Criterion**: Users can bookmark/unbookmark public sessions and view their bookmark collection.
+**Criterion**: Feed supports sorting by date (default), popularity (likes), and relevance; sort parameter ?sort=date|popularity|relevance.
 
 - **Test Method**: E2E
-- **Evidence Required**: Bookmark UI screenshots, collection view tests
+- **Evidence Required**: Sort functionality tests, sorted feed screenshots
+- **Related Story**: US-3.1
 
-### FR-011-AC06: Comment Functionality
+### US-3.1-AC04
 
-**Criterion**: Users can comment on public sessions, and comments are displayed with proper formatting and timestamps.
+**Criterion**: Feed response time p95 ≤400ms per PRD performance targets; feed is cached for 30s via NGINX edge caching.
 
-- **Test Method**: E2E
-- **Evidence Required**: Comment UI screenshots, comment display tests
+- **Test Method**: Performance
+- **Evidence Required**: Performance metrics, cache hit ratio
+- **Related Story**: US-3.1
 
-### FR-011-AC07: Follow/Unfollow
+### US-3.2-AC01
 
-**Criterion**: Users can follow/unfollow other users, and follower counts update correctly.
-
-- **Test Method**: Integration + E2E
-- **Evidence Required**: Follow button tests, follower count tests, UI screenshots
-
-### FR-011-AC08: Session Cloning
-
-**Criterion**: Users can clone public sessions into their planner with attribution preserved, and cloned sessions can be modified.
+**Criterion**: Users can toggle session visibility (private/public) via PATCH /api/v1/sessions/:id with visibility field; default is private.
 
 - **Test Method**: Integration + E2E
-- **Evidence Required**: Clone functionality tests, attribution verification, modification tests
+- **Evidence Required**: Visibility toggle tests, API responses
+- **Related Story**: US-3.2
 
-### FR-011-AC09: Content Reporting
+### US-3.2-AC02
 
-**Criterion**: Users can report inappropriate content, and reports appear in admin moderation queue.
-
-- **Test Method**: Integration + E2E
-- **Evidence Required**: Report UI screenshots, admin queue tests
-
-### FR-011-AC10: Privacy Policy Enforcement
-
-**Criterion**: Default session visibility is private; community guidelines are enforced; switching visibility never leaks past private data.
+**Criterion**: Switching session from private to public makes it visible in feed within ≤2s; switching from public to private removes it from feed immediately; past private data never leaked.
 
 - **Test Method**: Integration + Security
-- **Evidence Required**: Privacy tests, data leakage verification, guideline enforcement tests
+- **Evidence Required**: Privacy tests, data leakage verification, feed update timing
+- **Related Story**: US-3.2
+
+### US-3.3-AC01
+
+**Criterion**: Users can like/unlike public sessions via POST /api/v1/feed/item/:feedItemId/like and DELETE /api/v1/feed/item/:feedItemId/like; like action is idempotent.
+
+- **Test Method**: Integration + E2E
+- **Evidence Required**: Like button tests, API responses, idempotency verification
+- **Related Story**: US-3.3
+
+### US-3.3-AC02
+
+**Criterion**: Like counts update in real-time within ≤500ms; like count displayed on feed items and session details.
+
+- **Test Method**: Integration + E2E
+- **Evidence Required**: Count update tests, UI screenshots, API response times
+- **Related Story**: US-3.3
+
+### US-3.3-AC03
+
+**Criterion**: Users can bookmark/unbookmark sessions via POST /api/v1/sessions/:id/bookmark and DELETE /api/v1/sessions/:id/bookmark; bookmarks are idempotent.
+
+- **Test Method**: E2E
+- **Evidence Required**: Bookmark UI screenshots, bookmark functionality tests
+- **Related Story**: US-3.3
+
+### US-3.3-AC04
+
+**Criterion**: Users can view their bookmarked sessions via GET /api/v1/users/me/bookmarks with pagination.
+
+- **Test Method**: E2E
+- **Evidence Required**: Bookmark collection view tests, UI screenshots
+- **Related Story**: US-3.3
+
+### US-3.4-AC01
+
+**Criterion**: Users can comment on public sessions via POST /api/v1/feed/item/:feedItemId/comments with body (plain text, max 500 chars); comments are idempotent.
+
+- **Test Method**: E2E
+- **Evidence Required**: Comment UI screenshots, comment creation tests
+- **Related Story**: US-3.4
+
+### US-3.4-AC02
+
+**Criterion**: Comments are displayed with author info, timestamp, and proper formatting; comments list paginated (default 20 per page).
+
+- **Test Method**: E2E
+- **Evidence Required**: Comment display tests, comment list screenshots
+- **Related Story**: US-3.4
+
+### US-3.4-AC03
+
+**Criterion**: Comment owners and session owners can delete comments via DELETE /api/v1/comments/:commentId; deleted comments are soft-deleted (deleted_at set).
+
+- **Test Method**: E2E
+- **Evidence Required**: Comment deletion tests, access control verification
+- **Related Story**: US-3.4
+
+### US-3.4-AC04
+
+**Criterion**: Comment rate limiting: 20 comments per hour per user; exceeding limit returns 429 with Retry-After header.
+
+- **Test Method**: Integration
+- **Evidence Required**: Rate limit tests, HTTP headers
+- **Related Story**: US-3.4
+
+### US-3.5-AC01
+
+**Criterion**: Users can follow/unfollow other users via POST /api/v1/users/:alias/follow and DELETE /api/v1/users/:alias/follow; users cannot follow themselves (422 error).
+
+- **Test Method**: Integration + E2E
+- **Evidence Required**: Follow button tests, follower count tests, self-follow prevention
+- **Related Story**: US-3.5
+
+### US-3.5-AC02
+
+**Criterion**: Follower and following counts update correctly; counts displayed on user profiles; GET /api/v1/users/:alias/followers and /following return paginated lists.
+
+- **Test Method**: Integration + E2E
+- **Evidence Required**: Follower count tests, UI screenshots, API responses
+- **Related Story**: US-3.5
+
+### US-3.5-AC03
+
+**Criterion**: Follow rate limiting: 50 follows per day per user; exceeding limit returns 429.
+
+- **Test Method**: Integration
+- **Evidence Required**: Rate limit tests
+- **Related Story**: US-3.5
+
+### US-3.6-AC01
+
+**Criterion**: Users can clone public sessions via POST /api/v1/sessions/:id/clone or POST /api/v1/feed/session/:sessionId/clone; cloned session created as planned session for current user.
+
+- **Test Method**: Integration + E2E
+- **Evidence Required**: Clone functionality tests, cloned session verification
+- **Related Story**: US-3.6
+
+### US-3.6-AC02
+
+**Criterion**: Cloned sessions preserve attribution: source_session_id or metadata field contains original session ID and creator info; attribution visible in UI.
+
+- **Test Method**: Integration + E2E
+- **Evidence Required**: Attribution verification, UI screenshots showing attribution
+- **Related Story**: US-3.6
+
+### US-3.6-AC03
+
+**Criterion**: Users can modify cloned sessions (title, date, exercises, sets); modifications do not affect original session.
+
+- **Test Method**: E2E
+- **Evidence Required**: Modification tests, original session preservation
+- **Related Story**: US-3.6
+
+### US-3.7-AC01
+
+**Criterion**: Users can report inappropriate content (sessions or comments) via POST /api/v1/feed/report with reason and details; reports are idempotent.
+
+- **Test Method**: Integration + E2E
+- **Evidence Required**: Report UI screenshots, report creation tests
+- **Related Story**: US-3.7
+
+### US-3.7-AC02
+
+**Criterion**: Reports appear in admin moderation queue; admins can view reports via GET /api/v1/admin/reports with filtering and pagination.
+
+- **Test Method**: Integration + E2E
+- **Evidence Required**: Admin queue tests, report list screenshots
+- **Related Story**: US-3.7
+
+### US-3.7-AC03
+
+**Criterion**: Report rate limiting: 10 reports per day per user; exceeding limit returns 429.
+
+- **Test Method**: Integration
+- **Evidence Required**: Rate limit tests
+- **Related Story**: US-3.7
+
+### US-3.8-AC01
+
+**Criterion**: Unit tests cover like, bookmark, comment, follow, and clone operations with ≥90% code coverage.
+
+- **Test Method**: Unit
+- **Evidence Required**: Test coverage reports
+- **Related Story**: US-3.8
+
+### US-3.8-AC02
+
+**Criterion**: Integration tests verify feed access, social interactions, cloning, and reporting scenarios.
+
+- **Test Method**: Integration
+- **Evidence Required**: Integration test results
+- **Related Story**: US-3.8
+
+### US-3.8-AC03
+
+**Criterion**: E2E tests verify complete social workflow including feed browsing, liking, commenting, following, and cloning.
+
+- **Test Method**: E2E
+- **Evidence Required**: E2E test results, UI screenshots
+- **Related Story**: US-3.8
 
 ## Test Strategy
 

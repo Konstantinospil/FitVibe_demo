@@ -9,6 +9,7 @@ Run linting and auto-fix issues to ensure code quality and consistency.
 ## Commands
 
 ### Check Linting
+
 ```bash
 # Check all files
 pnpm lint
@@ -22,6 +23,7 @@ pnpm lint:check
 ```
 
 ### Auto-Fix Issues
+
 ```bash
 # Auto-fix all fixable issues
 pnpm lint --fix
@@ -32,6 +34,7 @@ pnpm --filter @fitvibe/frontend lint --fix
 ```
 
 ### Type Checking
+
 ```bash
 # TypeScript type checking
 pnpm typecheck
@@ -44,23 +47,27 @@ pnpm --filter @fitvibe/frontend typecheck
 ## Coding Standards
 
 ### TypeScript
+
 - **Strict mode enabled** - no `any` types in public surfaces
 - Explicit types for public APIs
 - Use interfaces for object shapes, types for unions/intersections
 - Prefer type inference where possible
 
 ### ESLint Rules
+
 - Recommended ESLint rules
 - Security plugins (OWASP guidelines)
 - React hooks rules (frontend)
 - Import boundaries (no cross-layer imports bypassing public APIs)
 
 ### Prettier Formatting
+
 - Automatic code formatting
 - Consistent style across codebase
 - Integrated with ESLint
 
 ### Import Boundaries
+
 - Backend: Folder-by-module structure, no cross-module imports bypassing public APIs
 - Frontend: Feature-sliced architecture, respect layer boundaries
 
@@ -80,4 +87,3 @@ pnpm --filter @fitvibe/frontend typecheck
 - **Security issues**: Address security plugin warnings
 
 Fix any issues found before committing code.
-

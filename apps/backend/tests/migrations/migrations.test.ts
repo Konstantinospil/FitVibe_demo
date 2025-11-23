@@ -6,6 +6,21 @@ const { connectionString: DATABASE_URL, isAvailable: isDatabaseAvailable } =
   resolveDatabaseConnection();
 const describeFn = isDatabaseAvailable ? describe : describe.skip;
 
+// Log skip reason with helpful instructions
+if (!isDatabaseAvailable) {
+  console.warn("\n⚠️  Database migration tests will be skipped (database unavailable)");
+  console.warn("To enable these tests:");
+  console.warn("  1. Set TEST_DATABASE_URL environment variable, or");
+  console.warn("  2. Set PGHOST, PGPORT, PGUSER, PGPASSWORD, PGDATABASE, or");
+  console.warn("  3. Start a local PostgreSQL instance");
+  if (process.env.CI) {
+    console.error("\n❌ ERROR: Database unavailable in CI environment!");
+    console.error("   This indicates a CI configuration issue.");
+    console.error("   Expected: PostgreSQL should be available in CI.");
+  }
+  console.warn("");
+}
+
 describeFn("database migrations", () => {
   let client: knex.Knex;
 
@@ -256,7 +271,7 @@ async function ensureDatabaseExtensions(admin: knex.Knex): Promise<void> {
   await admin.raw('CREATE EXTENSION IF NOT EXISTS "pgcrypto";');
   try {
     await admin.raw('CREATE EXTENSION IF NOT EXISTS "citext";');
-  } catch (error) {
+  } catch {
     await admin.raw(`
       DO $$
       BEGIN
@@ -326,6 +341,9 @@ function checkDatabaseAvailability(connectionString: string): boolean {
     return false;
   }
 
+  const timeout = process.env.CI ? 8000 : 5000; // Longer timeout in CI
+  const acquireTimeout = process.env.CI ? 5000 : 2000;
+
   const probeScript = `
 const knex = require('knex');
 (async () => {
@@ -335,7 +353,7 @@ const knex = require('knex');
       client: 'pg',
       connection: process.env.__TEST_DB_CONN__,
       pool: { min: 0, max: 1 },
-      acquireConnectionTimeout: 2000,
+      acquireConnectionTimeout: ${acquireTimeout},
     });
     
     // Set a timeout for the connection attempt
@@ -344,7 +362,7 @@ const knex = require('knex');
         client.destroy().catch(() => undefined);
       }
       process.exit(1);
-    }, 3000);
+    }, ${process.env.CI ? 6000 : 3000});
     
     await client.raw('select 1');
     clearTimeout(timeout);
@@ -361,8 +379,8 @@ const knex = require('knex');
   const result = spawnSync(process.execPath, ["-e", probeScript], {
     env: { ...process.env, __TEST_DB_CONN__: connectionString },
     stdio: "ignore",
-    timeout: 5000, // 5 second timeout for the entire spawn
-    killSignal: "SIGTERM", // Ensure process is killed on timeout
+    timeout: timeout,
+    killSignal: "SIGTERM",
   });
 
   // If the process was killed due to timeout, ensure it's terminated

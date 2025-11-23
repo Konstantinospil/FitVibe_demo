@@ -71,35 +71,32 @@ When creating an API endpoint:
 ## Example Endpoint Structure
 
 ```typescript
-import { Router } from 'express';
-import { z } from 'zod';
-import { authenticate } from '../middleware/auth';
-import { validate } from '../middleware/validation';
-import { createSession } from '../services/sessionService';
+import { Router } from "express";
+import { z } from "zod";
+import { authenticate } from "../middleware/auth";
+import { validate } from "../middleware/validation";
+import { createSession } from "../services/sessionService";
 
 const router = Router();
 
 const createSessionSchema = z.object({
   plannedDate: z.string().datetime(),
-  exercises: z.array(z.object({
-    exerciseId: z.string().uuid(),
-    sets: z.number().int().positive(),
-  })),
+  exercises: z.array(
+    z.object({
+      exerciseId: z.string().uuid(),
+      sets: z.number().int().positive(),
+    }),
+  ),
 });
 
-router.post(
-  '/sessions',
-  authenticate,
-  validate(createSessionSchema),
-  async (req, res, next) => {
-    try {
-      const session = await createSession(req.user.id, req.body);
-      res.status(201).json(session);
-    } catch (error) {
-      next(error);
-    }
+router.post("/sessions", authenticate, validate(createSessionSchema), async (req, res, next) => {
+  try {
+    const session = await createSession(req.user.id, req.body);
+    res.status(201).json(session);
+  } catch (error) {
+    next(error);
   }
-);
+});
 
 export default router;
 ```
@@ -107,6 +104,6 @@ export default router;
 ## Agent Reference
 
 For detailed implementation guidance, see:
+
 - **Backend Agent**: `.cursor/agents/backend-agent.md`
 - **Test Manager Agent**: `.cursor/agents/test_manager.md` (for testing)
-

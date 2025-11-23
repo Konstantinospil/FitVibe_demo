@@ -7,12 +7,14 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 const mockEnsureTranslations = vi.fn();
 
 vi.mock("../../src/i18n/config", () => ({
-  ensurePrivateTranslationsLoaded: () => mockEnsureTranslations(),
+  ensurePrivateTranslationsLoaded: (): void => {
+    mockEnsureTranslations();
+  },
 }));
 
-const createMockComponent = (label: string): React.FC => () => (
-  <div>{label}</div>
-);
+const createMockComponent =
+  (label: string): React.FC =>
+  () => <div>{label}</div>;
 
 vi.mock("../../src/components/ProtectedRoute", () => ({
   default: () => (

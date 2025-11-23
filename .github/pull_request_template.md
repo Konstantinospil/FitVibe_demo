@@ -31,9 +31,9 @@ Related to #
 
 <!-- List the main changes in this PR -->
 
-- 
-- 
-- 
+-
+-
+-
 
 ## Testing
 
@@ -149,7 +149,7 @@ Related to #
 
 <!-- If this PR includes breaking changes, describe them here -->
 
-**BREAKING CHANGE:** 
+**BREAKING CHANGE:**
 
 <!--
 Example:
@@ -176,4 +176,3 @@ Migration: Update all call sites to use `await getUser()`.
 - [ ] No merge conflicts
 - [ ] Approved by at least one maintainer
 - [ ] Ready to merge
-

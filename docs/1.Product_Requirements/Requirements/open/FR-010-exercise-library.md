@@ -85,54 +85,143 @@ Users and administrators can create exercises with the following attributes:
 
 ## Acceptance Criteria
 
-### FR-010-AC01: Exercise Creation
+Each acceptance criterion must be met for this requirement to be considered complete.
 
-**Criterion**: Users can create exercises with all required attributes and the exercise is saved within **≤500ms**.
+### US-2.1-AC01
+
+**Criterion**: Users can create exercises via POST /api/v1/exercises with required fields (name, type_code) and optional fields (muscle_group, equipment, tags, description); exercise saved within ≤500ms.
 
 - **Test Method**: Integration + E2E
 - **Evidence Required**: DB snapshot, UI screenshots, API response times
+- **Related Story**: US-2.1
 
-### FR-010-AC02: Exercise Validation
+### US-2.1-AC02
 
-**Criterion**: Exercise creation/editing validates required fields (name, category) and rejects invalid data with clear error messages.
-
-- **Test Method**: Unit + API negative
-- **Evidence Required**: Validation test results, error message samples
-
-### FR-010-AC03: Exercise Archival
-
-**Criterion**: Archiving an exercise hides it from selectors but preserves it in historical sessions.
+**Criterion**: Users can update their own exercises via PATCH /api/v1/exercises/:id; edits preserve historical accuracy; unauthorized edits return 403.
 
 - **Test Method**: Integration + E2E
-- **Evidence Required**: DB records, UI screenshots showing archived exercises not in selectors
+- **Evidence Required**: Update tests, access control verification
+- **Related Story**: US-2.1
 
-### FR-010-AC04: Exercise Visibility
+### US-2.1-AC03
 
-**Criterion**: Private exercises are only visible to their creator; public exercises are discoverable by all authenticated users.
+**Criterion**: Exercises can be archived (soft delete) via DELETE /api/v1/exercises/:id; archived exercises have archived_at timestamp set; they are hidden from selectors but retained in database.
+
+- **Test Method**: Integration + E2E
+- **Evidence Required**: DB records, UI showing archived exercises not in selectors
+- **Related Story**: US-2.1
+
+### US-2.1-AC04
+
+**Criterion**: Exercise visibility model: private (default, owner_id = user_id) or public (is_public = true); private exercises only visible to creator.
 
 - **Test Method**: Integration + E2E
 - **Evidence Required**: Access control tests, UI screenshots
+- **Related Story**: US-2.1
 
-### FR-010-AC05: Exercise Discovery
+### US-2.1-AC05
 
-**Criterion**: Users can search and filter public exercises by name, category, muscle group, and tags.
+**Criterion**: Exercise name uniqueness enforced per owner: (owner_id, normalized_name) unique constraint; duplicate names rejected with 409 CONFLICT.
+
+- **Test Method**: Unit + API negative
+- **Evidence Required**: Uniqueness test results, error responses
+- **Related Story**: US-2.1
+
+### US-2.2-AC01
+
+**Criterion**: Users can search public exercises via GET /api/v1/exercises?is_public=true&q=searchterm with pagination (default 20, max 100).
 
 - **Test Method**: E2E
-- **Evidence Required**: Search results, filter UI screenshots
+- **Evidence Required**: Search results, API response times
+- **Related Story**: US-2.2
 
-### FR-010-AC06: Exercise Snapshot
+### US-2.2-AC02
 
-**Criterion**: When an exercise is used in a session, a snapshot of the exercise name is stored in `session_exercises` and remains unchanged even if the exercise is later modified or archived.
+**Criterion**: Exercise search supports filtering by category (type_code), muscle_group, equipment, and tags; filters can be combined.
+
+- **Test Method**: E2E
+- **Evidence Required**: Filter UI screenshots, filtered search results
+- **Related Story**: US-2.2
+
+### US-2.2-AC03
+
+**Criterion**: Search results are sorted by relevance (name match) or date; empty results return empty array with 200 status.
+
+- **Test Method**: E2E
+- **Evidence Required**: Search result ordering, empty result handling
+- **Related Story**: US-2.2
+
+### US-2.3-AC01
+
+**Criterion**: When an exercise is used in a session, exercise name is stored as snapshot in session_exercises.exercise_name field; snapshot persists even if exercise is later modified or archived.
 
 - **Test Method**: Integration
-- **Evidence Required**: DB records showing snapshot preservation
+- **Evidence Required**: DB records showing snapshot preservation, exercise modification tests
+- **Related Story**: US-2.3
 
-### FR-010-AC07: Global Exercise Management
+### US-2.3-AC02
 
-**Criterion**: Administrators can create, edit, and archive global exercises that are accessible to all users.
+**Criterion**: Historical sessions display exercise name from snapshot, not current exercise name; exercise changes do not affect past session records.
+
+- **Test Method**: Integration + E2E
+- **Evidence Required**: Historical session display tests, exercise modification verification
+- **Related Story**: US-2.3
+
+### US-2.4-AC01
+
+**Criterion**: Administrators can create global exercises (owner_id = null) via POST /api/v1/exercises with admin role; global exercises are accessible to all users.
 
 - **Test Method**: Integration + E2E
 - **Evidence Required**: Admin UI screenshots, access control tests
+- **Related Story**: US-2.4
+
+### US-2.4-AC02
+
+**Criterion**: Administrators can edit and archive global exercises; non-admin users cannot modify global exercises (403 Forbidden).
+
+- **Test Method**: Integration + E2E
+- **Evidence Required**: Admin edit tests, non-admin access denial
+- **Related Story**: US-2.4
+
+### US-2.5-AC01
+
+**Criterion**: Exercise selector in Planner and Logger displays user's personal exercises, global exercises, and public exercises; archived exercises are excluded.
+
+- **Test Method**: E2E
+- **Evidence Required**: Exercise selector UI screenshots, exercise list verification
+- **Related Story**: US-2.5
+
+### US-2.5-AC02
+
+**Criterion**: Exercise selector supports search and filtering; selected exercise is added to session with proper reference.
+
+- **Test Method**: E2E
+- **Evidence Required**: Selector search tests, exercise addition verification
+- **Related Story**: US-2.5
+
+### US-2.6-AC01
+
+**Criterion**: Unit tests cover exercise CRUD operations, archival, visibility model, and uniqueness constraints with ≥90% code coverage.
+
+- **Test Method**: Unit
+- **Evidence Required**: Test coverage reports
+- **Related Story**: US-2.6
+
+### US-2.6-AC02
+
+**Criterion**: Integration tests verify exercise creation, editing, archival, search, and access control scenarios.
+
+- **Test Method**: Integration
+- **Evidence Required**: Integration test results
+- **Related Story**: US-2.6
+
+### US-2.6-AC03
+
+**Criterion**: E2E tests verify complete exercise management workflow including creation, search, selection, and archival.
+
+- **Test Method**: E2E
+- **Evidence Required**: E2E test results, UI screenshots
+- **Related Story**: US-2.6
 
 ## Test Strategy
 

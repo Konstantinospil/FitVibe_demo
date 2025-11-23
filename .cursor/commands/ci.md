@@ -5,6 +5,7 @@ Run each CI/CD step locally and separately. Fix all issues before proceeding to 
 ## Workflow Steps
 
 Execute the following steps in order. **CRITICAL**: After each step, if there are failures:
+
 1. Analyze the root cause of the failure
 2. Fix ALL issues completely before moving to next step
 3. Re-run the same step to verify the fix worked
@@ -13,17 +14,21 @@ Execute the following steps in order. **CRITICAL**: After each step, if there ar
 ## Step-by-Step Instructions
 
 ### Step 1: Install Dependencies
+
 ```bash
 pnpm install --frozen-lockfile
 ```
+
 - **On failure**: Check lockfile is up to date, resolve dependency conflicts
 - **Note**: Uses `--frozen-lockfile` to match CI workflow (prevents lockfile changes)
 - **Success criteria**: Installation completes without errors
 
 ### Step 2: Lint Check
+
 ```bash
 pnpm lint:check
 ```
+
 - **On failure**:
   - Run `pnpm lint -- --fix`
   - Read the linting errors carefully
@@ -33,9 +38,11 @@ pnpm lint:check
 - **Success criteria**: Zero warnings, zero errors
 
 ### Step 3: Type Check
+
 ```bash
 pnpm typecheck
 ```
+
 - **On failure**:
   - Read TypeScript errors carefully
   - Fix type errors by adding proper types, not by using `any`
@@ -44,9 +51,11 @@ pnpm typecheck
 - **Success criteria**: No TypeScript errors
 
 ### Step 4: Run Tests with Coverage
+
 ```bash
 pnpm test -- --coverage --runInBand
 ```
+
 - **On failure**:
   - Read test failure messages carefully
   - Identify if it's a test bug or implementation bug
@@ -59,9 +68,11 @@ pnpm test -- --coverage --runInBand
 - **Success criteria**: All tests passing (or >95% pass rate acceptable)
 
 ### Step 5: Coverage Gate Check
+
 ```bash
 pnpm test:coverage:gate ./coverage/coverage-summary.json
 ```
+
 - **On failure**:
   - Analyse the missing coverage.
   - Write or append to a report at `.\apps\docs\dev\Coverage_weaknesses.md` with the missing coverage classified by priority based on the potential impact on test coverage of the missing test, with higher impact items being on the top of the report.
@@ -70,30 +81,38 @@ pnpm test:coverage:gate ./coverage/coverage-summary.json
 - **Success criteria**: Coverage gate passes or is explicitly skipped (currently temporarily disabled - see script comments)
 
 ### Step 6: Baseline Assertion Check
+
 ```bash
 node tests/qa/assert-baseline.js
 ```
+
 - **On failure**: Investigate baseline requirements, ensure all required files exist
 - **Success criteria**: "QA baseline validated successfully"
 
 ### Step 7: i18n Check
+
 ```bash
 pnpm i18n:check
 ```
+
 - **On failure**: Add missing translation keys to locale files
 - **Success criteria**: "i18n coverage check passed" with matching key counts
 
 ### Step 8: Feature Flags Check
+
 ```bash
 node tests/qa/check-feature-flags.js
 ```
+
 - **On failure**: Verify feature flag defaults are correct
 - **Success criteria**: "Feature flag defaults verified"
 
 ### Step 9: Production Build
+
 ```bash
 pnpm build
 ```
+
 - **On failure**:
   - Read build errors carefully
   - Fix TypeScript errors in source code (not test files)
@@ -115,6 +134,7 @@ pnpm build
 ## After Completion
 
 Once all steps pass, summarize:
+
 - Total issues fixed
 - Test pass rates (Backend: X/Y, Frontend: X/Y)
 - Any warnings or concerns
@@ -136,6 +156,7 @@ Claude: I'll run the complete CI/CD workflow step by step, fixing any issues bef
 
 **CI/CD Workflow Complete!**
 Summary:
+
 - ✅ All 9 steps passed
 - Backend tests: 943/947 passing (99.8%)
 - Frontend tests: 269/289 passing (93%)

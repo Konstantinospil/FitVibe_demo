@@ -56,30 +56,47 @@ const renderSettings = () => {
 };
 
 describe("Settings", () => {
+  // eslint-disable-next-line @typescript-eslint/unbound-method
+  const mockGet = vi.mocked(apiClient.get);
+  // eslint-disable-next-line @typescript-eslint/unbound-method
+  const mockPatch = vi.mocked(apiClient.patch);
+  // eslint-disable-next-line @typescript-eslint/unbound-method
+  const mockDelete = vi.mocked(apiClient.delete);
+
   beforeEach(() => {
     vi.clearAllMocks();
     mockNavigate.mockClear();
 
     vi.mocked(useAuthStore).mockReturnValue({
       isAuthenticated: true,
-      user: { id: "user-1", username: "testuser", email: "user@example.com", role: "athlete", isVerified: true, createdAt: new Date().toISOString() },
+      user: {
+        id: "user-1",
+        username: "testuser",
+        email: "user@example.com",
+        role: "athlete",
+        isVerified: true,
+        createdAt: new Date().toISOString(),
+      },
       signIn: vi.fn(),
       signOut: mockSignOut,
       updateUser: vi.fn(),
     });
 
-    vi.mocked(apiClient.get).mockResolvedValue({ data: mockUserData });
-    vi.mocked(apiClient.patch).mockResolvedValue({ data: {} });
-    vi.mocked(apiClient.delete).mockResolvedValue({ data: {} });
+    mockGet.mockResolvedValue({ data: mockUserData });
+    mockPatch.mockResolvedValue({ data: {} });
+    mockDelete.mockResolvedValue({ data: {} });
     vi.mocked(get2FAStatus).mockResolvedValue({ enabled: false });
     vi.mocked(setup2FA).mockResolvedValue({
       qrCode: "data:image/png;base64,mock-qr-code",
       secret: "mock-secret",
       backupCodes: ["CODE1", "CODE2", "CODE3", "CODE4", "CODE5"],
-      message: "2FA setup initiated"
+      message: "2FA setup initiated",
     });
     vi.mocked(verify2FA).mockResolvedValue({ success: true, message: "2FA enabled successfully" });
-    vi.mocked(disable2FA).mockResolvedValue({ success: true, message: "2FA disabled successfully" });
+    vi.mocked(disable2FA).mockResolvedValue({
+      success: true,
+      message: "2FA disabled successfully",
+    });
   });
 
   it("renders settings page", async () => {
@@ -99,7 +116,7 @@ describe("Settings", () => {
     renderSettings();
 
     await waitFor(() => {
-      expect(apiClient.get).toHaveBeenCalledWith("/api/v1/users/me");
+      expect(mockGet).toHaveBeenCalledWith("/api/v1/users/me");
     });
   });
 
@@ -131,7 +148,7 @@ describe("Settings", () => {
       expect(screen.getByLabelText("Default Session Visibility")).toBeInTheDocument();
     });
 
-    const visibilitySelect = screen.getByLabelText("Default Session Visibility") as HTMLSelectElement;
+    const visibilitySelect = screen.getByLabelText("Default Session Visibility");
     fireEvent.change(visibilitySelect, { target: { value: "public" } });
 
     expect(visibilitySelect.value).toBe("public");
@@ -144,7 +161,7 @@ describe("Settings", () => {
       expect(screen.getByLabelText("Units")).toBeInTheDocument();
     });
 
-    const unitsSelect = screen.getByLabelText("Units") as HTMLSelectElement;
+    const unitsSelect = screen.getByLabelText("Units");
     fireEvent.change(unitsSelect, { target: { value: "imperial" } });
 
     expect(unitsSelect.value).toBe("imperial");
@@ -157,7 +174,7 @@ describe("Settings", () => {
       expect(screen.getByLabelText("Language")).toBeInTheDocument();
     });
 
-    const languageSelect = screen.getByLabelText("Language") as HTMLSelectElement;
+    const languageSelect = screen.getByLabelText("Language");
     fireEvent.change(languageSelect, { target: { value: "de" } });
 
     expect(languageSelect.value).toBe("de");
@@ -177,7 +194,7 @@ describe("Settings", () => {
     fireEvent.click(saveButton);
 
     await waitFor(() => {
-      expect(apiClient.patch).toHaveBeenCalledWith("/api/v1/users/me", {
+      expect(mockPatch).toHaveBeenCalledWith("/api/v1/users/me", {
         displayName: "Test Name",
         locale: "en",
         defaultVisibility: "private",
@@ -202,7 +219,7 @@ describe("Settings", () => {
   });
 
   it("shows error message when saving preferences fails", async () => {
-    vi.mocked(apiClient.patch).mockRejectedValue(new Error("Save failed"));
+    mockPatch.mockRejectedValue(new Error("Save failed"));
 
     renderSettings();
 
@@ -301,7 +318,9 @@ describe("Settings", () => {
     fireEvent.click(screen.getByText("Delete My Account"));
 
     await waitFor(() => {
-      expect(screen.getByText(/⚠️ Warning: This will permanently delete your account/)).toBeInTheDocument();
+      expect(
+        screen.getByText(/⚠️ Warning: This will permanently delete your account/),
+      ).toBeInTheDocument();
     });
 
     expect(screen.getByPlaceholderText("Enter your password")).toBeInTheDocument();
@@ -374,15 +393,18 @@ describe("Settings", () => {
 
     // Now the API should be called
     await waitFor(() => {
-      expect(apiClient.delete).toHaveBeenCalledWith("/api/v1/users/me", {
+      expect(mockDelete).toHaveBeenCalledWith("/api/v1/users/me", {
         data: { password: "mypassword" },
       });
     });
 
     // Wait for setTimeout to execute (2000ms delay) - the toast should appear during this time
-    await waitFor(() => {
-      expect(mockSignOut).toHaveBeenCalled();
-    }, { timeout: 3000 });
+    await waitFor(
+      () => {
+        expect(mockSignOut).toHaveBeenCalled();
+      },
+      { timeout: 3000 },
+    );
 
     await waitFor(() => {
       expect(mockNavigate).toHaveBeenCalledWith("/");
@@ -422,12 +444,12 @@ describe("Settings", () => {
       expect(screen.queryByText("Delete Account")).not.toBeInTheDocument();
     });
 
-    expect(apiClient.delete).not.toHaveBeenCalled();
+    expect(mockDelete).not.toHaveBeenCalled();
     expect(mockSignOut).not.toHaveBeenCalled();
   });
 
   it("shows error when account deletion fails", async () => {
-    vi.mocked(apiClient.delete).mockRejectedValue(new Error("Delete failed"));
+    mockDelete.mockRejectedValue(new Error("Delete failed"));
 
     renderSettings();
 

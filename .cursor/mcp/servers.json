@@ -2,54 +2,35 @@
   "mcpServers": {
     "filesystem": {
       "command": "npx",
-      "args": [
-        "-y",
-        "@modelcontextprotocol/server-filesystem",
-        "${workspaceFolder}"
-      ]
+      "args": ["-y", "@modelcontextprotocol/server-filesystem", "${workspaceFolder}"]
     },
     "git": {
       "command": "npx",
-      "args": [
-        "-y",
-        "@modelcontextprotocol/server-git",
-        "${workspaceFolder}"
-      ],
+      "args": ["-y", "@modelcontextprotocol/server-git", "${workspaceFolder}"],
       "env": {
         "GIT_CONFIG_GLOBAL": "/dev/null"
       }
     },
     "postgres": {
       "command": "npx",
-      "args": [
-        "-y",
-        "@modelcontextprotocol/server-postgres"
-      ],
+      "args": ["-y", "@modelcontextprotocol/server-postgres"],
       "env": {
         "POSTGRES_CONNECTION_STRING": "${POSTGRES_CONNECTION_STRING}"
       }
     },
     "brave-search": {
       "command": "npx",
-      "args": [
-        "-y",
-        "@modelcontextprotocol/server-brave-search"
-      ],
+      "args": ["-y", "@modelcontextprotocol/server-brave-search"],
       "env": {
         "BRAVE_API_KEY": "${BRAVE_API_KEY}"
       }
     },
     "github": {
       "command": "npx",
-      "args": [
-        "-y",
-        "@modelcontextprotocol/server-github"
-      ],
+      "args": ["-y", "@modelcontextprotocol/server-github"],
       "env": {
         "GITHUB_PERSONAL_ACCESS_TOKEN": "${GITHUB_PERSONAL_ACCESS_TOKEN}"
       }
     }
   }
 }
-
-

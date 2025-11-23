@@ -10,10 +10,10 @@
   "scripts": {
     "dev": "turbo run dev --parallel",
     "build": "turbo run build",
-    "lint": "turbo run lint --continue",
+    "lint": "turbo run lint",
     "lint:check": "turbo run lint --concurrency=1 -- --max-warnings=0",
     "test": "turbo run test --",
-    "test:backend": "turbo run test --filter=@fitvibe/backend -- --coverage --runInBand",
+    "test:backend": "turbo run test --filter=@fitvibe/backend -- --coverage",
     "test:frontend": "turbo run test --filter=@fitvibe/frontend -- --coverage",
     "test:a11y": "pnpm --filter @fitvibe/frontend run build && playwright test tests/frontend/e2e/accessibility.spec.cjs --config tests/frontend/e2e/playwright.config.cjs --reporter=line",
     "test:coverage:gate": "node tests/qa/check-coverage.cjs",

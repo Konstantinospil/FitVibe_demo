@@ -68,8 +68,8 @@ security-reports/
 
 # --- Logs & pids ---
 logs/
-!apps/backend/src/modules/logs/**/*.ts
 !apps/backend/src/modules/logs/
+!apps/backend/src/modules/logs/**/*.ts
 
 *.log
 *.log.*

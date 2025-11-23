@@ -825,11 +825,9 @@ const uuidSchema = z.string().uuid();
 const emailSchema = z.string().email();
 
 // ✅ Good: Schema composition
-const updateUserSchema = createUserSchema
-  .partial()
-  .refine((data) => Object.keys(data).length > 0, {
-    message: "At least one field must be provided",
-  });
+const updateUserSchema = createUserSchema.partial().refine((data) => Object.keys(data).length > 0, {
+  message: "At least one field must be provided",
+});
 ```
 
 ### Validation Middleware

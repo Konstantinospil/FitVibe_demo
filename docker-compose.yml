@@ -1,4 +1,4 @@
-version: '3.8'
+version: "3.8"
 
 services:
   # PostgreSQL Database
@@ -110,17 +110,17 @@ services:
     container_name: fitvibe-prometheus
     restart: unless-stopped
     ports:
-      - "127.0.0.1:9090:9090"  # SECURITY: Only localhost access
+      - "127.0.0.1:9090:9090" # SECURITY: Only localhost access
     volumes:
       - ./infra/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - ./infra/prometheus/alerts.yml:/etc/prometheus/alerts.yml:ro
       - prometheus_data:/prometheus
     command:
-      - '--config.file=/etc/prometheus/prometheus.yml'
-      - '--storage.tsdb.path=/prometheus'
-      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
-      - '--web.console.templates=/usr/share/prometheus/consoles'
-      - '--web.enable-lifecycle'
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--web.console.libraries=/usr/share/prometheus/console_libraries"
+      - "--web.console.templates=/usr/share/prometheus/consoles"
+      - "--web.enable-lifecycle"
     depends_on:
       - backend
     networks:
@@ -132,7 +132,7 @@ services:
     container_name: fitvibe-grafana
     restart: unless-stopped
     ports:
-      - "127.0.0.1:3001:3000"  # SECURITY: Only localhost access
+      - "127.0.0.1:3001:3000" # SECURITY: Only localhost access
     environment:
       GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
       GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:?Grafana admin password is required. Set GRAFANA_ADMIN_PASSWORD in .env file}

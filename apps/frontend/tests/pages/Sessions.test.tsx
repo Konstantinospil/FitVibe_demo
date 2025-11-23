@@ -6,6 +6,7 @@ import { I18nextProvider } from "react-i18next";
 import i18n from "i18next";
 import { initReactI18next } from "react-i18next";
 import * as api from "../../src/services/api";
+import type { SessionWithExercises } from "../../src/services/api";
 import { ToastProvider } from "../../src/contexts/ToastContext";
 
 // Mock API
@@ -128,15 +129,22 @@ describe("Sessions", () => {
       expect(screen.getByText("No planned sessions")).toBeInTheDocument();
     });
 
-    expect(screen.getByText("Create your first workout session to get started")).toBeInTheDocument();
+    expect(
+      screen.getByText("Create your first workout session to get started"),
+    ).toBeInTheDocument();
   });
 
   it("displays planned sessions list", async () => {
-    vi.mocked(api.listSessions).mockImplementation(async (params) => {
+    vi.mocked(api.listSessions).mockImplementation((params) => {
       if (params?.status === "planned") {
-        return { data: [mockSession as any], total: 1, limit: 50, offset: 0 };
+        return Promise.resolve({
+          data: [mockSession as SessionWithExercises],
+          total: 1,
+          limit: 50,
+          offset: 0,
+        });
       }
-      return { data: [], total: 0, limit: 50, offset: 0 };
+      return Promise.resolve({ data: [], total: 0, limit: 50, offset: 0 });
     });
 
     renderWithProviders();
@@ -189,11 +197,16 @@ describe("Sessions", () => {
       started_at: "2024-01-15T10:30:00Z",
     };
 
-    vi.mocked(api.listSessions).mockImplementation(async (params) => {
+    vi.mocked(api.listSessions).mockImplementation((params) => {
       if (params?.status === "in_progress") {
-        return { data: [activeSession as any], total: 1, limit: 20, offset: 0 };
+        return Promise.resolve({
+          data: [activeSession as SessionWithExercises],
+          total: 1,
+          limit: 20,
+          offset: 0,
+        });
       }
-      return { data: [], total: 0, limit: 50, offset: 0 };
+      return Promise.resolve({ data: [], total: 0, limit: 50, offset: 0 });
     });
 
     renderWithProviders();
@@ -226,11 +239,16 @@ describe("Sessions", () => {
   });
 
   it("navigates to logger when start button clicked", async () => {
-    vi.mocked(api.listSessions).mockImplementation(async (params) => {
+    vi.mocked(api.listSessions).mockImplementation((params) => {
       if (params?.status === "planned") {
-        return { data: [mockSession as any], total: 1, limit: 50, offset: 0 };
+        return Promise.resolve({
+          data: [mockSession as SessionWithExercises],
+          total: 1,
+          limit: 50,
+          offset: 0,
+        });
       }
-      return { data: [], total: 0, limit: 50, offset: 0 };
+      return Promise.resolve({ data: [], total: 0, limit: 50, offset: 0 });
     });
 
     renderWithProviders();
@@ -246,11 +264,16 @@ describe("Sessions", () => {
   });
 
   it("navigates to session detail when view button clicked", async () => {
-    vi.mocked(api.listSessions).mockImplementation(async (params) => {
+    vi.mocked(api.listSessions).mockImplementation((params) => {
       if (params?.status === "planned") {
-        return { data: [mockSession as any], total: 1, limit: 50, offset: 0 };
+        return Promise.resolve({
+          data: [mockSession as SessionWithExercises],
+          total: 1,
+          limit: 50,
+          offset: 0,
+        });
       }
-      return { data: [], total: 0, limit: 50, offset: 0 };
+      return Promise.resolve({ data: [], total: 0, limit: 50, offset: 0 });
     });
 
     renderWithProviders();
@@ -268,11 +291,16 @@ describe("Sessions", () => {
   it("deletes session when delete button clicked and confirmed", async () => {
     vi.mocked(api.deleteSession).mockResolvedValue(undefined);
 
-    vi.mocked(api.listSessions).mockImplementation(async (params) => {
+    vi.mocked(api.listSessions).mockImplementation((params) => {
       if (params?.status === "planned") {
-        return { data: [mockSession as any], total: 1, limit: 50, offset: 0 };
+        return Promise.resolve({
+          data: [mockSession as SessionWithExercises],
+          total: 1,
+          limit: 50,
+          offset: 0,
+        });
       }
-      return { data: [], total: 0, limit: 50, offset: 0 };
+      return Promise.resolve({ data: [], total: 0, limit: 50, offset: 0 });
     });
 
     renderWithProviders();
@@ -308,11 +336,16 @@ describe("Sessions", () => {
   });
 
   it("does not delete session when delete is cancelled", async () => {
-    vi.mocked(api.listSessions).mockImplementation(async (params) => {
+    vi.mocked(api.listSessions).mockImplementation((params) => {
       if (params?.status === "planned") {
-        return { data: [mockSession as any], total: 1, limit: 50, offset: 0 };
+        return Promise.resolve({
+          data: [mockSession as SessionWithExercises],
+          total: 1,
+          limit: 50,
+          offset: 0,
+        });
       }
-      return { data: [], total: 0, limit: 50, offset: 0 };
+      return Promise.resolve({ data: [], total: 0, limit: 50, offset: 0 });
     });
 
     renderWithProviders();
@@ -344,11 +377,16 @@ describe("Sessions", () => {
   it("shows toast when delete fails", async () => {
     vi.mocked(api.deleteSession).mockRejectedValue(new Error("Delete failed"));
 
-    vi.mocked(api.listSessions).mockImplementation(async (params) => {
+    vi.mocked(api.listSessions).mockImplementation((params) => {
       if (params?.status === "planned") {
-        return { data: [mockSession as any], total: 1, limit: 50, offset: 0 };
+        return Promise.resolve({
+          data: [mockSession as SessionWithExercises],
+          total: 1,
+          limit: 50,
+          offset: 0,
+        });
       }
-      return { data: [], total: 0, limit: 50, offset: 0 };
+      return Promise.resolve({ data: [], total: 0, limit: 50, offset: 0 });
     });
 
     renderWithProviders();
@@ -376,11 +414,16 @@ describe("Sessions", () => {
   });
 
   it("displays exercise count for sessions", async () => {
-    vi.mocked(api.listSessions).mockImplementation(async (params) => {
+    vi.mocked(api.listSessions).mockImplementation((params) => {
       if (params?.status === "planned") {
-        return { data: [mockSession as any], total: 1, limit: 50, offset: 0 };
+        return Promise.resolve({
+          data: [mockSession as SessionWithExercises],
+          total: 1,
+          limit: 50,
+          offset: 0,
+        });
       }
-      return { data: [], total: 0, limit: 50, offset: 0 };
+      return Promise.resolve({ data: [], total: 0, limit: 50, offset: 0 });
     });
 
     renderWithProviders();
@@ -403,11 +446,16 @@ describe("Sessions", () => {
       ],
     };
 
-    vi.mocked(api.listSessions).mockImplementation(async (params) => {
+    vi.mocked(api.listSessions).mockImplementation((params) => {
       if (params?.status === "planned") {
-        return { data: [sessionWithManyExercises as any], total: 1, limit: 50, offset: 0 };
+        return Promise.resolve({
+          data: [sessionWithManyExercises as SessionWithExercises],
+          total: 1,
+          limit: 50,
+          offset: 0,
+        });
       }
-      return { data: [], total: 0, limit: 50, offset: 0 };
+      return Promise.resolve({ data: [], total: 0, limit: 50, offset: 0 });
     });
 
     renderWithProviders();

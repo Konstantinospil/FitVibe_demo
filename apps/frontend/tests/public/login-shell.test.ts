@@ -1,7 +1,7 @@
 import { beforeEach, afterEach, describe, expect, it, vi } from "vitest";
 import { waitFor } from "@testing-library/dom";
 
-const mockLoadMain = vi.fn(async () => ({}));
+const mockLoadMain = vi.fn(() => Promise.resolve({}));
 
 vi.mock("../../src/main", () => ({
   default: mockLoadMain,
@@ -42,30 +42,30 @@ describe("login fallback shell", () => {
         assign: assignSpy,
       },
     });
-  Object.defineProperty(window, "sessionStorage", {
-    configurable: true,
-    value: {
-      storage: new Map<string, string>(),
-      getItem(key: string) {
-        return (this.storage as Map<string, string>).get(key) ?? null;
-      },
-      setItem(key: string, value: string) {
-        (this.storage as Map<string, string>).set(key, value);
-      },
-      removeItem(key: string) {
-        (this.storage as Map<string, string>).delete(key);
-      },
-      clear() {
-        (this.storage as Map<string, string>).clear();
-      },
-      key(index: number) {
-        return Array.from((this.storage as Map<string, string>).keys())[index] ?? null;
-      },
-      get length() {
-        return (this.storage as Map<string, string>).size;
-      },
-    } as Storage,
-  });
+    Object.defineProperty(window, "sessionStorage", {
+      configurable: true,
+      value: {
+        storage: new Map<string, string>(),
+        getItem(key: string) {
+          return (this.storage as Map<string, string>).get(key) ?? null;
+        },
+        setItem(key: string, value: string) {
+          (this.storage as Map<string, string>).set(key, value);
+        },
+        removeItem(key: string) {
+          (this.storage as Map<string, string>).delete(key);
+        },
+        clear() {
+          (this.storage as Map<string, string>).clear();
+        },
+        key(index: number) {
+          return Array.from((this.storage as Map<string, string>).keys())[index] ?? null;
+        },
+        get length() {
+          return (this.storage as Map<string, string>).size;
+        },
+      } as Storage,
+    });
     global.fetch = vi.fn();
   });
 
@@ -107,7 +107,7 @@ describe("login fallback shell", () => {
     buildFormDom();
     (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
       ok: true,
-      json: async () => ({ requires2FA: true, pendingSessionId: "pending-123" }),
+      json: () => Promise.resolve({ requires2FA: true, pendingSessionId: "pending-123" }),
     });
 
     await importLoginShell();
@@ -119,9 +119,7 @@ describe("login fallback shell", () => {
     form.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
 
     await waitFor(() => {
-      expect(assignSpy).toHaveBeenCalledWith(
-        "/login/verify-2fa?pendingSessionId=pending-123",
-      );
+      expect(assignSpy).toHaveBeenCalledWith("/login/verify-2fa?pendingSessionId=pending-123");
     });
   });
 
@@ -129,7 +127,7 @@ describe("login fallback shell", () => {
     buildFormDom();
     (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
       ok: true,
-      json: async () => ({ requires2FA: false }),
+      json: () => Promise.resolve({ requires2FA: false }),
     });
 
     await importLoginShell();
@@ -159,9 +157,7 @@ describe("login fallback shell", () => {
     form.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
 
     await waitFor(() => {
-      const errorRegion = document.querySelector(
-        ".login-fallback__error",
-      ) as HTMLDivElement;
+      const errorRegion = document.querySelector(".login-fallback__error") as HTMLDivElement;
       expect(errorRegion.hidden).toBe(false);
       expect(errorRegion.textContent).toContain("We couldn't verify your credentials");
     });

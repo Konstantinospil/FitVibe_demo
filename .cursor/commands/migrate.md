@@ -43,26 +43,26 @@ Work with database migrations following FitVibe database conventions.
 ## Example Migration
 
 ```typescript
-import { Knex } from 'knex';
+import { Knex } from "knex";
 
 export async function up(knex: Knex): Promise<void> {
-  await knex.schema.createTable('user_sessions', (table) => {
-    table.uuid('id').primary().defaultTo(knex.raw('gen_random_uuid()'));
-    table.uuid('user_id').notNullable();
-    table.foreign('user_id').references('id').inTable('users').onDelete('CASCADE');
-    table.timestamp('planned_date').notNullable();
-    table.timestamp('completed_at');
+  await knex.schema.createTable("user_sessions", (table) => {
+    table.uuid("id").primary().defaultTo(knex.raw("gen_random_uuid()"));
+    table.uuid("user_id").notNullable();
+    table.foreign("user_id").references("id").inTable("users").onDelete("CASCADE");
+    table.timestamp("planned_date").notNullable();
+    table.timestamp("completed_at");
     table.timestamps(true, true); // created_at, updated_at
-    
+
     // Indexes
-    table.index('user_id');
-    table.index('planned_date');
-    table.index(['user_id', 'planned_date']);
+    table.index("user_id");
+    table.index("planned_date");
+    table.index(["user_id", "planned_date"]);
   });
 }
 
 export async function down(knex: Knex): Promise<void> {
-  await knex.schema.dropTable('user_sessions');
+  await knex.schema.dropTable("user_sessions");
 }
 ```
 
@@ -74,4 +74,3 @@ export async function down(knex: Knex): Promise<void> {
 - **Document breaking changes** - Note any schema changes that affect existing data
 - **Update TDD** - Update data design section in TDD when schema changes
 - **Use transactions** - Wrap data migrations in transactions when possible
-

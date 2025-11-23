@@ -70,4 +70,3 @@ Refactor the selected code following FitVibe coding standards and best practices
 - **Optimize imports** - Remove unused imports
 
 Maintain existing functionality while improving code quality.
-

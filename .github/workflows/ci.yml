@@ -61,6 +61,14 @@ jobs:
           --health-retries 5
     env:
       DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/fitvibe_test
+      # Individual PG env vars for test files to detect database
+      PGHOST: 127.0.0.1
+      PGPORT: 5432
+      PGUSER: postgres
+      PGPASSWORD: postgres
+      PGDATABASE: fitvibe_test
+      # Highest priority - test files check this first
+      TEST_DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/fitvibe_test
       CLAMAV_ENABLED: "true"
       CLAMAV_HOST: "127.0.0.1"
       CLAMAV_PORT: "3310"
@@ -331,6 +339,14 @@ jobs:
           --health-retries 5
     env:
       DATABASE_URL: postgresql://fitvibe:fitvibe@127.0.0.1:5432/fitvibe
+      # Individual PG env vars for test files to detect database
+      PGHOST: 127.0.0.1
+      PGPORT: 5432
+      PGUSER: fitvibe
+      PGPASSWORD: fitvibe
+      PGDATABASE: fitvibe
+      # Highest priority - test files check this first
+      TEST_DATABASE_URL: postgresql://fitvibe:fitvibe@127.0.0.1:5432/fitvibe
       CLAMAV_ENABLED: "true"
       CLAMAV_HOST: "127.0.0.1"
       CLAMAV_PORT: "3310"

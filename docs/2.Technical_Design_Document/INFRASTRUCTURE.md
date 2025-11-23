@@ -49,27 +49,29 @@ This document provides comprehensive instructions for deploying FitVibe infrastr
 
 ### Infrastructure Components
 
-| Component | Purpose | HA Strategy | Backup |
-|-----------|---------|-------------|--------|
-| **Frontend** | React SPA served via NGINX | 2-6 replicas, HPA | Image registry |
-| **Backend** | Express API server | 3-10 replicas, HPA | Image registry |
-| **PostgreSQL** | Primary database | Master-replica, automated failover | Daily snapshots, WAL archiving |
-| **Redis** | Cache and session storage | Single instance (or cluster) | RDB snapshots (hourly) |
-| **NGINX** | Reverse proxy, TLS termination | 2+ replicas | Config in git |
-| **Prometheus** | Metrics collection | 2 replicas | 30-day retention |
-| **Grafana** | Metrics visualization | 2 replicas | Dashboards in git |
+| Component      | Purpose                        | HA Strategy                        | Backup                         |
+| -------------- | ------------------------------ | ---------------------------------- | ------------------------------ |
+| **Frontend**   | React SPA served via NGINX     | 2-6 replicas, HPA                  | Image registry                 |
+| **Backend**    | Express API server             | 3-10 replicas, HPA                 | Image registry                 |
+| **PostgreSQL** | Primary database               | Master-replica, automated failover | Daily snapshots, WAL archiving |
+| **Redis**      | Cache and session storage      | Single instance (or cluster)       | RDB snapshots (hourly)         |
+| **NGINX**      | Reverse proxy, TLS termination | 2+ replicas                        | Config in git                  |
+| **Prometheus** | Metrics collection             | 2 replicas                         | 30-day retention               |
+| **Grafana**    | Metrics visualization          | 2 replicas                         | Dashboards in git              |
 
 ## Prerequisites
 
 ### Required Tools
 
 **For Local Development:**
+
 - Docker 24+ & Docker Compose 2.20+
 - Node.js 20 LTS
 - PNPM 9+
 - PostgreSQL 15+ client (`psql`)
 
 **For Kubernetes Deployment:**
+
 - `kubectl` 1.28+
 - `helm` 3.12+
 - Cloud provider CLI:
@@ -82,10 +84,12 @@ This document provides comprehensive instructions for deploying FitVibe infrastr
 ### Access Requirements
 
 **Development:**
+
 - GitHub repository access
 - Local admin privileges (for Docker)
 
 **Production:**
+
 - Cloud provider account with admin IAM role
 - Kubernetes cluster access (RBAC: cluster-admin initially, namespace-scoped later)
 - GitHub Container Registry access (GHCR)
@@ -149,14 +153,14 @@ pnpm tsx apps/backend/src/db/scripts/seed.ts
 
 5. **Access services**:
 
-| Service | URL | Credentials |
-|---------|-----|-------------|
-| Frontend | http://localhost:3000 | Register new account |
-| Backend API | http://localhost:4000 | N/A (API endpoints) |
-| Prometheus | http://localhost:9090 | None |
-| Grafana | http://localhost:3001 | admin / admin |
-| PostgreSQL | localhost:5432 | fitvibe / fitvibe_dev_password |
-| Redis | localhost:6379 | fitvibe_dev_redis |
+| Service     | URL                   | Credentials                    |
+| ----------- | --------------------- | ------------------------------ |
+| Frontend    | http://localhost:3000 | Register new account           |
+| Backend API | http://localhost:4000 | N/A (API endpoints)            |
+| Prometheus  | http://localhost:9090 | None                           |
+| Grafana     | http://localhost:3001 | admin / admin                  |
+| PostgreSQL  | localhost:5432        | fitvibe / fitvibe_dev_password |
+| Redis       | localhost:6379        | fitvibe_dev_redis              |
 
 ### Manual Development Setup (Without Docker)
 
@@ -542,11 +546,11 @@ Configure Alertmanager to send notifications to Slack, PagerDuty, or email:
 ```yaml
 # infra/prometheus/alertmanager-config.yaml
 receivers:
-  - name: 'slack-notifications'
+  - name: "slack-notifications"
     slack_configs:
-      - api_url: 'YOUR_SLACK_WEBHOOK_URL'
-        channel: '#fitvibe-alerts'
-        text: '{{ .CommonAnnotations.summary }}'
+      - api_url: "YOUR_SLACK_WEBHOOK_URL"
+        channel: "#fitvibe-alerts"
+        text: "{{ .CommonAnnotations.summary }}"
 ```
 
 ### Logging

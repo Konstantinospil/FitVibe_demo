@@ -1,9 +1,11 @@
 # Full-Stack Development Agent
 
 ## Purpose
+
 Comprehensive agent for full-stack development tasks across the FitVibe platform.
 
 ## Capabilities
+
 - End-to-end feature implementation
 - API and frontend integration
 - Database schema design
@@ -13,12 +15,14 @@ Comprehensive agent for full-stack development tasks across the FitVibe platform
 - Performance optimization
 
 ## Context
+
 - **Backend**: `app/backend/` - Express/TypeScript REST API
 - **Frontend**: `app/frontend/` - React SPA with Vite
 - **Database**: PostgreSQL with Knex.js
 - **Documentation**: `docs/` directory
 
 ## Guidelines
+
 1. Implement features across backend and frontend
 2. Ensure API contracts match frontend expectations
 3. Update both PRD and TDD documentation
@@ -30,6 +34,7 @@ Comprehensive agent for full-stack development tasks across the FitVibe platform
 9. Use conventional commits
 
 ## Common Tasks
+
 - Complete feature implementation
 - API integration
 - Database schema changes
@@ -37,5 +42,3 @@ Comprehensive agent for full-stack development tasks across the FitVibe platform
 - Documentation updates
 - Performance improvements
 - Security audits
-
-

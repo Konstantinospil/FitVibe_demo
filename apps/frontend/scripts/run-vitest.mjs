@@ -21,7 +21,7 @@ const vitestPkg = require("vitest/package.json");
 const binEntry =
   typeof vitestPkg.bin === "string"
     ? vitestPkg.bin
-    : vitestPkg.bin?.vitest ?? vitestPkg.bin?.["vitest"];
+    : (vitestPkg.bin?.vitest ?? vitestPkg.bin?.["vitest"]);
 
 if (!binEntry) {
   console.error("[test] Unable to locate the Vitest binary entry point");

@@ -87,6 +87,7 @@ Generate comprehensive, production-ready test suites by analyzing documentation 
 - `analyze_acceptance_criteria`: Parse Given-When-Then scenarios from documentation
 
 **Fallback**: Use Bash to execute commands directly:
+
 - `npm test` or `pnpm test` for running tests
 - `npm run lint` for linting
 - `npm run typecheck` for type checking
@@ -120,9 +121,7 @@ The Test Manager receives structured input containing source code, documentation
   ],
   "documentation": {
     "description": "<what the code does>",
-    "acceptance_criteria": [
-      "Given [context] When [action] Then [expected result]"
-    ],
+    "acceptance_criteria": ["Given [context] When [action] Then [expected result]"],
     "edge_cases": ["<edge case 1>", "<edge case 2>"],
     "dependencies": ["<external dependency 1>"]
   },
@@ -172,11 +171,7 @@ The Test Manager receives structured input containing source code, documentation
       "Given invalid email When createUser is called Then ValidationError is thrown",
       "Given duplicate email When createUser is called Then DuplicateUserError is thrown"
     ],
-    "edge_cases": [
-      "Empty string fields",
-      "SQL injection attempts",
-      "Extremely long inputs"
-    ]
+    "edge_cases": ["Empty string fields", "SQL injection attempts", "Extremely long inputs"]
   },
   "tech_stack": {
     "language": "typescript",
@@ -258,6 +253,7 @@ The Test Manager receives structured input containing source code, documentation
 ### Phase 3: Quality Assurance (5-10 minutes)
 
 1. **Run Quality Checks**
+
    ```bash
    # ESLint
    npm run lint
@@ -316,7 +312,7 @@ The Test Manager receives structured input containing source code, documentation
 
 ### Standard Output Structure
 
-```markdown
+````markdown
 # Test Manager Output
 
 **Request ID**: TEST-YYYY-MM-DD-NNN
@@ -336,6 +332,7 @@ Generated comprehensive test suite for [component/method name] covering [X] acce
 ## Test Suite Details
 
 ### Test File
+
 - **Path**: `tests/path/to/file.test.ts`
 - **Framework**: Jest / Vitest / Mocha / Pytest
 - **Test Count**: X tests
@@ -344,14 +341,17 @@ Generated comprehensive test suite for [component/method name] covering [X] acce
 ### Tests Generated
 
 #### Happy Path Tests
+
 1. ✅ [Test description] - Covers AC #1
 2. ✅ [Test description] - Covers AC #2
 
 #### Edge Case Tests
+
 1. ✅ [Test description] - Empty inputs
 2. ✅ [Test description] - Boundary values
 
 #### Error Handling Tests
+
 1. ✅ [Test description] - Invalid input error
 2. ✅ [Test description] - External dependency failure
 
@@ -360,22 +360,26 @@ Generated comprehensive test suite for [component/method name] covering [X] acce
 ## Quality Metrics
 
 ### Code Quality
+
 - ✅ **ESLint**: 0 errors, 0 warnings
 - ✅ **TypeScript**: No type errors
 - ✅ **Prettier**: Formatted
 
 ### Security
+
 - ✅ **npm audit**: 0 vulnerabilities
 - ✅ **Snyk scan**: No issues found
 - ✅ **Code patterns**: No security anti-patterns
 
 ### Coverage
+
 - **Line Coverage**: Y%
 - **Branch Coverage**: Z%
 - **Function Coverage**: W%
 - **Statement Coverage**: V%
 
 ### Test Execution
+
 - **All Tests**: ✅ Passing
 - **Execution Time**: X ms
 - **Flakiness**: None detected
@@ -384,10 +388,10 @@ Generated comprehensive test suite for [component/method name] covering [X] acce
 
 ## Acceptance Criteria Coverage
 
-| Criteria | Status | Test Cases |
-|----------|--------|------------|
-| AC #1: [description] | ✅ Covered | test1, test2 |
-| AC #2: [description] | ✅ Covered | test3 |
+| Criteria                 | Status     | Test Cases   |
+| ------------------------ | ---------- | ------------ |
+| AC #1: [description]     | ✅ Covered | test1, test2 |
+| AC #2: [description]     | ✅ Covered | test3        |
 | Edge Case: [description] | ✅ Covered | test4, test5 |
 
 ---
@@ -397,6 +401,7 @@ Generated comprehensive test suite for [component/method name] covering [X] acce
 ```typescript
 // Generated test file content
 ```
+````
 
 ---
 
@@ -423,7 +428,8 @@ Generated comprehensive test suite for [component/method name] covering [X] acce
 **Next Agent**: code-review-agent
 **Status**: Ready
 **Notes**: Test suite complete, all quality checks passed, ready for code review
-```
+
+````
 
 ---
 
@@ -465,7 +471,7 @@ All criteria must be met before handing off to next agent:
     "Any unresolved problems (if applicable)"
   ]
 }
-```
+````
 
 ### Escalation Conditions
 
@@ -485,6 +491,7 @@ Escalate to supervisor/orchestrator when:
 Before completing work and handing off, verify:
 
 ### Completeness
+
 - [ ] All acceptance criteria have corresponding tests
 - [ ] Happy path scenarios are fully covered
 - [ ] Edge cases and boundary conditions tested
@@ -492,6 +499,7 @@ Before completing work and handing off, verify:
 - [ ] Integration points with dependencies tested
 
 ### Code Quality
+
 - [ ] ✅ ESLint passes with 0 errors, 0 warnings
 - [ ] ✅ TypeScript compilation succeeds with no errors
 - [ ] ✅ Code follows project style guide (Prettier formatted)
@@ -499,6 +507,7 @@ Before completing work and handing off, verify:
 - [ ] ✅ No code duplication (DRY principles followed)
 
 ### Security
+
 - [ ] ✅ npm audit / pip audit shows 0 vulnerabilities
 - [ ] ✅ Snyk scan passes (if available)
 - [ ] ✅ No hardcoded secrets or sensitive data
@@ -506,12 +515,14 @@ Before completing work and handing off, verify:
 - [ ] ✅ Test data does not expose real user information
 
 ### Type Safety
+
 - [ ] ✅ 100% TypeScript type coverage (no `any` unless justified)
 - [ ] ✅ Mock types match actual implementation types
 - [ ] ✅ Return types are properly typed
 - [ ] ✅ Generic types are used appropriately
 
 ### Test Execution
+
 - [ ] ✅ All tests pass locally
 - [ ] ✅ No test flakiness (run multiple times)
 - [ ] ✅ Tests run in reasonable time (<5s for unit tests, <30s for integration tests)
@@ -520,6 +531,7 @@ Before completing work and handing off, verify:
 - [ ] ✅ No slow operations (network calls, file I/O) in unit tests
 
 ### Coverage
+
 - [ ] ✅ Line coverage ≥ 80% repo-wide (QA Plan standard) or target specified in requirements
 - [ ] ✅ Branch coverage ≥ 80% repo-wide (QA Plan standard)
 - [ ] ✅ Critical paths (auth/session/points) have ≥90% coverage (QA Plan standard)
@@ -528,6 +540,7 @@ Before completing work and handing off, verify:
 - [ ] ✅ Context-specific coverage targets are used when appropriate (e.g., utilities may need 100%, while complex integrations may target 80%)
 
 ### Maintainability
+
 - [ ] Test setup/teardown is reusable
 - [ ] Mocks are well-organized and documented
 - [ ] Test data is clear and maintainable
@@ -535,6 +548,7 @@ Before completing work and handing off, verify:
 - [ ] Tests are independent (can run in any order)
 
 ### Documentation
+
 - [ ] Test file has header comment explaining purpose
 - [ ] Complex test scenarios have explanatory comments
 - [ ] Mock setup rationale is documented
@@ -580,13 +594,13 @@ Before completing work and handing off, verify:
 ### Async Function Testing
 
 ```typescript
-describe('asyncFunction', () => {
-  it('should resolve with expected value', async () => {
+describe("asyncFunction", () => {
+  it("should resolve with expected value", async () => {
     const result = await asyncFunction(input);
     expect(result).toEqual(expectedValue);
   });
 
-  it('should reject with error on failure', async () => {
+  it("should reject with error on failure", async () => {
     await expect(asyncFunction(invalidInput)).rejects.toThrow(Error);
   });
 });
@@ -595,16 +609,16 @@ describe('asyncFunction', () => {
 ### Mocking Dependencies
 
 ```typescript
-import { dependency } from './dependency';
+import { dependency } from "./dependency";
 
-jest.mock('./dependency');
+jest.mock("./dependency");
 
-describe('functionWithDependency', () => {
+describe("functionWithDependency", () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
-  it('should call dependency with correct arguments', () => {
+  it("should call dependency with correct arguments", () => {
     const mockFn = jest.mocked(dependency);
     mockFn.mockReturnValue(mockValue);
 
@@ -619,18 +633,18 @@ describe('functionWithDependency', () => {
 ### Error Handling Tests
 
 ```typescript
-describe('functionWithValidation', () => {
-  it('should throw ValidationError for invalid input', () => {
+describe("functionWithValidation", () => {
+  it("should throw ValidationError for invalid input", () => {
     expect(() => functionWithValidation(invalidInput)).toThrow(ValidationError);
-    expect(() => functionWithValidation(invalidInput)).toThrow('Expected error message');
+    expect(() => functionWithValidation(invalidInput)).toThrow("Expected error message");
   });
 
-  it('should throw with specific error code', () => {
+  it("should throw with specific error code", () => {
     try {
       functionWithValidation(invalidInput);
     } catch (error) {
       expect(error).toBeInstanceOf(ValidationError);
-      expect(error.code).toBe('VALIDATION_ERROR');
+      expect(error.code).toBe("VALIDATION_ERROR");
     }
   });
 });
@@ -660,23 +674,18 @@ describe('Component', () => {
 ### Testing Express Routes (if applicable)
 
 ```typescript
-import request from 'supertest';
-import app from './app';
+import request from "supertest";
+import app from "./app";
 
-describe('GET /api/endpoint', () => {
-  it('should return 200 with expected data', async () => {
-    const response = await request(app)
-      .get('/api/endpoint')
-      .expect(200);
+describe("GET /api/endpoint", () => {
+  it("should return 200 with expected data", async () => {
+    const response = await request(app).get("/api/endpoint").expect(200);
 
     expect(response.body).toMatchObject(expectedData);
   });
 
-  it('should return 400 for invalid input', async () => {
-    await request(app)
-      .post('/api/endpoint')
-      .send(invalidData)
-      .expect(400);
+  it("should return 400 for invalid input", async () => {
+    await request(app).post("/api/endpoint").send(invalidData).expect(400);
   });
 });
 ```
@@ -686,9 +695,9 @@ describe('GET /api/endpoint', () => {
 #### Fake Clock for Time-Dependent Tests
 
 ```typescript
-import { jest } from '@jest/globals';
+import { jest } from "@jest/globals";
 
-describe('timeDependentFunction', () => {
+describe("timeDependentFunction", () => {
   beforeEach(() => {
     jest.useFakeTimers();
   });
@@ -697,7 +706,7 @@ describe('timeDependentFunction', () => {
     jest.useRealTimers();
   });
 
-  it('should handle time-based logic correctly', () => {
+  it("should handle time-based logic correctly", () => {
     const result = timeDependentFunction();
     jest.advanceTimersByTime(1000);
     expect(result).toBe(expectedValue);
@@ -708,14 +717,14 @@ describe('timeDependentFunction', () => {
 #### Seeded PRNG for Random Data
 
 ```typescript
-import { seedPRNG } from './test-helpers';
+import { seedPRNG } from "./test-helpers";
 
-describe('functionWithRandomness', () => {
+describe("functionWithRandomness", () => {
   beforeEach(() => {
     seedPRNG(12345); // Deterministic seed
   });
 
-  it('should produce deterministic random results', () => {
+  it("should produce deterministic random results", () => {
     const result1 = functionWithRandomness();
     seedPRNG(12345); // Reset to same seed
     const result2 = functionWithRandomness();
@@ -727,17 +736,17 @@ describe('functionWithRandomness', () => {
 #### Deterministic UUIDs
 
 ```typescript
-import { v4 as uuidv4 } from 'uuid';
+import { v4 as uuidv4 } from "uuid";
 
 // In test setup
-jest.mock('uuid', () => ({
-  v4: jest.fn(() => '00000000-0000-0000-0000-000000000001'),
+jest.mock("uuid", () => ({
+  v4: jest.fn(() => "00000000-0000-0000-0000-000000000001"),
 }));
 
-describe('functionWithUUID', () => {
-  it('should use deterministic UUIDs', () => {
+describe("functionWithUUID", () => {
+  it("should use deterministic UUIDs", () => {
     const result = functionWithUUID();
-    expect(result.id).toBe('00000000-0000-0000-0000-000000000001');
+    expect(result.id).toBe("00000000-0000-0000-0000-000000000001");
   });
 });
 ```
@@ -747,15 +756,15 @@ describe('functionWithUUID', () => {
 #### Transactional Test Setup with Ephemeral Database
 
 ```typescript
-import { db } from './db';
-import { truncateAll, withTransaction } from './test-helpers';
+import { db } from "./db";
+import { truncateAll, withTransaction } from "./test-helpers";
 
-describe('Integration: User Service', () => {
+describe("Integration: User Service", () => {
   beforeEach(async () => {
     await truncateAll(); // Clean ephemeral database
   });
 
-  it('should create user in transaction', async () => {
+  it("should create user in transaction", async () => {
     await withTransaction(async (trx) => {
       const user = await createUser(userData, trx);
       expect(user.id).toBeDefined();
@@ -787,8 +796,8 @@ export async function teardownEphemeralDB(db: Database) {
 #### Zod ↔ OpenAPI Schema Validation
 
 ```typescript
-import { z } from 'zod';
-import { validateAgainstOpenAPI } from './contract-helpers';
+import { z } from "zod";
+import { validateAgainstOpenAPI } from "./contract-helpers";
 
 const UserSchema = z.object({
   id: z.string().uuid(),
@@ -796,20 +805,20 @@ const UserSchema = z.object({
   name: z.string(),
 });
 
-describe('Contract: User API', () => {
-  it('should match OpenAPI schema', async () => {
-    const response = await request(app).get('/api/users/123');
+describe("Contract: User API", () => {
+  it("should match OpenAPI schema", async () => {
+    const response = await request(app).get("/api/users/123");
     const user = UserSchema.parse(response.body);
 
     // Validate against OpenAPI spec
-    await validateAgainstOpenAPI('/api/users/{id}', 'get', response.body);
+    await validateAgainstOpenAPI("/api/users/{id}", "get", response.body);
     expect(user).toBeDefined();
   });
 
-  it('should not leak internal scoring internals', () => {
-    const response = await request(app).get('/api/users/123');
-    expect(response.body).not.toHaveProperty('internalScore');
-    expect(response.body).not.toHaveProperty('scoringFormula');
+  it("should not leak internal scoring internals", () => {
+    const response = await request(app).get("/api/users/123");
+    expect(response.body).not.toHaveProperty("internalScore");
+    expect(response.body).not.toHaveProperty("scoringFormula");
   });
 });
 ```
@@ -817,20 +826,20 @@ describe('Contract: User API', () => {
 #### Migration Contract Tests
 
 ```typescript
-import { validateMigrationOrder } from './migration-helpers';
+import { validateMigrationOrder } from "./migration-helpers";
 
-describe('Migration Contracts', () => {
-  it('should have correct migration order', () => {
+describe("Migration Contracts", () => {
+  it("should have correct migration order", () => {
     const migrations = getMigrationFiles();
     expect(validateMigrationOrder(migrations)).toBe(true);
   });
 
-  it('should not have drift in indexes', async () => {
+  it("should not have drift in indexes", async () => {
     const drift = await checkIndexDrift();
     expect(drift).toHaveLength(0);
   });
 
-  it('should maintain FK constraints', async () => {
+  it("should maintain FK constraints", async () => {
     const fkViolations = await checkForeignKeyConstraints();
     expect(fkViolations).toHaveLength(0);
   });
@@ -840,22 +849,22 @@ describe('Migration Contracts', () => {
 #### Observability Contract Tests
 
 ```typescript
-import { getMetrics } from './metrics-helper';
+import { getMetrics } from "./metrics-helper";
 
-describe('Observability Contracts', () => {
-  it('should expose required metrics', async () => {
-    const metrics = await getMetrics('/metrics');
-    expect(metrics).toHaveProperty('http_request_duration_seconds');
-    expect(metrics).toHaveProperty('db_query_duration_seconds');
-    expect(metrics).toHaveProperty('lcp_gauge');
+describe("Observability Contracts", () => {
+  it("should expose required metrics", async () => {
+    const metrics = await getMetrics("/metrics");
+    expect(metrics).toHaveProperty("http_request_duration_seconds");
+    expect(metrics).toHaveProperty("db_query_duration_seconds");
+    expect(metrics).toHaveProperty("lcp_gauge");
   });
 
-  it('should have correct metric labels', () => {
+  it("should have correct metric labels", () => {
     const metrics = parsePrometheusMetrics(metricsText);
-    const requestMetric = metrics.find(m => m.name === 'http_request_duration_seconds');
-    expect(requestMetric.labels).toContain('method');
-    expect(requestMetric.labels).toContain('route');
-    expect(requestMetric.labels).toContain('status_code');
+    const requestMetric = metrics.find((m) => m.name === "http_request_duration_seconds");
+    expect(requestMetric.labels).toContain("method");
+    expect(requestMetric.labels).toContain("route");
+    expect(requestMetric.labels).toContain("status_code");
   });
 });
 ```
@@ -865,19 +874,19 @@ describe('Observability Contracts', () => {
 #### Playwright with Deterministic Seeds
 
 ```typescript
-import { test, expect } from '@playwright/test';
+import { test, expect } from "@playwright/test";
 
-test.describe('E2E: User Flow', () => {
+test.describe("E2E: User Flow", () => {
   test.beforeEach(async ({ page }) => {
     // Use deterministic seed data
-    await seedTestData('deterministic-seed-123');
+    await seedTestData("deterministic-seed-123");
   });
 
-  test('should complete registration flow', async ({ page }) => {
-    await page.goto('/register');
-    await page.fill('[name="email"]', 'test@example.com');
+  test("should complete registration flow", async ({ page }) => {
+    await page.goto("/register");
+    await page.fill('[name="email"]', "test@example.com");
     await page.click('button[type="submit"]');
-    await expect(page).toHaveURL('/verify');
+    await expect(page).toHaveURL("/verify");
   });
 });
 ```
@@ -885,15 +894,15 @@ test.describe('E2E: User Flow', () => {
 #### Fake Clock in E2E Tests
 
 ```typescript
-import { test } from '@playwright/test';
+import { test } from "@playwright/test";
 
-test('should handle time-based features', async ({ page, context }) => {
+test("should handle time-based features", async ({ page, context }) => {
   // Use fake clock for deterministic time
   await context.addInitScript(() => {
     window.Date = class extends Date {
       constructor(...args) {
         if (args.length === 0) {
-          super('2025-01-20T10:00:00Z');
+          super("2025-01-20T10:00:00Z");
         } else {
           super(...args);
         }
@@ -901,7 +910,7 @@ test('should handle time-based features', async ({ page, context }) => {
     };
   });
 
-  await page.goto('/dashboard');
+  await page.goto("/dashboard");
   // Time-dependent assertions will be deterministic
 });
 ```
@@ -909,17 +918,14 @@ test('should handle time-based features', async ({ page, context }) => {
 #### Snapshot Masking for Dynamic Regions
 
 ```typescript
-import { test, expect } from '@playwright/test';
+import { test, expect } from "@playwright/test";
 
-test('should match visual baseline', async ({ page }) => {
-  await page.goto('/dashboard');
+test("should match visual baseline", async ({ page }) => {
+  await page.goto("/dashboard");
 
   // Mask dynamic regions (timestamps, IDs, etc.)
-  await expect(page).toHaveScreenshot('dashboard.png', {
-    mask: [
-      page.locator('[data-testid="timestamp"]'),
-      page.locator('[data-testid="user-id"]'),
-    ],
+  await expect(page).toHaveScreenshot("dashboard.png", {
+    mask: [page.locator('[data-testid="timestamp"]'), page.locator('[data-testid="user-id"]')],
   });
 });
 ```
@@ -933,12 +939,14 @@ test('should match visual baseline', async ({ page }) => {
 **Problem**: Acceptance criteria are unclear or missing details.
 
 **Solution**:
+
 1. Escalate to requirements analyst agent for clarification
 2. Document all assumptions made during test generation
 3. Add comments in test code explaining assumptions
 4. Include assumptions in handoff notes
 
 **Example Handoff Note**:
+
 ```markdown
 ⚠️ **Assumption**: AC #3 was ambiguous about error handling.
 Assumed ValidationError should be thrown based on similar patterns in codebase.
@@ -949,12 +957,14 @@ Assumed ValidationError should be thrown based on similar patterns in codebase.
 **Problem**: Code has many dependencies making mocking difficult.
 
 **Solution**:
+
 1. Break complex code into smaller, testable units
 2. Use integration tests for complex interactions
 3. Create test doubles for external dependencies
 4. Document dependency graph in test comments
 
 **Example**:
+
 ```typescript
 // Complex service with multiple dependencies
 // Strategy: Test each dependency interaction separately
@@ -966,12 +976,14 @@ Assumed ValidationError should be thrown based on similar patterns in codebase.
 **Problem**: Existing code has low coverage and is difficult to test.
 
 **Solution**:
+
 1. Focus on critical paths first (100% coverage)
 2. Document why certain paths are untested
 3. Suggest refactoring opportunities in handoff notes
 4. Use integration tests as fallback for untestable units
 
 **Example Handoff Note**:
+
 ```markdown
 💡 **Refactoring Opportunity**: `legacyFunction` has complex nested conditionals.
 Consider extracting smaller functions to improve testability.
@@ -983,21 +995,23 @@ Current coverage: 65% (target: 85%).
 **Problem**: Tests pass inconsistently.
 
 **Solution**:
+
 1. Identify timing issues (use fake timers)
 2. Check for race conditions (ensure proper async handling)
 3. Verify test isolation (no shared state)
 4. Use deterministic test data (no random values)
 
 **Example Fix**:
+
 ```typescript
 // Before: Flaky due to timing
-it('should update after delay', async () => {
+it("should update after delay", async () => {
   await wait(100); // Unreliable
   expect(state).toBe(expected);
 });
 
 // After: Deterministic
-it('should update after delay', async () => {
+it("should update after delay", async () => {
   jest.useFakeTimers();
   // ... test logic
   jest.advanceTimersByTime(100);
@@ -1011,12 +1025,14 @@ it('should update after delay', async () => {
 **Problem**: TypeScript errors when creating mocks or test data.
 
 **Solution**:
+
 1. Use `jest.mocked()` for proper type inference
 2. Create typed test fixtures
 3. Use `as` assertions sparingly and document why
 4. Ensure mock types match implementation types
 
 **Example**:
+
 ```typescript
 // Properly typed mock
 const mockService = jest.mocked(service);
@@ -1027,7 +1043,7 @@ interface TestUser {
   id: string;
   email: string;
 }
-const testUser: TestUser = { id: '1', email: 'test@example.com' };
+const testUser: TestUser = { id: "1", email: "test@example.com" };
 ```
 
 ### Security Vulnerabilities in Test Code
@@ -1035,18 +1051,20 @@ const testUser: TestUser = { id: '1', email: 'test@example.com' };
 **Problem**: Test code exposes secrets or uses unsafe patterns.
 
 **Solution**:
+
 1. Never commit real credentials (use environment variables)
 2. Use test-specific secrets (e.g., `test-secret-key`)
 3. Avoid `eval()` or `innerHTML` in tests
 4. Sanitize test data that might be logged
 
 **Example**:
+
 ```typescript
 // Bad: Hardcoded secret
-const apiKey = 'sk-live-1234567890';
+const apiKey = "sk-live-1234567890";
 
 // Good: Test-specific secret
-const apiKey = process.env.TEST_API_KEY || 'test-key-do-not-use-in-production';
+const apiKey = process.env.TEST_API_KEY || "test-key-do-not-use-in-production";
 ```
 
 ---
@@ -1124,7 +1142,7 @@ const apiKey = process.env.TEST_API_KEY || 'test-key-do-not-use-in-production';
 
 ### Output Example
 
-```markdown
+````markdown
 # Test Suite Generated for validateEmail
 
 **Status**: ✅ Complete
@@ -1135,16 +1153,19 @@ const apiKey = process.env.TEST_API_KEY || 'test-key-do-not-use-in-production';
 ## Test Cases
 
 ### Happy Path Tests (3 tests)
+
 ✅ Returns true for valid email: 'user@example.com'
 ✅ Returns true for email with subdomain: 'user@mail.example.com'
 ✅ Returns true for email with plus: 'user+tag@example.com'
 
 ### Edge Case Tests (3 tests)
+
 ✅ Returns false for email with multiple @ symbols
 ✅ Returns false for email without domain
 ✅ Returns false for very long email (>254 chars)
 
 ### Error Condition Tests (2 tests)
+
 ✅ Returns false for empty string
 ✅ Returns false for null/undefined input
 
@@ -1159,54 +1180,56 @@ const apiKey = process.env.TEST_API_KEY || 'test-key-do-not-use-in-production';
 ## Generated Test Code
 
 ```typescript
-import { validateEmail } from './validateEmail';
+import { validateEmail } from "./validateEmail";
 
-describe('validateEmail', () => {
-  describe('Happy Path', () => {
-    it('should return true for valid email format', () => {
-      expect(validateEmail('user@example.com')).toBe(true);
+describe("validateEmail", () => {
+  describe("Happy Path", () => {
+    it("should return true for valid email format", () => {
+      expect(validateEmail("user@example.com")).toBe(true);
     });
 
-    it('should return true for email with subdomain', () => {
-      expect(validateEmail('user@mail.example.com')).toBe(true);
+    it("should return true for email with subdomain", () => {
+      expect(validateEmail("user@mail.example.com")).toBe(true);
     });
 
-    it('should return true for email with plus sign', () => {
-      expect(validateEmail('user+tag@example.com')).toBe(true);
+    it("should return true for email with plus sign", () => {
+      expect(validateEmail("user+tag@example.com")).toBe(true);
     });
   });
 
-  describe('Edge Cases', () => {
-    it('should return false for email with multiple @ symbols', () => {
-      expect(validateEmail('user@@example.com')).toBe(false);
+  describe("Edge Cases", () => {
+    it("should return false for email with multiple @ symbols", () => {
+      expect(validateEmail("user@@example.com")).toBe(false);
     });
 
-    it('should return false for email without domain', () => {
-      expect(validateEmail('user@')).toBe(false);
+    it("should return false for email without domain", () => {
+      expect(validateEmail("user@")).toBe(false);
     });
 
-    it('should return false for very long email addresses', () => {
-      const longEmail = 'a'.repeat(250) + '@example.com';
+    it("should return false for very long email addresses", () => {
+      const longEmail = "a".repeat(250) + "@example.com";
       expect(validateEmail(longEmail)).toBe(false);
     });
   });
 
-  describe('Error Conditions', () => {
-    it('should return false for empty string', () => {
-      expect(validateEmail('')).toBe(false);
+  describe("Error Conditions", () => {
+    it("should return false for empty string", () => {
+      expect(validateEmail("")).toBe(false);
     });
 
-    it('should return false for whitespace-only string', () => {
-      expect(validateEmail('   ')).toBe(false);
+    it("should return false for whitespace-only string", () => {
+      expect(validateEmail("   ")).toBe(false);
     });
   });
 });
 ```
+````
 
 ## Next Steps
 
 ✅ Ready for code review
 ✅ Ready for CI/CD integration
+
 ```
 
 ---
@@ -1288,3 +1311,4 @@ Track the following metrics (managed by Performance Monitor Agent):
 ---
 
 **END OF AGENT CONFIGURATION**
+```

@@ -71,47 +71,111 @@ The following fields shall be immutable after initial registration:
 
 ## Acceptance Criteria
 
-### FR-009-AC01: Profile Editing
+Each acceptance criterion must be met for this requirement to be considered complete.
 
-**Criterion**: Users can edit editable profile fields and changes persist within **≤500ms**.
+### US-1.1-AC01
+
+**Criterion**: Users can edit alias, weight, fitness level, and training frequency via API endpoint PATCH /api/v1/users/me within ≤500ms response time.
 
 - **Test Method**: Integration + E2E
-- **Evidence Required**: DB snapshot, UI screenshots, API response times
+- **Evidence Required**: API response times, DB snapshot, UI screenshots
+- **Related Story**: US-1.1
 
-### FR-009-AC02: Field Validation
+### US-1.1-AC02
 
-**Criterion**: Invalid profile data (e.g., weight out of range, invalid file type) is rejected with clear error messages.
+**Criterion**: Profile field validation: alias max 32 chars, weight range 20-400 kg (or equivalent in lbs), fitness level enum (beginner/intermediate/advanced/elite), training frequency enum (rarely/1_2_per_week/3_4_per_week/5_plus_per_week). Invalid values rejected with 422 and clear error messages.
 
 - **Test Method**: Unit + API negative
 - **Evidence Required**: Validation test results, error message samples
+- **Related Story**: US-1.1
 
-### FR-009-AC03: Immutable Fields
+### US-1.1-AC03
 
-**Criterion**: Attempts to modify immutable fields (date of birth, gender) are rejected with **403 Forbidden**.
+**Criterion**: Immutable fields (date_of_birth, gender) cannot be modified; attempts return 403 Forbidden with error code E.USER.IMMUTABLE_FIELD.
 
 - **Test Method**: API negative
 - **Evidence Required**: HTTP traces, error responses
+- **Related Story**: US-1.1
 
-### FR-009-AC04: Avatar Upload
+### US-1.1-AC04
 
-**Criterion**: Avatar uploads are validated (size ≤5MB, type JPEG/PNG/WebP) and 128×128 preview is generated within **≤2s**.
+**Criterion**: Weight is stored internally as kg (weight_kg) regardless of user's preferred unit; UI converts for display based on user's weight_unit preference.
 
 - **Test Method**: Integration
-- **Evidence Required**: Upload logs, preview images, performance metrics
+- **Evidence Required**: DB records, UI conversion tests
+- **Related Story**: US-1.1
 
-### FR-009-AC05: Avatar Placeholder
+### US-1.1-AC05
 
-**Criterion**: Users without avatars see a default placeholder image.
+**Criterion**: Profile changes are audit-logged with who/when/what; state history records created for each field change.
+
+- **Test Method**: Integration
+- **Evidence Required**: Audit log excerpts, state history records
+- **Related Story**: US-1.1
+
+### US-1.2-AC01
+
+**Criterion**: Users can upload avatar images via POST /api/v1/users/me/avatar; accepted formats: JPEG, PNG, WebP; max size 5MB; rejected with 422 if invalid.
+
+- **Test Method**: Integration
+- **Evidence Required**: Upload logs, error responses for invalid files
+- **Related Story**: US-1.2
+
+### US-1.2-AC02
+
+**Criterion**: Uploaded avatars are scanned for malware using antivirus service; infected files rejected with E.UPLOAD.MALWARE_DETECTED and audit logged.
+
+- **Test Method**: Integration
+- **Evidence Required**: AV scan logs, EICAR test file rejection
+- **Related Story**: US-1.2
+
+### US-1.2-AC03
+
+**Criterion**: System generates 128×128 pixel preview image from uploaded avatar within ≤2s; preview stored and served at /users/avatar/:id endpoint.
+
+- **Test Method**: Integration
+- **Evidence Required**: Preview images, performance metrics, storage verification
+- **Related Story**: US-1.2
+
+### US-1.2-AC04
+
+**Criterion**: Users without avatars see a default placeholder image; placeholder is accessible and properly sized.
 
 - **Test Method**: E2E
-- **Evidence Required**: UI screenshots
+- **Evidence Required**: UI screenshots showing placeholder
+- **Related Story**: US-1.2
 
-### FR-009-AC06: Training Frequency Storage
+### US-1.2-AC05
 
-**Criterion**: Training frequency preference is stored and used for personalization features.
+**Criterion**: Avatar upload is idempotent via Idempotency-Key header; duplicate uploads return same result with Idempotent-Replayed header.
 
 - **Test Method**: Integration
-- **Evidence Required**: DB records, personalization logs
+- **Evidence Required**: Idempotency test results, HTTP headers
+- **Related Story**: US-1.2
+
+### US-1.3-AC01
+
+**Criterion**: Unit tests cover profile field validation, immutable field protection, and weight unit conversion with ≥90% code coverage.
+
+- **Test Method**: Unit
+- **Evidence Required**: Test coverage reports
+- **Related Story**: US-1.3
+
+### US-1.3-AC02
+
+**Criterion**: Integration tests verify profile update API, avatar upload flow, and error handling scenarios.
+
+- **Test Method**: Integration
+- **Evidence Required**: Integration test results
+- **Related Story**: US-1.3
+
+### US-1.3-AC03
+
+**Criterion**: E2E tests verify complete profile editing workflow including form validation, submission, and persistence.
+
+- **Test Method**: E2E
+- **Evidence Required**: E2E test results, UI screenshots
+- **Related Story**: US-1.3
 
 ## Test Strategy
 

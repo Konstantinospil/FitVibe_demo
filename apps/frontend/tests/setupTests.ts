@@ -138,7 +138,11 @@ const ensureMockCanvasState = (element: HTMLCanvasElement): MockCanvasState => {
 
 Object.defineProperty(HTMLCanvasElement.prototype, "getContext", {
   configurable: true,
-  value(this: HTMLCanvasElement, type: string, contextAttributes?: CanvasRenderingContext2DSettings) {
+  value(
+    this: HTMLCanvasElement,
+    type: string,
+    contextAttributes?: CanvasRenderingContext2DSettings,
+  ) {
     if (type === "2d") {
       const state = ensureMockCanvasState(this);
       return state.context as unknown as CanvasRenderingContext2D;

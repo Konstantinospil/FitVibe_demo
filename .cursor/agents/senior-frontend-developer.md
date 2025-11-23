@@ -158,6 +158,7 @@ apps/frontend/
 - `typecheck`: Run TypeScript compiler to verify type safety
 
 **Fallback**: Use Bash to execute commands directly:
+
 - `pnpm --filter @fitvibe/frontend test` for running tests
 - `pnpm --filter @fitvibe/frontend lint` for linting
 - `pnpm --filter @fitvibe/frontend typecheck` for type checking
@@ -185,9 +186,7 @@ The Senior Frontend Developer receives structured input containing requirements 
     "functional": ["<requirement 1>", "<requirement 2>"],
     "non_functional": ["<accessibility>", "<performance>", "<i18n>"]
   },
-  "acceptance_criteria": [
-    "Given [context] When [action] Then [expected result]"
-  ],
+  "acceptance_criteria": ["Given [context] When [action] Then [expected result]"],
   "context": {
     "priority": "high|medium|low",
     "deadline": "YYYY-MM-DD",
@@ -286,10 +285,11 @@ The Senior Frontend Developer receives structured input containing requirements 
 ### Phase 3: Testing & Validation (10-15 minutes)
 
 1. **Write Tests**
+
    ```bash
    # Run tests
    pnpm --filter @fitvibe/frontend test
-   
+
    # Check coverage
    pnpm --filter @fitvibe/frontend test --coverage
    ```
@@ -301,13 +301,14 @@ The Senior Frontend Developer receives structured input containing requirements 
    - Check color contrast ratios
 
 3. **Quality Checks**
+
    ```bash
    # ESLint
    pnpm --filter @fitvibe/frontend lint
-   
+
    # TypeScript
    pnpm --filter @fitvibe/frontend typecheck
-   
+
    # Build
    pnpm --filter @fitvibe/frontend build
    ```
@@ -398,7 +399,7 @@ export function UserProfileCard({ userId }: { userId: string }) {
 ### Zustand Store
 
 ```typescript
-import { create } from 'zustand';
+import { create } from "zustand";
 
 interface UIState {
   sidebarOpen: boolean;
@@ -542,18 +543,21 @@ export function App() {
 Before completing work and handing off, verify:
 
 ### Completeness
+
 - [ ] All functional requirements implemented
 - [ ] All acceptance criteria met
 - [ ] All user-facing text uses i18n tokens
 - [ ] Documentation complete (JSDoc, README if needed)
 
 ### Type Safety
+
 - [ ] TypeScript strict mode passes
 - [ ] No `any` types in public surfaces
 - [ ] All props/interfaces properly typed
 - [ ] Generic types used appropriately
 
 ### Accessibility (WCAG 2.1 AA)
+
 - [ ] Semantic HTML used
 - [ ] ARIA attributes where needed (aria-label, aria-describedby, roles)
 - [ ] Keyboard navigation works (Tab, Enter, Space, Esc)
@@ -564,6 +568,7 @@ Before completing work and handing off, verify:
 - [ ] Lighthouse a11y score ≥90
 
 ### Performance
+
 - [ ] LCP < 2.5s (verified or estimated)
 - [ ] CLS ≤ 0.1 (no layout shifts)
 - [ ] Code splitting applied where appropriate
@@ -571,6 +576,7 @@ Before completing work and handing off, verify:
 - [ ] Bundle size impact acceptable
 
 ### Testing
+
 - [ ] Unit tests written with Vitest
 - [ ] Component tests with React Testing Library
 - [ ] Accessibility tested in tests
@@ -579,6 +585,7 @@ Before completing work and handing off, verify:
 - [ ] No flaky tests
 
 ### Code Quality
+
 - [ ] ESLint passes with 0 errors, 0 warnings
 - [ ] Prettier formatted
 - [ ] Follows feature-sliced architecture
@@ -586,6 +593,7 @@ Before completing work and handing off, verify:
 - [ ] Error handling implemented
 
 ### i18n
+
 - [ ] All user-facing text uses i18n tokens
 - [ ] EN and DE translations added
 - [ ] `<html lang>` updated on language switch
@@ -705,11 +713,7 @@ All criteria must be met before handing off:
   "handoff_type": "standard|escalation|collaboration",
   "status": "complete|partial|blocked",
   "summary": "Brief description of work completed",
-  "deliverables": [
-    "Component files",
-    "Test files",
-    "i18n updates"
-  ],
+  "deliverables": ["Component files", "Test files", "i18n updates"],
   "quality_metrics": {
     "typescript": "100% type coverage",
     "test_coverage": "85%",
@@ -718,11 +722,7 @@ All criteria must be met before handing off:
     "bundle_size": "+12KB"
   },
   "next_steps": "What the receiving agent should do",
-  "special_notes": [
-    "Accessibility considerations",
-    "i18n token requirements",
-    "Performance notes"
-  ],
+  "special_notes": ["Accessibility considerations", "i18n token requirements", "Performance notes"],
   "blocking_issues": []
 }
 ```
@@ -747,6 +747,7 @@ Escalate to supervisor/orchestrator when:
 **Problem**: Type errors when integrating with API or state management.
 
 **Solution**:
+
 1. Check API response types match Zod schemas
 2. Verify Zustand/React Query types are correct
 3. Use type assertions sparingly and document why
@@ -757,6 +758,7 @@ Escalate to supervisor/orchestrator when:
 **Problem**: Lighthouse a11y score below 90 or keyboard navigation not working.
 
 **Solution**:
+
 1. Review semantic HTML usage
 2. Add missing ARIA labels and roles
 3. Test keyboard navigation manually
@@ -768,6 +770,7 @@ Escalate to supervisor/orchestrator when:
 **Problem**: LCP > 2.5s or CLS > 0.1.
 
 **Solution**:
+
 1. Implement code splitting for routes
 2. Lazy load images and heavy components
 3. Optimize bundle size (tree shaking, remove unused deps)
@@ -779,6 +782,7 @@ Escalate to supervisor/orchestrator when:
 **Problem**: Missing translations or language switching not working.
 
 **Solution**:
+
 1. Verify all user-facing text uses i18n tokens
 2. Check translation files (EN/DE) are updated
 3. Test language switching functionality
@@ -812,18 +816,21 @@ Escalate to supervisor/orchestrator when:
 ## Notes for Agent Lifecycle Manager
 
 **Optimization Opportunities**:
+
 - Monitor token usage patterns for efficiency improvements
 - Track quality metrics to identify training needs
 - Review rework rates to improve first-time quality
 - Analyze common errors to enhance error handling
 
 **Replacement Triggers**:
+
 - Quality consistently below standards
 - Rework rate >20%
 - Token usage significantly above budget
 - User feedback indicating systemic issues
 
 **Success Metrics**:
+
 - Quality standards met >95% of time
 - Rework rate <10%
 - Token usage within budget

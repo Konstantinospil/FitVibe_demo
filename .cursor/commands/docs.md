@@ -44,21 +44,25 @@ Update relevant documentation based on code changes. Follow FitVibe documentatio
 ## Documentation Standards
 
 ### Commit Messages
+
 - Use conventional commits (`feat:`, `fix:`, `docs:`, `chore:`)
 - Link to related PRD/TDD sections when applicable
 - Reference ADRs for architectural decisions
 
 ### Linking
+
 - Link to related sections in PRD/TDD
 - Update RTM (Requirements Traceability Matrix) when requirements change
 - Cross-reference related ADRs
 
 ### Diagrams
+
 - Keep Mermaid diagrams updated
 - Use consistent diagram styles
 - Update ERD when schema changes
 
 ### Glossary
+
 - Add new terms to `docs/0.Glossary.md`
 - Define acronyms and domain-specific terms
 - Keep definitions accurate and up-to-date
@@ -70,4 +74,3 @@ Update relevant documentation based on code changes. Follow FitVibe documentatio
 - **ADRs**: `docs/2.Technical_Design_Document/2.f.Architectural_Decision_Documentation/`
 - **Glossary**: `docs/0.Glossary.md`
 - **RTM**: `docs/1.Product_Requirements/rtm_comprehensive.csv`
-

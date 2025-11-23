@@ -66,7 +66,9 @@ describe("MaintenanceBanner", () => {
 
     renderWithProviders(<MaintenanceBanner />);
 
-    expect(screen.getByText("Emergency maintenance - back online at 15:00 UTC")).toBeInTheDocument();
+    expect(
+      screen.getByText("Emergency maintenance - back online at 15:00 UTC"),
+    ).toBeInTheDocument();
   });
 
   it("falls back to translation key when no custom message provided", () => {

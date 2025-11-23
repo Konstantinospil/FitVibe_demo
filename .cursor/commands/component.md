@@ -111,6 +111,6 @@ export function ComponentName({ id, onAction }: ComponentNameProps) {
 ## Agent Reference
 
 For detailed implementation guidance, patterns, and examples, see:
+
 - **Senior Frontend Developer Agent**: `.cursor/agents/senior-frontend-developer.md`
 - **Test Manager Agent**: `.cursor/agents/test_manager.md` (for testing)
-

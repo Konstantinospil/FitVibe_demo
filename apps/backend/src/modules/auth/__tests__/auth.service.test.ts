@@ -7,7 +7,7 @@ import * as authRepository from "../auth.repository.js";
 import { mailerService } from "../../../services/mailer.service.js";
 import { HttpError } from "../../../utils/http.js";
 import type { RegisterDTO, LoginDTO, LoginContext } from "../auth.types.js";
-import type { AuthUserRecord } from "../auth.repository.js";
+import type { AuthUserRecord, AuthSessionRecord, RefreshTokenRecord } from "../auth.repository.js";
 
 // Mock dependencies
 jest.mock("../auth.repository.js");
@@ -1110,6 +1110,126 @@ describe("Auth Service", () => {
           updated_at: expect.any(String),
         }),
       );
+    });
+  });
+
+  describe("session helpers", () => {
+    beforeEach(() => {
+      jest.clearAllMocks();
+    });
+
+    it("marks the current session when listing", async () => {
+      const now = new Date().toISOString();
+      const baseSession = {
+        jti: "current",
+        user_id: "user-1",
+        user_agent: "Chrome",
+        ip: "10.0.0.1",
+        created_at: now,
+        expires_at: now,
+        revoked_at: null,
+        last_active_at: now,
+      };
+      const otherSession = {
+        ...baseSession,
+        jti: "other",
+        user_agent: "Safari",
+        ip: "10.0.0.2",
+      };
+      mockAuthRepo.listSessionsByUserId.mockResolvedValue([
+        baseSession,
+        otherSession,
+      ] as AuthSessionRecord[]);
+
+      const sessions = await authService.listSessions("user-1", "current");
+
+      expect(sessions).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ id: "current", isCurrent: true }),
+          expect.objectContaining({ id: "other", isCurrent: false }),
+        ]),
+      );
+      expect(mockAuthRepo.listSessionsByUserId).toHaveBeenCalledWith("user-1");
+    });
+
+    it("revokes other sessions when requested", async () => {
+      const now = new Date().toISOString();
+      const current = {
+        jti: "current",
+        user_id: "user-1",
+        user_agent: null,
+        ip: null,
+        created_at: now,
+        expires_at: now,
+        revoked_at: null,
+        last_active_at: now,
+      };
+      const old = { ...current, jti: "old" };
+      mockAuthRepo.listSessionsByUserId.mockResolvedValue([current, old] as AuthSessionRecord[]);
+      mockAuthRepo.revokeSessionsByUserId.mockResolvedValue(1);
+      mockAuthRepo.revokeRefreshByUserExceptSession.mockResolvedValue(1);
+
+      const result = await authService.revokeSessions("user-1", {
+        revokeOthers: true,
+        currentSessionId: "current",
+        context: { requestId: "req-1" },
+      });
+
+      expect(result.revoked).toBe(1);
+      expect(mockAuthRepo.revokeSessionsByUserId).toHaveBeenCalledWith("user-1", "current");
+      expect(mockAuthRepo.revokeRefreshByUserExceptSession).toHaveBeenCalledWith(
+        "user-1",
+        "current",
+      );
+    });
+
+    it("throws if requesting to revoke others without a current session id", async () => {
+      await expect(
+        authService.revokeSessions("user-1", { revokeOthers: true, currentSessionId: null }),
+      ).rejects.toThrow("Current session id required");
+    });
+  });
+
+  describe("refresh token reuse detection", () => {
+    beforeEach(() => {
+      jest.clearAllMocks();
+    });
+
+    it("revokes the session family and emits audit when a refresh token is reused", async () => {
+      const refreshToken = "reused-token";
+      const tokenHash = mockCrypto.createHash("sha256").update(refreshToken).digest("hex");
+      const historical = {
+        id: "token-1",
+        user_id: "user-1",
+        token_hash: tokenHash,
+        session_jti: "session-1",
+        expires_at: new Date(Date.now() + 60_000).toISOString(),
+        created_at: new Date(Date.now() - 120_000).toISOString(),
+        revoked_at: new Date(Date.now() - 60_000).toISOString(),
+      };
+
+      mockAuthRepo.getRefreshByHash.mockResolvedValue(undefined);
+      mockAuthRepo.findRefreshTokenRaw.mockResolvedValue(historical as RefreshTokenRecord);
+      mockAuthRepo.revokeSessionById.mockResolvedValue(1);
+      mockAuthRepo.revokeRefreshBySession.mockResolvedValue(1);
+
+      const decoded = {
+        sub: "user-1",
+        sid: "session-1",
+        typ: "refresh",
+      };
+      mockJwt.verify.mockReturnValue(decoded as never);
+
+      await expect(
+        authService.refresh(refreshToken, {
+          requestId: "req-123",
+          ip: "203.0.113.5",
+          userAgent: "jest-agent",
+        }),
+      ).rejects.toMatchObject({ status: 401, code: "AUTH_INVALID_REFRESH" });
+
+      expect(mockAuthRepo.revokeSessionById).toHaveBeenCalledWith("session-1");
+      expect(mockAuthRepo.revokeRefreshBySession).toHaveBeenCalledWith("session-1");
     });
   });
 });

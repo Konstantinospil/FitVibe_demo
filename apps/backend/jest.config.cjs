@@ -50,5 +50,7 @@ module.exports = {
     "login-enumeration\\.test\\.ts$",
   ],
   clearMocks: true,
-  forceExit: true,
+  // Removed forceExit: true to allow proper cleanup detection
+  // Use --detectOpenHandles to identify what's keeping the process alive
+  // forceExit: true,
 };

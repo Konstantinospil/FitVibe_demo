@@ -157,9 +157,7 @@ describe("TwoFactorVerificationLogin", () => {
     fireEvent.click(screen.getByRole("button", { name: /verify and continue/i }));
 
     await waitFor(() => {
-      expect(screen.getByRole("alert")).toHaveTextContent(
-        "Invalid 2FA code. Please try again.",
-      );
+      expect(screen.getByRole("alert")).toHaveTextContent("Invalid 2FA code. Please try again.");
     });
   });
 
@@ -173,9 +171,7 @@ describe("TwoFactorVerificationLogin", () => {
     fireEvent.click(screen.getByRole("button", { name: /verify and continue/i }));
 
     await waitFor(() => {
-      expect(screen.getByRole("alert")).toHaveTextContent(
-        "Verification failed. Please try again.",
-      );
+      expect(screen.getByRole("alert")).toHaveTextContent("Verification failed. Please try again.");
     });
   });
 

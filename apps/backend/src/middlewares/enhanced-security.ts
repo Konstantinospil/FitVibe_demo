@@ -189,7 +189,7 @@ export function detectSuspiciousPatterns(req: Request, res: Response, next: Next
   // XSS patterns - Check for specific strings
   const xssPatterns = ["<SCRIPT", "</SCRIPT>", "JAVASCRIPT:", "<IFRAME"];
 
-  const checkString = (value: any): boolean => {
+  const checkString = (value: unknown): boolean => {
     if (typeof value !== "string") {
       return false;
     }

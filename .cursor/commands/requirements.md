@@ -124,12 +124,14 @@ Create a requirements document following this structure:
 ## Functional Requirements
 
 ### FR-001: [Requirement Name]
+
 **Description**: [Clear description of what the system must do]
 **Priority**: [Must-have|Should-have|Nice-to-have]
 **Acceptance Criteria**:
+
 - [ ] Criterion 1: [Specific, testable condition]
 - [ ] Criterion 2: [Specific, testable condition]
-**Use Cases**:
+      **Use Cases**:
 - Primary: [Main use case]
 - Edge Cases: [Unusual scenarios to handle]
 
@@ -138,6 +140,7 @@ Create a requirements document following this structure:
 ## Non-Functional Requirements
 
 ### NFR-001: [Requirement Name]
+
 **Description**: [Performance, security, usability, etc.]
 **Acceptance Criteria**: [Measurable criteria]
 
@@ -146,12 +149,15 @@ Create a requirements document following this structure:
 ## Dependencies
 
 ### Technical Dependencies
+
 - [Dependency 1]: [Description and impact]
 
 ### Feature Dependencies
+
 - [Related Feature 1]: [How it relates]
 
 ### External Dependencies
+
 - [External Service/API]: [Description and requirements]
 
 ---
@@ -159,9 +165,11 @@ Create a requirements document following this structure:
 ## Constraints
 
 ### Technical Constraints
+
 - [Constraint 1]: [Description]
 
 ### Business Constraints
+
 - [Constraint 1]: [Description]
 
 ---
@@ -197,6 +205,7 @@ Create a requirements document following this structure:
 Before completing, verify:
 
 ### Completeness
+
 - [ ] All user needs addressed in requirements
 - [ ] Functional requirements fully specified
 - [ ] Non-functional requirements identified
@@ -205,6 +214,7 @@ Before completing, verify:
 - [ ] Constraints identified
 
 ### Clarity
+
 - [ ] Requirements are unambiguous
 - [ ] Acceptance criteria are specific and measurable
 - [ ] Use cases and examples provided where helpful
@@ -212,12 +222,14 @@ Before completing, verify:
 - [ ] Requirements document is well-structured
 
 ### Testability
+
 - [ ] Each requirement has clear acceptance criteria
 - [ ] Acceptance criteria are testable
 - [ ] Success conditions are defined
 - [ ] Edge cases identified
 
 ### Consistency
+
 - [ ] No conflicting requirements
 - [ ] Requirements align with business objectives
 - [ ] Requirements align with technical constraints
@@ -228,6 +240,7 @@ Before completing, verify:
 User: `/requirements [description of feature or user request]`
 
 Example:
+
 ```
 /requirements I need a user dashboard where users can see their workout statistics, recent activity, and quick actions to start a workout or view their progress.
 ```
@@ -244,9 +257,9 @@ Example:
 ## Escalation
 
 Escalate to supervisor/orchestrator when:
+
 - User request is too ambiguous and cannot be clarified
 - Business objectives are unclear or conflicting
 - Technical constraints make requirements infeasible
 - Critical dependencies are missing or unknown
 - Requirements conflict with existing system architecture
-

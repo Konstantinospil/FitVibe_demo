@@ -29,6 +29,7 @@ Each agent has context about the relevant tech stack, coding standards, and comm
 Model Context Protocol (MCP) servers provide additional context and capabilities:
 
 ### Standard MCP Servers
+
 - **filesystem** - File system operations
 - **git** - Git repository operations
 - **postgres** - PostgreSQL database access
@@ -36,6 +37,7 @@ Model Context Protocol (MCP) servers provide additional context and capabilities
 - **github** - GitHub integration
 
 Configuration is in `.cursor/mcp/servers.json`. Set required environment variables:
+
 - `POSTGRES_CONNECTION_STRING` - For PostgreSQL MCP server
 - `BRAVE_API_KEY` - For Brave Search (optional)
 - `GITHUB_PERSONAL_ACCESS_TOKEN` - For GitHub integration (optional)
@@ -72,6 +74,7 @@ Slash commands provide quick access to common development workflows:
 ### Using Agents
 
 In Cursor, you can reference agents in your prompts:
+
 - "Use the backend agent to create a new API endpoint"
 - "With the senior frontend developer, create an accessible React component"
 - "Using the test manager, write tests for this function"
@@ -79,6 +82,7 @@ In Cursor, you can reference agents in your prompts:
 ### Using MCP Servers
 
 MCP servers are automatically available when configured. They provide additional context and tools for:
+
 - Reading/writing files
 - Git operations
 - Database queries
@@ -88,6 +92,7 @@ MCP servers are automatically available when configured. They provide additional
 ### Using Slash Commands
 
 Type `/` in Cursor's chat to see available commands, or use them directly:
+
 - `/test` - Run or create tests
 - `/lint` - Fix linting issues
 - `/refactor` - Refactor selected code
@@ -159,4 +164,3 @@ Type `/` in Cursor's chat to see available commands, or use them directly:
 ---
 
 For more information, see the main [README.md](../README.md) and [CONTRIBUTING.md](../CONTRIBUTING.md).
-

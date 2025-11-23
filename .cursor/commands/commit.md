@@ -5,6 +5,7 @@ Create a conventional commit with all current changes and push to the remote rep
 ## Steps
 
 1. **Review Changes**
+
    ```bash
    git status  # See all changes
    git diff    # Review the changes
@@ -30,6 +31,7 @@ Create a conventional commit with all current changes and push to the remote rep
    - Optionally add footer for breaking changes or issue references
 
 4. **Stage and Commit**
+
    ```bash
    git add -A
    git commit -m "<type>: <description>"
