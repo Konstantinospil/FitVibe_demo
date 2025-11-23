@@ -4,13 +4,18 @@ import client from "prom-client";
 const register = new client.Registry();
 
 // Store the default metrics collector so we can stop it during tests
-let defaultMetricsCollector: ReturnType<typeof client.collectDefaultMetrics> | null = null;
+// collectDefaultMetrics may return a stop function or void depending on version/options
+let defaultMetricsCollector: (() => void) | null = null;
 
 // Only collect default metrics if NOT in test environment
 // This prevents timers from being created in the first place
 // Check NODE_ENV at module load time - jest.setup.ts sets this before any imports
 if (process.env.NODE_ENV !== "test") {
-  defaultMetricsCollector = client.collectDefaultMetrics({ register });
+  const result = client.collectDefaultMetrics({ register });
+  // Only store if it returns a function (some versions return void)
+  if (typeof result === "function") {
+    defaultMetricsCollector = result;
+  }
 }
 
 const httpRequestDuration = new client.Histogram({

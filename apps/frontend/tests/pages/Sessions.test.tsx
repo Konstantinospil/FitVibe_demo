@@ -69,8 +69,20 @@ const mockSession = {
   visibility: "private" as const,
   notes: "Chest and triceps",
   exercises: [
-    { exercise_id: "bench-press", sets: [] },
-    { exercise_id: "tricep-dips", sets: [] },
+    {
+      id: "exercise-1",
+      session_id: "session-1",
+      exercise_id: "bench-press",
+      order_index: 0,
+      sets: [],
+    },
+    {
+      id: "exercise-2",
+      session_id: "session-1",
+      exercise_id: "tricep-dips",
+      order_index: 1,
+      sets: [],
+    },
   ],
 };
 
@@ -437,12 +449,48 @@ describe("Sessions", () => {
     const sessionWithManyExercises: typeof mockSession = {
       ...mockSession,
       exercises: [
-        { exercise_id: "exercise-1", sets: [] },
-        { exercise_id: "exercise-2", sets: [] },
-        { exercise_id: "exercise-3", sets: [] },
-        { exercise_id: "exercise-4", sets: [] },
-        { exercise_id: "exercise-5", sets: [] },
-        { exercise_id: "exercise-6", sets: [] },
+        {
+          id: "ex-1",
+          session_id: "session-1",
+          exercise_id: "exercise-1",
+          order_index: 0,
+          sets: [],
+        },
+        {
+          id: "ex-2",
+          session_id: "session-1",
+          exercise_id: "exercise-2",
+          order_index: 1,
+          sets: [],
+        },
+        {
+          id: "ex-3",
+          session_id: "session-1",
+          exercise_id: "exercise-3",
+          order_index: 2,
+          sets: [],
+        },
+        {
+          id: "ex-4",
+          session_id: "session-1",
+          exercise_id: "exercise-4",
+          order_index: 3,
+          sets: [],
+        },
+        {
+          id: "ex-5",
+          session_id: "session-1",
+          exercise_id: "exercise-5",
+          order_index: 4,
+          sets: [],
+        },
+        {
+          id: "ex-6",
+          session_id: "session-1",
+          exercise_id: "exercise-6",
+          order_index: 5,
+          sets: [],
+        },
       ],
     };
 
