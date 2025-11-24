@@ -11,7 +11,6 @@ import * as retentionService from "../../../services/retention.service";
 import * as authService from "../auth.service";
 import * as authRepo from "../auth.repository";
 import type { AuthUserRecord } from "../auth.repository";
-import type { db } from "../../../db/connection";
 
 // Mock dependencies
 jest.mock("../auth.repository");
@@ -20,6 +19,18 @@ jest.mock("../../../services/mailer.service.js");
 jest.mock("../../users/dsr.service.js", () => ({
   processDueAccountDeletions: jest.fn<() => Promise<number>>().mockResolvedValue(0),
 }));
+jest.mock("../../../db/connection.js", () => {
+  const mockQueryBuilder = {
+    where: jest.fn().mockReturnThis(),
+    andWhere: jest.fn().mockReturnThis(),
+    orWhere: jest.fn().mockReturnThis(),
+    whereNotNull: jest.fn().mockReturnThis(),
+    del: jest.fn().mockResolvedValue(0),
+  };
+  return {
+    db: jest.fn(() => mockQueryBuilder),
+  };
+});
 
 const mockAuthRepo = jest.mocked(authRepo);
 
@@ -151,30 +162,19 @@ describe("AC-1.8: Email Verification Resend Limiting & Auto-Purge", () => {
   });
 
   describe("Auto-Purge Unverified Accounts (7 days)", () => {
-    // Mock the database for these tests
-    let mockDb: jest.MockedFunction<typeof db>;
-
     beforeEach(() => {
-      // Create a mock query builder
-      const mockQueryBuilder: any = {
-        where: jest.fn().mockReturnThis(),
-        andWhere: jest.fn().mockReturnThis(),
-        del: jest.fn().mockResolvedValue(0),
-      };
-
-      // Mock the db function
-      mockDb = jest.fn(() => mockQueryBuilder) as unknown as jest.MockedFunction<typeof db>;
-      (global as any).db = mockDb;
+      // Clear mocks before each test
+      jest.clearAllMocks();
     });
 
     it("should purge accounts older than 7 days with pending_verification status", async () => {
+      const { db } = await import("../../../db/connection.js");
       const mockQueryBuilder = {
-        where: jest.fn<typeof mockQueryBuilder.where>().mockReturnThis(),
-        andWhere: jest.fn<typeof mockQueryBuilder.andWhere>().mockReturnThis(),
+        where: jest.fn().mockReturnThis(),
+        andWhere: jest.fn().mockReturnThis(),
         del: jest.fn().mockResolvedValue(5), // 5 accounts purged
       };
-
-      mockDb.mockReturnValue(mockQueryBuilder);
+      jest.mocked(db).mockReturnValue(mockQueryBuilder as any);
 
       const now = new Date("2024-01-10T00:00:00Z");
       const result = await retentionService.purgeUnverifiedAccounts(now);
@@ -190,13 +190,13 @@ describe("AC-1.8: Email Verification Resend Limiting & Auto-Purge", () => {
     });
 
     it("should return 0 when no unverified accounts to purge", async () => {
+      const { db } = await import("../../../db/connection.js");
       const mockQueryBuilder: any = {
         where: jest.fn().mockReturnThis(),
         andWhere: jest.fn().mockReturnThis(),
         del: jest.fn().mockResolvedValue(0),
       };
-
-      mockDb.mockReturnValue(mockQueryBuilder);
+      jest.mocked(db).mockReturnValue(mockQueryBuilder);
 
       const now = new Date();
       const result = await retentionService.purgeUnverifiedAccounts(now);
@@ -205,13 +205,13 @@ describe("AC-1.8: Email Verification Resend Limiting & Auto-Purge", () => {
     });
 
     it("should not purge accounts newer than 7 days", async () => {
+      const { db } = await import("../../../db/connection.js");
       const mockQueryBuilder: any = {
         where: jest.fn().mockReturnThis(),
         andWhere: jest.fn().mockReturnThis(),
         del: jest.fn().mockResolvedValue(0),
       };
-
-      mockDb.mockReturnValue(mockQueryBuilder);
+      jest.mocked(db).mockReturnValue(mockQueryBuilder);
 
       const now = new Date("2024-01-05T00:00:00Z");
       await retentionService.purgeUnverifiedAccounts(now);
@@ -225,13 +225,13 @@ describe("AC-1.8: Email Verification Resend Limiting & Auto-Purge", () => {
     });
 
     it("should only purge pending_verification accounts, not active accounts", async () => {
+      const { db } = await import("../../../db/connection.js");
       const mockQueryBuilder: any = {
         where: jest.fn().mockReturnThis(),
         andWhere: jest.fn().mockReturnThis(),
         del: jest.fn().mockResolvedValue(0),
       };
-
-      mockDb.mockReturnValue(mockQueryBuilder);
+      jest.mocked(db).mockReturnValue(mockQueryBuilder);
 
       await retentionService.purgeUnverifiedAccounts();
 
@@ -240,6 +240,7 @@ describe("AC-1.8: Email Verification Resend Limiting & Auto-Purge", () => {
     });
 
     it("should be included in retention sweep", async () => {
+      const { db } = await import("../../../db/connection.js");
       const mockQueryBuilder: any = {
         where: jest.fn().mockReturnThis(),
         andWhere: jest.fn().mockReturnThis(),
@@ -247,8 +248,7 @@ describe("AC-1.8: Email Verification Resend Limiting & Auto-Purge", () => {
         whereNotNull: jest.fn().mockReturnThis(),
         del: jest.fn().mockResolvedValue(0),
       };
-
-      mockDb.mockReturnValue(mockQueryBuilder);
+      jest.mocked(db).mockReturnValue(mockQueryBuilder);
 
       const now = new Date();
       const summary = await retentionService.runRetentionSweep(now);
@@ -289,14 +289,13 @@ describe("AC-1.8: Email Verification Resend Limiting & Auto-Purge", () => {
       expect(result.verificationToken).toBeDefined();
 
       // But the retention job would purge this account
+      const { db } = await import("../../../db/connection.js");
       const mockQueryBuilder = {
-        where: jest.fn<typeof mockQueryBuilder.where>().mockReturnThis(),
-        andWhere: jest.fn<typeof mockQueryBuilder.andWhere>().mockReturnThis(),
+        where: jest.fn().mockReturnThis(),
+        andWhere: jest.fn().mockReturnThis(),
         del: jest.fn().mockResolvedValue(1),
       };
-
-      const mockDb = jest.fn(() => mockQueryBuilder) as unknown as jest.MockedFunction<typeof db>;
-      (global as any).db = mockDb;
+      jest.mocked(db).mockReturnValue(mockQueryBuilder as any);
 
       const purgedCount = await retentionService.purgeUnverifiedAccounts(new Date());
       expect(purgedCount).toBeGreaterThanOrEqual(0);
@@ -357,14 +356,13 @@ describe("AC-1.8: Email Verification Resend Limiting & Auto-Purge", () => {
     });
 
     it("should calculate 7 days threshold correctly across month boundaries", async () => {
+      const { db } = await import("../../../db/connection.js");
       const mockQueryBuilder: any = {
         where: jest.fn().mockReturnThis(),
         andWhere: jest.fn().mockReturnThis(),
         del: jest.fn().mockResolvedValue(0),
       };
-
-      const mockDb = jest.fn(() => mockQueryBuilder) as unknown as jest.MockedFunction<typeof db>;
-      (global as any).db = mockDb;
+      jest.mocked(db).mockReturnValue(mockQueryBuilder);
 
       // Current date: March 5, 2024
       const now = new Date("2024-03-05T00:00:00Z");

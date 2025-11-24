@@ -1,6 +1,7 @@
 import bcrypt from "bcryptjs";
 import { login } from "../auth.service.js";
 import * as authRepository from "../auth.repository.js";
+import * as bruteforceRepository from "../bruteforce.repository.js";
 import type { AuthUserRecord } from "../auth.repository.js";
 
 describe("Q-11 login enumeration protections", () => {
@@ -9,10 +10,26 @@ describe("Q-11 login enumeration protections", () => {
     Promise<boolean>,
     [string | Buffer, string]
   >;
+  const getFailedAttemptSpy = jest.spyOn(bruteforceRepository, "getFailedAttempt");
+  const recordFailedAttemptSpy = jest.spyOn(bruteforceRepository, "recordFailedAttempt");
 
   beforeEach(() => {
     jest.clearAllMocks();
     compareSpy.mockResolvedValue(false);
+    // Mock bruteforce repository functions
+    getFailedAttemptSpy.mockResolvedValue(null);
+    recordFailedAttemptSpy.mockResolvedValue({
+      id: "attempt-123",
+      identifier: "test@example.com",
+      ip_address: "127.0.0.1",
+      user_agent: null,
+      attempt_count: 1,
+      locked_until: null,
+      last_attempt_at: new Date().toISOString(),
+      first_attempt_at: new Date().toISOString(),
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    });
   });
 
   it("performs a dummy password comparison when the user does not exist", async () => {

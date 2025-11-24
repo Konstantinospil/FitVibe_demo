@@ -11,13 +11,17 @@ import * as authService from "../auth.service";
 import * as twofaService from "../twofa.service";
 import * as authRepo from "../auth.repository";
 import * as pending2faRepo from "../pending-2fa.repository";
+import * as bruteforceRepo from "../bruteforce.repository";
+import type { FailedLoginAttempt } from "../bruteforce.repository";
 import type { LoginDTO, LoginContext } from "../auth.types";
 import type { AuthUserRecord } from "../auth.repository";
+import { getCurrentTermsVersion } from "../../../config/terms.js";
 
 // Mock dependencies
 jest.mock("../auth.repository");
 jest.mock("../twofa.service");
 jest.mock("../pending-2fa.repository");
+jest.mock("../bruteforce.repository");
 jest.mock("bcryptjs");
 jest.mock("jsonwebtoken");
 jest.mock("crypto");
@@ -25,6 +29,7 @@ jest.mock("crypto");
 const mockAuthRepo = jest.mocked(authRepo);
 const mockTwofaService = jest.mocked(twofaService);
 const mockPending2faRepo = jest.mocked(pending2faRepo);
+const mockBruteforceRepo = jest.mocked(bruteforceRepo);
 
 describe("2-Stage Login Flow (AC-1.6)", () => {
   const mockUser: AuthUserRecord = {
@@ -35,6 +40,7 @@ describe("2-Stage Login Flow (AC-1.6)", () => {
     status: "active",
     created_at: "2024-01-01T00:00:00Z",
     password_hash: "hashed-password",
+    terms_version: getCurrentTermsVersion(), // Set current terms version
   };
 
   const loginDto: LoginDTO = {
@@ -50,6 +56,30 @@ describe("2-Stage Login Flow (AC-1.6)", () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    // Mock bruteforce repository functions
+    mockBruteforceRepo.getFailedAttempt.mockResolvedValue(null);
+    mockBruteforceRepo.recordFailedAttempt.mockResolvedValue({
+      id: "attempt-123",
+      identifier: "test@example.com",
+      ip_address: "127.0.0.1",
+      user_agent: "Mozilla/5.0",
+      attempt_count: 1,
+      locked_until: null,
+      last_attempt_at: new Date().toISOString(),
+      first_attempt_at: new Date().toISOString(),
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    });
+    mockBruteforceRepo.resetFailedAttempts.mockResolvedValue(undefined);
+    // Mock synchronous functions - these are called with the result of getFailedAttempt
+    // Since getFailedAttempt returns null, isAccountLocked(null) should return false
+    (mockBruteforceRepo.isAccountLocked as jest.Mock).mockImplementation(
+      (attempt: FailedLoginAttempt | null) =>
+        attempt?.locked_until !== null &&
+        attempt.locked_until !== undefined &&
+        new Date(attempt.locked_until) > new Date(),
+    );
+    (mockBruteforceRepo.getRemainingLockoutSeconds as jest.Mock).mockReturnValue(0);
   });
 
   afterEach(() => {

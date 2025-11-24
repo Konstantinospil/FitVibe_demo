@@ -18,7 +18,7 @@ export async function up(knex: Knex): Promise<void> {
   // Ensure index exists with correct column name
   await knex.raw(`DROP INDEX IF EXISTS exercises_owner_active_idx;`);
   await knex.raw(`
-    CREATE INDEX IF NOT EXISTS exercises_owner_active_idx 
+    CREATE INDEX IF NOT EXISTS exercises_owner_active_idx
     ON exercises(owner_id) WHERE archived_at IS NULL;
   `);
 }

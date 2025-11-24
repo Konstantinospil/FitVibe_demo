@@ -65,12 +65,25 @@ const LEGACY_SESSION_VIEW_SQL = `
 `;
 
 export async function up(knex: Knex): Promise<void> {
-  // Drop dependent objects first (in reverse dependency order)
-  await knex.raw(`DROP MATERIALIZED VIEW IF EXISTS mv_leaderboard CASCADE;`);
-  await knex.raw(`DROP VIEW IF EXISTS v_session_summary CASCADE;`);
+  // Drop all dependent objects in correct dependency order
+  // Order matters: drop objects that depend on others BEFORE dropping their dependencies
+
+  // 1. Drop trigger first (depends on function)
   await knex.raw(`DROP TRIGGER IF EXISTS trg_session_summary_refresh ON sessions;`);
-  await knex.raw(`DROP FUNCTION IF EXISTS session_summary_refresh_trigger();`);
-  await knex.raw(`DROP MATERIALIZED VIEW IF EXISTS ${WEEKLY_VIEW} CASCADE;`);
+
+  // 2. Drop functions (may reference views in their body, but don't create formal dependencies)
+  await knex.raw(`DROP FUNCTION IF EXISTS session_summary_refresh_trigger() CASCADE;`);
+  await knex.raw(`DROP FUNCTION IF EXISTS refresh_session_summary(boolean) CASCADE;`);
+
+  // 3. Drop regular views that depend on session_summary
+  await knex.raw(`DROP VIEW IF EXISTS v_session_summary CASCADE;`);
+
+  // 4. Drop weekly_aggregates WITHOUT CASCADE first (it depends on session_summary)
+  // This prevents CASCADE from trying to drop session_summary prematurely
+  await knex.raw(`DROP MATERIALIZED VIEW IF EXISTS ${WEEKLY_VIEW};`);
+
+  // 5. Now drop session_summary - weekly_aggregates is gone, so this should work
+  // Use CASCADE to handle any remaining dependencies (indexes, etc.)
   await knex.raw(`DROP MATERIALIZED VIEW IF EXISTS ${SESSION_VIEW} CASCADE;`);
 
   // Recreate session_summary with new columns
@@ -85,6 +98,9 @@ export async function up(knex: Knex): Promise<void> {
   await knex.raw(
     `CREATE INDEX IF NOT EXISTS idx_${WEEKLY_VIEW}_owner_week ON ${WEEKLY_VIEW} (owner_id, week_start DESC);`,
   );
+
+  // Recreate refresh_session_summary function (needed for trigger and post-deploy scripts)
+  await knex.raw(readSql("../functions/refresh_session_summary.sql"));
 
   // Recreate v_session_summary view and trigger
   await knex.raw(readSql("../views/v_session_summary.sql"));

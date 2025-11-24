@@ -58,12 +58,19 @@ function createKnexMock() {
     return chains.get(table)!;
   });
   const rawMock = jest.fn().mockResolvedValue(undefined);
-  const knex = Object.assign(knexSpy, { raw: rawMock }) as unknown as Knex;
+  const schemaMock = {
+    hasTable: jest.fn().mockResolvedValue(false),
+  };
+  const knex = Object.assign(knexSpy, {
+    raw: rawMock,
+    schema: schemaMock,
+  }) as unknown as Knex;
 
   return {
     knex,
     knexSpy,
     rawMock,
+    schemaMock,
     getChain: (table: string): InsertChain => {
       const chain = chains.get(table);
       if (!chain) {
@@ -259,7 +266,12 @@ describe("database seed modules", () => {
   it.each(seedCases)(
     "inserts data for %s",
     async ({ seedFn, table, conflict, strategy, sampleMatcher, rawCalls, assertInsert }) => {
-      const { knex, knexSpy, rawMock, getChain } = createKnexMock();
+      const { knex, knexSpy, rawMock, schemaMock, getChain } = createKnexMock();
+
+      // For the profiles/user_static seed, mock hasTable to return true for "profiles"
+      if (table === "profiles") {
+        schemaMock.hasTable.mockResolvedValue(true);
+      }
 
       await seedFn(knex);
 
