@@ -25,6 +25,9 @@ jest.mock("../bruteforce.repository");
 jest.mock("bcryptjs");
 jest.mock("jsonwebtoken");
 jest.mock("crypto");
+jest.mock("uuid", () => ({
+  v4: jest.fn(() => "mock-uuid-123"),
+}));
 
 const mockAuthRepo = jest.mocked(authRepo);
 const mockTwofaService = jest.mocked(twofaService);
@@ -74,10 +77,14 @@ describe("2-Stage Login Flow (AC-1.6)", () => {
     // Mock synchronous functions - these are called with the result of getFailedAttempt
     // Since getFailedAttempt returns null, isAccountLocked(null) should return false
     (mockBruteforceRepo.isAccountLocked as jest.Mock).mockImplementation(
-      (attempt: FailedLoginAttempt | null) =>
-        attempt?.locked_until !== null &&
-        attempt.locked_until !== undefined &&
-        new Date(attempt.locked_until) > new Date(),
+      (attempt: FailedLoginAttempt | null) => {
+        if (!attempt || !attempt.locked_until) {
+          return false;
+        }
+        const now = new Date();
+        const lockoutExpiry = new Date(attempt.locked_until);
+        return now < lockoutExpiry;
+      },
     );
     (mockBruteforceRepo.getRemainingLockoutSeconds as jest.Mock).mockReturnValue(0);
   });
@@ -109,7 +116,7 @@ describe("2-Stage Login Flow (AC-1.6)", () => {
       // Verify
       expect(result.requires2FA).toBe(true);
       if (result.requires2FA) {
-        expect(result.pendingSessionId).toBe("pending-session-123");
+        expect(result.pendingSessionId).toBe("mock-uuid-123");
       }
       expect(mockTwofaService.is2FAEnabled).toHaveBeenCalledWith("user-123");
       expect(mockPending2faRepo.createPending2FASession).toHaveBeenCalled();
@@ -363,10 +370,11 @@ describe("2-Stage Login Flow (AC-1.6)", () => {
 
       // Verify pending 2FA session was created
       expect(mockPending2faRepo.createPending2FASession).toHaveBeenCalledWith(
-        "user-123",
         expect.objectContaining({
+          id: "mock-uuid-123",
+          user_id: "user-123",
           ip: "127.0.0.1",
-          userAgent: "Mozilla/5.0",
+          user_agent: "Mozilla/5.0",
         }),
       );
     });
