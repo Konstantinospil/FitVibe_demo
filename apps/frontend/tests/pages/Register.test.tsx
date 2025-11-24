@@ -111,8 +111,10 @@ describe("Register", () => {
 
     fireEvent.change(nameInput, { target: { value: "John Doe" } });
     fireEvent.change(emailInput, { target: { value: "john@example.com" } });
-    fireEvent.change(passwordInput, { target: { value: "password123" } });
-    fireEvent.change(confirmPasswordInput, { target: { value: "different" } });
+    fireEvent.change(passwordInput, { target: { value: "Password123!" } });
+    fireEvent.change(confirmPasswordInput, { target: { value: "Different123!" } });
+    const termsCheckbox = screen.getByRole("checkbox", { name: /accept the/i });
+    fireEvent.click(termsCheckbox);
     fireEvent.click(submitButton);
 
     await waitFor(() => {
@@ -138,17 +140,16 @@ describe("Register", () => {
 
     fireEvent.change(nameInput, { target: { value: "John Doe" } });
     fireEvent.change(emailInput, { target: { value: "john@example.com" } });
-    fireEvent.change(passwordInput, { target: { value: "password123" } });
-    fireEvent.change(confirmPasswordInput, { target: { value: "password123" } });
-    fireEvent.click(submitButton);
-
+    fireEvent.change(passwordInput, { target: { value: "Password123!" } });
+    fireEvent.change(confirmPasswordInput, { target: { value: "Password123!" } });
     const termsCheckbox = screen.getByRole("checkbox", { name: /accept the/i });
     fireEvent.click(termsCheckbox);
+    fireEvent.click(submitButton);
 
     await waitFor(() => {
       expect(api.register).toHaveBeenCalledWith({
         email: "john@example.com",
-        password: "password123",
+        password: "Password123!",
         username: "john",
         terms_accepted: true,
         profile: {
@@ -176,8 +177,8 @@ describe("Register", () => {
 
     fireEvent.change(nameInput, { target: { value: "John Doe" } });
     fireEvent.change(emailInput, { target: { value: "john@example.com" } });
-    fireEvent.change(passwordInput, { target: { value: "password123" } });
-    fireEvent.change(confirmPasswordInput, { target: { value: "password123" } });
+    fireEvent.change(passwordInput, { target: { value: "Password123!" } });
+    fireEvent.change(confirmPasswordInput, { target: { value: "Password123!" } });
     const termsCheckbox = screen.getByRole("checkbox", { name: /accept the/i });
     fireEvent.click(termsCheckbox);
     fireEvent.click(submitButton);
@@ -193,7 +194,7 @@ describe("Register", () => {
         data: {
           error: {
             code: "USER_ALREADY_EXISTS",
-            message: "User already exists",
+            // Don't provide message so it uses the translation
           },
         },
       },
@@ -209,8 +210,8 @@ describe("Register", () => {
 
     fireEvent.change(nameInput, { target: { value: "John Doe" } });
     fireEvent.change(emailInput, { target: { value: "existing@example.com" } });
-    fireEvent.change(passwordInput, { target: { value: "password123" } });
-    fireEvent.change(confirmPasswordInput, { target: { value: "password123" } });
+    fireEvent.change(passwordInput, { target: { value: "Password123!" } });
+    fireEvent.change(confirmPasswordInput, { target: { value: "Password123!" } });
     const termsCheckbox = screen.getByRole("checkbox", { name: /accept the/i });
     fireEvent.click(termsCheckbox);
     fireEvent.click(submitButton);
@@ -237,8 +238,8 @@ describe("Register", () => {
 
     fireEvent.change(nameInput, { target: { value: "John Doe" } });
     fireEvent.change(emailInput, { target: { value: "john@example.com" } });
-    fireEvent.change(passwordInput, { target: { value: "password123" } });
-    fireEvent.change(confirmPasswordInput, { target: { value: "password123" } });
+    fireEvent.change(passwordInput, { target: { value: "Password123!" } });
+    fireEvent.change(confirmPasswordInput, { target: { value: "Password123!" } });
     const termsCheckbox = screen.getByRole("checkbox", { name: /accept the/i });
     fireEvent.click(termsCheckbox);
     fireEvent.click(submitButton);
@@ -276,15 +277,18 @@ describe("Register", () => {
 
     fireEvent.change(nameInput, { target: { value: "Test User" } });
     fireEvent.change(emailInput, { target: { value: "test.user+tag@example.com" } });
-    fireEvent.change(passwordInput, { target: { value: "password123" } });
-    fireEvent.change(confirmPasswordInput, { target: { value: "password123" } });
+    fireEvent.change(passwordInput, { target: { value: "Password123!" } });
+    fireEvent.change(confirmPasswordInput, { target: { value: "Password123!" } });
+    const termsCheckbox = screen.getByRole("checkbox", { name: /accept the/i });
+    fireEvent.click(termsCheckbox);
     fireEvent.click(submitButton);
 
     await waitFor(() => {
       expect(api.register).toHaveBeenCalledWith({
         email: "test.user+tag@example.com",
-        password: "password123",
+        password: "Password123!",
         username: "test.user_tag", // Special characters replaced with underscores
+        terms_accepted: true,
         profile: {
           display_name: "Test User",
         },

@@ -1,8 +1,15 @@
 import React from "react";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import Home from "../../src/pages/Home";
 import * as api from "../../src/services/api";
 import { useAuthStore } from "../../src/store/auth.store";
+import type {
+  ExercisesListResponse,
+  SessionsListResponse,
+  Exercise,
+  SessionWithExercises,
+} from "../../src/services/api";
 
 const mockNavigate = vi.fn();
 
@@ -31,7 +38,9 @@ const apiErrorSpy = vi.fn();
 
 vi.mock("../../src/utils/logger", () => ({
   logger: {
-    apiError: apiErrorSpy,
+    get apiError() {
+      return apiErrorSpy;
+    },
   },
 }));
 
@@ -58,25 +67,41 @@ const authenticatedState = {
   user: { id: "user-1", username: "demo", email: "demo@test.dev" },
 };
 
-const mockExerciseResponse = {
+const mockExerciseResponse: ExercisesListResponse = {
   data: [
-    { id: "exercise-1", name: "Bench Press", type_code: "strength" },
-    { id: "exercise-2", name: "Snatch", type_code: "explosivity" },
+    {
+      id: "exercise-1",
+      name: "Bench Press",
+      type_code: "strength",
+      is_public: false,
+      created_at: "2024-01-01T00:00:00.000Z",
+      updated_at: "2024-01-01T00:00:00.000Z",
+    },
+    {
+      id: "exercise-2",
+      name: "Snatch",
+      type_code: "explosivity",
+      is_public: false,
+      created_at: "2024-01-01T00:00:00.000Z",
+      updated_at: "2024-01-01T00:00:00.000Z",
+    },
   ],
   total: 2,
   limit: 10,
   offset: 0,
 };
 
-const mockSessionResponse = {
+const mockSessionResponse: SessionsListResponse = {
   data: [
     {
       id: "session-1",
       planned_at: "2024-01-01T10:00:00.000Z",
       exercises: [
-        { id: "session-ex-1", exercise_id: "exercise-1" },
-        { id: "session-ex-2", exercise_id: "exercise-2" },
+        { id: "session-ex-1", exercise_id: "exercise-1", sets: [] },
+        { id: "session-ex-2", exercise_id: "exercise-2", sets: [] },
       ],
+      created_at: "2024-01-01T00:00:00.000Z",
+      updated_at: "2024-01-01T00:00:00.000Z",
     },
   ],
   total: 1,
@@ -94,14 +119,23 @@ describe("Home page", () => {
     });
 
     mockNavigate.mockClear();
-    mockedApi.listExercises.mockResolvedValue(mockExerciseResponse as any);
-    mockedApi.listSessions.mockResolvedValue(mockSessionResponse as any);
-    mockedApi.createExercise.mockResolvedValue({ id: "created-ex", name: "Custom" } as any);
+    mockedApi.listExercises.mockResolvedValue(mockExerciseResponse);
+    mockedApi.listSessions.mockResolvedValue(mockSessionResponse);
+    mockedApi.createExercise.mockResolvedValue({
+      id: "created-ex",
+      name: "Custom",
+      type_code: "strength",
+      is_public: false,
+      created_at: "2024-01-01T00:00:00.000Z",
+      updated_at: "2024-01-01T00:00:00.000Z",
+    } satisfies Exercise);
     mockedApi.createSession.mockResolvedValue({
       id: "session-created",
       planned_at: "2024-01-01T12:00:00.000Z",
-      exercises: [{ id: "session-ex-new", exercise_id: "created-ex" }],
-    } as any);
+      exercises: [{ id: "session-ex-new", exercise_id: "created-ex", sets: [] }],
+      created_at: "2024-01-01T00:00:00.000Z",
+      updated_at: "2024-01-01T00:00:00.000Z",
+    } satisfies SessionWithExercises);
     apiErrorSpy.mockClear();
   });
 
@@ -130,10 +164,23 @@ describe("Home page", () => {
     });
     fireEvent.click(strengthButton);
 
+    // Wait for modal to appear
+    await waitFor(() => {
+      expect(screen.getByText("vibesHome.addExercise.createNew")).toBeInTheDocument();
+    });
+
     fireEvent.click(screen.getByText("vibesHome.addExercise.createNew"));
+
+    await waitFor(() => {
+      expect(screen.getByLabelText("vibesHome.addExercise.exerciseName")).toBeInTheDocument();
+    });
 
     fireEvent.change(screen.getByLabelText("vibesHome.addExercise.exerciseName"), {
       target: { value: "Tempo Push Press" },
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText("vibesHome.addExercise.add")).toBeInTheDocument();
     });
 
     fireEvent.click(screen.getByText("vibesHome.addExercise.add"));
@@ -156,10 +203,24 @@ describe("Home page", () => {
 
     const vibeButton = await screen.findByRole("button", { name: "vibes.strength.name" });
     fireEvent.click(vibeButton);
+
+    // Wait for modal to appear
+    await waitFor(() => {
+      expect(screen.getByText("vibesHome.addExercise.createNew")).toBeInTheDocument();
+    });
+
     fireEvent.click(screen.getByText("vibesHome.addExercise.createNew"));
+
+    await waitFor(() => {
+      expect(screen.getByLabelText("vibesHome.addExercise.exerciseName")).toBeInTheDocument();
+    });
 
     fireEvent.change(screen.getByLabelText("vibesHome.addExercise.exerciseName"), {
       target: { value: "French Press" },
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText("vibesHome.addExercise.add")).toBeInTheDocument();
     });
 
     fireEvent.click(screen.getByText("vibesHome.addExercise.add"));

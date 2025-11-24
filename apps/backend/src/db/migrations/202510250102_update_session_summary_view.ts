@@ -78,12 +78,37 @@ export async function up(knex: Knex): Promise<void> {
   // 3. Drop regular views that depend on session_summary
   await knex.raw(`DROP VIEW IF EXISTS v_session_summary CASCADE;`);
 
-  // 4. Drop weekly_aggregates WITHOUT CASCADE first (it depends on session_summary)
-  // This prevents CASCADE from trying to drop session_summary prematurely
-  await knex.raw(`DROP MATERIALIZED VIEW IF EXISTS ${WEEKLY_VIEW};`);
+  // 4. Drop all indexes on weekly_aggregates dynamically
+  interface IndexRow {
+    indexname: string;
+  }
+  const weeklyIndexes = (await knex.raw(`
+    SELECT indexname
+    FROM pg_indexes
+    WHERE tablename = '${WEEKLY_VIEW}' AND schemaname = 'public'
+  `)) as unknown as { rows: IndexRow[] };
+  if (weeklyIndexes.rows && weeklyIndexes.rows.length > 0) {
+    for (const row of weeklyIndexes.rows) {
+      await knex.raw(`DROP INDEX IF EXISTS ${row.indexname} CASCADE;`);
+    }
+  }
 
-  // 5. Now drop session_summary - weekly_aggregates is gone, so this should work
-  // Use CASCADE to handle any remaining dependencies (indexes, etc.)
+  // 5. Drop weekly_aggregates (it depends on session_summary)
+  await knex.raw(`DROP MATERIALIZED VIEW IF EXISTS ${WEEKLY_VIEW} CASCADE;`);
+
+  // 6. Drop all indexes on session_summary explicitly (required before dropping the view)
+  const sessionIndexes = (await knex.raw(`
+    SELECT indexname
+    FROM pg_indexes
+    WHERE tablename = '${SESSION_VIEW}' AND schemaname = 'public'
+  `)) as unknown as { rows: IndexRow[] };
+  if (sessionIndexes.rows && sessionIndexes.rows.length > 0) {
+    for (const row of sessionIndexes.rows) {
+      await knex.raw(`DROP INDEX IF EXISTS ${row.indexname} CASCADE;`);
+    }
+  }
+
+  // 7. Now drop session_summary - all dependencies should be gone
   await knex.raw(`DROP MATERIALIZED VIEW IF EXISTS ${SESSION_VIEW} CASCADE;`);
 
   // Recreate session_summary with new columns
