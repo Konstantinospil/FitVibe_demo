@@ -4,6 +4,9 @@ services:
     image: postgres:15-alpine
     container_name: fitvibe-postgres
     restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    user: "999:999" # postgres user
     environment:
       POSTGRES_DB: fitvibe
       POSTGRES_USER: fitvibe
@@ -27,6 +30,9 @@ services:
     image: redis:7-alpine
     container_name: fitvibe-redis
     restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    user: "999:999" # redis user
     command: redis-server --requirepass ${REDIS_PASSWORD:?Redis password is required. Set REDIS_PASSWORD in .env file}
     # SECURITY: Removed port mapping - only accessible within Docker network
     # To connect locally: docker exec -it fitvibe-redis redis-cli -a $REDIS_PASSWORD
@@ -49,6 +55,8 @@ services:
       target: runtime
     container_name: fitvibe-backend
     restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
     ports:
       - "4000:4000"
     environment:
@@ -88,6 +96,8 @@ services:
       dockerfile: infra/docker/dev/Dockerfile.frontend
     container_name: fitvibe-frontend
     restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
     ports:
       - "5174:80" # Changed to 5174 to avoid conflict, and nginx serves on port 80
     environment:
@@ -106,6 +116,9 @@ services:
     image: prom/prometheus:latest
     container_name: fitvibe-prometheus
     restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    user: "65534:65534" # nobody user
     ports:
       - "127.0.0.1:9090:9090" # SECURITY: Only localhost access
     volumes:
@@ -128,6 +141,9 @@ services:
     image: grafana/grafana:latest
     container_name: fitvibe-grafana
     restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    user: "472:472" # grafana user
     ports:
       - "127.0.0.1:3001:3000" # SECURITY: Only localhost access
     environment:
@@ -153,6 +169,9 @@ services:
     image: nginx:alpine
     container_name: fitvibe-nginx
     restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    user: "65534:65534" # nobody user
     ports:
       - "80:80"
       - "443:443"

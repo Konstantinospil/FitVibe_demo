@@ -31,8 +31,17 @@ FROM nginx:alpine
 COPY --from=builder /app/apps/frontend/dist /usr/share/nginx/html
 
 # Basic hardening and nginx defaults
+# Set nginx to run as nobody user and disable server tokens
 RUN sed -i 's/user  nginx;/user nobody;/' /etc/nginx/nginx.conf && \
-    sed -i 's/# server_tokens off;/server_tokens off;/' /etc/nginx/nginx.conf
+    sed -i 's/# server_tokens off;/server_tokens off;/' /etc/nginx/nginx.conf && \
+    chown -R nobody:nobody /usr/share/nginx/html /var/cache/nginx /var/run /var/log/nginx
+
+# Ensure proper permissions for nginx directories
+RUN mkdir -p /var/cache/nginx/client_temp /var/cache/nginx/proxy_temp /var/cache/nginx/fastcgi_temp /var/cache/nginx/uwsgi_temp /var/cache/nginx/scgi_temp && \
+    chown -R nobody:nobody /var/cache/nginx
+
+# Run as non-root user (nobody)
+USER nobody
 
 EXPOSE 80
 CMD ["nginx", "-g", "daemon off;"]
