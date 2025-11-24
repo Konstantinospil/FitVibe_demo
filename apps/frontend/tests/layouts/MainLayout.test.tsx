@@ -61,8 +61,11 @@ describe("MainLayout", () => {
       </MemoryRouter>,
     );
 
-    expect(screen.getByText("Home")).toBeInTheDocument();
-    expect(screen.getByText("Profile")).toBeInTheDocument();
+    // Navigation items use icons with aria-labels - use getAllByLabelText and check first
+    const homeLinks = screen.getAllByLabelText("Home");
+    const profileLinks = screen.getAllByLabelText("Profile");
+    expect(homeLinks.length).toBeGreaterThan(0);
+    expect(profileLinks.length).toBeGreaterThan(0);
   });
 
   it("should render skip to content link", () => {

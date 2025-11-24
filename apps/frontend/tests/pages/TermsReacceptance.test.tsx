@@ -108,7 +108,7 @@ describe("TermsReacceptance page", () => {
   });
 
   it("should submit form when terms are accepted", async () => {
-    vi.mocked(api.acceptTerms).mockResolvedValue(undefined);
+    vi.mocked(api.acceptTerms).mockResolvedValue({ message: "Terms accepted" });
 
     render(<TermsReacceptance />);
 
@@ -134,7 +134,7 @@ describe("TermsReacceptance page", () => {
       configurable: true,
     });
 
-    vi.mocked(api.acceptTerms).mockResolvedValue(undefined);
+    vi.mocked(api.acceptTerms).mockResolvedValue({ message: "Terms accepted" });
 
     render(<TermsReacceptance />);
 

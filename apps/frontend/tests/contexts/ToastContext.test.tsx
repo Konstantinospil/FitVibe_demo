@@ -81,6 +81,9 @@ describe("ToastContext", () => {
   });
 
   it("should remove toast after duration", async () => {
+    // Use real timers for this test since it's testing timeout behavior
+    vi.useRealTimers();
+
     render(
       <ToastProvider>
         <TestComponent />
@@ -92,15 +95,16 @@ describe("ToastContext", () => {
 
     expect(screen.getByText("Custom message")).toBeInTheDocument();
 
-    // Advance timers and wait for removal
-    vi.advanceTimersByTime(1000);
-
+    // Wait for the toast to be removed after duration (1000ms) + buffer
     await waitFor(
       () => {
         expect(screen.queryByText("Custom message")).not.toBeInTheDocument();
       },
       { timeout: 2000 },
     );
+
+    // Restore fake timers for other tests
+    vi.useFakeTimers();
   });
 
   it("should allow manual toast removal", () => {

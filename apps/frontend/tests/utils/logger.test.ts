@@ -97,7 +97,7 @@ describe("logger", () => {
     it("should log errors with non-Error object", () => {
       const errorObj = { code: "ERR_CODE", message: "Custom error" };
 
-      logger.error("Error message", errorObj as Error, { context: "test" });
+      logger.error("Error message", errorObj as unknown as Error, { context: "test" });
 
       expect(consoleErrorSpy).toHaveBeenCalledWith(
         "[ERROR] Error message",

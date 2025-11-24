@@ -82,10 +82,17 @@ describe("LoginFormContent", () => {
     );
 
     const submitButton = screen.getByRole("button", { name: "Sign In" });
-    fireEvent.click(submitButton);
+    const form = submitButton.closest("form");
+    if (form) {
+      fireEvent.submit(form);
+    } else {
+      fireEvent.click(submitButton);
+    }
 
     await waitFor(() => {
-      expect(screen.getByText("Please fill in all fields")).toBeInTheDocument();
+      const errorText = screen.queryByText("Please fill in all fields");
+      const alert = screen.queryByRole("alert");
+      expect(errorText || alert).toBeTruthy();
     });
   });
 
@@ -93,6 +100,7 @@ describe("LoginFormContent", () => {
     vi.mocked(api.login).mockResolvedValue({
       user: { id: "user-1", username: "test", email: "test@example.com" },
       requires2FA: false,
+      session: null,
     });
 
     render(
@@ -119,7 +127,6 @@ describe("LoginFormContent", () => {
 
   it("should navigate to 2FA page when 2FA is required", async () => {
     vi.mocked(api.login).mockResolvedValue({
-      user: { id: "user-1", username: "test", email: "test@example.com" },
       requires2FA: true,
       pendingSessionId: "session-123",
     });

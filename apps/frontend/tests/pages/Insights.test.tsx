@@ -129,12 +129,12 @@ describe("Insights page", () => {
 
   it("should render insights page with tabs", () => {
     vi.mocked(useDashboardAnalytics).mockReturnValue({
-      data: null,
+      data: undefined,
       isLoading: false,
       isFetching: false,
       error: null,
       refetch: vi.fn(),
-    });
+    } as unknown as ReturnType<typeof useDashboardAnalytics>);
 
     renderInsights();
 
@@ -145,12 +145,12 @@ describe("Insights page", () => {
 
   it("should switch between dashboard and progress tabs", () => {
     vi.mocked(useDashboardAnalytics).mockReturnValue({
-      data: null,
+      data: undefined,
       isLoading: false,
       isFetching: false,
       error: null,
       refetch: vi.fn(),
-    });
+    } as unknown as ReturnType<typeof useDashboardAnalytics>);
 
     renderInsights();
 
@@ -172,7 +172,7 @@ describe("Insights page", () => {
       ],
       personalRecords: [],
       aggregates: [],
-      meta: { range: "4w" as const, grain: "weekly" as const },
+      meta: { range: "4w" as const, grain: "weekly" as const, totalRows: 0, truncated: false },
     };
 
     vi.mocked(useDashboardAnalytics).mockReturnValue({
@@ -181,7 +181,7 @@ describe("Insights page", () => {
       isFetching: false,
       error: null,
       refetch: vi.fn(),
-    });
+    } as unknown as ReturnType<typeof useDashboardAnalytics>);
 
     renderInsights();
 
@@ -194,12 +194,12 @@ describe("Insights page", () => {
     vi.mocked(api.exportProgress).mockResolvedValue(mockBlob);
 
     vi.mocked(useDashboardAnalytics).mockReturnValue({
-      data: null,
+      data: undefined,
       isLoading: false,
       isFetching: false,
       error: null,
       refetch: vi.fn(),
-    });
+    } as unknown as ReturnType<typeof useDashboardAnalytics>);
 
     // Create a mock for URL.createObjectURL
     const createObjectURLSpy = vi.fn(() => "blob:test");
@@ -207,12 +207,22 @@ describe("Insights page", () => {
 
     const clickSpy = vi.fn();
     const removeSpy = vi.fn();
-    const createElementSpy = vi.spyOn(document, "createElement").mockReturnValue({
-      href: "",
-      download: "",
-      click: clickSpy,
-      remove: removeSpy,
-    } as unknown as HTMLElement);
+
+    // Save original createElement before mocking
+    const originalCreateElement = (tagName: string) => document.createElement(tagName);
+
+    // Create a real anchor element using original method
+    const anchorElement = originalCreateElement("a");
+    anchorElement.click = clickSpy;
+    anchorElement.remove = removeSpy;
+
+    const createElementSpy = vi.spyOn(document, "createElement").mockImplementation((tagName) => {
+      if (tagName === "a") {
+        return anchorElement;
+      }
+      // For other elements, use the original implementation
+      return originalCreateElement(tagName);
+    });
 
     renderInsights();
 
@@ -220,10 +230,11 @@ describe("Insights page", () => {
     fireEvent.click(progressTab);
 
     await waitFor(() => {
-      expect(screen.getByText("Export CSV")).toBeInTheDocument();
+      // Button text is "Export" based on translation mock
+      expect(screen.getByText("Export")).toBeInTheDocument();
     });
 
-    const exportButton = screen.getByText("Export CSV");
+    const exportButton = screen.getByText("Export");
     fireEvent.click(exportButton);
 
     await waitFor(() => {
@@ -235,12 +246,12 @@ describe("Insights page", () => {
 
   it("should display error message when dashboard data fails to load", () => {
     vi.mocked(useDashboardAnalytics).mockReturnValue({
-      data: null,
+      data: undefined,
       isLoading: false,
       isFetching: false,
       error: new Error("Failed to load"),
       refetch: vi.fn(),
-    });
+    } as unknown as ReturnType<typeof useDashboardAnalytics>);
 
     renderInsights();
 
@@ -254,13 +265,13 @@ describe("Insights page", () => {
         summary: [],
         personalRecords: [],
         aggregates: [],
-        meta: { range: "4w" as const, grain: "weekly" as const },
+        meta: { range: "4w" as const, grain: "weekly" as const, totalRows: 0, truncated: false },
       },
       isLoading: false,
       isFetching: false,
       error: null,
       refetch: mockRefetch,
-    });
+    } as unknown as ReturnType<typeof useDashboardAnalytics>);
 
     renderInsights();
 
