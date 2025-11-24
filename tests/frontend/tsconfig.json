@@ -1,0 +1,14 @@
+{
+  "extends": "../../apps/frontend/tsconfig.json",
+  "compilerOptions": {
+    "rootDir": ".",
+    "baseUrl": "../../apps/frontend",
+    "paths": {
+      "../../src/*": ["../../apps/frontend/src/*"],
+      "../src/*": ["../../apps/frontend/src/*"]
+    },
+    "types": ["vite/client", "node", "vitest/globals", "@testing-library/jest-dom"]
+  },
+  "include": ["**/*.ts", "**/*.tsx"],
+  "exclude": ["node_modules", "e2e"]
+}

@@ -4,7 +4,7 @@ module.exports = {
   ...baseConfig,
   displayName: "backend",
   rootDir: __dirname,
-  roots: ["<rootDir>/src", "<rootDir>/tests"],
+  roots: ["<rootDir>/src", "<rootDir>/../../tests/backend"],
   testMatch: ["**/__tests__/**/*.(spec|test).ts", "**/?(*.)+(spec|test).ts"],
   setupFilesAfterEnv: ["<rootDir>/jest.setup.ts"],
   transform: {

@@ -2,7 +2,7 @@
 """
 Generate GitHub issues from user stories.
 
-This script reads USER_STORIES.md and generates GitHub issue creation commands
+This script reads docs/USER_STORIES.md and generates GitHub issue creation commands
 that can be executed via GitHub CLI or used to create issues via the API.
 """
 
@@ -240,8 +240,8 @@ def generate_issue_body(story: Dict) -> str:
 
     # Related Documentation
     body_parts.append("## Related Documentation")
-    body_parts.append(f"- [USER_STORIES.md](../../USER_STORIES.md)")
-    body_parts.append(f"- [PROJECT_EPICS_AND_ACTIVITIES.md](../../PROJECT_EPICS_AND_ACTIVITIES.md)")
+    body_parts.append(f"- [USER_STORIES.md](../../docs/USER_STORIES.md)")
+    body_parts.append(f"- [PROJECT_EPICS_AND_ACTIVITIES.md](../../docs/PROJECT_EPICS_AND_ACTIVITIES.md)")
 
     return "\n".join(body_parts)
 
@@ -365,7 +365,7 @@ def generate_json_export(stories: List[Dict], output_file: Path):
 def main():
     """Main function."""
     root_dir = Path(__file__).parent.parent
-    stories_file = root_dir / "USER_STORIES.md"
+    stories_file = root_dir / "docs" / "USER_STORIES.md"
 
     if not stories_file.exists():
         print(f"Error: {stories_file} not found")

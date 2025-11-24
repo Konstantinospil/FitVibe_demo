@@ -158,7 +158,7 @@ See the [Documentation Hub README](docs/README.md) for a complete guide to all d
 
 ## 🤝 Contributing
 
-We welcome contributions! Please read our [Contributing Guide](CONTRIBUTING.md) before submitting pull requests. Key points:
+We welcome contributions! Please read our [Contributing Guide](docs/CONTRIBUTING.md) before submitting pull requests. Key points:
 
 - Branch from `develop` for new features
 - Use conventional commits (`feat:`, `fix:`, `docs:`, `chore:`)
@@ -167,7 +167,7 @@ We welcome contributions! Please read our [Contributing Guide](CONTRIBUTING.md) 
 
 ## 🔒 Security
 
-- Follow the guidance in `SECURITY.md` for responsible disclosure
+- Follow the guidance in `docs/SECURITY.md` for responsible disclosure
 - Never commit secrets, API keys, or personal data
 - Report vulnerabilities privately to `kpilpilidis@gmail.com`
 

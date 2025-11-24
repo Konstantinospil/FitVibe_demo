@@ -67,7 +67,7 @@ Every pull request should include:
 
 ## 5. Testing Expectations
 
-- Unit and integration tests live under `tests/` and per-workspace `apps/*/tests`. Add or update tests when behaviour changes.
+- Unit and integration tests live under `tests/` (organized by `tests/backend/` and `tests/frontend/`). Add or update tests when behaviour changes.
 - Use test doubles for external services; do not hit live third-party APIs.
 - For new endpoints, document the contract in the TDD and add an integration or contract test.
 - Performance tests (k6) and security scans run in CI; trigger them locally when practical.
@@ -76,16 +76,16 @@ Every pull request should include:
 
 ## 6. Documentation and Diagrams
 
-- Product or UX changes: update the PRD (`apps/docs/1. Product Requirements Document.md`).
-- Technical changes: update the TDD (`apps/docs/2. Technical Design Document.md`) and regenerate any affected Mermaid diagrams stored under `docs/diagrams/`.
-- Architecture decisions: add or update an ADR in `apps/docs/adr/`.
-- Infrastructure updates: document in `infra/README.md` and any relevant policy under `infra/security/policies/`.
+- Product or UX changes: update the PRD (`docs/1.Product_Requirements/1.Product_Requirements_Document.md`).
+- Technical changes: update the TDD (`docs/2.Technical_Design_Document/`) and regenerate any affected Mermaid diagrams stored under `docs/2.Technical_Design_Document/2.g.Diagramms/`.
+- Architecture decisions: add or update an ADR in `docs/2.Technical_Design_Document/2.f.Architectural_Decision_Documentation/`.
+- Infrastructure updates: document in `infra/README.md` and any relevant policy under `infra/security/`.
 
 ---
 
 ## 7. Security and Privacy
 
-- Follow the guidance in `SECURITY.md` for responsible disclosure and secure development requirements.
+- Follow the guidance in `docs/SECURITY.md` for responsible disclosure and secure development requirements.
 - Never commit secrets, API keys, or personal data. `.env` files are intentionally excluded from Git.
 - Run `pnpm audit --prod` if you add or update critical dependencies and include the results in your pull request description.
 - Report suspected vulnerabilities privately to `kpilpilidis@gmail.com` instead of opening an issue.

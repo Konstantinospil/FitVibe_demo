@@ -224,7 +224,7 @@ describe("LoginFormContent", () => {
       </MemoryRouter>,
     );
 
-    const passwordInput = screen.getByLabelText("Password");
+    const passwordInput = screen.getByLabelText("Password") as HTMLInputElement;
     const toggleButton = screen.getByLabelText("Show password");
 
     expect(passwordInput.type).toBe("password");

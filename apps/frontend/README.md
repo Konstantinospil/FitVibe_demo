@@ -43,4 +43,4 @@ src/
   utils/         # Client helpers
 ```
 
-End-to-end checks live under `apps/frontend/tests`. Use `pnpm test --filter frontend` from the repo root to run the e2e / component suites once they are implemented.
+End-to-end checks live under `tests/frontend/e2e`. Unit and integration tests live under `tests/frontend/`. Use `pnpm test --filter frontend` from the repo root to run the test suites.

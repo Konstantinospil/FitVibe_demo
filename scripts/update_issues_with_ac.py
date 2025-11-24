@@ -43,7 +43,7 @@ def get_github_token() -> Optional[str]:
 
 
 def parse_acceptance_criteria(stories_file: Path) -> Dict[str, List[Dict]]:
-    """Parse acceptance criteria from USER_STORIES.md."""
+    """Parse acceptance criteria from docs/USER_STORIES.md."""
     with open(stories_file, "r", encoding="utf-8") as f:
         content = f.read()
     
@@ -225,7 +225,7 @@ def update_issue_with_ac(session: requests.Session, token: str, issue: Dict, ac_
 def main():
     """Main function."""
     root_dir = Path(__file__).parent.parent
-    stories_file = root_dir / "USER_STORIES.md"
+    stories_file = root_dir / "docs" / "USER_STORIES.md"
     
     if not stories_file.exists():
         print(f"Error: {stories_file} not found")

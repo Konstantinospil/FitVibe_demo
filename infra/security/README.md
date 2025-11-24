@@ -170,7 +170,7 @@ If you discover a security vulnerability:
 
 - [Security Policies](../docs/5.Policies/5.b.Security/) - Detailed security policies
 - [Safe Git Push Guide](../docs/5.Policies/5.b.Security/SAFE_GIT_PUSH_GUIDE.md) - Secure Git practices
-- [SECURITY.md](../../SECURITY.md) - Security reporting procedures
+- [SECURITY.md](../../docs/SECURITY.md) - Security reporting procedures
 
 ### External
 
@@ -182,5 +182,5 @@ If you discover a security vulnerability:
 
 - [Infrastructure README](../README.md)
 - [Backend README](../../apps/backend/README.md)
-- [Contributing Guide](../../CONTRIBUTING.md)
+- [Contributing Guide](../../docs/CONTRIBUTING.md)
 - [Security Policies](../../docs/5.Policies/5.b.Security/)

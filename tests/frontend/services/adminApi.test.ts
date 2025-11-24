@@ -41,7 +41,6 @@ describe("adminApi", () => {
 
       const result = await listReports();
 
-      // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(apiClient.get as ReturnType<typeof vi.fn>).toHaveBeenCalledWith(
         "/api/v1/admin/reports",
         { params: undefined },
@@ -57,7 +56,6 @@ describe("adminApi", () => {
 
       await listReports({ status: "pending", limit: 10, offset: 0 });
 
-      // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(apiClient.get as ReturnType<typeof vi.fn>).toHaveBeenCalledWith(
         "/api/v1/admin/reports",
         {
@@ -73,7 +71,6 @@ describe("adminApi", () => {
 
       await moderateReport("report-1", "dismiss");
 
-      // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(apiClient.post as ReturnType<typeof vi.fn>).toHaveBeenCalledWith(
         "/api/v1/admin/reports/report-1/moderate",
         {
@@ -105,7 +102,6 @@ describe("adminApi", () => {
 
       const result = await searchUsers("test", { limit: 10, offset: 0 });
 
-      // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(apiClient.get as ReturnType<typeof vi.fn>).toHaveBeenCalledWith(
         "/api/v1/admin/users/search",
         {
@@ -122,7 +118,6 @@ describe("adminApi", () => {
 
       await performUserAction("user-1", "suspend", "Violation of terms");
 
-      // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(apiClient.post as ReturnType<typeof vi.fn>).toHaveBeenCalledWith(
         "/api/v1/admin/users/user-1/action",
         {
@@ -137,7 +132,6 @@ describe("adminApi", () => {
 
       await performUserAction("user-1", "activate");
 
-      // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(apiClient.post as ReturnType<typeof vi.fn>).toHaveBeenCalledWith(
         "/api/v1/admin/users/user-1/action",
         {
@@ -171,7 +165,6 @@ describe("adminApi", () => {
 
       const result = await listAuditLogs({ action: "suspend", limit: 10 });
 
-      // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(apiClient.get as ReturnType<typeof vi.fn>).toHaveBeenCalledWith("/api/v1/logs", {
         params: { action: "suspend", limit: 10 },
       });
@@ -202,7 +195,6 @@ describe("adminApi", () => {
 
       const result = await getRecentActivity(5);
 
-      // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(apiClient.get as ReturnType<typeof vi.fn>).toHaveBeenCalledWith(
         "/api/v1/logs/recent-activity",
         {

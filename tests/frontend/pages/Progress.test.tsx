@@ -158,13 +158,15 @@ describe("Progress page", () => {
     anchorElement.click = clickSpy;
     anchorElement.remove = removeSpy;
 
-    const createElementSpy = vi.spyOn(document, "createElement").mockImplementation((tagName) => {
-      if (tagName === "a") {
-        return anchorElement;
-      }
-      // For other elements, use the original implementation
-      return originalCreateElement(tagName);
-    });
+    const createElementSpy = vi
+      .spyOn(document, "createElement")
+      .mockImplementation((tagName: string) => {
+        if (tagName === "a") {
+          return anchorElement;
+        }
+        // For other elements, use the original implementation
+        return originalCreateElement(tagName);
+      });
 
     renderProgress();
 

@@ -13,7 +13,7 @@ This document summarizes the GitHub issues setup for the FitVibe project. User s
 
 ### 1. User Stories Document
 
-**File**: `USER_STORIES.md`
+**File**: `docs/USER_STORIES.md`
 
 - **65 user stories** organized by epic
 - Each story includes:
@@ -179,11 +179,11 @@ Each issue includes:
 4. **Activities**: List of activities (E-X-AY)
 5. **Dependencies**: Related requirements or user stories
 6. **Acceptance Criteria**: Placeholder (to be filled)
-7. **Related Documentation**: Links to USER_STORIES.md and PROJECT_EPICS_AND_ACTIVITIES.md
+7. **Related Documentation**: Links to docs/USER_STORIES.md and docs/PROJECT_EPICS_AND_ACTIVITIES.md
 
 ## Regenerating Issues
 
-If you update `USER_STORIES.md`, regenerate the issue files:
+If you update `docs/USER_STORIES.md`, regenerate the issue files:
 
 ```bash
 python scripts/generate_github_issues.py
@@ -217,8 +217,8 @@ Common issues:
 
 ## Files Reference
 
-- `USER_STORIES.md` - User stories with activities grouped
-- `PROJECT_EPICS_AND_ACTIVITIES.md` - Original epics and activities
+- `docs/USER_STORIES.md` - User stories with activities grouped
+- `docs/PROJECT_EPICS_AND_ACTIVITIES.md` - Original epics and activities
 - `scripts/generate_github_issues.py` - Generates issue files
 - `scripts/create_issues_via_api.py` - Creates issues via API
 - `scripts/generated/create_github_issues.sh` - CLI commands

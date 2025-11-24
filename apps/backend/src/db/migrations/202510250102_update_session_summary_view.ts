@@ -94,9 +94,38 @@ export async function up(knex: Knex): Promise<void> {
   }
 
   // 5. Drop weekly_aggregates (it depends on session_summary)
+  // Use CASCADE to automatically drop any objects that depend on weekly_aggregates
   await knex.raw(`DROP MATERIALIZED VIEW IF EXISTS ${WEEKLY_VIEW} CASCADE;`);
 
-  // 6. Drop all indexes on session_summary explicitly (required before dropping the view)
+  // 6. Check for any other views/materialized views that depend on session_summary
+  interface DependencyRow {
+    dependent_view: string;
+  }
+  const dependentViews = (await knex.raw(`
+    SELECT DISTINCT dependent_ns.nspname AS dependent_schema,
+                    dependent_view.relname AS dependent_view
+    FROM pg_depend 
+    JOIN pg_rewrite ON pg_depend.objid = pg_rewrite.oid 
+    JOIN pg_class AS dependent_view ON pg_rewrite.ev_class = dependent_view.oid
+    JOIN pg_class AS source_table ON pg_depend.refobjid = source_table.oid
+    JOIN pg_namespace dependent_ns ON dependent_view.relnamespace = dependent_ns.oid
+    JOIN pg_namespace source_ns ON source_table.relnamespace = source_ns.oid
+    WHERE source_ns.nspname = 'public'
+      AND source_table.relname = '${SESSION_VIEW}'
+      AND dependent_view.relkind IN ('v', 'm')
+      AND dependent_view.relname != '${SESSION_VIEW}'
+      AND dependent_view.relname != '${WEEKLY_VIEW}'
+  `)) as unknown as { rows: DependencyRow[] };
+
+  if (dependentViews.rows && dependentViews.rows.length > 0) {
+    for (const row of dependentViews.rows) {
+      // Drop any remaining dependent views
+      await knex.raw(`DROP MATERIALIZED VIEW IF EXISTS ${row.dependent_view} CASCADE;`);
+      await knex.raw(`DROP VIEW IF EXISTS ${row.dependent_view} CASCADE;`);
+    }
+  }
+
+  // 7. Drop all indexes on session_summary explicitly (required before dropping the view)
   const sessionIndexes = (await knex.raw(`
     SELECT indexname
     FROM pg_indexes
@@ -108,7 +137,7 @@ export async function up(knex: Knex): Promise<void> {
     }
   }
 
-  // 7. Now drop session_summary - all dependencies should be gone
+  // 8. Now drop session_summary - use CASCADE to handle any remaining dependencies
   await knex.raw(`DROP MATERIALIZED VIEW IF EXISTS ${SESSION_VIEW} CASCADE;`);
 
   // Recreate session_summary with new columns

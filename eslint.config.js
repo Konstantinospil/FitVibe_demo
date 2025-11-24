@@ -23,6 +23,7 @@ export default tseslint.config(
       "**/*.js",
       "**/*.cjs",
       "**/*.mjs",
+      "tests/**/*.cjs", // E2E test configs
     ],
   },
   js.configs.recommended,
@@ -103,13 +104,37 @@ export default tseslint.config(
     },
   },
   {
-    files: ["**/__tests__/**/*.ts", "**/*.test.ts", "**/*.spec.ts"],
+    files: [
+      "**/__tests__/**/*.ts",
+      "**/__tests__/**/*.tsx",
+      "**/*.test.ts",
+      "**/*.test.tsx",
+      "**/*.spec.ts",
+      "**/*.spec.tsx",
+      "tests/**/*.ts",
+      "tests/**/*.tsx",
+    ],
+    languageOptions: {
+      parserOptions: {
+        // Disable type-aware linting for test files
+        project: false,
+      },
+    },
     rules: {
       "@typescript-eslint/no-unsafe-assignment": "off",
       "@typescript-eslint/no-unsafe-call": "off",
       "@typescript-eslint/no-unsafe-member-access": "off",
       "@typescript-eslint/no-unsafe-return": "off",
+      "@typescript-eslint/no-unsafe-argument": "off",
       "@typescript-eslint/no-explicit-any": "off",
+      "@typescript-eslint/no-redundant-type-constituents": "off",
+      "@typescript-eslint/no-unused-vars": "off",
+      "@typescript-eslint/unbound-method": "off",
+      // Disable type-checking rules that require project references
+      "@typescript-eslint/no-floating-promises": "off",
+      "@typescript-eslint/await-thenable": "off",
+      "@typescript-eslint/no-misused-promises": "off",
+      "@typescript-eslint/no-unnecessary-type-assertion": "off",
     },
   },
 );

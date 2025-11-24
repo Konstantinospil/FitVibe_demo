@@ -140,7 +140,7 @@ Located in [`2.Technical_Design_Document/2.f.Architectural_Decision_Documentatio
 ## Quick Links
 
 - [Main README](../README.md) - Project overview and quick start
-- [Contributing Guide](../CONTRIBUTING.md) - How to contribute to the project
+- [Contributing Guide](CONTRIBUTING.md) - How to contribute to the project
 - [Glossary](0.Glossary.md) - Terminology reference
 - [ADR Index](2.Technical_Design_Document/2.f.Architectural_Decision_Documentation/ADR_INDEX.md) - All architecture decisions
 - [Diagrams Index](2.Technical_Design_Document/2.g.Diagramms/diagrams_index.md) - Visual documentation

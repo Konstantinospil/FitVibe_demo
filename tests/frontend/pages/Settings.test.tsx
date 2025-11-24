@@ -56,11 +56,10 @@ const renderSettings = () => {
 };
 
 describe("Settings", () => {
-  // eslint-disable-next-line @typescript-eslint/unbound-method
   const mockGet = vi.mocked(apiClient.get);
-  // eslint-disable-next-line @typescript-eslint/unbound-method
+
   const mockPatch = vi.mocked(apiClient.patch);
-  // eslint-disable-next-line @typescript-eslint/unbound-method
+
   const mockDelete = vi.mocked(apiClient.delete);
 
   beforeEach(() => {
