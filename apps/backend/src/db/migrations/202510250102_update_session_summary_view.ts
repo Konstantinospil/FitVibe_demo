@@ -65,11 +65,12 @@ const LEGACY_SESSION_VIEW_SQL = `
 `;
 
 export async function up(knex: Knex): Promise<void> {
-  // Drop dependent objects first
+  // Drop dependent objects first (in reverse dependency order)
+  await knex.raw(`DROP MATERIALIZED VIEW IF EXISTS mv_leaderboard CASCADE;`);
   await knex.raw(`DROP VIEW IF EXISTS v_session_summary CASCADE;`);
   await knex.raw(`DROP TRIGGER IF EXISTS trg_session_summary_refresh ON sessions;`);
   await knex.raw(`DROP FUNCTION IF EXISTS session_summary_refresh_trigger();`);
-  await knex.raw(`DROP MATERIALIZED VIEW IF EXISTS ${WEEKLY_VIEW};`);
+  await knex.raw(`DROP MATERIALIZED VIEW IF EXISTS ${WEEKLY_VIEW} CASCADE;`);
   await knex.raw(`DROP MATERIALIZED VIEW IF EXISTS ${SESSION_VIEW} CASCADE;`);
 
   // Recreate session_summary with new columns

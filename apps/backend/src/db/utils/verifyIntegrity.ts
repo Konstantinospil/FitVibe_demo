@@ -8,7 +8,7 @@ const TABLES = [
   "fitness_levels",
   "exercise_types",
   "users",
-  "user_static",
+  "profiles",
   "user_contacts",
   "auth_sessions",
   "user_state_history",

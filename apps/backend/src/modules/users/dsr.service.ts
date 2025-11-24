@@ -138,7 +138,7 @@ export async function executeAccountDeletion(userId: string): Promise<void> {
     await trx("plans").where({ user_id: userId }).del();
     await trx("user_metrics").where({ user_id: userId }).del();
     await trx("user_contacts").where({ user_id: userId }).del();
-    await trx("user_static").where({ user_id: userId }).del();
+    await trx("profiles").where({ user_id: userId }).del();
     await trx("user_state_history").where({ user_id: userId }).del();
     await trx("user_points").where({ user_id: userId }).del();
     await trx("badges").where({ user_id: userId }).del();

@@ -137,9 +137,9 @@ describe("database seed modules", () => {
       },
     },
     {
-      name: "user_static",
+      name: "profiles",
       seedFn: seedUserStatic,
-      table: "user_static",
+      table: "profiles",
       conflict: "user_id",
       strategy: "merge",
       sampleMatcher: { gender_code: "woman" },

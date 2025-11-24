@@ -229,7 +229,7 @@ describe("dsr.service", () => {
     ensureTable("exercises");
     ensureTable("user_metrics");
     ensureTable("user_contacts");
-    ensureTable("user_static");
+    ensureTable("profiles");
     ensureTable("user_state_history");
     ensureTable("user_points");
     ensureTable("badges");
@@ -318,7 +318,7 @@ describe("dsr.service", () => {
     tables.plans.push({ id: "plan-1", user_id: userId });
     tables.exercises.push({ id: "exercise-1", owner_id: userId });
     tables.user_metrics.push({ id: "metric-1", user_id: userId });
-    tables.user_static.push({ user_id: userId });
+    tables.profiles.push({ user_id: userId });
     tables.user_state_history.push({ id: "history-1", user_id: userId });
     tables.user_points.push({ id: "point-1", user_id: userId });
     tables.badges.push({ id: "badge-1", user_id: userId });

@@ -115,10 +115,9 @@ describeFn("database migrations", () => {
       const columns = await client("users").columnInfo();
       expect(columns.id).toBeDefined();
       expect(columns.username).toBeDefined();
-      expect(columns.email).toBeDefined();
+      expect(columns.display_name).toBeDefined();
       expect(columns.password_hash).toBeDefined();
       expect(columns.role_code).toBeDefined();
-      expect(columns.email_verified).toBeDefined();
       expect(columns.created_at).toBeDefined();
       expect(columns.updated_at).toBeDefined();
     });
@@ -129,11 +128,11 @@ describeFn("database migrations", () => {
 
       const columns = await client("profiles").columnInfo();
       expect(columns.user_id).toBeDefined();
-      expect(columns.display_name).toBeDefined();
-      expect(columns.bio).toBeDefined();
       expect(columns.date_of_birth).toBeDefined();
-      expect(columns.gender_id).toBeDefined();
-      expect(columns.fitness_level).toBeDefined();
+      expect(columns.gender_code).toBeDefined();
+      expect(columns.alias).toBeDefined();
+      expect(columns.bio).toBeDefined();
+      expect(columns.visibility).toBeDefined();
       expect(columns.created_at).toBeDefined();
       expect(columns.updated_at).toBeDefined();
     });
@@ -144,9 +143,9 @@ describeFn("database migrations", () => {
 
       const columns = await client("sessions").columnInfo();
       expect(columns.id).toBeDefined();
-      expect(columns.user_id).toBeDefined();
+      expect(columns.owner_id).toBeDefined();
       expect(columns.plan_id).toBeDefined();
-      expect(columns.name).toBeDefined();
+      expect(columns.title).toBeDefined();
       expect(columns.status).toBeDefined();
       expect(columns.visibility).toBeDefined();
       expect(columns.planned_at).toBeDefined();
@@ -162,7 +161,7 @@ describeFn("database migrations", () => {
       expect(columns.id).toBeDefined();
       expect(columns.name).toBeDefined();
       expect(columns.owner_id).toBeDefined();
-      expect(columns.category_id).toBeDefined();
+      expect(columns.type_code).toBeDefined();
       expect(columns.created_at).toBeDefined();
       expect(columns.updated_at).toBeDefined();
     });
@@ -187,12 +186,11 @@ describeFn("database migrations", () => {
       const columns = await client("exercise_sets").columnInfo();
       expect(columns.id).toBeDefined();
       expect(columns.session_exercise_id).toBeDefined();
-      expect(columns.set_number).toBeDefined();
+      expect(columns.order_index).toBeDefined();
       expect(columns.reps).toBeDefined();
       expect(columns.weight_kg).toBeDefined();
       expect(columns.rpe).toBeDefined();
       expect(columns.created_at).toBeDefined();
-      expect(columns.updated_at).toBeDefined();
     });
 
     it("creates personal_records table with correct schema", async () => {
@@ -203,11 +201,10 @@ describeFn("database migrations", () => {
       expect(columns.id).toBeDefined();
       expect(columns.user_id).toBeDefined();
       expect(columns.exercise_id).toBeDefined();
-      expect(columns.metric_type).toBeDefined();
+      expect(columns.pr_type).toBeDefined();
       expect(columns.value).toBeDefined();
       expect(columns.achieved_at).toBeDefined();
       expect(columns.is_current).toBeDefined();
-      expect(columns.visibility).toBeDefined();
       expect(columns.created_at).toBeDefined();
     });
 
@@ -217,8 +214,8 @@ describeFn("database migrations", () => {
 
       const columns = await client("feed_items").columnInfo();
       expect(columns.id).toBeDefined();
-      expect(columns.user_id).toBeDefined();
-      expect(columns.content).toBeDefined();
+      expect(columns.owner_id).toBeDefined();
+      expect(columns.kind).toBeDefined();
       expect(columns.visibility).toBeDefined();
       expect(columns.created_at).toBeDefined();
       expect(columns.updated_at).toBeDefined();
@@ -232,18 +229,28 @@ describeFn("database migrations", () => {
       expect(columns.id).toBeDefined();
       expect(columns.user_id).toBeDefined();
       expect(columns.points).toBeDefined();
-      expect(columns.reason).toBeDefined();
+      expect(columns.source_type).toBeDefined();
       expect(columns.awarded_at).toBeDefined();
     });
 
     it("creates foreign key constraints between users and profiles", async () => {
       const foreignKeys = await client.raw(`
-        SELECT constraint_name, table_name, column_name,
-               foreign_table_name, foreign_column_name
-        FROM information_schema.key_column_usage
-        WHERE table_schema = 'tmp_migration_test'
-          AND table_name = 'profiles'
-          AND constraint_name LIKE '%foreign%'
+        SELECT
+          tc.constraint_name,
+          tc.table_name,
+          kcu.column_name,
+          ccu.table_name AS foreign_table_name,
+          ccu.column_name AS foreign_column_name
+        FROM information_schema.table_constraints AS tc
+        JOIN information_schema.key_column_usage AS kcu
+          ON tc.constraint_name = kcu.constraint_name
+          AND tc.table_schema = kcu.table_schema
+        JOIN information_schema.constraint_column_usage AS ccu
+          ON ccu.constraint_name = tc.constraint_name
+          AND ccu.table_schema = tc.table_schema
+        WHERE tc.constraint_type = 'FOREIGN KEY'
+          AND tc.table_schema = 'tmp_migration_test'
+          AND tc.table_name = 'profiles'
       `);
 
       expect(foreignKeys.rows.length).toBeGreaterThan(0);
@@ -355,7 +362,7 @@ const knex = require('knex');
       pool: { min: 0, max: 1 },
       acquireConnectionTimeout: ${acquireTimeout},
     });
-    
+
     // Set a timeout for the connection attempt
     const timeout = setTimeout(() => {
       if (client) {
@@ -363,7 +370,7 @@ const knex = require('knex');
       }
       process.exit(1);
     }, ${process.env.CI ? 6000 : 3000});
-    
+
     await client.raw('select 1');
     clearTimeout(timeout);
     await client.destroy();

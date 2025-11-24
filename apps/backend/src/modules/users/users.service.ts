@@ -62,10 +62,16 @@ const CONTACT_VERIFICATION_RESEND_LIMIT = 3;
 const CONTACT_VERIFICATION_RESEND_WINDOW_MS = 60 * 60 * 1000;
 const CONTACT_VERIFICATION_RETENTION_DAYS = 7;
 
-type UserStaticRow = {
+type ProfileRow = {
   user_id: string;
+  alias: string | null;
+  bio: string | null;
+  avatar_asset_id: string | null;
   date_of_birth: string | null;
   gender_code: string | null;
+  visibility: string;
+  timezone: string | null;
+  unit_preferences: Record<string, unknown>;
   created_at: string;
   updated_at: string;
 };
@@ -738,14 +744,20 @@ export async function collectUserData(userId: string): Promise<UserDataExportBun
   }
 
   const contacts = await db<ContactRow>("user_contacts").where({ user_id: userId });
-  const profileRow = await db<UserStaticRow>("user_static")
+  const profileRow = await db<ProfileRow>("profiles")
     .where({ user_id: userId })
-    .first<UserStaticRow>();
+    .first<ProfileRow>();
   const profile = profileRow
     ? {
         user_id: profileRow.user_id,
+        alias: profileRow.alias,
+        bio: profileRow.bio,
+        avatar_asset_id: profileRow.avatar_asset_id,
         date_of_birth: profileRow.date_of_birth,
         gender_code: profileRow.gender_code,
+        visibility: profileRow.visibility,
+        timezone: profileRow.timezone,
+        unit_preferences: profileRow.unit_preferences,
         created_at: profileRow.created_at,
         updated_at: profileRow.updated_at,
       }

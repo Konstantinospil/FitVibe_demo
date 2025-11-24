@@ -18,5 +18,8 @@ export async function seed(knex: Knex): Promise<void> {
     },
   ];
 
-  await knex("user_static").insert(rows).onConflict("user_id").merge();
+  // Note: Table renamed to 'profiles' in migration 202511160000
+  // Using raw query to handle both old and new table names during migration
+  const tableName = (await knex.schema.hasTable("profiles")) ? "profiles" : "user_static";
+  await knex(tableName).insert(rows).onConflict("user_id").merge();
 }

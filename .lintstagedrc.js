@@ -5,7 +5,9 @@ export default {
       (f) => !f.includes("/dist/") && !f.includes("\\dist\\") && !f.includes("node_modules"),
     );
     if (filtered.length === 0) return [];
-    return [`eslint --fix ${filtered.join(" ")}`, `prettier --write ${filtered.join(" ")}`];
+    // Quote filenames to handle spaces in paths
+    const quoted = filtered.map((f) => `"${f}"`).join(" ");
+    return [`eslint --fix ${quoted}`, `prettier --write ${quoted}`];
   },
   "*.{json,md,yml,yaml}": ["prettier --write"],
 };
