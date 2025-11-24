@@ -53,9 +53,25 @@ const Register: React.FC = () => {
       return;
     }
 
-    // Validate password strength (basic check)
+    // Validate password strength (matches backend requirements)
     if (password.length < 12) {
       setError("Password must be at least 12 characters");
+      return;
+    }
+    if (!/(?=.*[a-z])/.test(password)) {
+      setError("Password must contain at least one lowercase letter");
+      return;
+    }
+    if (!/(?=.*[A-Z])/.test(password)) {
+      setError("Password must contain at least one uppercase letter");
+      return;
+    }
+    if (!/(?=.*\d)/.test(password)) {
+      setError("Password must contain at least one digit");
+      return;
+    }
+    if (!/(?=.*[^\w\s])/.test(password)) {
+      setError("Password must contain at least one symbol");
       return;
     }
 
