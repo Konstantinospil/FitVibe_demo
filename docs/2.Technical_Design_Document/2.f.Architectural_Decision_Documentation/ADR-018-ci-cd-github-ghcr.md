@@ -16,24 +16,34 @@ We require a deterministic, secure, and budget-enforcing delivery pipeline. The 
 ## Decision
 
 1. **Triggers & Branch Strategy**
-   - **PRs to `main`**: run full CI (no deploy).
-   - **Push to `main`**: run full CI + build images + publish canary tags.
+   - **All PRs**: run full CI (quality gates, tests, security, performance, accessibility).
+   - **Push to `main`, `dev`, `stage`**: run full CI + build images + publish tags (E2E and build jobs enabled).
    - **Release tags (`vX.Y.Z`)**: publish immutable images, SBOM, and provenance; deploy to staging → manual approval → production.
    - Protected branches with required checks; linear history via squash merges.
 
-2. **Workflow Stages (Overview)**
-   1. **Prepare**: checkout, setup Node LTS & pnpm, restore turbo/pnpm caches.
-   2. **Static Quality**: `eslint --max-warnings=0`, `tsc -b` (project refs).
-   3. **Unit Tests**: vitest/jest with JUnit + coverage (Codecov/upload). Thresholds enforced.
-   4. **Integration Tests**: ephemeral Postgres/Redis via services; migrations/seeds per run.
-   5. **E2E Tests**: Playwright against preview server; artifacts (screenshots, traces) uploaded.
-   6. **Lighthouse/A11y**: CI audit; fail < **90** score; axe checks for WCAG AA violations.
-   7. **Security**: dependency scan (OSV/GHAS), secret scan, **ZAP baseline (authenticated)**; fail on **High/Critical** CVEs or missing headers.
-   8. **Perf (k6 smoke)**: gate on budgets (API **p95 < 300 ms**, LCP **< 2.5 s**) and on **>10% regression** vs baseline.
-   9. **Build Containers**: multi-stage Dockerfiles for backend/frontend; SBOM (syft) and **SLSA provenance** generated.
-   10. **Publish**: push images to **GHCR** (`ghcr.io/org/app:{sha,branch,semver}`); mark canary/stable appropriately.
-   11. **Deploy**: staging auto-deploy on release tag; production requires **manual approval** and environment protections.
-   12. **Post-Deploy Checks**: health probes, smoke tests, and rollback on failure.
+2. **Workflow Structure & Stages**
+
+   The CI pipeline is structured as **multiple parallel and sequential jobs** for efficiency and clarity:
+
+   **Primary Quality Gates** (run on all PRs and pushes, in parallel):
+   - **`quality`** job: lint (`pnpm lint:check`), typecheck (`pnpm typecheck`), unit tests (backend/frontend with coverage), coverage gate (`pnpm test:coverage:gate`), QA baseline validation, i18n check, feature flags check, build (`pnpm build`).
+   - **`database_tests`** job: migration tests and seed tests (separate from unit tests for isolation).
+
+   **Secondary Jobs** (run after quality gates pass, mostly in parallel):
+   - **`openapi_spec`**: Generate and validate OpenAPI schema.
+   - **`integration`**: Integration tests with ephemeral Postgres/Redis via services; migrations/seeds per run.
+   - **`metrics_contract`**: Validate Prometheus metrics exposure.
+   - **`security`**: Dependency audit (`pnpm audit --prod --audit-level=high`), OSV scanner, Snyk scan, TruffleHog secret scanning, static secret scan, Trivy container scan.
+   - **`zap_baseline`**: OWASP ZAP baseline scan (if target URL configured).
+   - **`performance`**: k6 smoke test, performance budget assertion (API p95 < 300ms, LCP < 2.5s, no >10% regression), Lighthouse CI.
+   - **`accessibility`**: Axe accessibility suite for WCAG 2.1 AA compliance.
+   - **`qa_summary`**: Aggregate coverage and performance metrics, generate QA summary.
+
+   **Conditional Jobs** (run only on push to `main`/`stage`):
+   - **`e2e`**: Playwright E2E tests against preview server; artifacts (screenshots, traces) uploaded.
+   - **`build`**: Build multi-arch Docker images (linux/amd64, linux/arm64), generate SBOMs (via Docker buildx), sign images with cosign (keyless OIDC), create GitHub release, upload container artifacts.
+
+   > See `.github/workflows/ci.yml` for the complete job definitions and dependencies.
 
 3. **Artifacts & Supply Chain Security**
    - **SBOM** generated per image and attached to release.
