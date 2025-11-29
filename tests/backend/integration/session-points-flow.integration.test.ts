@@ -23,6 +23,10 @@ describe("Integration: Session → Points Flow", () => {
   let testUser: { id: string; email: string; password: string; accessToken: string };
 
   beforeEach(async () => {
+    // Ensure read-only mode is disabled for tests
+    const { env } = await import("../../../apps/backend/src/config/env.js");
+    (env as { readOnlyMode: boolean }).readOnlyMode = false;
+
     await truncateAll();
     // Ensure roles are seeded before creating users
     await ensureRolesSeeded();
@@ -55,6 +59,31 @@ describe("Integration: Session → Points Flow", () => {
     const verifyUser = await db("users").where({ id: userId }).first();
     if (!verifyUser) {
       throw new Error(`User ${userId} was not created in database`);
+    }
+
+    // Verify email contact was created
+    const verifyContact = await db("user_contacts")
+      .where({ user_id: userId, type: "email", is_primary: true })
+      .first();
+    if (!verifyContact) {
+      throw new Error(`User email contact was not created in database`);
+    }
+
+    // Verify user can be found by email (same query login uses)
+    const { findUserByEmail } = await import(
+      "../../../apps/backend/src/modules/auth/auth.repository.js"
+    );
+    let foundUser = await findUserByEmail("points@example.com");
+    let retries = 0;
+    while (!foundUser && retries < 10) {
+      await new Promise((resolve) => setTimeout(resolve, 100));
+      foundUser = await findUserByEmail("points@example.com");
+      retries++;
+    }
+    if (!foundUser) {
+      throw new Error(
+        `User not found by email after ${retries} retries. User exists: ${!!verifyUser}, Contact exists: ${!!verifyContact}`,
+      );
     }
 
     // Login to get access token

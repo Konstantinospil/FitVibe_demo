@@ -27,6 +27,10 @@ describe("Integration: Feed Sharing → Reactions Flow", () => {
   let user2: { id: string; email: string; accessToken: string };
 
   beforeEach(async () => {
+    // Ensure read-only mode is disabled for tests
+    const { env } = await import("../../../apps/backend/src/config/env.js");
+    (env as { readOnlyMode: boolean }).readOnlyMode = false;
+
     await truncateAll();
     // Ensure roles are seeded before creating users
     await ensureRolesSeeded();

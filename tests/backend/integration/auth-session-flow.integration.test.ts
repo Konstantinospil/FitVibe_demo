@@ -22,6 +22,10 @@ import { v4 as uuidv4 } from "uuid";
 
 describe("Integration: Auth → Session Flow", () => {
   beforeEach(async () => {
+    // Ensure read-only mode is disabled for tests
+    const { env } = await import("../../../apps/backend/src/config/env.js");
+    (env as { readOnlyMode: boolean }).readOnlyMode = false;
+
     // Clean up any existing test data
     await truncateAll();
     // Ensure roles are seeded before creating users
@@ -67,6 +71,23 @@ describe("Integration: Auth → Session Flow", () => {
 
     expect(verifyResponse.status).toBe(200);
     expect(verifyResponse.body.user.status).toBe("active");
+
+    // Verify user can be found by email before login (same query login uses)
+    const { findUserByEmail } = await import(
+      "../../../apps/backend/src/modules/auth/auth.repository.js"
+    );
+    let foundUser = await findUserByEmail("testuser@example.com");
+    let retries = 0;
+    while ((!foundUser || foundUser.status !== "active") && retries < 10) {
+      await new Promise((resolve) => setTimeout(resolve, 100));
+      foundUser = await findUserByEmail("testuser@example.com");
+      retries++;
+    }
+    if (!foundUser || foundUser.status !== "active") {
+      throw new Error(
+        `User not found or not active after ${retries} retries. User: ${foundUser ? JSON.stringify({ id: foundUser.id, status: foundUser.status }) : "null"}`,
+      );
+    }
 
     // Step 3: Login via API
     const loginResponse = await request(app).post("/api/v1/auth/login").send({
@@ -132,6 +153,37 @@ describe("Integration: Auth → Session Flow", () => {
 
     if (!userResult) {
       throw new Error("Failed to create user for login failure test");
+    }
+
+    // Verify user exists and can be found by email
+    const verifyUser = await db("users").where({ id: userId }).first();
+    if (!verifyUser) {
+      throw new Error(`User ${userId} was not created in database`);
+    }
+
+    // Verify email contact was created
+    const verifyContact = await db("user_contacts")
+      .where({ user_id: userId, type: "email", is_primary: true })
+      .first();
+    if (!verifyContact) {
+      throw new Error(`User email contact was not created in database`);
+    }
+
+    // Verify user can be found by email (same query login uses)
+    const { findUserByEmail } = await import(
+      "../../../apps/backend/src/modules/auth/auth.repository.js"
+    );
+    let foundUser = await findUserByEmail("existing@example.com");
+    let retries = 0;
+    while (!foundUser && retries < 10) {
+      await new Promise((resolve) => setTimeout(resolve, 100));
+      foundUser = await findUserByEmail("existing@example.com");
+      retries++;
+    }
+    if (!foundUser) {
+      throw new Error(
+        `User not found by email after ${retries} retries. User exists: ${!!verifyUser}, Contact exists: ${!!verifyContact}`,
+      );
     }
 
     // Attempt login with wrong password
