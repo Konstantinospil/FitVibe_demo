@@ -1,6 +1,6 @@
 import React from "react";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import Insights from "../../src/pages/Insights";
 import * as api from "../../src/services/api";
@@ -106,6 +106,7 @@ const createQueryClient = () => {
     defaultOptions: {
       queries: {
         retry: false,
+        gcTime: 0, // Disable garbage collection time for tests
       },
     },
   });
@@ -117,6 +118,12 @@ describe("Insights page", () => {
   beforeEach(() => {
     queryClient = createQueryClient();
     vi.clearAllMocks();
+  });
+
+  afterEach(() => {
+    // Clean up QueryClient to prevent memory leaks
+    queryClient.clear();
+    queryClient.removeQueries();
   });
 
   const renderInsights = () => {

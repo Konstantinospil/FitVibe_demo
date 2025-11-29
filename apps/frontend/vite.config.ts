@@ -56,10 +56,14 @@ export default defineConfig(() => {
           // Explicitly set thread limits to avoid minThreads/maxThreads conflict
           // In CI, use fewer threads to avoid resource contention
           // Ensure minThreads <= maxThreads to prevent RangeError
+          // Reduced threads to prevent memory issues - single thread for stability
           minThreads: 1,
-          maxThreads: process.env.CI ? 2 : 4,
+          maxThreads: 1, // Use single thread to prevent memory accumulation
         },
       },
+      testTimeout: 10000, // 10 second timeout per test
+      hookTimeout: 10000, // 10 second timeout for hooks
+      teardownTimeout: 5000, // 5 second timeout for teardown
       // Ensure dependencies are resolved correctly for setup files
       server: {
         deps: {
