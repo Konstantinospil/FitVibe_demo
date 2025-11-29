@@ -26,7 +26,7 @@ jest.mock("bcryptjs");
 jest.mock("jsonwebtoken");
 jest.mock("crypto");
 jest.mock("uuid", () => ({
-  v4: jest.fn(() => "mock-uuid-123"),
+  v4: jest.fn(() => "00000000-0000-0000-0000-000000000123"),
 }));
 
 const mockAuthRepo = jest.mocked(authRepo);
@@ -123,7 +123,7 @@ describe("2-Stage Login Flow (AC-1.6)", () => {
       // Verify
       expect(result.requires2FA).toBe(true);
       if (result.requires2FA) {
-        expect(result.pendingSessionId).toBe("mock-uuid-123");
+        expect(result.pendingSessionId).toBe("00000000-0000-0000-0000-000000000123");
       }
       expect(mockTwofaService.is2FAEnabled).toHaveBeenCalledWith("user-123");
       expect(mockPending2faRepo.createPending2FASession).toHaveBeenCalled();
@@ -390,7 +390,7 @@ describe("2-Stage Login Flow (AC-1.6)", () => {
       // Verify pending 2FA session was created
       expect(mockPending2faRepo.createPending2FASession).toHaveBeenCalledWith(
         expect.objectContaining({
-          id: "mock-uuid-123",
+          id: "00000000-0000-0000-0000-000000000123",
           user_id: "user-123",
           ip: "127.0.0.1",
           user_agent: "Mozilla/5.0",
