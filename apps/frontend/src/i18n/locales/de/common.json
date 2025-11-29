@@ -12,7 +12,10 @@
   "language": {
     "label": "Sprache",
     "english": "Englisch",
-    "german": "Deutsch"
+    "german": "Deutsch",
+    "spanish": "Spanisch",
+    "french": "Französisch",
+    "greek": "Griechisch"
   },
   "status": {
     "checking": "Backend wird geprüft...",

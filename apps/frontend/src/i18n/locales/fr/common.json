@@ -1,0 +1,481 @@
+{
+  "navigation": {
+    "home": "Accueil",
+    "sessions": "Séances",
+    "insights": "Analyses",
+    "profile": "Profil",
+    "signOut": "Déconnexion",
+    "you": "Vous",
+    "activeSession": "Séance active",
+    "skipToContent": "Aller au contenu principal"
+  },
+  "language": {
+    "label": "Langue",
+    "english": "Anglais",
+    "german": "Allemand",
+    "spanish": "Espagnol",
+    "french": "Français",
+    "greek": "Grec"
+  },
+  "status": {
+    "checking": "Vérification du serveur…",
+    "online": "Serveur en ligne",
+    "offline": "Serveur hors ligne"
+  },
+  "visibility": {
+    "labels": {
+      "private": "Privé",
+      "link": "Lien uniquement",
+      "public": "Public"
+    },
+    "guards": {
+      "private": "Seulement vous pouvez voir cette séance.",
+      "link": "Toute personne avec le lien peut voir.",
+      "public": "Visible par tous sur FitVibe."
+    }
+  },
+  "home": {
+    "eyebrow": "FitVibe",
+    "title": "Entraînez-vous plus intelligemment. Partagez vos progrès. Célébrez la régularité.",
+    "description": "Planifiez, enregistrez et analysez votre entraînement avec des détails prêts pour les entraîneurs. Suivez les séries, comparez les blocs et détectez les tendances de récupération sans fioritures.",
+    "subtitleOnline": "Connexion API saine — statut : {{status}}.",
+    "subtitleOnlineFallback": "Connexion API saine — prêt quand vous l'êtes.",
+    "subtitleOffline": "Travail hors ligne. Vos modifications seront synchronisées lorsque le serveur reviendra.",
+    "subtitleChecking": "Vérification de la santé de l'API et préchauffage des caches…",
+    "ctaPrimary": "Rejoindre la bêta privée",
+    "ctaSecondary": "Parler à l'équipe",
+    "chartTitle": "Tendance de régularité",
+    "chartDescription": "Taux de complétion sur sept jours pour les séances planifiées.",
+    "chartLabel": "Jour : {{label}}",
+    "chartValue": "{{value}}%"
+  },
+  "profile": {
+    "eyebrow": "Profil d'athlète",
+    "title": "Préférences, confidentialité et objectifs de performance.",
+    "description": "Définissez la visibilité par défaut, les unités préférées et les objectifs de records personnels pour que chaque séance partagée raconte votre histoire.",
+    "edit": "Modifier le profil",
+    "sections": {
+      "visibility": {
+        "title": "Visibilité",
+        "description": "Visibilité de séance par défaut : Abonnés. Passez à Public pour les récapitulatifs de compétition."
+      },
+      "units": {
+        "title": "Unités préférées",
+        "description": "Poids en kilogrammes • Distance en kilomètres • Allure en min/km."
+      },
+      "achievements": {
+        "title": "Réalisations marquantes",
+        "description": "Squat arrière 180 kg • Développé couché 115 kg • Soulevé de terre 210 kg • Qualifié pour le Marathon de Boston."
+      }
+    },
+    "share": {
+      "title": "Liens de partage",
+      "description": "Créez des liens de partage personnels pour les entraîneurs ou les juges. Révoquez l'accès instantanément à tout moment.",
+      "create": "Créer un lien de partage",
+      "empty": "Aucun lien de partage actif pour le moment.",
+      "copy": "Copier le lien",
+      "copyAria": "Copier le lien",
+      "revoke": "Révoquer",
+      "revoked": "Révoqué",
+      "copied": "Lien copié",
+      "copiedAria": "Lien copié dans le presse-papiers",
+      "guards": {
+        "active": "Partagez cette URL uniquement avec des personnes en qui vous avez confiance.",
+        "revoked": "Ce lien n'est plus accessible."
+      }
+    }
+  },
+  "feed": {
+    "eyebrow": "Flux communautaire",
+    "title": "Partagez vos progrès avec vos coéquipiers et vos abonnés.",
+    "description": "Le travail privé reste privé. Les réalisations publiques sont découvrables et faciles à célébrer.",
+    "timestamp": "il y a un instant",
+    "button": "Ouvrir la séance",
+    "items": {
+      "leah": {
+        "user": "Leah",
+        "note": "Nouveau 5RM au soulevé de terre à 170 kg — le travail de préhension porte ses fruits !",
+        "stats": "17 j'aime • 6 commentaires",
+        "visibility": "public"
+      },
+      "marco": {
+        "user": "Marco",
+        "note": "A partagé un plan de décharge avec protocole de rééducation de la cheville.",
+        "stats": "Vue entraîneur • Non listé",
+        "visibility": "link"
+      },
+      "team": {
+        "user": "Équipe Nordic Velocity",
+        "note": "Classement hebdomadaire : Emma a repris la 1ère place avec 98 points de série.",
+        "stats": "Épinglé • Flux d'équipe",
+        "visibility": "private"
+      }
+    }
+  },
+  "footer": {
+    "note": "Conçu pour les athlètes qui aiment les progrès basés sur les données — Fitvibe",
+    "terms": "Conditions générales",
+    "privacy": "Politique de confidentialité"
+  },
+  "terms": {
+    "eyebrow": "Légal",
+    "title": "Conditions générales",
+    "description": "Veuillez lire attentivement nos Conditions générales avant d'utiliser FitVibe.",
+    "effectiveDate": "Date d'entrée en vigueur"
+  },
+  "privacy": {
+    "eyebrow": "Légal",
+    "title": "Politique de confidentialité",
+    "description": "Découvrez comment nous collectons, utilisons et protégeons vos données personnelles.",
+    "effectiveDate": "Date d'entrée en vigueur"
+  },
+  "errors": {
+    "TERMS_ACCEPTANCE_REQUIRED": "Vous devez accepter les Conditions générales et la Politique de confidentialité pour créer un compte",
+    "TERMS_VERSION_OUTDATED": "Les Conditions générales ont été mises à jour. Veuillez accepter les nouveaux termes pour continuer.",
+    "WEAK_PASSWORD": "Le mot de passe doit contenir au moins 12 caractères et inclure des majuscules, minuscules, chiffres et symboles",
+    "PASSWORD_CONTAINS_USERNAME": "Le mot de passe ne peut pas contenir votre nom d'utilisateur",
+    "PASSWORD_CONTAINS_EMAIL": "Le mot de passe ne peut pas contenir votre adresse e-mail",
+    "AUTH_INVALID_TOKEN": "Jeton de vérification invalide",
+    "AUTH_TOKEN_EXPIRED": "Votre lien de vérification a expiré. Veuillez en demander un nouveau",
+    "AUTH_TOO_MANY_REQUESTS": "Limite de vérification atteinte. Veuillez réessayer plus tard",
+    "AUTH_CONFLICT": "Impossible de terminer l'inscription",
+    "AUTH_USER_NOT_FOUND": "Utilisateur introuvable",
+    "AUTH_INVALID_CREDENTIALS": "Identifiants invalides",
+    "AUTH_INVALID_REFRESH": "Jeton de rafraîchissement invalide",
+    "AUTH_SESSION_REVOKED": "Séance révoquée",
+    "AUTH_REFRESH_EXPIRED": "Jeton de rafraîchissement expiré",
+    "AUTH_INVALID_SCOPE": "Spécifiez un sessionId ou une portée de révocation",
+    "AUTH_SESSION_NOT_FOUND": "Séance introuvable",
+    "UNAUTHENTICATED": "Contexte d'authentification manquant",
+    "USER_USERNAME_TAKEN": "Le nom d'utilisateur est déjà utilisé",
+    "USER_USERNAME_INVALID": "Le nom d'utilisateur doit contenir entre 3 et 50 caractères et peut inclure des lettres, chiffres, points, underscores et tirets",
+    "USER_STATUS_INVALID": "Impossible de changer le statut",
+    "USER_DISPLAY_NAME_REQUIRED": "Le nom d'affichage est requis",
+    "USER_EMAIL_INVALID": "L'e-mail est requis",
+    "USER_ROLE_INVALID": "Le rôle est requis",
+    "USER_NOT_FOUND": "Utilisateur introuvable",
+    "USER_EMAIL_TAKEN": "L'e-mail est déjà utilisé",
+    "USER_REFRESH_FAILED": "Impossible de charger les données utilisateur",
+    "USER_INVALID_PASSWORD": "Mot de passe actuel invalide",
+    "USER_CONTACT_NOT_FOUND": "Contact introuvable",
+    "USER_CONTACT_ALREADY_VERIFIED": "Contact déjà vérifié",
+    "USER_PHONE_INVALID": "Le numéro de téléphone est requis",
+    "USER_PHONE_TAKEN": "Le numéro de téléphone est déjà utilisé",
+    "USER_CONTACT_TOKEN_REQUIRED": "Le jeton de vérification est requis",
+    "USER_CONTACT_TOKEN_INVALID": "Jeton de vérification invalide",
+    "USER_CONTACT_TOKEN_EXPIRED": "Jeton de vérification expiré",
+    "USER_CONTACT_REFRESH_FAILED": "Impossible de charger le contact",
+    "USER_CONTACT_REMOVE_PRIMARY": "Impossible de supprimer l'e-mail principal",
+    "EXERCISE_INVALID_TYPE": "Type d'exercice invalide",
+    "EXERCISE_DUPLICATE": "Le nom de l'exercice existe déjà dans cette portée de bibliothèque",
+    "EXERCISE_NOT_FOUND": "Exercice introuvable",
+    "EXERCISE_FORBIDDEN": "Vous n'avez pas la permission de modifier cet exercice",
+    "EXERCISE_CREATE_FAILED": "Impossible de charger l'exercice créé",
+    "EXERCISE_REFRESH_FAILED": "Impossible de charger l'exercice mis à jour",
+    "SESSION_INVALID_SET": "Données de série invalides",
+    "SESSION_INVALID_PLAN": "Plan invalide",
+    "SESSION_NOT_FOUND": "Séance introuvable",
+    "SESSION_CREATE_FAILED": "Impossible de charger la séance créée",
+    "SESSION_UPDATE_FAILED": "Impossible de charger la séance mise à jour",
+    "SESSION_CLONE_FAILED": "Impossible de charger la séance clonée",
+    "SESSION_RECURRENCE_INVALID": "L'horizon de récurrence dépasse un an",
+    "SESSION_INVALID_SOURCE": "La séance source a une date planifiée invalide",
+    "FEED_AUTH_REQUIRED": "Authentification requise pour le flux demandé",
+    "FEED_ITEM_NOT_FOUND": "Élément du flux introuvable",
+    "FEED_BLOCKED": "Interaction bloquée par les paramètres de confidentialité",
+    "FEED_NOT_PUBLIC": "L'élément du flux n'est pas public",
+    "FEED_SESSION_NOT_FOUND": "Séance introuvable",
+    "FEED_REPORT_REASON_REQUIRED": "La raison du signalement est requise",
+    "FEED_REPORT_REASON_TOO_LONG": "La raison dépasse 200 caractères",
+    "FEED_NOT_OWNER": "Vous n'êtes pas propriétaire de cette séance",
+    "FEED_INVALID_STATUS": "Seules les séances terminées peuvent être partagées",
+    "FEED_LINK_REVOKED": "Le lien de partage a été révoqué",
+    "FEED_LINK_EXPIRED": "Le lien de partage a expiré",
+    "FEED_LINK_EXHAUSTED": "Limite de vues du lien de partage atteinte",
+    "FEED_LINK_NOT_FOUND": "Lien de partage introuvable",
+    "FEED_USER_NOT_FOUND": "Utilisateur introuvable",
+    "FEED_CANNOT_FOLLOW_SELF": "Vous ne pouvez pas vous suivre vous-même",
+    "FEED_CANNOT_BLOCK_SELF": "Vous ne pouvez pas vous bloquer vous-même",
+    "FEED_COMMENT_NOT_FOUND": "Commentaire introuvable",
+    "FEED_INVALID_EXPIRES_AT": "expiresAt doit être une date ISO valide",
+    "SOCIAL_COMMENT_EMPTY": "Le corps du commentaire est requis",
+    "SOCIAL_COMMENT_TOO_LONG": "Le commentaire dépasse 500 caractères",
+    "SOCIAL_COMMENT_FORBIDDEN": "Le commentaire a échoué la modération",
+    "SOCIAL_COMMENT_LOAD_FAILED": "Échec du chargement du commentaire",
+    "POINTS_INVALID_CURSOR": "Le curseur est mal formé",
+    "POINTS_INVALID_LIMIT": "La limite doit être un entier positif",
+    "POINTS_INVALID_FROM": "From doit être un horodatage ISO valide",
+    "POINTS_INVALID_TO": "To doit être un horodatage ISO valide",
+    "POINTS_SESSION_NOT_COMPLETED": "La séance n'est pas terminée",
+    "IDEMPOTENCY_STATE": "Impossible d'initialiser l'enregistrement d'idempotence",
+    "IDEMPOTENCY_MISMATCH": "La clé d'idempotence a déjà été utilisée avec une charge utile différente",
+    "IDEMPOTENCY_INVALID": "L'en-tête Idempotency-Key ne doit pas être vide",
+    "VALIDATION_ERROR": "Échec de la validation",
+    "INTERNAL_SERVER_ERROR": "Erreur inattendue",
+    "UPLOAD_NO_FILE": "Aucun fichier téléchargé",
+    "UPLOAD_UNSUPPORTED_TYPE": "Type de fichier non pris en charge",
+    "UPLOAD_TOO_LARGE": "Fichier trop volumineux (max 5 Mo)",
+    "UPLOAD_MALWARE_DETECTED": "Le fichier a échoué au scan de sécurité",
+    "UPLOAD_NOT_FOUND": "Fichier introuvable",
+    "EMAIL_SERVICE_UNAVAILABLE": "Service e-mail indisponible"
+  },
+  "validation": {
+    "passwordMinLength": "Le mot de passe doit contenir au moins 12 caractères",
+    "passwordLowercase": "Le mot de passe doit inclure une lettre minuscule",
+    "passwordUppercase": "Le mot de passe doit inclure une lettre majuscule",
+    "passwordDigit": "Le mot de passe doit inclure un chiffre",
+    "passwordSymbol": "Le mot de passe doit inclure un symbole",
+    "usernameFormat": "Le nom d'utilisateur ne peut contenir que des lettres, chiffres, underscores, points ou tirets",
+    "sessionIdRequired": "Fournissez sessionId ou portée de révocation",
+    "revokeConflict": "Impossible de combiner revokeAll et revokeOthers"
+  },
+  "dashboard": {
+    "eyebrow": "Pouls de disponibilité",
+    "title": "Votre centre de commande d'entraînement",
+    "description": "Surveillez les séries, la disponibilité et les changements du classement en un coup d'œil. Les métriques se mettent à jour en temps réel après la synchronisation ou les enregistrements manuels.",
+    "errorRefresh": "Impossible d'actualiser les analyses. Affichage du dernier instantané.",
+    "retry": "Réessayer",
+    "personalBests": "Records personnels",
+    "volumeAggregates": "Agrégats de volume",
+    "selectRange": "Sélectionner la plage",
+    "last4Weeks": "4 dernières semaines",
+    "last8Weeks": "8 dernières semaines",
+    "weekly": "Hebdomadaire",
+    "monthly": "Mensuel",
+    "refreshing": "Actualisation…",
+    "period": "Période",
+    "volume": "Volume",
+    "sessions": "Séances",
+    "helperText": "Affichage jusqu'à 5 périodes pour garder les tableaux de bord partagés rapides."
+  },
+  "progress": {
+    "eyebrow": "Tendances et analyses",
+    "title": "Visualisez la progression avec contexte",
+    "description": "Comparez le volume, la vélocité et la disponibilité entre les blocs pour voir comment les changements de programmation génèrent des résultats.",
+    "exportFailed": "Échec de l'exportation des données de progression",
+    "chartRenderFailed": "Échec du rendu du graphique",
+    "reloadPage": "Recharger la page",
+    "presetRange": "Plage prédéfinie",
+    "customRange": "Plage personnalisée",
+    "period": "Période :",
+    "7days": "7 jours",
+    "30days": "30 jours",
+    "90days": "90 jours",
+    "groupBy": "Grouper par :",
+    "daily": "Quotidien",
+    "weekly": "Hebdomadaire",
+    "exportCsv": "Exporter CSV",
+    "volumeTrend": "Tendance de volume",
+    "sessionsTrend": "Tendance des séances",
+    "intensityTrend": "Intensité moyenne (RPE)",
+    "exerciseBreakdown": "Répartition des exercices",
+    "failedToLoad": "Échec du chargement des données de tendance",
+    "failedToLoadExercise": "Échec du chargement des données d'exercice",
+    "retry": "Réessayer",
+    "noData": "Aucune donnée pour cette période",
+    "noExerciseData": "Aucune donnée d'exercice pour cette période",
+    "exercise": "Exercice",
+    "totalVolume": "Volume total",
+    "avgVolume": "Volume moyen",
+    "maxWeight": "Poids maximum",
+    "trend": "Tendance",
+    "trendUp": "Hausse",
+    "trendDown": "Baisse",
+    "trendStable": "Stable",
+    "session": "séance",
+    "sessions": "séances"
+  },
+  "verifyEmail": {
+    "eyebrow": "Vérification de l'e-mail",
+    "titleVerifying": "Vérification de votre e-mail…",
+    "titleSuccess": "E-mail vérifié",
+    "titleFailed": "Échec de la vérification",
+    "descVerifying": "Veuillez patienter pendant que nous vérifions votre adresse e-mail.",
+    "descSuccess": "Votre e-mail a été vérifié. Redirection vers la connexion…",
+    "descFailed": "Nous n'avons pas pu vérifier votre e-mail. Le lien a peut-être expiré ou est invalide.",
+    "noToken": "Aucun jeton de vérification fourni",
+    "goToLogin": "Aller à la connexion",
+    "backToRegister": "Retour à l'inscription"
+  },
+  "forgotPassword": {
+    "eyebrow": "Réinitialisation du mot de passe",
+    "titleSuccess": "Vérifiez votre e-mail",
+    "title": "Mot de passe oublié ?",
+    "descSuccess": "Si un compte existe pour cet e-mail, nous avons envoyé des instructions de réinitialisation.",
+    "description": "Entrez votre e-mail et nous vous enverrons un lien de réinitialisation.",
+    "emailLabel": "Adresse e-mail",
+    "emailPlaceholder": "vous@exemple.com",
+    "sending": "Envoi…",
+    "sendLink": "Envoyer le lien de réinitialisation",
+    "backToLogin": "Retour à la connexion",
+    "successMessage": "Vérifiez votre e-mail pour le lien de réinitialisation du mot de passe.",
+    "errorSend": "Échec de l'envoi de l'e-mail de réinitialisation"
+  },
+  "resetPassword": {
+    "eyebrow": "Réinitialisation du mot de passe",
+    "titleSuccess": "Mot de passe réinitialisé avec succès",
+    "title": "Réinitialisez votre mot de passe",
+    "descSuccess": "Votre mot de passe a été réinitialisé. Redirection vers la connexion…",
+    "description": "Entrez votre nouveau mot de passe ci-dessous.",
+    "newPasswordLabel": "Nouveau mot de passe",
+    "newPasswordPlaceholder": "Entrez le nouveau mot de passe",
+    "confirmPasswordLabel": "Confirmer le nouveau mot de passe",
+    "confirmPasswordPlaceholder": "Confirmez le nouveau mot de passe",
+    "resetting": "Réinitialisation…",
+    "resetButton": "Réinitialiser le mot de passe",
+    "backToLogin": "Retour à la connexion",
+    "successText": "Vous pouvez maintenant vous connecter avec votre nouveau mot de passe.",
+    "passwordMismatch": "Les mots de passe ne correspondent pas",
+    "invalidToken": "Jeton de réinitialisation invalide. Veuillez en demander un nouveau.",
+    "errorReset": "Échec de la réinitialisation du mot de passe"
+  },
+  "logger": {
+    "eyebrow": "Carnet d'entraînement",
+    "title": "Capturez chaque répétition sans interrompre le flux.",
+    "description": "Suivez les séries, la charge, le tempo et le RPE. Synchronisez avec des wearables ou enregistrez manuellement—vos données restent prêtes pour les entraîneurs.",
+    "exercise": "Exercice",
+    "sets": "Séries",
+    "reps": "Répétitions",
+    "load": "Charge"
+  },
+  "planner": {
+    "eyebrow": "Architecture de séance",
+    "title": "Concevez des blocs d'entraînement avec intention.",
+    "description": "Glissez, dupliquez et périodisez les entraînements. Le planificateur maintient l'intensité, le volume et les ratios de décharge sur la cible.",
+    "editBlock": "Modifier le bloc"
+  },
+  "sessions": {
+    "eyebrow": "Gestion de l'entraînement",
+    "title": "Planifiez et enregistrez vos entraînements",
+    "description": "Concevez des blocs d'entraînement et capturez chaque répétition sans interrompre le flux.",
+    "plannerTab": "Planificateur",
+    "loggerTab": "Carnet"
+  },
+  "insights": {
+    "eyebrow": "Analyses et tendances",
+    "title": "Votre tableau de bord de performance",
+    "description": "Surveillez la disponibilité, visualisez la progression et suivez votre parcours avec des analyses basées sur les données.",
+    "dashboardTab": "Tableau de bord",
+    "progressTab": "Progression"
+  },
+  "notFound": {
+    "eyebrow": "Navigation",
+    "title": "Nous n'avons pas pu trouver cette page.",
+    "description": "La route est privée ou n'est pas encore disponible. Retournez au tableau de bord ou contactez l'équipe pour un accès anticipé.",
+    "takeMeHome": "Ramenez-moi à la maison",
+    "goToLanding": "Aller à la page d'accueil"
+  },
+  "components": {
+    "dateRangePicker": {
+      "from": "De :",
+      "to": "À :"
+    },
+    "maintenanceBanner": {
+      "message": "Le système est en mode lecture seule. Les opérations d'écriture sont désactivées."
+    },
+    "errorBoundary": {
+      "title": "Quelque chose s'est mal passé",
+      "message": "Une erreur inattendue s'est produite",
+      "tryAgain": "Réessayer"
+    },
+    "mainLayout": {
+      "logo": "FV",
+      "brand": "FitVibe"
+    }
+  },
+  "common": {
+    "retry": "Réessayer",
+    "loading": "Chargement…",
+    "error": "Erreur",
+    "success": "Succès",
+    "cancel": "Annuler",
+    "save": "Enregistrer",
+    "delete": "Supprimer",
+    "edit": "Modifier",
+    "close": "Fermer",
+    "back": "Retour",
+    "next": "Suivant",
+    "previous": "Précédent",
+    "submit": "Soumettre",
+    "confirm": "Confirmer"
+  },
+  "vibes": {
+    "strength": {
+      "name": "Force",
+      "element": "Terre",
+      "activities": "Musculation, strongman, culturisme"
+    },
+    "agility": {
+      "name": "Agilité",
+      "element": "Air",
+      "activities": "Jonglerie, escalade, bloc, gymnastique, parkour"
+    },
+    "endurance": {
+      "name": "Endurance",
+      "element": "Eau",
+      "activities": "Course, randonnée, cyclisme, aviron, corde à sauter"
+    },
+    "explosivity": {
+      "name": "Explosivité",
+      "element": "Feu",
+      "activities": "Sprints, sauts, lancers"
+    },
+    "intelligence": {
+      "name": "Intelligence",
+      "element": "Ombre",
+      "activities": "Échecs, tir, voile"
+    },
+    "regeneration": {
+      "name": "Régénération",
+      "element": "Éther",
+      "activities": "Yoga, étirement, jeûne"
+    }
+  },
+  "vibesHome": {
+    "title": "Choisissez votre Vibe",
+    "subtitle": "Sélectionnez un élément pour ajouter un nouvel exercice",
+    "addExercise": {
+      "title": "Ajouter un exercice",
+      "selectExisting": "Sélectionner un exercice existant",
+      "createNew": "Créer un nouvel exercice",
+      "exerciseName": "Nom de l'exercice",
+      "exerciseNamePlaceholder": "Entrez le nom de l'exercice",
+      "selectVibe": "Vibe sélectionné",
+      "exerciseDetails": "Détails de l'exercice",
+      "sets": "Séries",
+      "setsPlaceholder": "ex. 3",
+      "reps": "Répétitions",
+      "repsPlaceholder": "ex. 10",
+      "duration": "Durée (minutes)",
+      "durationPlaceholder": "ex. 30",
+      "resistance": "Résistance / Watts",
+      "resistancePlaceholder": "ex. 100",
+      "speed": "Vitesse / Allure",
+      "speedPlaceholder": "ex. 10 km/h",
+      "distance": "Distance (km)",
+      "distancePlaceholder": "ex. 5",
+      "rpe": "RPE (1-10)",
+      "rpePlaceholder": "Taux d'effort perçu",
+      "weight": "Poids (kg)",
+      "weightPlaceholder": "ex. 80",
+      "notes": "Notes (optionnel)",
+      "notesPlaceholder": "Ajoutez des notes...",
+      "cancel": "Annuler",
+      "add": "Enregistrer l'exercice"
+    },
+    "history": {
+      "title": "Historique des exercices",
+      "period": "Période",
+      "day": "Jour",
+      "week": "Semaine",
+      "month": "Mois",
+      "quarter": "Trimestre",
+      "semester": "Semestre",
+      "year": "Année",
+      "noExercises": "Aucun exercice trouvé pour cette période",
+      "exercise": "Exercice",
+      "vibe": "Vibe",
+      "date": "Date"
+    }
+  }
+}

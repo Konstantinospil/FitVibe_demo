@@ -12,7 +12,10 @@
   "language": {
     "label": "Language",
     "english": "English",
-    "german": "German"
+    "german": "German",
+    "spanish": "Spanish",
+    "french": "French",
+    "greek": "Greek"
   },
   "status": {
     "checking": "Checking server…",
