@@ -100,15 +100,30 @@ function sanitizeUserAgent(userAgent?: string | null): string | null {
   return userAgent.length > 512 ? userAgent.slice(0, 512) : userAgent;
 }
 
+/**
+ * Validates if a string is a valid UUID format
+ */
+function isValidUUID(str: string | null): boolean {
+  if (!str) {
+    return false;
+  }
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  return uuidRegex.test(str);
+}
+
 async function recordAuditEvent(
   userId: string | null,
   action: string,
   metadata: Record<string, unknown> = {},
 ) {
   try {
+    // Validate userId is a valid UUID or null
+    // Test IDs like "user-123" are not valid UUIDs and will cause database errors
+    const validUserId = userId && isValidUUID(userId) ? userId : null;
+
     await db("audit_log").insert({
       id: uuidv4(),
-      actor_user_id: userId,
+      actor_user_id: validUserId,
       action,
       entity_type: "auth",
       metadata,

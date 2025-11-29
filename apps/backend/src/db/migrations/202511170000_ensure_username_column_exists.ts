@@ -16,13 +16,23 @@ export async function up(knex: Knex): Promise<void> {
   const tableExists = await knex.schema.hasTable("users");
   if (!tableExists) {
     // Table doesn't exist, nothing to do - original migration will create it
-
     console.warn("[migration] Users table does not exist yet, skipping username column check");
     return;
   }
 
-  // Check if username column exists using type-safe method
-  const columnExists = await knex.schema.hasColumn("users", "username");
+  // Check if username column exists using a more reliable method
+  // Query the information_schema directly to avoid any caching issues
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+  const columnCheck = await knex.raw(`
+    SELECT column_name
+    FROM information_schema.columns
+    WHERE table_schema = 'public'
+      AND table_name = 'users'
+      AND column_name = 'username'
+  `);
+
+  const columnCheckRows = (columnCheck as { rows: Array<Record<string, unknown>> }).rows;
+  const columnExists = Array.isArray(columnCheckRows) && columnCheckRows.length > 0;
 
   if (!columnExists) {
     console.warn("[migration] Username column missing, adding it now...");
@@ -41,7 +51,6 @@ export async function up(knex: Knex): Promise<void> {
       });
 
       // Generate usernames for existing rows based on their ID
-
       await knex.raw(`
         UPDATE users
         SET username = 'user_' || id::text
@@ -49,7 +58,6 @@ export async function up(knex: Knex): Promise<void> {
       `);
 
       // Now add NOT NULL constraint
-
       await knex.raw(`
         ALTER TABLE users
         ALTER COLUMN username SET NOT NULL

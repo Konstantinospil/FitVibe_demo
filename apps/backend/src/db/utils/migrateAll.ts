@@ -13,9 +13,12 @@ async function main(): Promise<void> {
     const migrations = result[1] as Array<{ name: string }>;
 
     if (migrations.length > 0) {
-      logger.info(`[db] Applied ${migrations.length} migration(s) in batch ${batchNo}:`, {
-        migrations: migrations.map((m) => m.name),
-      });
+      logger.info(
+        {
+          migrations: migrations.map((m) => m.name),
+        },
+        `[db] Applied ${migrations.length} migration(s) in batch ${batchNo}:`,
+      );
     } else {
       logger.info("[db] No new migrations to apply.");
     }
