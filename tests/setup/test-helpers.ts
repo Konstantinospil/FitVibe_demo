@@ -1,5 +1,16 @@
 import type { Knex } from "knex";
-import db from "../../apps/backend/src/db/index.js";
+
+// Lazy import to avoid database connection during module load
+// This prevents issues when test-helpers.ts is parsed but not used (e.g., in unit tests)
+let dbInstance: Knex | null = null;
+
+async function getDb(): Promise<Knex> {
+  if (!dbInstance) {
+    const dbModule = await import("../../apps/backend/src/db/index.js");
+    dbInstance = dbModule.default;
+  }
+  return dbInstance;
+}
 
 export function createTestId(prefix: string = "test"): string {
   return `${prefix}-${Math.random().toString(36).slice(2)}`;
@@ -16,6 +27,7 @@ export async function wait(ms: number): Promise<void> {
 export async function withTransaction<T>(
   callback: (trx: Knex.Transaction) => Promise<T>,
 ): Promise<T> {
+  const db = await getDb();
   return await db.transaction(async (trx) => {
     try {
       const result = await callback(trx);
@@ -35,6 +47,7 @@ export async function withTransaction<T>(
  * Silently skips tables that don't exist (e.g., if migrations haven't run yet).
  */
 export async function truncateAll(): Promise<void> {
+  const db = await getDb();
   const tables = [
     "idempotency_keys",
     "audit_logs",

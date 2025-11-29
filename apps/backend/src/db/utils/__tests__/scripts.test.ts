@@ -65,7 +65,8 @@ const exitSpy = jest.spyOn(process, "exit").mockImplementation((() => undefined)
 beforeEach(() => {
   jest.clearAllMocks();
   spawnSyncMock.mockReset();
-  dbMock.migrate.latest.mockReset().mockResolvedValue(undefined);
+  // migrate.latest returns [batchNo, migrations[]] - default to empty migrations
+  dbMock.migrate.latest.mockReset().mockResolvedValue([1, []] as never);
   dbMock.migrate.rollback.mockReset().mockResolvedValue(undefined);
   dbMock.seed.run.mockReset().mockResolvedValue(undefined);
   dbMock.raw.mockReset().mockResolvedValue(undefined);
@@ -125,11 +126,17 @@ describe("migration & seed scripts", () => {
   it("applies migrations and destroys the connection", async () => {
     await jest.isolateModulesAsync(async () => {
       await import("../migrateAll.js");
+      // Wait for the async main() function to complete
+      // The main() function runs asynchronously, so we need to wait for it
+      await new Promise((resolve) => setTimeout(resolve, 100));
       await flushPromises();
     });
 
     expect(dbMock.migrate.latest).toHaveBeenCalledTimes(1);
     expect(dbMock.destroy).toHaveBeenCalledTimes(1);
+    // Check that both log messages were called
+    expect(loggerMock.info).toHaveBeenCalledWith("[db] Applying migrations (all environments)...");
+    expect(loggerMock.info).toHaveBeenCalledWith("[db] No new migrations to apply.");
     expect(loggerMock.info).toHaveBeenCalledWith("[db] Migrations applied successfully.");
   });
 
