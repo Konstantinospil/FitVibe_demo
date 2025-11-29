@@ -161,6 +161,10 @@
   --color-border: #2E5B49;
   --color-border-strong: rgba(227, 224, 217, 0.2);
 
+  /* Input Fields - Dark Mode (WCAG 2.2 AA compliant) */
+  --color-input-bg: #0D1A15;        /* Solid opaque background, ≥4.5:1 contrast with --color-text-primary */
+  --color-input-border: #2E5B49;    /* Uses existing border color for consistency */
+
   /* Text - Dark Mode */
   --color-text-primary: #FFFFFF;
   --color-text-secondary: rgba(255, 255, 255, 0.90);
@@ -194,6 +198,10 @@
   --color-accent: #34d399;        /* Emerald accent for success cues */
   --color-accent-strong: #15523A; /* Aether for secondary emphasis */
   --color-highlight: #6366F1;     /* Indigo for focus rings */
+
+  /* Form Links - Dark Mode (WCAG 2.2 AA compliant) */
+  --color-link-form: #6FD9B9;      /* Light emerald-turquoise for links on card backgrounds, ≥4.5:1 contrast */
+  --color-link-form-hover: #4FD1A5; /* Slightly darker variant for hover state */
 
   /* === STATUS COLORS === */
 
@@ -303,6 +311,10 @@
   --color-border: rgba(46, 91, 73, 0.2);
   --color-border-strong: rgba(11, 12, 16, 0.15);
 
+  /* Input Fields - Light Mode (WCAG 2.2 AA compliant) */
+  --color-input-bg: #F5F5F5;       /* Light gray background, ≥4.5:1 contrast with --color-text-primary */
+  --color-input-border: #B8C5B1;   /* Solid border color derived from design system, ensures visibility */
+
   /* Text - Light Mode */
   --color-text-primary: #000000;
   --color-text-secondary: rgba(0, 0, 0, 0.90);
@@ -324,6 +336,10 @@
   --color-accent: #34d399;
   --color-accent-strong: #15523A;
   --color-highlight: #6366F1;
+
+  /* Form Links - Light Mode (WCAG 2.2 AA compliant) */
+  --color-link-form: #15523A;      /* Aether green for links on white backgrounds, ≥4.5:1 contrast */
+  --color-link-form-hover: #1E6A4C; /* Secondary hover color for consistency */
 
   /* Background Gradients (Light Mode) */
   --gradient-primary: radial-gradient(circle at top left, rgba(250, 249, 246, 0.9), rgba(255, 255, 255, 0.95) 55%);
@@ -462,8 +478,8 @@ small {
 .login-fallback__field {
   width: 100%;
   border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(22, 44, 34, 0.85);
+  border: 1px solid var(--color-input-border);
+  background: var(--color-input-bg);
   color: var(--color-text-primary);
   padding: 0.9rem 1rem;
   font-size: 1rem;
@@ -503,6 +519,8 @@ small {
 
 .login-fallback__button {
   height: 52px;
+  min-height: 44px;
+  min-width: 44px;
   border-radius: 12px;
   border: none;
   background: linear-gradient(90deg, #fb951d, #fdd835);
@@ -511,6 +529,9 @@ small {
   font-size: 1rem;
   cursor: pointer;
   transition: opacity 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .login-fallback__button[disabled] {
@@ -527,12 +548,23 @@ small {
   display: flex;
   justify-content: space-between;
   font-size: 0.9rem;
-  color: #FFFFFF;
+  gap: 1rem;
 }
 
 .login-fallback__links a {
-  color: inherit;
+  color: var(--color-link-form);
   text-decoration: underline;
+  transition: color 0.15s ease;
+  padding: 0.75rem 0.5rem;
+  min-height: 24px;
+  min-width: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.login-fallback__links a:hover {
+  color: var(--color-link-form-hover);
 }
 
 .skip-link {

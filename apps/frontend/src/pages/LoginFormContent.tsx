@@ -9,9 +9,9 @@ import { login } from "../services/api";
 const inputStyle: React.CSSProperties = {
   width: "100%",
   borderRadius: "12px",
-  border: "1px solid var(--color-border, rgba(46, 91, 73, 0.2))",
-  background: "var(--color-surface-glass, rgba(22, 44, 34, 0.45))",
-  color: "var(--color-text-primary, #FFFFFF)",
+  border: "1px solid var(--color-input-border)",
+  background: "var(--color-input-bg)",
+  color: "var(--color-text-primary)",
   padding: "0.85rem 1rem",
   fontSize: "1rem",
   fontFamily: "var(--font-family-base, 'Inter', sans-serif)",
@@ -146,7 +146,7 @@ const LoginFormContent: React.FC = () => {
             e.currentTarget.style.boxShadow = "0 0 0 2px rgba(52, 211, 153, 0.2)";
           }}
           onBlur={(e) => {
-            e.currentTarget.style.borderColor = "var(--color-border, rgba(46, 91, 73, 0.2))";
+            e.currentTarget.style.borderColor = "var(--color-input-border)";
             e.currentTarget.style.boxShadow = "none";
           }}
         />
@@ -228,13 +228,51 @@ const LoginFormContent: React.FC = () => {
           display: "flex",
           justifyContent: "space-between",
           fontSize: "0.9rem",
-          color: "#FFFFFF",
+          gap: "1rem",
         }}
       >
-        <NavLink to="/register" style={{ color: "#FFFFFF" }}>
+        <NavLink
+          to="/register"
+          style={{
+            color: "var(--color-link-form)",
+            textDecoration: "underline",
+            transition: "color 150ms ease",
+            padding: "0.75rem 0.5rem",
+            minHeight: "24px",
+            minWidth: "24px",
+            display: "inline-flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.color = "var(--color-link-form-hover)";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.color = "var(--color-link-form)";
+          }}
+        >
           {t("auth.login.registerPrompt")}
         </NavLink>
-        <NavLink to="/forgot-password" style={{ color: "#FFFFFF" }}>
+        <NavLink
+          to="/forgot-password"
+          style={{
+            color: "var(--color-link-form)",
+            textDecoration: "underline",
+            transition: "color 150ms ease",
+            padding: "0.75rem 0.5rem",
+            minHeight: "24px",
+            minWidth: "24px",
+            display: "inline-flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.color = "var(--color-link-form-hover)";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.color = "var(--color-link-form)";
+          }}
+        >
           {t("auth.login.forgot")}
         </NavLink>
       </div>

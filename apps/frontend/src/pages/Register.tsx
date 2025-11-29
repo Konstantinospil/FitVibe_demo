@@ -9,9 +9,9 @@ import { Eye, EyeOff } from "lucide-react";
 const inputStyle: React.CSSProperties = {
   width: "100%",
   borderRadius: "12px",
-  border: "1px solid var(--color-border, rgba(46, 91, 73, 0.2))",
-  background: "var(--color-surface-glass, rgba(22, 44, 34, 0.45))",
-  color: "var(--color-text-primary, #FFFFFF)",
+  border: "1px solid var(--color-input-border)",
+  background: "var(--color-input-bg)",
+  color: "var(--color-text-primary)",
   padding: "0.85rem 1rem",
   fontSize: "1rem",
   fontFamily: "var(--font-family-base, 'Inter', sans-serif)",
@@ -219,7 +219,7 @@ const Register: React.FC = () => {
               e.currentTarget.style.boxShadow = "0 0 0 2px rgba(52, 211, 153, 0.2)";
             }}
             onBlur={(e) => {
-              e.currentTarget.style.borderColor = "var(--color-border, rgba(46, 91, 73, 0.2))";
+              e.currentTarget.style.borderColor = "var(--color-input-border)";
               e.currentTarget.style.boxShadow = "none";
             }}
           />
@@ -243,7 +243,7 @@ const Register: React.FC = () => {
               e.currentTarget.style.boxShadow = "0 0 0 2px rgba(52, 211, 153, 0.2)";
             }}
             onBlur={(e) => {
-              e.currentTarget.style.borderColor = "var(--color-border, rgba(46, 91, 73, 0.2))";
+              e.currentTarget.style.borderColor = "var(--color-input-border)";
               e.currentTarget.style.boxShadow = "none";
             }}
           />
@@ -268,7 +268,7 @@ const Register: React.FC = () => {
                 e.currentTarget.style.boxShadow = "0 0 0 2px rgba(52, 211, 153, 0.2)";
               }}
               onBlur={(e) => {
-                e.currentTarget.style.borderColor = "var(--color-border, rgba(46, 91, 73, 0.2))";
+                e.currentTarget.style.borderColor = "var(--color-input-border)";
                 e.currentTarget.style.boxShadow = "none";
               }}
             />
@@ -323,7 +323,7 @@ const Register: React.FC = () => {
                 e.currentTarget.style.boxShadow = "0 0 0 2px rgba(52, 211, 153, 0.2)";
               }}
               onBlur={(e) => {
-                e.currentTarget.style.borderColor = "var(--color-border, rgba(46, 91, 73, 0.2))";
+                e.currentTarget.style.borderColor = "var(--color-input-border)";
                 e.currentTarget.style.boxShadow = "none";
               }}
             />
@@ -370,7 +370,7 @@ const Register: React.FC = () => {
             border:
               error && !acceptedTerms
                 ? "1px solid rgba(248, 113, 113, 0.5)"
-                : "1px solid var(--color-border)",
+                : "1px solid var(--color-input-border)",
             transition: "border-color 150ms ease",
           }}
         >
@@ -452,7 +452,26 @@ const Register: React.FC = () => {
           }}
         >
           {t("auth.register.loginPrompt")}{" "}
-          <NavLink to="/login" style={{ color: "#FFFFFF" }}>
+          <NavLink
+            to="/login"
+            style={{
+              color: "var(--color-link-form)",
+              textDecoration: "underline",
+              transition: "color 150ms ease",
+              padding: "0.75rem 0.5rem",
+              minHeight: "24px",
+              minWidth: "24px",
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.color = "var(--color-link-form-hover)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.color = "var(--color-link-form)";
+            }}
+          >
             {t("auth.register.loginLink")}
           </NavLink>
         </p>
