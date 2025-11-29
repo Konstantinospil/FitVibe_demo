@@ -73,9 +73,7 @@ describe("Integration: Auth → Session Flow", () => {
     expect(verifyResponse.body.user.status).toBe("active");
 
     // Verify user can be found by email before login (same query login uses)
-    const { findUserByEmail } = await import(
-      "../../../apps/backend/src/modules/auth/auth.repository.js"
-    );
+    // Reuse findUserByEmail from earlier import
     let foundUser = await findUserByEmail("testuser@example.com");
     let retries = 0;
     while ((!foundUser || foundUser.status !== "active") && retries < 10) {

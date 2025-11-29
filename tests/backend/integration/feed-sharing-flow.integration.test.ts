@@ -157,7 +157,7 @@ describe("Integration: Feed Sharing → Reactions Flow", () => {
 
     // Verify user2 can be found by email (same query login uses)
     let foundUser2 = await findUserByEmail("reactor@example.com");
-    let retries = 0;
+    retries = 0; // Reuse retries variable from user1 verification
     while (!foundUser2 && retries < 10) {
       await new Promise((resolve) => setTimeout(resolve, 100));
       foundUser2 = await findUserByEmail("reactor@example.com");
