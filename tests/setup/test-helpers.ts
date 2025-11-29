@@ -42,9 +42,38 @@ export async function withTransaction<T>(
 }
 
 /**
+ * Ensure roles are seeded in the database.
+ * This is needed for integration tests that create users with role_code.
+ * Uses onConflict to safely handle cases where roles already exist.
+ */
+export async function ensureRolesSeeded(): Promise<void> {
+  const db = await getDb();
+  const ROLES = [
+    { code: "admin", description: "Platform administrator" },
+    { code: "coach", description: "Coach / trainer with team oversight" },
+    { code: "athlete", description: "Individual athlete" },
+    { code: "support", description: "Support staff (nutrition, physio, etc.)" },
+  ];
+
+  try {
+    await db("roles").insert(ROLES).onConflict("code").ignore();
+  } catch (error) {
+    // Silently skip if roles table doesn't exist (migrations haven't run)
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    if (errorMessage.includes("does not exist") || errorMessage.includes("relation")) {
+      return;
+    }
+    // Re-throw other errors
+    throw error;
+  }
+}
+
+/**
  * Truncate all tables in the test database.
  * Use with caution - only in test environments.
  * Silently skips tables that don't exist (e.g., if migrations haven't run yet).
+ * Note: Does NOT truncate roles table - roles are needed for foreign key constraints.
+ * Ensures roles are seeded after truncation.
  */
 export async function truncateAll(): Promise<void> {
   const db = await getDb();
@@ -78,6 +107,7 @@ export async function truncateAll(): Promise<void> {
     // Removed "user_streaks" - doesn't exist
     // Removed "feed_posts" - use "feed_items" instead
     // Removed other legacy table names
+    // Note: "roles" is NOT truncated - it's needed for foreign key constraints
   ];
 
   // Disable foreign key checks temporarily
@@ -98,4 +128,7 @@ export async function truncateAll(): Promise<void> {
     }
   }
   await db.raw("SET session_replication_role = 'origin'");
+
+  // Ensure roles are seeded after truncation (roles table is not truncated)
+  await ensureRolesSeeded();
 }
