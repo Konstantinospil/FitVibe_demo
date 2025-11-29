@@ -15,17 +15,35 @@ jest.mock("../../db.config.js", () => ({
   DB_CONFIG: dbConfigMock,
 }));
 
-const dbMock = {
-  migrate: {
-    latest: jest.fn(),
-    rollback: jest.fn(),
+const queryBuilderMock = jest.fn().mockReturnValue({
+  count: jest.fn().mockReturnValue({
+    first: jest.fn().mockResolvedValue({ count: "0" }),
+  }),
+});
+
+const dbMock = Object.assign(
+  (table: string) => {
+    if (table === "knex_migrations") {
+      return queryBuilderMock(table);
+    }
+    return queryBuilderMock(table);
   },
-  seed: {
-    run: jest.fn(),
+  {
+    migrate: {
+      latest: jest.fn(),
+      rollback: jest.fn(),
+      currentVersion: jest.fn(),
+    },
+    seed: {
+      run: jest.fn(),
+    },
+    raw: jest.fn(),
+    schema: {
+      hasTable: jest.fn(),
+    },
+    destroy: jest.fn(),
   },
-  raw: jest.fn(),
-  destroy: jest.fn(),
-};
+);
 jest.mock("../../index.js", () => ({
   __esModule: true,
   default: dbMock,
@@ -67,10 +85,17 @@ beforeEach(() => {
   spawnSyncMock.mockReset();
   // migrate.latest returns [batchNo, migrations[]] - default to empty migrations
   dbMock.migrate.latest.mockReset().mockResolvedValue([1, []] as never);
-  dbMock.migrate.rollback.mockReset().mockResolvedValue(undefined);
+  dbMock.migrate.rollback.mockReset().mockResolvedValue([[]] as never);
+  dbMock.migrate.currentVersion.mockReset().mockResolvedValue("20240101000000");
   dbMock.seed.run.mockReset().mockResolvedValue(undefined);
   dbMock.raw.mockReset().mockResolvedValue(undefined);
+  dbMock.schema.hasTable.mockReset().mockResolvedValue(true);
   dbMock.destroy.mockReset().mockResolvedValue(undefined);
+  queryBuilderMock.mockReset().mockReturnValue({
+    count: jest.fn().mockReturnValue({
+      first: jest.fn().mockResolvedValue({ count: "0" }),
+    }),
+  });
   connectionDbMock.schema.hasTable.mockReset().mockResolvedValue(true);
   connectionDbMock.destroy.mockReset().mockResolvedValue(undefined);
   connectionDbMock.select.mockReset().mockImplementation(() => {
