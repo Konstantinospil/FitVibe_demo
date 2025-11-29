@@ -178,7 +178,7 @@ jobs:
         timeout-minutes: 15
         env:
           CI: "true"
-        run: pnpm --filter @fitvibe/backend test -- --coverage --maxWorkers=2 --testPathIgnorePatterns="migrations/migrations\\.test\\.ts|seeds/seeds\\.test\\.ts"
+        run: pnpm --filter @fitvibe/backend test -- --coverage --maxWorkers=2 --testPathIgnorePatterns="migrations/migrations\\.test\\.ts|seeds/seeds\\.test\\.ts|.*\\.integration\\.test\\.ts$|src/db/utils/__tests__/scripts\\.test\\.ts"
 
       - name: Frontend unit tests & coverage
         timeout-minutes: 10
@@ -366,6 +366,160 @@ jobs:
             echo "- ❌ Database tests failed" >> $GITHUB_STEP_SUMMARY
           fi
 
+  excluded_tests:
+    name: Excluded Tests (Integration & Scripts)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    needs:
+      - quality
+      - database_tests
+    permissions:
+      contents: read
+      actions: read
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: fitvibe_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U postgres"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+      clamav:
+        image: clamav/clamav:1.3
+        ports:
+          - 3310:3310
+        env:
+          FRESHCLAM_CHECKS: 0
+        options: >-
+          --health-cmd="clamdscan --version"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/fitvibe_test
+      # Individual PG env vars for test files to detect database
+      PGHOST: 127.0.0.1
+      PGPORT: 5432
+      PGUSER: postgres
+      PGPASSWORD: postgres
+      PGDATABASE: fitvibe_test
+      # Highest priority - test files check this first
+      TEST_DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/fitvibe_test
+      CLAMAV_ENABLED: "true"
+      CLAMAV_HOST: "127.0.0.1"
+      CLAMAV_PORT: "3310"
+      REAL_CLAMD: "1"
+      CI: "true"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - name: Enable corepack
+        run: corepack enable
+
+      - name: Cache pnpm store
+        uses: actions/cache@v4
+        with:
+          path: ~/.pnpm-store
+          key: pnpm-store-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            pnpm-store-${{ runner.os }}-
+
+      - name: Install native canvas prerequisites
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y \
+            build-essential \
+            libcairo2-dev \
+            libpango1.0-dev \
+            libjpeg-dev \
+            libgif-dev \
+            librsvg2-dev \
+            postgresql-client
+
+      - name: Wait for services
+        timeout-minutes: 15
+        run: |
+          echo "Waiting for PostgreSQL..."
+          for i in {1..30}; do
+            if pg_isready -h 127.0.0.1 -p 5432 -U postgres >/dev/null 2>&1; then
+              echo "PostgreSQL is ready"
+              break
+            fi
+            if [ $i -eq 30 ]; then
+              echo "PostgreSQL failed to start" >&2
+              exit 1
+            fi
+            sleep 2
+          done
+
+          echo "Waiting for ClamAV..."
+          python3 - <<'PY'
+          import socket, time, sys
+          host = "127.0.0.1"
+          port = 3310
+          for i in range(30):
+              try:
+                  with socket.create_connection((host, port), timeout=2):
+                      print("ClamAV is ready")
+                      sys.exit(0)
+              except OSError:
+                  if i == 29:
+                      print("ClamAV failed to start", file=sys.stderr)
+                      sys.exit(1)
+                  time.sleep(2)
+          PY
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile --prefer-offline
+
+      - name: Run database migrations
+        timeout-minutes: 10
+        run: pnpm --filter @fitvibe/backend exec tsx src/db/utils/migrateAll.ts
+
+      - name: Run scripts.test.ts
+        timeout-minutes: 10
+        env:
+          CI: "true"
+        run: pnpm --filter @fitvibe/backend exec jest src/db/utils/__tests__/scripts.test.ts --maxWorkers=1 --forceExit
+
+      - name: Run integration tests
+        timeout-minutes: 20
+        env:
+          NODE_ENV: test
+          CI: "true"
+        run: pnpm --filter @fitvibe/backend exec jest --maxWorkers=2 --testMatch="**/tests/backend/integration/**/*.integration.test.ts" --testPathIgnorePatterns="" --forceExit
+
+      - name: Job summary
+        if: always()
+        run: |
+          echo "## Excluded Tests Summary" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ job.status }}" == "success" ]; then
+            echo "- ✅ Scripts test passed" >> $GITHUB_STEP_SUMMARY
+            echo "- ✅ Integration tests passed" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "- ❌ Some excluded tests failed" >> $GITHUB_STEP_SUMMARY
+          fi
+
   openapi_spec:
     name: Build OpenAPI spec
     runs-on: ubuntu-latest
@@ -373,6 +527,7 @@ jobs:
     needs:
       - quality
       - database_tests
+      - excluded_tests
     permissions:
       contents: read
       actions: read
@@ -445,6 +600,7 @@ jobs:
     needs:
       - quality
       - database_tests
+      - excluded_tests
     permissions:
       contents: read
       actions: read
@@ -605,6 +761,7 @@ jobs:
     needs:
       - quality
       - database_tests
+      - excluded_tests
     permissions:
       contents: read
     steps:
@@ -627,6 +784,7 @@ jobs:
     needs:
       - quality
       - database_tests
+      - excluded_tests
     permissions:
       contents: read
       security-events: write
@@ -770,6 +928,7 @@ jobs:
     needs:
       - quality
       - database_tests
+      - excluded_tests
     permissions:
       contents: read
     steps:
@@ -871,6 +1030,7 @@ jobs:
     needs:
       - quality
       - database_tests
+      - excluded_tests
       - performance
     permissions:
       contents: read
@@ -923,6 +1083,7 @@ jobs:
     needs:
       - quality
       - database_tests
+      - excluded_tests
     permissions:
       contents: read
     steps:
@@ -1062,6 +1223,7 @@ jobs:
     needs:
       - quality
       - database_tests
+      - excluded_tests
       - integration
       - metrics_contract
       - accessibility
