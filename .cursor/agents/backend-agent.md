@@ -895,58 +895,111 @@ All criteria must be met before handing off:
 - ✅ Security checks passed
 - ✅ No blocking issues
 
+### Handoff Protocol
+
+All handoffs must use the Standard Handoff Protocol defined in `.cursor/agents/HANDOFF_PROTOCOL.md`.
+
 ### Handoff to Frontend Agent
 
-When backend implementation is complete and API contract is ready, hand off to `senior-frontend-developer` agent with:
+When backend implementation is complete and API contract is ready, hand off to `senior-frontend-developer` agent:
 
 ```json
 {
   "from_agent": "backend-agent",
   "to_agent": "senior-frontend-developer",
-  "request_id": "BE-YYYY-MM-DD-NNN",
+  "request_id": "PLAN-YYYY-MM-DD-NNN",
+  "handoff_id": "HANDOFF-YYYY-MM-DD-NNN",
+  "timestamp": "2025-11-29T11:00:00Z",
   "handoff_type": "standard",
   "status": "complete",
-  "summary": "Backend API implementation complete",
-  "deliverables": {
-    "backend": ["Module files", "Migration files", "Test files"],
-    "api_contract": {
-      "endpoints": ["PUT /api/v1/users/:id/profile"],
-      "request_schema": "UpdateProfileSchema",
-      "response_schema": "UserProfile",
-      "error_responses": ["401", "403", "404", "400"]
-    }
-  },
+  "priority": "high",
+  "summary": "Backend API implementation complete. All endpoints implemented, tested, and documented. Ready for frontend integration.",
+  "deliverables": [
+    "apps/backend/src/modules/users/user-profile.controller.ts",
+    "apps/backend/src/modules/users/user-profile.service.ts",
+    "apps/backend/src/modules/users/user-profile.repository.ts",
+    "apps/backend/src/modules/users/user-profile.schemas.ts",
+    "apps/backend/src/db/migrations/202511291200_create_user_profiles.ts"
+  ],
+  "acceptance_criteria": [
+    "PUT /api/v1/users/:id/profile endpoint created",
+    "Input validation with Zod schemas",
+    "User can only update own profile",
+    "Tests written and passing",
+    "API contract documented"
+  ],
   "quality_metrics": {
-    "backend_coverage": "85%",
     "typescript": "100% type coverage",
-    "tests": "all passing"
+    "test_coverage": "85%",
+    "eslint_errors": 0,
+    "api_contract": "documented"
   },
-  "next_steps": "Frontend agent should implement React component to consume this API",
+  "context": {
+    "epic": "E1",
+    "requirement": "FR-009",
+    "related_issues": ["ISSUE-001"]
+  },
+  "next_steps": "Frontend agent should implement React component to consume this API. Use React Query for server state, ensure WCAG 2.1 AA compliance, add i18n tokens.",
   "special_notes": [
+    "API endpoint: PUT /api/v1/users/:id/profile",
+    "Request schema: UpdateProfileSchema",
+    "Response schema: UserProfile",
+    "Error responses: 401, 403, 404, 400",
     "API requires authentication",
     "User can only update own profile",
     "Idempotency supported via Idempotency-Key header"
   ],
   "blocking_issues": []
 }
-````
+```
 
-### Handoff Message Format
+### Handoff to Test Manager
+
+After implementation, hand off to test-manager for additional testing:
 
 ```json
 {
   "from_agent": "backend-agent",
-  "to_agent": "next-agent-id",
-  "request_id": "BE-YYYY-MM-DD-NNN",
-  "handoff_type": "standard|escalation|collaboration",
-  "status": "complete|partial|blocked",
-  "summary": "Brief description of work completed",
-  "deliverables": ["List of outputs and artifacts"],
+  "to_agent": "test-manager",
+  "request_id": "PLAN-YYYY-MM-DD-NNN",
+  "handoff_id": "HANDOFF-YYYY-MM-DD-NNN",
+  "timestamp": "2025-11-29T11:30:00Z",
+  "handoff_type": "standard",
+  "status": "complete",
+  "priority": "high",
+  "summary": "Backend implementation complete. Ready for comprehensive test suite generation.",
+  "deliverables": [
+    "apps/backend/src/modules/users/user-profile.controller.ts",
+    "apps/backend/src/modules/users/user-profile.service.ts",
+    "apps/backend/src/modules/users/user-profile.repository.ts"
+  ],
+  "acceptance_criteria": [
+    "PUT /api/v1/users/:id/profile endpoint created",
+    "Input validation with Zod schemas",
+    "User can only update own profile",
+    "Tests written and passing"
+  ],
   "quality_metrics": {
     "typescript": "100% type coverage",
     "test_coverage": "85%",
-    "api_contract": "documented"
+    "eslint_errors": 0
   },
+  "context": {
+    "epic": "E1",
+    "requirement": "FR-009",
+    "related_issues": ["ISSUE-001"]
+  },
+  "next_steps": "Generate comprehensive test suite covering happy paths, edge cases, and error conditions. Target 80% coverage minimum, 90% for critical paths.",
+  "special_notes": [
+    "Backend uses asyncHandler wrapper",
+    "Idempotency support implemented",
+    "Error handling uses HttpError utility"
+  ],
+  "blocking_issues": []
+}
+```
+
+**Note**: See `.cursor/agents/HANDOFF_PROTOCOL.md` for complete specification and examples.
   "next_steps": "What the receiving agent should do",
   "special_notes": ["API contract details", "Integration considerations"],
   "blocking_issues": []
@@ -1072,3 +1125,4 @@ Escalate to supervisor/orchestrator when:
 ---
 
 **END OF AGENT CONFIGURATION**
+````

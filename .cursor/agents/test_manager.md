@@ -429,7 +429,7 @@ Generated comprehensive test suite for [component/method name] covering [X] acce
 **Status**: Ready
 **Notes**: Test suite complete, all quality checks passed, ready for code review
 
-````
+`````
 
 ---
 
@@ -446,32 +446,66 @@ All criteria must be met before handing off to next agent:
 - ✅ No blocking issues
 - ✅ Ready for next phase
 
-### Handoff Message Format
+### Handoff Protocol
+
+All handoffs must use the Standard Handoff Protocol defined in `.cursor/agents/HANDOFF_PROTOCOL.md`.
+
+### Handoff to Planner Agent
+
+After test suite generation is complete:
 
 ```json
 {
-  "from_agent": "agent-id",
-  "to_agent": "next-agent-id",
-  "request_id": "REQ-YYYY-MM-DD-NNN",
-  "handoff_type": "standard|escalation|collaboration",
-  "status": "complete|partial|blocked",
-  "summary": "Brief description of work completed",
+  "from_agent": "test-manager",
+  "to_agent": "planner-agent",
+  "request_id": "PLAN-YYYY-MM-DD-NNN",
+  "handoff_id": "HANDOFF-YYYY-MM-DD-NNN",
+  "timestamp": "2025-11-29T15:00:00Z",
+  "handoff_type": "standard",
+  "status": "complete",
+  "priority": "high",
+  "summary": "Comprehensive test suite generated. All tests passing, coverage targets met, quality checks passed. Ready for final review and merge.",
   "deliverables": [
-    "List of outputs and artifacts"
+    "apps/backend/src/modules/users/__tests__/user-profile.controller.test.ts",
+    "apps/backend/src/modules/users/__tests__/user-profile.service.test.ts",
+    "apps/backend/src/modules/users/__tests__/user-profile.repository.test.ts",
+    "apps/frontend/tests/components/ProfileEditForm.test.tsx",
+    "apps/frontend/tests/pages/ProfilePage.test.tsx"
+  ],
+  "acceptance_criteria": [
+    "All acceptance criteria have corresponding tests",
+    "Happy path scenarios fully covered",
+    "Edge cases and boundary conditions tested",
+    "Error handling and validation tested",
+    "Coverage targets met (≥80% repo-wide, ≥90% critical)"
   ],
   "quality_metrics": {
-    "metric1": "value",
-    "metric2": "value"
+    "test_coverage": "85%",
+    "line_coverage": "87%",
+    "branch_coverage": "83%",
+    "function_coverage": "90%",
+    "eslint_errors": 0,
+    "typescript_errors": 0,
+    "all_tests_passing": true,
+    "test_execution_time": "2.3s"
   },
-  "next_steps": "What the receiving agent should do",
+  "context": {
+    "epic": "E1",
+    "requirement": "FR-009",
+    "related_issues": ["ISSUE-001"]
+  },
+  "next_steps": "Planner should update project plan, mark issue as complete, and hand off to version-controller for PR creation.",
   "special_notes": [
-    "Important context or considerations"
+    "Tests use deterministic patterns (fake clock, seeded PRNG, deterministic UUIDs)",
+    "Integration tests use transactional setup with ephemeral database",
+    "All tests pass ESLint and TypeScript checks",
+    "No security vulnerabilities in test code"
   ],
-  "blocking_issues": [
-    "Any unresolved problems (if applicable)"
-  ]
+  "blocking_issues": []
 }
-````
+```
+
+**Note**: See `.cursor/agents/HANDOFF_PROTOCOL.md` for complete specification and examples.
 
 ### Escalation Conditions
 
@@ -1223,7 +1257,7 @@ describe("validateEmail", () => {
   });
 });
 ```
-````
+`````
 
 ## Next Steps
 

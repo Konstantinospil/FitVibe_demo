@@ -343,24 +343,51 @@ All criteria must be met before handing off to next agent:
 
 ### Handoff Message Format
 
+All handoffs must use the Standard Handoff Protocol defined in `.cursor/agents/HANDOFF_PROTOCOL.md`.
+
 ```json
 {
-  "from_agent": "agent-id",
-  "to_agent": "next-agent-id",
-  "request_id": "REQ-YYYY-MM-DD-NNN",
-  "handoff_type": "standard|escalation|collaboration",
-  "status": "complete|partial|blocked",
-  "summary": "Brief description of work completed",
-  "deliverables": ["List of outputs and artifacts"],
+  "from_agent": "requirements-analyst-agent",
+  "to_agent": "planner-agent",
+  "request_id": "PLAN-YYYY-MM-DD-NNN",
+  "handoff_id": "HANDOFF-YYYY-MM-DD-NNN",
+  "timestamp": "2025-11-29T10:30:00Z",
+  "handoff_type": "standard",
+  "status": "complete",
+  "priority": "high",
+  "summary": "Requirements analysis complete. All acceptance criteria defined, dependencies identified, ready for implementation.",
+  "deliverables": [
+    "docs/requirements/REQ-YYYY-MM-DD-NNN.md",
+    "docs/requirements/acceptance-criteria.md"
+  ],
+  "acceptance_criteria": [
+    "All functional requirements documented",
+    "All non-functional requirements identified",
+    "Acceptance criteria are specific and testable",
+    "Dependencies and constraints documented"
+  ],
   "quality_metrics": {
-    "metric1": "value",
-    "metric2": "value"
+    "requirements_completeness": "100%",
+    "acceptance_criteria_count": 4,
+    "dependencies_identified": 2
   },
-  "next_steps": "What the receiving agent should do",
-  "special_notes": ["Important context or considerations"],
-  "blocking_issues": ["Any unresolved problems (if applicable)"]
+  "context": {
+    "epic": "E1",
+    "requirement": "FR-009",
+    "related_issues": ["ISSUE-001"],
+    "dependencies": ["FR-001", "FR-002"]
+  },
+  "next_steps": "Hand off to planner-agent for workflow orchestration. Planner will assign to fullstack-agent or backend-agent + frontend-agent for implementation.",
+  "special_notes": [
+    "Requirements are complete and unambiguous",
+    "All acceptance criteria are testable",
+    "No blocking issues identified"
+  ],
+  "blocking_issues": []
 }
 ```
+
+**Note**: See `.cursor/agents/HANDOFF_PROTOCOL.md` for complete specification and examples.
 
 ### Escalation Conditions
 

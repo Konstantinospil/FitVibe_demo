@@ -208,6 +208,7 @@ describe("Auth Controller", () => {
         requires2FA: false,
         user: expect.any(Object),
         session: expect.any(Object),
+        tokens: expect.any(Object),
       });
     });
 
@@ -282,6 +283,7 @@ describe("Auth Controller", () => {
       expect(mockResponse.json).toHaveBeenCalledWith({
         user: expect.any(Object),
         session: expect.any(Object),
+        tokens: expect.any(Object),
       });
     });
 

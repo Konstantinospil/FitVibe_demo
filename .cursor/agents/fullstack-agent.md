@@ -862,6 +862,10 @@ All criteria must be met before handing off:
 - ✅ i18n implemented for all user-facing text
 - ✅ No blocking issues
 
+### Handoff Protocol
+
+All handoffs must use the Standard Handoff Protocol defined in `.cursor/agents/HANDOFF_PROTOCOL.md`.
+
 ### Handoff to Backend Agent
 
 When backend needs to be implemented first or separately:
@@ -870,13 +874,34 @@ When backend needs to be implemented first or separately:
 {
   "from_agent": "fullstack-agent",
   "to_agent": "backend-agent",
-  "request_id": "FS-YYYY-MM-DD-NNN",
+  "request_id": "PLAN-YYYY-MM-DD-NNN",
+  "handoff_id": "HANDOFF-YYYY-MM-DD-NNN",
+  "timestamp": "2025-11-29T10:30:00Z",
   "handoff_type": "collaboration",
-  "status": "partial",
-  "summary": "Backend implementation needed for full-stack feature",
-  "next_steps": "Backend agent should implement API endpoints, then hand off to frontend agent"
+  "status": "in_progress",
+  "priority": "high",
+  "summary": "Backend implementation needed for full-stack feature. Frontend will follow after backend API is complete.",
+  "deliverables": [],
+  "acceptance_criteria": [
+    "Backend API endpoints implemented",
+    "Database migrations created if needed",
+    "Input validation with Zod schemas",
+    "Tests written and passing"
+  ],
+  "quality_metrics": {},
+  "context": {
+    "epic": "E1",
+    "requirement": "FR-009",
+    "related_issues": ["ISSUE-001"]
+  },
+  "next_steps": "Backend agent should implement API endpoints following Controller → Service → Repository pattern, then hand off to frontend agent or back to fullstack-agent.",
+  "special_notes": [
+    "API contract must be documented for frontend integration",
+    "Ensure idempotency support for state-changing operations"
+  ],
+  "blocking_issues": []
 }
-````
+```
 
 ### Handoff to Frontend Agent
 
@@ -886,45 +911,97 @@ When frontend needs to be implemented after backend:
 {
   "from_agent": "fullstack-agent",
   "to_agent": "senior-frontend-developer",
-  "request_id": "FS-YYYY-MM-DD-NNN",
+  "request_id": "PLAN-YYYY-MM-DD-NNN",
+  "handoff_id": "HANDOFF-YYYY-MM-DD-NNN",
+  "timestamp": "2025-11-29T11:00:00Z",
   "handoff_type": "standard",
-  "status": "partial",
-  "summary": "Backend complete, frontend implementation needed",
-  "api_contract": {
-    "endpoints": ["PUT /api/v1/users/:id/profile"],
-    "request_schema": "UpdateProfileSchema",
-    "response_schema": "UserProfile"
+  "status": "in_progress",
+  "priority": "high",
+  "summary": "Backend complete, frontend implementation needed. API endpoints are ready for integration.",
+  "deliverables": [
+    "apps/backend/src/modules/users/user-profile.controller.ts",
+    "apps/backend/src/modules/users/user-profile.service.ts",
+    "apps/backend/src/modules/users/user-profile.repository.ts"
+  ],
+  "acceptance_criteria": [
+    "React components implemented with accessibility",
+    "API integration using React Query",
+    "i18n tokens added for all user-facing text",
+    "Tests written and passing"
+  ],
+  "quality_metrics": {
+    "backend_coverage": "85%",
+    "api_contract": "verified"
   },
-  "next_steps": "Frontend agent should implement React components to consume backend API"
+  "context": {
+    "epic": "E1",
+    "requirement": "FR-009",
+    "related_issues": ["ISSUE-001"]
+  },
+  "next_steps": "Frontend agent should implement React components to consume backend API. Use React Query for server state, ensure WCAG 2.1 AA compliance, add i18n tokens.",
+  "special_notes": [
+    "API endpoint: PUT /api/v1/users/:id/profile",
+    "Request schema: UpdateProfileSchema",
+    "Response schema: UserProfile",
+    "Ensure proper error handling and loading states"
+  ],
+  "blocking_issues": []
 }
 ```
 
-### Handoff Message Format
+### Handoff to Test Manager
+
+After implementation is complete:
 
 ```json
 {
   "from_agent": "fullstack-agent",
-  "to_agent": "next-agent-id",
-  "request_id": "FS-YYYY-MM-DD-NNN",
-  "handoff_type": "standard|escalation|collaboration",
-  "status": "complete|partial|blocked",
-  "summary": "Brief description of work completed",
-  "deliverables": {
-    "backend": ["Module files", "Migration files", "Test files"],
-    "frontend": ["Component files", "Service files", "Test files"],
-    "documentation": ["PRD updates", "TDD updates"]
-  },
+  "to_agent": "test-manager",
+  "request_id": "PLAN-YYYY-MM-DD-NNN",
+  "handoff_id": "HANDOFF-YYYY-MM-DD-NNN",
+  "timestamp": "2025-11-29T14:00:00Z",
+  "handoff_type": "standard",
+  "status": "complete",
+  "priority": "high",
+  "summary": "Full-stack implementation complete. Backend API, frontend components, and database migrations created. Ready for comprehensive testing.",
+  "deliverables": [
+    "apps/backend/src/modules/users/user-profile.controller.ts",
+    "apps/backend/src/modules/users/user-profile.service.ts",
+    "apps/backend/src/modules/users/user-profile.repository.ts",
+    "apps/backend/src/db/migrations/202511291200_create_user_profiles.ts",
+    "apps/frontend/src/components/ProfileEditForm.tsx",
+    "apps/frontend/src/pages/ProfilePage.tsx"
+  ],
+  "acceptance_criteria": [
+    "PUT /api/v1/users/:id/profile endpoint created",
+    "Input validation with Zod schemas",
+    "User can only update own profile",
+    "Frontend form with React Query integration",
+    "i18n tokens added",
+    "Tests written and passing"
+  ],
   "quality_metrics": {
-    "backend_coverage": "85%",
-    "frontend_coverage": "80%",
-    "e2e_tests": "all passing",
-    "api_contract": "verified"
+    "typescript_coverage": "100%",
+    "eslint_errors": 0,
+    "test_coverage": "0%",
+    "lines_of_code": 450
   },
-  "next_steps": "What the receiving agent should do",
-  "special_notes": ["API contract details", "Integration considerations"],
+  "context": {
+    "epic": "E1",
+    "requirement": "FR-009",
+    "related_issues": ["ISSUE-001"]
+  },
+  "next_steps": "Generate comprehensive test suite covering happy paths, edge cases, and error conditions. Target 80% coverage minimum, 90% for critical paths.",
+  "special_notes": [
+    "Backend uses asyncHandler wrapper",
+    "Frontend uses React Query for API calls",
+    "i18n tokens added for all user-facing text"
+  ],
   "blocking_issues": []
 }
 ```
+
+**Note**: See `.cursor/agents/HANDOFF_PROTOCOL.md` for complete specification and examples.
 
 ### Escalation Conditions
 
@@ -1047,3 +1124,4 @@ Escalate to supervisor/orchestrator when:
 ---
 
 **END OF AGENT CONFIGURATION**
+````

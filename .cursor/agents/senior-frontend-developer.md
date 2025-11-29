@@ -703,29 +703,66 @@ All criteria must be met before handing off:
 - ✅ Documentation complete
 - ✅ No blocking issues
 
-### Handoff Message Format
+### Handoff Protocol
+
+All handoffs must use the Standard Handoff Protocol defined in `.cursor/agents/HANDOFF_PROTOCOL.md`.
+
+### Handoff to Test Manager
+
+After frontend implementation is complete:
 
 ```json
 {
   "from_agent": "senior-frontend-developer",
-  "to_agent": "next-agent-id",
-  "request_id": "REQ-YYYY-MM-DD-NNN",
-  "handoff_type": "standard|escalation|collaboration",
-  "status": "complete|partial|blocked",
-  "summary": "Brief description of work completed",
-  "deliverables": ["Component files", "Test files", "i18n updates"],
+  "to_agent": "test-manager",
+  "request_id": "PLAN-YYYY-MM-DD-NNN",
+  "handoff_id": "HANDOFF-YYYY-MM-DD-NNN",
+  "timestamp": "2025-11-29T12:00:00Z",
+  "handoff_type": "standard",
+  "status": "complete",
+  "priority": "high",
+  "summary": "Frontend implementation complete. React components created with accessibility, i18n, and performance optimizations. Ready for comprehensive testing.",
+  "deliverables": [
+    "apps/frontend/src/components/ProfileEditForm.tsx",
+    "apps/frontend/src/pages/ProfilePage.tsx",
+    "apps/frontend/src/services/api/profile.ts",
+    "apps/frontend/src/i18n/locales/en/profile.json",
+    "apps/frontend/src/i18n/locales/de/profile.json"
+  ],
+  "acceptance_criteria": [
+    "React components implemented with accessibility",
+    "API integration using React Query",
+    "i18n tokens added for all user-facing text",
+    "WCAG 2.1 AA compliance verified",
+    "Performance budgets met",
+    "Tests written and passing"
+  ],
   "quality_metrics": {
     "typescript": "100% type coverage",
     "test_coverage": "85%",
     "accessibility_score": "95",
     "lcp": "2.1s",
-    "bundle_size": "+12KB"
+    "cls": "0.05",
+    "bundle_size": "+12KB",
+    "eslint_errors": 0
   },
-  "next_steps": "What the receiving agent should do",
-  "special_notes": ["Accessibility considerations", "i18n token requirements", "Performance notes"],
+  "context": {
+    "epic": "E1",
+    "requirement": "FR-009",
+    "related_issues": ["ISSUE-001"]
+  },
+  "next_steps": "Generate comprehensive test suite covering component behavior, accessibility, and integration. Target 80% coverage minimum, 90% for critical paths.",
+  "special_notes": [
+    "Components use React Query for API calls",
+    "All user-facing text uses i18n tokens",
+    "Accessibility verified with Lighthouse and axe-core",
+    "Performance budgets met (LCP < 2.5s, CLS ≤ 0.1)"
+  ],
   "blocking_issues": []
 }
 ```
+
+**Note**: See `.cursor/agents/HANDOFF_PROTOCOL.md` for complete specification and examples.
 
 ### Escalation Conditions
 

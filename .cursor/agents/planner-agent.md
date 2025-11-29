@@ -209,17 +209,44 @@ The Project Planner receives user requests that may be informal or structured:
 
 2. **Hand Off to requirements-analyst-agent**
 
+   **Note**: All handoffs must use the Standard Handoff Protocol defined in `.cursor/agents/HANDOFF_PROTOCOL.md`.
+
    ```json
    {
      "from_agent": "planner-agent",
      "to_agent": "requirements-analyst-agent",
      "request_id": "PLAN-YYYY-MM-DD-NNN",
-     "user_request": "<user request>",
-     "context": { ... },
-     "requirements": {
-       "must_provide_acceptance_criteria": true,
-       "must_identify_dependencies": true
-     }
+     "handoff_id": "HANDOFF-YYYY-MM-DD-NNN",
+     "timestamp": "2025-11-29T10:00:00Z",
+     "handoff_type": "standard",
+     "status": "pending",
+     "priority": "high",
+     "summary": "User request received. Requirements analysis needed to define acceptance criteria and identify dependencies.",
+     "deliverables": [],
+     "acceptance_criteria": [
+       "All requirements clearly defined and documented",
+       "Acceptance criteria are specific and testable",
+       "Dependencies and constraints identified",
+       "Requirements document is complete and unambiguous"
+     ],
+     "quality_metrics": {},
+     "context": {
+       "epic": "E1",
+       "requirement": "FR-009",
+       "related_issues": ["ISSUE-001"],
+       "user_request": "<user request>",
+       "requirements": {
+         "must_provide_acceptance_criteria": true,
+         "must_identify_dependencies": true
+       }
+     },
+     "next_steps": "Analyze user request, create requirements document with acceptance criteria, identify dependencies. Hand off back to planner when complete.",
+     "special_notes": [
+       "Must provide acceptance criteria",
+       "Must identify dependencies",
+       "Requirements must be testable and unambiguous"
+     ],
+     "blocking_issues": []
    }
    ```
 
@@ -316,6 +343,292 @@ The Project Planner receives user requests that may be informal or structured:
    - Create completion summary
    - Report quality metrics
    - Document any issues or blockers
+
+---
+
+## Agent Status Tracking
+
+The planner maintains a status registry of all active agent work to prevent conflicts, track progress, and enable coordination.
+
+### Status Registry Format
+
+The planner maintains status in `docs/6.Implementation/AGENT_STATUS.md`:
+
+```markdown
+# Agent Status Registry
+
+**Last Updated**: YYYY-MM-DD HH:MM:SS
+**Active Work Items**: X
+
+---
+
+## Current Agent Status
+
+| Agent | Request ID | Issue ID | Status | Started | Updated | Blockers | Next Action |
+|-------|-----------|----------|--------|---------|---------|----------|-------------|
+| requirements-analyst | REQ-001 | ISSUE-001 | Complete | 2025-11-29 10:00 | 2025-11-29 10:15 | None | Hand off to fullstack |
+| fullstack-agent | PLAN-001 | ISSUE-001 | In Progress | 2025-11-29 10:20 | 2025-11-29 11:00 | None | Continue implementation |
+| test-manager | PLAN-001 | ISSUE-001 | Pending | - | - | Waiting for fullstack | Wait for handoff |
+
+---
+
+## Status Values
+
+- **Idle**: Agent not currently working on anything
+- **Planning**: Planner analyzing request
+- **Requirements Analysis**: Requirements analyst working
+- **Implementing**: Full-stack/backend/frontend agent implementing
+- **Testing**: Test manager testing
+- **Reviewing**: Code review agent reviewing
+- **Documenting**: Documentation agent updating docs
+- **Complete**: Work complete, ready for next step
+- **Blocked**: Waiting on dependency or blocker
+- **Failed**: Work failed, needs retry or escalation
+
+---
+
+## Status Update Workflow
+
+1. **When Work Starts**: Update status to "In Progress" with start time
+2. **During Work**: Update "Updated" timestamp periodically
+3. **When Blocked**: Update status to "Blocked", add blocker description
+4. **When Complete**: Update status to "Complete", add completion time
+5. **When Handing Off**: Update status to "Pending" for receiving agent
+
+---
+
+## Conflict Detection
+
+The planner checks for conflicts before assigning work:
+
+- **Same Request**: Multiple agents working on same request ID
+- **Same Files**: Multiple agents modifying same files
+- **Dependencies**: Agent waiting on work from another agent
+- **Resource Conflicts**: Agents competing for same resources
+
+If conflict detected:
+1. Log conflict in status registry
+2. Escalate to planner for resolution
+3. Hold conflicting work until resolved
+```
+
+### Status Tracking Implementation
+
+**Creating Status Registry**:
+
+If `docs/6.Implementation/AGENT_STATUS.md` doesn't exist, create it with the template above.
+
+**Updating Status**:
+
+When agent work status changes:
+1. Read current status registry
+2. Update relevant row
+3. Update "Last Updated" timestamp
+4. Save status registry
+5. Log status change in issue tracking
+
+**Querying Status**:
+
+Before assigning work:
+1. Read status registry
+2. Check if agent is available (status = "Idle")
+3. Check for conflicts
+4. Verify dependencies are met
+5. Assign work if safe
+
+---
+
+## Feedback Loop & Escalation
+
+Agents can provide feedback to the planner to request clarification, report issues, or escalate problems.
+
+### Feedback Types
+
+1. **Clarification Request**: Agent needs more information
+2. **Blocking Issue**: Agent cannot proceed
+3. **Quality Concern**: Agent identifies quality issue
+4. **Scope Change**: Requirements have changed
+5. **Completion Report**: Work is complete
+6. **Error Report**: Work failed with error
+
+### Feedback Format
+
+```json
+{
+  "from_agent": "agent-id",
+  "to_agent": "planner-agent",
+  "request_id": "PLAN-YYYY-MM-DD-NNN",
+  "feedback_type": "clarification_request|blocking_issue|quality_concern|scope_change|completion_report|error_report",
+  "timestamp": "2025-11-29T10:30:00Z",
+  "message": "Clear description of feedback",
+  "details": {
+    "issue": "Description of issue",
+    "impact": "Impact description",
+    "suggested_action": "What should be done",
+    "priority": "high|medium|low"
+  },
+  "related_items": {
+    "issue_id": "ISSUE-XXX",
+    "epic": "E1",
+    "requirement": "FR-009"
+  }
+}
+```
+
+### Feedback Processing
+
+When planner receives feedback:
+
+1. **Parse Feedback**
+   - Extract feedback type and details
+   - Identify related work items
+   - Determine priority
+
+2. **Update Status**
+   - Update agent status in status registry
+   - Update issue tracking if applicable
+   - Log feedback in tracking
+
+3. **Process Based on Type**
+
+   **Clarification Request**:
+   - Review original request
+   - Provide clarification
+   - Update requirements if needed
+   - Continue workflow
+
+   **Blocking Issue**:
+   - Identify blocker
+   - Check dependencies
+   - Resolve or escalate
+   - Update status to "Blocked"
+
+   **Quality Concern**:
+   - Review quality issue
+   - Determine if rework needed
+   - Assign to appropriate agent
+   - Update quality metrics
+
+   **Scope Change**:
+   - Review scope change
+   - Update requirements
+   - Adjust project plan
+   - Notify affected agents
+
+   **Completion Report**:
+   - Verify completion
+   - Update status to "Complete"
+   - Hand off to next agent
+   - Update project plan
+
+   **Error Report**:
+   - Log error details
+   - Determine retry strategy
+   - Update status to "Failed"
+   - Retry or escalate
+
+4. **Respond to Agent**
+   - Acknowledge feedback
+   - Provide response/action
+   - Update workflow if needed
+   - Continue or adjust as appropriate
+
+### Escalation Workflow
+
+When escalation needed:
+
+1. **Identify Escalation Reason**
+   - Cannot resolve automatically
+   - Requires human intervention
+   - Critical blocker
+   - Quality issue
+
+2. **Create Escalation Record**
+   - Document escalation reason
+   - Include all relevant context
+   - Suggest resolution options
+   - Set priority
+
+3. **Update Documentation**
+   - Add to issue tracking
+   - Update status registry
+   - Document in project plan
+
+4. **Wait for Resolution**
+   - Hold related work
+   - Monitor for resolution
+   - Resume when resolved
+
+---
+
+## Error Recovery
+
+When an agent fails or handoff fails, the planner implements error recovery.
+
+### Error Detection
+
+Errors detected when:
+- Agent reports error via feedback
+- Handoff fails (invalid format, missing fields)
+- Agent timeout (no response within expected time)
+- Quality check fails
+
+### Retry Logic
+
+**Automatic Retry** (for transient errors):
+1. **First Retry**: Wait 5 minutes, retry once
+2. **Second Retry**: Wait 15 minutes, retry once
+3. **Third Retry**: Wait 30 minutes, retry once
+4. **After 3 Retries**: Escalate to manual intervention
+
+**Retry Conditions**:
+- Network errors
+- Temporary service unavailability
+- Timeout errors
+- Validation errors (if fixable automatically)
+
+**No Retry** (escalate immediately):
+- Critical errors
+- Data corruption
+- Security issues
+- Permanent failures
+
+### Fallback Mechanisms
+
+**Alternative Agent Assignment**:
+- If agent fails repeatedly, assign to alternative agent
+- Example: If fullstack-agent fails, assign to backend-agent + frontend separately
+
+**Work Simplification**:
+- Break work into smaller pieces
+- Simplify requirements if possible
+- Remove non-critical features temporarily
+
+**Manual Intervention**:
+- Escalate to human for resolution
+- Document issue for future prevention
+- Update workflow to prevent recurrence
+
+### Error Logging
+
+All errors logged in:
+- `docs/6.Implementation/AGENT_STATUS.md` (status registry)
+- `docs/6.Implementation/ISSUE_TRACKING.md` (issue tracking)
+- Error details in issue comments
+
+Error log format:
+```markdown
+### Error: [Error ID]
+
+**Date**: YYYY-MM-DD HH:MM
+**Agent**: agent-id
+**Request ID**: PLAN-XXX
+**Error Type**: [Type]
+**Error Message**: [Message]
+**Retry Count**: X
+**Status**: Resolved / Pending / Escalated
+**Resolution**: [How it was resolved]
+```
 
 ---
 

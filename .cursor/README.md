@@ -23,6 +23,9 @@ Agents are specialized AI assistants configured for specific development tasks:
 - **fullstack-agent.md** - Full-stack feature implementation
 - **test_manager.md** - Testing and quality assurance
 - **version_controller.md** - Version control, git operations, security scanning, and PR management
+- **agent-quality-agent.md** - Meta-agent for reviewing and improving agent configurations
+
+See `.cursor/agents/REGISTRY.md` for complete agent registry and capabilities.
 
 Each agent has context about the relevant tech stack, coding standards, and common tasks.
 
