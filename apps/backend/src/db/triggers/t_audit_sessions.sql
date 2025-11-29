@@ -14,15 +14,15 @@ BEGIN
   IF TG_OP = 'INSERT' THEN
     v_action := 'session.create';
     v_entity_id := NEW.id;
-    v_actor_user_id := NEW.user_id;
+    v_actor_user_id := NEW.owner_id;
   ELSIF TG_OP = 'UPDATE' THEN
     v_action := 'session.update';
     v_entity_id := NEW.id;
-    v_actor_user_id := NEW.user_id;
+    v_actor_user_id := NEW.owner_id;
   ELSIF TG_OP = 'DELETE' THEN
     v_action := 'session.delete';
     v_entity_id := OLD.id;
-    v_actor_user_id := OLD.user_id;
+    v_actor_user_id := OLD.owner_id;
   ELSE
     RETURN NULL;
   END IF;

@@ -156,11 +156,21 @@ describe("Integration: Session → Points Flow", () => {
     expect(completeResponse.status).toBe(200);
     expect(completeResponse.body.status).toBe("completed");
 
-    // Step 3: Verify points were awarded
-    const pointsHistory = await db("user_points")
-      .where({ user_id: testUser.id })
+    // Step 3: Verify points were awarded (with retry logic for transaction visibility)
+    let pointsHistory = await db("user_points")
+      .where({ user_id: testUser.id, source_type: "session_completed" })
       .orderBy("awarded_at", "desc")
       .first();
+
+    let retries = 0;
+    while (!pointsHistory && retries < 10) {
+      await new Promise((resolve) => setTimeout(resolve, 100));
+      pointsHistory = await db("user_points")
+        .where({ user_id: testUser.id, source_type: "session_completed" })
+        .orderBy("awarded_at", "desc")
+        .first();
+      retries++;
+    }
 
     expect(pointsHistory).toBeDefined();
     expect(pointsHistory).toHaveProperty("points");
@@ -253,11 +263,21 @@ describe("Integration: Session → Points Flow", () => {
         });
     }
 
-    // Verify total points
-    const totalPoints = await db("user_points")
+    // Verify total points (with retry logic for transaction visibility)
+    let totalPoints = await db("user_points")
       .where({ user_id: testUser.id })
       .sum("points as total")
       .first();
+
+    let retries = 0;
+    while ((!totalPoints || Number(totalPoints?.total || 0) === 0) && retries < 10) {
+      await new Promise((resolve) => setTimeout(resolve, 100));
+      totalPoints = await db("user_points")
+        .where({ user_id: testUser.id })
+        .sum("points as total")
+        .first();
+      retries++;
+    }
 
     expect(totalPoints).toBeDefined();
     expect(Number(totalPoints?.total || 0)).toBeGreaterThan(0);
