@@ -15,7 +15,10 @@ import request from "supertest";
 import bcrypt from "bcryptjs";
 import app from "../../../apps/backend/src/app.js";
 import db from "../../../apps/backend/src/db/index.js";
-import { createUser } from "../../../apps/backend/src/modules/auth/auth.repository.js";
+import {
+  createUser,
+  findUserByEmail,
+} from "../../../apps/backend/src/modules/auth/auth.repository.js";
 import { truncateAll, ensureRolesSeeded } from "../../setup/test-helpers.js";
 import { v4 as uuidv4 } from "uuid";
 
@@ -35,22 +38,57 @@ describe("Integration: Feed Sharing → Reactions Flow", () => {
 
     // User 1
     const userId1 = uuidv4();
-    const user1Result = await createUser({
-      id: userId1,
-      username: "sharer",
-      display_name: "Session Sharer",
-      status: "active",
-      role_code: "athlete",
-      password_hash: passwordHash,
-      primaryEmail: "sharer@example.com",
-      emailVerified: true,
-      terms_accepted: true,
-      terms_accepted_at: now,
-      terms_version: "2024-06-01",
-    });
+    let user1Result;
+    try {
+      user1Result = await createUser({
+        id: userId1,
+        username: "sharer",
+        display_name: "Session Sharer",
+        status: "active",
+        role_code: "athlete",
+        password_hash: passwordHash,
+        primaryEmail: "sharer@example.com",
+        emailVerified: true,
+        terms_accepted: true,
+        terms_accepted_at: now,
+        terms_version: "2024-06-01",
+      });
+    } catch (error) {
+      throw new Error(
+        `Failed to create user1: ${error instanceof Error ? error.message : String(error)}`,
+      );
+    }
 
     if (!user1Result) {
-      throw new Error("Failed to create user1");
+      throw new Error("Failed to create user1: createUser returned undefined");
+    }
+
+    // Verify user1 exists in database before login
+    const verifyUser1 = await db("users").where({ id: userId1 }).first();
+    if (!verifyUser1) {
+      throw new Error(`User1 ${userId1} was not created in database`);
+    }
+
+    // Verify email contact was created
+    const verifyContact1 = await db("user_contacts")
+      .where({ user_id: userId1, type: "email", is_primary: true })
+      .first();
+    if (!verifyContact1) {
+      throw new Error(`User1 email contact was not created in database`);
+    }
+
+    // Verify user1 can be found by email (same query login uses)
+    let foundUser1 = await findUserByEmail("sharer@example.com");
+    let retries = 0;
+    while (!foundUser1 && retries < 10) {
+      await new Promise((resolve) => setTimeout(resolve, 100));
+      foundUser1 = await findUserByEmail("sharer@example.com");
+      retries++;
+    }
+    if (!foundUser1) {
+      throw new Error(
+        `User1 not found by email after ${retries} retries. User exists: ${!!verifyUser1}, Contact exists: ${!!verifyContact1}`,
+      );
     }
 
     const login1 = await request(app).post("/api/v1/auth/login").send({
@@ -74,22 +112,29 @@ describe("Integration: Feed Sharing → Reactions Flow", () => {
 
     // User 2
     const userId2 = uuidv4();
-    const user2Result = await createUser({
-      id: userId2,
-      username: "reactor",
-      display_name: "Reaction User",
-      status: "active",
-      role_code: "athlete",
-      password_hash: passwordHash,
-      primaryEmail: "reactor@example.com",
-      emailVerified: true,
-      terms_accepted: true,
-      terms_accepted_at: now,
-      terms_version: "2024-06-01",
-    });
+    let user2Result;
+    try {
+      user2Result = await createUser({
+        id: userId2,
+        username: "reactor",
+        display_name: "Reaction User",
+        status: "active",
+        role_code: "athlete",
+        password_hash: passwordHash,
+        primaryEmail: "reactor@example.com",
+        emailVerified: true,
+        terms_accepted: true,
+        terms_accepted_at: now,
+        terms_version: "2024-06-01",
+      });
+    } catch (error) {
+      throw new Error(
+        `Failed to create user2: ${error instanceof Error ? error.message : String(error)}`,
+      );
+    }
 
     if (!user2Result) {
-      throw new Error("Failed to create user2");
+      throw new Error("Failed to create user2: createUser returned undefined");
     }
 
     // Verify user2 exists in database before login
@@ -98,8 +143,27 @@ describe("Integration: Feed Sharing → Reactions Flow", () => {
       throw new Error(`User2 ${userId2} was not created in database`);
     }
 
-    // Small delay to avoid rate limiting issues
-    await new Promise((resolve) => setTimeout(resolve, 100));
+    // Verify email contact was created
+    const verifyContact2 = await db("user_contacts")
+      .where({ user_id: userId2, type: "email", is_primary: true })
+      .first();
+    if (!verifyContact2) {
+      throw new Error(`User2 email contact was not created in database`);
+    }
+
+    // Verify user2 can be found by email (same query login uses)
+    let foundUser2 = await findUserByEmail("reactor@example.com");
+    let retries = 0;
+    while (!foundUser2 && retries < 10) {
+      await new Promise((resolve) => setTimeout(resolve, 100));
+      foundUser2 = await findUserByEmail("reactor@example.com");
+      retries++;
+    }
+    if (!foundUser2) {
+      throw new Error(
+        `User2 not found by email after ${retries} retries. User exists: ${!!verifyUser2}, Contact exists: ${!!verifyContact2}`,
+      );
+    }
 
     const login2 = await request(app).post("/api/v1/auth/login").send({
       email: "reactor@example.com",
@@ -158,13 +222,45 @@ describe("Integration: Feed Sharing → Reactions Flow", () => {
     const sessionId = sessionResponse.body.id;
 
     // Complete the session
-    await request(app)
+    const completeResponse = await request(app)
       .patch(`/api/v1/sessions/${sessionId}`)
       .set("Authorization", `Bearer ${user1.accessToken}`)
       .send({
         status: "completed",
         completed_at: new Date().toISOString(),
       });
+
+    if (completeResponse.status !== 200) {
+      throw new Error(
+        `Failed to complete session: ${completeResponse.status} - ${JSON.stringify(completeResponse.body)}`,
+      );
+    }
+
+    // Verify session is completed in database
+    const completedSession = await db("sessions").where({ id: sessionId }).first();
+    if (!completedSession || completedSession.status !== "completed") {
+      throw new Error(
+        `Session ${sessionId} was not completed. Status: ${completedSession?.status}`,
+      );
+    }
+
+    // Verify session can be found using the same query feed service uses
+    const { findSessionById } = await import(
+      "../../../apps/backend/src/modules/feed/feed.repository.js"
+    );
+    let foundSession = await findSessionById(sessionId);
+    let retries = 0;
+    while (!foundSession && retries < 10) {
+      await new Promise((resolve) => setTimeout(resolve, 100));
+      foundSession = await findSessionById(sessionId);
+      retries++;
+    }
+    if (!foundSession) {
+      throw new Error(`Session ${sessionId} not found by findSessionById after ${retries} retries`);
+    }
+    if (foundSession.status !== "completed") {
+      throw new Error(`Session ${sessionId} status is ${foundSession.status}, expected completed`);
+    }
 
     // Step 2: User 1 shares session to feed (creates share link which creates feed item)
     const shareResponse = await request(app)
@@ -230,13 +326,42 @@ describe("Integration: Feed Sharing → Reactions Flow", () => {
     const sessionId = sessionResponse.body.id;
 
     // Complete the session
-    await request(app)
+    const completeResponse = await request(app)
       .patch(`/api/v1/sessions/${sessionId}`)
       .set("Authorization", `Bearer ${user1.accessToken}`)
       .send({
         status: "completed",
         completed_at: new Date().toISOString(),
       });
+
+    if (completeResponse.status !== 200) {
+      throw new Error(
+        `Failed to complete session: ${completeResponse.status} - ${JSON.stringify(completeResponse.body)}`,
+      );
+    }
+
+    // Verify session is completed
+    const completedSession = await db("sessions").where({ id: sessionId }).first();
+    if (!completedSession || completedSession.status !== "completed") {
+      throw new Error(
+        `Session ${sessionId} was not completed. Status: ${completedSession?.status}`,
+      );
+    }
+
+    // Verify session can be found using the same query feed service uses
+    const { findSessionById } = await import(
+      "../../../apps/backend/src/modules/feed/feed.repository.js"
+    );
+    let foundSession = await findSessionById(sessionId);
+    let retries = 0;
+    while (!foundSession && retries < 10) {
+      await new Promise((resolve) => setTimeout(resolve, 100));
+      foundSession = await findSessionById(sessionId);
+      retries++;
+    }
+    if (!foundSession) {
+      throw new Error(`Session ${sessionId} not found by findSessionById after ${retries} retries`);
+    }
 
     // Share the session
     const shareResponse = await request(app)
@@ -276,13 +401,42 @@ describe("Integration: Feed Sharing → Reactions Flow", () => {
     const sessionId = sessionResponse.body.id;
 
     // Complete the session
-    await request(app)
+    const completeResponse = await request(app)
       .patch(`/api/v1/sessions/${sessionId}`)
       .set("Authorization", `Bearer ${user1.accessToken}`)
       .send({
         status: "completed",
         completed_at: new Date().toISOString(),
       });
+
+    if (completeResponse.status !== 200) {
+      throw new Error(
+        `Failed to complete session: ${completeResponse.status} - ${JSON.stringify(completeResponse.body)}`,
+      );
+    }
+
+    // Verify session is completed
+    const completedSession = await db("sessions").where({ id: sessionId }).first();
+    if (!completedSession || completedSession.status !== "completed") {
+      throw new Error(
+        `Session ${sessionId} was not completed. Status: ${completedSession?.status}`,
+      );
+    }
+
+    // Verify session can be found using the same query feed service uses
+    const { findSessionById } = await import(
+      "../../../apps/backend/src/modules/feed/feed.repository.js"
+    );
+    let foundSession = await findSessionById(sessionId);
+    let retries = 0;
+    while (!foundSession && retries < 10) {
+      await new Promise((resolve) => setTimeout(resolve, 100));
+      foundSession = await findSessionById(sessionId);
+      retries++;
+    }
+    if (!foundSession) {
+      throw new Error(`Session ${sessionId} not found by findSessionById after ${retries} retries`);
+    }
 
     // Share the session
     const shareResponse = await request(app)

@@ -122,6 +122,7 @@ export async function findSessionById(sessionId: string): Promise<SessionRow | u
   return db<SessionRow>(SESSIONS_TABLE)
     .select(["id", "owner_id", "visibility", "status", "completed_at"])
     .where({ id: sessionId })
+    .whereNull("deleted_at")
     .first();
 }
 
