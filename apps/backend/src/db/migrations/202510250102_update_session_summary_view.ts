@@ -87,6 +87,10 @@ export async function up(knex: Knex): Promise<void> {
 
   // Recreate session_summary with new columns
   await knex.raw(NEW_SESSION_VIEW_SQL);
+  // Create unique index on session_id (required for concurrent refresh)
+  await knex.raw(
+    `CREATE UNIQUE INDEX IF NOT EXISTS idx_${SESSION_VIEW}_session_id ON ${SESSION_VIEW} (session_id);`,
+  );
   await knex.raw(
     `CREATE INDEX IF NOT EXISTS idx_${SESSION_VIEW}_owner_completed ON ${SESSION_VIEW} (owner_id, completed_at DESC);`,
   );

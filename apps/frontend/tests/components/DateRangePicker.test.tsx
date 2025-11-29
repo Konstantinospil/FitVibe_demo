@@ -48,7 +48,7 @@ describe("DateRangePicker", () => {
     // Use fill to set the value directly, avoiding intermediate empty states
     await user.clear(toInput);
     // Simulate typing the full date value
-    await user.type(toInput, "2025-01-20", { delay: 0 });
+    await user.type(toInput, "2025-01-20");
 
     // The component should eventually call onChange with the correct value
     // We check that it was called at least once with the expected final value
@@ -95,7 +95,7 @@ describe("DateRangePicker", () => {
 
     const toInput = screen.getByLabelText(/to:/i) as HTMLInputElement;
     await user.clear(toInput);
-    await user.type(toInput, "2025-01-10", { delay: 0 });
+    await user.type(toInput, "2025-01-10");
 
     // Wait for the final onChange call
     await new Promise((resolve) => setTimeout(resolve, 100));

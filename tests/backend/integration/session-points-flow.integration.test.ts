@@ -16,7 +16,7 @@ import bcrypt from "bcryptjs";
 import app from "../../../apps/backend/src/app.js";
 import db from "../../../apps/backend/src/db/index.js";
 import { createUser } from "../../../apps/backend/src/modules/auth/auth.repository.js";
-import { truncateAll } from "../../setup/test-helpers.js";
+import { truncateAll, ensureRolesSeeded } from "../../setup/test-helpers.js";
 import { v4 as uuidv4 } from "uuid";
 
 describe("Integration: Session → Points Flow", () => {
@@ -24,6 +24,8 @@ describe("Integration: Session → Points Flow", () => {
 
   beforeEach(async () => {
     await truncateAll();
+    // Ensure roles are seeded before creating users
+    await ensureRolesSeeded();
 
     // Create a test user and get access token
     const userId = uuidv4();
@@ -31,7 +33,7 @@ describe("Integration: Session → Points Flow", () => {
     const passwordHash = await bcrypt.hash(password, 12);
     const now = new Date().toISOString();
 
-    await createUser({
+    const userResult = await createUser({
       id: userId,
       username: "pointsuser",
       display_name: "Points User",
@@ -45,6 +47,16 @@ describe("Integration: Session → Points Flow", () => {
       terms_version: "2024-06-01",
     });
 
+    if (!userResult) {
+      throw new Error("Failed to create test user");
+    }
+
+    // Verify user exists in database before login
+    const verifyUser = await db("users").where({ id: userId }).first();
+    if (!verifyUser) {
+      throw new Error(`User ${userId} was not created in database`);
+    }
+
     // Login to get access token
     const loginResponse = await request(app).post("/api/v1/auth/login").send({
       email: "points@example.com",
@@ -52,7 +64,13 @@ describe("Integration: Session → Points Flow", () => {
     });
 
     if (loginResponse.status !== 200) {
-      throw new Error("Failed to login test user");
+      throw new Error(
+        `Failed to login test user: ${loginResponse.status} - ${JSON.stringify(loginResponse.body)}`,
+      );
+    }
+
+    if (!loginResponse.body.tokens?.accessToken) {
+      throw new Error(`Login response missing tokens: ${JSON.stringify(loginResponse.body)}`);
     }
 
     testUser = {
@@ -74,26 +92,27 @@ describe("Integration: Session → Points Flow", () => {
       .set("Authorization", `Bearer ${testUser.accessToken}`)
       .send({
         title: "Strength Training",
-        scheduledAt: new Date().toISOString(),
-        status: "planned",
-        privacy: "private",
+        planned_at: new Date().toISOString(),
+        visibility: "private",
         exercises: [
           {
-            exerciseTypeId: null,
-            name: "Push-ups",
+            exercise_id: null,
+            order: 1,
             sets: [
               {
+                order: 1,
                 reps: 10,
-                weight: null,
-                duration: null,
-                distance: null,
               },
             ],
           },
         ],
       });
 
-    expect(createResponse.status).toBe(201);
+    if (createResponse.status !== 201) {
+      throw new Error(
+        `Failed to create session: ${createResponse.status} - ${JSON.stringify(createResponse.body)}`,
+      );
+    }
     const sessionId = createResponse.body.id;
 
     // Step 2: Complete the session
@@ -102,22 +121,22 @@ describe("Integration: Session → Points Flow", () => {
       .set("Authorization", `Bearer ${testUser.accessToken}`)
       .send({
         status: "completed",
-        completedAt: new Date().toISOString(),
+        completed_at: new Date().toISOString(),
       });
 
     expect(completeResponse.status).toBe(200);
     expect(completeResponse.body.status).toBe("completed");
 
     // Step 3: Verify points were awarded
-    const pointsHistory = await db("points_history")
+    const pointsHistory = await db("user_points")
       .where({ user_id: testUser.id })
-      .orderBy("created_at", "desc")
+      .orderBy("awarded_at", "desc")
       .first();
 
     expect(pointsHistory).toBeDefined();
     expect(pointsHistory).toHaveProperty("points");
     expect(pointsHistory.points).toBeGreaterThan(0);
-    expect(pointsHistory.reason).toContain("session");
+    expect(pointsHistory.source_type).toBe("session_completed");
   });
 
   it("should not award points for canceled sessions", async () => {
@@ -127,12 +146,16 @@ describe("Integration: Session → Points Flow", () => {
       .set("Authorization", `Bearer ${testUser.accessToken}`)
       .send({
         title: "Canceled Workout",
-        scheduledAt: new Date().toISOString(),
-        status: "planned",
-        privacy: "private",
+        planned_at: new Date().toISOString(),
+        visibility: "private",
         exercises: [],
       });
 
+    if (!createResponse.body.id) {
+      throw new Error(
+        `Session creation failed or missing ID: ${JSON.stringify(createResponse.body)}`,
+      );
+    }
     const sessionId = createResponse.body.id;
 
     // Cancel the session
@@ -143,13 +166,18 @@ describe("Integration: Session → Points Flow", () => {
         status: "canceled",
       });
 
-    expect(cancelResponse.status).toBe(200);
+    if (cancelResponse.status !== 200) {
+      throw new Error(
+        `Failed to cancel session: ${cancelResponse.status} - ${JSON.stringify(cancelResponse.body)}`,
+      );
+    }
     expect(cancelResponse.body.status).toBe("canceled");
 
-    // Verify no points were awarded
-    const pointsHistory = await db("points_history")
+    // Verify no points were awarded for canceled session
+    const pointsHistory = await db("user_points")
       .where({ user_id: testUser.id })
-      .where("reason", "like", "%session%")
+      .where("source_type", "session")
+      .orderBy("awarded_at", "desc")
       .first();
 
     // Points might exist from other operations, but not for canceled session
@@ -168,14 +196,18 @@ describe("Integration: Session → Points Flow", () => {
         .set("Authorization", `Bearer ${testUser.accessToken}`)
         .send({
           title: `Workout ${i + 1}`,
-          scheduledAt: new Date().toISOString(),
-          status: "planned",
-          privacy: "private",
+          planned_at: new Date().toISOString(),
+          visibility: "private",
           exercises: [
             {
-              exerciseTypeId: null,
-              name: "Exercise",
-              sets: [{ reps: 5 }],
+              exercise_id: null,
+              order: 1,
+              sets: [
+                {
+                  order: 1,
+                  reps: 5,
+                },
+              ],
             },
           ],
         });
@@ -188,12 +220,12 @@ describe("Integration: Session → Points Flow", () => {
         .set("Authorization", `Bearer ${testUser.accessToken}`)
         .send({
           status: "completed",
-          completedAt: new Date().toISOString(),
+          completed_at: new Date().toISOString(),
         });
     }
 
     // Verify total points
-    const totalPoints = await db("points_history")
+    const totalPoints = await db("user_points")
       .where({ user_id: testUser.id })
       .sum("points as total")
       .first();

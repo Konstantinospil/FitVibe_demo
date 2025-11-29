@@ -270,6 +270,23 @@ pnpm typecheck     # TypeScript type checking
 - Grafana dashboards for visualization
 - Correlation IDs for request tracing
 
+## Implementation Principles
+
+**CRITICAL**: These principles are non-negotiable and must be followed in all implementations.
+
+1. **Never use placeholders or fake data** - Implement full functionality, never use `TODO`, `FIXME`, `placeholder`, `mock`, `fake`, `dummy`, or `stub` in production code
+2. **Never reduce code quality** - Don't simplify at the expense of quality, maintainability, or correctness. Always include proper error handling, validation, and type safety
+3. **Always use global settings** - Never hardcode URLs, ports, timeouts, limits, or magic numbers. All configuration must come from environment variables or centralized config files
+4. **Always use i18n for text** - All user-facing text (labels, buttons, errors, placeholders, messages) must come from i18n translation files, never hardcoded
+5. **Complete error handling** - Use `HttpError` utility with specific error codes and messages. Never use generic errors or swallow exceptions
+6. **Type safety** - Strict TypeScript compliance, no `any` types in public surfaces, proper type definitions for all APIs
+7. **Comprehensive testing** - Write tests for all new functionality (unit + integration), maintain ≥80% coverage, test happy paths, errors, and edge cases
+8. **Proper architecture** - Follow Controller → Service → Repository pattern, keep controllers thin, business logic in services, data access in repositories
+9. **Security first** - Validate all input, use parameterized queries, implement proper auth/authz, follow privacy-by-default
+10. **Accessibility by default** - All UI components must be accessible (ARIA labels, keyboard navigation, WCAG 2.1 AA compliant)
+
+See `docs/6.Implementation/implementation_principles.md` for detailed examples and guidelines.
+
 ## When Writing Code
 
 1. **Always** use TypeScript strict mode - no `any` types in public surfaces
@@ -287,6 +304,9 @@ pnpm typecheck     # TypeScript type checking
 13. **Always** implement idempotency for state-changing operations
 14. **Always** use transactions for multi-step database operations
 15. **Always** use React Query for server state management in frontend
+16. **Always** use i18n for all user-facing text (never hardcode strings)
+17. **Always** use configuration from `env.ts` or config files (never hardcode values)
+18. **Always** implement complete functionality (never use placeholders or simplified versions)
 
 ## Quick Reference: Most Common Tasks
 
@@ -639,3 +659,4 @@ If you encounter errors like `es-errors: 1.3.0`, `debug: 4.4.3`, or `http-errors
 - **Backend Modules**: `apps/backend/src/modules/README.md`
 - **Project Epics**: `PROJECT_EPICS_AND_ACTIVITIES.md`
 - **Chat Analysis**: `docs/6.Implementation/cursor_chat_analysis.md` (updated based on actual usage patterns)
+- **Implementation Principles**: `docs/6.Implementation/implementation_principles.md` (core implementation principles and preferences)

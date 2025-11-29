@@ -16,6 +16,8 @@ This directory contains Cursor IDE configuration files for agents, MCP servers, 
 
 Agents are specialized AI assistants configured for specific development tasks:
 
+- **planner-agent.md** - Project planning, workflow orchestration, and documentation management
+- **requirements-analyst-agent.md** - Requirements analysis and acceptance criteria definition
 - **backend-agent.md** - Backend development (Express, Knex.js, PostgreSQL)
 - **senior-frontend-developer.md** - Frontend development (React, Vite, TypeScript)
 - **fullstack-agent.md** - Full-stack feature implementation
@@ -23,6 +25,16 @@ Agents are specialized AI assistants configured for specific development tasks:
 - **version_controller.md** - Version control, git operations, security scanning, and PR management
 
 Each agent has context about the relevant tech stack, coding standards, and common tasks.
+
+### Agent Workflow
+
+The **planner-agent** orchestrates the development workflow:
+
+1. **User Request** → Planner Agent analyzes
+2. **Requirements Analysis** → Always hands off to requirements-analyst-agent
+3. **Implementation** → Hands off to fullstack-agent (or backend-agent/frontend-agent separately)
+4. **Testing** → Hands off to test-manager
+5. **Documentation** → Planner updates PROJECT_EPICS_AND_ACTIVITIES.md and ISSUE_TRACKING.md
 
 ## MCP Servers
 

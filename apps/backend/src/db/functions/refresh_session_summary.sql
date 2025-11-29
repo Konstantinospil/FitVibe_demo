@@ -25,6 +25,14 @@ BEGIN
         WHEN feature_not_supported THEN
           RAISE NOTICE 'Concurrent refresh not supported for %, running non-concurrent refresh instead.', target;
           EXECUTE format('REFRESH MATERIALIZED VIEW %I', target);
+        WHEN OTHERS THEN
+          -- If concurrent refresh fails (e.g., missing unique index), fall back to non-concurrent
+          IF SQLSTATE = '55000' THEN
+            RAISE NOTICE 'Concurrent refresh failed for % (likely missing unique index), running non-concurrent refresh instead.', target;
+            EXECUTE format('REFRESH MATERIALIZED VIEW %I', target);
+          ELSE
+            RAISE;
+          END IF;
       END;
     ELSE
       EXECUTE format('REFRESH MATERIALIZED VIEW %I', target);

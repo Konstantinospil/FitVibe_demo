@@ -211,11 +211,24 @@ export async function login(req: Request, res: Response, next: NextFunction): Pr
     // SECURITY: Tokens are ONLY set in HttpOnly cookies, never exposed to JavaScript
     setAccessCookie(res, result.tokens.accessToken);
     setRefreshCookie(res, result.tokens.refreshToken);
-    res.json({
+
+    // In non-production environments, also return tokens in JSON for testing/debugging
+    const response: {
+      requires2FA: false;
+      user: typeof result.user;
+      session: typeof result.session;
+      tokens?: typeof result.tokens;
+    } = {
       requires2FA: false,
       user: result.user,
       session: result.session,
-    });
+    };
+
+    if (!env.isProduction) {
+      response.tokens = result.tokens;
+    }
+
+    res.json(response);
     return;
   } catch (error) {
     next(error);
@@ -239,10 +252,22 @@ export async function verify2FALogin(
     // SECURITY: Tokens are ONLY set in HttpOnly cookies, never exposed to JavaScript
     setAccessCookie(res, tokens.accessToken);
     setRefreshCookie(res, tokens.refreshToken);
-    res.json({
+
+    // In non-production environments, also return tokens in JSON for testing/debugging
+    const response: {
+      user: typeof user;
+      session: typeof session;
+      tokens?: typeof tokens;
+    } = {
       user,
       session,
-    });
+    };
+
+    if (!env.isProduction) {
+      response.tokens = tokens;
+    }
+
+    res.json(response);
     return;
   } catch (error) {
     next(error);

@@ -21,7 +21,7 @@ def find_cursor_chat_storage() -> Optional[Path]:
     """Find Cursor chat storage location."""
     appdata = os.getenv('APPDATA')
     home = os.getenv('HOME') or os.path.expanduser('~')
-    
+
     possible_locations = [
         Path(appdata) / 'Cursor' / 'User' / 'workspaceStorage' if appdata else None,
         Path(appdata) / 'Cursor' / 'logs' if appdata else None,
@@ -29,11 +29,11 @@ def find_cursor_chat_storage() -> Optional[Path]:
         Path(home) / '.cursor' / 'logs',
         Path(home) / '.config' / 'Cursor' / 'User' / 'workspaceStorage',
     ]
-    
+
     for location in possible_locations:
         if location and location.exists():
             return location
-    
+
     return None
 
 def extract_chats_from_sqlite(db_path: Path) -> List[Dict[str, Any]]:
@@ -42,11 +42,11 @@ def extract_chats_from_sqlite(db_path: Path) -> List[Dict[str, Any]]:
     try:
         conn = sqlite3.connect(str(db_path))
         cursor = conn.cursor()
-        
+
         # Try common table names
         cursor.execute("SELECT name FROM sqlite_master WHERE type='table'")
         tables = [row[0] for row in cursor.fetchall()]
-        
+
         for table in tables:
             try:
                 cursor.execute(f"SELECT * FROM {table} LIMIT 1000")
@@ -59,11 +59,11 @@ def extract_chats_from_sqlite(db_path: Path) -> List[Dict[str, Any]]:
                         chats.append(chat_dict)
             except Exception as e:
                 continue
-        
+
         conn.close()
     except Exception as e:
         print(f"  [WARNING] Error reading SQLite {db_path.name}: {e}")
-    
+
     return chats
 
 def extract_chats_from_json(json_path: Path) -> List[Dict[str, Any]]:
@@ -84,7 +84,7 @@ def extract_chats_from_json(json_path: Path) -> List[Dict[str, Any]]:
                         break
     except Exception as e:
         print(f"  [WARNING] Error reading JSON {json_path.name}: {e}")
-    
+
     return chats
 
 def extract_text_from_file(file_path: Path) -> List[str]:
@@ -92,17 +92,17 @@ def extract_text_from_file(file_path: Path) -> List[str]:
     try:
         with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
             content = f.read()
-        
+
         # Look for chat-like patterns
         messages = []
-        
+
         # Pattern: User: message or Assistant: message
         user_pattern = re.compile(r'(?:User|You|Human):\s*(.+?)(?:\n|$)', re.IGNORECASE | re.MULTILINE)
         assistant_pattern = re.compile(r'(?:Assistant|AI|Bot|Cursor):\s*(.+?)(?:\n|$)', re.IGNORECASE | re.MULTILINE)
-        
+
         messages.extend(user_pattern.findall(content))
         messages.extend(assistant_pattern.findall(content))
-        
+
         # Pattern: JSON-like structures
         json_pattern = re.compile(r'\{[^{}]*"(?:message|content|text|user|assistant)"[^{}]*\}', re.IGNORECASE)
         json_matches = json_pattern.findall(content)
@@ -113,7 +113,7 @@ def extract_text_from_file(file_path: Path) -> List[str]:
                     messages.append(str(data.get('message') or data.get('content') or data.get('text', '')))
             except:
                 pass
-        
+
         return messages
     except Exception as e:
         return []
@@ -122,27 +122,27 @@ def collect_all_chats(chat_dir: Path) -> List[Dict[str, Any]]:
     """Collect all chats from directory."""
     all_chats = []
     all_messages = []
-    
+
     if not chat_dir.exists():
         return all_chats
-    
+
     print(f"  [INFO] Searching in: {chat_dir}")
-    
+
     # Search for SQLite databases
     db_files = list(chat_dir.rglob('*.db'))
     json_files = list(chat_dir.rglob('*.json'))
     text_files = list(chat_dir.rglob('*.txt'))
     log_files = list(chat_dir.rglob('*.log'))
-    
+
     print(f"  [INFO] Found: {len(db_files)} DB files, {len(json_files)} JSON files, {len(text_files)} text files, {len(log_files)} log files")
-    
+
     for db_file in db_files[:10]:  # Limit to first 10 to avoid too many
         print(f"  [INFO] Checking: {db_file.name}")
         chats = extract_chats_from_sqlite(db_file)
         all_chats.extend(chats)
         if chats:
             print(f"    [OK] Found {len(chats)} entries")
-    
+
     for json_file in json_files[:20]:  # Limit to first 20
         if 'chat' in json_file.name.lower() or 'conversation' in json_file.name.lower() or 'message' in json_file.name.lower():
             print(f"  [INFO] Checking: {json_file.name}")
@@ -150,17 +150,17 @@ def collect_all_chats(chat_dir: Path) -> List[Dict[str, Any]]:
             all_chats.extend(chats)
             if chats:
                 print(f"    [OK] Found {len(chats)} entries")
-    
+
     # Also extract text from files
     for text_file in (text_files + log_files)[:10]:
         if any(keyword in text_file.name.lower() for keyword in ['chat', 'conversation', 'message', 'history']):
             messages = extract_text_from_file(text_file)
             all_messages.extend(messages)
-    
+
     # Convert messages to chat format
     for msg in all_messages:
         all_chats.append({'message': msg, 'content': msg, 'text': msg})
-    
+
     return all_chats
 
 def analyze_patterns(chats: List[Dict[str, Any]]) -> Dict[str, Any]:
@@ -176,7 +176,7 @@ def analyze_patterns(chats: List[Dict[str, Any]]) -> Dict[str, Any]:
         'file_mentions': Counter(),
         'suggestions': []
     }
-    
+
     # Extract user messages
     user_messages = []
     for chat in chats:
@@ -186,12 +186,12 @@ def analyze_patterns(chats: List[Dict[str, Any]]) -> Dict[str, Any]:
             if key in chat and chat[key]:
                 msg = str(chat[key])
                 break
-        
+
         if msg and len(msg) > 10:  # Only meaningful messages
             user_messages.append(msg)
-    
+
     print(f"  [INFO] Analyzing {len(user_messages)} user messages...")
-    
+
     # Analyze common questions
     question_patterns = [
         (r'how (do|can|should|to) (i|we|you)', 'how questions'),
@@ -203,7 +203,7 @@ def analyze_patterns(chats: List[Dict[str, Any]]) -> Dict[str, Any]:
         (r'explain', 'explain requests'),
         (r'show (me|how)', 'show requests'),
     ]
-    
+
     for msg in user_messages:
         msg_lower = msg.lower()
         for pattern, category in question_patterns:
@@ -213,7 +213,7 @@ def analyze_patterns(chats: List[Dict[str, Any]]) -> Dict[str, Any]:
                 if match:
                     question = match.group(0).strip()[:100]
                     analysis['common_questions'][question] += 1
-    
+
     # Analyze error mentions
     error_keywords = ['error', 'bug', 'fix', 'broken', 'not working', 'fails', 'exception', 'issue', 'problem']
     for msg in user_messages:
@@ -225,7 +225,7 @@ def analyze_patterns(chats: List[Dict[str, Any]]) -> Dict[str, Any]:
                 if context:
                     error_context = context.group(0).strip()[:120]
                     analysis['error_patterns'][error_context] += 1
-    
+
     # Analyze code-related requests
     code_keywords = {
         'create': ['create', 'make', 'build', 'generate'],
@@ -237,7 +237,7 @@ def analyze_patterns(chats: List[Dict[str, Any]]) -> Dict[str, Any]:
         'api': ['api', 'endpoint', 'route'],
         'migration': ['migration', 'migrate', 'schema'],
     }
-    
+
     for category, keywords in code_keywords.items():
         for msg in user_messages:
             msg_lower = msg.lower()
@@ -250,7 +250,7 @@ def analyze_patterns(chats: List[Dict[str, Any]]) -> Dict[str, Any]:
                         analysis['code_patterns'][f"{category}: {target}"] += 1
                     else:
                         analysis['code_patterns'][category] += 1
-    
+
     # Analyze technology mentions
     tech_keywords = ['typescript', 'react', 'express', 'postgres', 'knex', 'zod', 'jest', 'vitest', 'playwright', 'docker', 'kubernetes']
     for msg in user_messages:
@@ -258,7 +258,7 @@ def analyze_patterns(chats: List[Dict[str, Any]]) -> Dict[str, Any]:
         for tech in tech_keywords:
             if tech in msg_lower:
                 analysis['technology_mentions'][tech] += 1
-    
+
     # Analyze file mentions
     file_patterns = [
         r'\.(ts|tsx|js|jsx|json|md|sql|py)(?:\s|$|,|\.)',
@@ -271,7 +271,7 @@ def analyze_patterns(chats: List[Dict[str, Any]]) -> Dict[str, Any]:
                 if isinstance(match, tuple):
                     match = match[0]
                 analysis['file_mentions'][match.strip()[:50]] += 1
-    
+
     # Identify missing context
     missing_context_keywords = ['what is', 'explain', 'documentation', 'where is', 'how does', 'i don\'t understand', 'confused']
     for msg in user_messages:
@@ -279,13 +279,13 @@ def analyze_patterns(chats: List[Dict[str, Any]]) -> Dict[str, Any]:
         for keyword in missing_context_keywords:
             if keyword in msg_lower:
                 analysis['missing_context'][keyword] += 1
-    
+
     return analysis
 
 def generate_improvements(analysis: Dict[str, Any], current_rules: str) -> List[str]:
     """Generate suggestions to improve .cursorrules."""
     improvements = []
-    
+
     # Check for common questions that aren't covered
     top_questions = analysis['common_questions'].most_common(15)
     if top_questions:
@@ -298,7 +298,7 @@ def generate_improvements(analysis: Dict[str, Any], current_rules: str) -> List[
                 if question.lower() not in current_rules.lower():
                     improvements.append(f"  [WARNING] Not currently covered in .cursorrules")
                 improvements.append("")
-    
+
     # Check for error patterns
     top_errors = analysis['error_patterns'].most_common(10)
     if top_errors:
@@ -308,7 +308,7 @@ def generate_improvements(analysis: Dict[str, Any], current_rules: str) -> List[
             if count > 1:
                 improvements.append(f"- **'{error}'** (mentioned {count} times)")
                 improvements.append("")
-    
+
     # Check for code patterns
     top_patterns = analysis['code_patterns'].most_common(15)
     if top_patterns:
@@ -322,7 +322,7 @@ def generate_improvements(analysis: Dict[str, Any], current_rules: str) -> List[
                 if not any(keyword in current_rules.lower() for keyword in pattern_lower.split(':')):
                     improvements.append(f"  [WARNING] May need better coverage in .cursorrules")
                 improvements.append("")
-    
+
     # Technology mentions
     top_tech = analysis['technology_mentions'].most_common(10)
     if top_tech:
@@ -333,7 +333,7 @@ def generate_improvements(analysis: Dict[str, Any], current_rules: str) -> List[
             if tech.lower() not in current_rules.lower():
                 improvements.append(f"  [WARNING] Not mentioned in .cursorrules")
             improvements.append("")
-    
+
     # Missing context
     if analysis['missing_context']:
         improvements.append("\n## Missing Context Indicators\n")
@@ -341,7 +341,7 @@ def generate_improvements(analysis: Dict[str, Any], current_rules: str) -> List[
         for context, count in analysis['missing_context'].most_common(5):
             improvements.append(f"- **{context}** ({count} mentions)")
         improvements.append("\n[TIP] Consider adding more examples and detailed explanations to .cursorrules")
-    
+
     return improvements
 
 def generate_report(analysis: Dict[str, Any], improvements: List[str], output_path: Path, current_rules_path: Path):
@@ -365,38 +365,38 @@ This report analyzes Cursor chat history to identify patterns and suggest improv
 ## Top 15 Most Common Questions
 
 """
-    
+
     if analysis['common_questions']:
         for i, (question, count) in enumerate(analysis['common_questions'].most_common(15), 1):
             report += f"{i}. `{question}` ({count} times)\n"
     else:
         report += "*No questions detected*\n"
-    
+
     report += "\n## Top 10 Error Patterns\n\n"
     if analysis['error_patterns']:
         for i, (error, count) in enumerate(analysis['error_patterns'].most_common(10), 1):
             report += f"{i}. `{error}` ({count} times)\n"
     else:
         report += "*No error patterns detected*\n"
-    
+
     report += "\n## Top 15 Code Patterns\n\n"
     if analysis['code_patterns']:
         for i, (pattern, count) in enumerate(analysis['code_patterns'].most_common(15), 1):
             report += f"{i}. `{pattern}` ({count} times)\n"
     else:
         report += "*No code patterns detected*\n"
-    
+
     report += "\n## Technology Mentions\n\n"
     if analysis['technology_mentions']:
         for tech, count in analysis['technology_mentions'].most_common(10):
             report += f"- **{tech}**: {count} mentions\n"
     else:
         report += "*No technology mentions detected*\n"
-    
+
     report += "\n---\n\n"
     report += "## Suggested Improvements to .cursorrules\n\n"
     report += "\n".join(improvements)
-    
+
     report += "\n---\n\n"
     report += "## Next Steps\n\n"
     report += "1. **Review common questions**: Add clarifications to `.cursorrules` for frequently asked questions\n"
@@ -410,10 +410,10 @@ This report analyzes Cursor chat history to identify patterns and suggest improv
     report += "2. Update `.cursorrules` with new sections or clarifications\n"
     report += "3. Test the updated rules by asking similar questions in Cursor\n"
     report += "4. Iterate based on feedback\n"
-    
+
     with open(output_path, 'w', encoding='utf-8') as f:
         f.write(report)
-    
+
     print(f"\n[OK] Report saved to: {output_path}")
 
 def main():
@@ -423,7 +423,7 @@ def main():
         import io
         sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
         sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
-    
+
     parser = argparse.ArgumentParser(
         description="Analyze Cursor chat history to improve .cursorrules"
     )
@@ -444,12 +444,12 @@ def main():
         default='.cursorrules',
         help='Path to current .cursorrules file'
     )
-    
+
     args = parser.parse_args()
-    
+
     print("Cursor Chat History Analyzer")
     print("=" * 60)
-    
+
     # Find chat directory
     if args.chat_dir:
         chat_dir = Path(args.chat_dir)
@@ -466,15 +466,15 @@ def main():
             return 1
         else:
             print(f"[OK] Found: {chat_dir}")
-    
+
     if not chat_dir.exists():
         print(f"[ERROR] Directory does not exist: {chat_dir}")
         return 1
-    
+
     # Collect chats
     print(f"\n[INFO] Collecting chats from: {chat_dir}")
     chats = collect_all_chats(chat_dir)
-    
+
     if not chats:
         print("\n[WARNING] No chats found. This could mean:")
         print("  1. Cursor hasn't been used much yet (no chat history)")
@@ -483,13 +483,13 @@ def main():
         print("\n[TIP] You can also manually export chats and save them as text files, then run:")
         print("   python scripts/analyze_cursor_chats.py --chat-dir <path-to-text-files>")
         return 1
-    
+
     print(f"\n[OK] Collected {len(chats)} chat entries")
-    
+
     # Analyze
     print("\n[INFO] Analyzing patterns...")
     analysis = analyze_patterns(chats)
-    
+
     # Read current rules
     current_rules = ""
     rules_path = Path(args.rules_file)
@@ -500,21 +500,21 @@ def main():
         print(f"   [OK] Read {len(current_rules)} characters")
     else:
         print(f"\n[WARNING] .cursorrules not found at: {rules_path}")
-    
+
     # Generate improvements
     print("\n[INFO] Generating improvement suggestions...")
     improvements = generate_improvements(analysis, current_rules)
-    
+
     # Generate report
     output_path = Path(args.output)
     output_path.parent.mkdir(parents=True, exist_ok=True)
     generate_report(analysis, improvements, output_path, rules_path)
-    
+
     print(f"\n[OK] Analysis complete!")
     print(f"[OK] Report: {output_path}")
     print(f"\n[TIP] Review the report and update .cursorrules accordingly")
     print(f"   The report contains specific suggestions based on your chat history")
-    
+
     return 0
 
 if __name__ == '__main__':

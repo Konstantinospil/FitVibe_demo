@@ -10,6 +10,11 @@ export async function up(knex: Knex): Promise<void> {
   // Create materialized view
   await knex.raw(readSql("../views/mv_session_summary.sql"));
 
+  // Create unique index on session_id (required for concurrent refresh)
+  await knex.raw(
+    "CREATE UNIQUE INDEX IF NOT EXISTS idx_session_summary_session_id ON session_summary (session_id);",
+  );
+
   // Create regular view that selects from materialized view
   await knex.raw(readSql("../views/v_session_summary.sql"));
 
