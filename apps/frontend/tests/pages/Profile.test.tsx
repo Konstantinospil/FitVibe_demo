@@ -37,7 +37,7 @@ vi.mock("../../src/components/ui", () => ({
     style,
   }: {
     children: React.ReactNode;
-    type?: string;
+    type?: "button" | "submit" | "reset";
     variant?: string;
     style?: React.CSSProperties;
   }) => (
