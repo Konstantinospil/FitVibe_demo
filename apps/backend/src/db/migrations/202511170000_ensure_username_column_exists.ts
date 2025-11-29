@@ -16,87 +16,96 @@ export async function up(knex: Knex): Promise<void> {
   const tableExists = await knex.schema.hasTable("users");
   if (!tableExists) {
     // Table doesn't exist, nothing to do - original migration will create it
-    console.warn("[migration] Users table does not exist yet, skipping username column check");
     return;
   }
 
-  // Check if username column exists using a more reliable method.
-  // IMPORTANT: we must respect the *current schema* so this migration works both:
-  // - in production (typically schema = "public")
-  // - in tests (which run in an isolated schema, e.g. "tmp_migration_test")
-  //
-  // Using current_schema() instead of hard-coding "public" keeps this migration
-  // idempotent regardless of the search_path used by Knex.
+  // Check if username column exists using information_schema which works across schemas
+  // We need to check all schemas in the search_path to find where the table actually is
   // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
   const columnCheck = await knex.raw(`
-    SELECT column_name
-    FROM information_schema.columns
-    WHERE table_schema = current_schema()
-      AND table_name = 'users'
-      AND column_name = 'username'
+    SELECT EXISTS (
+      SELECT 1
+      FROM information_schema.columns
+      WHERE table_schema IN (
+        SELECT unnest(current_schemas(false))
+      )
+        AND table_name = 'users'
+        AND column_name = 'username'
+    ) AS exists
   `);
 
-  const columnCheckRows = (columnCheck as { rows: Array<Record<string, unknown>> }).rows;
-  const columnExists = Array.isArray(columnCheckRows) && columnCheckRows.length > 0;
+  const columnCheckResult = (columnCheck as { rows: Array<{ exists: boolean }> }).rows[0];
+  const columnExists = columnCheckResult?.exists === true;
 
-  if (!columnExists) {
-    console.warn("[migration] Username column missing, adding it now...");
-    // Column doesn't exist, add it with the exact specification from the original migration
-    // This matches: table.specificType("username", "citext").notNullable().unique();
-
-    // First, check if there are existing rows that would need usernames
-    const rowCount = await knex("users").count<{ count: string | number }>("* as count").first();
-    const hasRows = rowCount && Number(rowCount.count) > 0;
-
-    if (hasRows) {
-      // If there are existing rows, we need to add the column as nullable first,
-      // populate it, then make it NOT NULL
-      await knex.schema.alterTable("users", (table) => {
-        table.specificType("username", "citext").nullable();
-      });
-
-      // Generate usernames for existing rows based on their ID
-      await knex.raw(`
-        UPDATE users
-        SET username = 'user_' || id::text
-        WHERE username IS NULL
-      `);
-
-      // Now add NOT NULL constraint
-      await knex.raw(`
-        ALTER TABLE users
-        ALTER COLUMN username SET NOT NULL
-      `);
-
-      // Add UNIQUE constraint (check if it already exists first to avoid errors)
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-      const uniqueExists = await knex.raw(`
-        SELECT 1
-        FROM pg_constraint
-        WHERE conrelid = 'users'::regclass
-          AND conname = 'users_username_unique'
-      `);
-
-      const uniqueExistsRows = (uniqueExists as { rows: Array<Record<string, unknown>> }).rows;
-      if (uniqueExistsRows.length === 0) {
-        await knex.raw(`
-          ALTER TABLE users
-          ADD CONSTRAINT users_username_unique UNIQUE (username)
-        `);
-      }
-    } else {
-      // No existing rows, can add column directly with all constraints
-      await knex.schema.alterTable("users", (table) => {
-        table.specificType("username", "citext").notNullable().unique();
-      });
-    }
-
-    console.warn("[migration] Username column added successfully");
-  } else {
-    console.warn("[migration] Username column already exists, skipping");
+  if (columnExists) {
+    // Column already exists, nothing to do
+    return;
   }
-  // If column exists, we assume it was created correctly by the original migration
-  // No need to modify existing columns as that could cause data issues
+
+  // Column doesn't exist, add it with the exact specification from the original migration
+  // This matches: table.specificType("username", "citext").notNullable().unique();
+  // Use a DO block to make it truly idempotent
+  await knex.raw(`
+    DO $$
+    BEGIN
+      -- Check again right before adding to avoid race conditions
+      IF NOT EXISTS (
+        SELECT 1
+        FROM information_schema.columns
+        WHERE table_schema IN (
+          SELECT unnest(current_schemas(false))
+        )
+          AND table_name = 'users'
+          AND column_name = 'username'
+      ) THEN
+        -- First check if there are existing rows
+        IF EXISTS (SELECT 1 FROM users LIMIT 1) THEN
+          -- Add column as nullable first
+          ALTER TABLE users ADD COLUMN username citext;
+          
+          -- Generate usernames for existing rows
+          UPDATE users SET username = 'user_' || id::text WHERE username IS NULL;
+          
+          -- Make it NOT NULL
+          ALTER TABLE users ALTER COLUMN username SET NOT NULL;
+          
+          -- Add UNIQUE constraint if it doesn't exist
+          -- Check for any unique constraint on username column, not just by name
+          IF NOT EXISTS (
+            SELECT 1 FROM pg_constraint c
+            JOIN pg_attribute a ON a.attrelid = c.conrelid AND a.attnum = ANY(c.conkey)
+            WHERE c.conrelid = 'users'::regclass
+              AND c.contype = 'u'
+              AND a.attname = 'username'
+          ) THEN
+            ALTER TABLE users ADD CONSTRAINT users_username_unique UNIQUE (username);
+          END IF;
+        ELSE
+          -- No existing rows, add with all constraints at once
+          ALTER TABLE users ADD COLUMN username citext NOT NULL;
+          
+          -- Add UNIQUE constraint if it doesn't exist
+          -- Check for any unique constraint on username column, not just by name
+          IF NOT EXISTS (
+            SELECT 1 FROM pg_constraint c
+            JOIN pg_attribute a ON a.attrelid = c.conrelid AND a.attnum = ANY(c.conkey)
+            WHERE c.conrelid = 'users'::regclass
+              AND c.contype = 'u'
+              AND a.attname = 'username'
+          ) THEN
+            ALTER TABLE users ADD CONSTRAINT users_username_unique UNIQUE (username);
+          END IF;
+        END IF;
+      END IF;
+    EXCEPTION
+      WHEN duplicate_column THEN
+        -- Column was added between check and add, that's fine
+        NULL;
+      WHEN duplicate_object THEN
+        -- Constraint already exists, that's fine
+        NULL;
+    END $$;
+  `);
 }
 
 export async function down(_knex: Knex): Promise<void> {
