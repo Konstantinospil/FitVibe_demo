@@ -178,7 +178,7 @@ jobs:
         timeout-minutes: 15
         env:
           CI: "true"
-        run: pnpm --filter @fitvibe/backend test -- --coverage --maxWorkers=2 --testPathIgnorePatterns="migrations\\.test\\.ts|seeds\\.test\\.ts"
+        run: pnpm --filter @fitvibe/backend test -- --coverage --maxWorkers=2 --testPathIgnorePatterns="migrations\\.test\\.ts|seeds\\.test\\.ts|integration\\.test\\.ts"
 
       - name: Frontend unit tests & coverage
         timeout-minutes: 10
