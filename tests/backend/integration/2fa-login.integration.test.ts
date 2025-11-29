@@ -7,21 +7,21 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach } from "@jest/globals";
-import * as authService from "../auth.service";
-import * as twofaService from "../twofa.service";
-import * as authRepo from "../auth.repository";
-import * as pending2faRepo from "../pending-2fa.repository";
-import * as bruteforceRepo from "../bruteforce.repository";
-import type { FailedLoginAttempt } from "../bruteforce.repository";
-import type { LoginDTO, LoginContext } from "../auth.types";
-import type { AuthUserRecord } from "../auth.repository";
-import { getCurrentTermsVersion } from "../../../config/terms.js";
+import * as authService from "../../../apps/backend/src/modules/auth/auth.service.js";
+import * as twofaService from "../../../apps/backend/src/modules/auth/twofa.service.js";
+import * as authRepo from "../../../apps/backend/src/modules/auth/auth.repository.js";
+import * as pending2faRepo from "../../../apps/backend/src/modules/auth/pending-2fa.repository.js";
+import * as bruteforceRepo from "../../../apps/backend/src/modules/auth/bruteforce.repository.js";
+import type { FailedLoginAttempt } from "../../../apps/backend/src/modules/auth/bruteforce.repository.js";
+import type { LoginDTO, LoginContext } from "../../../apps/backend/src/modules/auth/auth.types.js";
+import type { AuthUserRecord } from "../../../apps/backend/src/modules/auth/auth.repository.js";
+import { getCurrentTermsVersion } from "../../../apps/backend/src/config/terms.js";
 
 // Mock dependencies
-jest.mock("../auth.repository");
-jest.mock("../twofa.service");
-jest.mock("../pending-2fa.repository");
-jest.mock("../bruteforce.repository");
+jest.mock("../../../apps/backend/src/modules/auth/auth.repository.js");
+jest.mock("../../../apps/backend/src/modules/auth/twofa.service.js");
+jest.mock("../../../apps/backend/src/modules/auth/pending-2fa.repository.js");
+jest.mock("../../../apps/backend/src/modules/auth/bruteforce.repository.js");
 jest.mock("bcryptjs");
 jest.mock("jsonwebtoken");
 jest.mock("crypto");

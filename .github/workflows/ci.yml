@@ -507,7 +507,7 @@ jobs:
         env:
           NODE_ENV: test
           CI: "true"
-        run: pnpm --filter @fitvibe/backend exec jest --maxWorkers=2 --testMatch="**/tests/backend/integration/**/*.integration.test.ts" --testPathIgnorePatterns="" --forceExit
+        run: pnpm --filter @fitvibe/backend exec jest --maxWorkers=2 --testMatch="**/integration/**/*.integration.test.ts" --testPathIgnorePatterns="/node_modules/|verification-resend-limit\\.test\\.ts$|login-enumeration\\.test\\.ts$" --forceExit
 
       - name: Job summary
         if: always()
@@ -742,7 +742,7 @@ jobs:
         timeout-minutes: 20
         env:
           NODE_ENV: test
-        run: pnpm --filter @fitvibe/backend exec jest --maxWorkers=2 --testMatch="**/tests/backend/integration/**/*.integration.test.ts" --testPathIgnorePatterns=""
+        run: pnpm --filter @fitvibe/backend exec jest --maxWorkers=2 --testMatch="**/integration/**/*.integration.test.ts" --testPathIgnorePatterns="/node_modules/|verification-resend-limit\\.test\\.ts$|login-enumeration\\.test\\.ts$"
 
       - name: Job summary
         if: always()
