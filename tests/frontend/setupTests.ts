@@ -15,11 +15,8 @@ afterEach(() => {
     vi.useRealTimers();
   }
 
-  // Clear any remaining timers
-  if (typeof globalThis !== "undefined" && globalThis.clearInterval) {
-    // Clear any intervals that might have been created
-    // This helps prevent memory leaks from hanging timers
-  }
+  // Timer cleanup is handled by vi.useRealTimers() above
+  // Fake timers are automatically cleaned up when restored
 });
 
 class ResizeObserverMock {

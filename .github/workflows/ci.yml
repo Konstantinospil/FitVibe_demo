@@ -178,7 +178,7 @@ jobs:
         timeout-minutes: 15
         env:
           CI: "true"
-        run: pnpm --filter @fitvibe/backend test -- --coverage --maxWorkers=2 --testPathIgnorePatterns="tests/migrations/migrations\\.test\\.ts|tests/seeds/seeds\\.test\\.ts"
+        run: pnpm --filter @fitvibe/backend test -- --coverage --maxWorkers=2 --testPathIgnorePatterns="migrations/migrations\\.test\\.ts|seeds/seeds\\.test\\.ts"
 
       - name: Frontend unit tests & coverage
         timeout-minutes: 10
@@ -340,12 +340,12 @@ jobs:
       - name: Run database migration tests
         timeout-minutes: 10
         run: |
-          pnpm --filter @fitvibe/backend exec jest tests/migrations/migrations.test.ts --maxWorkers=1 --forceExit
+          pnpm --filter @fitvibe/backend exec jest migrations/migrations.test.ts --maxWorkers=1 --forceExit
 
       - name: Run database seed tests
         timeout-minutes: 10
         run: |
-          pnpm --filter @fitvibe/backend exec jest tests/seeds/seeds.test.ts --maxWorkers=1 --forceExit
+          pnpm --filter @fitvibe/backend exec jest seeds/seeds.test.ts --maxWorkers=1 --forceExit
 
       - name: Force close database connections
         if: always()

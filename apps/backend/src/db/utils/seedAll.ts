@@ -8,12 +8,12 @@ async function main(): Promise<void> {
 
     const result = await db.seed.run();
 
-    const seedFiles = result[0] as Array<{ file: string }>;
+    const seedFiles = result[0];
 
     if (seedFiles.length > 0) {
       logger.info(
         {
-          seeds: seedFiles.map((s) => s.file),
+          seeds: seedFiles,
         },
         `[db] Applied ${seedFiles.length} seed file(s):`,
       );
