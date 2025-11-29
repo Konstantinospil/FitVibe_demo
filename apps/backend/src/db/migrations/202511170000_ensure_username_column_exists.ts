@@ -12,6 +12,13 @@ import type { Knex } from "knex";
  * from the original migration.
  */
 export async function up(knex: Knex): Promise<void> {
+  // Check if users table exists first
+  const tableExists = await knex.schema.hasTable("users");
+  if (!tableExists) {
+    // Table doesn't exist, nothing to do - original migration will create it
+    return;
+  }
+
   // Check if username column exists using type-safe method
   const columnExists = await knex.schema.hasColumn("users", "username");
 
@@ -38,17 +45,29 @@ export async function up(knex: Knex): Promise<void> {
         WHERE username IS NULL
       `);
 
-      // Now add NOT NULL constraint and UNIQUE constraint
+      // Now add NOT NULL constraint
 
       await knex.raw(`
         ALTER TABLE users
         ALTER COLUMN username SET NOT NULL
       `);
 
-      await knex.raw(`
-        ALTER TABLE users
-        ADD CONSTRAINT users_username_unique UNIQUE (username)
+      // Add UNIQUE constraint (check if it already exists first to avoid errors)
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      const uniqueExists = await knex.raw(`
+        SELECT 1
+        FROM pg_constraint
+        WHERE conrelid = 'users'::regclass
+          AND conname = 'users_username_unique'
       `);
+
+      const uniqueExistsRows = (uniqueExists as { rows: Array<Record<string, unknown>> }).rows;
+      if (uniqueExistsRows.length === 0) {
+        await knex.raw(`
+          ALTER TABLE users
+          ADD CONSTRAINT users_username_unique UNIQUE (username)
+        `);
+      }
     } else {
       // No existing rows, can add column directly with all constraints
       await knex.schema.alterTable("users", (table) => {
