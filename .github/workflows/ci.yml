@@ -586,7 +586,7 @@ jobs:
         timeout-minutes: 20
         env:
           NODE_ENV: test
-        run: pnpm --filter @fitvibe/backend exec jest --maxWorkers=2
+        run: pnpm --filter @fitvibe/backend exec jest --maxWorkers=2 --testMatch="**/tests/backend/integration/**/*.integration.test.ts" --testPathIgnorePatterns=""
 
       - name: Job summary
         if: always()
