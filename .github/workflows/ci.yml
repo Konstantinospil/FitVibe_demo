@@ -247,7 +247,7 @@ jobs:
   database_tests:
     name: Database Tests
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 40
     permissions:
       contents: read
       actions: read
@@ -265,6 +265,17 @@ jobs:
           --health-interval=10s
           --health-timeout=5s
           --health-retries=5
+      clamav:
+        image: clamav/clamav:1.3
+        ports:
+          - 3310:3310
+        env:
+          FRESHCLAM_CHECKS: 0
+        options: >-
+          --health-cmd="clamdscan --version"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     env:
       DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/fitvibe_test
       # Individual PG env vars for test files to detect database
@@ -275,6 +286,10 @@ jobs:
       PGDATABASE: fitvibe_test
       # Highest priority - test files check this first
       TEST_DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/fitvibe_test
+      CLAMAV_ENABLED: "true"
+      CLAMAV_HOST: "127.0.0.1"
+      CLAMAV_PORT: "3310"
+      REAL_CLAMD: "1"
       CI: "true"
     steps:
       - name: Checkout
@@ -316,7 +331,7 @@ jobs:
             librsvg2-dev \
             postgresql-client
 
-      - name: Wait for PostgreSQL
+      - name: Wait for services
         timeout-minutes: 10
         run: |
           echo "Waiting for PostgreSQL..."
@@ -334,8 +349,37 @@ jobs:
             sleep 2
           done
 
+          echo "Waiting for ClamAV..."
+          python3 - <<'PY'
+          import socket, time, sys
+          host = "127.0.0.1"
+          port = 3310
+          for i in range(30):
+              try:
+                  with socket.create_connection((host, port), timeout=2):
+                      print("ClamAV is ready")
+                      sys.exit(0)
+              except OSError:
+                  if i == 29:
+                      print("ClamAV failed to start", file=sys.stderr)
+                      sys.exit(1)
+                  time.sleep(2)
+          PY
+
       - name: Install dependencies
         run: pnpm install --frozen-lockfile --prefer-offline
+
+      - name: Run database migrations
+        timeout-minutes: 10
+        env:
+          NODE_ENV: test
+        run: pnpm --filter @fitvibe/backend exec tsx src/db/utils/migrateAll.ts
+
+      - name: Seed database
+        timeout-minutes: 10
+        env:
+          NODE_ENV: test
+        run: pnpm --filter @fitvibe/backend exec tsx src/db/utils/seedAll.ts
 
       - name: Run database migration tests
         timeout-minutes: 10
@@ -346,6 +390,13 @@ jobs:
         timeout-minutes: 10
         run: |
           pnpm --filter @fitvibe/backend exec jest --testPathPattern="seeds.test" --maxWorkers=1 --forceExit
+
+      - name: Run integration tests
+        timeout-minutes: 20
+        env:
+          NODE_ENV: test
+        run: |
+          pnpm --filter @fitvibe/backend exec jest --testPathPattern="integration.test" --maxWorkers=2 --forceExit
 
       - name: Force close database connections
         if: always()
@@ -362,6 +413,7 @@ jobs:
           if [ "${{ job.status }}" == "success" ]; then
             echo "- ✅ Migration tests passed" >> $GITHUB_STEP_SUMMARY
             echo "- ✅ Seed tests passed" >> $GITHUB_STEP_SUMMARY
+            echo "- ✅ Integration tests passed" >> $GITHUB_STEP_SUMMARY
           else
             echo "- ❌ Database tests failed" >> $GITHUB_STEP_SUMMARY
           fi
@@ -437,142 +489,6 @@ jobs:
           path: apps/backend/openapi/openapi.json
           retention-days: 90
           if-no-files-found: error
-
-  integration:
-    name: Backend Integration Tests
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
-    needs:
-      - quality
-      - database_tests
-    permissions:
-      contents: read
-      actions: read
-    services:
-      postgres:
-        image: postgres:16
-        env:
-          POSTGRES_DB: fitvibe
-          POSTGRES_USER: fitvibe
-          POSTGRES_PASSWORD: fitvibe
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd "pg_isready -U fitvibe -d fitvibe"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-      clamav:
-        image: clamav/clamav:1.3
-        ports:
-          - 3310:3310
-        env:
-          FRESHCLAM_CHECKS: 0
-        options: >-
-          --health-cmd="clamdscan --version"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-    env:
-      DATABASE_URL: postgresql://fitvibe:fitvibe@127.0.0.1:5432/fitvibe
-      CLAMAV_ENABLED: "true"
-      CLAMAV_HOST: "127.0.0.1"
-      CLAMAV_PORT: "3310"
-      REAL_CLAMD: "1"
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: ${{ env.PNPM_VERSION }}
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: pnpm
-
-      - name: Cache pnpm store
-        uses: actions/cache@v4
-        with:
-          path: ~/.pnpm-store
-          key: pnpm-store-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: |
-            pnpm-store-${{ runner.os }}-
-
-      - name: Install native canvas prerequisites
-        run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y \
-            build-essential \
-            libcairo2-dev \
-            libpango1.0-dev \
-            libjpeg-dev \
-            libgif-dev \
-            librsvg2-dev
-
-      - name: Wait for services
-        timeout-minutes: 10
-        run: |
-          echo "Waiting for PostgreSQL..."
-          for i in {1..30}; do
-            if pg_isready -h 127.0.0.1 -p 5432 -U fitvibe >/dev/null 2>&1; then
-              echo "PostgreSQL is ready"
-
-              break
-            fi
-            if [ $i -eq 30 ]; then
-              echo "PostgreSQL failed to start" >&2
-              exit 1
-            fi
-            sleep 2
-          done
-
-          echo "Waiting for ClamAV..."
-          python3 - <<'PY'
-          import socket, time, sys
-          host = "127.0.0.1"
-          port = 3310
-          for i in range(30):
-              try:
-                  with socket.create_connection((host, port), timeout=2):
-                      print("ClamAV is ready")
-                      sys.exit(0)
-              except OSError:
-                  if i == 29:
-                      print("ClamAV failed to start", file=sys.stderr)
-                      sys.exit(1)
-                  time.sleep(2)
-          PY
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile --prefer-offline
-
-      - name: Run database migrations
-        timeout-minutes: 10
-        run: pnpm --filter @fitvibe/backend exec tsx src/db/utils/migrateAll.ts
-
-      - name: Seed database
-        timeout-minutes: 10
-        run: pnpm --filter @fitvibe/backend exec tsx src/db/utils/seedAll.ts
-
-      - name: Integration tests
-        timeout-minutes: 20
-        env:
-          NODE_ENV: test
-        run: pnpm --filter @fitvibe/backend exec jest --maxWorkers=2
-
-      - name: Job summary
-        if: always()
-        run: |
-          echo "## Integration Tests Summary" >> $GITHUB_STEP_SUMMARY
-          if [ "${{ job.status }}" == "success" ]; then
-            echo "- ✅ Integration tests passed" >> $GITHUB_STEP_SUMMARY
-          else
-            echo "- ❌ Integration tests failed" >> $GITHUB_STEP_SUMMARY
-          fi
 
   metrics_contract:
     name: Metrics Contract
@@ -967,7 +883,7 @@ jobs:
     name: E2E Playwright
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    needs: integration
+    needs: database_tests
     if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/stage')
     permissions:
       contents: read
@@ -1038,7 +954,6 @@ jobs:
     needs:
       - quality
       - database_tests
-      - integration
       - metrics_contract
       - accessibility
       - qa_summary
