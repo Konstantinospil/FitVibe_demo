@@ -16,6 +16,8 @@ export async function up(knex: Knex): Promise<void> {
   const tableExists = await knex.schema.hasTable("users");
   if (!tableExists) {
     // Table doesn't exist, nothing to do - original migration will create it
+
+    console.warn("[migration] Users table does not exist yet, skipping username column check");
     return;
   }
 
@@ -23,6 +25,7 @@ export async function up(knex: Knex): Promise<void> {
   const columnExists = await knex.schema.hasColumn("users", "username");
 
   if (!columnExists) {
+    console.warn("[migration] Username column missing, adding it now...");
     // Column doesn't exist, add it with the exact specification from the original migration
     // This matches: table.specificType("username", "citext").notNullable().unique();
 
@@ -74,6 +77,10 @@ export async function up(knex: Knex): Promise<void> {
         table.specificType("username", "citext").notNullable().unique();
       });
     }
+
+    console.warn("[migration] Username column added successfully");
+  } else {
+    console.warn("[migration] Username column already exists, skipping");
   }
   // If column exists, we assume it was created correctly by the original migration
   // No need to modify existing columns as that could cause data issues
