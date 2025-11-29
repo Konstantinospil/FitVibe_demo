@@ -83,5 +83,48 @@ export default defineConfig(() => {
         "/api": "http://localhost:4000",
       },
     },
+    build: {
+      // Optimize build for performance
+      minify: "esbuild",
+      target: "es2020",
+      cssMinify: true,
+      sourcemap: false,
+      rollupOptions: {
+        output: {
+          // Optimize chunk splitting for better caching and loading
+          manualChunks: (id) => {
+            // Vendor chunks
+            if (id.includes("node_modules")) {
+              // Separate large dependencies
+              if (id.includes("react") || id.includes("react-dom") || id.includes("preact")) {
+                return "react-vendor";
+              }
+              if (id.includes("@tanstack/react-query")) {
+                return "query-vendor";
+              }
+              if (id.includes("react-router")) {
+                return "router-vendor";
+              }
+              if (id.includes("recharts")) {
+                return "charts-vendor";
+              }
+              if (id.includes("zustand")) {
+                return "state-vendor";
+              }
+              // Other vendor code
+              return "vendor";
+            }
+          },
+          // Optimize chunk file names for better caching
+          chunkFileNames: "assets/js/[name]-[hash].js",
+          entryFileNames: "assets/js/[name]-[hash].js",
+          assetFileNames: "assets/[ext]/[name]-[hash].[ext]",
+        },
+      },
+      // Chunk size warnings threshold (300KB as per PRD)
+      chunkSizeWarningLimit: 300,
+      // Enable tree shaking
+      treeshake: true,
+    },
   };
 });

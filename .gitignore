@@ -101,6 +101,9 @@ Thumbs.db
 tmp/
 temp/
 .sass-cache/
+__pycache__/
+*.py[cod]
+*$py.class
 
 # --- Database & dumps (adjust if you commit seeds separately) ---
 *.sqlite
@@ -120,6 +123,9 @@ apps/backend/uploads/
 *.local.json
 *.local.yml
 docker-compose.override.yml
+
+# --- Documentation: Implementation folder (planning/reviews) ---
+docs/Implementation/
 
 # --- Misc ---
 # Keep Husky hooks committed; do NOT ignore .husky/

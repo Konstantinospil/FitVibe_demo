@@ -288,6 +288,16 @@ pnpm typecheck     # TypeScript type checking
 14. **Always** use transactions for multi-step database operations
 15. **Always** use React Query for server state management in frontend
 
+## Quick Reference: Most Common Tasks
+
+Based on chat history analysis, these are the most frequently requested tasks:
+
+1. **Create API endpoints** (83 requests) - See "Backend Route Handler Pattern" below
+2. **Create database migrations** (42 requests) - See "Database Migration Pattern" below
+3. **Create/update tests** (40 requests) - See "Testing Patterns" below
+4. **Update existing code** (32 requests) - Follow existing patterns, maintain consistency
+5. **Create React components** (14 requests) - See "Frontend Component Pattern" below
+
 ## Common Patterns
 
 ### Backend Route Handler Pattern
@@ -430,6 +440,118 @@ export const exampleApi = {
 };
 ```
 
+### Database Migration Pattern
+```typescript
+// apps/backend/src/db/migrations/YYYYMMDDHHMM_description.ts
+import type { Knex } from "knex";
+
+export async function up(knex: Knex): Promise<void> {
+  await knex.schema.createTable("table_name", (table) => {
+    table.uuid("id").primary().defaultTo(knex.raw("gen_random_uuid()"));
+    table.string("name").notNullable();
+    table.uuid("user_id").notNullable().references("id").inTable("users").onDelete("CASCADE");
+    table.timestamp("created_at").notNullable().defaultTo(knex.fn.now());
+    table.timestamp("updated_at").notNullable().defaultTo(knex.fn.now());
+
+    // Indexes
+    table.index("user_id");
+    table.index("created_at");
+
+    // Constraints
+    table.unique(["user_id", "name"]);
+  });
+}
+
+export async function down(knex: Knex): Promise<void> {
+  await knex.schema.dropTableIfExists("table_name");
+}
+```
+
+**Migration Best Practices:**
+- Use descriptive names: `YYYYMMDDHHMM_verb_noun.ts` (e.g., `202501201430_create_user_profiles.ts`)
+- Always implement both `up()` and `down()` functions
+- Use transactions for data migrations
+- Add indexes for foreign keys and frequently queried columns
+- Use `snake_case` for table and column names
+- Use UUIDs with `gen_random_uuid()` for primary keys
+- Add `created_at` and `updated_at` timestamps
+- Use foreign key constraints with appropriate `onDelete` actions
+- Test migrations in both directions (up and down)
+
+### Testing Patterns
+
+#### Backend Test Pattern (Jest)
+```typescript
+// modules/example/__tests__/example.service.test.ts
+import { describe, it, expect, beforeEach, jest } from "@jest/globals";
+import { createExample } from "../example.service.js";
+import { exampleRepository } from "../example.repository.js";
+import { HttpError } from "../../utils/http.js";
+
+jest.mock("../example.repository.js");
+
+describe("createExample", () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it("should create example with valid data", async () => {
+    const mockData = { name: "Test", userId: "user-123" };
+    const mockResult = { id: "example-123", ...mockData };
+
+    jest.mocked(exampleRepository.create).mockResolvedValue(mockResult);
+
+    const result = await createExample(mockData, "user-123");
+
+    expect(result).toEqual(mockResult);
+    expect(exampleRepository.create).toHaveBeenCalledWith(
+      expect.objectContaining({ name: "Test", user_id: "user-123" })
+    );
+  });
+
+  it("should throw HttpError for invalid input", async () => {
+    await expect(createExample({ name: "ab" }, "user-123")).rejects.toThrow(HttpError);
+  });
+});
+```
+
+#### Frontend Test Pattern (Vitest)
+```typescript
+// components/__tests__/ExampleComponent.test.tsx
+import { describe, it, expect, vi } from "vitest";
+import { render, screen, waitFor } from "@testing-library/react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { ExampleComponent } from "../ExampleComponent";
+
+describe("ExampleComponent", () => {
+  it("should render with data", async () => {
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+    });
+
+    render(
+      <QueryClientProvider client={queryClient}>
+        <ExampleComponent />
+      </QueryClientProvider>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText(/example/i)).toBeInTheDocument();
+    });
+  });
+});
+```
+
+**Testing Best Practices:**
+- Use test doubles (mocks, stubs) for external dependencies
+- Test happy paths, error cases, and edge cases
+- Use deterministic test data (fake clocks, seeded PRNG, deterministic UUIDs)
+- Maintain ≥80% coverage repo-wide, ≥90% for critical paths
+- Use `describe` blocks to group related tests
+- Use descriptive test names: `should [expected behavior] when [condition]`
+- Clean up after tests (use `beforeEach`/`afterEach` for setup/teardown)
+- Test accessibility with React Testing Library queries
+
 ## Project Status & Epics
 
 Refer to `PROJECT_EPICS_AND_ACTIVITIES.md` for current project status:
@@ -446,6 +568,68 @@ Refer to `PROJECT_EPICS_AND_ACTIVITIES.md` for current project status:
 - **Epic 11**: Technical Debt & Code Quality - Open
 - **Epic 12**: Coach Training Unit Assignment (FR-012) - Open
 
+## Troubleshooting Common Issues
+
+### Dependency Version Errors
+If you encounter errors like `es-errors: 1.3.0`, `debug: 4.4.3`, or `http-errors: 2.0.0`:
+1. Check `package.json` for version conflicts
+2. Run `pnpm update` to update dependencies
+3. Check for peer dependency warnings: `pnpm install --strict-peer-dependencies`
+4. Review migration guides for breaking changes
+5. Use `pnpm why <package>` to understand dependency tree
+
+### Common Error Patterns
+- **404 errors**: Check route registration and middleware order
+- **400 errors**: Validate input with Zod schemas before processing
+- **409 errors**: Check for unique constraint violations
+- **Type errors**: Ensure TypeScript strict mode compliance, no `any` types
+- **Test failures**: Verify test data setup, check for flaky tests
+
+### React/Knex/Express Specific Issues
+- **React**: Use React Query for server state, Zustand for client state
+- **Knex**: Always use parameterized queries (automatic), use transactions for multi-step operations
+- **Express**: Use `asyncHandler` wrapper, validate with Zod, use `HttpError` for errors
+
+## Technology-Specific Guidance
+
+### React (37 mentions)
+- Use functional components with hooks
+- Implement React Query for server state management
+- Use Zustand for global client state
+- Follow feature-sliced architecture
+- Ensure WCAG 2.1 AA compliance
+- Use i18next for all user-facing text
+
+### Knex.js (34 mentions)
+- Use migrations for all schema changes
+- Always use transactions for multi-step operations
+- Use `snake_case` for database columns
+- Add indexes for foreign keys and frequently queried columns
+- Use parameterized queries (automatic with Knex)
+- Use `returning("*")` for INSERT operations
+
+### Express.js (28 mentions)
+- Use `asyncHandler` wrapper for all route handlers
+- Validate input with Zod schemas
+- Use `HttpError` utility for consistent error responses
+- Implement idempotency for state-changing operations
+- Use middleware for cross-cutting concerns
+- Follow REST conventions with `/api/v1/` prefix
+
+### TypeScript (18 mentions)
+- Strict mode enabled - no `any` types in public surfaces
+- Use interfaces for object shapes, types for unions/intersections
+- Use `import type` for type-only imports
+- Use `.js` extensions in import statements (ESM compatibility)
+- Prefer type inference, but be explicit for public APIs
+
+### Docker (17 mentions)
+- Use multi-stage builds for optimization
+- Follow `.dockerignore` patterns
+- Use health checks in Dockerfiles
+- Document required environment variables
+- Use Docker Compose for local development
+
 ## References
 - **PRD**: `docs/1.Product_Requirements/1.Product_Requirements_Document.md`
 - **TDD**: `docs/2.Technical_Design_Document/`
@@ -454,3 +638,4 @@ Refer to `PROJECT_EPICS_AND_ACTIVITIES.md` for current project status:
 - **Contributing**: `CONTRIBUTING.md`
 - **Backend Modules**: `apps/backend/src/modules/README.md`
 - **Project Epics**: `PROJECT_EPICS_AND_ACTIVITIES.md`
+- **Chat Analysis**: `docs/6.Implementation/cursor_chat_analysis.md` (updated based on actual usage patterns)
