@@ -368,7 +368,7 @@ class ComplianceChecker:
                         )
 
         # Frontend tests should be in tests/ directory
-        frontend_tests = self.root_dir / 'apps/frontend/tests'
+        frontend_tests = self.root_dir / 'tests/frontend'
         if frontend_tests.exists():
             test_files = list(frontend_tests.rglob('*.test.{ts,tsx}'))
             if test_files:

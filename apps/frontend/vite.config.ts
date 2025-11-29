@@ -24,7 +24,10 @@ export default defineConfig(() => {
                 "node_modules/@testing-library/jest-dom",
               ),
               // Resolve relative imports from tests/frontend/ to apps/frontend/src/
+              // This allows tests in tests/frontend/ to use ../src to import from apps/frontend/src/
               "../src": pathResolve(root, "src"),
+              // Also handle imports from tests/frontend subdirectories
+              "../../src": pathResolve(root, "src"),
             }
           : {}),
         ...(isVitest
@@ -38,17 +41,21 @@ export default defineConfig(() => {
       },
       // Ensure node_modules resolution works for setup files outside the app directory
       // Include both frontend's node_modules and workspace root node_modules
+      // Prioritize frontend's node_modules for test dependencies
       modules: [
         pathResolve(root, "node_modules"),
         pathResolve(workspaceRoot, "node_modules"),
         "node_modules",
       ],
       preserveSymlinks: false,
+      // Ensure proper resolution of dependencies when tests are in tests/frontend
+      dedupe: ["@testing-library/react", "@testing-library/jest-dom", "axios-mock-adapter"],
     },
     test: {
       globals: true,
       environment: "jsdom",
       setupFiles: "../../tests/frontend/setupTests.ts",
+      include: ["../../tests/frontend/**/*.{test,spec}.{ts,tsx}"],
       css: true,
       pool: "threads",
       poolOptions: {
@@ -65,9 +72,23 @@ export default defineConfig(() => {
       hookTimeout: 10000, // 10 second timeout for hooks
       teardownTimeout: 5000, // 5 second timeout for teardown
       // Ensure dependencies are resolved correctly for setup files
+      // Inline all test dependencies to ensure they're resolved from the correct node_modules
       server: {
         deps: {
-          inline: ["@testing-library/jest-dom"],
+          inline: [
+            "@testing-library/jest-dom",
+            "@testing-library/react",
+            "@testing-library/user-event",
+            "@testing-library/dom",
+            "axios-mock-adapter",
+            "react-router-dom",
+            "react-router",
+            "@remix-run/router",
+            "i18next",
+            "react-i18next",
+            /^@testing-library\//,
+            /^vitest\//,
+          ],
         },
       },
       coverage: {

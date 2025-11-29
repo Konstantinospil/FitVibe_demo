@@ -240,3 +240,4 @@ When adding a new issue, use this template:
 
 **Document Created**: 2025-11-29  
 **Maintained By**: planner-agent
+

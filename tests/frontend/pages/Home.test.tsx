@@ -1,6 +1,7 @@
 import React from "react";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { MemoryRouter } from "react-router-dom";
 import Home from "../../src/pages/Home";
 import * as api from "../../src/services/api";
 import { useAuthStore } from "../../src/store/auth.store";
@@ -221,7 +222,11 @@ describe("Home page", () => {
   it("redirects unauthenticated users to the login screen", () => {
     useAuthStore.setState({ ...originalState, isAuthenticated: false });
 
-    render(<Home />);
+    render(
+      <MemoryRouter>
+        <Home />
+      </MemoryRouter>,
+    );
 
     expect(mockNavigate).toHaveBeenCalledWith("/login", {
       replace: true,
@@ -231,7 +236,11 @@ describe("Home page", () => {
   });
 
   it("allows creating a custom exercise session", async () => {
-    render(<Home />);
+    render(
+      <MemoryRouter>
+        <Home />
+      </MemoryRouter>,
+    );
 
     const strengthButton = await screen.findByRole("button", {
       name: "vibes.strength.name",
@@ -273,7 +282,11 @@ describe("Home page", () => {
   it("shows an error message when session creation fails", async () => {
     mockedApi.createSession.mockRejectedValueOnce(new Error("network"));
 
-    render(<Home />);
+    render(
+      <MemoryRouter>
+        <Home />
+      </MemoryRouter>,
+    );
 
     const vibeButton = await screen.findByRole("button", { name: "vibes.strength.name" });
     fireEvent.click(vibeButton);

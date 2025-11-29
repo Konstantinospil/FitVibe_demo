@@ -125,7 +125,11 @@ apps/backend/uploads/
 docker-compose.override.yml
 
 # --- Documentation: Implementation folder (planning/reviews) ---
-docs/Implementation/
+docs/6.Implementation/
+
+# --- Cursor IDE configuration (user-specific, should not be committed) ---
+.cursor/
+.cursorrules
 
 # --- Misc ---
 # Keep Husky hooks committed; do NOT ignore .husky/

@@ -1,6 +1,7 @@
 import React from "react";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import { MemoryRouter } from "react-router-dom";
 import TermsReacceptance from "../../src/pages/TermsReacceptance";
 import * as api from "../../src/services/api";
 import { useAuth } from "../../src/contexts/AuthContext";
@@ -78,7 +79,11 @@ describe("TermsReacceptance page", () => {
   });
 
   it("should render terms reacceptance form", () => {
-    render(<TermsReacceptance />);
+    render(
+      <MemoryRouter>
+        <TermsReacceptance />
+      </MemoryRouter>,
+    );
 
     expect(screen.getByText("Terms and Conditions Update")).toBeInTheDocument();
     expect(screen.getByText("Please accept the updated terms")).toBeInTheDocument();
@@ -86,7 +91,11 @@ describe("TermsReacceptance page", () => {
   });
 
   it("should show error when submitting without accepting terms", async () => {
-    render(<TermsReacceptance />);
+    render(
+      <MemoryRouter>
+        <TermsReacceptance />
+      </MemoryRouter>,
+    );
 
     const submitButton = screen.getByRole("button", { name: "Accept" });
     const form = submitButton.closest("form");
@@ -110,7 +119,11 @@ describe("TermsReacceptance page", () => {
   it("should submit form when terms are accepted", async () => {
     vi.mocked(api.acceptTerms).mockResolvedValue({ message: "Terms accepted" });
 
-    render(<TermsReacceptance />);
+    render(
+      <MemoryRouter>
+        <TermsReacceptance />
+      </MemoryRouter>,
+    );
 
     const checkbox = screen.getByRole("checkbox");
     fireEvent.click(checkbox);
@@ -136,7 +149,11 @@ describe("TermsReacceptance page", () => {
 
     vi.mocked(api.acceptTerms).mockResolvedValue({ message: "Terms accepted" });
 
-    render(<TermsReacceptance />);
+    render(
+      <MemoryRouter>
+        <TermsReacceptance />
+      </MemoryRouter>,
+    );
 
     const checkbox = screen.getByRole("checkbox");
     fireEvent.click(checkbox);
@@ -161,7 +178,11 @@ describe("TermsReacceptance page", () => {
       },
     });
 
-    render(<TermsReacceptance />);
+    render(
+      <MemoryRouter>
+        <TermsReacceptance />
+      </MemoryRouter>,
+    );
 
     const checkbox = screen.getByRole("checkbox");
     fireEvent.click(checkbox);
@@ -195,7 +216,11 @@ describe("TermsReacceptance page", () => {
       () => new Promise((resolve) => setTimeout(resolve, 100)),
     );
 
-    render(<TermsReacceptance />);
+    render(
+      <MemoryRouter>
+        <TermsReacceptance />
+      </MemoryRouter>,
+    );
 
     const checkbox = screen.getByRole("checkbox");
     fireEvent.click(checkbox);
@@ -212,7 +237,11 @@ describe("TermsReacceptance page", () => {
   });
 
   it("should allow signing out", () => {
-    render(<TermsReacceptance />);
+    render(
+      <MemoryRouter>
+        <TermsReacceptance />
+      </MemoryRouter>,
+    );
 
     const signOutButton = screen.getByRole("button", { name: "Sign Out" });
     fireEvent.click(signOutButton);
@@ -222,7 +251,11 @@ describe("TermsReacceptance page", () => {
   });
 
   it("should render links to terms and privacy", () => {
-    render(<TermsReacceptance />);
+    render(
+      <MemoryRouter>
+        <TermsReacceptance />
+      </MemoryRouter>,
+    );
 
     const termsLink = screen.getByText("Terms");
     const privacyLink = screen.getByText("Privacy Policy");

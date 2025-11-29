@@ -21,6 +21,8 @@
     "qa:summary": "node tests/qa/generate-summary.mjs",
     "i18n:check": "node tests/qa/check-i18n.cjs",
     "security:scan": "node tests/security/run-security-checks.mjs",
+    "agent:validate": "python3 .cursor/scripts/validate_agent_security.py --all --strict",
+    "agent:validate:single": "python3 .cursor/scripts/validate_agent_security.py --agent",
     "typecheck": "turbo run typecheck",
     "bug:collect": "node scripts/bug-collector.mjs",
     "bug:fix": "node scripts/bug-fixer-agent.mjs",

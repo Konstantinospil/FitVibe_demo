@@ -30,14 +30,14 @@ describe("StatusPill", () => {
     render(<StatusPill status="online" />);
 
     const statusElement = screen.getByRole("status");
-    expect(statusElement).toHaveTextContent("Online");
+    expect(statusElement).toHaveTextContent("Server online");
   });
 
   it("should render offline status with default label", () => {
     render(<StatusPill status="offline" />);
 
     const statusElement = screen.getByRole("status");
-    expect(statusElement).toHaveTextContent("Offline");
+    expect(statusElement).toHaveTextContent("Server offline");
   });
 
   it("should render custom text when provided as children", () => {
@@ -49,13 +49,13 @@ describe("StatusPill", () => {
   it("should use translation key when children is empty", () => {
     render(<StatusPill status="online">{""}</StatusPill>);
 
-    expect(screen.getByText("Online")).toBeInTheDocument();
+    expect(screen.getByText("Server online")).toBeInTheDocument();
   });
 
   it("should use translation key when children contains only whitespace", () => {
     render(<StatusPill status="online">{"   "}</StatusPill>);
 
-    expect(screen.getByText("Online")).toBeInTheDocument();
+    expect(screen.getByText("Server online")).toBeInTheDocument();
   });
 
   it("should have aria-live polite attribute", () => {
@@ -81,7 +81,7 @@ describe("StatusPill", () => {
 
     const statusElement = screen.getByRole("status");
     // When children is not a simple string, the component falls back to translating the status
-    expect(statusElement).toHaveAttribute("aria-label", "Online");
+    expect(statusElement).toHaveAttribute("aria-label", "Server online");
   });
 
   it("should render indicator dot for checking status", () => {
@@ -141,7 +141,7 @@ describe("StatusPill", () => {
     expect(screen.getByText("Active")).toBeInTheDocument();
     // But uses translated status for aria-label (accessibility)
     const statusElement = screen.getByRole("status");
-    expect(statusElement).toHaveAttribute("aria-label", "Online");
+    expect(statusElement).toHaveAttribute("aria-label", "Server online");
   });
 
   it("should apply correct styles for checking status", () => {

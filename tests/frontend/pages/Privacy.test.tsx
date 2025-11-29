@@ -1,6 +1,7 @@
 import React from "react";
 import { render, screen } from "@testing-library/react";
 import { describe, it, expect, vi } from "vitest";
+import { MemoryRouter } from "react-router-dom";
 import Privacy from "../../src/pages/Privacy";
 
 vi.mock("react-i18next", () => ({
@@ -19,14 +20,22 @@ vi.mock("react-i18next", () => ({
 
 describe("Privacy page", () => {
   it("should render privacy policy content", () => {
-    render(<Privacy />);
+    render(
+      <MemoryRouter>
+        <Privacy />
+      </MemoryRouter>,
+    );
 
     expect(screen.getByText("Privacy Policy")).toBeInTheDocument();
     expect(screen.getByText("How we handle your data")).toBeInTheDocument();
   });
 
   it("should display effective date", () => {
-    render(<Privacy />);
+    render(
+      <MemoryRouter>
+        <Privacy />
+      </MemoryRouter>,
+    );
 
     const effectiveDateElements = screen.getAllByText(/Effective Date/i);
     expect(effectiveDateElements.length).toBeGreaterThan(0);
@@ -34,7 +43,11 @@ describe("Privacy page", () => {
   });
 
   it("should render privacy policy sections", () => {
-    render(<Privacy />);
+    render(
+      <MemoryRouter>
+        <Privacy />
+      </MemoryRouter>,
+    );
 
     expect(screen.getByText("1. Scope")).toBeInTheDocument();
     expect(screen.getByText("2. Who we are and how to contact us")).toBeInTheDocument();
@@ -42,7 +55,11 @@ describe("Privacy page", () => {
   });
 
   it("should render data collection table", () => {
-    render(<Privacy />);
+    render(
+      <MemoryRouter>
+        <Privacy />
+      </MemoryRouter>,
+    );
 
     expect(screen.getByText("Category")).toBeInTheDocument();
     expect(screen.getByText("Examples")).toBeInTheDocument();
@@ -51,7 +68,11 @@ describe("Privacy page", () => {
   });
 
   it("should render contact information", () => {
-    render(<Privacy />);
+    render(
+      <MemoryRouter>
+        <Privacy />
+      </MemoryRouter>,
+    );
 
     const emailElements = screen.getAllByText(/kpilpilidis@gmail.com/i);
     expect(emailElements.length).toBeGreaterThan(0);

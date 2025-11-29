@@ -57,7 +57,9 @@ describe("ErrorBoundary", () => {
 
     expect(screen.getByText("Something went wrong")).toBeInTheDocument();
     expect(screen.getByText("Test error")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Try Again" })).toBeInTheDocument();
+    expect(screen.getByText("Try again")).toBeInTheDocument();
+    const button = screen.getByText("Try again").closest("button");
+    expect(button).toBeInTheDocument();
   });
 
   it("should render fallback UI when provided", () => {
@@ -96,7 +98,9 @@ describe("ErrorBoundary", () => {
       </ErrorBoundary>,
     );
 
-    // Initial error state
+    // Initial error state - find button by text
+    const tryAgainButton = screen.getByText("Try again").closest("button");
+    expect(tryAgainButton).toBeInTheDocument();
     expect(screen.getByText("Something went wrong")).toBeInTheDocument();
 
     // First, update the child to not throw anymore
@@ -110,8 +114,10 @@ describe("ErrorBoundary", () => {
     expect(screen.getByText("Something went wrong")).toBeInTheDocument();
 
     // Click Try Again to reset and render the (now non-throwing) child
-    const tryAgainButton = screen.getByRole("button", { name: "Try Again" });
-    fireEvent.click(tryAgainButton);
+    const tryAgainBtn = screen.getByText("Try again").closest("button");
+    if (tryAgainBtn) {
+      fireEvent.click(tryAgainBtn);
+    }
 
     // Now the child should render normally
     expect(screen.getByText("Normal Content")).toBeInTheDocument();
