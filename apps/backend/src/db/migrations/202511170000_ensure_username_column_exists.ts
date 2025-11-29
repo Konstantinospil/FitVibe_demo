@@ -20,13 +20,18 @@ export async function up(knex: Knex): Promise<void> {
     return;
   }
 
-  // Check if username column exists using a more reliable method
-  // Query the information_schema directly to avoid any caching issues
+  // Check if username column exists using a more reliable method.
+  // IMPORTANT: we must respect the *current schema* so this migration works both:
+  // - in production (typically schema = "public")
+  // - in tests (which run in an isolated schema, e.g. "tmp_migration_test")
+  //
+  // Using current_schema() instead of hard-coding "public" keeps this migration
+  // idempotent regardless of the search_path used by Knex.
   // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
   const columnCheck = await knex.raw(`
     SELECT column_name
     FROM information_schema.columns
-    WHERE table_schema = 'public'
+    WHERE table_schema = current_schema()
       AND table_name = 'users'
       AND column_name = 'username'
   `);
