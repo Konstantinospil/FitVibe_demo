@@ -44,13 +44,17 @@ describe("Integration: Feed Sharing → Reactions Flow", () => {
       emailVerified: true,
       terms_accepted: true,
       terms_accepted_at: now,
-      terms_version: "1.0.0",
+      terms_version: "2024-06-01",
     });
 
     const login1 = await request(app).post("/api/v1/auth/login").send({
       email: "sharer@example.com",
       password: password,
     });
+
+    if (login1.status !== 200) {
+      throw new Error(`Failed to login user1: ${login1.status} - ${JSON.stringify(login1.body)}`);
+    }
 
     user1 = {
       id: userId1,
@@ -71,13 +75,17 @@ describe("Integration: Feed Sharing → Reactions Flow", () => {
       emailVerified: true,
       terms_accepted: true,
       terms_accepted_at: now,
-      terms_version: "1.0.0",
+      terms_version: "2024-06-01",
     });
 
     const login2 = await request(app).post("/api/v1/auth/login").send({
       email: "reactor@example.com",
       password: password,
     });
+
+    if (login2.status !== 200) {
+      throw new Error(`Failed to login user2: ${login2.status} - ${JSON.stringify(login2.body)}`);
+    }
 
     user2 = {
       id: userId2,

@@ -42,7 +42,7 @@ describe("Integration: Session → Points Flow", () => {
       emailVerified: true,
       terms_accepted: true,
       terms_accepted_at: now,
-      terms_version: "1.0.0",
+      terms_version: "2024-06-01",
     });
 
     // Login to get access token

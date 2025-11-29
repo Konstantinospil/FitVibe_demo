@@ -40,16 +40,18 @@ describe("Integration: Auth → Session Flow", () => {
       terms_accepted: true,
     });
 
-    expect(registerResponse.status).toBe(201);
-    expect(registerResponse.body).toHaveProperty("verificationToken");
-    expect(registerResponse.body.user).toMatchObject({
-      email: "testuser@example.com",
-      username: "testuser",
-      status: "pending_verification",
-    });
+    expect(registerResponse.status).toBe(202);
+    expect(registerResponse.body).toHaveProperty("message");
+    expect(registerResponse.body).toHaveProperty("debugVerificationToken");
 
-    const userId = registerResponse.body.user.id;
-    const verificationToken = registerResponse.body.verificationToken;
+    const verificationToken = registerResponse.body.debugVerificationToken;
+    expect(verificationToken).toBeTruthy();
+
+    // Get user ID from database since registration response doesn't include user object
+    const user = await db("users").where({ primary_email: "testuser@example.com" }).first();
+    expect(user).toBeDefined();
+    expect(user.status).toBe("pending_verification");
+    const userId = user.id;
 
     // Step 2: Verify email via API
     const verifyResponse = await request(app).post("/api/v1/auth/verify-email").send({
@@ -115,7 +117,7 @@ describe("Integration: Auth → Session Flow", () => {
       emailVerified: true,
       terms_accepted: true,
       terms_accepted_at: now,
-      terms_version: "1.0.0",
+      terms_version: "2024-06-01",
     });
 
     // Attempt login with wrong password
