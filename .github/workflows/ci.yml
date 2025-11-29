@@ -527,7 +527,6 @@ jobs:
     needs:
       - quality
       - database_tests
-      - excluded_tests
     permissions:
       contents: read
       actions: read
@@ -760,8 +759,6 @@ jobs:
     timeout-minutes: 5
     needs:
       - quality
-      - database_tests
-      - excluded_tests
     permissions:
       contents: read
     steps:
@@ -783,8 +780,6 @@ jobs:
     timeout-minutes: 30
     needs:
       - quality
-      - database_tests
-      - excluded_tests
     permissions:
       contents: read
       security-events: write
@@ -927,8 +922,6 @@ jobs:
     timeout-minutes: 20
     needs:
       - quality
-      - database_tests
-      - excluded_tests
     permissions:
       contents: read
     steps:
@@ -1029,8 +1022,6 @@ jobs:
     timeout-minutes: 10
     needs:
       - quality
-      - database_tests
-      - excluded_tests
       - performance
     permissions:
       contents: read
@@ -1082,8 +1073,6 @@ jobs:
     timeout-minutes: 20
     needs:
       - quality
-      - database_tests
-      - excluded_tests
     permissions:
       contents: read
     steps:
