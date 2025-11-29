@@ -154,7 +154,7 @@
   --color-bg: #0B0C10;
   --color-surface: #162C22;
   --color-surface-muted: rgba(46, 91, 73, 0.3);
-  --color-surface-glass: rgba(22, 44, 34, 0.45);
+  --color-surface-glass: rgba(22, 44, 34, 0.85);
   --color-bg-card: #162C22;
 
   /* Borders - Dark Mode */
@@ -463,7 +463,7 @@ small {
   width: 100%;
   border-radius: 12px;
   border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(255, 255, 255, 0.04);
+  background: rgba(22, 44, 34, 0.85);
   color: var(--color-text-primary);
   padding: 0.9rem 1rem;
   font-size: 1rem;
@@ -527,7 +527,7 @@ small {
   display: flex;
   justify-content: space-between;
   font-size: 0.9rem;
-  color: rgba(255, 255, 255, 0.75);
+  color: #FFFFFF;
 }
 
 .login-fallback__links a {

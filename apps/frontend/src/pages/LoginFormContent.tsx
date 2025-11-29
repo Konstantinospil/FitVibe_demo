@@ -228,13 +228,13 @@ const LoginFormContent: React.FC = () => {
           display: "flex",
           justifyContent: "space-between",
           fontSize: "0.9rem",
-          color: "var(--color-text-secondary)",
+          color: "#FFFFFF",
         }}
       >
-        <NavLink to="/register" style={{ color: "var(--color-text-secondary)" }}>
+        <NavLink to="/register" style={{ color: "#FFFFFF" }}>
           {t("auth.login.registerPrompt")}
         </NavLink>
-        <NavLink to="/forgot-password" style={{ color: "var(--color-text-secondary)" }}>
+        <NavLink to="/forgot-password" style={{ color: "#FFFFFF" }}>
           {t("auth.login.forgot")}
         </NavLink>
       </div>

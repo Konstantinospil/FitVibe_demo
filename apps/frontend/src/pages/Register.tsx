@@ -452,7 +452,7 @@ const Register: React.FC = () => {
           }}
         >
           {t("auth.register.loginPrompt")}{" "}
-          <NavLink to="/login" style={{ color: "var(--color-text-secondary)" }}>
+          <NavLink to="/login" style={{ color: "#FFFFFF" }}>
             {t("auth.register.loginLink")}
           </NavLink>
         </p>

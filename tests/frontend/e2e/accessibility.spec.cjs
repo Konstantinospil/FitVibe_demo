@@ -64,7 +64,7 @@ test.describe("Accessibility (axe)", () => {
       await page.waitForLoadState("networkidle");
 
       const results = await new AxeBuilder({ page })
-        .withTags(["wcag2a", "wcag2aa"])
+        .withTags(["wcag2a", "wcag2aa", "wcag22aa"])
         .analyze();
 
       const impactfulViolations = results.violations.filter((violation) =>

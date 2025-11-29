@@ -123,7 +123,7 @@ const ForgotPassword: React.FC = () => {
           style={{
             display: "block",
             textAlign: "center",
-            color: "var(--color-text-secondary)",
+            color: "#FFFFFF",
             fontSize: "0.9rem",
           }}
         >
