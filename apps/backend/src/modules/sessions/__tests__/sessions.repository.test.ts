@@ -363,7 +363,6 @@ describe("Sessions Repository", () => {
         points: null,
         completed_at: null,
         plan_id: null,
-        template_id: null,
         created_at: "2024-01-01T00:00:00Z",
         updated_at: "2024-01-01T00:00:00Z",
         deleted_at: null,
@@ -587,11 +586,9 @@ describe("Sessions Repository", () => {
             return Promise.resolve(manyExercises);
           }) as never;
 
-        const result = await sessionsRepository.getSessionWithDetails(
-          "session-123",
-          "user-123",
-          false,
-        );
+        const result = await sessionsRepository.getSessionWithDetails("session-123", "user-123", {
+          includeDeleted: false,
+        });
 
         expect(result).toBeDefined();
         expect(mockQueryBuilder.where).toHaveBeenCalled();
@@ -648,8 +645,8 @@ describe("Sessions Repository", () => {
           }) as never;
 
         await sessionsRepository.listSessions("user-123", {
-          startDate: "2024-01-01T00:00:00.000Z",
-          endDate: "2024-01-01T00:00:00.001Z",
+          planned_from: "2024-01-01T00:00:00.000Z",
+          planned_to: "2024-01-01T00:00:00.001Z",
         });
 
         expect(mockQueryBuilder.where).toHaveBeenCalled();
@@ -666,8 +663,8 @@ describe("Sessions Repository", () => {
           }) as never;
 
         await sessionsRepository.listSessions("user-123", {
-          startDate: "2024-01-01T23:59:59.999Z",
-          endDate: "2024-01-02T00:00:00.000Z",
+          planned_from: "2024-01-01T23:59:59.999Z",
+          planned_to: "2024-01-02T00:00:00.000Z",
         });
 
         expect(mockQueryBuilder.where).toHaveBeenCalled();
@@ -703,11 +700,9 @@ describe("Sessions Repository", () => {
             return Promise.resolve(exercisesWithNulls);
           }) as never;
 
-        const result = await sessionsRepository.getSessionWithDetails(
-          "session-123",
-          "user-123",
-          false,
-        );
+        const result = await sessionsRepository.getSessionWithDetails("session-123", "user-123", {
+          includeDeleted: false,
+        });
 
         expect(result).toBeDefined();
       });
@@ -792,7 +787,9 @@ describe("Sessions Repository", () => {
 
         mockQueryBuilder.first.mockResolvedValue(mockSession);
 
-        const result = await sessionsRepository.getSessionById("session-123", "user-123", false);
+        const result = await sessionsRepository.getSessionById("session-123", "user-123", {
+          includeDeleted: false,
+        });
 
         expect(result?.title).toBe("");
       });
@@ -862,9 +859,9 @@ describe("Sessions Repository", () => {
 
         const result = await sessionsRepository.listSessions("user-123", {
           status: "completed",
-          planId: "plan-123",
-          startDate: "2024-01-01",
-          endDate: "2024-12-31",
+          plan_id: "plan-123",
+          planned_from: "2024-01-01",
+          planned_to: "2024-12-31",
           search: "workout",
           limit: 10,
           offset: 20,
@@ -946,7 +943,7 @@ describe("Sessions Repository", () => {
         const result = await sessionsRepository.getSessionWithDetails(
           "session-123",
           "user-123",
-          false,
+          {},
         );
 
         expect(result).toBeDefined();
@@ -955,7 +952,12 @@ describe("Sessions Repository", () => {
 
     describe("Concurrent Operations", () => {
       it("should handle concurrent refresh calls with different modes", async () => {
-        mockDb.raw.mockReturnValue(Promise.resolve({}));
+        mockDb.raw.mockReturnValue({
+          timeout: jest.fn().mockReturnThis(),
+          wrap: jest.fn().mockReturnThis(),
+          toSQL: jest.fn().mockReturnValue({ sql: "", bindings: [] }),
+          queryContext: jest.fn().mockReturnThis(),
+        } as never);
 
         await Promise.all([
           sessionsRepository.refreshSessionSummary(true),
@@ -978,9 +980,9 @@ describe("Sessions Repository", () => {
           .mockResolvedValueOnce(mockSessions[2]);
 
         const results = await Promise.all([
-          sessionsRepository.getSessionById("session-1", "user-123", false),
-          sessionsRepository.getSessionById("session-2", "user-123", false),
-          sessionsRepository.getSessionById("session-3", "user-123", false),
+          sessionsRepository.getSessionById("session-1", "user-123", { includeDeleted: false }),
+          sessionsRepository.getSessionById("session-2", "user-123", { includeDeleted: false }),
+          sessionsRepository.getSessionById("session-3", "user-123", { includeDeleted: false }),
         ]);
 
         expect(results).toHaveLength(3);

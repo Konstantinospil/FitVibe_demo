@@ -137,7 +137,9 @@ describe("database seed modules", () => {
         const hashMock = bcrypt.hash as jest.MockedFunction<typeof bcrypt.hash>;
         expect(hashMock).toHaveBeenNthCalledWith(1, "Admin123!", 12);
         expect(hashMock).toHaveBeenNthCalledWith(2, "Athlete123!", 12);
-        const row = rows.find((entry: { id?: string }) => entry.id === ADMIN_ID) as {
+        const row = (rows as Array<{ id?: string; password_hash?: string }>).find(
+          (entry) => entry.id === ADMIN_ID,
+        ) as {
           password_hash: string;
         };
         expect(row.password_hash).toBe("hashed-Admin123!");
@@ -174,8 +176,8 @@ describe("database seed modules", () => {
       conflict: "id",
       strategy: "ignore",
       assertInsert: (rows) => {
-        const compound = rows.find(
-          (entry: { id: string }) => entry.id === "77777777-7777-7777-7777-777777777777",
+        const compound = (rows as Array<{ id: string; tags?: string }>).find(
+          (entry) => entry.id === "77777777-7777-7777-7777-777777777777",
         ) as { tags: string };
         expect(typeof compound.tags).toBe("string");
         expect(JSON.parse(compound.tags)).toContain("compound");

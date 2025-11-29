@@ -27,9 +27,13 @@ type MockResponse = TypedResponse & {
   status: jest.MockedFunction<TypedResponse["status"]>;
   json: jest.MockedFunction<TypedResponse["json"]>;
   setHeader: jest.MockedFunction<(key: string, value: string) => MockResponse>;
-  getHeader: jest.MockedFunction<(key: string) => string | undefined>;
+  getHeader: jest.MockedFunction<
+    ((name: "set-cookie") => string[] | undefined) & ((name: string) => string | undefined)
+  >;
   removeHeader: jest.MockedFunction<(key: string) => MockResponse>;
-  on: jest.MockedFunction<TypedResponse["on"]>;
+  on: jest.MockedFunction<
+    (event: string | symbol, listener: (...args: unknown[]) => void) => MockResponse
+  >;
 };
 
 describe("enhanced security middleware", () => {
@@ -45,11 +49,18 @@ describe("enhanced security middleware", () => {
       headers[key] = value;
       return res;
     });
-    res.getHeader = jest.fn((key: string) => headers[key]);
-    res.removeHeader = jest.fn(() => {
+    res.getHeader = jest.fn((key: string) => {
+      if (key === "set-cookie") {
+        return undefined;
+      }
+      return headers[key];
+    }) as jest.MockedFunction<
+      ((name: "set-cookie") => string[] | undefined) & ((name: string) => string | undefined)
+    >;
+    res.removeHeader = jest.fn((key: string) => {
       return res;
     });
-    res.on = jest.fn((event: string, handler: () => void) => {
+    res.on = jest.fn((event: string | symbol, handler: (...args: unknown[]) => void) => {
       baseOn(event, handler);
       return res;
     });
@@ -67,7 +78,7 @@ describe("enhanced security middleware", () => {
     const res = createMockRes();
     const next = jest.fn();
 
-    enhancedCSP({} as TypedRequest, res, next);
+    enhancedCSP({} as TypedRequest as Request, res, next);
 
     expect(typeof res.locals.cspNonce).toBe("string");
     expect(res.setHeader).toHaveBeenCalledWith(
@@ -81,7 +92,7 @@ describe("enhanced security middleware", () => {
     const res = createMockRes();
     const next = jest.fn();
 
-    additionalSecurityHeaders({} as TypedRequest, res, next);
+    additionalSecurityHeaders({} as TypedRequest as Request, res, next);
 
     expect(res.setHeader).toHaveBeenCalledWith("X-Content-Type-Options", "nosniff");
     expect(res.setHeader).toHaveBeenCalledWith(
@@ -94,16 +105,16 @@ describe("enhanced security middleware", () => {
 
   it("limits request payload size", () => {
     const limiter = requestSizeLimiter(10);
-    const req = new EventEmitter() as TypedRequest & {
+    const req = new EventEmitter() as unknown as Request & {
       pause: jest.Mock;
       connection: { destroy: jest.Mock };
     };
     req.pause = jest.fn();
-    req.connection = { destroy: jest.fn() };
+    req.connection = { destroy: jest.fn() } as any;
     const res = createMockRes();
     const next = jest.fn();
 
-    limiter(req, res, next);
+    limiter(req as unknown as Request, res, next);
     expect(next).toHaveBeenCalled();
 
     req.emit("data", Buffer.alloc(6));
@@ -125,7 +136,7 @@ describe("enhanced security middleware", () => {
     const res = createMockRes();
     const next = jest.fn();
 
-    timeout({} as TypedRequest, res, next);
+    timeout({} as TypedRequest as Request, res, next);
     expect(next).toHaveBeenCalled();
 
     jest.advanceTimersByTime(1000);
@@ -150,7 +161,7 @@ describe("enhanced security middleware", () => {
     } as unknown as TypedRequest;
     const res = createMockRes();
 
-    validateForwardedIP(req, res, next);
+    validateForwardedIP(req as unknown as Request, res, next);
     expect(warnSpy).toHaveBeenCalledWith(
       "[Security] Invalid X-Forwarded-For header:",
       expect.stringContaining("bad.ip.address"),
@@ -173,7 +184,7 @@ describe("enhanced security middleware", () => {
     const res = createMockRes();
     const next = jest.fn();
 
-    detectSuspiciousPatterns(req, res, next);
+    detectSuspiciousPatterns(req as unknown as Request, res, next);
 
     expect(res.status).toHaveBeenCalledWith(400);
     expect(res.json).toHaveBeenCalledWith(
@@ -194,14 +205,14 @@ describe("enhanced security middleware", () => {
     const res = createMockRes();
     const next = jest.fn();
 
-    detectSuspiciousPatterns(req, res, next);
+    detectSuspiciousPatterns(req as unknown as Request, res, next);
     expect(next).toHaveBeenCalled();
     expect(res.status).not.toHaveBeenCalled();
   });
 
   it("applies no-cache headers", () => {
     const res = createMockRes();
-    noCacheHeaders({} as TypedRequest, res, jest.fn());
+    noCacheHeaders({} as TypedRequest as Request, res, jest.fn());
 
     expect(res.setHeader).toHaveBeenCalledWith(
       "Cache-Control",
@@ -216,7 +227,7 @@ describe("enhanced security middleware", () => {
     const warnSpy = jest.spyOn(console, "warn").mockImplementation(() => {});
     const res = createMockRes();
 
-    logSecurityHeaders({ path: "/secure" } as TypedRequest, res, jest.fn());
+    logSecurityHeaders({ path: "/secure" } as TypedRequest as Request, res, jest.fn());
 
     res.emit("finish");
     expect(warnSpy).toHaveBeenCalledWith(

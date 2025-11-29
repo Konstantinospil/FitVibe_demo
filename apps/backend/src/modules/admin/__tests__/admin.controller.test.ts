@@ -4,6 +4,17 @@
 
 import { describe, it, expect, jest, beforeEach } from "@jest/globals";
 import type { Request, Response } from "express";
+import type { JwtPayload } from "../../auth/auth.types.js";
+
+// Helper to create complete JwtPayload
+function createMockJwtPayload(overrides: Partial<JwtPayload> = {}): JwtPayload {
+  return {
+    sub: "admin-123",
+    role: "admin",
+    sid: "session-123",
+    ...overrides,
+  };
+}
 import { HttpError } from "../../../utils/http.js";
 import * as controller from "../admin.controller.js";
 import * as service from "../admin.service.js";
@@ -117,7 +128,7 @@ describe("Admin Controller", () => {
       mockReq = {
         params: { reportId: "report-1" },
         body: { action: "dismiss" },
-        user: { sub: "admin-1" },
+        user: createMockJwtPayload({ sub: "admin-1" }),
       };
 
       await controller.moderateReportHandler(mockReq as Request, mockRes as Response);
@@ -151,7 +162,7 @@ describe("Admin Controller", () => {
       mockReq = {
         params: { reportId: "report-1" },
         body: { action: "invalid" },
-        user: { sub: "admin-1" },
+        user: createMockJwtPayload({ sub: "admin-1" }),
       };
 
       await expect(
@@ -167,7 +178,7 @@ describe("Admin Controller", () => {
       mockReq = {
         params: { reportId: "report-1" },
         body: { action: "hide" },
-        user: { sub: "admin-1" },
+        user: createMockJwtPayload({ sub: "admin-1" }),
       };
 
       await controller.moderateReportHandler(mockReq as Request, mockRes as Response);
@@ -189,7 +200,7 @@ describe("Admin Controller", () => {
       mockReq = {
         params: { reportId: "report-1" },
         body: { action: "ban" },
-        user: { sub: "admin-1" },
+        user: createMockJwtPayload({ sub: "admin-1" }),
       };
 
       await controller.moderateReportHandler(mockReq as Request, mockRes as Response);
@@ -274,7 +285,7 @@ describe("Admin Controller", () => {
       mockReq = {
         params: { userId: "user-1" },
         body: { action: "suspend", reason: "Violation" },
-        user: { sub: "admin-1" },
+        user: createMockJwtPayload({ sub: "admin-1" }),
       };
 
       await controller.userActionHandler(mockReq as Request, mockRes as Response);
@@ -309,7 +320,7 @@ describe("Admin Controller", () => {
       mockReq = {
         params: { userId: "user-1" },
         body: { action: "invalid" },
-        user: { sub: "admin-1" },
+        user: createMockJwtPayload({ sub: "admin-1" }),
       };
 
       await expect(
@@ -325,7 +336,7 @@ describe("Admin Controller", () => {
       mockReq = {
         params: { userId: "user-1" },
         body: { action: "ban" },
-        user: { sub: "admin-1" },
+        user: createMockJwtPayload({ sub: "admin-1" }),
       };
 
       await controller.userActionHandler(mockReq as Request, mockRes as Response);
@@ -344,7 +355,7 @@ describe("Admin Controller", () => {
       mockReq = {
         params: { userId: "user-1" },
         body: { action: "activate" },
-        user: { sub: "admin-1" },
+        user: createMockJwtPayload({ sub: "admin-1" }),
       };
 
       await controller.userActionHandler(mockReq as Request, mockRes as Response);
@@ -363,7 +374,7 @@ describe("Admin Controller", () => {
       mockReq = {
         params: { userId: "user-1" },
         body: { action: "delete" },
-        user: { sub: "admin-1" },
+        user: createMockJwtPayload({ sub: "admin-1" }),
       };
 
       await controller.userActionHandler(mockReq as Request, mockRes as Response);

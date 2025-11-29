@@ -6,6 +6,7 @@ jest.mock("crypto", () => ({
 }));
 
 const mockedCrypto = jest.mocked(crypto);
+(mockedCrypto.randomInt as jest.Mock).mockReturnValue(0); // Default value
 
 describe("timing.utils", () => {
   beforeEach(() => {
@@ -20,7 +21,7 @@ describe("timing.utils", () => {
   describe("normalizeAuthTiming", () => {
     it("should not delay when operation already exceeds minimum time", async () => {
       const startTime = Date.now() - 400; // Operation took 400ms
-      mockedCrypto.randomInt.mockReturnValue(5);
+      (mockedCrypto.randomInt as unknown as jest.Mock<number>).mockReturnValue(5);
 
       const delayPromise = normalizeAuthTiming(startTime, 300);
       jest.advanceTimersByTime(0);
@@ -35,7 +36,7 @@ describe("timing.utils", () => {
       const startTime = Date.now() - 100; // Operation took 100ms
       const minTime = 300;
       const expectedDelay = minTime - 100; // 200ms remaining
-      mockedCrypto.randomInt.mockReturnValue(5); // +5ms jitter
+      (mockedCrypto.randomInt as unknown as jest.Mock<number>).mockReturnValue(5); // +5ms jitter
 
       const delayPromise = normalizeAuthTiming(startTime, minTime);
 
@@ -50,7 +51,7 @@ describe("timing.utils", () => {
     it("should add random jitter to delay", async () => {
       const startTime = Date.now() - 100; // Operation took 100ms
       const minTime = 300;
-      mockedCrypto.randomInt.mockReturnValue(-5); // -5ms jitter
+      (mockedCrypto.randomInt as unknown as jest.Mock<number>).mockReturnValue(-5); // -5ms jitter
 
       const delayPromise = normalizeAuthTiming(startTime, minTime);
       jest.advanceTimersByTime(195); // 200ms - 5ms jitter
@@ -62,7 +63,7 @@ describe("timing.utils", () => {
 
     it("should use default minimum time when not specified", async () => {
       const startTime = Date.now() - 100;
-      mockedCrypto.randomInt.mockReturnValue(0);
+      (mockedCrypto.randomInt as unknown as jest.Mock<number>).mockReturnValue(0);
 
       const delayPromise = normalizeAuthTiming(startTime);
       jest.advanceTimersByTime(200);
@@ -76,7 +77,7 @@ describe("timing.utils", () => {
     it("should handle negative jitter correctly", async () => {
       const startTime = Date.now() - 100;
       const minTime = 300;
-      mockedCrypto.randomInt.mockReturnValue(-10); // Maximum negative jitter
+      (mockedCrypto.randomInt as unknown as jest.Mock<number>).mockReturnValue(-10); // Maximum negative jitter
 
       const delayPromise = normalizeAuthTiming(startTime, minTime);
       jest.advanceTimersByTime(190); // 200ms - 10ms jitter
@@ -89,7 +90,7 @@ describe("timing.utils", () => {
     it("should handle positive jitter correctly", async () => {
       const startTime = Date.now() - 100;
       const minTime = 300;
-      mockedCrypto.randomInt.mockReturnValue(10); // Maximum positive jitter
+      (mockedCrypto.randomInt as unknown as jest.Mock<number>).mockReturnValue(10); // Maximum positive jitter
 
       const delayPromise = normalizeAuthTiming(startTime, minTime);
       jest.advanceTimersByTime(210); // 200ms + 10ms jitter
@@ -102,7 +103,7 @@ describe("timing.utils", () => {
     it("should ensure delay is never negative", async () => {
       const startTime = Date.now() - 100;
       const minTime = 300;
-      mockedCrypto.randomInt.mockReturnValue(-200); // Large negative jitter
+      (mockedCrypto.randomInt as unknown as jest.Mock<number>).mockReturnValue(-200); // Large negative jitter
 
       const delayPromise = normalizeAuthTiming(startTime, minTime);
       jest.advanceTimersByTime(0); // Math.max(0, ...) should prevent negative delay
@@ -116,7 +117,7 @@ describe("timing.utils", () => {
     it("should handle very fast operations", async () => {
       const startTime = Date.now() - 10; // Very fast operation (10ms)
       const minTime = 300;
-      mockedCrypto.randomInt.mockReturnValue(0);
+      (mockedCrypto.randomInt as unknown as jest.Mock<number>).mockReturnValue(0);
 
       const delayPromise = normalizeAuthTiming(startTime, minTime);
       jest.advanceTimersByTime(290); // 300ms - 10ms = 290ms delay
@@ -129,7 +130,7 @@ describe("timing.utils", () => {
     it("should handle operations that take exactly minimum time", async () => {
       const startTime = Date.now() - 300; // Exactly minimum time
       const minTime = 300;
-      mockedCrypto.randomInt.mockReturnValue(0);
+      (mockedCrypto.randomInt as unknown as jest.Mock<number>).mockReturnValue(0);
 
       const delayPromise = normalizeAuthTiming(startTime, minTime);
       jest.advanceTimersByTime(0);
@@ -149,7 +150,7 @@ describe("timing.utils", () => {
           await new Promise((resolve) => setTimeout(resolve, 50));
           return "result";
         });
-        mockedCrypto.randomInt.mockReturnValue(0);
+        (mockedCrypto.randomInt as unknown as jest.Mock<number>).mockReturnValue(0);
 
         const startTime = Date.now();
         const result = await withNormalizedTiming(mockFn, 300);
@@ -171,7 +172,7 @@ describe("timing.utils", () => {
           await new Promise((resolve) => setTimeout(resolve, 50));
           throw new Error("Test error");
         });
-        mockedCrypto.randomInt.mockReturnValue(0);
+        (mockedCrypto.randomInt as unknown as jest.Mock<number>).mockReturnValue(0);
 
         const startTime = Date.now();
         await expect(withNormalizedTiming(mockFn, 300)).rejects.toThrow("Test error");
@@ -192,7 +193,7 @@ describe("timing.utils", () => {
           await new Promise((resolve) => setTimeout(resolve, 50));
           return "result";
         });
-        mockedCrypto.randomInt.mockReturnValue(0);
+        (mockedCrypto.randomInt as unknown as jest.Mock<number>).mockReturnValue(0);
 
         const startTime = Date.now();
         await withNormalizedTiming(mockFn);
@@ -213,7 +214,7 @@ describe("timing.utils", () => {
           await new Promise((resolve) => setTimeout(resolve, 400));
           return "result";
         });
-        mockedCrypto.randomInt.mockReturnValue(0);
+        (mockedCrypto.randomInt as unknown as jest.Mock<number>).mockReturnValue(0);
 
         const startTime = Date.now();
         const result = await withNormalizedTiming(mockFn, 300);
@@ -233,7 +234,7 @@ describe("timing.utils", () => {
     it("should preserve function return value", async () => {
       const returnValue = { data: "test", count: 42 };
       const mockFn = jest.fn().mockResolvedValue(returnValue);
-      mockedCrypto.randomInt.mockReturnValue(0);
+      (mockedCrypto.randomInt as unknown as jest.Mock<number>).mockReturnValue(0);
 
       const resultPromise = withNormalizedTiming(mockFn, 300);
       jest.advanceTimersByTime(100);

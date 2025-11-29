@@ -57,6 +57,7 @@ coverage/
 reports/
 playwright-report/
 test-results/
+.test-results/
 cypress/videos/
 cypress/screenshots/
 cypress/downloads/

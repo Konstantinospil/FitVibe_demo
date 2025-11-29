@@ -9,7 +9,7 @@
     "build": "tsc -p tsconfig.json",
     "start": "node dist/server.js",
     "lint": "eslint \"src\" --max-warnings=0",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.test.json",
     "test": "jest --passWithNoTests",
     "openapi:build": "node scripts/generate-openapi.mjs",
     "db:retention": "tsx src/db/scripts/run-retention.ts",

@@ -13,6 +13,7 @@ import type {
   UserStatus,
 } from "../users.types.js";
 import type { UserRow, ContactRow, AvatarRow } from "../users.repository.js";
+import type { DeleteSchedule } from "../dsr.service.js";
 
 // Mock dependencies
 jest.mock("../users.repository.js");
@@ -29,19 +30,28 @@ const mockBcrypt = jest.mocked(bcrypt);
 
 // Mock db - needs to be both a function and have methods like transaction
 jest.mock("../../../db/connection.js", () => {
-  const mockQueryBuilder = {
-    whereRaw: jest.fn().mockReturnThis(),
-    whereNot: jest.fn().mockReturnThis(),
-    first: jest.fn().mockResolvedValue(null),
-    where: jest.fn().mockReturnThis(),
-    update: jest.fn().mockResolvedValue(1),
-    insert: jest.fn().mockResolvedValue([]),
+  const createQueryBuilder = (defaultValue: unknown[] = []) => {
+    const builder = Object.assign(Promise.resolve(defaultValue), {
+      whereRaw: jest.fn().mockReturnThis(),
+      whereNot: jest.fn().mockReturnThis(),
+      first: jest.fn().mockResolvedValue(null),
+      where: jest.fn().mockReturnThis(),
+      whereIn: jest.fn().mockReturnThis(),
+      orderBy: jest.fn().mockReturnThis(),
+      update: jest.fn().mockResolvedValue(1),
+      insert: jest.fn().mockResolvedValue([]),
+    });
+    return builder;
   };
 
-  const mockDbFunction = jest.fn(() => mockQueryBuilder);
+  const mockQueryBuilder = createQueryBuilder();
+
+  const mockDbFunction = jest.fn(() => mockQueryBuilder) as jest.Mock & {
+    transaction: jest.Mock;
+  };
   mockDbFunction.transaction = jest.fn((cb: (trx: unknown) => Promise<void>) => cb({}));
 
-  return { db: mockDbFunction };
+  return { db: mockDbFunction, mockQueryBuilder };
 });
 
 const mockDb = jest.mocked(db);
@@ -126,7 +136,7 @@ describe("Users Service", () => {
     it("should handle username conflicts", async () => {
       mockBcrypt.hash.mockResolvedValue("hashed" as never);
 
-      (db as jest.Mock).mockImplementation(() => ({
+      (mockDb as unknown as jest.Mock).mockImplementation(() => ({
         transaction: jest.fn((cb: (trx: unknown) => Promise<void>) => cb({})),
       }));
 
@@ -148,7 +158,7 @@ describe("Users Service", () => {
       const hashedPassword = "hashed_password";
       mockBcrypt.hash.mockResolvedValue(hashedPassword as never);
 
-      (db as jest.Mock).mockImplementation(() => ({
+      (mockDb as unknown as jest.Mock).mockImplementation(() => ({
         transaction: jest.fn((cb: (trx: unknown) => Promise<void>) => cb({})),
       }));
 
@@ -206,7 +216,6 @@ describe("Users Service", () => {
           role_code: "athlete",
           status: "active",
           created_at: "2024-01-01T00:00:00Z",
-          updated_at: "2024-01-01T00:00:00Z",
         } as UserRow,
         contacts: [
           {
@@ -282,7 +291,6 @@ describe("Users Service", () => {
           role_code: "athlete",
           status: "active",
           created_at: "2024-01-01T00:00:00Z",
-          updated_at: "2024-01-01T00:00:00Z",
         } as UserRow,
       ];
 
@@ -324,7 +332,7 @@ describe("Users Service", () => {
         first: jest.fn().mockResolvedValue(null),
       } as never);
 
-      mockUsersRepo.updateUserProfile.mockResolvedValue();
+      mockUsersRepo.updateUserProfile.mockResolvedValue(1);
       mockUsersRepo.fetchUserWithContacts.mockResolvedValue({
         user: {
           id: userId,
@@ -388,7 +396,7 @@ describe("Users Service", () => {
         display_name: "Old Name",
       } as UserRow);
 
-      mockUsersRepo.updateUserProfile.mockResolvedValue();
+      mockUsersRepo.updateUserProfile.mockResolvedValue(1);
       mockUsersRepo.fetchUserWithContacts.mockResolvedValue({
         user: {
           id: userId,
@@ -418,7 +426,7 @@ describe("Users Service", () => {
         preferred_lang: "en",
       } as UserRow);
 
-      mockUsersRepo.updateUserProfile.mockResolvedValue();
+      mockUsersRepo.updateUserProfile.mockResolvedValue(1);
       mockUsersRepo.fetchUserWithContacts.mockResolvedValue({
         user: {
           id: userId,
@@ -458,13 +466,13 @@ describe("Users Service", () => {
         { type: "email", value: "test@example.com", is_primary: true } as ContactRow,
       ]);
 
-      (db as jest.Mock).mockImplementation(() => ({
+      (mockDb as unknown as jest.Mock).mockImplementation(() => ({
         transaction: jest.fn((cb: (trx: unknown) => Promise<void>) => cb({})),
       }));
 
       mockBcrypt.compare.mockResolvedValue(true as never);
       mockBcrypt.hash.mockResolvedValue("new_hash" as never);
-      mockUsersRepo.changePassword.mockResolvedValue();
+      mockUsersRepo.changePassword.mockResolvedValue(1);
 
       await usersService.updatePassword(userId, dto);
 
@@ -500,7 +508,7 @@ describe("Users Service", () => {
         newPassword: "NewP@ssw0rd456",
       };
 
-      mockUsersRepo.findUserById.mockResolvedValue(null);
+      mockUsersRepo.findUserById.mockResolvedValue(undefined);
 
       await expect(usersService.updatePassword(userId, dto)).rejects.toThrow();
     });
@@ -522,13 +530,13 @@ describe("Users Service", () => {
         { type: "email", value: "test@example.com", is_primary: true } as ContactRow,
       ]);
 
-      (db as jest.Mock).mockImplementation(() => ({
+      (mockDb as unknown as jest.Mock).mockImplementation(() => ({
         transaction: jest.fn((cb: (trx: unknown) => Promise<void>) => cb({})),
       }));
 
       mockBcrypt.compare.mockResolvedValue(true as never);
       mockBcrypt.hash.mockResolvedValue("new_hash" as never);
-      mockUsersRepo.changePassword.mockResolvedValue();
+      mockUsersRepo.changePassword.mockResolvedValue(1);
 
       await usersService.updatePassword(userId, dto);
 
@@ -545,12 +553,12 @@ describe("Users Service", () => {
         status: "pending_verification",
       } as UserRow);
 
-      (db as jest.Mock).mockImplementation(() => ({
+      (mockDb as unknown as jest.Mock).mockImplementation(() => ({
         transaction: jest.fn((cb: (trx: unknown) => Promise<void>) => cb({})),
       }));
 
-      mockUsersRepo.setUserStatus.mockResolvedValue();
-      mockUsersRepo.insertStateHistory.mockResolvedValue();
+      mockUsersRepo.setUserStatus.mockResolvedValue(1);
+      mockUsersRepo.insertStateHistory.mockResolvedValue([1]);
       mockUsersRepo.fetchUserWithContacts.mockResolvedValue({
         user: {
           id: userId,
@@ -571,12 +579,12 @@ describe("Users Service", () => {
         status: "active",
       } as UserRow);
 
-      (db as jest.Mock).mockImplementation(() => ({
+      (mockDb as unknown as jest.Mock).mockImplementation(() => ({
         transaction: jest.fn((cb: (trx: unknown) => Promise<void>) => cb({})),
       }));
 
-      mockUsersRepo.setUserStatus.mockResolvedValue();
-      mockUsersRepo.insertStateHistory.mockResolvedValue();
+      mockUsersRepo.setUserStatus.mockResolvedValue(1);
+      mockUsersRepo.insertStateHistory.mockResolvedValue([1]);
       mockUsersRepo.fetchUserWithContacts.mockResolvedValue({
         user: {
           id: userId,
@@ -603,7 +611,7 @@ describe("Users Service", () => {
     });
 
     it("should throw error if user not found", async () => {
-      mockUsersRepo.findUserById.mockResolvedValue(null);
+      mockUsersRepo.findUserById.mockResolvedValue(undefined);
 
       await expect(usersService.changeStatus(null, userId, "active")).rejects.toThrow();
     });
@@ -613,9 +621,10 @@ describe("Users Service", () => {
     const userId = "user-123";
 
     it("should schedule account deletion", async () => {
-      const mockSchedule = {
-        scheduledFor: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-        canCancel: true,
+      const mockSchedule: DeleteSchedule = {
+        scheduledAt: new Date().toISOString(),
+        purgeDueAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+        backupPurgeDueAt: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString(),
       };
 
       mockUsersRepo.findUserById.mockResolvedValue({
@@ -625,7 +634,7 @@ describe("Users Service", () => {
 
       mockDsrService.scheduleAccountDeletion.mockResolvedValue(mockSchedule);
 
-      const result = await usersService.requestAccountDeletion(userId);
+      const result = await usersService.requestAccountDeletion(userId, "password123");
 
       expect(result).toEqual(mockSchedule);
       expect(mockDsrService.scheduleAccountDeletion).toHaveBeenCalledWith(userId);
@@ -647,7 +656,6 @@ describe("Users Service", () => {
           is_verified: true,
           verified_at: "2024-01-01T00:00:00Z",
           created_at: "2024-01-01T00:00:00Z",
-          updated_at: "2024-01-01T00:00:00Z",
         },
       ];
 
@@ -683,7 +691,7 @@ describe("Users Service", () => {
         is_primary: false,
       } as ContactRow);
 
-      mockUsersRepo.deleteContact.mockResolvedValue();
+      mockUsersRepo.deleteContact.mockResolvedValue(1);
 
       await usersService.removeContact(userId, contactId);
 
@@ -691,7 +699,7 @@ describe("Users Service", () => {
     });
 
     it("should throw error if contact not found", async () => {
-      mockUsersRepo.getContactById.mockResolvedValue(null);
+      mockUsersRepo.getContactById.mockResolvedValue(undefined);
 
       await expect(usersService.removeContact(userId, contactId)).rejects.toThrow();
     });
@@ -719,6 +727,398 @@ describe("Users Service", () => {
       await expect(usersService.removeContact(userId, contactId)).rejects.toThrow(
         "USER_CONTACT_REMOVE_PRIMARY",
       );
+    });
+  });
+
+  describe("requestContactVerification", () => {
+    const userId = "user-123";
+    const contactId = "contact-123";
+
+    beforeEach(() => {
+      jest.clearAllMocks();
+      mockAuthRepo.countAuthTokensSince.mockResolvedValue(0);
+      mockAuthRepo.purgeAuthTokensOlderThan.mockResolvedValue(0);
+      mockAuthRepo.markAuthTokensConsumed.mockResolvedValue(0);
+      mockAuthRepo.createAuthToken.mockResolvedValue([]);
+    });
+
+    it("should create verification token for unverified contact", async () => {
+      mockUsersRepo.getContactById.mockResolvedValue({
+        id: contactId,
+        user_id: userId,
+        type: "email",
+        value: "test@example.com",
+        is_verified: false,
+      } as ContactRow);
+
+      const result = await usersService.requestContactVerification(userId, contactId);
+
+      expect(result).toHaveProperty("token");
+      expect(result).toHaveProperty("expiresAt");
+      expect(mockAuthRepo.createAuthToken).toHaveBeenCalled();
+      expect(mockAuditUtil.insertAudit).toHaveBeenCalled();
+    });
+
+    it("should throw error if contact not found", async () => {
+      mockUsersRepo.getContactById.mockResolvedValue(undefined);
+
+      await expect(usersService.requestContactVerification(userId, contactId)).rejects.toThrow(
+        HttpError,
+      );
+    });
+
+    it("should throw error if user does not own contact", async () => {
+      mockUsersRepo.getContactById.mockResolvedValue({
+        id: contactId,
+        user_id: "other-user",
+        type: "email",
+        value: "test@example.com",
+        is_verified: false,
+      } as ContactRow);
+
+      await expect(usersService.requestContactVerification(userId, contactId)).rejects.toThrow(
+        HttpError,
+      );
+    });
+
+    it("should throw error if contact already verified", async () => {
+      mockUsersRepo.getContactById.mockResolvedValue({
+        id: contactId,
+        user_id: userId,
+        type: "email",
+        value: "test@example.com",
+        is_verified: true,
+      } as ContactRow);
+
+      await expect(usersService.requestContactVerification(userId, contactId)).rejects.toThrow(
+        "USER_CONTACT_ALREADY_VERIFIED",
+      );
+    });
+
+    it("should throw error if rate limit exceeded", async () => {
+      mockUsersRepo.getContactById.mockResolvedValue({
+        id: contactId,
+        user_id: userId,
+        type: "email",
+        value: "test@example.com",
+        is_verified: false,
+      } as ContactRow);
+      mockAuthRepo.countAuthTokensSince.mockResolvedValue(3);
+
+      await expect(usersService.requestContactVerification(userId, contactId)).rejects.toThrow(
+        HttpError,
+      );
+      try {
+        await usersService.requestContactVerification(userId, contactId);
+      } catch (error) {
+        expect(error).toBeInstanceOf(HttpError);
+        expect((error as HttpError).code).toBe("USER_CONTACT_VERIFY_LIMIT");
+      }
+    });
+  });
+
+  describe("updatePrimaryEmail", () => {
+    const userId = "user-123";
+    const email = "newemail@example.com";
+
+    beforeEach(() => {
+      jest.clearAllMocks();
+      mockUsersRepo.fetchUserWithContacts.mockResolvedValue({
+        user: {
+          id: userId,
+          username: "testuser",
+          display_name: "Test User",
+          status: "active",
+        } as UserRow,
+        contacts: [],
+        avatar: null,
+      });
+    });
+
+    it("should update primary email successfully", async () => {
+      mockUsersRepo.upsertContact.mockResolvedValue(1);
+
+      const result = await usersService.updatePrimaryEmail(userId, email);
+
+      expect(mockUsersRepo.upsertContact).toHaveBeenCalledWith(
+        userId,
+        expect.objectContaining({
+          type: "email",
+          value: email.trim().toLowerCase(),
+          isPrimary: true,
+          isRecovery: true,
+        }),
+      );
+      expect(mockAuditUtil.insertAudit).toHaveBeenCalled();
+      expect(result).toBeDefined();
+    });
+
+    it("should throw error for empty email", async () => {
+      await expect(usersService.updatePrimaryEmail(userId, "   ")).rejects.toThrow(
+        "USER_EMAIL_INVALID",
+      );
+    });
+
+    it("should throw error if email already taken", async () => {
+      mockUsersRepo.upsertContact.mockRejectedValue({ code: "23505" });
+
+      await expect(usersService.updatePrimaryEmail(userId, email)).rejects.toThrow(
+        "USER_EMAIL_TAKEN",
+      );
+    });
+  });
+
+  describe("updatePhoneNumber", () => {
+    const userId = "user-123";
+    const phone = "+1234567890";
+
+    beforeEach(() => {
+      jest.clearAllMocks();
+      mockUsersRepo.fetchUserWithContacts.mockResolvedValue({
+        user: {
+          id: userId,
+          username: "testuser",
+          display_name: "Test User",
+          status: "active",
+        } as UserRow,
+        contacts: [],
+        avatar: null,
+      });
+    });
+
+    it("should update phone number successfully", async () => {
+      mockUsersRepo.upsertContact.mockResolvedValue(1);
+
+      const result = await usersService.updatePhoneNumber(userId, phone);
+
+      expect(mockUsersRepo.upsertContact).toHaveBeenCalledWith(
+        userId,
+        expect.objectContaining({
+          type: "phone",
+          value: phone.trim(),
+          isPrimary: false,
+          isRecovery: true,
+        }),
+      );
+      expect(mockAuditUtil.insertAudit).toHaveBeenCalled();
+      expect(result).toBeDefined();
+    });
+
+    it("should update phone with custom isRecovery flag", async () => {
+      mockUsersRepo.upsertContact.mockResolvedValue(1);
+
+      await usersService.updatePhoneNumber(userId, phone, false);
+
+      expect(mockUsersRepo.upsertContact).toHaveBeenCalledWith(
+        userId,
+        expect.objectContaining({
+          isRecovery: false,
+        }),
+      );
+    });
+
+    it("should throw error for empty phone", async () => {
+      await expect(usersService.updatePhoneNumber(userId, "   ")).rejects.toThrow(
+        "USER_PHONE_INVALID",
+      );
+    });
+
+    it("should throw error if phone already taken", async () => {
+      mockUsersRepo.upsertContact.mockRejectedValue({ code: "23505" });
+
+      await expect(usersService.updatePhoneNumber(userId, phone)).rejects.toThrow(
+        "USER_PHONE_TAKEN",
+      );
+    });
+  });
+
+  describe("verifyContact", () => {
+    const userId = "user-123";
+    const contactId = "contact-123";
+    const token = "test-token";
+
+    beforeEach(() => {
+      jest.clearAllMocks();
+      mockAuthRepo.findAuthToken.mockResolvedValue({
+        id: "token-123",
+        user_id: userId,
+        token_type: "email_verification",
+        token_hash: "hash-123",
+        expires_at: new Date(Date.now() + 3600000).toISOString(),
+        created_at: new Date().toISOString(),
+        consumed_at: null,
+      });
+      mockUsersRepo.markContactVerified.mockResolvedValue(1);
+      mockAuthRepo.consumeAuthToken.mockResolvedValue(1);
+      mockAuthRepo.markAuthTokensConsumed.mockResolvedValue(1);
+    });
+
+    it("should verify contact with valid token", async () => {
+      mockUsersRepo.getContactById
+        .mockResolvedValueOnce({
+          id: contactId,
+          user_id: userId,
+          type: "email",
+          value: "test@example.com",
+          is_verified: false,
+        } as ContactRow)
+        .mockResolvedValueOnce({
+          id: contactId,
+          user_id: userId,
+          type: "email",
+          value: "test@example.com",
+          is_verified: true,
+        } as ContactRow);
+
+      const result = await usersService.verifyContact(userId, contactId, token);
+
+      expect(mockUsersRepo.markContactVerified).toHaveBeenCalledWith(contactId);
+      expect(mockAuthRepo.consumeAuthToken).toHaveBeenCalled();
+      expect(result.isVerified).toBe(true);
+    });
+
+    it("should return contact if already verified", async () => {
+      mockUsersRepo.getContactById.mockResolvedValue({
+        id: contactId,
+        user_id: userId,
+        type: "email",
+        value: "test@example.com",
+        is_verified: true,
+      } as ContactRow);
+
+      const result = await usersService.verifyContact(userId, contactId, token);
+
+      expect(mockUsersRepo.markContactVerified).not.toHaveBeenCalled();
+      expect(result.isVerified).toBe(true);
+    });
+
+    it("should throw error if contact not found", async () => {
+      mockUsersRepo.getContactById.mockResolvedValue(undefined);
+
+      await expect(usersService.verifyContact(userId, contactId, token)).rejects.toThrow(HttpError);
+    });
+
+    it("should throw error for empty token", async () => {
+      mockUsersRepo.getContactById.mockResolvedValue({
+        id: contactId,
+        user_id: userId,
+        type: "email",
+        value: "test@example.com",
+        is_verified: false,
+      } as ContactRow);
+
+      await expect(usersService.verifyContact(userId, contactId, "   ")).rejects.toThrow(
+        "USER_CONTACT_TOKEN_REQUIRED",
+      );
+    });
+
+    it("should throw error for invalid token", async () => {
+      mockUsersRepo.getContactById.mockResolvedValue({
+        id: contactId,
+        user_id: userId,
+        type: "email",
+        value: "test@example.com",
+        is_verified: false,
+      } as ContactRow);
+      mockAuthRepo.findAuthToken.mockResolvedValue(undefined);
+
+      await expect(usersService.verifyContact(userId, contactId, token)).rejects.toThrow(
+        "USER_CONTACT_TOKEN_INVALID",
+      );
+    });
+
+    it("should throw error for expired token", async () => {
+      mockUsersRepo.getContactById.mockResolvedValue({
+        id: contactId,
+        user_id: userId,
+        type: "email",
+        value: "test@example.com",
+        is_verified: false,
+      } as ContactRow);
+      mockAuthRepo.findAuthToken.mockResolvedValue({
+        id: "token-123",
+        user_id: userId,
+        token_type: "email_verification",
+        token_hash: "hash-123",
+        expires_at: new Date(Date.now() - 1000).toISOString(),
+        created_at: new Date().toISOString(),
+        consumed_at: null,
+      });
+
+      await expect(usersService.verifyContact(userId, contactId, token)).rejects.toThrow(
+        "USER_CONTACT_TOKEN_EXPIRED",
+      );
+    });
+  });
+
+  describe("collectUserData", () => {
+    const userId = "user-123";
+    let mockQueryBuilder: {
+      where: jest.Mock;
+      whereIn: jest.Mock;
+      orderBy: jest.Mock;
+      first: jest.Mock;
+      pluck: jest.Mock;
+    };
+
+    beforeEach(() => {
+      jest.clearAllMocks();
+      // Create a thenable query builder that resolves to an empty array when awaited
+      const thenablePromise = Promise.resolve([]);
+      mockQueryBuilder = Object.assign(thenablePromise, {
+        where: jest.fn().mockReturnThis(),
+        whereIn: jest.fn().mockReturnThis(),
+        orderBy: jest.fn().mockReturnThis(),
+        first: jest.fn().mockResolvedValue([]),
+        pluck: jest.fn().mockResolvedValue([]),
+      });
+      mockDb.mockReturnValue(mockQueryBuilder as unknown as ReturnType<typeof db>);
+    });
+
+    it("should collect all user data successfully", async () => {
+      // Mock user query
+      mockQueryBuilder.first.mockResolvedValueOnce({
+        id: userId,
+        username: "testuser",
+        display_name: "Test User",
+        status: "active",
+        password_hash: "hash",
+      });
+
+      // Mock all other queries to return empty arrays/null
+      mockQueryBuilder.first
+        .mockResolvedValueOnce([]) // contacts
+        .mockResolvedValueOnce(null) // profile
+        .mockResolvedValueOnce([]) // metrics (orderBy)
+        .mockResolvedValueOnce([]) // sessions
+        .mockResolvedValueOnce([]) // plans
+        .mockResolvedValueOnce([]) // exercises
+        .mockResolvedValueOnce([]) // session_exercises (whereIn)
+        .mockResolvedValueOnce([]) // exercise_sets (whereIn)
+        .mockResolvedValueOnce([]) // user_points (orderBy)
+        .mockResolvedValueOnce([]) // badges (orderBy)
+        .mockResolvedValueOnce([]) // followers (orderBy)
+        .mockResolvedValueOnce([]) // following (orderBy)
+        .mockResolvedValueOnce([]) // media (orderBy)
+        .mockResolvedValueOnce([]); // user_state_history (orderBy)
+
+      const result = await usersService.collectUserData(userId);
+
+      expect(result).toHaveProperty("user");
+      expect(result).toHaveProperty("contacts");
+      expect(result).toHaveProperty("profile");
+      expect(result).toHaveProperty("metrics");
+      expect(result).toHaveProperty("sessions");
+      expect(result).toHaveProperty("points");
+      expect(result).toHaveProperty("badges");
+      expect(result).toHaveProperty("meta");
+      expect(result.user).not.toHaveProperty("password_hash");
+    });
+
+    it("should throw error if user not found", async () => {
+      mockQueryBuilder.first.mockResolvedValue(null);
+
+      await expect(usersService.collectUserData(userId)).rejects.toThrow("USER_NOT_FOUND");
     });
   });
 });

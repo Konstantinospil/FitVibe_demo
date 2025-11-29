@@ -1,6 +1,28 @@
 import path from "node:path";
 import { spawnSync } from "node:child_process";
+import fs from "node:fs";
 import knex from "knex";
+
+// Find project root by looking for package.json or going up from test location
+function findProjectRoot(): string {
+  let current = __dirname;
+  while (current !== path.dirname(current)) {
+    const packageJson = path.join(current, "package.json");
+    try {
+      if (fs.existsSync(packageJson)) {
+        const pkg = JSON.parse(fs.readFileSync(packageJson, "utf8"));
+        if (pkg.name === "fitvibe") {
+          return current;
+        }
+      }
+    } catch {
+      // Continue searching
+    }
+    current = path.dirname(current);
+  }
+  // Fallback: assume we're in tests/backend/seeds, go up 3 levels
+  return path.resolve(__dirname, "../../..");
+}
 
 const { connectionString: DATABASE_URL, isAvailable: isDatabaseAvailable } =
   resolveDatabaseConnection();
@@ -22,7 +44,7 @@ if (!isDatabaseAvailable) {
 }
 
 describeFn("database seeds", () => {
-  let client: knex.Knex;
+  let client: knex.Knex | undefined;
 
   beforeAll(async () => {
     const admin = knex({
@@ -30,27 +52,66 @@ describeFn("database seeds", () => {
       connection: DATABASE_URL,
     });
 
-    await admin.raw("DROP SCHEMA IF EXISTS tmp_seed_test CASCADE;");
-    await admin.raw("CREATE SCHEMA tmp_seed_test;");
-    await ensureDatabaseExtensions(admin);
-    await admin.destroy();
+    try {
+      await admin.raw("DROP SCHEMA IF EXISTS tmp_seed_test CASCADE;");
+      await admin.raw("CREATE SCHEMA tmp_seed_test;");
+      await ensureDatabaseExtensions(admin);
+    } finally {
+      await admin.destroy();
+    }
 
+    // Initialize client BEFORE running migrations to ensure it's always defined
     client = knex({
       client: "pg",
       connection: DATABASE_URL,
       searchPath: ["tmp_seed_test", "public"],
       migrations: {
         loadExtensions: [".ts"],
-        directory: path.resolve(__dirname, "../../src/db/migrations"),
+        directory: path.resolve(findProjectRoot(), "apps/backend/src/db/migrations"),
       },
       seeds: {
         loadExtensions: [".ts"],
-        directory: path.resolve(__dirname, "../../src/db/seeds"),
+        directory: path.resolve(findProjectRoot(), "apps/backend/src/db/seeds"),
       },
     });
 
     // Run migrations first to create tables
-    await client.migrate.latest();
+    // Handle migration errors that might prevent migrations from completing
+    try {
+      await client.migrate.latest();
+    } catch (migrationError: unknown) {
+      const errorMessage =
+        migrationError instanceof Error ? migrationError.message : String(migrationError);
+      // If it's a concurrent extension creation error, that's OK - extension already exists
+      if (
+        errorMessage.includes("duplicate key value violates unique constraint") &&
+        errorMessage.includes("pg_extension_name_index")
+      ) {
+        // Extension was created concurrently, verify migrations completed or retry
+        // Check if migration table exists to see if migrations ran
+
+        const migrationCheck = await client.raw(`
+          SELECT 1 FROM information_schema.tables 
+          WHERE table_schema = 'tmp_seed_test' AND table_name = 'knex_migrations'
+        `);
+        const hasMigrationTable =
+          (migrationCheck as { rows: Array<Record<string, unknown>> }).rows.length > 0;
+        if (!hasMigrationTable) {
+          // Migrations didn't complete, wait and retry once
+          await new Promise((resolve) => setTimeout(resolve, 200));
+          try {
+            await client.migrate.latest();
+          } catch (retryError: unknown) {
+            // If retry also fails, re-throw the original error
+            throw migrationError;
+          }
+        }
+        // Migrations completed, continue
+      } else {
+        // Re-throw other migration errors
+        throw migrationError;
+      }
+    }
   });
 
   afterAll(async () => {
@@ -67,6 +128,13 @@ describeFn("database seeds", () => {
 
   describe("seed data insertion", () => {
     beforeAll(async () => {
+      // Ensure client is initialized and has seed property
+      if (!client) {
+        throw new Error("Database client not initialized - migrations may have failed");
+      }
+      if (!client.seed) {
+        throw new Error("Database client missing seed property - check knex configuration");
+      }
       await client.seed.run();
     });
 
@@ -336,17 +404,61 @@ if (!isDatabaseAvailable) {
 
 async function ensureDatabaseExtensions(admin: knex.Knex): Promise<void> {
   await admin.raw('CREATE EXTENSION IF NOT EXISTS "pgcrypto";');
+  // Note: uuid-ossp is not needed - we use gen_random_uuid() from pgcrypto
+  // Attempt to create citext extension, fallback to domain if not available
+  // Handle concurrent creation errors gracefully
   try {
     await admin.raw('CREATE EXTENSION IF NOT EXISTS "citext";');
-  } catch {
-    await admin.raw(`
-      DO $$
-      BEGIN
-        IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'citext') THEN
-          CREATE DOMAIN citext AS text;
-        END IF;
-      END $$;
-    `);
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    // Handle extension not available errors
+    if (
+      errorMessage.includes("could not open extension control file") ||
+      (errorMessage.includes("extension") && errorMessage.includes("does not exist"))
+    ) {
+      await admin.raw(`
+        DO $$
+        BEGIN
+          IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'citext') THEN
+            CREATE DOMAIN citext AS text;
+          END IF;
+        END $$;
+      `);
+    } else if (
+      // Handle concurrent creation race condition
+      errorMessage.includes("duplicate key value violates unique constraint") ||
+      errorMessage.includes("pg_extension_name_index")
+    ) {
+      // Extension is being created concurrently, check if it exists now
+
+      const checkExt = await admin.raw(`
+        SELECT 1 FROM pg_extension WHERE extname = 'citext'
+      `);
+      const checkExtRows = (checkExt as { rows: Array<Record<string, unknown>> }).rows;
+      if (checkExtRows.length === 0) {
+        // Extension doesn't exist yet, wait a bit and retry once
+        await new Promise((resolve) => setTimeout(resolve, 100));
+        try {
+          await admin.raw('CREATE EXTENSION IF NOT EXISTS "citext";');
+        } catch (retryError: unknown) {
+          // If it still fails, check if it exists (might have been created by another process)
+
+          const checkAgain = await admin.raw(`
+            SELECT 1 FROM pg_extension WHERE extname = 'citext'
+          `);
+          const checkAgainRows = (checkAgain as { rows: Array<Record<string, unknown>> }).rows;
+          if (checkAgainRows.length === 0) {
+            // Still doesn't exist and retry failed, re-throw
+            throw retryError;
+          }
+          // Extension exists now, continue
+        }
+      }
+      // Extension exists, continue
+    } else {
+      // Re-throw if it's a different error
+      throw error;
+    }
   }
 }
 

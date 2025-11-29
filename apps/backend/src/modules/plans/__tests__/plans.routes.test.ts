@@ -12,7 +12,7 @@ jest.mock("../../auth/auth.middleware", () => ({
 }));
 
 jest.mock("../../../utils/async-handler.js", () => ({
-  asyncHandler: jest.fn((fn) => fn),
+  asyncHandler: jest.fn((fn: unknown) => fn),
 }));
 
 jest.mock("../plans.controller.js", () => ({
@@ -33,7 +33,9 @@ describe("Plans Routes", () => {
   it("should register GET /stats route", () => {
     const routes = plansRouter.stack;
     const statsRoute = routes.find(
-      (layer) => layer.route?.path === "/stats" && layer.route?.methods?.get,
+      (layer) =>
+        layer.route?.path === "/stats" &&
+        (layer.route as { methods?: { get?: boolean } })?.methods?.get,
     );
     expect(statsRoute).toBeDefined();
   });
@@ -41,7 +43,8 @@ describe("Plans Routes", () => {
   it("should register GET / route", () => {
     const routes = plansRouter.stack;
     const listRoute = routes.find(
-      (layer) => layer.route?.path === "/" && layer.route?.methods?.get,
+      (layer) =>
+        layer.route?.path === "/" && (layer.route as { methods?: { get?: boolean } })?.methods?.get,
     );
     expect(listRoute).toBeDefined();
   });
@@ -49,7 +52,9 @@ describe("Plans Routes", () => {
   it("should register POST / route", () => {
     const routes = plansRouter.stack;
     const createRoute = routes.find(
-      (layer) => layer.route?.path === "/" && layer.route?.methods?.post,
+      (layer) =>
+        layer.route?.path === "/" &&
+        (layer.route as { methods?: { post?: boolean } })?.methods?.post,
     );
     expect(createRoute).toBeDefined();
   });
@@ -57,7 +62,9 @@ describe("Plans Routes", () => {
   it("should register GET /:id route", () => {
     const routes = plansRouter.stack;
     const getRoute = routes.find(
-      (layer) => layer.route?.path === "/:id" && layer.route?.methods?.get,
+      (layer) =>
+        layer.route?.path === "/:id" &&
+        (layer.route as { methods?: { get?: boolean } })?.methods?.get,
     );
     expect(getRoute).toBeDefined();
   });
@@ -65,7 +72,9 @@ describe("Plans Routes", () => {
   it("should register PATCH /:id route", () => {
     const routes = plansRouter.stack;
     const updateRoute = routes.find(
-      (layer) => layer.route?.path === "/:id" && layer.route?.methods?.patch,
+      (layer) =>
+        layer.route?.path === "/:id" &&
+        (layer.route as { methods?: { patch?: boolean } })?.methods?.patch,
     );
     expect(updateRoute).toBeDefined();
   });
@@ -73,7 +82,9 @@ describe("Plans Routes", () => {
   it("should register POST /:id/archive route", () => {
     const routes = plansRouter.stack;
     const archiveRoute = routes.find(
-      (layer) => layer.route?.path === "/:id/archive" && layer.route?.methods?.post,
+      (layer) =>
+        layer.route?.path === "/:id/archive" &&
+        (layer.route as { methods?: { post?: boolean } })?.methods?.post,
     );
     expect(archiveRoute).toBeDefined();
   });
@@ -81,7 +92,9 @@ describe("Plans Routes", () => {
   it("should register DELETE /:id route", () => {
     const routes = plansRouter.stack;
     const deleteRoute = routes.find(
-      (layer) => layer.route?.path === "/:id" && layer.route?.methods?.delete,
+      (layer) =>
+        layer.route?.path === "/:id" &&
+        (layer.route as { methods?: { delete?: boolean } })?.methods?.delete,
     );
     expect(deleteRoute).toBeDefined();
   });

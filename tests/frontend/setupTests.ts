@@ -1,4 +1,4 @@
-import "@testing-library/jest-dom/vitest";
+import "@testing-library/jest-dom";
 import { ensurePrivateTranslationsLoaded } from "../src/i18n/config";
 
 beforeAll(async () => {
@@ -32,6 +32,15 @@ if (!window.matchMedia) {
       removeEventListener: vi.fn(),
       dispatchEvent: vi.fn(),
     })),
+  });
+}
+
+// Ensure window.URL.createObjectURL is available in test environment
+if (typeof window !== "undefined" && window.URL && !window.URL.createObjectURL) {
+  Object.defineProperty(window.URL, "createObjectURL", {
+    writable: true,
+    configurable: true,
+    value: vi.fn(() => "blob:mock-url"),
   });
 }
 

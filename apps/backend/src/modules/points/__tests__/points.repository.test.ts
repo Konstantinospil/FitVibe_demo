@@ -51,6 +51,7 @@ describe("Points Repository", () => {
   describe("insertPointsEvent", () => {
     it("should insert points event and return record", async () => {
       const event = {
+        id: "event-123",
         user_id: "user-123",
         source_type: "session_completed",
         source_id: "session-123",
@@ -59,10 +60,10 @@ describe("Points Repository", () => {
         calories: 500,
         metadata: { duration: 60 },
         awarded_at: new Date("2024-01-01"),
+        created_at: new Date("2024-01-01"),
       };
 
       const mockRow = {
-        id: "event-123",
         ...event,
         points: "100",
         calories: "500",
@@ -100,14 +101,16 @@ describe("Points Repository", () => {
 
       await pointsRepository.insertPointsEvent(
         {
+          id: "event-456",
           user_id: "user-123",
           source_type: "test",
           source_id: null,
-          algorithm_version: null,
+          algorithm_version: "v1",
           points: 50,
           calories: null,
           metadata: {},
           awarded_at: new Date(),
+          created_at: new Date(),
         },
         mockTrx,
       );
@@ -456,6 +459,7 @@ describe("Points Repository", () => {
   describe("insertBadgeAward", () => {
     it("should insert badge award and return record", async () => {
       const award = {
+        id: "badge-123",
         user_id: "user-123",
         badge_type: "first_session",
         metadata: { session_id: "session-123" },
@@ -463,7 +467,6 @@ describe("Points Repository", () => {
       };
 
       const mockRow = {
-        id: "badge-123",
         ...award,
         awarded_at: new Date("2024-01-01"),
       };

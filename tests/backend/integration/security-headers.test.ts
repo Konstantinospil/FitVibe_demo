@@ -1,5 +1,5 @@
 import request from "supertest";
-import app from "../../src/app.js";
+import app from "../../../apps/backend/src/app.js";
 
 describe("Q-15 security headers", () => {
   it("applies strict HTTP response headers on health endpoint", async () => {

@@ -4,7 +4,7 @@ This directory contains Cursor IDE configuration files for agents, MCP servers, 
 
 ## Directory Structure
 
-```
+```text
 .cursor/
 ├── agents/          # Specialized development agents
 ├── mcp/            # Model Context Protocol server configurations
@@ -68,6 +68,10 @@ Slash commands provide quick access to common development workflows:
 - `/requirements` - Analyze and document requirements with acceptance criteria
 - `/ci` - Run complete CI/CD workflow locally
 - `/commit` - Create conventional commit and push changes
+- `/bug:collect` - Collect bugs from all sources (tests, linter, type checker)
+- `/bug:fix` - Fix bugs using basic single-agent system
+- `/bug:fix:multi` - Fix bugs using enhanced multi-agent system
+- `/bug:brainstorm` - Brainstorm solutions with multiple LLMs
 
 ## Usage
 
@@ -104,6 +108,10 @@ Type `/` in Cursor's chat to see available commands, or use them directly:
 - `/requirements` - Analyze requirements
 - `/ci` - Run CI/CD workflow
 - `/commit` - Commit and push changes
+- `/bug:collect` - Collect bugs from all sources
+- `/bug:fix` - Fix bugs (basic agent)
+- `/bug:fix:multi` - Fix bugs (multi-agent)
+- `/bug:brainstorm` - Brainstorm solutions with LLMs
 
 ## Configuration
 

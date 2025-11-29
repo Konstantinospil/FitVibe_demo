@@ -33,7 +33,9 @@ describe("Health Router", () => {
 
       // Find the GET / route
       const healthRoute = routes.find(
-        (layer) => layer.route?.path === "/" && layer.route?.methods?.get,
+        (layer) =>
+          layer.route?.path === "/" &&
+          (layer.route as { methods?: { get?: boolean } })?.methods?.get,
       );
       expect(healthRoute).toBeDefined();
 
@@ -42,7 +44,7 @@ describe("Health Router", () => {
         expect(handler).toBeDefined();
 
         // Call the handler
-        handler(mockReq as Request, mockRes as Response);
+        handler(mockReq as Request, mockRes as Response, jest.fn());
 
         // Verify response
         expect(jsonMock).toHaveBeenCalledWith(
@@ -57,12 +59,14 @@ describe("Health Router", () => {
     it("should return ISO timestamp", () => {
       const routes = healthRouter.stack;
       const healthRoute = routes.find(
-        (layer) => layer.route?.path === "/" && layer.route?.methods?.get,
+        (layer) =>
+          layer.route?.path === "/" &&
+          (layer.route as { methods?: { get?: boolean } })?.methods?.get,
       );
 
       if (healthRoute?.route) {
         const handler = healthRoute.route.stack[0]?.handle;
-        handler(mockReq as Request, mockRes as Response);
+        handler(mockReq as Request, mockRes as Response, jest.fn());
 
         const callArgs = jsonMock.mock.calls[0][0];
         expect(callArgs.timestamp).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/);

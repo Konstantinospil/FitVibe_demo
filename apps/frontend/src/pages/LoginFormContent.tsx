@@ -49,7 +49,7 @@ const LoginFormContent: React.FC = () => {
 
     // Validate inputs
     if (!email.trim() || !password) {
-      setError("Please fill in all fields");
+      setError(t("auth.login.fillAllFields") || "Please fill in all fields");
       return;
     }
 
@@ -60,17 +60,24 @@ const LoginFormContent: React.FC = () => {
       const response = await login({ email: email.trim(), password });
 
       if (response.requires2FA) {
+        // Navigate to 2FA verification page
         navigate("/login/verify-2fa", {
           state: {
             pendingSessionId: response.pendingSessionId,
             from,
           },
+          replace: false,
         });
         return;
       }
 
-      signIn(response.user);
-      navigate(from, { replace: true });
+      // Login successful - sign in and navigate
+      if (response.user) {
+        signIn(response.user);
+        navigate(from, { replace: true });
+      } else {
+        setError(t("auth.login.error") || "Login failed. Please try again.");
+      }
     } catch (err: unknown) {
       console.error("Login error:", err);
 

@@ -150,5 +150,81 @@ describe("Logs Controller", () => {
       expect(service.getRecentActivity).toHaveBeenCalledWith(20);
       expect(jsonMock).toHaveBeenCalledWith({ activity: mockLogs });
     });
+
+    it("should handle invalid limit values gracefully", async () => {
+      const mockLogs: AuditLogEntry[] = [];
+      jest.mocked(service.getRecentActivity).mockResolvedValue(mockLogs);
+
+      mockReq = {
+        query: { limit: "invalid" },
+      };
+
+      await controller.recentActivityHandler(mockReq as Request, mockRes as Response);
+
+      expect(service.getRecentActivity).toHaveBeenCalledWith(NaN);
+      expect(jsonMock).toHaveBeenCalledWith({ activity: mockLogs });
+    });
+  });
+
+  describe("listLogsHandler edge cases", () => {
+    it("should handle invalid limit values", async () => {
+      const mockLogs: AuditLogEntry[] = [];
+      jest.mocked(service.listLogs).mockResolvedValue(mockLogs);
+
+      mockReq = {
+        query: { limit: "not-a-number", offset: "5" },
+      };
+
+      await controller.listLogsHandler(mockReq as Request, mockRes as Response);
+
+      expect(service.listLogs).toHaveBeenCalledWith({
+        limit: NaN,
+        offset: 5,
+      });
+      expect(jsonMock).toHaveBeenCalledWith({ logs: mockLogs });
+    });
+
+    it("should handle invalid offset values", async () => {
+      const mockLogs: AuditLogEntry[] = [];
+      jest.mocked(service.listLogs).mockResolvedValue(mockLogs);
+
+      mockReq = {
+        query: { limit: "10", offset: "invalid" },
+      };
+
+      await controller.listLogsHandler(mockReq as Request, mockRes as Response);
+
+      expect(service.listLogs).toHaveBeenCalledWith({
+        limit: 10,
+        offset: NaN,
+      });
+      expect(jsonMock).toHaveBeenCalledWith({ logs: mockLogs });
+    });
+
+    it("should handle undefined query parameters", async () => {
+      const mockLogs: AuditLogEntry[] = [];
+      jest.mocked(service.listLogs).mockResolvedValue(mockLogs);
+
+      mockReq = {
+        query: {
+          action: undefined,
+          entityType: undefined,
+          actorUserId: undefined,
+          outcome: undefined,
+        },
+      };
+
+      await controller.listLogsHandler(mockReq as Request, mockRes as Response);
+
+      expect(service.listLogs).toHaveBeenCalledWith({
+        action: undefined,
+        entityType: undefined,
+        actorUserId: undefined,
+        outcome: undefined,
+        limit: 100,
+        offset: 0,
+      });
+      expect(jsonMock).toHaveBeenCalledWith({ logs: mockLogs });
+    });
   });
 });

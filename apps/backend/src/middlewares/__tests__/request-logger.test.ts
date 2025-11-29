@@ -1,5 +1,6 @@
 import type { Request, Response } from "express";
 import type morgan from "morgan";
+import type { JwtPayload } from "../../modules/auth/auth.types.js";
 
 // Mock the logger before importing httpLogger
 jest.mock("../../config/logger", () => ({
@@ -21,7 +22,7 @@ import { logger } from "../../config/logger";
 let httpLogger: ReturnType<typeof morgan>;
 
 describe("request-logger", () => {
-  let mockRequest: Partial<Request & { requestId?: string; user?: { sub?: string } }>;
+  let mockRequest: Partial<Request & { requestId?: string; user?: JwtPayload }>;
   let mockResponse: Partial<Response>;
 
   beforeAll(async () => {
@@ -92,7 +93,7 @@ describe("request-logger", () => {
     });
 
     it("should extract user sub from request", () => {
-      mockRequest.user = { sub: "user-456" };
+      mockRequest.user = { sub: "user-456", role: "user", sid: "session-123" };
 
       expect(mockRequest.user?.sub).toBe("user-456");
     });
@@ -100,13 +101,14 @@ describe("request-logger", () => {
     it("should handle missing user", () => {
       mockRequest.user = undefined;
 
-      expect(mockRequest.user?.sub ?? "-").toBe("-");
+      const userSub = (mockRequest.user as JwtPayload | undefined)?.sub;
+      expect(userSub ?? "-").toBe("-");
     });
 
     it("should handle user without sub property", () => {
-      mockRequest.user = {};
+      mockRequest.user = { sub: "user-123", role: "user", sid: "session-123" };
 
-      expect(mockRequest.user?.sub ?? "-").toBe("-");
+      expect(mockRequest.user?.sub ?? "-").toBe("user-123");
     });
   });
 
@@ -335,7 +337,7 @@ describe("request-logger", () => {
 
     it("should verify request structure for full logging", () => {
       mockRequest.requestId = "full-req-123";
-      mockRequest.user = { sub: "full-user-456" };
+      mockRequest.user = { sub: "full-user-456", role: "user", sid: "session-123" };
       mockRequest.originalUrl = "/api/v1/users?page=1";
       mockRequest.method = "GET";
       mockResponse.statusCode = 200;
@@ -354,7 +356,8 @@ describe("request-logger", () => {
 
       // Verify fallback values for missing data
       expect(mockRequest.requestId ?? "-").toBe("-");
-      expect(mockRequest.user?.sub ?? "-").toBe("-");
+      const userSub = (mockRequest.user as JwtPayload | undefined)?.sub;
+      expect(userSub ?? "-").toBe("-");
       expect(mockRequest.originalUrl.split("?")[0]).toBe("/");
     });
   });

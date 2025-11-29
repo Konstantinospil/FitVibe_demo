@@ -1,4 +1,5 @@
 import type { Request, Response } from "express";
+import type { JwtPayload } from "../../auth/auth.types.js";
 import {
   listPlansHandler,
   getPlanStatsHandler,
@@ -26,7 +27,7 @@ describe("plans.controller", () => {
     statusMock = jest.fn().mockReturnValue({ json: jsonMock, send: sendMock });
 
     mockRequest = {
-      user: { sub: "user-123" },
+      user: { sub: "user-123", role: "user", sid: "session-123" },
       params: {},
       query: {},
       body: {},
@@ -165,7 +166,7 @@ describe("plans.controller", () => {
     });
 
     it("should throw when user sub is missing", async () => {
-      mockRequest.user = {};
+      mockRequest.user = {} as unknown as JwtPayload;
 
       await expect(
         listPlansHandler(mockRequest as Request, mockResponse as Response),
@@ -173,7 +174,11 @@ describe("plans.controller", () => {
     });
 
     it("should throw when user sub is not a string", async () => {
-      mockRequest.user = { sub: 123 };
+      mockRequest.user = {
+        sub: 123, // Number instead of string
+        role: "user",
+        sid: "session-123",
+      } as unknown as JwtPayload;
 
       await expect(
         listPlansHandler(mockRequest as Request, mockResponse as Response),

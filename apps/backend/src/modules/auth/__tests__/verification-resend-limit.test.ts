@@ -43,11 +43,19 @@ describe("AC-1.8: Email Verification Resend Limiting & Auto-Purge", () => {
     const mockUser: AuthUserRecord = {
       id: "user-123",
       username: "testuser",
+      display_name: "Test User",
+      locale: "en-US",
+      preferred_lang: "en",
       primary_email: "test@example.com",
+      email_verified: false,
       role_code: "athlete",
       status: "pending_verification",
       created_at: "2024-01-01T00:00:00Z",
+      updated_at: "2024-01-01T00:00:00Z",
       password_hash: "hashed-password",
+      terms_accepted: true,
+      terms_accepted_at: "2024-01-01T00:00:00Z",
+      terms_version: "2024-01-01",
     };
 
     it("should allow first verification email resend", async () => {
@@ -64,6 +72,7 @@ describe("AC-1.8: Email Verification Resend Limiting & Auto-Purge", () => {
         email: "test@example.com",
         username: "testuser",
         password: "ValidPassword123!",
+        terms_accepted: true,
       });
 
       expect(result.verificationToken).toBeDefined();
@@ -84,6 +93,7 @@ describe("AC-1.8: Email Verification Resend Limiting & Auto-Purge", () => {
         email: "test@example.com",
         username: "testuser",
         password: "ValidPassword123!",
+        terms_accepted: true,
       });
 
       expect(result.verificationToken).toBeDefined();
@@ -103,6 +113,7 @@ describe("AC-1.8: Email Verification Resend Limiting & Auto-Purge", () => {
         email: "test@example.com",
         username: "testuser",
         password: "ValidPassword123!",
+        terms_accepted: true,
       });
 
       expect(result.verificationToken).toBeDefined();
@@ -121,6 +132,7 @@ describe("AC-1.8: Email Verification Resend Limiting & Auto-Purge", () => {
           email: "test@example.com",
           username: "testuser",
           password: "ValidPassword123!",
+          terms_accepted: true,
         }),
       ).rejects.toThrow("AUTH_TOO_MANY_REQUESTS");
 
@@ -142,6 +154,7 @@ describe("AC-1.8: Email Verification Resend Limiting & Auto-Purge", () => {
         email: "test@example.com",
         username: "testuser",
         password: "ValidPassword123!",
+        terms_accepted: true,
       });
 
       // Verify countAuthTokensSince was called with a date ~1 hour ago
@@ -263,11 +276,19 @@ describe("AC-1.8: Email Verification Resend Limiting & Auto-Purge", () => {
       const mockUser: AuthUserRecord = {
         id: "user-old",
         username: "olduser",
+        display_name: "Old User",
+        locale: "en-US",
+        preferred_lang: "en",
         primary_email: "old@example.com",
+        email_verified: false,
         role_code: "athlete",
         status: "pending_verification",
         created_at: new Date(Date.now() - 8 * 24 * 60 * 60 * 1000).toISOString(), // 8 days old
+        updated_at: new Date(Date.now() - 8 * 24 * 60 * 60 * 1000).toISOString(),
         password_hash: "hashed",
+        terms_accepted: true,
+        terms_accepted_at: new Date(Date.now() - 8 * 24 * 60 * 60 * 1000).toISOString(),
+        terms_version: "2024-01-01",
       };
 
       mockAuthRepo.findUserByEmail.mockResolvedValue(mockUser);
@@ -284,6 +305,7 @@ describe("AC-1.8: Email Verification Resend Limiting & Auto-Purge", () => {
         email: "old@example.com",
         username: "olduser",
         password: "ValidPassword123!",
+        terms_accepted: true,
       });
 
       expect(result.verificationToken).toBeDefined();
@@ -307,21 +329,37 @@ describe("AC-1.8: Email Verification Resend Limiting & Auto-Purge", () => {
       const user1: AuthUserRecord = {
         id: "user-1",
         username: "user1",
+        display_name: "User 1",
+        locale: "en-US",
+        preferred_lang: "en",
         primary_email: "user1@example.com",
+        email_verified: false,
         role_code: "athlete",
         status: "pending_verification",
         created_at: "2024-01-01T00:00:00Z",
+        updated_at: "2024-01-01T00:00:00Z",
         password_hash: "hashed",
+        terms_accepted: true,
+        terms_accepted_at: "2024-01-01T00:00:00Z",
+        terms_version: "2024-01-01",
       };
 
       const user2: AuthUserRecord = {
         id: "user-2",
         username: "user2",
+        display_name: "User 2",
+        locale: "en-US",
+        preferred_lang: "en",
         primary_email: "user2@example.com",
+        email_verified: false,
         role_code: "athlete",
         status: "pending_verification",
         created_at: "2024-01-01T00:00:00Z",
+        updated_at: "2024-01-01T00:00:00Z",
         password_hash: "hashed",
+        terms_accepted: true,
+        terms_accepted_at: "2024-01-01T00:00:00Z",
+        terms_version: "2024-01-01",
       };
 
       // User 1 has hit the limit
@@ -337,6 +375,7 @@ describe("AC-1.8: Email Verification Resend Limiting & Auto-Purge", () => {
           email: "user1@example.com",
           username: "user1",
           password: "ValidPassword123!",
+          terms_accepted: true,
         }),
       ).rejects.toThrow("AUTH_TOO_MANY_REQUESTS");
 
@@ -350,6 +389,7 @@ describe("AC-1.8: Email Verification Resend Limiting & Auto-Purge", () => {
         email: "user2@example.com",
         username: "user2",
         password: "ValidPassword123!",
+        terms_accepted: true,
       });
 
       expect(result.verificationToken).toBeDefined();

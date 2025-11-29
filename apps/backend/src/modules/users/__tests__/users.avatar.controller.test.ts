@@ -8,6 +8,23 @@ import * as repository from "../users.avatar.repository";
 import * as mediaStorage from "../../../services/mediaStorage.service";
 import * as antivirus from "../../../services/antivirus.service";
 import * as auditUtil from "../../common/audit.util";
+import type { JwtPayload } from "../../auth/auth.types.js";
+import type { ScanResult } from "../../../services/antivirus.service.js";
+
+// AvatarMeta type (not exported from repository)
+interface AvatarMeta {
+  id: string;
+  owner_id: string;
+  target_type: string;
+  target_id: string;
+  storage_key: string;
+  file_url: string;
+  mime_type: string | null;
+  media_type: string | null;
+  bytes: number | null;
+  created_at: string;
+  updated_at: string | null;
+}
 
 // Mock dependencies
 jest.mock("../users.avatar.repository");
@@ -19,13 +36,49 @@ jest.mock("sharp");
 // Import sharp after mocking
 import sharp from "sharp";
 
+// Helper functions
+function createMockJwtPayload(overrides: Partial<JwtPayload> = {}): JwtPayload {
+  return {
+    sub: "user-123",
+    role: "user",
+    sid: "session-123",
+    ...overrides,
+  };
+}
+
+function createMockAvatarMeta(overrides: Partial<AvatarMeta> = {}): AvatarMeta {
+  return {
+    id: "media-123",
+    owner_id: "user-123",
+    target_type: "user_avatar",
+    target_id: "user-123",
+    storage_key: "avatars/user-123/avatar.png",
+    file_url: "https://storage.example.com/avatars/user-123/avatar.png",
+    mime_type: "image/png",
+    media_type: null,
+    bytes: 1024,
+    created_at: new Date().toISOString(),
+    updated_at: null,
+    ...overrides,
+  };
+}
+
+function createMockScanResult(overrides: Partial<ScanResult> = {}): ScanResult {
+  return {
+    isInfected: false,
+    viruses: [],
+    scannedAt: new Date(),
+    ...overrides,
+  };
+}
+
 describe("users.avatar.controller", () => {
   let mockRequest: Partial<Request>;
   let mockResponse: Partial<Response>;
-  let jsonMock: jest.MockedFunction<typeof jsonMock>;
-  let statusMock: jest.MockedFunction<typeof statusMock>;
-  let sendMock: jest.MockedFunction<typeof sendMock>;
-  let setMock: jest.MockedFunction<typeof setMock>;
+  let jsonMock: jest.Mock;
+  let statusMock: jest.Mock;
+  let sendMock: jest.Mock;
+  let setMock: jest.Mock;
 
   // Mock sharp chain
   const mockToBuffer = jest.fn();
@@ -35,15 +88,13 @@ describe("users.avatar.controller", () => {
   const mockSharp = sharp as unknown as jest.Mock;
 
   beforeEach(() => {
-    jsonMock = jest.fn<typeof jsonMock>();
-    sendMock = jest.fn<typeof sendMock>();
-    setMock = jest.fn<typeof setMock>();
-    statusMock = jest
-      .fn<typeof statusMock>()
-      .mockReturnValue({ json: jsonMock, send: sendMock } as never);
+    jsonMock = jest.fn();
+    sendMock = jest.fn();
+    setMock = jest.fn();
+    statusMock = jest.fn().mockReturnValue({ json: jsonMock, send: sendMock } as never);
 
     mockRequest = {
-      user: { sub: "user-123" },
+      user: createMockJwtPayload(),
       params: {},
       file: undefined,
       get: jest.fn().mockReturnValue(null), // For idempotency key header
@@ -76,10 +127,7 @@ describe("users.avatar.controller", () => {
       };
       mockRequest.file = mockFile as Express.Multer.File;
 
-      jest.mocked(antivirus.scanBuffer).mockResolvedValue({
-        isInfected: false,
-        viruses: [],
-      });
+      jest.mocked(antivirus.scanBuffer).mockResolvedValue(createMockScanResult());
 
       jest.mocked(mediaStorage.saveUserAvatarFile).mockResolvedValue({
         storageKey: "avatars/user-123/avatar.png",
@@ -88,10 +136,10 @@ describe("users.avatar.controller", () => {
 
       jest.mocked(repository.saveUserAvatarMetadata).mockResolvedValue({
         previousKey: null,
-        record: {
+        record: createMockAvatarMeta({
           id: "media-123",
-          created_at: new Date("2024-01-01"),
-        },
+          created_at: new Date("2024-01-01").toISOString(),
+        }),
       });
 
       jest.mocked(auditUtil.insertAudit).mockResolvedValue(undefined);
@@ -127,8 +175,8 @@ describe("users.avatar.controller", () => {
         fileUrl: "/users/avatar/user-123",
         bytes: 2048,
         mimeType: "image/png",
-        updatedAt: new Date("2024-01-01"),
-        preview: expect.stringContaining("data:image/png;base64,"),
+        updatedAt: new Date("2024-01-01").toISOString(),
+        preview: expect.stringMatching(/^data:image\/png;base64,/),
       });
     });
 
@@ -141,17 +189,17 @@ describe("users.avatar.controller", () => {
       };
       mockRequest.file = mockFile as Express.Multer.File;
 
-      jest.mocked(antivirus.scanBuffer).mockResolvedValue({
-        isInfected: false,
-        viruses: [],
-      });
+      jest.mocked(antivirus.scanBuffer).mockResolvedValue(createMockScanResult());
       jest.mocked(mediaStorage.saveUserAvatarFile).mockResolvedValue({
         storageKey: "avatars/user-123/avatar.png",
         bytes: 3000,
       });
       jest.mocked(repository.saveUserAvatarMetadata).mockResolvedValue({
         previousKey: null,
-        record: { id: "media-456", created_at: new Date() },
+        record: createMockAvatarMeta({
+          id: "media-456",
+          created_at: new Date().toISOString(),
+        }),
       });
 
       await uploadAvatarHandler(mockRequest as Request, mockResponse as Response);
@@ -168,17 +216,17 @@ describe("users.avatar.controller", () => {
       };
       mockRequest.file = mockFile as Express.Multer.File;
 
-      jest.mocked(antivirus.scanBuffer).mockResolvedValue({
-        isInfected: false,
-        viruses: [],
-      });
+      jest.mocked(antivirus.scanBuffer).mockResolvedValue(createMockScanResult());
       jest.mocked(mediaStorage.saveUserAvatarFile).mockResolvedValue({
         storageKey: "avatars/user-123/avatar.png",
         bytes: 1500,
       });
       jest.mocked(repository.saveUserAvatarMetadata).mockResolvedValue({
         previousKey: null,
-        record: { id: "media-789", created_at: new Date() },
+        record: createMockAvatarMeta({
+          id: "media-789",
+          created_at: new Date().toISOString(),
+        }),
       });
 
       await uploadAvatarHandler(mockRequest as Request, mockResponse as Response);
@@ -195,17 +243,17 @@ describe("users.avatar.controller", () => {
       };
       mockRequest.file = mockFile as Express.Multer.File;
 
-      jest.mocked(antivirus.scanBuffer).mockResolvedValue({
-        isInfected: false,
-        viruses: [],
-      });
+      jest.mocked(antivirus.scanBuffer).mockResolvedValue(createMockScanResult());
       jest.mocked(mediaStorage.saveUserAvatarFile).mockResolvedValue({
         storageKey: "avatars/user-123/new-avatar.png",
         bytes: 2000,
       });
       jest.mocked(repository.saveUserAvatarMetadata).mockResolvedValue({
         previousKey: "avatars/user-123/old-avatar.png",
-        record: { id: "media-new", created_at: new Date() },
+        record: createMockAvatarMeta({
+          id: "media-new",
+          created_at: new Date().toISOString(),
+        }),
       });
       jest.mocked(mediaStorage.deleteStorageObject).mockResolvedValue(undefined);
 
@@ -226,17 +274,17 @@ describe("users.avatar.controller", () => {
       };
       mockRequest.file = mockFile as Express.Multer.File;
 
-      jest.mocked(antivirus.scanBuffer).mockResolvedValue({
-        isInfected: false,
-        viruses: [],
-      });
+      jest.mocked(antivirus.scanBuffer).mockResolvedValue(createMockScanResult());
       jest.mocked(mediaStorage.saveUserAvatarFile).mockResolvedValue({
         storageKey: "avatars/user-123/new-avatar.png",
         bytes: 2000,
       });
       jest.mocked(repository.saveUserAvatarMetadata).mockResolvedValue({
         previousKey: "avatars/user-123/old-avatar.png",
-        record: { id: "media-new", created_at: new Date() },
+        record: createMockAvatarMeta({
+          id: "media-new",
+          created_at: new Date().toISOString(),
+        }),
       });
       jest.mocked(mediaStorage.deleteStorageObject).mockRejectedValue(new Error("Delete failed"));
 
@@ -305,17 +353,17 @@ describe("users.avatar.controller", () => {
         size: 5 * 1024 * 1024, // Exactly 5MB
       } as Express.Multer.File;
 
-      jest.mocked(antivirus.scanBuffer).mockResolvedValue({
-        isInfected: false,
-        viruses: [],
-      });
+      jest.mocked(antivirus.scanBuffer).mockResolvedValue(createMockScanResult());
       jest.mocked(mediaStorage.saveUserAvatarFile).mockResolvedValue({
         storageKey: "avatars/user-123/avatar.png",
         bytes: 2000,
       });
       jest.mocked(repository.saveUserAvatarMetadata).mockResolvedValue({
         previousKey: null,
-        record: { id: "media-max", created_at: new Date() },
+        record: createMockAvatarMeta({
+          id: "media-max",
+          created_at: new Date().toISOString(),
+        }),
       });
 
       await uploadAvatarHandler(mockRequest as Request, mockResponse as Response);
@@ -331,10 +379,12 @@ describe("users.avatar.controller", () => {
         size: 1024,
       } as Express.Multer.File;
 
-      jest.mocked(antivirus.scanBuffer).mockResolvedValue({
-        isInfected: true,
-        viruses: ["EICAR-Test-File", "Win32.Trojan"],
-      });
+      jest.mocked(antivirus.scanBuffer).mockResolvedValue(
+        createMockScanResult({
+          isInfected: true,
+          viruses: ["EICAR-Test-File", "Win32.Trojan"],
+        }),
+      );
 
       await uploadAvatarHandler(mockRequest as Request, mockResponse as Response);
 
@@ -371,10 +421,12 @@ describe("users.avatar.controller", () => {
         size: 2048,
       } as Express.Multer.File;
 
-      jest.mocked(antivirus.scanBuffer).mockResolvedValue({
-        isInfected: true,
-        viruses: ["Malware.Generic"],
-      });
+      jest.mocked(antivirus.scanBuffer).mockResolvedValue(
+        createMockScanResult({
+          isInfected: true,
+          viruses: ["Malware.Generic"],
+        }),
+      );
 
       await uploadAvatarHandler(mockRequest as Request, mockResponse as Response);
 
@@ -393,11 +445,13 @@ describe("users.avatar.controller", () => {
     it("should return avatar image with correct headers", async () => {
       mockRequest.params = { id: "user-456" };
 
-      jest.mocked(repository.getUserAvatarMetadata).mockResolvedValue({
-        id: "media-123",
-        storage_key: "avatars/user-456/avatar.png",
-        mime_type: "image/png",
-      });
+      jest.mocked(repository.getUserAvatarMetadata).mockResolvedValue(
+        createMockAvatarMeta({
+          id: "media-123",
+          storage_key: "avatars/user-456/avatar.png",
+          mime_type: "image/png",
+        }),
+      );
 
       const mockImageBuffer = Buffer.from("image-data");
       jest.mocked(mediaStorage.readStorageObject).mockResolvedValue(mockImageBuffer);
@@ -414,11 +468,13 @@ describe("users.avatar.controller", () => {
     it("should return avatar with JPEG mime type", async () => {
       mockRequest.params = { id: "user-789" };
 
-      jest.mocked(repository.getUserAvatarMetadata).mockResolvedValue({
-        id: "media-456",
-        storage_key: "avatars/user-789/avatar.jpg",
-        mime_type: "image/jpeg",
-      });
+      jest.mocked(repository.getUserAvatarMetadata).mockResolvedValue(
+        createMockAvatarMeta({
+          id: "media-456",
+          storage_key: "avatars/user-789/avatar.jpg",
+          mime_type: "image/jpeg",
+        }),
+      );
 
       const mockImageBuffer = Buffer.from("jpeg-data");
       jest.mocked(mediaStorage.readStorageObject).mockResolvedValue(mockImageBuffer);
@@ -431,11 +487,13 @@ describe("users.avatar.controller", () => {
     it("should default to image/png when mime_type is null", async () => {
       mockRequest.params = { id: "user-999" };
 
-      jest.mocked(repository.getUserAvatarMetadata).mockResolvedValue({
-        id: "media-old",
-        storage_key: "avatars/user-999/avatar.png",
-        mime_type: null,
-      });
+      jest.mocked(repository.getUserAvatarMetadata).mockResolvedValue(
+        createMockAvatarMeta({
+          id: "media-old",
+          storage_key: "avatars/user-999/avatar.png",
+          mime_type: null,
+        }),
+      );
 
       const mockImageBuffer = Buffer.from("old-image");
       jest.mocked(mediaStorage.readStorageObject).mockResolvedValue(mockImageBuffer);
@@ -460,11 +518,13 @@ describe("users.avatar.controller", () => {
     it("should return 404 when storage read fails", async () => {
       mockRequest.params = { id: "user-404" };
 
-      jest.mocked(repository.getUserAvatarMetadata).mockResolvedValue({
-        id: "media-missing",
-        storage_key: "avatars/user-404/missing.png",
-        mime_type: "image/png",
-      });
+      jest.mocked(repository.getUserAvatarMetadata).mockResolvedValue(
+        createMockAvatarMeta({
+          id: "media-missing",
+          storage_key: "avatars/user-404/missing.png",
+          mime_type: "image/png",
+        }),
+      );
 
       jest
         .mocked(mediaStorage.readStorageObject)
@@ -479,12 +539,14 @@ describe("users.avatar.controller", () => {
 
   describe("deleteAvatarHandler", () => {
     it("should delete avatar metadata and file", async () => {
-      mockRequest.user = { sub: "user-123" };
+      mockRequest.user = createMockJwtPayload();
 
-      jest.mocked(repository.deleteUserAvatarMetadata).mockResolvedValue({
-        id: "media-123",
-        storage_key: "avatars/user-123/avatar.png",
-      });
+      jest.mocked(repository.deleteUserAvatarMetadata).mockResolvedValue(
+        createMockAvatarMeta({
+          id: "media-123",
+          storage_key: "avatars/user-123/avatar.png",
+        }),
+      );
 
       jest.mocked(mediaStorage.deleteStorageObject).mockResolvedValue(undefined);
 
@@ -503,12 +565,15 @@ describe("users.avatar.controller", () => {
     });
 
     it("should delete metadata when no storage_key exists", async () => {
-      mockRequest.user = { sub: "user-456" };
+      mockRequest.user = createMockJwtPayload({ sub: "user-456" });
 
-      jest.mocked(repository.deleteUserAvatarMetadata).mockResolvedValue({
-        id: "media-456",
-        storage_key: null,
-      });
+      // Test case where avatar exists but storage_key is empty (edge case)
+      jest.mocked(repository.deleteUserAvatarMetadata).mockResolvedValue(
+        createMockAvatarMeta({
+          id: "media-456",
+          storage_key: "", // Empty string instead of null
+        }),
+      );
 
       await deleteAvatarHandler(mockRequest as Request, mockResponse as Response);
 
@@ -523,7 +588,7 @@ describe("users.avatar.controller", () => {
     });
 
     it("should continue when no metadata exists to delete", async () => {
-      mockRequest.user = { sub: "user-789" };
+      mockRequest.user = createMockJwtPayload({ sub: "user-789" });
 
       jest.mocked(repository.deleteUserAvatarMetadata).mockResolvedValue(null);
 
@@ -540,12 +605,14 @@ describe("users.avatar.controller", () => {
     });
 
     it("should continue when storage deletion fails", async () => {
-      mockRequest.user = { sub: "user-error" };
+      mockRequest.user = createMockJwtPayload({ sub: "user-error" });
 
-      jest.mocked(repository.deleteUserAvatarMetadata).mockResolvedValue({
-        id: "media-error",
-        storage_key: "avatars/user-error/avatar.png",
-      });
+      jest.mocked(repository.deleteUserAvatarMetadata).mockResolvedValue(
+        createMockAvatarMeta({
+          id: "media-error",
+          storage_key: "avatars/user-error/avatar.png",
+        }),
+      );
 
       jest
         .mocked(mediaStorage.deleteStorageObject)

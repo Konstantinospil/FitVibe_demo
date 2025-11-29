@@ -1,4 +1,5 @@
 import type { Request, Response, NextFunction } from "express";
+import type { JwtPayload } from "../../auth/auth.types.js";
 import { requireRole } from "../rbac.middleware";
 
 describe("rbac.middleware", () => {
@@ -28,7 +29,7 @@ describe("rbac.middleware", () => {
 
   describe("requireRole", () => {
     it("should allow user with matching role (single role string)", () => {
-      mockRequest.user = { role: "admin" };
+      mockRequest.user = { sub: "user-123", role: "admin", sid: "session-123" };
 
       const middleware = requireRole("admin");
       middleware(mockRequest as Request, mockResponse as Response, mockNext);
@@ -38,7 +39,7 @@ describe("rbac.middleware", () => {
     });
 
     it("should allow user with matching role (array of roles)", () => {
-      mockRequest.user = { role: "coach" };
+      mockRequest.user = { sub: "user-123", role: "coach", sid: "session-123" };
 
       const middleware = requireRole(["admin", "coach"]);
       middleware(mockRequest as Request, mockResponse as Response, mockNext);
@@ -48,7 +49,7 @@ describe("rbac.middleware", () => {
     });
 
     it("should allow admin role when multiple roles are allowed", () => {
-      mockRequest.user = { role: "admin" };
+      mockRequest.user = { sub: "user-123", role: "admin", sid: "session-123" };
 
       const middleware = requireRole(["admin", "coach", "support"]);
       middleware(mockRequest as Request, mockResponse as Response, mockNext);
@@ -58,7 +59,7 @@ describe("rbac.middleware", () => {
     });
 
     it("should allow coach role when included in allowed roles", () => {
-      mockRequest.user = { role: "coach" };
+      mockRequest.user = { sub: "user-123", role: "coach", sid: "session-123" };
 
       const middleware = requireRole(["admin", "coach"]);
       middleware(mockRequest as Request, mockResponse as Response, mockNext);
@@ -68,7 +69,7 @@ describe("rbac.middleware", () => {
     });
 
     it("should return 403 when user has different role", () => {
-      mockRequest.user = { role: "athlete" };
+      mockRequest.user = { sub: "user-123", role: "athlete", sid: "session-123" };
 
       const middleware = requireRole("admin");
       middleware(mockRequest as Request, mockResponse as Response, mockNext);
@@ -79,7 +80,7 @@ describe("rbac.middleware", () => {
     });
 
     it("should return 403 when user role not in allowed list", () => {
-      mockRequest.user = { role: "athlete" };
+      mockRequest.user = { sub: "user-123", role: "athlete", sid: "session-123" };
 
       const middleware = requireRole(["admin", "coach"]);
       middleware(mockRequest as Request, mockResponse as Response, mockNext);
@@ -112,7 +113,10 @@ describe("rbac.middleware", () => {
     });
 
     it("should return 401 when user has no role property", () => {
-      mockRequest.user = { sub: "user-123" };
+      mockRequest.user = {
+        sub: "user-123",
+        sid: "session-123",
+      } as unknown as JwtPayload;
 
       const middleware = requireRole("admin");
       middleware(mockRequest as Request, mockResponse as Response, mockNext);
@@ -123,7 +127,11 @@ describe("rbac.middleware", () => {
     });
 
     it("should return 401 when user role is null", () => {
-      mockRequest.user = { role: null };
+      mockRequest.user = {
+        sub: "user-123",
+        role: null as unknown as string,
+        sid: "session-123",
+      } as unknown as JwtPayload;
 
       const middleware = requireRole("admin");
       middleware(mockRequest as Request, mockResponse as Response, mockNext);
@@ -134,7 +142,11 @@ describe("rbac.middleware", () => {
     });
 
     it("should return 401 when user role is undefined", () => {
-      mockRequest.user = { role: undefined };
+      mockRequest.user = {
+        sub: "user-123",
+        role: undefined as unknown as string,
+        sid: "session-123",
+      } as unknown as JwtPayload;
 
       const middleware = requireRole("admin");
       middleware(mockRequest as Request, mockResponse as Response, mockNext);
@@ -145,7 +157,7 @@ describe("rbac.middleware", () => {
     });
 
     it("should handle single role in array format", () => {
-      mockRequest.user = { role: "support" };
+      mockRequest.user = { sub: "user-123", role: "support", sid: "session-123" };
 
       const middleware = requireRole(["support"]);
       middleware(mockRequest as Request, mockResponse as Response, mockNext);
@@ -155,7 +167,7 @@ describe("rbac.middleware", () => {
     });
 
     it("should handle empty user object", () => {
-      mockRequest.user = {};
+      mockRequest.user = {} as unknown as JwtPayload;
 
       const middleware = requireRole("admin");
       middleware(mockRequest as Request, mockResponse as Response, mockNext);
@@ -166,7 +178,7 @@ describe("rbac.middleware", () => {
     });
 
     it("should be case sensitive for role matching", () => {
-      mockRequest.user = { role: "Admin" };
+      mockRequest.user = { sub: "user-123", role: "Admin", sid: "session-123" };
 
       const middleware = requireRole("admin");
       middleware(mockRequest as Request, mockResponse as Response, mockNext);
@@ -180,7 +192,7 @@ describe("rbac.middleware", () => {
       const adminMiddleware = requireRole("admin");
       const coachMiddleware = requireRole("coach");
 
-      mockRequest.user = { role: "admin" };
+      mockRequest.user = { sub: "user-123", role: "admin", sid: "session-123" };
       adminMiddleware(mockRequest as Request, mockResponse as Response, mockNext);
       expect(mockNext).toHaveBeenCalledTimes(1);
 
@@ -194,8 +206,7 @@ describe("rbac.middleware", () => {
       mockRequest.user = {
         sub: "user-123",
         role: "admin",
-        email: "admin@example.com",
-        name: "Admin User",
+        sid: "session-123",
       };
 
       const middleware = requireRole("admin");
@@ -206,7 +217,7 @@ describe("rbac.middleware", () => {
     });
 
     it("should reject when role is empty string", () => {
-      mockRequest.user = { role: "" };
+      mockRequest.user = { sub: "user-123", role: "", sid: "session-123" };
 
       const middleware = requireRole("admin");
       middleware(mockRequest as Request, mockResponse as Response, mockNext);

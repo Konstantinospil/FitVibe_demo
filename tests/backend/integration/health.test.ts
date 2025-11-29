@@ -1,5 +1,5 @@
 import request from "supertest";
-import app from "../../src/app.js";
+import app from "../../../apps/backend/src/app.js";
 
 describe("GET /health", () => {
   it("returns a healthy status payload", async () => {

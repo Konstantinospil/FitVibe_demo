@@ -1,4 +1,5 @@
 import type { Request, Response } from "express";
+import type { JwtPayload } from "../../auth/auth.types.js";
 import {
   getIdempotencyKey,
   getRouteTemplate,
@@ -222,7 +223,7 @@ describe("idempotency.helpers", () => {
 
   describe("requireAuthenticatedUser", () => {
     it("should return user ID when authenticated", () => {
-      mockRequest.user = { sub: "user-123" };
+      mockRequest.user = { sub: "user-123", role: "user", sid: "session-123" };
 
       const result = requireAuthenticatedUser(mockRequest as Request, mockResponse as Response);
 
@@ -230,7 +231,11 @@ describe("idempotency.helpers", () => {
     });
 
     it("should return UUID user ID", () => {
-      mockRequest.user = { sub: "550e8400-e29b-41d4-a716-446655440000" };
+      mockRequest.user = {
+        sub: "550e8400-e29b-41d4-a716-446655440000",
+        role: "user",
+        sid: "session-123",
+      };
 
       const result = requireAuthenticatedUser(mockRequest as Request, mockResponse as Response);
 
@@ -254,7 +259,10 @@ describe("idempotency.helpers", () => {
     });
 
     it("should throw when user has no sub property", () => {
-      mockRequest.user = { id: "user-123" };
+      mockRequest.user = {
+        role: "user",
+        sid: "session-123",
+      } as unknown as JwtPayload;
 
       expect(() =>
         requireAuthenticatedUser(mockRequest as Request, mockResponse as Response),
@@ -262,7 +270,11 @@ describe("idempotency.helpers", () => {
     });
 
     it("should throw when sub is not a string", () => {
-      mockRequest.user = { sub: 123 };
+      mockRequest.user = {
+        sub: 123, // Number instead of string
+        role: "user",
+        sid: "session-123",
+      } as unknown as JwtPayload;
 
       expect(() =>
         requireAuthenticatedUser(mockRequest as Request, mockResponse as Response),
@@ -270,7 +282,11 @@ describe("idempotency.helpers", () => {
     });
 
     it("should throw when sub is null", () => {
-      mockRequest.user = { sub: null };
+      mockRequest.user = {
+        sub: null,
+        role: "user",
+        sid: "session-123",
+      } as unknown as JwtPayload;
 
       expect(() =>
         requireAuthenticatedUser(mockRequest as Request, mockResponse as Response),
@@ -278,7 +294,11 @@ describe("idempotency.helpers", () => {
     });
 
     it("should throw when sub is undefined", () => {
-      mockRequest.user = { sub: undefined };
+      mockRequest.user = {
+        sub: undefined,
+        role: "user",
+        sid: "session-123",
+      } as unknown as JwtPayload;
 
       expect(() =>
         requireAuthenticatedUser(mockRequest as Request, mockResponse as Response),
@@ -286,7 +306,7 @@ describe("idempotency.helpers", () => {
     });
 
     it("should accept empty string as valid sub", () => {
-      mockRequest.user = { sub: "" };
+      mockRequest.user = { sub: "", role: "user", sid: "session-123" };
 
       const result = requireAuthenticatedUser(mockRequest as Request, mockResponse as Response);
 
@@ -294,7 +314,7 @@ describe("idempotency.helpers", () => {
     });
 
     it("should handle user object with additional properties", () => {
-      mockRequest.user = { sub: "user-456", role: "admin", email: "admin@example.com" };
+      mockRequest.user = { sub: "user-456", role: "admin", sid: "session-456" };
 
       const result = requireAuthenticatedUser(mockRequest as Request, mockResponse as Response);
 
@@ -516,7 +536,7 @@ describe("idempotency.helpers", () => {
 
     beforeEach(() => {
       handlerMock = jest.fn();
-      mockRequest.user = { sub: "user-123" };
+      mockRequest.user = { sub: "user-123", role: "user", sid: "session-123" };
       (mockRequest.get as jest.Mock).mockReturnValue(null);
       mockRequest.method = "POST";
       mockRequest.baseUrl = "/api/v1";
@@ -596,7 +616,7 @@ describe("idempotency.helpers", () => {
     it("should pass userId to handler function", async () => {
       const idempotencyKey = "key-userid";
       (mockRequest.get as jest.Mock).mockReturnValue(idempotencyKey);
-      mockRequest.user = { sub: "user-different" };
+      mockRequest.user = { sub: "user-different", role: "user", sid: "session-123" };
 
       (idempotencyService.resolveIdempotency as jest.Mock).mockResolvedValue({
         type: "new",
@@ -614,7 +634,7 @@ describe("idempotency.helpers", () => {
       const users = ["user-aaa", "user-bbb", "user-ccc"];
 
       for (const userId of users) {
-        mockRequest.user = { sub: userId };
+        mockRequest.user = { sub: userId, role: "user", sid: "session-123" };
         (mockRequest.get as jest.Mock).mockReturnValue(null);
 
         const result = await withIdempotency(

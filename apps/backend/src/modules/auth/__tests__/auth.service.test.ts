@@ -8,12 +8,35 @@ import { mailerService } from "../../../services/mailer.service.js";
 import { HttpError } from "../../../utils/http.js";
 import type { RegisterDTO, LoginDTO, LoginContext } from "../auth.types.js";
 import type { AuthUserRecord, AuthSessionRecord, RefreshTokenRecord } from "../auth.repository.js";
+import { getCurrentTermsVersion } from "../../../config/terms.js";
+
+// Helper function to create complete AuthUserRecord
+function createMockUser(overrides: Partial<AuthUserRecord> = {}): AuthUserRecord {
+  return {
+    id: "user-123",
+    username: "testuser",
+    display_name: "Test User",
+    locale: "en-US",
+    preferred_lang: "en",
+    primary_email: "test@example.com",
+    email_verified: true,
+    role_code: "athlete",
+    status: "active",
+    created_at: "2024-01-01T00:00:00Z",
+    updated_at: "2024-01-01T00:00:00Z",
+    password_hash: "hashed-password",
+    terms_accepted: true,
+    terms_accepted_at: "2024-01-01T00:00:00Z",
+    terms_version: getCurrentTermsVersion(),
+    ...overrides,
+  };
+}
 
 // Mock dependencies
 jest.mock("../auth.repository.js");
 jest.mock("../pending-2fa.repository.js", () => ({
   createPending2FASession: jest.fn().mockResolvedValue(undefined),
-  getPending2FASession: jest.fn().mockResolvedValue(null),
+  getPending2FASession: jest.fn().mockResolvedValue(undefined),
   markPending2FASessionVerified: jest.fn().mockResolvedValue(undefined),
   deletePending2FASession: jest.fn().mockResolvedValue(undefined),
 }));
@@ -22,7 +45,7 @@ jest.mock("../twofa.service.js", () => ({
   verify2FACode: jest.fn().mockResolvedValue(true),
 }));
 jest.mock("../bruteforce.repository.js", () => ({
-  getFailedAttempt: jest.fn().mockResolvedValue(null),
+  getFailedAttempt: jest.fn().mockResolvedValue(undefined),
   recordFailedAttempt: jest.fn().mockResolvedValue({
     id: "attempt-1",
     identifier: "test@example.com",
@@ -117,19 +140,25 @@ describe("Auth Service", () => {
     jest.clearAllMocks();
 
     // Setup crypto mocks
-    mockRandomBytes = jest.fn().mockReturnValue({
-      toString: jest.fn().mockReturnValue("mock-token"),
-    });
-    mockCreateHash = jest.fn().mockReturnValue({
+    const mockHashInstance: {
+      update: jest.Mock;
+      digest: jest.Mock;
+    } = {
       update: jest.fn().mockReturnThis(),
       digest: jest.fn().mockReturnValue("mock-hash"),
-    });
+    };
+    mockRandomBytes = jest.fn().mockReturnValue({
+      toString: jest.fn().mockReturnValue("mock-token"),
+    } as unknown as Buffer);
+    mockCreateHash = jest.fn().mockReturnValue(mockHashInstance);
 
     mockCrypto.randomBytes = mockRandomBytes as never;
     mockCrypto.createHash = mockCreateHash as never;
 
     // Setup uuid mock
-    mockUuidv4.mockReturnValue("550e8400-e29b-41d4-a716-446655440000");
+    (mockUuidv4 as unknown as jest.MockedFunction<() => string>).mockReturnValue(
+      "550e8400-e29b-41d4-a716-446655440000",
+    );
   });
 
   describe("register", () => {
@@ -146,13 +175,13 @@ describe("Auth Service", () => {
     it("should register a new user successfully", async () => {
       const mockUserId = "user-123";
 
-      mockAuthRepo.findUserByEmail.mockResolvedValue(null);
-      mockAuthRepo.findUserByUsername.mockResolvedValue(null);
+      mockAuthRepo.findUserByEmail.mockResolvedValue(undefined);
+      mockAuthRepo.findUserByUsername.mockResolvedValue(undefined);
       mockBcrypt.hash.mockResolvedValue("hashed-password" as never);
       mockAuthRepo.createUser.mockResolvedValue(undefined);
-      mockAuthRepo.purgeAuthTokensOlderThan.mockResolvedValue(undefined);
-      mockAuthRepo.markAuthTokensConsumed.mockResolvedValue(undefined);
-      mockAuthRepo.createAuthToken.mockResolvedValue(undefined);
+      mockAuthRepo.purgeAuthTokensOlderThan.mockResolvedValue(0);
+      mockAuthRepo.markAuthTokensConsumed.mockResolvedValue(0);
+      mockAuthRepo.createAuthToken.mockResolvedValue([]);
       mockAuthRepo.findUserById.mockResolvedValue({
         id: mockUserId,
         username: "testuser",
@@ -182,7 +211,7 @@ describe("Auth Service", () => {
           terms_version: expect.any(String),
         }),
       );
-      // eslint-disable-next-line @typescript-eslint/unbound-method
+
       expect(mockMailer.send).toHaveBeenCalled();
     });
 
@@ -200,21 +229,16 @@ describe("Auth Service", () => {
     });
 
     it("should resend verification email if user exists with pending_verification status", async () => {
-      const existingUser: AuthUserRecord = {
-        id: "user-123",
-        username: "testuser",
-        primary_email: "test@example.com",
-        role_code: "athlete",
+      const existingUser = createMockUser({
         status: "pending_verification",
-        created_at: "2024-01-01T00:00:00Z",
-        password_hash: "hashed-password",
-      };
+        email_verified: false,
+      });
 
       mockAuthRepo.findUserByEmail.mockResolvedValue(existingUser);
-      mockAuthRepo.findUserByUsername.mockResolvedValue(null);
-      mockAuthRepo.purgeAuthTokensOlderThan.mockResolvedValue(undefined);
-      mockAuthRepo.markAuthTokensConsumed.mockResolvedValue(undefined);
-      mockAuthRepo.createAuthToken.mockResolvedValue(undefined);
+      mockAuthRepo.findUserByUsername.mockResolvedValue(undefined);
+      mockAuthRepo.purgeAuthTokensOlderThan.mockResolvedValue(0);
+      mockAuthRepo.markAuthTokensConsumed.mockResolvedValue(0);
+      mockAuthRepo.createAuthToken.mockResolvedValue([]);
       mockAuthRepo.countAuthTokensSince.mockResolvedValue(0);
       mockMailer.send.mockResolvedValue(undefined);
 
@@ -223,59 +247,41 @@ describe("Auth Service", () => {
       expect(result.verificationToken).toBeDefined();
       expect(result.user?.id).toBe("user-123");
       expect(mockAuthRepo.createUser).not.toHaveBeenCalled();
-      // eslint-disable-next-line @typescript-eslint/unbound-method
+
       expect(mockMailer.send).toHaveBeenCalled();
     });
 
     it("should throw conflict error if user already exists with active status", async () => {
-      const existingUser: AuthUserRecord = {
-        id: "user-123",
-        username: "testuser",
-        primary_email: "test@example.com",
-        role_code: "athlete",
-        status: "active",
-        created_at: "2024-01-01T00:00:00Z",
-        password_hash: "hashed-password",
-      };
+      const existingUser = createMockUser();
 
       mockAuthRepo.findUserByEmail.mockResolvedValue(existingUser);
-      mockAuthRepo.findUserByUsername.mockResolvedValue(null);
+      mockAuthRepo.findUserByUsername.mockResolvedValue(undefined);
 
       await expect(() => authService.register(validRegisterDto)).rejects.toThrow(HttpError);
       await expect(() => authService.register(validRegisterDto)).rejects.toThrow("AUTH_CONFLICT");
     });
 
     it("should throw error if username is taken", async () => {
-      const existingUser: AuthUserRecord = {
+      const existingUser = createMockUser({
         id: "user-456",
-        username: "testuser",
         primary_email: "other@example.com",
-        role_code: "athlete",
-        status: "active",
-        created_at: "2024-01-01T00:00:00Z",
-        password_hash: "hashed-password",
-      };
+      });
 
-      mockAuthRepo.findUserByEmail.mockResolvedValue(null);
+      mockAuthRepo.findUserByEmail.mockResolvedValue(undefined);
       mockAuthRepo.findUserByUsername.mockResolvedValue(existingUser);
 
       await expect(() => authService.register(validRegisterDto)).rejects.toThrow(HttpError);
     });
 
     it("should throw rate limit error if too many verification emails sent", async () => {
-      const existingUser: AuthUserRecord = {
-        id: "user-123",
-        username: "testuser",
-        primary_email: "test@example.com",
-        role_code: "athlete",
+      const existingUser = createMockUser({
         status: "pending_verification",
-        created_at: "2024-01-01T00:00:00Z",
-        password_hash: "hashed-password",
-      };
+        email_verified: false,
+      });
 
       mockAuthRepo.findUserByEmail.mockResolvedValue(existingUser);
-      mockAuthRepo.findUserByUsername.mockResolvedValue(null);
-      mockAuthRepo.purgeAuthTokensOlderThan.mockResolvedValue(undefined);
+      mockAuthRepo.findUserByUsername.mockResolvedValue(undefined);
+      mockAuthRepo.purgeAuthTokensOlderThan.mockResolvedValue(0);
       mockAuthRepo.countAuthTokensSince.mockResolvedValue(3);
 
       await expect(() => authService.register(validRegisterDto)).rejects.toThrow(HttpError);
@@ -288,15 +294,7 @@ describe("Auth Service", () => {
   describe("verifyEmail", () => {
     it("should verify email successfully", async () => {
       const mockToken = "verification-token";
-      const mockUser: AuthUserRecord = {
-        id: "user-123",
-        username: "testuser",
-        primary_email: "test@example.com",
-        role_code: "athlete",
-        status: "active",
-        created_at: "2024-01-01T00:00:00Z",
-        password_hash: "hashed-password",
-      };
+      const mockUser = createMockUser();
 
       const mockAuthToken = {
         id: "token-123",
@@ -309,11 +307,11 @@ describe("Auth Service", () => {
       };
 
       mockAuthRepo.findAuthToken.mockResolvedValue(mockAuthToken);
-      mockAuthRepo.consumeAuthToken.mockResolvedValue(undefined);
-      mockAuthRepo.updateUserStatus.mockResolvedValue(undefined);
-      mockAuthRepo.markAuthTokensConsumed.mockResolvedValue(undefined);
+      mockAuthRepo.consumeAuthToken.mockResolvedValue(1);
+      mockAuthRepo.updateUserStatus.mockResolvedValue(1);
+      mockAuthRepo.markAuthTokensConsumed.mockResolvedValue(1);
       mockAuthRepo.findUserById.mockResolvedValue(mockUser);
-      mockAuthRepo.markEmailVerified.mockResolvedValue(undefined);
+      mockAuthRepo.markEmailVerified.mockResolvedValue(1);
 
       const result = await authService.verifyEmail(mockToken);
 
@@ -324,7 +322,7 @@ describe("Auth Service", () => {
     });
 
     it("should throw error if token is invalid", async () => {
-      mockAuthRepo.findAuthToken.mockResolvedValue(null);
+      mockAuthRepo.findAuthToken.mockResolvedValue(undefined);
 
       await expect(authService.verifyEmail("invalid-token")).rejects.toThrow(HttpError);
       await expect(authService.verifyEmail("invalid-token")).rejects.toThrow("AUTH_INVALID_TOKEN");
@@ -342,7 +340,7 @@ describe("Auth Service", () => {
       };
 
       mockAuthRepo.findAuthToken.mockResolvedValue(mockAuthToken);
-      mockAuthRepo.consumeAuthToken.mockResolvedValue(undefined);
+      mockAuthRepo.consumeAuthToken.mockResolvedValue(1);
 
       await expect(authService.verifyEmail("expired-token")).rejects.toThrow(HttpError);
       await expect(authService.verifyEmail("expired-token")).rejects.toThrow("AUTH_TOKEN_EXPIRED");
@@ -360,10 +358,10 @@ describe("Auth Service", () => {
       };
 
       mockAuthRepo.findAuthToken.mockResolvedValue(mockAuthToken);
-      mockAuthRepo.consumeAuthToken.mockResolvedValue(undefined);
-      mockAuthRepo.updateUserStatus.mockResolvedValue(undefined);
-      mockAuthRepo.markAuthTokensConsumed.mockResolvedValue(undefined);
-      mockAuthRepo.findUserById.mockResolvedValue(null);
+      mockAuthRepo.consumeAuthToken.mockResolvedValue(1);
+      mockAuthRepo.updateUserStatus.mockResolvedValue(1);
+      mockAuthRepo.markAuthTokensConsumed.mockResolvedValue(1);
+      mockAuthRepo.findUserById.mockResolvedValue(undefined);
 
       await expect(authService.verifyEmail("token")).rejects.toThrow(HttpError);
       await expect(authService.verifyEmail("token")).rejects.toThrow("AUTH_USER_NOT_FOUND");
@@ -383,24 +381,19 @@ describe("Auth Service", () => {
     };
 
     it("should login successfully without 2FA", async () => {
-      const mockUser: AuthUserRecord = {
+      const mockUser = createMockUser({
         id: "user-123",
         username: "testuser",
         primary_email: "test@example.com",
         role_code: "athlete",
         status: "active",
-        created_at: "2024-01-01T00:00:00Z",
-        password_hash: "hashed-password",
-        terms_accepted: true,
-        terms_accepted_at: new Date().toISOString(),
-        terms_version: "2024-06-01",
-      };
+      });
 
       mockAuthRepo.findUserByEmail.mockResolvedValue(mockUser);
       mockBcrypt.compare.mockResolvedValue(true as never);
-      mockAuthRepo.createAuthSession.mockResolvedValue(undefined);
+      mockAuthRepo.createAuthSession.mockResolvedValue([]);
       mockJwt.sign.mockReturnValue("mock-jwt-token" as never);
-      mockAuthRepo.insertRefreshToken.mockResolvedValue(undefined);
+      mockAuthRepo.insertRefreshToken.mockResolvedValue([]);
 
       const result = await authService.login(validLoginDto, loginContext);
 
@@ -417,18 +410,16 @@ describe("Auth Service", () => {
     });
 
     it("should reject login if terms version is outdated", async () => {
-      const mockUser: AuthUserRecord = {
+      const mockUser = createMockUser({
         id: "user-123",
         username: "testuser",
         primary_email: "test@example.com",
         role_code: "athlete",
         status: "active",
-        created_at: "2024-01-01T00:00:00Z",
-        password_hash: "hashed-password",
         terms_accepted: true,
         terms_accepted_at: new Date().toISOString(),
         terms_version: "2024-01-01", // Old version
-      };
+      });
 
       mockAuthRepo.findUserByEmail.mockResolvedValue(mockUser);
       mockBcrypt.compare.mockResolvedValue(true as never);
@@ -441,7 +432,7 @@ describe("Auth Service", () => {
     });
 
     it("should throw error if user not found", async () => {
-      mockAuthRepo.findUserByEmail.mockResolvedValue(null);
+      mockAuthRepo.findUserByEmail.mockResolvedValue(undefined);
       mockBcrypt.compare.mockResolvedValue(false as never);
 
       await expect(authService.login(validLoginDto, loginContext)).rejects.toThrow(HttpError);
@@ -451,15 +442,10 @@ describe("Auth Service", () => {
     });
 
     it("should throw error if user status is not active", async () => {
-      const mockUser: AuthUserRecord = {
-        id: "user-123",
-        username: "testuser",
-        primary_email: "test@example.com",
-        role_code: "athlete",
+      const mockUser = createMockUser({
         status: "pending_verification",
-        created_at: "2024-01-01T00:00:00Z",
-        password_hash: "hashed-password",
-      };
+        email_verified: false,
+      });
 
       mockAuthRepo.findUserByEmail.mockResolvedValue(mockUser);
       mockBcrypt.compare.mockResolvedValue(false as never);
@@ -471,18 +457,13 @@ describe("Auth Service", () => {
     });
 
     it("should throw error if password is incorrect", async () => {
-      const mockUser: AuthUserRecord = {
+      const mockUser = createMockUser({
         id: "user-123",
         username: "testuser",
         primary_email: "test@example.com",
         role_code: "athlete",
         status: "active",
-        created_at: "2024-01-01T00:00:00Z",
-        password_hash: "hashed-password",
-        terms_accepted: true,
-        terms_accepted_at: new Date().toISOString(),
-        terms_version: "2024-06-01",
-      };
+      });
 
       mockAuthRepo.findUserByEmail.mockResolvedValue(mockUser);
       mockBcrypt.compare.mockResolvedValue(false as never);
@@ -515,7 +496,7 @@ describe("Auth Service", () => {
         revoked_at: null,
       };
 
-      const mockSession = {
+      const mockSession: AuthSessionRecord = {
         jti: mockSessionId,
         user_id: "user-123",
         user_agent: "Mozilla/5.0",
@@ -523,29 +504,25 @@ describe("Auth Service", () => {
         created_at: "2024-01-01T00:00:00Z",
         expires_at: new Date(Date.now() + 60000).toISOString(),
         revoked_at: null,
+        last_active_at: "2024-01-01T00:00:00Z",
       };
 
-      const mockUser: AuthUserRecord = {
+      const mockUser = createMockUser({
         id: "user-123",
         username: "testuser",
         primary_email: "test@example.com",
         role_code: "athlete",
         status: "active",
-        created_at: "2024-01-01T00:00:00Z",
-        password_hash: "hashed-password",
-        terms_accepted: true,
-        terms_accepted_at: new Date().toISOString(),
-        terms_version: "2024-06-01",
-      };
+      });
 
       mockJwt.verify.mockReturnValue(mockPayload as never);
       mockAuthRepo.getRefreshByHash.mockResolvedValue(mockRefreshRecord);
       mockAuthRepo.findSessionById.mockResolvedValue(mockSession);
       mockAuthRepo.findUserById.mockResolvedValue(mockUser);
-      mockAuthRepo.revokeRefreshByHash.mockResolvedValue(undefined);
+      mockAuthRepo.revokeRefreshByHash.mockResolvedValue(1);
       mockJwt.sign.mockReturnValue("new-token" as never);
-      mockAuthRepo.insertRefreshToken.mockResolvedValue(undefined);
-      mockAuthRepo.updateSession.mockResolvedValue(undefined);
+      mockAuthRepo.insertRefreshToken.mockResolvedValue([]);
+      mockAuthRepo.updateSession.mockResolvedValue(1);
 
       const result = await authService.refresh(mockRefreshToken);
 
@@ -573,7 +550,7 @@ describe("Auth Service", () => {
         revoked_at: null,
       };
 
-      const mockSession = {
+      const mockSession: AuthSessionRecord = {
         jti: mockSessionId,
         user_id: "user-123",
         user_agent: "Mozilla/5.0",
@@ -581,20 +558,17 @@ describe("Auth Service", () => {
         created_at: "2024-01-01T00:00:00Z",
         expires_at: new Date(Date.now() + 60000).toISOString(),
         revoked_at: null,
+        last_active_at: "2024-01-01T00:00:00Z",
       };
 
-      const mockUser: AuthUserRecord = {
+      const mockUser = createMockUser({
         id: "user-123",
         username: "testuser",
         primary_email: "test@example.com",
         role_code: "athlete",
         status: "active",
-        created_at: "2024-01-01T00:00:00Z",
-        password_hash: "hashed-password",
-        terms_accepted: true,
-        terms_accepted_at: new Date().toISOString(),
         terms_version: "2024-01-01", // Old version
-      };
+      });
 
       mockJwt.verify.mockReturnValue(mockPayload as never);
       mockAuthRepo.getRefreshByHash.mockResolvedValue(mockRefreshRecord);
@@ -622,8 +596,8 @@ describe("Auth Service", () => {
       };
 
       mockJwt.verify.mockReturnValue(mockPayload as never);
-      mockAuthRepo.getRefreshByHash.mockResolvedValue(null);
-      mockAuthRepo.findRefreshTokenRaw.mockResolvedValue(null);
+      mockAuthRepo.getRefreshByHash.mockResolvedValue(undefined);
+      mockAuthRepo.findRefreshTokenRaw.mockResolvedValue(undefined);
 
       await expect(authService.refresh(mockRefreshToken)).rejects.toThrow(HttpError);
       await expect(authService.refresh(mockRefreshToken)).rejects.toThrow("AUTH_INVALID_REFRESH");
@@ -647,10 +621,10 @@ describe("Auth Service", () => {
       };
 
       mockJwt.verify.mockReturnValue(mockPayload as never);
-      mockAuthRepo.getRefreshByHash.mockResolvedValue(null);
+      mockAuthRepo.getRefreshByHash.mockResolvedValue(undefined);
       mockAuthRepo.findRefreshTokenRaw.mockResolvedValue(mockHistorical);
-      mockAuthRepo.revokeSessionById.mockResolvedValue(undefined);
-      mockAuthRepo.revokeRefreshBySession.mockResolvedValue(undefined);
+      mockAuthRepo.revokeSessionById.mockResolvedValue(1);
+      mockAuthRepo.revokeRefreshBySession.mockResolvedValue(1);
 
       await expect(authService.refresh(mockRefreshToken)).rejects.toThrow(HttpError);
       expect(mockAuthRepo.revokeSessionById).toHaveBeenCalledWith(mockSessionId);
@@ -674,7 +648,7 @@ describe("Auth Service", () => {
         revoked_at: null,
       };
 
-      const mockSession = {
+      const mockSession: AuthSessionRecord = {
         jti: mockSessionId,
         user_id: "user-123",
         user_agent: "Mozilla/5.0",
@@ -682,12 +656,13 @@ describe("Auth Service", () => {
         created_at: "2024-01-01T00:00:00Z",
         expires_at: new Date(Date.now() + 60000).toISOString(),
         revoked_at: "2024-01-02T00:00:00Z",
+        last_active_at: "2024-01-01T00:00:00Z",
       };
 
       mockJwt.verify.mockReturnValue(mockPayload as never);
       mockAuthRepo.getRefreshByHash.mockResolvedValue(mockRefreshRecord);
       mockAuthRepo.findSessionById.mockResolvedValue(mockSession);
-      mockAuthRepo.revokeRefreshByHash.mockResolvedValue(undefined);
+      mockAuthRepo.revokeRefreshByHash.mockResolvedValue(1);
 
       await expect(authService.refresh(mockRefreshToken)).rejects.toThrow(HttpError);
       await expect(authService.refresh(mockRefreshToken)).rejects.toThrow("AUTH_SESSION_REVOKED");
@@ -710,7 +685,7 @@ describe("Auth Service", () => {
         revoked_at: null,
       };
 
-      const mockSession = {
+      const mockSession: AuthSessionRecord = {
         jti: mockSessionId,
         user_id: "user-123",
         user_agent: "Mozilla/5.0",
@@ -718,13 +693,14 @@ describe("Auth Service", () => {
         created_at: "2024-01-01T00:00:00Z",
         expires_at: new Date(Date.now() + 60000).toISOString(),
         revoked_at: null,
+        last_active_at: "2024-01-01T00:00:00Z",
       };
 
       mockJwt.verify.mockReturnValue(mockPayload as never);
       mockAuthRepo.getRefreshByHash.mockResolvedValue(mockRefreshRecord);
       mockAuthRepo.findSessionById.mockResolvedValue(mockSession);
-      mockAuthRepo.revokeRefreshByHash.mockResolvedValue(undefined);
-      mockAuthRepo.revokeSessionById.mockResolvedValue(undefined);
+      mockAuthRepo.revokeRefreshByHash.mockResolvedValue(1);
+      mockAuthRepo.revokeSessionById.mockResolvedValue(1);
 
       await expect(authService.refresh(mockRefreshToken)).rejects.toThrow(HttpError);
       await expect(authService.refresh(mockRefreshToken)).rejects.toThrow("AUTH_REFRESH_EXPIRED");
@@ -741,9 +717,9 @@ describe("Auth Service", () => {
       };
 
       mockJwt.verify.mockReturnValue(mockPayload as never);
-      mockAuthRepo.revokeRefreshByHash.mockResolvedValue(undefined);
-      mockAuthRepo.revokeRefreshBySession.mockResolvedValue(undefined);
-      mockAuthRepo.revokeSessionById.mockResolvedValue(undefined);
+      mockAuthRepo.revokeRefreshByHash.mockResolvedValue(1);
+      mockAuthRepo.revokeRefreshBySession.mockResolvedValue(1);
+      mockAuthRepo.revokeSessionById.mockResolvedValue(1);
 
       await authService.logout(mockRefreshToken);
 
@@ -764,7 +740,7 @@ describe("Auth Service", () => {
       mockJwt.verify.mockImplementation(() => {
         throw new Error("Invalid token");
       });
-      mockAuthRepo.revokeRefreshByHash.mockResolvedValue(undefined);
+      mockAuthRepo.revokeRefreshByHash.mockResolvedValue(1);
 
       await authService.logout(mockRefreshToken);
 
@@ -774,51 +750,38 @@ describe("Auth Service", () => {
 
   describe("requestPasswordReset", () => {
     it("should generate password reset token for active user", async () => {
-      const mockUser: AuthUserRecord = {
-        id: "user-123",
-        username: "testuser",
-        primary_email: "test@example.com",
-        role_code: "athlete",
-        status: "active",
-        created_at: "2024-01-01T00:00:00Z",
-        password_hash: "hashed-password",
-      };
+      const mockUser = createMockUser();
 
       mockAuthRepo.findUserByEmail.mockResolvedValue(mockUser);
-      mockAuthRepo.purgeAuthTokensOlderThan.mockResolvedValue(undefined);
-      mockAuthRepo.markAuthTokensConsumed.mockResolvedValue(undefined);
-      mockAuthRepo.createAuthToken.mockResolvedValue(undefined);
+      mockAuthRepo.purgeAuthTokensOlderThan.mockResolvedValue(0);
+      mockAuthRepo.markAuthTokensConsumed.mockResolvedValue(0);
+      mockAuthRepo.createAuthToken.mockResolvedValue([]);
       mockMailer.send.mockResolvedValue(undefined);
 
       const result = await authService.requestPasswordReset("test@example.com");
 
       expect(result.resetToken).toBeDefined();
       expect(mockAuthRepo.createAuthToken).toHaveBeenCalled();
-      // eslint-disable-next-line @typescript-eslint/unbound-method
+
       expect(mockMailer.send).toHaveBeenCalled();
     });
 
     it("should not reveal if user does not exist", async () => {
-      mockAuthRepo.findUserByEmail.mockResolvedValue(null);
+      mockAuthRepo.findUserByEmail.mockResolvedValue(undefined);
 
       const result = await authService.requestPasswordReset("nonexistent@example.com");
 
       expect(result.resetToken).toBeUndefined();
       expect(mockAuthRepo.createAuthToken).not.toHaveBeenCalled();
-      // eslint-disable-next-line @typescript-eslint/unbound-method
+
       expect(mockMailer.send).not.toHaveBeenCalled();
     });
 
     it("should not send reset token if user is not active", async () => {
-      const mockUser: AuthUserRecord = {
-        id: "user-123",
-        username: "testuser",
-        primary_email: "test@example.com",
-        role_code: "athlete",
+      const mockUser = createMockUser({
         status: "pending_verification",
-        created_at: "2024-01-01T00:00:00Z",
-        password_hash: "hashed-password",
-      };
+        email_verified: false,
+      });
 
       mockAuthRepo.findUserByEmail.mockResolvedValue(mockUser);
 
@@ -844,23 +807,17 @@ describe("Auth Service", () => {
         consumed_at: null,
       };
 
-      const mockUser: AuthUserRecord = {
-        id: "user-123",
-        username: "testuser",
-        primary_email: "test@example.com",
-        role_code: "athlete",
-        status: "active",
-        created_at: "2024-01-01T00:00:00Z",
+      const mockUser = createMockUser({
         password_hash: "old-hashed-password",
-      };
+      });
 
       mockAuthRepo.findAuthToken.mockResolvedValue(mockAuthToken);
       mockAuthRepo.findUserById.mockResolvedValue(mockUser);
       mockBcrypt.hash.mockResolvedValue("new-hashed-password" as never);
-      mockAuthRepo.updateUserPassword.mockResolvedValue(undefined);
-      mockAuthRepo.consumeAuthToken.mockResolvedValue(undefined);
-      mockAuthRepo.markAuthTokensConsumed.mockResolvedValue(undefined);
-      mockAuthRepo.revokeRefreshByUserId.mockResolvedValue(undefined);
+      mockAuthRepo.updateUserPassword.mockResolvedValue(1);
+      mockAuthRepo.consumeAuthToken.mockResolvedValue(1);
+      mockAuthRepo.markAuthTokensConsumed.mockResolvedValue(1);
+      mockAuthRepo.revokeRefreshByUserId.mockResolvedValue(1);
 
       await authService.resetPassword(mockToken, newPassword);
 
@@ -873,7 +830,7 @@ describe("Auth Service", () => {
     });
 
     it("should throw error if token is invalid", async () => {
-      mockAuthRepo.findAuthToken.mockResolvedValue(null);
+      mockAuthRepo.findAuthToken.mockResolvedValue(undefined);
 
       await expect(authService.resetPassword("invalid-token", "NewP@ssw0rd456")).rejects.toThrow(
         HttpError,
@@ -895,7 +852,7 @@ describe("Auth Service", () => {
       };
 
       mockAuthRepo.findAuthToken.mockResolvedValue(mockAuthToken);
-      mockAuthRepo.consumeAuthToken.mockResolvedValue(undefined);
+      mockAuthRepo.consumeAuthToken.mockResolvedValue(1);
 
       await expect(authService.resetPassword("expired-token", "NewP@ssw0rd456")).rejects.toThrow(
         HttpError,
@@ -917,7 +874,7 @@ describe("Auth Service", () => {
       };
 
       mockAuthRepo.findAuthToken.mockResolvedValue(mockAuthToken);
-      mockAuthRepo.findUserById.mockResolvedValue(null);
+      mockAuthRepo.findUserById.mockResolvedValue(undefined);
 
       await expect(authService.resetPassword("token", "NewP@ssw0rd456")).rejects.toThrow(HttpError);
       await expect(authService.resetPassword("token", "NewP@ssw0rd456")).rejects.toThrow(
@@ -971,7 +928,7 @@ describe("Auth Service", () => {
 
   describe("revokeSessions", () => {
     it("should revoke single session", async () => {
-      const mockSession = {
+      const mockSession: AuthSessionRecord = {
         jti: "session-1",
         user_id: "user-123",
         user_agent: "Mozilla/5.0",
@@ -979,11 +936,12 @@ describe("Auth Service", () => {
         created_at: "2024-01-01T00:00:00Z",
         expires_at: "2024-01-15T00:00:00Z",
         revoked_at: null,
+        last_active_at: "2024-01-01T00:00:00Z",
       };
 
       mockAuthRepo.findSessionById.mockResolvedValue(mockSession);
-      mockAuthRepo.revokeSessionById.mockResolvedValue(undefined);
-      mockAuthRepo.revokeRefreshBySession.mockResolvedValue(undefined);
+      mockAuthRepo.revokeSessionById.mockResolvedValue(1);
+      mockAuthRepo.revokeRefreshBySession.mockResolvedValue(1);
 
       const result = await authService.revokeSessions("user-123", {
         sessionId: "session-1",
@@ -1009,8 +967,8 @@ describe("Auth Service", () => {
       ];
 
       mockAuthRepo.listSessionsByUserId.mockResolvedValue(mockSessions as never);
-      mockAuthRepo.revokeSessionsByUserId.mockResolvedValue(undefined);
-      mockAuthRepo.revokeRefreshByUserId.mockResolvedValue(undefined);
+      mockAuthRepo.revokeSessionsByUserId.mockResolvedValue(1);
+      mockAuthRepo.revokeRefreshByUserId.mockResolvedValue(1);
 
       const result = await authService.revokeSessions("user-123", {
         revokeAll: true,
@@ -1041,8 +999,8 @@ describe("Auth Service", () => {
       ];
 
       mockAuthRepo.listSessionsByUserId.mockResolvedValue(mockSessions as never);
-      mockAuthRepo.revokeSessionsByUserId.mockResolvedValue(undefined);
-      mockAuthRepo.revokeRefreshByUserExceptSession.mockResolvedValue(undefined);
+      mockAuthRepo.revokeSessionsByUserId.mockResolvedValue(1);
+      mockAuthRepo.revokeRefreshByUserExceptSession.mockResolvedValue(1);
 
       const result = await authService.revokeSessions("user-123", {
         revokeOthers: true,
@@ -1065,7 +1023,7 @@ describe("Auth Service", () => {
     });
 
     it("should throw error if session not found", async () => {
-      mockAuthRepo.findSessionById.mockResolvedValue(null);
+      mockAuthRepo.findSessionById.mockResolvedValue(undefined);
 
       await expect(
         authService.revokeSessions("user-123", { sessionId: "nonexistent" }),
@@ -1094,7 +1052,7 @@ describe("Auth Service", () => {
       const mockWhere = jest.fn().mockReturnValue({
         update: mockUpdate,
       });
-      (mockDb.db as jest.Mock).mockReturnValue({
+      (mockDb.db as unknown as jest.Mock).mockReturnValue({
         where: mockWhere,
       });
 
@@ -1197,7 +1155,10 @@ describe("Auth Service", () => {
 
     it("revokes the session family and emits audit when a refresh token is reused", async () => {
       const refreshToken = "reused-token";
-      const tokenHash = mockCrypto.createHash("sha256").update(refreshToken).digest("hex");
+      const mockHash = mockCrypto.createHash("sha256") as unknown as {
+        update: (data: string | Uint8Array) => { digest: (format: string) => string };
+      };
+      const tokenHash = mockHash.update(refreshToken).digest("hex");
       const historical = {
         id: "token-1",
         user_id: "user-1",

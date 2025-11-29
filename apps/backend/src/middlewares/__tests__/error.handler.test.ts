@@ -117,18 +117,22 @@ describe("errorHandler middleware", () => {
 
     it("should log ZodError details", () => {
       const schema = z.object({ name: z.string().min(1) });
-      let zodError: ZodError;
+      let zodError: ZodError | undefined;
       try {
         schema.parse({ name: "" });
       } catch (err) {
         zodError = err as ZodError;
       }
 
-      errorHandler(zodError!, mockRequest as Request, mockResponse as Response, mockNext);
+      if (!zodError) {
+        throw new Error("Expected ZodError to be thrown");
+      }
+
+      errorHandler(zodError, mockRequest as Request, mockResponse as Response, mockNext);
 
       expect(logger.error).toHaveBeenCalledWith(
         expect.objectContaining({
-          err: zodError,
+          err: zodError!,
           status: 400,
           code: "VALIDATION_ERROR",
         }),
@@ -384,7 +388,8 @@ describe("errorHandler middleware", () => {
 
     it("should handle non-string requestId", () => {
       const error = new HttpError(404, "NOT_FOUND", "Not found");
-      mockResponse.locals = { requestId: 12345 };
+      // Intentionally use non-string value to test error handler's type checking
+      mockResponse.locals = { requestId: 12345 } as unknown as Response["locals"];
 
       errorHandler(error, mockRequest as Request, mockResponse as Response, mockNext);
 

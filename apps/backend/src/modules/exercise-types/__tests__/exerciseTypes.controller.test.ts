@@ -27,7 +27,7 @@ describe("exerciseTypes.controller", () => {
       params: {},
       query: {},
       body: {},
-      user: { sub: "admin-123" },
+      user: { sub: "admin-123", role: "admin", sid: "session-123" },
     };
 
     mockResponse = {
@@ -302,7 +302,7 @@ describe("exerciseTypes.controller", () => {
   describe("deleteType", () => {
     it("should delete an exercise type", async () => {
       mockRequest.params = { code: "obsolete" };
-      (service.removeType as jest.Mock).mockResolvedValue(undefined);
+      (service.removeType as jest.Mock).mockResolvedValue(1);
 
       await deleteType(mockRequest as Request, mockResponse as Response);
 
@@ -313,7 +313,7 @@ describe("exerciseTypes.controller", () => {
 
     it("should handle deletion of different types", async () => {
       mockRequest.params = { code: "deprecated" };
-      (service.removeType as jest.Mock).mockResolvedValue(undefined);
+      (service.removeType as jest.Mock).mockResolvedValue(1);
 
       await deleteType(mockRequest as Request, mockResponse as Response);
 
@@ -323,8 +323,8 @@ describe("exerciseTypes.controller", () => {
 
     it("should pass admin ID to service", async () => {
       mockRequest.params = { code: "test" };
-      mockRequest.user = { sub: "different-admin-456" };
-      (service.removeType as jest.Mock).mockResolvedValue(undefined);
+      mockRequest.user = { sub: "different-admin-456", role: "admin", sid: "session-456" };
+      (service.removeType as jest.Mock).mockResolvedValue(1);
 
       await deleteType(mockRequest as Request, mockResponse as Response);
 

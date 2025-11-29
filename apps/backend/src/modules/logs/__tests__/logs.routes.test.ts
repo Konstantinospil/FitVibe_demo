@@ -54,14 +54,19 @@ describe("Logs Routes", () => {
 
   it("should register GET / route", () => {
     const routes = logsRouter.stack;
-    const getRoute = routes.find((layer) => layer.route?.path === "/" && layer.route?.methods?.get);
+    const getRoute = routes.find(
+      (layer) =>
+        layer.route?.path === "/" && (layer.route as { methods?: { get?: boolean } })?.methods?.get,
+    );
     expect(getRoute).toBeDefined();
   });
 
   it("should register GET /recent-activity route", () => {
     const routes = logsRouter.stack;
     const recentRoute = routes.find(
-      (layer) => layer.route?.path === "/recent-activity" && layer.route?.methods?.get,
+      (layer) =>
+        layer.route?.path === "/recent-activity" &&
+        (layer.route as { methods?: { get?: boolean } })?.methods?.get,
     );
     expect(recentRoute).toBeDefined();
   });

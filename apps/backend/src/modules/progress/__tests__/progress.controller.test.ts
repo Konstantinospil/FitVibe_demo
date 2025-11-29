@@ -336,7 +336,7 @@ describe("progress.controller", () => {
     it("returns trends with default parameters", async () => {
       const trends = {
         period: 30,
-        group_by: "day",
+        group_by: "day" as const,
         data: [
           { date: "2025-01-01", sessions: 1, volume: 1000 },
           { date: "2025-01-02", sessions: 2, volume: 2000 },
@@ -360,7 +360,7 @@ describe("progress.controller", () => {
     it("accepts custom period and group_by parameters", async () => {
       const trends = {
         period: 90,
-        group_by: "week",
+        group_by: "week" as const,
         data: [],
       };
 

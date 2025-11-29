@@ -4,7 +4,7 @@ services:
     container_name: fitvibe_db
     security_opt:
       - no-new-privileges:true
-    user: "999:999" # postgres user
+    # user: "999:999" # postgres user - commented out for Windows compatibility
     environment:
       POSTGRES_USER: fitvibe
       POSTGRES_PASSWORD: fitvibe

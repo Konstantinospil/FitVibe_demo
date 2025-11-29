@@ -1,6 +1,28 @@
 import path from "node:path";
 import { spawnSync } from "node:child_process";
+import fs from "node:fs";
 import knex from "knex";
+
+// Find project root by looking for package.json or going up from test location
+function findProjectRoot(): string {
+  let current = __dirname;
+  while (current !== path.dirname(current)) {
+    const packageJson = path.join(current, "package.json");
+    try {
+      if (fs.existsSync(packageJson)) {
+        const pkg = JSON.parse(fs.readFileSync(packageJson, "utf8"));
+        if (pkg.name === "fitvibe") {
+          return current;
+        }
+      }
+    } catch {
+      // Continue searching
+    }
+    current = path.dirname(current);
+  }
+  // Fallback: assume we're in tests/backend/migrations, go up 3 levels
+  return path.resolve(__dirname, "../../..");
+}
 
 const { connectionString: DATABASE_URL, isAvailable: isDatabaseAvailable } =
   resolveDatabaseConnection();
@@ -41,7 +63,7 @@ describeFn("database migrations", () => {
       searchPath: ["tmp_migration_test", "public"],
       migrations: {
         loadExtensions: [".ts"],
-        directory: path.resolve(__dirname, "../../src/db/migrations"),
+        directory: path.resolve(findProjectRoot(), "apps/backend/src/db/migrations"),
       },
     });
   });
@@ -276,17 +298,29 @@ if (!isDatabaseAvailable) {
 
 async function ensureDatabaseExtensions(admin: knex.Knex): Promise<void> {
   await admin.raw('CREATE EXTENSION IF NOT EXISTS "pgcrypto";');
+  // Note: uuid-ossp is not needed - we use gen_random_uuid() from pgcrypto
+  // Attempt to create citext extension, fallback to domain if not available
   try {
     await admin.raw('CREATE EXTENSION IF NOT EXISTS "citext";');
-  } catch {
-    await admin.raw(`
-      DO $$
-      BEGIN
-        IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'citext') THEN
-          CREATE DOMAIN citext AS text;
-        END IF;
-      END $$;
-    `);
+  } catch (error: unknown) {
+    // If citext extension is not available, create a domain as fallback
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    if (
+      errorMessage.includes("could not open extension control file") ||
+      (errorMessage.includes("extension") && errorMessage.includes("does not exist"))
+    ) {
+      await admin.raw(`
+        DO $$
+        BEGIN
+          IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'citext') THEN
+            CREATE DOMAIN citext AS text;
+          END IF;
+        END $$;
+      `);
+    } else {
+      // Re-throw if it's a different error
+      throw error;
+    }
   }
 }
 

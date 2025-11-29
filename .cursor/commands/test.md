@@ -8,6 +8,23 @@ Run the appropriate test suite based on the context. For comprehensive testing g
 
 ## Running Tests
 
+### Database Setup (Required for Database Tests)
+
+Before running database tests (migrations, seeds, or integration tests), ensure the database is running:
+
+```bash
+# Start PostgreSQL database using Docker Compose
+cd infra && docker-compose -f docker-compose.dev.yml up -d db
+
+# Wait for database to be ready (optional check)
+docker exec fitvibe_db psql -U fitvibe -d postgres -c "SELECT 1;" || echo "Database not ready yet"
+
+# Create test database if it doesn't exist
+docker exec fitvibe_db psql -U fitvibe -d postgres -c "CREATE DATABASE fitvibe_db;" || echo "Database may already exist"
+```
+
+**Note**: Database tests will automatically detect the database connection via environment variables (`PGHOST`, `PGPORT`, `PGUSER`, `PGPASSWORD`, `PGDATABASE`) or `TEST_DATABASE_URL`.
+
 ### By Context
 
 1. **Backend files**: `pnpm test -- app/backend` (Jest)
@@ -15,6 +32,7 @@ Run the appropriate test suite based on the context. For comprehensive testing g
 3. **E2E tests**: `pnpm test:e2e` (Playwright)
 4. **Performance tests**: `pnpm test:perf` (k6)
 5. **All tests**: `pnpm test` (runs all test suites)
+6. **Database tests**: `pnpm test -- tests/backend/migrations tests/backend/seeds` (requires database running)
 
 ### With Coverage
 

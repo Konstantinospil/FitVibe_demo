@@ -34,14 +34,14 @@ describe("Feed Controller", () => {
 
   beforeEach(() => {
     mockRequest = {
-      user: { sub: "user-123" },
+      user: { sub: "user-123", role: "user", sid: "session-123" },
       params: {},
       query: {},
       body: {},
       headers: {},
       get: jest.fn((headerName: string) => {
         return (mockRequest.headers as Record<string, string>)?.[headerName.toLowerCase()];
-      }),
+      }) as unknown as Request["get"],
       method: "POST",
     };
     mockResponse = {
@@ -50,7 +50,7 @@ describe("Feed Controller", () => {
       set: jest.fn().mockReturnThis(),
     };
     jest.clearAllMocks();
-    mockGetIdempotencyKey.mockReturnValue(undefined);
+    mockGetIdempotencyKey.mockReturnValue(null);
     mockGetRouteTemplate.mockReturnValue("/feed/items/:feedItemId/like");
     mockResolveIdempotency.mockResolvedValue({ type: "new", recordId: "rec-1" });
     mockPersistIdempotencyResult.mockResolvedValue();

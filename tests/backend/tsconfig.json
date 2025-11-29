@@ -10,6 +10,6 @@
     },
     "types": ["node", "jest"]
   },
-  "include": ["**/*.ts"],
+  "include": ["**/*.ts", "../setup/**/*.ts"],
   "exclude": ["node_modules"]
 }

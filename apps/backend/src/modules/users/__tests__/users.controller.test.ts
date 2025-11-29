@@ -1,7 +1,18 @@
 import type { Request, Response } from "express";
+import type { JwtPayload } from "../../auth/auth.types.js";
 import * as usersController from "../users.controller.js";
 import * as usersService from "../users.service.js";
 import * as usersRepository from "../users.repository.js";
+
+// Helper to create complete JwtPayload
+function createMockJwtPayload(overrides: Partial<JwtPayload> = {}): JwtPayload {
+  return {
+    sub: "user-123",
+    role: "user",
+    sid: "session-123",
+    ...overrides,
+  };
+}
 
 // Mock dependencies
 jest.mock("../users.service.js");
@@ -22,8 +33,11 @@ describe("Users Controller", () => {
       body: {},
       headers: {},
       get: jest.fn((headerName: string) => {
+        if (headerName === "set-cookie") {
+          return [];
+        }
         return (mockRequest.headers as Record<string, string>)?.[headerName.toLowerCase()];
-      }),
+      }) as jest.Mock,
     };
     mockResponse = {
       status: jest.fn().mockReturnThis(),
@@ -47,7 +61,7 @@ describe("Users Controller", () => {
 
   describe("me", () => {
     it("should return current user details", async () => {
-      mockRequest.user = { sub: "user-123" };
+      mockRequest.user = createMockJwtPayload();
 
       const mockUser = {
         id: "user-123",
@@ -76,7 +90,7 @@ describe("Users Controller", () => {
     });
 
     it("should return 404 if user not found", async () => {
-      mockRequest.user = { sub: "user-123" };
+      mockRequest.user = createMockJwtPayload();
       mockUsersService.getMe.mockResolvedValue(null);
 
       await usersController.me(mockRequest as Request, mockResponse as Response);
@@ -114,7 +128,7 @@ describe("Users Controller", () => {
 
   describe("adminCreateUser", () => {
     it("should create user with valid data", async () => {
-      mockRequest.user = { sub: "admin-123" };
+      mockRequest.user = createMockJwtPayload({ sub: "admin-123", role: "admin" });
       mockRequest.body = {
         username: "newuser",
         displayName: "New User",
@@ -156,7 +170,7 @@ describe("Users Controller", () => {
 
   describe("updateMe", () => {
     it("should update user profile", async () => {
-      mockRequest.user = { sub: "user-123" };
+      mockRequest.user = createMockJwtPayload();
       mockRequest.body = {
         displayName: "Updated Name",
       };
@@ -183,7 +197,7 @@ describe("Users Controller", () => {
     });
 
     it("should return 400 for invalid data", async () => {
-      mockRequest.user = { sub: "user-123" };
+      mockRequest.user = createMockJwtPayload();
       mockRequest.body = {
         username: "a", // too short
       };
@@ -196,7 +210,7 @@ describe("Users Controller", () => {
 
   describe("changePassword", () => {
     it("should change password with valid credentials", async () => {
-      mockRequest.user = { sub: "user-123" };
+      mockRequest.user = createMockJwtPayload();
       mockRequest.body = {
         currentPassword: "OldP@ssw0rd123",
         newPassword: "NewP@ssw0rd456",
@@ -220,7 +234,7 @@ describe("Users Controller", () => {
     });
 
     it("should return 400 for invalid password format", async () => {
-      mockRequest.user = { sub: "user-123" };
+      mockRequest.user = createMockJwtPayload();
       mockRequest.body = {
         currentPassword: "short",
         newPassword: "weak",
@@ -234,7 +248,7 @@ describe("Users Controller", () => {
 
   describe("deleteAccount", () => {
     it("should schedule account deletion", async () => {
-      mockRequest.user = { sub: "user-123" };
+      mockRequest.user = createMockJwtPayload();
       mockRequest.body = { password: "ValidPassword123!" };
 
       const mockSchedule = {
@@ -271,7 +285,7 @@ describe("Users Controller", () => {
 
   describe("exportData", () => {
     it("should export user data as zip", async () => {
-      mockRequest.user = { sub: "user-123" };
+      mockRequest.user = createMockJwtPayload();
 
       const mockUserData = {
         meta: {
@@ -342,7 +356,7 @@ describe("Users Controller", () => {
 
   describe("listUserContacts", () => {
     it("should list user contacts", async () => {
-      mockRequest.user = { sub: "user-123" };
+      mockRequest.user = createMockJwtPayload();
 
       const mockContacts = [
         {
@@ -372,7 +386,7 @@ describe("Users Controller", () => {
 
   describe("requestContactVerificationHandler", () => {
     it("should request contact verification", async () => {
-      mockRequest.user = { sub: "user-123" };
+      mockRequest.user = createMockJwtPayload();
       mockRequest.params = { contactId: "550e8400-e29b-41d4-a716-446655440000" };
 
       const mockVerification = {
@@ -409,7 +423,7 @@ describe("Users Controller", () => {
 
   describe("updateEmail", () => {
     it("should update primary email", async () => {
-      mockRequest.user = { sub: "user-123" };
+      mockRequest.user = createMockJwtPayload();
       mockRequest.body = { email: "newemail@example.com" };
 
       const mockUpdatedUser = {
@@ -437,7 +451,7 @@ describe("Users Controller", () => {
     });
 
     it("should return 400 for invalid email", async () => {
-      mockRequest.user = { sub: "user-123" };
+      mockRequest.user = createMockJwtPayload();
       mockRequest.body = { email: "invalid-email" };
 
       await usersController.updateEmail(mockRequest as Request, mockResponse as Response);
@@ -448,7 +462,7 @@ describe("Users Controller", () => {
 
   describe("updatePhone", () => {
     it("should update phone number", async () => {
-      mockRequest.user = { sub: "user-123" };
+      mockRequest.user = createMockJwtPayload();
       mockRequest.body = { phone: "+1234567890" };
 
       const mockUpdatedUser = {
@@ -469,7 +483,7 @@ describe("Users Controller", () => {
     });
 
     it("should update phone with recovery flag", async () => {
-      mockRequest.user = { sub: "user-123" };
+      mockRequest.user = createMockJwtPayload();
       mockRequest.body = { phone: "+1234567890", isRecovery: true };
 
       mockUsersService.updatePhoneNumber.mockResolvedValue({} as never);
@@ -494,7 +508,7 @@ describe("Users Controller", () => {
 
   describe("verifyContactHandler", () => {
     it("should verify contact with valid token", async () => {
-      mockRequest.user = { sub: "user-123" };
+      mockRequest.user = createMockJwtPayload();
       mockRequest.params = { contactId: "550e8400-e29b-41d4-a716-446655440001" };
       mockRequest.body = { token: "verification-token-12345" };
 
@@ -536,7 +550,7 @@ describe("Users Controller", () => {
     });
 
     it("should return 403 if contact belongs to different user (CWE-807 fix)", async () => {
-      mockRequest.user = { sub: "user-123" };
+      mockRequest.user = createMockJwtPayload();
       mockRequest.params = { contactId: "550e8400-e29b-41d4-a716-446655440001" };
       mockRequest.body = { token: "verification-token-12345" };
 
@@ -566,12 +580,12 @@ describe("Users Controller", () => {
     });
 
     it("should return 403 if contact does not exist (CWE-807 fix)", async () => {
-      mockRequest.user = { sub: "user-123" };
+      mockRequest.user = createMockJwtPayload();
       mockRequest.params = { contactId: "550e8400-e29b-41d4-a716-446655440001" };
       mockRequest.body = { token: "verification-token-12345" };
 
       // Contact not found
-      mockUsersRepository.getContactById.mockResolvedValue(null);
+      mockUsersRepository.getContactById.mockResolvedValue(undefined);
 
       await usersController.verifyContactHandler(mockRequest as Request, mockResponse as Response);
 
@@ -583,7 +597,7 @@ describe("Users Controller", () => {
     });
 
     it("should return 400 for invalid token format", async () => {
-      mockRequest.user = { sub: "user-123" };
+      mockRequest.user = createMockJwtPayload();
       mockRequest.params = { contactId: "contact-456" };
       mockRequest.body = { token: "short" };
 
@@ -595,7 +609,7 @@ describe("Users Controller", () => {
 
   describe("removeContactHandler", () => {
     it("should remove contact", async () => {
-      mockRequest.user = { sub: "user-123" };
+      mockRequest.user = createMockJwtPayload();
       mockRequest.params = { contactId: "550e8400-e29b-41d4-a716-446655440002" };
 
       mockUsersService.removeContact.mockResolvedValue();
@@ -621,7 +635,7 @@ describe("Users Controller", () => {
 
   describe("adminChangeStatus", () => {
     it("should change user status", async () => {
-      mockRequest.user = { sub: "admin-123" };
+      mockRequest.user = createMockJwtPayload({ sub: "admin-123", role: "admin" });
       mockRequest.params = { id: "user-456" };
       mockRequest.body = { status: "archived" };
 
@@ -643,7 +657,7 @@ describe("Users Controller", () => {
     });
 
     it("should return 400 for invalid status", async () => {
-      mockRequest.user = { sub: "admin-123" };
+      mockRequest.user = createMockJwtPayload({ sub: "admin-123", role: "admin" });
       mockRequest.params = { id: "user-456" };
       mockRequest.body = { status: "invalid-status" };
 
@@ -655,7 +669,7 @@ describe("Users Controller", () => {
 
   describe("getMetrics", () => {
     it("should return metrics for authenticated user (me endpoint)", async () => {
-      mockRequest.user = { sub: "user-123" };
+      mockRequest.user = createMockJwtPayload();
       mockRequest.params = {};
 
       const mockMetrics = {
@@ -675,7 +689,11 @@ describe("Users Controller", () => {
     });
 
     it("should return metrics for specific user by ID (admin access)", async () => {
-      mockRequest.user = { sub: "admin-123", role: "admin" };
+      mockRequest.user = createMockJwtPayload({
+        sub: "admin-123",
+        role: "admin",
+        sid: "session-admin",
+      });
       mockRequest.params = { userId: "user-456" };
 
       const mockMetrics = {
@@ -705,7 +723,7 @@ describe("Users Controller", () => {
     });
 
     it("should handle metrics with zero values", async () => {
-      mockRequest.user = { sub: "new-user-123" };
+      mockRequest.user = createMockJwtPayload({ sub: "new-user-123" });
       mockRequest.params = {};
 
       const mockMetrics = {

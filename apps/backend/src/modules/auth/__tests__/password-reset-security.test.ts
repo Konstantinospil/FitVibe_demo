@@ -26,11 +26,19 @@ describe("AC-1.9: Password Reset Security", () => {
   const mockUser: AuthUserRecord = {
     id: "user-123",
     username: "testuser",
+    display_name: "Test User",
+    locale: "en-US",
+    preferred_lang: "en",
     primary_email: "test@example.com",
+    email_verified: true,
     role_code: "athlete",
     status: "active",
     created_at: "2024-01-01T00:00:00Z",
+    updated_at: "2024-01-01T00:00:00Z",
     password_hash: "$2a$12$oldpasswordhash",
+    terms_accepted: true,
+    terms_accepted_at: "2024-01-01T00:00:00Z",
+    terms_version: "2024-06-01",
   };
 
   const validResetToken: AuthTokenRecord = {
@@ -40,7 +48,7 @@ describe("AC-1.9: Password Reset Security", () => {
     token_hash: "valid-token-hash",
     expires_at: new Date(Date.now() + 15 * 60 * 1000).toISOString(), // 15 minutes from now
     created_at: new Date().toISOString(),
-    consumed: false,
+    consumed_at: null,
   };
 
   beforeEach(() => {
@@ -51,10 +59,10 @@ describe("AC-1.9: Password Reset Security", () => {
     it("should allow first use of valid reset token", async () => {
       mockAuthRepo.findAuthToken.mockResolvedValue(validResetToken);
       mockAuthRepo.findUserById.mockResolvedValue(mockUser);
-      mockAuthRepo.updateUserPassword.mockResolvedValue(undefined);
-      mockAuthRepo.consumeAuthToken.mockResolvedValue(undefined);
-      mockAuthRepo.markAuthTokensConsumed.mockResolvedValue(undefined);
-      mockAuthRepo.revokeRefreshByUserId.mockResolvedValue(undefined);
+      mockAuthRepo.updateUserPassword.mockResolvedValue(1);
+      mockAuthRepo.consumeAuthToken.mockResolvedValue(1);
+      mockAuthRepo.markAuthTokensConsumed.mockResolvedValue(1);
+      mockAuthRepo.revokeRefreshByUserId.mockResolvedValue(1);
 
       const bcrypt = await import("bcryptjs");
       (bcrypt.hash as jest.Mock).mockResolvedValue("$2a$12$newpasswordhash");
@@ -76,10 +84,10 @@ describe("AC-1.9: Password Reset Security", () => {
       // First use succeeds
       mockAuthRepo.findAuthToken.mockResolvedValueOnce(validResetToken);
       mockAuthRepo.findUserById.mockResolvedValue(mockUser);
-      mockAuthRepo.updateUserPassword.mockResolvedValue(undefined);
-      mockAuthRepo.consumeAuthToken.mockResolvedValue(undefined);
-      mockAuthRepo.markAuthTokensConsumed.mockResolvedValue(undefined);
-      mockAuthRepo.revokeRefreshByUserId.mockResolvedValue(undefined);
+      mockAuthRepo.updateUserPassword.mockResolvedValue(1);
+      mockAuthRepo.consumeAuthToken.mockResolvedValue(1);
+      mockAuthRepo.markAuthTokensConsumed.mockResolvedValue(1);
+      mockAuthRepo.revokeRefreshByUserId.mockResolvedValue(1);
 
       const bcrypt = await import("bcryptjs");
       (bcrypt.hash as jest.Mock).mockResolvedValue("$2a$12$newpasswordhash");
@@ -126,7 +134,7 @@ describe("AC-1.9: Password Reset Security", () => {
       };
 
       mockAuthRepo.findAuthToken.mockResolvedValue(expiredToken);
-      mockAuthRepo.consumeAuthToken.mockResolvedValue(undefined);
+      mockAuthRepo.consumeAuthToken.mockResolvedValue(0);
 
       await expect(authService.resetPassword("expired-token", "NewPassword123!")).rejects.toThrow(
         HttpError,
@@ -153,10 +161,10 @@ describe("AC-1.9: Password Reset Security", () => {
 
       mockAuthRepo.findAuthToken.mockResolvedValue(almostExpiredToken);
       mockAuthRepo.findUserById.mockResolvedValue(mockUser);
-      mockAuthRepo.updateUserPassword.mockResolvedValue(undefined);
-      mockAuthRepo.consumeAuthToken.mockResolvedValue(undefined);
-      mockAuthRepo.markAuthTokensConsumed.mockResolvedValue(undefined);
-      mockAuthRepo.revokeRefreshByUserId.mockResolvedValue(undefined);
+      mockAuthRepo.updateUserPassword.mockResolvedValue(1);
+      mockAuthRepo.consumeAuthToken.mockResolvedValue(1);
+      mockAuthRepo.markAuthTokensConsumed.mockResolvedValue(1);
+      mockAuthRepo.revokeRefreshByUserId.mockResolvedValue(1);
 
       const bcrypt = await import("bcryptjs");
       (bcrypt.hash as jest.Mock).mockResolvedValue("$2a$12$newpasswordhash");
@@ -172,10 +180,10 @@ describe("AC-1.9: Password Reset Security", () => {
     it("should revoke all user refresh tokens on successful password reset", async () => {
       mockAuthRepo.findAuthToken.mockResolvedValue(validResetToken);
       mockAuthRepo.findUserById.mockResolvedValue(mockUser);
-      mockAuthRepo.updateUserPassword.mockResolvedValue(undefined);
-      mockAuthRepo.consumeAuthToken.mockResolvedValue(undefined);
-      mockAuthRepo.markAuthTokensConsumed.mockResolvedValue(undefined);
-      mockAuthRepo.revokeRefreshByUserId.mockResolvedValue(undefined);
+      mockAuthRepo.updateUserPassword.mockResolvedValue(1);
+      mockAuthRepo.consumeAuthToken.mockResolvedValue(1);
+      mockAuthRepo.markAuthTokensConsumed.mockResolvedValue(1);
+      mockAuthRepo.revokeRefreshByUserId.mockResolvedValue(1);
 
       const bcrypt = await import("bcryptjs");
       (bcrypt.hash as jest.Mock).mockResolvedValue("$2a$12$newpasswordhash");
@@ -208,10 +216,10 @@ describe("AC-1.9: Password Reset Security", () => {
     it("should revoke refresh tokens even if token consumption fails", async () => {
       mockAuthRepo.findAuthToken.mockResolvedValue(validResetToken);
       mockAuthRepo.findUserById.mockResolvedValue(mockUser);
-      mockAuthRepo.updateUserPassword.mockResolvedValue(undefined);
+      mockAuthRepo.updateUserPassword.mockResolvedValue(0);
       mockAuthRepo.consumeAuthToken.mockRejectedValue(new Error("Token consumption failed"));
-      mockAuthRepo.markAuthTokensConsumed.mockResolvedValue(undefined);
-      mockAuthRepo.revokeRefreshByUserId.mockResolvedValue(undefined);
+      mockAuthRepo.markAuthTokensConsumed.mockResolvedValue(0);
+      mockAuthRepo.revokeRefreshByUserId.mockResolvedValue(0);
 
       const bcrypt = await import("bcryptjs");
       (bcrypt.hash as jest.Mock).mockResolvedValue("$2a$12$newpasswordhash");
@@ -307,10 +315,10 @@ describe("AC-1.9: Password Reset Security", () => {
     it("should accept valid strong password", async () => {
       mockAuthRepo.findAuthToken.mockResolvedValue(validResetToken);
       mockAuthRepo.findUserById.mockResolvedValue(mockUser);
-      mockAuthRepo.updateUserPassword.mockResolvedValue(undefined);
-      mockAuthRepo.consumeAuthToken.mockResolvedValue(undefined);
-      mockAuthRepo.markAuthTokensConsumed.mockResolvedValue(undefined);
-      mockAuthRepo.revokeRefreshByUserId.mockResolvedValue(undefined);
+      mockAuthRepo.updateUserPassword.mockResolvedValue(1);
+      mockAuthRepo.consumeAuthToken.mockResolvedValue(1);
+      mockAuthRepo.markAuthTokensConsumed.mockResolvedValue(1);
+      mockAuthRepo.revokeRefreshByUserId.mockResolvedValue(1);
 
       const bcrypt = await import("bcryptjs");
       (bcrypt.hash as jest.Mock).mockResolvedValue("$2a$12$newpasswordhash");
@@ -326,10 +334,10 @@ describe("AC-1.9: Password Reset Security", () => {
     it("should handle concurrent reset attempts (race condition)", async () => {
       mockAuthRepo.findAuthToken.mockResolvedValue(validResetToken);
       mockAuthRepo.findUserById.mockResolvedValue(mockUser);
-      mockAuthRepo.updateUserPassword.mockResolvedValue(undefined);
-      mockAuthRepo.consumeAuthToken.mockResolvedValue(undefined);
-      mockAuthRepo.markAuthTokensConsumed.mockResolvedValue(undefined);
-      mockAuthRepo.revokeRefreshByUserId.mockResolvedValue(undefined);
+      mockAuthRepo.updateUserPassword.mockResolvedValue(1);
+      mockAuthRepo.consumeAuthToken.mockResolvedValue(1);
+      mockAuthRepo.markAuthTokensConsumed.mockResolvedValue(1);
+      mockAuthRepo.revokeRefreshByUserId.mockResolvedValue(1);
 
       const bcrypt = await import("bcryptjs");
       (bcrypt.hash as jest.Mock).mockResolvedValue("$2a$12$newpasswordhash");
@@ -350,9 +358,9 @@ describe("AC-1.9: Password Reset Security", () => {
     it("should consume token even if password update succeeds but later operations fail", async () => {
       mockAuthRepo.findAuthToken.mockResolvedValue(validResetToken);
       mockAuthRepo.findUserById.mockResolvedValue(mockUser);
-      mockAuthRepo.updateUserPassword.mockResolvedValue(undefined);
-      mockAuthRepo.consumeAuthToken.mockResolvedValue(undefined);
-      mockAuthRepo.markAuthTokensConsumed.mockResolvedValue(undefined);
+      mockAuthRepo.updateUserPassword.mockResolvedValue(0);
+      mockAuthRepo.consumeAuthToken.mockResolvedValue(0);
+      mockAuthRepo.markAuthTokensConsumed.mockResolvedValue(0);
       // Simulate refresh revocation failure
       mockAuthRepo.revokeRefreshByUserId.mockRejectedValue(new Error("Revocation failed"));
 
@@ -380,19 +388,19 @@ describe("AC-1.9: Password Reset Security", () => {
       mockAuthRepo.findUserById.mockResolvedValue(mockUser);
       mockAuthRepo.updateUserPassword.mockImplementation(() => {
         callOrder.push("updatePassword");
-        return Promise.resolve();
+        return Promise.resolve(1);
       });
       mockAuthRepo.consumeAuthToken.mockImplementation(() => {
         callOrder.push("consumeToken");
-        return Promise.resolve();
+        return Promise.resolve(1);
       });
       mockAuthRepo.markAuthTokensConsumed.mockImplementation(() => {
         callOrder.push("markConsumed");
-        return Promise.resolve();
+        return Promise.resolve(1);
       });
       mockAuthRepo.revokeRefreshByUserId.mockImplementation(() => {
         callOrder.push("revokeRefresh");
-        return Promise.resolve();
+        return Promise.resolve(1);
       });
 
       const bcrypt = await import("bcryptjs");

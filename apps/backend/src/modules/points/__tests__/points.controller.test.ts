@@ -1,7 +1,18 @@
 import type { Request, Response } from "express";
+import type { JwtPayload } from "../../auth/auth.types.js";
 import * as pointsController from "../points.controller.js";
 import * as pointsRepository from "../points.repository.js";
 import * as pointsService from "../points.service.js";
+
+// Helper to create complete JwtPayload
+function createMockJwtPayload(overrides: Partial<JwtPayload> = {}): JwtPayload {
+  return {
+    sub: "user-123",
+    role: "user",
+    sid: "session-123",
+    ...overrides,
+  };
+}
 
 // Mock dependencies
 jest.mock("../points.repository.js");
@@ -116,13 +127,10 @@ describe("Points Controller", () => {
 
   describe("getPointsSummaryHandler", () => {
     it("should return points summary for authenticated user", async () => {
-      mockRequest.user = { sub: "user-123" };
+      mockRequest.user = createMockJwtPayload({ sub: "user-123" });
       const mockSummary = {
-        total: 1500,
-        weekly: 200,
-        monthly: 800,
-        badges: 5,
-        rank: 42,
+        balance: 1500,
+        recent: [],
       };
 
       mockPointsService.getPointsSummary.mockResolvedValue(mockSummary);
@@ -158,7 +166,7 @@ describe("Points Controller", () => {
     });
 
     it("should return 401 when user.sub is missing", async () => {
-      mockRequest.user = {};
+      mockRequest.user = undefined;
 
       await pointsController.getPointsSummaryHandler(
         mockRequest as Request,
@@ -172,14 +180,24 @@ describe("Points Controller", () => {
 
   describe("getPointsHistoryHandler", () => {
     it("should return points history for authenticated user", async () => {
-      mockRequest.user = { sub: "user-123" };
+      mockRequest.user = createMockJwtPayload({ sub: "user-123" });
       mockRequest.query = { limit: "10" };
       const mockHistory = {
         items: [
-          { id: "1", points: 100, reason: "session_completed", createdAt: "2025-01-20T10:00:00Z" },
+          {
+            id: "1",
+            user_id: "user-123",
+            source_type: "session_completed",
+            source_id: "session-1",
+            algorithm_version: "v1",
+            points: 100,
+            calories: null,
+            metadata: {},
+            awarded_at: "2025-01-20T10:00:00Z",
+            created_at: "2025-01-20T10:00:00Z",
+          },
         ],
-        cursor: "next-cursor",
-        hasMore: false,
+        nextCursor: "next-cursor",
       };
 
       mockPointsService.getPointsHistory.mockResolvedValue(mockHistory);
@@ -210,7 +228,7 @@ describe("Points Controller", () => {
     });
 
     it("should return 400 when query validation fails", async () => {
-      mockRequest.user = { sub: "user-123" };
+      mockRequest.user = createMockJwtPayload({ sub: "user-123" });
       mockRequest.query = { limit: "invalid" };
 
       await pointsController.getPointsHistoryHandler(
@@ -228,14 +246,14 @@ describe("Points Controller", () => {
     });
 
     it("should handle query parameters correctly", async () => {
-      mockRequest.user = { sub: "user-123" };
+      mockRequest.user = createMockJwtPayload({ sub: "user-123" });
       mockRequest.query = {
         cursor: "cursor-123",
         limit: "20",
         from: "2025-01-01",
         to: "2025-01-31",
       };
-      const mockHistory = { items: [], cursor: null, hasMore: false };
+      const mockHistory = { items: [], nextCursor: null };
 
       mockPointsService.getPointsHistory.mockResolvedValue(mockHistory);
 

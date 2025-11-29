@@ -36,16 +36,21 @@ describe("mediaStorage.service", () => {
 
   it("saves avatar files with mime-specific extensions and returns metadata", async () => {
     const buffer = Buffer.from("binary-avatar-data");
-    jest.spyOn(crypto, "randomUUID").mockReturnValue("fixed-file-id");
+    jest.spyOn(crypto, "randomUUID").mockReturnValue("00000000-0000-0000-0000-000000000001");
 
     const result = await saveUserAvatarFile("user-123", buffer, "image/png");
 
     expect(result).toEqual({
-      storageKey: "avatars/user-123/fixed-file-id.png",
+      storageKey: "avatars/user-123/00000000-0000-0000-0000-000000000001.png",
       bytes: buffer.length,
     });
 
-    const savedPath = path.join(TEMP_ROOT, "avatars", "user-123", "fixed-file-id.png");
+    const savedPath = path.join(
+      TEMP_ROOT,
+      "avatars",
+      "user-123",
+      "00000000-0000-0000-0000-000000000001.png",
+    );
     const savedBuffer = await fs.readFile(savedPath);
     expect(savedBuffer.equals(buffer)).toBe(true);
   });
@@ -105,7 +110,7 @@ describe("mediaStorage.service", () => {
 
   it("handles jpeg mime type correctly", async () => {
     const buffer = Buffer.from("jpeg-data");
-    jest.spyOn(crypto, "randomUUID").mockReturnValue("jpeg-file-id");
+    jest.spyOn(crypto, "randomUUID").mockReturnValue("00000000-0000-0000-0000-000000000002");
 
     const result = await saveUserAvatarFile("user-123", buffer, "image/jpeg");
 
@@ -114,7 +119,7 @@ describe("mediaStorage.service", () => {
 
   it("handles webp mime type correctly", async () => {
     const buffer = Buffer.from("webp-data");
-    jest.spyOn(crypto, "randomUUID").mockReturnValue("webp-file-id");
+    jest.spyOn(crypto, "randomUUID").mockReturnValue("00000000-0000-0000-0000-000000000003");
 
     const result = await saveUserAvatarFile("user-123", buffer, "image/webp");
 
@@ -123,7 +128,7 @@ describe("mediaStorage.service", () => {
 
   it("uses .bin extension for unknown mime types", async () => {
     const buffer = Buffer.from("unknown-data");
-    jest.spyOn(crypto, "randomUUID").mockReturnValue("unknown-file-id");
+    jest.spyOn(crypto, "randomUUID").mockReturnValue("00000000-0000-0000-0000-000000000004");
 
     const result = await saveUserAvatarFile("user-123", buffer, "image/unknown");
 

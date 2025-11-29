@@ -12,14 +12,14 @@ describe("Exercise Controller", () => {
 
   beforeEach(() => {
     mockRequest = {
-      user: { sub: "user-123", role: "athlete" },
+      user: { sub: "user-123", role: "athlete", sid: "session-123" },
       params: {},
       query: {},
       body: {},
       headers: {},
       get: jest.fn((headerName: string) => {
         return (mockRequest.headers as Record<string, string>)?.[headerName.toLowerCase()];
-      }),
+      }) as unknown as Request["get"],
     };
     mockResponse = {
       status: jest.fn().mockReturnThis(),
@@ -138,7 +138,7 @@ describe("Exercise Controller", () => {
     });
 
     it("should allow admin to filter by owner_id", async () => {
-      mockRequest.user = { sub: "admin-123", role: "admin" };
+      mockRequest.user = { sub: "admin-123", role: "admin", sid: "session-123" };
       mockRequest.query = { owner_id: "123e4567-e89b-12d3-a456-426614174000" };
 
       mockExerciseService.getAll.mockResolvedValue([] as never);
@@ -158,7 +158,7 @@ describe("Exercise Controller", () => {
     });
 
     it("should handle owner_id=global for admin", async () => {
-      mockRequest.user = { sub: "admin-123", role: "admin" };
+      mockRequest.user = { sub: "admin-123", role: "admin", sid: "session-123" };
       mockRequest.query = { owner_id: "global" };
 
       mockExerciseService.getAll.mockResolvedValue([] as never);
@@ -178,7 +178,7 @@ describe("Exercise Controller", () => {
     });
 
     it("should handle owner_id=null for admin", async () => {
-      mockRequest.user = { sub: "admin-123", role: "admin" };
+      mockRequest.user = { sub: "admin-123", role: "admin", sid: "session-123" };
       mockRequest.query = { owner_id: "null" };
 
       mockExerciseService.getAll.mockResolvedValue([] as never);
@@ -278,7 +278,7 @@ describe("Exercise Controller", () => {
     });
 
     it("should pass isAdmin flag for admin users", async () => {
-      mockRequest.user = { sub: "admin-123", role: "admin" };
+      mockRequest.user = { sub: "admin-123", role: "admin", sid: "session-123" };
       mockRequest.params = { id: "ex-123" };
 
       mockExerciseService.getOne.mockResolvedValue({} as never);
@@ -372,7 +372,7 @@ describe("Exercise Controller", () => {
     });
 
     it("should allow admin to set owner_id", async () => {
-      mockRequest.user = { sub: "admin-123", role: "admin" };
+      mockRequest.user = { sub: "admin-123", role: "admin", sid: "session-123" };
       mockRequest.body = {
         name: "Global Exercise",
         type_code: "strength",
@@ -521,7 +521,7 @@ describe("Exercise Controller", () => {
     });
 
     it("should pass isAdmin flag for admin users", async () => {
-      mockRequest.user = { sub: "admin-123", role: "admin" };
+      mockRequest.user = { sub: "admin-123", role: "admin", sid: "session-123" };
       mockRequest.params = { id: "ex-123" };
 
       mockExerciseService.archiveOne.mockResolvedValue(undefined as never);

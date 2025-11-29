@@ -45,7 +45,7 @@ describe("Logs Repository", () => {
           outcome: "success",
           requestId: "req-1",
           metadata: {},
-          createdAt: new Date("2025-01-20T10:00:00Z"),
+          createdAt: "2025-01-20T10:00:00Z",
         },
       ];
 
@@ -174,7 +174,7 @@ describe("Logs Repository", () => {
           outcome: "success",
           requestId: "req-1",
           metadata: {},
-          createdAt: new Date("2025-01-20T10:00:00Z"),
+          createdAt: "2025-01-20T10:00:00Z",
         },
       ];
 

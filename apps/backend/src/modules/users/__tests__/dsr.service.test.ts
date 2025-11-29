@@ -371,6 +371,11 @@ describe("dsr.service", () => {
     await expect(executeAccountDeletion("user-3")).rejects.toBeInstanceOf(HttpError);
   });
 
+  it("throws when executing deletion for non-existent user", async () => {
+    await expect(executeAccountDeletion("non-existent")).rejects.toBeInstanceOf(HttpError);
+    await expect(executeAccountDeletion("non-existent")).rejects.toThrow("User not found");
+  });
+
   it("processes due account deletions", async () => {
     const now = new Date("2025-10-21T10:00:00.000Z");
     tables.users.push({
@@ -399,5 +404,100 @@ describe("dsr.service", () => {
     expect(processed).toBe(1);
     expect(tables.users).toHaveLength(1);
     expect(tables.users[0].id).toBe("future-user");
+  });
+
+  it("throws when scheduling deletion for non-existent user", async () => {
+    await expect(scheduleAccountDeletion("non-existent")).rejects.toBeInstanceOf(HttpError);
+    await expect(scheduleAccountDeletion("non-existent")).rejects.toThrow("User not found");
+  });
+
+  it("handles media cleanup errors gracefully during deletion", async () => {
+    const userId = "user-media-error";
+    const now = new Date().toISOString();
+    tables.users.push({
+      id: userId,
+      username: "to-delete",
+      status: "pending_deletion",
+      deleted_at: now,
+      purge_scheduled_at: now,
+      backup_purge_due_at: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
+      created_at: now,
+      updated_at: now,
+    });
+    tables.media.push({
+      id: "media-1",
+      owner_id: userId,
+      storage_key: "media/error/avatar.jpg",
+      target_type: "avatar",
+      target_id: userId,
+      file_url: "",
+      mime_type: "image/jpeg",
+      media_type: "image",
+      bytes: 1234,
+      created_at: now,
+    });
+
+    // Mock deleteStorageObject to throw an error
+    (deleteStorageObject as jest.Mock).mockRejectedValue(new Error("Storage error"));
+
+    // Should still complete deletion even if media cleanup fails
+    await executeAccountDeletion(userId);
+
+    expect(tables.users).toHaveLength(0);
+    expect(deleteStorageObject).toHaveBeenCalledWith("media/error/avatar.jpg");
+  });
+
+  it("preserves existing deletion timestamps when scheduling", async () => {
+    const userId = "user-4";
+    const existingDeletedAt = "2025-10-20T10:00:00.000Z";
+    const existingPurgeAt = "2025-10-21T10:00:00.000Z";
+    const existingBackupAt = "2025-11-04T10:00:00.000Z";
+    tables.users.push({
+      id: userId,
+      username: "demo",
+      status: "pending_deletion",
+      deleted_at: existingDeletedAt,
+      purge_scheduled_at: existingPurgeAt,
+      backup_purge_due_at: existingBackupAt,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    });
+
+    const schedule = await scheduleAccountDeletion(userId, new Date("2025-10-21T10:00:00.000Z"));
+
+    expect(schedule.scheduledAt).toBe(existingDeletedAt);
+    expect(schedule.purgeDueAt).toBe(existingPurgeAt);
+    expect(schedule.backupPurgeDueAt).toBe(existingBackupAt);
+  });
+
+  it("handles deletion with no sessions gracefully", async () => {
+    const userId = "user-no-sessions";
+    const now = new Date().toISOString();
+    tables.users.push({
+      id: userId,
+      username: "no-sessions",
+      status: "pending_deletion",
+      deleted_at: now,
+      purge_scheduled_at: now,
+      backup_purge_due_at: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
+      created_at: now,
+      updated_at: now,
+    });
+    tables.user_contacts.push({
+      id: "contact-1",
+      user_id: userId,
+      type: "email",
+      value: "user@example.com",
+      is_primary: true,
+      is_recovery: true,
+      is_verified: true,
+      verified_at: now,
+      created_at: now,
+    });
+
+    await executeAccountDeletion(userId);
+
+    expect(tables.users).toHaveLength(0);
+    expect(tables.user_tombstones).toHaveLength(1);
   });
 });

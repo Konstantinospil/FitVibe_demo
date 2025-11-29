@@ -58,7 +58,9 @@ const mockDbRaw = jest.fn((sql: string) => sql);
 describe("Plans Service", () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    mockedUuid.mockReturnValue("00000000-0000-0000-0000-000000000001");
+    (mockedUuid as unknown as jest.MockedFunction<() => string>).mockReturnValue(
+      "00000000-0000-0000-0000-000000000001",
+    );
   });
 
   describe("getPlanById", () => {
@@ -68,12 +70,13 @@ describe("Plans Service", () => {
         user_id: "user-123",
         name: "Test Plan",
         status: "active",
+        progress_percent: "0",
+        session_count: 0,
+        completed_count: 0,
         start_date: null,
         end_date: null,
-        total_sessions: 0,
-        completed_sessions: 0,
-        created_at: new Date(),
-        updated_at: new Date(),
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
         archived_at: null,
       };
 
@@ -102,10 +105,11 @@ describe("Plans Service", () => {
         status: "active",
         start_date: null,
         end_date: null,
-        total_sessions: 0,
-        completed_sessions: 0,
-        created_at: new Date(),
-        updated_at: new Date(),
+        progress_percent: "0",
+        session_count: 0,
+        completed_count: 0,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
         archived_at: null,
       };
 
@@ -124,12 +128,13 @@ describe("Plans Service", () => {
           user_id: "user-123",
           name: "Plan 1",
           status: "active",
+          progress_percent: 0,
+          session_count: 0,
+          completed_count: 0,
           start_date: null,
           end_date: null,
-          total_sessions: 0,
-          completed_sessions: 0,
-          created_at: new Date(),
-          updated_at: new Date(),
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
           archived_at: null,
         },
       ];
@@ -178,10 +183,11 @@ describe("Plans Service", () => {
         status: "active",
         start_date: "2025-01-01",
         end_date: "2025-12-31",
-        total_sessions: 0,
-        completed_sessions: 0,
-        created_at: new Date(),
-        updated_at: new Date(),
+        progress_percent: "0",
+        session_count: 0,
+        completed_count: 0,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
         archived_at: null,
       };
 
@@ -211,10 +217,11 @@ describe("Plans Service", () => {
         status: "active",
         start_date: null,
         end_date: null,
-        total_sessions: 0,
-        completed_sessions: 0,
-        created_at: new Date(),
-        updated_at: new Date(),
+        progress_percent: "0",
+        session_count: 0,
+        completed_count: 0,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
         archived_at: null,
       };
 
@@ -243,10 +250,11 @@ describe("Plans Service", () => {
         status: "active",
         start_date: null,
         end_date: null,
-        total_sessions: 0,
-        completed_sessions: 0,
-        created_at: new Date(),
-        updated_at: new Date(),
+        progress_percent: "0",
+        session_count: 0,
+        completed_count: 0,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
         archived_at: null,
       };
 
@@ -276,10 +284,11 @@ describe("Plans Service", () => {
         status: "active",
         start_date: null,
         end_date: null,
-        total_sessions: 0,
-        completed_sessions: 0,
-        created_at: new Date(),
-        updated_at: new Date(),
+        progress_percent: "0",
+        session_count: 0,
+        completed_count: 0,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
         archived_at: null,
       };
 
@@ -299,10 +308,11 @@ describe("Plans Service", () => {
         status: "active",
         start_date: null,
         end_date: null,
-        total_sessions: 0,
-        completed_sessions: 0,
-        created_at: new Date(),
-        updated_at: new Date(),
+        progress_percent: "0",
+        session_count: 0,
+        completed_count: 0,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
         archived_at: null,
       };
 
@@ -326,10 +336,11 @@ describe("Plans Service", () => {
         status: "active",
         start_date: null,
         end_date: null,
-        total_sessions: 0,
-        completed_sessions: 0,
-        created_at: new Date(),
-        updated_at: new Date(),
+        progress_percent: "0",
+        session_count: 0,
+        completed_count: 0,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
         archived_at: null,
       };
 
@@ -349,10 +360,11 @@ describe("Plans Service", () => {
         status: "active",
         start_date: null,
         end_date: null,
-        total_sessions: 0,
-        completed_sessions: 0,
-        created_at: new Date(),
-        updated_at: new Date(),
+        progress_percent: "0",
+        session_count: 0,
+        completed_count: 0,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
         archived_at: null,
       };
 
@@ -375,10 +387,11 @@ describe("Plans Service", () => {
         status: "active",
         start_date: null,
         end_date: null,
-        total_sessions: 0,
-        completed_sessions: 0,
-        created_at: new Date(),
-        updated_at: new Date(),
+        progress_percent: "0",
+        session_count: 0,
+        completed_count: 0,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
         archived_at: null,
       };
 
@@ -398,10 +411,11 @@ describe("Plans Service", () => {
         status: "active",
         start_date: null,
         end_date: null,
-        total_sessions: 0,
-        completed_sessions: 0,
-        created_at: new Date(),
-        updated_at: new Date(),
+        progress_percent: "0",
+        session_count: 0,
+        completed_count: 0,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
         archived_at: null,
       };
 
@@ -439,10 +453,11 @@ describe("Plans Service", () => {
         status: "active",
         start_date: null,
         end_date: null,
-        total_sessions: 0,
-        completed_sessions: 0,
-        created_at: new Date(),
-        updated_at: new Date(),
+        progress_percent: "0",
+        session_count: 0,
+        completed_count: 0,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
         archived_at: null,
       };
 
@@ -451,7 +466,7 @@ describe("Plans Service", () => {
         total: "10",
         completed: "7",
       });
-      mockedUpdatePlanProgress.mockResolvedValue(undefined);
+      mockedUpdatePlanProgress.mockResolvedValue(1);
 
       await plansService.recomputeProgress("user-123", "plan-1");
 
@@ -467,7 +482,7 @@ describe("Plans Service", () => {
         total: "5",
         completed: "3",
       });
-      mockedUpdatePlanProgress.mockResolvedValue(undefined);
+      mockedUpdatePlanProgress.mockResolvedValue(1);
 
       await plansService.recomputeProgress("user-123", "plan-1", mockTrx);
 
@@ -482,10 +497,11 @@ describe("Plans Service", () => {
         status: "active",
         start_date: null,
         end_date: null,
-        total_sessions: 0,
-        completed_sessions: 0,
-        created_at: new Date(),
-        updated_at: new Date(),
+        progress_percent: "0",
+        session_count: 0,
+        completed_count: 0,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
         archived_at: null,
       };
 
@@ -494,7 +510,7 @@ describe("Plans Service", () => {
         total: "0",
         completed: "0",
       });
-      mockedUpdatePlanProgress.mockResolvedValue(undefined);
+      mockedUpdatePlanProgress.mockResolvedValue(1);
 
       await plansService.recomputeProgress("user-123", "plan-1");
 
@@ -509,16 +525,17 @@ describe("Plans Service", () => {
         status: "active",
         start_date: null,
         end_date: null,
-        total_sessions: 0,
-        completed_sessions: 0,
-        created_at: new Date(),
-        updated_at: new Date(),
+        progress_percent: "0",
+        session_count: 0,
+        completed_count: 0,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
         archived_at: null,
       };
 
       mockedFindPlanById.mockResolvedValue(existingPlan);
       mockQueryBuilder.first.mockResolvedValue(null);
-      mockedUpdatePlanProgress.mockResolvedValue(undefined);
+      mockedUpdatePlanProgress.mockResolvedValue(1);
 
       await plansService.recomputeProgress("user-123", "plan-1");
 

@@ -37,41 +37,52 @@ const Register: React.FC = () => {
 
     // Validate inputs
     if (!name.trim() || !email.trim() || !password || !confirmPassword) {
-      setError("Please fill in all fields");
+      setError(t("auth.register.fillAllFields") || "Please fill in all fields");
       return;
     }
 
     // Check if terms are accepted
     if (!acceptedTerms) {
-      setError("You must accept the terms and conditions");
+      setError(
+        t("auth.register.termsRequired") ||
+          "You must accept the terms and conditions to create an account",
+      );
       return;
     }
 
     // Check if passwords match
     if (password !== confirmPassword) {
-      setError("Passwords do not match");
+      setError(t("auth.register.passwordsDoNotMatch") || "Passwords do not match");
       return;
     }
 
     // Validate password strength (matches backend requirements)
     if (password.length < 12) {
-      setError("Password must be at least 12 characters");
+      setError(
+        t("auth.register.passwordMinLength") || "Password must be at least 12 characters long",
+      );
       return;
     }
     if (!/(?=.*[a-z])/.test(password)) {
-      setError("Password must contain at least one lowercase letter");
+      setError(
+        t("auth.register.passwordLowercase") ||
+          "Password must contain at least one lowercase letter",
+      );
       return;
     }
     if (!/(?=.*[A-Z])/.test(password)) {
-      setError("Password must contain at least one uppercase letter");
+      setError(
+        t("auth.register.passwordUppercase") ||
+          "Password must contain at least one uppercase letter",
+      );
       return;
     }
     if (!/(?=.*\d)/.test(password)) {
-      setError("Password must contain at least one digit");
+      setError(t("auth.register.passwordDigit") || "Password must contain at least one digit");
       return;
     }
     if (!/(?=.*[^\w\s])/.test(password)) {
-      setError("Password must contain at least one symbol");
+      setError(t("auth.register.passwordSymbol") || "Password must contain at least one symbol");
       return;
     }
 

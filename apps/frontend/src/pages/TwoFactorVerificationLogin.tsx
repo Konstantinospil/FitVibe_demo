@@ -52,8 +52,11 @@ const TwoFactorVerificationLogin: React.FC = () => {
     setError(null);
 
     if (!pendingSessionId) {
-      setError("Invalid session. Please try logging in again.");
+      setError(
+        t("auth.twoFactor.invalidSession") || "Invalid session. Please try logging in again.",
+      );
       setIsSubmitting(false);
+      setTimeout(() => navigate("/login", { replace: true }), 2000);
       return;
     }
 

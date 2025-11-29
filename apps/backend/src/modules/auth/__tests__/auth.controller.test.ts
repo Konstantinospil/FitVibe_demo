@@ -1,6 +1,7 @@
 import type { Request, Response, NextFunction } from "express";
 import * as authController from "../auth.controller.js";
 import * as authService from "../auth.service.js";
+import type { JwtPayload } from "../auth.types.js";
 import { HttpError } from "../../../utils/http.js";
 
 // Mock dependencies
@@ -29,7 +30,7 @@ const mockPersistIdempotencyResult = jest.mocked(persistIdempotencyResult);
 describe("Auth Controller", () => {
   let mockRequest: Partial<Request>;
   let mockResponse: Partial<Response>;
-  let mockNext: NextFunction;
+  let mockNext: jest.MockedFunction<NextFunction>;
 
   beforeEach(() => {
     mockRequest = {
@@ -41,8 +42,11 @@ describe("Auth Controller", () => {
         if (header === "user-agent") {
           return "test-user-agent";
         }
+        if (header === "set-cookie") {
+          return [];
+        }
         return undefined;
-      }),
+      }) as jest.Mock,
       user: undefined,
       requestId: "test-request-id",
       baseUrl: "",
@@ -60,7 +64,7 @@ describe("Auth Controller", () => {
     };
     mockNext = jest.fn();
     jest.clearAllMocks();
-    mockGetIdempotencyKey.mockReturnValue(undefined);
+    mockGetIdempotencyKey.mockReturnValue(null);
     mockGetRouteTemplate.mockReturnValue("/api/v1/auth/register");
     mockResolveIdempotency.mockResolvedValue({ type: "new", recordId: "rec-1" });
     mockPersistIdempotencyResult.mockResolvedValue();
@@ -173,12 +177,20 @@ describe("Auth Controller", () => {
 
       mockAuthService.login.mockResolvedValue({
         requires2FA: false,
-        user: { id: "user-123", email: "test@example.com" },
+        user: {
+          id: "user-123",
+          email: "test@example.com",
+          username: "testuser",
+          role: "user",
+          status: "active",
+          created_at: "2024-01-01T00:00:00Z",
+        },
         tokens: {
           accessToken: "access-token",
           refreshToken: "refresh-token",
+          accessExpiresIn: 3600,
         },
-        session: { id: "session-123" },
+        session: { id: "session-123", expiresAt: "2024-01-01T01:00:00Z" },
       });
 
       await authController.login(mockRequest as Request, mockResponse as Response, mockNext);
@@ -299,7 +311,14 @@ describe("Auth Controller", () => {
       };
 
       mockAuthService.refresh.mockResolvedValue({
-        user: { id: "user-123" },
+        user: {
+          id: "user-123",
+          email: "test@example.com",
+          username: "testuser",
+          role: "user",
+          status: "active",
+          created_at: "2024-01-01T00:00:00Z",
+        },
         accessToken: "new-access-token",
         newRefresh: "new-refresh-token",
       });
@@ -329,7 +348,7 @@ describe("Auth Controller", () => {
 
       expect(mockNext).toHaveBeenCalled();
 
-      const error = mockNext.mock.calls[0][0] as HttpError;
+      const error = mockNext.mock.calls[0][0] as unknown as HttpError;
       expect(error.status).toBe(401);
       expect(error.code).toBe("UNAUTHENTICATED");
     });
@@ -346,7 +365,7 @@ describe("Auth Controller", () => {
 
       expect(mockNext).toHaveBeenCalled();
 
-      const receivedError = mockNext.mock.calls[0][0] as HttpError;
+      const receivedError = mockNext.mock.calls[0][0] as unknown as HttpError;
       expect(receivedError.status).toBe(401);
       expect(receivedError.code).toBe("INVALID_TOKEN");
     });
@@ -411,6 +430,10 @@ describe("Auth Controller", () => {
       mockAuthService.verifyEmail.mockResolvedValue({
         id: "user-123",
         email: "test@example.com",
+        username: "testuser",
+        role: "user",
+        status: "active",
+        created_at: "2024-01-01T00:00:00Z",
       });
 
       await authController.verifyEmail(mockRequest as Request, mockResponse as Response, mockNext);
@@ -430,7 +453,7 @@ describe("Auth Controller", () => {
 
       expect(mockNext).toHaveBeenCalled();
 
-      const error = mockNext.mock.calls[0][0] as HttpError;
+      const error = mockNext.mock.calls[0][0] as unknown as HttpError;
       expect(error.status).toBe(400);
       expect(error.code).toBe("AUTH_INVALID_TOKEN");
     });
@@ -582,6 +605,7 @@ describe("Auth Controller", () => {
     it("should list user sessions", async () => {
       mockRequest.user = {
         sub: "user-123",
+        role: "user",
         sid: "session-123",
       };
 
@@ -615,7 +639,7 @@ describe("Auth Controller", () => {
 
       expect(mockNext).toHaveBeenCalled();
 
-      const error = mockNext.mock.calls[0][0] as HttpError;
+      const error = mockNext.mock.calls[0][0] as unknown as HttpError;
       expect(error.status).toBe(401);
       expect(error.code).toBe("UNAUTHENTICATED");
     });
@@ -628,6 +652,7 @@ describe("Auth Controller", () => {
 
       mockRequest.user = {
         sub: "user-123",
+        role: "user",
         sid: currentSessionId,
       };
       mockRequest.body = {
@@ -673,7 +698,7 @@ describe("Auth Controller", () => {
 
       expect(mockNext).toHaveBeenCalled();
 
-      const error = mockNext.mock.calls[0][0] as HttpError;
+      const error = mockNext.mock.calls[0][0] as unknown as HttpError;
       expect(error.status).toBe(401);
       expect(error.code).toBe("UNAUTHENTICATED");
     });
@@ -681,7 +706,9 @@ describe("Auth Controller", () => {
     it("should throw error when revokeOthers is true but no current session", async () => {
       mockRequest.user = {
         sub: "user-123",
-      };
+        role: "user",
+        // No sid - simulates no current session
+      } as JwtPayload;
       mockRequest.body = {
         revokeOthers: true,
       };
@@ -695,7 +722,7 @@ describe("Auth Controller", () => {
       );
 
       expect(mockNext).toHaveBeenCalled();
-      const error = mockNext.mock.calls[0][0] as HttpError;
+      const error = mockNext.mock.calls[0][0] as unknown as HttpError;
       expect(error.status).toBe(400);
       expect(error.code).toBe("AUTH_SESSION_UNKNOWN");
     });
@@ -704,6 +731,7 @@ describe("Auth Controller", () => {
       const currentSessionId = "550e8400-e29b-41d4-a716-446655440000";
       mockRequest.user = {
         sub: "user-123",
+        role: "user",
         sid: currentSessionId,
       };
       mockRequest.body = {
@@ -730,6 +758,7 @@ describe("Auth Controller", () => {
       const currentSessionId = "session-123";
       mockRequest.user = {
         sub: "user-123",
+        role: "user",
         sid: currentSessionId,
       };
       mockRequest.body = {
@@ -753,6 +782,8 @@ describe("Auth Controller", () => {
     it("should accept terms for authenticated user", async () => {
       mockRequest.user = {
         sub: "user-123",
+        role: "user",
+        sid: "session-123",
       };
       mockRequest.body = {
         terms_accepted: true,
@@ -778,7 +809,7 @@ describe("Auth Controller", () => {
       await authController.acceptTerms(mockRequest as Request, mockResponse as Response, mockNext);
 
       expect(mockNext).toHaveBeenCalled();
-      const error = mockNext.mock.calls[0][0] as HttpError;
+      const error = mockNext.mock.calls[0][0] as unknown as HttpError;
       expect(error.status).toBe(401);
       expect(error.code).toBe("UNAUTHENTICATED");
       expect(mockAuthService.acceptTerms).not.toHaveBeenCalled();
@@ -787,6 +818,8 @@ describe("Auth Controller", () => {
     it("should handle accept terms errors", async () => {
       mockRequest.user = {
         sub: "user-123",
+        role: "user",
+        sid: "session-123",
       };
       mockRequest.body = {
         terms_accepted: true,

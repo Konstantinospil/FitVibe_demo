@@ -1,6 +1,17 @@
 import type { Request, Response } from "express";
+import type { JwtPayload } from "../../auth/auth.types.js";
 import * as sessionsController from "../sessions.controller.js";
 import * as sessionsService from "../sessions.service.js";
+
+// Helper to create complete JwtPayload
+function createMockJwtPayload(overrides: Partial<JwtPayload> = {}): JwtPayload {
+  return {
+    sub: "user-123",
+    role: "user",
+    sid: "session-123",
+    ...overrides,
+  };
+}
 
 // Mock dependencies
 jest.mock("../sessions.service.js");
@@ -17,11 +28,16 @@ const mockPersistIdempotencyResult = jest.mocked(persistIdempotencyResult);
 // Helper function to create getIdempotencyKey mock
 function createGetIdempotencyKeyMock(key: string | null) {
   return jest.fn((header: string) => {
-    if (header === "Idempotency-Key") {
-      return key;
+    if (header === "set-cookie") {
+      return undefined;
     }
-    return null;
-  });
+    if (header === "Idempotency-Key") {
+      return key ?? undefined;
+    }
+    return undefined;
+  }) as jest.MockedFunction<
+    ((name: "set-cookie") => string[] | undefined) & ((name: string) => string | undefined)
+  >;
 }
 
 describe("Sessions Controller", () => {
@@ -30,18 +46,33 @@ describe("Sessions Controller", () => {
 
   beforeEach(() => {
     mockRequest = {
-      user: { sub: "user-123" },
+      user: createMockJwtPayload({ sub: "user-123" }),
       params: {},
       query: {},
       body: {},
       headers: {},
-      get: jest.fn().mockReturnValue(null),
+      get: jest.fn((header: string) => {
+        if (header === "set-cookie") {
+          return undefined;
+        }
+        return undefined;
+      }) as jest.MockedFunction<
+        ((name: "set-cookie") => string[] | undefined) & ((name: string) => string | undefined)
+      >,
     };
     mockResponse = {
       status: jest.fn().mockReturnThis(),
       json: jest.fn().mockReturnThis(),
       send: jest.fn().mockReturnThis(),
       set: jest.fn().mockReturnThis(),
+      getHeader: jest.fn((name: string) => {
+        if (name === "set-cookie") {
+          return undefined;
+        }
+        return undefined;
+      }) as jest.MockedFunction<
+        ((name: "set-cookie") => string[] | undefined) & ((name: string) => string | undefined)
+      >,
     };
     jest.clearAllMocks();
     mockResolveIdempotency.mockResolvedValue({ type: "new", recordId: "rec-1" });
@@ -260,7 +291,7 @@ describe("Sessions Controller", () => {
       mockResolveIdempotency.mockResolvedValue({
         type: "new",
         recordId: null,
-      });
+      } as any);
       const mockCreated = { id: "session-123", title: "Test Session" };
       mockSessionsService.createOne.mockResolvedValue(mockCreated as never);
 
@@ -277,11 +308,16 @@ describe("Sessions Controller", () => {
     it("should throw error when idempotency key is empty", async () => {
       mockRequest.body = { title: "Test Session", planned_at: new Date().toISOString() };
       mockRequest.get = jest.fn((header: string) => {
+        if (header === "set-cookie") {
+          return undefined;
+        }
         if (header === "Idempotency-Key") {
           return "   ";
         }
-        return null;
-      });
+        return undefined;
+      }) as jest.MockedFunction<
+        ((name: "set-cookie") => string[] | undefined) & ((name: string) => string | undefined)
+      >;
 
       await expect(
         sessionsController.createSessionHandler(mockRequest as Request, mockResponse as Response),
@@ -292,11 +328,16 @@ describe("Sessions Controller", () => {
       mockRequest.body = { title: "Test Session", planned_at: new Date().toISOString() };
       const longKey = "a".repeat(201);
       mockRequest.get = jest.fn((header: string) => {
+        if (header === "set-cookie") {
+          return undefined;
+        }
         if (header === "Idempotency-Key") {
           return longKey;
         }
-        return null;
-      });
+        return undefined;
+      }) as jest.MockedFunction<
+        ((name: "set-cookie") => string[] | undefined) & ((name: string) => string | undefined)
+      >;
 
       await expect(
         sessionsController.createSessionHandler(mockRequest as Request, mockResponse as Response),
@@ -508,7 +549,7 @@ describe("Sessions Controller", () => {
       mockResolveIdempotency.mockResolvedValue({
         type: "new",
         recordId: null,
-      });
+      } as any);
       const mockCloned = { id: "cloned-123", title: "Cloned Session" };
       mockSessionsService.cloneOne.mockResolvedValue(mockCloned as never);
 
@@ -657,7 +698,7 @@ describe("Sessions Controller", () => {
       mockResolveIdempotency.mockResolvedValue({
         type: "new",
         recordId: null,
-      });
+      } as any);
       const mockSessions = [{ id: "session-1" }];
       mockSessionsService.applyRecurrence.mockResolvedValue(mockSessions as never);
 
@@ -729,7 +770,7 @@ describe("Sessions Controller", () => {
     it("should cancel session", async () => {
       mockRequest.params = { id: "session-123" };
 
-      mockSessionsService.cancelOne.mockResolvedValue(true);
+      mockSessionsService.cancelOne.mockResolvedValue(undefined);
 
       await sessionsController.deleteSessionHandler(
         mockRequest as Request,
@@ -743,7 +784,7 @@ describe("Sessions Controller", () => {
     it("should call service with correct parameters", async () => {
       mockRequest.params = { id: "test-session-id" };
 
-      mockSessionsService.cancelOne.mockResolvedValue(true);
+      mockSessionsService.cancelOne.mockResolvedValue(undefined);
 
       await sessionsController.deleteSessionHandler(
         mockRequest as Request,

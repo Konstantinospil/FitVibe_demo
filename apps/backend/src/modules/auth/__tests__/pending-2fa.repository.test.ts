@@ -20,12 +20,12 @@ jest.mock("../../../db/index.js", () => ({
 describe("Pending 2FA Repository", () => {
   let mockDb: jest.MockedFunction<Knex>;
   let mockQueryBuilder: {
-    insert: jest.MockedFunction<typeof mockQueryBuilder.insert>;
-    where: jest.MockedFunction<typeof mockQueryBuilder.where>;
-    first: jest.MockedFunction<typeof mockQueryBuilder.first>;
-    update: jest.MockedFunction<typeof mockQueryBuilder.update>;
-    del: jest.MockedFunction<typeof mockQueryBuilder.del>;
-    returning: jest.MockedFunction<typeof mockQueryBuilder.returning>;
+    insert: jest.Mock;
+    where: jest.Mock;
+    first: jest.Mock;
+    update: jest.Mock;
+    del: jest.Mock;
+    returning: jest.Mock;
   };
 
   beforeEach(() => {
@@ -33,12 +33,12 @@ describe("Pending 2FA Repository", () => {
 
     // Create mock query builder
     mockQueryBuilder = {
-      insert: jest.fn<typeof mockQueryBuilder.insert>().mockReturnThis(),
-      where: jest.fn<typeof mockQueryBuilder.where>().mockReturnThis(),
-      first: jest.fn<typeof mockQueryBuilder.first>().mockReturnThis(),
-      update: jest.fn<typeof mockQueryBuilder.update>().mockReturnThis(),
-      del: jest.fn<typeof mockQueryBuilder.del>().mockReturnThis(),
-      returning: jest.fn<typeof mockQueryBuilder.returning>().mockReturnThis(),
+      insert: jest.fn().mockReturnThis(),
+      where: jest.fn().mockReturnThis(),
+      first: jest.fn().mockReturnThis(),
+      update: jest.fn().mockReturnThis(),
+      del: jest.fn().mockReturnThis(),
+      returning: jest.fn().mockReturnThis(),
     };
 
     // Mock db function to return query builder

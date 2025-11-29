@@ -60,6 +60,9 @@ describe("Q-11 login enumeration protections", () => {
       updated_at: new Date().toISOString(),
       primary_email: "inactive@fitvibe.test",
       email_verified: false,
+      terms_accepted: true,
+      terms_accepted_at: new Date().toISOString(),
+      terms_version: "2024-06-01",
     };
     findUserByEmailSpy.mockResolvedValue(inactiveUser);
 

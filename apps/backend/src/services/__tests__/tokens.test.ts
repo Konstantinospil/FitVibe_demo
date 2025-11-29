@@ -16,7 +16,6 @@ import { env } from "../../config/env.js";
 import { newJti } from "../../utils/hash.js";
 
 // Generate valid RSA keys for testing
-import { generateKeyPairSync } from "node:crypto";
 const { privateKey, publicKey } = generateKeyPairSync("rsa", {
   modulusLength: 2048,
   publicKeyEncoding: { type: "spki", format: "pem" },
@@ -99,8 +98,8 @@ describe("Tokens Service", () => {
       const decoded = verifyAccess(token);
 
       expect(decoded.sub).toBe("user-123");
-      expect(decoded.username).toBe("testuser");
       expect(decoded.role).toBe("user");
+      expect(decoded.sid).toBe("session-123");
     });
 
     it("should throw error for invalid token", () => {

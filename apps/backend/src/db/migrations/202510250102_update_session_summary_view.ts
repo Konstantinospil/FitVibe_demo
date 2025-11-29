@@ -65,79 +65,24 @@ const LEGACY_SESSION_VIEW_SQL = `
 `;
 
 export async function up(knex: Knex): Promise<void> {
-  // Drop all dependent objects in correct dependency order
-  // Order matters: drop objects that depend on others BEFORE dropping their dependencies
+  // Drop dependent objects in correct order (expand/contract pattern)
+  // Materialized views are analytics/cache and can be safely dropped and recreated
+  // Order: drop objects that depend on others BEFORE dropping their dependencies
 
-  // 1. Drop trigger first (depends on function)
-  await knex.raw(`DROP TRIGGER IF EXISTS trg_session_summary_refresh ON sessions;`);
-
-  // 2. Drop functions (may reference views in their body, but don't create formal dependencies)
+  // 1. Drop trigger and functions first (they reference the views)
+  await knex.raw(`DROP TRIGGER IF EXISTS trg_session_summary_refresh ON sessions CASCADE;`);
   await knex.raw(`DROP FUNCTION IF EXISTS session_summary_refresh_trigger() CASCADE;`);
   await knex.raw(`DROP FUNCTION IF EXISTS refresh_session_summary(boolean) CASCADE;`);
 
-  // 3. Drop regular views that depend on session_summary
+  // 2. Drop regular view that depends on materialized view
   await knex.raw(`DROP VIEW IF EXISTS v_session_summary CASCADE;`);
 
-  // 4. Drop all indexes on weekly_aggregates dynamically
-  interface IndexRow {
-    indexname: string;
-  }
-  const weeklyIndexes = (await knex.raw(`
-    SELECT indexname
-    FROM pg_indexes
-    WHERE tablename = '${WEEKLY_VIEW}' AND schemaname = 'public'
-  `)) as unknown as { rows: IndexRow[] };
-  if (weeklyIndexes.rows && weeklyIndexes.rows.length > 0) {
-    for (const row of weeklyIndexes.rows) {
-      await knex.raw(`DROP INDEX IF EXISTS ${row.indexname} CASCADE;`);
-    }
-  }
-
-  // 5. Drop weekly_aggregates (it depends on session_summary)
-  // Use CASCADE to automatically drop any objects that depend on weekly_aggregates
+  // 3. Drop weekly_aggregates first (it depends on session_summary)
+  // CASCADE ensures any indexes or other dependencies are also dropped
   await knex.raw(`DROP MATERIALIZED VIEW IF EXISTS ${WEEKLY_VIEW} CASCADE;`);
 
-  // 6. Check for any other views/materialized views that depend on session_summary
-  interface DependencyRow {
-    dependent_view: string;
-  }
-  const dependentViews = (await knex.raw(`
-    SELECT DISTINCT dependent_ns.nspname AS dependent_schema,
-                    dependent_view.relname AS dependent_view
-    FROM pg_depend 
-    JOIN pg_rewrite ON pg_depend.objid = pg_rewrite.oid 
-    JOIN pg_class AS dependent_view ON pg_rewrite.ev_class = dependent_view.oid
-    JOIN pg_class AS source_table ON pg_depend.refobjid = source_table.oid
-    JOIN pg_namespace dependent_ns ON dependent_view.relnamespace = dependent_ns.oid
-    JOIN pg_namespace source_ns ON source_table.relnamespace = source_ns.oid
-    WHERE source_ns.nspname = 'public'
-      AND source_table.relname = '${SESSION_VIEW}'
-      AND dependent_view.relkind IN ('v', 'm')
-      AND dependent_view.relname != '${SESSION_VIEW}'
-      AND dependent_view.relname != '${WEEKLY_VIEW}'
-  `)) as unknown as { rows: DependencyRow[] };
-
-  if (dependentViews.rows && dependentViews.rows.length > 0) {
-    for (const row of dependentViews.rows) {
-      // Drop any remaining dependent views
-      await knex.raw(`DROP MATERIALIZED VIEW IF EXISTS ${row.dependent_view} CASCADE;`);
-      await knex.raw(`DROP VIEW IF EXISTS ${row.dependent_view} CASCADE;`);
-    }
-  }
-
-  // 7. Drop all indexes on session_summary explicitly (required before dropping the view)
-  const sessionIndexes = (await knex.raw(`
-    SELECT indexname
-    FROM pg_indexes
-    WHERE tablename = '${SESSION_VIEW}' AND schemaname = 'public'
-  `)) as unknown as { rows: IndexRow[] };
-  if (sessionIndexes.rows && sessionIndexes.rows.length > 0) {
-    for (const row of sessionIndexes.rows) {
-      await knex.raw(`DROP INDEX IF EXISTS ${row.indexname} CASCADE;`);
-    }
-  }
-
-  // 8. Now drop session_summary - use CASCADE to handle any remaining dependencies
+  // 4. Drop session_summary (CASCADE handles any remaining dependencies)
+  // This is safe for materialized views as they are analytics/cache and can be recreated
   await knex.raw(`DROP MATERIALIZED VIEW IF EXISTS ${SESSION_VIEW} CASCADE;`);
 
   // Recreate session_summary with new columns
@@ -162,7 +107,16 @@ export async function up(knex: Knex): Promise<void> {
 }
 
 export async function down(knex: Knex): Promise<void> {
-  await knex.raw(`DROP MATERIALIZED VIEW IF EXISTS ${WEEKLY_VIEW};`);
-  await knex.raw(`DROP MATERIALIZED VIEW IF EXISTS ${SESSION_VIEW};`);
+  // Drop in reverse order with CASCADE to handle dependencies
+  // 1. Drop trigger and function first (they were recreated in up())
+  await knex.raw(`DROP TRIGGER IF EXISTS trg_session_summary_refresh ON sessions CASCADE;`);
+  await knex.raw(`DROP FUNCTION IF EXISTS session_summary_refresh_trigger() CASCADE;`);
+  await knex.raw(`DROP VIEW IF EXISTS v_session_summary CASCADE;`);
+
+  // 2. Drop materialized views
+  await knex.raw(`DROP MATERIALIZED VIEW IF EXISTS ${WEEKLY_VIEW} CASCADE;`);
+  await knex.raw(`DROP MATERIALIZED VIEW IF EXISTS ${SESSION_VIEW} CASCADE;`);
+
+  // 3. Recreate legacy version (without trigger/function - those will be recreated by 202510140028's down() if needed)
   await knex.raw(LEGACY_SESSION_VIEW_SQL);
 }

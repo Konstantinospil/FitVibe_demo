@@ -24,6 +24,7 @@ export default tseslint.config(
       "**/*.cjs",
       "**/*.mjs",
       "tests/**/*.cjs", // E2E test configs
+      "tests/setup/test-helpers.ts", // Test helper file not in tsconfig
     ],
   },
   js.configs.recommended,

@@ -101,4 +101,94 @@ describe("errorHandler middleware", () => {
     expect(next).toHaveBeenCalledWith(expect.any(Error));
     expect(status).not.toHaveBeenCalled();
   });
+
+  it("handles non-Error objects without status", () => {
+    const { res, status, json } = createResponse();
+    const next = jest.fn() as NextFunction;
+
+    errorHandler("string error", {} as Request, res, next);
+
+    expect(status).toHaveBeenCalledWith(500);
+    expect(json).toHaveBeenCalledWith({
+      error: {
+        code: "INTERNAL_ERROR",
+        message: "Internal server error",
+        requestId: "req-123",
+      },
+    });
+    expect(next).not.toHaveBeenCalled();
+  });
+
+  it("handles errors with status 500 code mapping", () => {
+    const { res, status, json } = createResponse();
+    const next = jest.fn() as NextFunction;
+    const err = Object.assign(new Error("Server error"), { status: 500 });
+
+    errorHandler(err, {} as Request, res, next);
+
+    expect(status).toHaveBeenCalledWith(500);
+    expect(json).toHaveBeenCalledWith({
+      error: {
+        code: "INTERNAL_ERROR",
+        message: "Server error",
+        requestId: "req-123",
+      },
+    });
+  });
+
+  it("handles errors with non-500 status code mapping", () => {
+    const { res, status, json } = createResponse();
+    const next = jest.fn() as NextFunction;
+    const err = Object.assign(new Error("Not found"), { status: 404 });
+
+    errorHandler(err, {} as Request, res, next);
+
+    expect(status).toHaveBeenCalledWith(404);
+    expect(json).toHaveBeenCalledWith({
+      error: {
+        code: "UNEXPECTED_ERROR",
+        message: "Not found",
+        requestId: "req-123",
+      },
+    });
+  });
+
+  it("handles HttpError without details", () => {
+    const { res, status, json } = createResponse();
+    const next = jest.fn() as NextFunction;
+    const err = new HttpError(403, "FORBIDDEN", "Access denied");
+
+    errorHandler(err, {} as Request, res, next);
+
+    expect(status).toHaveBeenCalledWith(403);
+    expect(json).toHaveBeenCalledWith({
+      error: {
+        code: "FORBIDDEN",
+        message: "Access denied",
+        requestId: "req-123",
+      },
+    });
+  });
+
+  it("handles response with no requestId", () => {
+    const json = jest.fn();
+    const status = jest.fn().mockReturnValue({ json });
+    const res = {
+      locals: {},
+      headersSent: false,
+      status,
+    } as unknown as Response;
+    const next = jest.fn() as NextFunction;
+    const err = new HttpError(404, "NOT_FOUND", "Not found");
+
+    errorHandler(err, {} as Request, res, next);
+
+    expect(json).toHaveBeenCalledWith({
+      error: {
+        code: "NOT_FOUND",
+        message: "Not found",
+        requestId: undefined,
+      },
+    });
+  });
 });

@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars, @typescript-eslint/no-unsafe-argument */
 import { HttpError } from "../../../utils/http.js";
 import {
   blockUserByAlias,
@@ -339,7 +338,7 @@ describe("feed.service", () => {
 
     const result = await getSharedSession("token");
     expect(result.session?.id).toBe("session-1");
-    expect(result.feedItem?.id).toBe("feed-1");
+    expect((result.feedItem as { id?: string })?.id).toBe("feed-1");
     expect(mockedIncrementShareLinkView).toHaveBeenCalledWith("share-1");
   });
 

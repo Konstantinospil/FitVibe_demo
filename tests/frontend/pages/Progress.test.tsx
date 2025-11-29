@@ -138,35 +138,71 @@ describe("Progress page", () => {
   });
 
   it("should handle export progress", async () => {
+    // Ensure required globals exist
+    if (typeof document === "undefined" || !document.createElement) {
+      throw new Error("document.createElement is not available in test environment");
+    }
+    if (typeof global === "undefined") {
+      throw new Error("global is not available in test environment");
+    }
+
     const mockBlob = new Blob(["test"], { type: "text/csv" });
     vi.mocked(api.exportProgress).mockResolvedValue(mockBlob);
     vi.mocked(api.getProgressTrends).mockResolvedValue([]);
     vi.mocked(api.getExerciseBreakdown).mockResolvedValue({ exercises: [], period: 30 });
 
+    // Mock window.URL.createObjectURL (the code uses window.URL, not global.URL)
     const createObjectURLSpy = vi.fn(() => "blob:test");
-    const originalCreateObjectURL = global.URL.createObjectURL.bind(global.URL);
-    global.URL.createObjectURL = createObjectURLSpy;
+
+    // Ensure window.URL exists and save original
+    let originalCreateObjectURL: ((blob: Blob) => string) | undefined;
+    if (!window.URL) {
+      (window as { URL: typeof URL }).URL = {
+        createObjectURL: createObjectURLSpy,
+        revokeObjectURL: vi.fn(),
+      } as typeof URL;
+    } else {
+      // Save original if it exists (may be undefined in jsdom)
+      originalCreateObjectURL =
+        "createObjectURL" in window.URL && typeof window.URL.createObjectURL === "function"
+          ? window.URL.createObjectURL
+          : undefined;
+      // Set the mock
+      window.URL.createObjectURL = createObjectURLSpy;
+    }
+
+    // Mock document.createElement for anchor elements
+    // Ensure document is available
+    if (
+      typeof document === "undefined" ||
+      !document ||
+      typeof document.createElement !== "function"
+    ) {
+      throw new Error("document.createElement is not available in test environment");
+    }
 
     const clickSpy = vi.fn();
     const removeSpy = vi.fn();
 
-    // Save original createElement before mocking
-    const originalCreateElement = (tagName: string) => document.createElement(tagName);
-
-    // Create a real anchor element using original method
-    const anchorElement = originalCreateElement("a");
+    // Create anchor element - document should be available in jsdom
+    const anchorElement = document.createElement("a");
     anchorElement.click = clickSpy;
     anchorElement.remove = removeSpy;
 
-    const createElementSpy = vi
-      .spyOn(document, "createElement")
-      .mockImplementation((tagName: string) => {
-        if (tagName === "a") {
-          return anchorElement;
-        }
-        // For other elements, use the original implementation
-        return originalCreateElement(tagName);
-      });
+    // Spy on createElement
+    const createElementSpy = vi.spyOn(document, "createElement");
+    const originalImpl = createElementSpy.getOriginalImplementation();
+    createElementSpy.mockImplementation((tagName: string) => {
+      if (tagName === "a") {
+        return anchorElement;
+      }
+      // For other elements, use the original implementation
+      if (originalImpl) {
+        return originalImpl.call(document, tagName);
+      }
+      // Fallback - should not happen if document is available
+      throw new Error(`Cannot create element ${tagName}: document.createElement not available`);
+    });
 
     renderProgress();
 
@@ -182,7 +218,7 @@ describe("Progress page", () => {
     });
 
     createElementSpy.mockRestore();
-    global.URL.createObjectURL = originalCreateObjectURL;
+    // Note: URL.createObjectURL mock will be cleaned up by vi.restoreAllMocks in beforeEach
   });
 
   it("should switch between preset and custom range", () => {

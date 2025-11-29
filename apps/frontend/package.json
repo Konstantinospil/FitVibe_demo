@@ -8,7 +8,7 @@
     "preview": "vite preview",
     "lint": "eslint \"src\" --max-warnings=0",
     "lint:check": "turbo run lint -- --max-warnings=0",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.test.json",
     "test": "node ./scripts/run-vitest.mjs",
     "test:watch": "vitest"
   },

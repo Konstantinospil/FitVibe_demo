@@ -266,7 +266,7 @@ describe("Exercise Types Service", () => {
       mockExerciseTypesRepo.getExerciseType
         .mockResolvedValueOnce(existingType)
         .mockResolvedValueOnce(updatedType);
-      mockExerciseTypesRepo.updateExerciseType.mockResolvedValue(undefined);
+      mockExerciseTypesRepo.updateExerciseType.mockResolvedValue(1);
       mockAuditUtil.insertAudit.mockResolvedValue(undefined);
       mockCacheInstance.keys.mockReturnValue(["types_default"]);
 
@@ -311,7 +311,7 @@ describe("Exercise Types Service", () => {
       mockExerciseTypesRepo.getExerciseType
         .mockResolvedValueOnce(existingType)
         .mockResolvedValueOnce(existingType);
-      mockExerciseTypesRepo.updateExerciseType.mockResolvedValue(undefined);
+      mockExerciseTypesRepo.updateExerciseType.mockResolvedValue(1);
       mockCacheInstance.keys.mockReturnValue([]);
 
       await exerciseTypesService.editType("barbell_squat", { name: "Updated" });
@@ -328,7 +328,7 @@ describe("Exercise Types Service", () => {
       };
 
       mockExerciseTypesRepo.getExerciseType.mockResolvedValue(existingType);
-      mockExerciseTypesRepo.updateExerciseType.mockResolvedValue(undefined);
+      mockExerciseTypesRepo.updateExerciseType.mockResolvedValue(1);
       mockCacheInstance.keys.mockReturnValue(["types_default", "types_de-DE"]);
 
       await exerciseTypesService.editType("barbell_squat", { name: "Updated" });
@@ -346,7 +346,7 @@ describe("Exercise Types Service", () => {
       };
 
       mockExerciseTypesRepo.getExerciseType.mockResolvedValue(existingType);
-      mockExerciseTypesRepo.deleteExerciseType.mockResolvedValue(undefined);
+      mockExerciseTypesRepo.deleteExerciseType.mockResolvedValue(1);
       mockAuditUtil.insertAudit.mockResolvedValue(undefined);
       mockCacheInstance.keys.mockReturnValue(["types_default"]);
 
@@ -381,7 +381,7 @@ describe("Exercise Types Service", () => {
       };
 
       mockExerciseTypesRepo.getExerciseType.mockResolvedValue(existingType);
-      mockExerciseTypesRepo.deleteExerciseType.mockResolvedValue(undefined);
+      mockExerciseTypesRepo.deleteExerciseType.mockResolvedValue(1);
       mockCacheInstance.keys.mockReturnValue([]);
 
       await exerciseTypesService.removeType("barbell_squat");
@@ -398,7 +398,7 @@ describe("Exercise Types Service", () => {
       };
 
       mockExerciseTypesRepo.getExerciseType.mockResolvedValue(existingType);
-      mockExerciseTypesRepo.deleteExerciseType.mockResolvedValue(undefined);
+      mockExerciseTypesRepo.deleteExerciseType.mockResolvedValue(1);
       mockCacheInstance.keys.mockReturnValue(["types_default", "types_en-US", "other_cache_key"]);
 
       await exerciseTypesService.removeType("barbell_squat");

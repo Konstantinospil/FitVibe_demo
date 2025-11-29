@@ -26,7 +26,7 @@ jest.mock("../../../db/connection.js", () => ({
 const mockedGetCompletedSessionDatesInRange =
   getCompletedSessionDatesInRange as jest.MockedFunction<typeof getCompletedSessionDatesInRange>;
 const mockedInsertPointsEvent = insertPointsEvent as jest.MockedFunction<typeof insertPointsEvent>;
-const mockedUuid = uuidv4 as jest.MockedFunction<typeof uuidv4>;
+const mockedUuid = uuidv4 as jest.MockedFunction<() => string>;
 
 type TransactionHandler = (trx: Knex.Transaction) => unknown;
 type DbMock = jest.Mock & {

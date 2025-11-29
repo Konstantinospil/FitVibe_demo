@@ -51,6 +51,9 @@ describe("Q-10 email verification policies", () => {
     updated_at: new Date("2025-10-20T00:00:00.000Z").toISOString(),
     primary_email: "jamie@fitvibe.test",
     email_verified: false,
+    terms_accepted: true,
+    terms_accepted_at: "2025-10-20T00:00:00.000Z",
+    terms_version: "2024-01-01",
   };
 
   beforeAll(() => {
@@ -79,6 +82,7 @@ describe("Q-10 email verification policies", () => {
         email: pendingUser.primary_email ?? "",
         username: pendingUser.username,
         password: "StrongPassw0rd!",
+        terms_accepted: true,
       });
 
       expect(result.user?.id).toBe(pendingUser.id);
@@ -118,6 +122,7 @@ describe("Q-10 email verification policies", () => {
           email: pendingUser.primary_email ?? "",
           username: pendingUser.username,
           password: "StrongPassw0rd!",
+          terms_accepted: true,
         }),
       ).rejects.toMatchObject({
         status: 429,

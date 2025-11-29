@@ -6,7 +6,7 @@
  * 2. Stage 2: User verifies 2FA code with pendingSessionId, receives tokens
  */
 
-import { describe, it, expect, beforeEach, afterEach, jest } from "@jest/globals";
+import { describe, it, expect, beforeEach, afterEach } from "@jest/globals";
 import * as authService from "../auth.service";
 import * as twofaService from "../twofa.service";
 import * as authRepo from "../auth.repository";
@@ -38,11 +38,18 @@ describe("2-Stage Login Flow (AC-1.6)", () => {
   const mockUser: AuthUserRecord = {
     id: "user-123",
     username: "testuser",
+    display_name: "Test User",
+    locale: "en-US",
+    preferred_lang: "en",
     primary_email: "test@example.com",
+    email_verified: true,
     role_code: "athlete",
     status: "active",
     created_at: "2024-01-01T00:00:00Z",
+    updated_at: "2024-01-01T00:00:00Z",
     password_hash: "hashed-password",
+    terms_accepted: true,
+    terms_accepted_at: "2024-01-01T00:00:00Z",
     terms_version: getCurrentTermsVersion(), // Set current terms version
   };
 
@@ -129,16 +136,20 @@ describe("2-Stage Login Flow (AC-1.6)", () => {
       const bcrypt = jest.mocked(await import("bcryptjs"));
       jest.mocked(bcrypt.compare).mockResolvedValue(true as never);
       mockTwofaService.is2FAEnabled.mockResolvedValue(false);
-      mockAuthRepo.createAuthSession.mockResolvedValue(undefined);
-      mockAuthRepo.insertRefreshToken.mockResolvedValue(undefined);
+      mockAuthRepo.createAuthSession.mockResolvedValue([]);
+      mockAuthRepo.insertRefreshToken.mockResolvedValue([]);
 
       const jwt = jest.mocked(await import("jsonwebtoken"));
       jest.mocked(jwt.sign).mockReturnValue("mock-jwt-token" as never);
 
       const crypto = jest.mocked(await import("crypto"));
-      const mockHashInstance = {
-        update: jest.fn<() => typeof mockHashInstance>().mockReturnThis(),
-        digest: jest.fn<() => string>().mockReturnValue("mock-hash"),
+      interface MockHashInstance {
+        update: jest.Mock<MockHashInstance, [data: string | Buffer]>;
+        digest: jest.Mock<string, [encoding?: string]>;
+      }
+      const mockHashInstance: MockHashInstance = {
+        update: jest.fn<MockHashInstance, [data: string | Buffer]>().mockReturnThis(),
+        digest: jest.fn<string, [encoding?: string]>().mockReturnValue("mock-hash"),
       };
       jest.mocked(crypto.createHash).mockReturnValue(mockHashInstance as never);
 
@@ -177,17 +188,21 @@ describe("2-Stage Login Flow (AC-1.6)", () => {
       mockTwofaService.verify2FACode.mockResolvedValue(true);
       mockPending2faRepo.markPending2FASessionVerified.mockResolvedValue(undefined);
       mockAuthRepo.findUserById.mockResolvedValue(mockUser);
-      mockAuthRepo.createAuthSession.mockResolvedValue(undefined);
-      mockAuthRepo.insertRefreshToken.mockResolvedValue(undefined);
+      mockAuthRepo.createAuthSession.mockResolvedValue([]);
+      mockAuthRepo.insertRefreshToken.mockResolvedValue([]);
       mockPending2faRepo.deletePending2FASession.mockResolvedValue(undefined);
 
       const jwt = jest.mocked(await import("jsonwebtoken"));
       jest.mocked(jwt.sign).mockReturnValue("mock-jwt-token" as never);
 
       const crypto = jest.mocked(await import("crypto"));
-      const mockHashInstance = {
-        update: jest.fn<() => typeof mockHashInstance>().mockReturnThis(),
-        digest: jest.fn<() => string>().mockReturnValue("mock-hash"),
+      interface MockHashInstance {
+        update: jest.Mock<MockHashInstance, [data: string | Buffer]>;
+        digest: jest.Mock<string, [encoding?: string]>;
+      }
+      const mockHashInstance: MockHashInstance = {
+        update: jest.fn<MockHashInstance, [data: string | Buffer]>().mockReturnThis(),
+        digest: jest.fn<string, [encoding?: string]>().mockReturnValue("mock-hash"),
       };
       jest.mocked(crypto.createHash).mockReturnValue(mockHashInstance as never);
 
@@ -326,17 +341,21 @@ describe("2-Stage Login Flow (AC-1.6)", () => {
       mockTwofaService.verify2FACode.mockResolvedValue(true);
       mockPending2faRepo.markPending2FASessionVerified.mockResolvedValue(undefined);
       mockAuthRepo.findUserById.mockResolvedValue(mockUser);
-      mockAuthRepo.createAuthSession.mockResolvedValue(undefined);
-      mockAuthRepo.insertRefreshToken.mockResolvedValue(undefined);
+      mockAuthRepo.createAuthSession.mockResolvedValue([]);
+      mockAuthRepo.insertRefreshToken.mockResolvedValue([]);
       mockPending2faRepo.deletePending2FASession.mockResolvedValue(undefined);
 
       const jwt = jest.mocked(await import("jsonwebtoken"));
       jest.mocked(jwt.sign).mockReturnValue("mock-jwt-token" as never);
 
       const crypto = jest.mocked(await import("crypto"));
-      const mockHashInstance = {
-        update: jest.fn<() => typeof mockHashInstance>().mockReturnThis(),
-        digest: jest.fn<() => string>().mockReturnValue("mock-hash"),
+      interface MockHashInstance {
+        update: jest.Mock<MockHashInstance, [data: string | Buffer]>;
+        digest: jest.Mock<string, [encoding?: string]>;
+      }
+      const mockHashInstance: MockHashInstance = {
+        update: jest.fn<MockHashInstance, [data: string | Buffer]>().mockReturnThis(),
+        digest: jest.fn<string, [encoding?: string]>().mockReturnValue("mock-hash"),
       };
       jest.mocked(crypto.createHash).mockReturnValue(mockHashInstance as never);
 

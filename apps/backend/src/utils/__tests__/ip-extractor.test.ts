@@ -4,6 +4,7 @@
 
 import { describe, it, expect, jest, beforeEach } from "@jest/globals";
 import type { Request } from "express";
+import type { Socket } from "net";
 import { extractClientIp, extractClientIpForRateLimit } from "../ip-extractor.js";
 import { env } from "../../config/env.js";
 
@@ -22,10 +23,10 @@ describe("IP Extractor", () => {
     mockReq = {
       socket: {
         remoteAddress: "192.168.1.1",
-      },
+      } as Partial<Socket> as Socket,
       ip: "192.168.1.1",
       headers: {},
-    };
+    } as Partial<Request>;
   });
 
   describe("extractClientIp", () => {
@@ -105,8 +106,8 @@ describe("IP Extractor", () => {
       jest.mocked(env).trustProxy = false;
       mockReq.socket = {
         remoteAddress: "::1",
-      };
-      mockReq.ip = "::1";
+      } as Partial<Socket> as Socket;
+      (mockReq as { ip?: string }).ip = "::1";
 
       const ip = extractClientIp(mockReq as Request);
 
@@ -116,7 +117,7 @@ describe("IP Extractor", () => {
     it("should return unknown if IP cannot be determined", () => {
       jest.mocked(env).trustProxy = false;
       mockReq.socket = undefined;
-      mockReq.ip = undefined;
+      (mockReq as { ip?: string }).ip = undefined;
 
       const ip = extractClientIp(mockReq as Request);
 
@@ -130,8 +131,8 @@ describe("IP Extractor", () => {
       };
       mockReq.socket = {
         remoteAddress: "192.168.1.1",
-      };
-      mockReq.ip = "192.168.1.1";
+      } as Partial<Socket> as Socket;
+      (mockReq as { ip?: string }).ip = "192.168.1.1";
 
       const ip = extractClientIp(mockReq as Request);
 

@@ -1,12 +1,47 @@
 import * as badgesService from "../badges.service.js";
 import * as pointsRepository from "../points.repository.js";
 import type { SessionWithExercises } from "../../sessions/sessions.types.js";
-import type { SessionMetricsSnapshot } from "../points.types.js";
+import type {
+  SessionMetricsSnapshot,
+  BadgeCatalogEntry,
+  BadgeAwardRecord,
+} from "../points.types.js";
 
 // Mock dependencies
 jest.mock("../points.repository.js");
 
 const mockPointsRepo = jest.mocked(pointsRepository);
+
+// Helper to create mock badge catalog
+function createMockBadgeCatalog(codes: string[]): Map<string, BadgeCatalogEntry> {
+  const catalog = new Map<string, BadgeCatalogEntry>();
+  for (const code of codes) {
+    catalog.set(code, {
+      code,
+      name: code.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase()),
+      description: `Badge for ${code}`,
+      category: "test",
+      priority: 1,
+      criteria: {},
+    });
+  }
+  return catalog;
+}
+
+// Helper to create mock badge award record
+function createMockBadgeAward(
+  userId: string,
+  badgeType: string,
+  sessionId: string,
+): BadgeAwardRecord {
+  return {
+    id: `badge-${Date.now()}`,
+    user_id: userId,
+    badge_type: badgeType,
+    metadata: { session_id: sessionId },
+    awarded_at: new Date().toISOString(),
+  };
+}
 
 describe("Badges Service", () => {
   let mockTrx: { commit: jest.Mock; rollback: jest.Mock };
@@ -32,20 +67,52 @@ describe("Badges Service", () => {
       } as SessionWithExercises;
 
       const mockMetrics: SessionMetricsSnapshot = {
+        averageRpe: null,
+        distanceMeters: 0,
         runDistanceMeters: 0,
         rideDistanceMeters: 0,
-        totalVolumeKg: 0,
-        totalReps: 0,
-        totalDurationSec: 0,
       };
 
-      mockPointsRepo.getBadgeCatalog.mockResolvedValue(
-        new Set(["first_session", "streak_7_day", "run_10k", "ride_100k"]),
-      );
+      const mockCatalog = new Map<string, BadgeCatalogEntry>();
+      mockCatalog.set("first_session", {
+        code: "first_session",
+        name: "First Session",
+        description: "Complete your first session",
+        category: "milestone",
+        priority: 1,
+        criteria: {},
+      });
+      mockCatalog.set("streak_7_day", {
+        code: "streak_7_day",
+        name: "7 Day Streak",
+        description: "Complete sessions for 7 days",
+        category: "streak",
+        priority: 2,
+        criteria: {},
+      });
+      mockCatalog.set("run_10k", {
+        code: "run_10k",
+        name: "10K Run",
+        description: "Run 10 kilometers",
+        category: "distance",
+        priority: 3,
+        criteria: {},
+      });
+      mockCatalog.set("ride_100k", {
+        code: "ride_100k",
+        name: "100K Ride",
+        description: "Ride 100 kilometers",
+        category: "distance",
+        priority: 4,
+        criteria: {},
+      });
+      mockPointsRepo.getBadgeCatalog.mockResolvedValue(mockCatalog);
       mockPointsRepo.getUserBadgeCodes.mockResolvedValue(new Set());
       mockPointsRepo.countCompletedSessions.mockResolvedValue(1);
       mockPointsRepo.getCompletedSessionDatesInRange.mockResolvedValue(new Set());
-      mockPointsRepo.insertBadgeAward.mockResolvedValue(undefined);
+      mockPointsRepo.insertBadgeAward.mockResolvedValue(
+        createMockBadgeAward("user-123", "first_session", "session-123"),
+      );
 
       const result = await badgesService.evaluateBadgesForSession({
         session: mockSession,
@@ -73,14 +140,15 @@ describe("Badges Service", () => {
       } as SessionWithExercises;
 
       const mockMetrics: SessionMetricsSnapshot = {
+        averageRpe: null,
+        distanceMeters: 0,
         runDistanceMeters: 0,
         rideDistanceMeters: 0,
-        totalVolumeKg: 0,
-        totalReps: 0,
-        totalDurationSec: 0,
       };
 
-      mockPointsRepo.getBadgeCatalog.mockResolvedValue(new Set(["first_session", "streak_7_day"]));
+      mockPointsRepo.getBadgeCatalog.mockResolvedValue(
+        createMockBadgeCatalog(["first_session", "streak_7_day"]),
+      );
       mockPointsRepo.getUserBadgeCodes.mockResolvedValue(new Set(["first_session"]));
       mockPointsRepo.getCompletedSessionDatesInRange.mockResolvedValue(new Set());
 
@@ -102,14 +170,13 @@ describe("Badges Service", () => {
       } as SessionWithExercises;
 
       const mockMetrics: SessionMetricsSnapshot = {
+        averageRpe: null,
+        distanceMeters: 0,
         runDistanceMeters: 0,
         rideDistanceMeters: 0,
-        totalVolumeKg: 0,
-        totalReps: 0,
-        totalDurationSec: 0,
       };
 
-      mockPointsRepo.getBadgeCatalog.mockResolvedValue(new Set(["first_session"]));
+      mockPointsRepo.getBadgeCatalog.mockResolvedValue(createMockBadgeCatalog(["first_session"]));
       mockPointsRepo.getUserBadgeCodes.mockResolvedValue(new Set());
       mockPointsRepo.countCompletedSessions.mockResolvedValue(5);
       mockPointsRepo.getCompletedSessionDatesInRange.mockResolvedValue(new Set());
@@ -131,14 +198,13 @@ describe("Badges Service", () => {
       } as SessionWithExercises;
 
       const mockMetrics: SessionMetricsSnapshot = {
+        averageRpe: null,
+        distanceMeters: 0,
         runDistanceMeters: 0,
         rideDistanceMeters: 0,
-        totalVolumeKg: 0,
-        totalReps: 0,
-        totalDurationSec: 0,
       };
 
-      mockPointsRepo.getBadgeCatalog.mockResolvedValue(new Set(["streak_7_day"]));
+      mockPointsRepo.getBadgeCatalog.mockResolvedValue(createMockBadgeCatalog(["streak_7_day"]));
       mockPointsRepo.getUserBadgeCodes.mockResolvedValue(new Set());
       mockPointsRepo.getCompletedSessionDatesInRange.mockResolvedValue(
         new Set([
@@ -151,7 +217,9 @@ describe("Badges Service", () => {
           "2024-01-07",
         ]),
       );
-      mockPointsRepo.insertBadgeAward.mockResolvedValue(undefined);
+      mockPointsRepo.insertBadgeAward.mockResolvedValue(
+        createMockBadgeAward("user-123", "first_session", "session-123"),
+      );
 
       const result = await badgesService.evaluateBadgesForSession({
         session: mockSession,
@@ -174,14 +242,13 @@ describe("Badges Service", () => {
       } as SessionWithExercises;
 
       const mockMetrics: SessionMetricsSnapshot = {
+        averageRpe: null,
+        distanceMeters: 0,
         runDistanceMeters: 0,
         rideDistanceMeters: 0,
-        totalVolumeKg: 0,
-        totalReps: 0,
-        totalDurationSec: 0,
       };
 
-      mockPointsRepo.getBadgeCatalog.mockResolvedValue(new Set(["streak_7_day"]));
+      mockPointsRepo.getBadgeCatalog.mockResolvedValue(createMockBadgeCatalog(["streak_7_day"]));
       mockPointsRepo.getUserBadgeCodes.mockResolvedValue(new Set());
       mockPointsRepo.getCompletedSessionDatesInRange.mockResolvedValue(
         new Set([
@@ -213,16 +280,17 @@ describe("Badges Service", () => {
       } as SessionWithExercises;
 
       const mockMetrics: SessionMetricsSnapshot = {
+        averageRpe: null,
+        distanceMeters: 10000,
         runDistanceMeters: 10000,
         rideDistanceMeters: 0,
-        totalVolumeKg: 0,
-        totalReps: 0,
-        totalDurationSec: 0,
       };
 
-      mockPointsRepo.getBadgeCatalog.mockResolvedValue(new Set(["run_10k"]));
+      mockPointsRepo.getBadgeCatalog.mockResolvedValue(createMockBadgeCatalog(["run_10k"]));
       mockPointsRepo.getUserBadgeCodes.mockResolvedValue(new Set());
-      mockPointsRepo.insertBadgeAward.mockResolvedValue(undefined);
+      mockPointsRepo.insertBadgeAward.mockResolvedValue(
+        createMockBadgeAward("user-123", "first_session", "session-123"),
+      );
 
       const result = await badgesService.evaluateBadgesForSession({
         session: mockSession,
@@ -243,14 +311,13 @@ describe("Badges Service", () => {
       } as SessionWithExercises;
 
       const mockMetrics: SessionMetricsSnapshot = {
+        averageRpe: null,
+        distanceMeters: 9999,
         runDistanceMeters: 9999,
         rideDistanceMeters: 0,
-        totalVolumeKg: 0,
-        totalReps: 0,
-        totalDurationSec: 0,
       };
 
-      mockPointsRepo.getBadgeCatalog.mockResolvedValue(new Set(["run_10k"]));
+      mockPointsRepo.getBadgeCatalog.mockResolvedValue(createMockBadgeCatalog(["run_10k"]));
       mockPointsRepo.getUserBadgeCodes.mockResolvedValue(new Set());
 
       const result = await badgesService.evaluateBadgesForSession({
@@ -270,16 +337,17 @@ describe("Badges Service", () => {
       } as SessionWithExercises;
 
       const mockMetrics: SessionMetricsSnapshot = {
+        averageRpe: null,
+        distanceMeters: 100000,
         runDistanceMeters: 0,
         rideDistanceMeters: 100000,
-        totalVolumeKg: 0,
-        totalReps: 0,
-        totalDurationSec: 0,
       };
 
-      mockPointsRepo.getBadgeCatalog.mockResolvedValue(new Set(["ride_100k"]));
+      mockPointsRepo.getBadgeCatalog.mockResolvedValue(createMockBadgeCatalog(["ride_100k"]));
       mockPointsRepo.getUserBadgeCodes.mockResolvedValue(new Set());
-      mockPointsRepo.insertBadgeAward.mockResolvedValue(undefined);
+      mockPointsRepo.insertBadgeAward.mockResolvedValue(
+        createMockBadgeAward("user-123", "first_session", "session-123"),
+      );
 
       const result = await badgesService.evaluateBadgesForSession({
         session: mockSession,
@@ -300,14 +368,13 @@ describe("Badges Service", () => {
       } as SessionWithExercises;
 
       const mockMetrics: SessionMetricsSnapshot = {
+        averageRpe: null,
+        distanceMeters: 99999,
         runDistanceMeters: 0,
         rideDistanceMeters: 99999,
-        totalVolumeKg: 0,
-        totalReps: 0,
-        totalDurationSec: 0,
       };
 
-      mockPointsRepo.getBadgeCatalog.mockResolvedValue(new Set(["ride_100k"]));
+      mockPointsRepo.getBadgeCatalog.mockResolvedValue(createMockBadgeCatalog(["ride_100k"]));
       mockPointsRepo.getUserBadgeCodes.mockResolvedValue(new Set());
 
       const result = await badgesService.evaluateBadgesForSession({
@@ -327,19 +394,20 @@ describe("Badges Service", () => {
       } as SessionWithExercises;
 
       const mockMetrics: SessionMetricsSnapshot = {
+        averageRpe: null,
+        distanceMeters: 110000,
         runDistanceMeters: 10000,
         rideDistanceMeters: 100000,
-        totalVolumeKg: 0,
-        totalReps: 0,
-        totalDurationSec: 0,
       };
 
       mockPointsRepo.getBadgeCatalog.mockResolvedValue(
-        new Set(["first_session", "run_10k", "ride_100k"]),
+        createMockBadgeCatalog(["first_session", "run_10k", "ride_100k"]),
       );
       mockPointsRepo.getUserBadgeCodes.mockResolvedValue(new Set());
       mockPointsRepo.countCompletedSessions.mockResolvedValue(1);
-      mockPointsRepo.insertBadgeAward.mockResolvedValue(undefined);
+      mockPointsRepo.insertBadgeAward.mockResolvedValue(
+        createMockBadgeAward("user-123", "first_session", "session-123"),
+      );
 
       const result = await badgesService.evaluateBadgesForSession({
         session: mockSession,
@@ -362,14 +430,13 @@ describe("Badges Service", () => {
       } as SessionWithExercises;
 
       const mockMetrics: SessionMetricsSnapshot = {
+        averageRpe: null,
+        distanceMeters: 10000,
         runDistanceMeters: 10000,
         rideDistanceMeters: 0,
-        totalVolumeKg: 0,
-        totalReps: 0,
-        totalDurationSec: 0,
       };
 
-      mockPointsRepo.getBadgeCatalog.mockResolvedValue(new Set()); // Empty catalog
+      mockPointsRepo.getBadgeCatalog.mockResolvedValue(new Map()); // Empty catalog
       mockPointsRepo.getUserBadgeCodes.mockResolvedValue(new Set());
 
       const result = await badgesService.evaluateBadgesForSession({
@@ -390,16 +457,17 @@ describe("Badges Service", () => {
       } as never;
 
       const mockMetrics: SessionMetricsSnapshot = {
+        averageRpe: null,
+        distanceMeters: 10000,
         runDistanceMeters: 10000,
         rideDistanceMeters: 0,
-        totalVolumeKg: 0,
-        totalReps: 0,
-        totalDurationSec: 0,
       };
 
-      mockPointsRepo.getBadgeCatalog.mockResolvedValue(new Set(["run_10k"]));
+      mockPointsRepo.getBadgeCatalog.mockResolvedValue(createMockBadgeCatalog(["run_10k"]));
       mockPointsRepo.getUserBadgeCodes.mockResolvedValue(new Set());
-      mockPointsRepo.insertBadgeAward.mockResolvedValue(undefined);
+      mockPointsRepo.insertBadgeAward.mockResolvedValue(
+        createMockBadgeAward("user-123", "first_session", "session-123"),
+      );
 
       const result = await badgesService.evaluateBadgesForSession({
         session: mockSession,

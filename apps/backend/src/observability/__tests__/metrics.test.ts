@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-argument */
 import type { Request, Response, NextFunction } from "express";
 import {
   metricsMiddleware,

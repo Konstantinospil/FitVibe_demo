@@ -18,8 +18,11 @@ export async function up(knex: Knex): Promise<void> {
 }
 
 export async function down(knex: Knex): Promise<void> {
-  await knex.raw("DROP TRIGGER IF EXISTS trg_session_summary_refresh ON sessions;");
-  await knex.raw("DROP FUNCTION IF EXISTS session_summary_refresh_trigger();");
+  // Drop trigger first to remove dependency on the function
+  await knex.raw("DROP TRIGGER IF EXISTS trg_session_summary_refresh ON sessions CASCADE;");
+  // Use CASCADE to handle case where later migrations (like 202510250102) may have left dependencies
+  // This is safe because we're rolling back to a state before this migration existed
+  await knex.raw("DROP FUNCTION IF EXISTS session_summary_refresh_trigger() CASCADE;");
   await knex.raw("DROP VIEW IF EXISTS v_session_summary;");
   await knex.raw("DROP MATERIALIZED VIEW IF EXISTS session_summary;");
 }

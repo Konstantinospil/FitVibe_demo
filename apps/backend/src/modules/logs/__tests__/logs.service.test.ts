@@ -31,7 +31,7 @@ describe("Logs Service", () => {
           outcome: "success",
           requestId: "req-1",
           metadata: {},
-          createdAt: new Date(),
+          createdAt: new Date().toISOString(),
         },
       ];
 

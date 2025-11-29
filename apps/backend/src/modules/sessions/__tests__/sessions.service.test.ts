@@ -117,7 +117,7 @@ describe("sessions.service", () => {
     mockedRefreshSessionSummary.mockReset();
     mockedSessionsExistAtDates.mockReset();
 
-    mockedCreateSession.mockResolvedValue([]);
+    mockedCreateSession.mockResolvedValue(1);
     mockedUpdateSession.mockResolvedValue(1);
     mockedCancelSession.mockResolvedValue(1);
     mockedReplaceSessionExercises.mockResolvedValue();
@@ -512,7 +512,7 @@ describe("sessions.service", () => {
       };
 
       mockedGetSessionWithDetails.mockResolvedValueOnce(source).mockResolvedValueOnce(cloned);
-      mockedCreateSession.mockResolvedValue([]);
+      mockedCreateSession.mockResolvedValue(1);
       mockedReplaceSessionExercises.mockResolvedValue();
 
       mockedUuid
@@ -613,7 +613,7 @@ describe("sessions.service", () => {
       };
 
       mockedGetSessionWithDetails.mockResolvedValueOnce(source).mockResolvedValueOnce(cloned);
-      mockedCreateSession.mockResolvedValue([]);
+      mockedCreateSession.mockResolvedValue(1);
       mockedReplaceSessionExercises.mockResolvedValue();
 
       mockedUuid
@@ -698,7 +698,7 @@ describe("sessions.service", () => {
         .mockResolvedValueOnce(source)
         .mockResolvedValueOnce(cloneOneSession)
         .mockResolvedValueOnce(cloneTwoSession);
-      mockedCreateSession.mockResolvedValue([]);
+      mockedCreateSession.mockResolvedValue(1);
       mockedReplaceSessionExercises.mockResolvedValue();
 
       mockedUuid

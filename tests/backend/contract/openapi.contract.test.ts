@@ -1,7 +1,10 @@
 import { zodToJsonSchema } from "zod-to-json-schema";
 import type { ZodTypeAny } from "zod";
-import { RegisterSchema, LoginSchema } from "../../src/modules/auth/auth.schemas.js";
-import openApiSpec from "../../openapi/openapi.json";
+import {
+  RegisterSchema,
+  LoginSchema,
+} from "../../../apps/backend/src/modules/auth/auth.schemas.js";
+import openApiSpec from "../../../apps/backend/openapi/openapi.json";
 
 type SchemaMapEntry = {
   name: string;

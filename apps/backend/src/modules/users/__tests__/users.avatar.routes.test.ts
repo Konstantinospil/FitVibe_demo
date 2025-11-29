@@ -17,7 +17,7 @@ jest.mock("../../common/rateLimiter.js", () => ({
 }));
 
 jest.mock("../../../utils/async-handler.js", () => ({
-  asyncHandler: jest.fn((fn) => fn),
+  asyncHandler: jest.fn((fn: unknown) => fn),
 }));
 
 jest.mock("multer", () => {
@@ -45,7 +45,9 @@ describe("Users Avatar Routes", () => {
   it("should register POST /avatar route", () => {
     const routes = usersAvatarRouter.stack;
     const postRoute = routes.find(
-      (layer) => layer.route?.path === "/avatar" && layer.route?.methods?.post,
+      (layer) =>
+        layer.route?.path === "/avatar" &&
+        (layer.route as { methods?: Record<string, boolean> })?.methods?.post,
     );
     expect(postRoute).toBeDefined();
   });
@@ -53,7 +55,9 @@ describe("Users Avatar Routes", () => {
   it("should register GET /avatar/:id route", () => {
     const routes = usersAvatarRouter.stack;
     const getRoute = routes.find(
-      (layer) => layer.route?.path === "/avatar/:id" && layer.route?.methods?.get,
+      (layer) =>
+        layer.route?.path === "/avatar/:id" &&
+        (layer.route as { methods?: Record<string, boolean> })?.methods?.get,
     );
     expect(getRoute).toBeDefined();
   });
@@ -61,7 +65,9 @@ describe("Users Avatar Routes", () => {
   it("should register DELETE /avatar route", () => {
     const routes = usersAvatarRouter.stack;
     const deleteRoute = routes.find(
-      (layer) => layer.route?.path === "/avatar" && layer.route?.methods?.delete,
+      (layer) =>
+        layer.route?.path === "/avatar" &&
+        (layer.route as { methods?: Record<string, boolean> })?.methods?.delete,
     );
     expect(deleteRoute).toBeDefined();
   });
