@@ -2,12 +2,12 @@
 
 ---
 
-**AC ID**: US-8.2-AC01  
-**Story ID**: [US-8.2](../user-stories/US-8.2-keyboard-navigation.md)  
-**Status**: Proposed  
-**Priority**: High  
-**Test Method**: Accessibility audit  
-**Created**: 2025-01-21  
+**AC ID**: US-8.2-AC01
+**Story ID**: [US-8.2](../user-stories/US-8.2-keyboard-navigation.md)
+**Status**: Proposed
+**Priority**: High
+**Test Method**: Accessibility audit
+**Created**: 2025-01-21
 **Updated**: 2025-01-21
 
 ---
@@ -58,6 +58,6 @@ Accessibility audits verify keyboard navigation and focus indicators.
 
 ---
 
-**Last Updated**: 2025-01-21  
-**Verified By**: {Name/Team}  
+**Last Updated**: 2025-01-21
+**Verified By**: {Name/Team}
 **Verified Date**: {YYYY-MM-DD}

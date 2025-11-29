@@ -2,12 +2,12 @@
 
 ---
 
-**AC ID**: US-8.4-AC02  
-**Story ID**: [US-8.4](../user-stories/US-8.4-screen-reader-support.md)  
-**Status**: Proposed  
-**Priority**: High  
-**Test Method**: Screen reader testing  
-**Created**: 2025-01-21  
+**AC ID**: US-8.4-AC02
+**Story ID**: [US-8.4](../user-stories/US-8.4-screen-reader-support.md)
+**Status**: Proposed
+**Priority**: High
+**Test Method**: Screen reader testing
+**Created**: 2025-01-21
 **Updated**: 2025-01-21
 
 ---
@@ -58,6 +58,6 @@ Screen reader testing verifies announcements and live regions.
 
 ---
 
-**Last Updated**: 2025-01-21  
-**Verified By**: {Name/Team}  
+**Last Updated**: 2025-01-21
+**Verified By**: {Name/Team}
 **Verified Date**: {YYYY-MM-DD}

@@ -2,12 +2,12 @@
 
 ---
 
-**AC ID**: US-8.3-AC02  
-**Story ID**: [US-8.3](../user-stories/US-8.3-color-contrast.md)  
-**Status**: Proposed  
-**Priority**: High  
-**Test Method**: Accessibility audit  
-**Created**: 2025-01-21  
+**AC ID**: US-8.3-AC02
+**Story ID**: [US-8.3](../user-stories/US-8.3-color-contrast.md)
+**Status**: Proposed
+**Priority**: High
+**Test Method**: Accessibility audit
+**Created**: 2025-01-21
 **Updated**: 2025-01-21
 
 ---
@@ -58,6 +58,6 @@ Accessibility audits verify alternative indicators for color-coded information.
 
 ---
 
-**Last Updated**: 2025-01-21  
-**Verified By**: {Name/Team}  
+**Last Updated**: 2025-01-21
+**Verified By**: {Name/Team}
 **Verified Date**: {YYYY-MM-DD}

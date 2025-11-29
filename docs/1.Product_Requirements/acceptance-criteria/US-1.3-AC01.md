@@ -2,12 +2,12 @@
 
 ---
 
-**AC ID**: US-1.3-AC01  
-**Story ID**: [US-1.3](../user-stories/US-1.3-profile-testing.md)  
-**Status**: Proposed  
-**Priority**: Medium  
-**Test Method**: Unit  
-**Created**: 2025-01-21  
+**AC ID**: US-1.3-AC01
+**Story ID**: [US-1.3](../user-stories/US-1.3-profile-testing.md)
+**Status**: Proposed
+**Priority**: Medium
+**Test Method**: Unit
+**Created**: 2025-01-21
 **Updated**: 2025-01-21
 
 ---
@@ -51,6 +51,6 @@ Unit tests verify business logic coverage.
 
 ---
 
-**Last Updated**: 2025-01-21  
-**Verified By**: {Name/Team}  
+**Last Updated**: 2025-01-21
+**Verified By**: {Name/Team}
 **Verified Date**: {YYYY-MM-DD}

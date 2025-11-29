@@ -2,12 +2,12 @@
 
 ---
 
-**AC ID**: US-9.4-AC02  
-**Story ID**: [US-9.4](../user-stories/US-9.4-grafana-dashboards.md)  
-**Status**: Proposed  
-**Priority**: Medium  
-**Test Method**: Ops review  
-**Created**: 2025-01-21  
+**AC ID**: US-9.4-AC02
+**Story ID**: [US-9.4](../user-stories/US-9.4-grafana-dashboards.md)
+**Status**: Proposed
+**Priority**: Medium
+**Test Method**: Ops review
+**Created**: 2025-01-21
 **Updated**: 2025-01-21
 
 ---
@@ -58,6 +58,6 @@ Ops review verifies dashboard configuration and access.
 
 ---
 
-**Last Updated**: 2025-01-21  
-**Verified By**: {Name/Team}  
+**Last Updated**: 2025-01-21
+**Verified By**: {Name/Team}
 **Verified Date**: {YYYY-MM-DD}

@@ -2,12 +2,12 @@
 
 ---
 
-**AC ID**: US-8.7-AC01  
-**Story ID**: [US-8.7](../user-stories/US-8.7-lighthouse-compliance.md)  
-**Status**: Proposed  
-**Priority**: High  
-**Test Method**: Lighthouse CI  
-**Created**: 2025-01-21  
+**AC ID**: US-8.7-AC01
+**Story ID**: [US-8.7](../user-stories/US-8.7-lighthouse-compliance.md)
+**Status**: Proposed
+**Priority**: High
+**Test Method**: Lighthouse CI
+**Created**: 2025-01-21
 **Updated**: 2025-01-21
 
 ---
@@ -58,6 +58,6 @@ Lighthouse CI runs verify accessibility score.
 
 ---
 
-**Last Updated**: 2025-01-21  
-**Verified By**: {Name/Team}  
+**Last Updated**: 2025-01-21
+**Verified By**: {Name/Team}
 **Verified Date**: {YYYY-MM-DD}

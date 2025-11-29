@@ -2,12 +2,12 @@
 
 ---
 
-**AC ID**: US-7.8-AC02  
-**Story ID**: [US-7.8](../user-stories/US-7.8-performance-monitoring.md)  
-**Status**: Proposed  
-**Priority**: High  
-**Test Method**: Ops review  
-**Created**: 2025-01-21  
+**AC ID**: US-7.8-AC02
+**Story ID**: [US-7.8](../user-stories/US-7.8-performance-monitoring.md)
+**Status**: Proposed
+**Priority**: High
+**Test Method**: Ops review
+**Created**: 2025-01-21
 **Updated**: 2025-01-21
 
 ---
@@ -58,6 +58,6 @@ Ops review of alert configuration and testing.
 
 ---
 
-**Last Updated**: 2025-01-21  
-**Verified By**: {Name/Team}  
+**Last Updated**: 2025-01-21
+**Verified By**: {Name/Team}
 **Verified Date**: {YYYY-MM-DD}

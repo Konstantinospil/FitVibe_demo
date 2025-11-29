@@ -2,12 +2,12 @@
 
 ---
 
-**AC ID**: US-9.6-AC01  
-**Story ID**: [US-9.6](../user-stories/US-9.6-log-aggregation.md)  
-**Status**: Proposed  
-**Priority**: Medium  
-**Test Method**: Ops review  
-**Created**: 2025-01-21  
+**AC ID**: US-9.6-AC01
+**Story ID**: [US-9.6](../user-stories/US-9.6-log-aggregation.md)
+**Status**: Proposed
+**Priority**: Medium
+**Test Method**: Ops review
+**Created**: 2025-01-21
 **Updated**: 2025-01-21
 
 ---
@@ -58,6 +58,6 @@ Ops review verifies log aggregation and search functionality.
 
 ---
 
-**Last Updated**: 2025-01-21  
-**Verified By**: {Name/Team}  
+**Last Updated**: 2025-01-21
+**Verified By**: {Name/Team}
 **Verified Date**: {YYYY-MM-DD}

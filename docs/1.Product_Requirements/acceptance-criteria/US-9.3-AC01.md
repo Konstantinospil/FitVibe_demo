@@ -2,12 +2,12 @@
 
 ---
 
-**AC ID**: US-9.3-AC01  
-**Story ID**: [US-9.3](../user-stories/US-9.3-opentelemetry-tracing.md)  
-**Status**: Proposed  
-**Priority**: Medium  
-**Test Method**: Integration  
-**Created**: 2025-01-21  
+**AC ID**: US-9.3-AC01
+**Story ID**: [US-9.3](../user-stories/US-9.3-opentelemetry-tracing.md)
+**Status**: Proposed
+**Priority**: Medium
+**Test Method**: Integration
+**Created**: 2025-01-21
 **Updated**: 2025-01-21
 
 ---
@@ -58,6 +58,6 @@ Integration tests verify tracing configuration and span content.
 
 ---
 
-**Last Updated**: 2025-01-21  
-**Verified By**: {Name/Team}  
+**Last Updated**: 2025-01-21
+**Verified By**: {Name/Team}
 **Verified Date**: {YYYY-MM-DD}

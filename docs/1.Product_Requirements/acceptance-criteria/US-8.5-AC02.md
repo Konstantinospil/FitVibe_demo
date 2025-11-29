@@ -2,12 +2,12 @@
 
 ---
 
-**AC ID**: US-8.5-AC02  
-**Story ID**: [US-8.5](../user-stories/US-8.5-focus-management.md)  
-**Status**: Proposed  
-**Priority**: High  
-**Test Method**: Accessibility audit  
-**Created**: 2025-01-21  
+**AC ID**: US-8.5-AC02
+**Story ID**: [US-8.5](../user-stories/US-8.5-focus-management.md)
+**Status**: Proposed
+**Priority**: High
+**Test Method**: Accessibility audit
+**Created**: 2025-01-21
 **Updated**: 2025-01-21
 
 ---
@@ -57,6 +57,6 @@ Accessibility audits verify dynamic content focus management.
 
 ---
 
-**Last Updated**: 2025-01-21  
-**Verified By**: {Name/Team}  
+**Last Updated**: 2025-01-21
+**Verified By**: {Name/Team}
 **Verified Date**: {YYYY-MM-DD}
