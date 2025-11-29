@@ -5,7 +5,7 @@ import { seed as seedGenders } from "../002_genders.js";
 import { seed as seedFitnessLevels } from "../003_fitness_levels.js";
 import { seed as seedExerciseTypes } from "../004_exercise_types.js";
 import { seed as seedUsers } from "../005_users.js";
-import { seed as seedUserStatic } from "../Demo Data/006_user_static.js";
+import { seed as seedProfiles } from "../Demo Data/006_profiles.js";
 import { seed as seedUserContacts } from "../Demo Data/007_user_contacts.js";
 import { seed as seedUserMetrics } from "../Demo Data/008_user_metrics.js";
 import { seed as seedExercises } from "../Demo Data/009_exercises.js";
@@ -147,7 +147,7 @@ describe("database seed modules", () => {
     },
     {
       name: "profiles",
-      seedFn: seedUserStatic,
+      seedFn: seedProfiles,
       table: "profiles",
       conflict: "user_id",
       strategy: "merge",
@@ -270,7 +270,7 @@ describe("database seed modules", () => {
     async ({ seedFn, table, conflict, strategy, sampleMatcher, rawCalls, assertInsert }) => {
       const { knex, knexSpy, rawMock, schemaMock, getChain } = createKnexMock();
 
-      // For the profiles/user_static seed, mock hasTable to return true for "profiles"
+      // For the profiles seed, mock hasTable to return true for "profiles"
       if (table === "profiles") {
         schemaMock.hasTable.mockResolvedValue(true);
       }
