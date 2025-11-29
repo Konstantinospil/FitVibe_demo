@@ -1751,6 +1751,417 @@ This document groups activities from the Epics and Activities document into user
 
 ---
 
+## Epic 12: Coach Training Unit Assignment (FR-012)
+
+### US-12.1: Manage Coach-Athlete Relationships
+
+**As a** coach
+**I want** to establish and manage relationships with athletes
+**So that** I can assign training units to them
+
+**Activities:**
+
+- E12-A1: Coach-Athlete Relationship API
+- E12-A11: Coach-Athlete Management Frontend
+- E12-A14: Coach-Athlete Relationship Tests
+
+**Story Points**: 5
+**Priority**: High
+**Dependencies**: FR-001, FR-002, FR-008
+
+**Acceptance Criteria:**
+
+- **US-12.1-AC01**: Coaches can create consent-based relationships with athletes via POST /api/v1/coaches/athletes; relationships require athlete consent before activation.
+  - Test Method: Integration + E2E
+  - Evidence: Relationship creation tests, consent flow verification
+
+- **US-12.1-AC02**: Coaches can list their athletes via GET /api/v1/coaches/athletes with pagination; athletes can list their coaches via GET /api/v1/athletes/coaches.
+  - Test Method: Integration + E2E
+  - Evidence: List endpoints tests, UI screenshots
+
+- **US-12.1-AC03**: Either party can revoke the relationship via DELETE /api/v1/coaches/athletes/:id; revocation takes effect immediately and prevents further assignments.
+  - Test Method: Integration + E2E
+  - Evidence: Revocation tests, access control verification
+
+- **US-12.1-AC04**: Frontend UI allows coaches to manage athlete relationships with search, filter, and relationship status display.
+  - Test Method: E2E
+  - Evidence: UI screenshots, relationship management workflow
+
+- **US-12.1-AC05**: Access control tests verify coaches can only manage their own relationships; athletes can only see their assigned coaches.
+  - Test Method: Integration + Security
+  - Evidence: Access control test results, security audit
+
+---
+
+### US-12.2: Create and Manage Training Units
+
+**As a** coach
+**I want** to create and manage training units with exercises and repeat counts
+**So that** I can build a library of training programs
+
+**Activities:**
+
+- E12-A2: Training Unit Data Model
+- E12-A3: Training Unit CRUD API
+- E12-A8: Training Unit Library Frontend
+- E12-A9: Training Unit Creation Frontend
+
+**Story Points**: 8
+**Priority**: High
+**Dependencies**: FR-010
+
+**Acceptance Criteria:**
+
+- **US-12.2-AC01**: Training units data model created with training_units table including fields: id, coach_id, name, description, exercises (JSONB), repeat_count, metadata, created_at, updated_at, archived_at.
+  - Test Method: Integration
+  - Evidence: Migration file, schema verification, DB snapshot
+
+- **US-12.2-AC02**: Coaches can create training units via POST /api/v1/training-units with exercises array and repeat count; training unit saved within ≤500ms.
+  - Test Method: Integration + E2E
+  - Evidence: Creation tests, API response times, DB records
+
+- **US-12.2-AC03**: Coaches can read, update, and archive their training units via GET/PATCH/DELETE /api/v1/training-units/:id; archived units are soft-deleted.
+  - Test Method: Integration + E2E
+  - Evidence: CRUD operation tests, archival verification
+
+- **US-12.2-AC04**: Training unit library frontend displays all coach's training units with search, filter, and list views; supports pagination.
+  - Test Method: E2E
+  - Evidence: Library UI screenshots, search functionality tests
+
+- **US-12.2-AC05**: Training unit creation/editing UI allows adding exercises, setting repeat counts, and managing metadata with proper validation.
+  - Test Method: E2E
+  - Evidence: Creation UI screenshots, form validation tests
+
+---
+
+### US-12.3: Assign Training Units to Athletes
+
+**As a** coach
+**I want** to assign training units to athletes with date selection and exercise modifications
+**So that** I can provide personalized training programs
+
+**Activities:**
+
+- E12-A4: Exercise Repeat/Rounds Logic
+- E12-A5: Training Unit Assignment API
+- E12-A6: Exercise Modification API
+- E12-A7: Bulk Assignment API
+- E12-A10: Assignment Frontend
+- E12-A12: Assignment History Frontend
+
+**Story Points**: 10
+**Priority**: High
+**Dependencies**: US-12.1, US-12.2, FR-004
+
+**Acceptance Criteria:**
+
+- **US-12.3-AC01**: Exercise repeat/rounds logic duplicates exercises based on repeat_count when creating sessions; logic handles nested repeats correctly.
+  - Test Method: Integration
+  - Evidence: Repeat logic tests, session generation verification
+
+- **US-12.3-AC02**: Coaches can assign training units to athletes via POST /api/v1/training-units/:id/assign with athlete_id and planned_at date; assignment creates planned sessions.
+  - Test Method: Integration + E2E
+  - Evidence: Assignment tests, session creation verification
+
+- **US-12.3-AC03**: Coaches can modify exercise parameters (weight, substitution, intensity) during assignment via assignment API with exercise_modifications array.
+  - Test Method: Integration + E2E
+  - Evidence: Modification tests, parameter override verification
+
+- **US-12.3-AC04**: Bulk assignment endpoint POST /api/v1/training-units/:id/assign-bulk allows assigning to multiple athletes efficiently; supports up to 50 athletes per request.
+  - Test Method: Integration
+  - Evidence: Bulk assignment tests, performance metrics
+
+- **US-12.3-AC05**: Assignment frontend UI provides athlete selection, date picker, exercise modification interface, and assignment confirmation.
+  - Test Method: E2E
+  - Evidence: Assignment UI screenshots, workflow tests
+
+- **US-12.3-AC06**: Assignment history frontend displays all assignments with filtering by athlete, date range, and completion status; supports pagination.
+  - Test Method: E2E
+  - Evidence: History UI screenshots, filter functionality tests
+
+---
+
+### US-12.4: Training Unit Testing
+
+**As a** developer
+**I want** comprehensive tests for training unit functionality
+**So that** I can ensure coach-athlete features work correctly
+
+**Activities:**
+
+- E12-A13: Training Unit Tests
+
+**Story Points**: 3
+**Priority**: High
+**Dependencies**: US-12.2, US-12.3
+
+**Acceptance Criteria:**
+
+- **US-12.4-AC01**: Integration tests cover training unit CRUD operations, assignment flow, repeat logic, and exercise modifications with ≥90% code coverage.
+  - Test Method: Integration
+  - Evidence: Test coverage reports, integration test results
+
+- **US-12.4-AC02**: E2E tests verify complete training unit workflow including creation, assignment, modification, and history viewing.
+  - Test Method: E2E
+  - Evidence: E2E test results, workflow verification
+
+---
+
+## Epic 13: WCAG 2.2 Compliance Update (NFR-004 Enhancement)
+
+### US-13.1: Update Accessibility Documentation
+
+**As a** developer
+**I want** all accessibility documentation updated to reference WCAG 2.2 AA
+**So that** the project reflects current accessibility standards
+
+**Activities:**
+
+- E13-A1: Update Visual Design System
+- E13-A2: Update ADR-020
+- E13-A3: Update NFR-004
+
+**Story Points**: 2
+**Priority**: High
+**Dependencies**: Documentation
+
+**Acceptance Criteria:**
+
+- **US-13.1-AC01**: Visual Design System updated to reference WCAG 2.2 AA instead of 2.1 AA; status messages pattern documented.
+  - Test Method: Documentation review
+  - Evidence: VDS updates, status messages pattern documentation
+
+- **US-13.1-AC02**: ADR-020 updated to reference WCAG 2.2 instead of 2.1; all accessibility decisions reflect 2.2 standards.
+  - Test Method: Documentation review
+  - Evidence: ADR-020 updates, decision log
+
+- **US-13.1-AC03**: NFR-004 requirement document updated to reference WCAG 2.2; all acceptance criteria reflect 2.2 success criteria.
+  - Test Method: Documentation review
+  - Evidence: NFR-004 updates, requirement verification
+
+---
+
+### US-13.2: Focus Not Obscured (2.4.11)
+
+**As a** keyboard user
+**I want** focus indicators to always be visible
+**So that** I can navigate the application effectively
+
+**Activities:**
+
+- E13-A4: Focus Visibility Audit
+
+**Story Points**: 2
+**Priority**: High
+**Dependencies**: US-8.5, All frontend
+
+**Acceptance Criteria:**
+
+- **US-13.2-AC01**: All focus indicators are visible and not hidden by sticky headers, modals, or overlays; minimum 2px visibility requirement met.
+  - Test Method: Accessibility audit
+  - Evidence: Focus visibility audit results, z-index guidelines
+
+- **US-13.2-AC02**: Z-index guidelines documented for focusable elements; automated tests verify focus visibility across all pages.
+  - Test Method: Accessibility audit + Automated testing
+  - Evidence: Z-index documentation, focus visibility test results
+
+---
+
+### US-13.3: Keyboard Alternatives for Dragging (2.5.7)
+
+**As a** keyboard user
+**I want** keyboard alternatives for all drag-and-drop operations
+**So that** I can use the planner without a mouse
+
+**Activities:**
+
+- E13-A5: Keyboard Alternatives for Dragging
+
+**Story Points**: 3
+**Priority**: High
+**Dependencies**: US-4.3, US-8.2
+
+**Acceptance Criteria:**
+
+- **US-13.3-AC01**: All drag-and-drop operations in Planner have keyboard alternatives; arrow keys and Enter/Space activate drag operations.
+  - Test Method: E2E + Accessibility audit
+  - Evidence: Keyboard navigation tests, drag alternative verification
+
+- **US-13.3-AC02**: Keyboard navigation documented for all draggable elements; documentation includes key bindings and usage patterns.
+  - Test Method: Documentation review
+  - Evidence: Keyboard navigation documentation, key binding reference
+
+- **US-13.3-AC03**: E2E tests verify keyboard alternatives work for all drag operations; tests cover month/week/day calendar views.
+  - Test Method: E2E
+  - Evidence: E2E test results, keyboard workflow verification
+
+---
+
+### US-13.4: Target Size Compliance (2.5.8)
+
+**As a** user with motor impairments
+**I want** all interactive elements to meet minimum target size requirements
+**So that** I can easily click or tap on controls
+
+**Activities:**
+
+- E13-A6: Target Size Verification
+
+**Story Points**: 2
+**Priority**: High
+**Dependencies**: US-8.3, Frontend
+
+**Acceptance Criteria:**
+
+- **US-13.4-AC01**: All pointer targets meet minimum 24×24 CSS pixels; design system explicitly documents 24×24 minimum (current 44×44 exceeds requirement).
+  - Test Method: Accessibility audit
+  - Evidence: Target size audit results, design system updates
+
+- **US-13.4-AC02**: Exceptions documented (inline links, essential targets) with justification; automated tests verify target sizes.
+  - Test Method: Accessibility audit + Automated testing
+  - Evidence: Exception documentation, target size test results
+
+---
+
+### US-13.5: Consistent Help Mechanisms (3.2.6)
+
+**As a** user
+**I want** help mechanisms to appear in consistent locations
+**So that** I can easily find assistance when needed
+
+**Activities:**
+
+- E13-A7: Help Mechanism Consistency
+
+**Story Points**: 2
+**Priority**: High
+**Dependencies**: All frontend
+
+**Acceptance Criteria:**
+
+- **US-13.5-AC01**: Help mechanisms (help links, contact forms) appear in consistent location across all pages; help placement pattern documented in design system.
+  - Test Method: Manual audit
+  - Evidence: Help mechanism audit results, design system documentation
+
+- **US-13.5-AC02**: Manual audit confirms consistency across pages; help mechanisms are accessible and functional.
+  - Test Method: Manual audit
+  - Evidence: Consistency audit report, help mechanism verification
+
+---
+
+### US-13.6: Form Data Persistence (3.3.7)
+
+**As a** user
+**I want** form data to persist when validation errors occur
+**So that** I don't have to re-enter information
+
+**Activities:**
+
+- E13-A8: Form Data Persistence
+
+**Story Points**: 2
+**Priority**: High
+**Dependencies**: All frontend
+
+**Acceptance Criteria:**
+
+- **US-13.6-AC01**: Form data persists on validation errors; multi-step forms preserve entered data across steps.
+  - Test Method: E2E
+  - Evidence: Form persistence tests, data preservation verification
+
+- **US-13.6-AC02**: Auto-population patterns documented; forms use consistent patterns for data persistence.
+  - Test Method: Documentation review
+  - Evidence: Auto-population documentation, pattern examples
+
+- **US-13.6-AC03**: E2E tests verify data persistence across all forms; tests cover validation error scenarios.
+  - Test Method: E2E
+  - Evidence: E2E test results, persistence verification
+
+---
+
+### US-13.7: Accessible Authentication (3.3.8)
+
+**As a** user
+**I want** authentication without cognitive function tests
+**So that** I can access the application easily
+
+**Activities:**
+
+- E13-A9: Authentication Pattern Review
+
+**Story Points**: 2
+**Priority**: High
+**Dependencies**: Auth module
+
+**Acceptance Criteria:**
+
+- **US-13.7-AC01**: No cognitive function tests (CAPTCHA, puzzles) in authentication flows; authentication patterns documented.
+  - Test Method: Manual audit
+  - Evidence: Authentication audit results, pattern documentation
+
+- **US-13.7-AC02**: If CAPTCHA is added in future, alternative authentication must be available; manual audit confirms compliance.
+  - Test Method: Manual audit
+  - Evidence: Compliance verification, alternative authentication documentation
+
+---
+
+### US-13.8: Status Messages Implementation (4.1.3)
+
+**As a** screen reader user
+**I want** status messages to be properly announced
+**So that** I am aware of application state changes
+
+**Activities:**
+
+- E13-A10: Status Messages Implementation
+
+**Story Points**: 2
+**Priority**: High
+**Dependencies**: All frontend
+
+**Acceptance Criteria:**
+
+- **US-13.8-AC01**: All status messages use appropriate ARIA roles (role="status" for polite, role="alert" for assertive); status message patterns documented in design system.
+  - Test Method: Accessibility audit
+  - Evidence: ARIA role audit results, design system documentation
+
+- **US-13.8-AC02**: Polite vs. assertive updates properly implemented; automated tests verify ARIA roles.
+  - Test Method: Automated testing
+  - Evidence: ARIA role test results, status message verification
+
+---
+
+### US-13.9: WCAG 2.2 Testing and Validation
+
+**As a** developer
+**I want** accessibility tests updated for WCAG 2.2
+**So that** I can verify compliance with new standards
+
+**Activities:**
+
+- E13-A11: Update Accessibility Tests
+- E13-A12: WCAG 2.2 Compliance Validation
+
+**Story Points**: 3
+**Priority**: High
+**Dependencies**: US-8.6, All WCAG 2.2 stories
+
+**Acceptance Criteria:**
+
+- **US-13.9-AC01**: Accessibility tests updated to include WCAG 2.2 tags; axe-core tests include all 9 new success criteria.
+  - Test Method: Automated testing
+  - Evidence: Test updates, WCAG 2.2 tag verification
+
+- **US-13.9-AC02**: All new criteria verified with automated tests; manual testing checklist updated for WCAG 2.2.
+  - Test Method: Automated testing + Manual audit
+  - Evidence: Test results, updated checklist
+
+- **US-13.9-AC03**: Full accessibility audit run; Lighthouse and axe-core report 0 WCAG 2.2 violations; all 9 new criteria pass.
+  - Test Method: Accessibility audit
+  - Evidence: Audit report, Lighthouse scores, axe-core results
+
+---
+
 ## Epic 11: Technical Debt & Code Quality
 
 ### US-11.1: Fix 2FA Route Conflict
@@ -1877,7 +2288,7 @@ This document groups activities from the Epics and Activities document into user
 
 ## Summary
 
-### Total User Stories: 58
+### Total User Stories: 78
 
 ### By Epic
 
@@ -1892,15 +2303,17 @@ This document groups activities from the Epics and Activities document into user
 - Epic 9: 6 stories (15 SP)
 - Epic 10: 5 stories (12 SP)
 - Epic 11: 5 stories (8 SP)
+- Epic 12: 4 stories (26 SP)
+- Epic 13: 9 stories (20 SP)
 
-### Total Story Points: 201 SP
+### Total Story Points: 267 SP
 
 ### By Priority
 
-- **High**: 30 stories (95 SP)
-- **Medium**: 28 stories (106 SP)
+- **High**: 45 stories (141 SP)
+- **Medium**: 33 stories (126 SP)
 
 ---
 
-**Last Updated**: 2025-01-21
+**Last Updated**: 2025-01-23
 **Next Review**: 2025-02-01

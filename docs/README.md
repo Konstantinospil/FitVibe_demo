@@ -93,6 +93,17 @@ Located in [`2.Technical_Design_Document/2.f.Architectural_Decision_Documentatio
 - [`5.a.Ops/`](5.Policies/5.a.Ops/) - Operational policies
 - [`5.b.Security/`](5.Policies/5.b.Security/) - Security policies and procedures
 
+#### Implementation (`Implementation/`)
+
+**Note**: This folder contains project planning, implementation reports, and review documents. These files are excluded from version control (see `.gitignore`).
+
+- `PROJECT_EPICS_AND_ACTIVITIES.md` - Epic definitions and activity breakdowns
+- `GITHUB_ISSUES_SETUP.md` - GitHub issues setup and tracking
+- `WCAG_2.2_IMPLEMENTATION_PLAN.md` - WCAG 2.2 compliance implementation plan
+- `WCAG_2.2_UPDATE_PLAN.md` - WCAG 2.2 update planning
+- `EPIC_13_GITHUB_ISSUE.md` - Epic 13 GitHub issue details
+- `Bug_Fixer_*.md` - Bug fixing agent reports and reviews
+
 ## Working With the Documentation
 
 ### Document Maintenance
