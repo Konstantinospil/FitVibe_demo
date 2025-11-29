@@ -5,8 +5,54 @@ import { toErrorPayload } from "../../utils/error.utils.js";
 async function main(): Promise<void> {
   try {
     logger.info("[db] Running database seeds...");
-    await db.seed.run();
-    logger.info("[db] Seeds completed.");
+
+    const result = await db.seed.run();
+
+    const seedFiles = result[0] as Array<{ file: string }>;
+
+    if (seedFiles.length > 0) {
+      logger.info(
+        {
+          seeds: seedFiles.map((s) => s.file),
+        },
+        `[db] Applied ${seedFiles.length} seed file(s):`,
+      );
+    } else {
+      logger.info("[db] No new seeds to apply.");
+    }
+
+    // Verify critical seed data was inserted
+    const criticalSeeds = [
+      { table: "roles", minCount: 4 },
+      { table: "genders", minCount: 4 },
+      { table: "fitness_levels", minCount: 4 },
+      { table: "exercise_types", minCount: 20 },
+    ];
+
+    for (const { table, minCount } of criticalSeeds) {
+      const exists = await db.schema.hasTable(table);
+      if (exists) {
+        const count = await db(table).count<{ count: string | number }>("* as count").first();
+        const rowCount = count ? Number(count.count) : 0;
+        if (rowCount < minCount) {
+          throw new Error(
+            `Seed verification failed: ${table} has ${rowCount} rows, expected at least ${minCount}`,
+          );
+        }
+        logger.info(`[db] Verified ${table}: ${rowCount} rows`);
+      }
+    }
+    logger.info("[db] Seeds completed and verified.");
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    logger.error(
+      {
+        ...toErrorPayload(error),
+        context: "seedAll",
+      },
+      `Failed to run database seeds: ${errorMessage}`,
+    );
+    throw error;
   } finally {
     await db.destroy();
   }

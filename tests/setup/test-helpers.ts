@@ -50,24 +50,34 @@ export async function truncateAll(): Promise<void> {
   const db = await getDb();
   const tables = [
     "idempotency_keys",
-    "audit_logs",
-    "feed_reactions",
-    "feed_bookmarks",
-    "feed_posts",
+    "audit_log",
+    "feed_reports",
+    "feed_comments",
+    "feed_likes",
+    "feed_items", // Changed from "feed_posts"
+    "session_bookmarks",
+    "share_links",
+    "user_blocks",
+    "followers",
+    "badges",
+    "badge_catalog",
+    "user_points",
+    "exercise_sets",
     "session_exercises",
     "sessions",
+    "plans",
     "exercises",
     "exercise_types",
-    "training_plans",
-    "points_history",
-    "user_badges",
-    "user_streaks",
-    "refresh_tokens",
+    "user_metrics",
+    "user_state_history",
     "auth_sessions",
-    "auth_tokens",
     "pending_2fa_sessions",
     "user_contacts",
+    "profiles",
     "users",
+    // Removed "user_streaks" - doesn't exist
+    // Removed "feed_posts" - use "feed_items" instead
+    // Removed other legacy table names
   ];
 
   // Disable foreign key checks temporarily

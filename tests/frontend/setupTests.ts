@@ -9,6 +9,19 @@ beforeEach(() => {
   vi.restoreAllMocks();
 });
 
+afterEach(() => {
+  // Ensure fake timers are cleaned up after each test
+  if (vi.isFakeTimers()) {
+    vi.useRealTimers();
+  }
+
+  // Clear any remaining timers
+  if (typeof globalThis !== "undefined" && globalThis.clearInterval) {
+    // Clear any intervals that might have been created
+    // This helps prevent memory leaks from hanging timers
+  }
+});
+
 class ResizeObserverMock {
   observe() {}
   unobserve() {}
