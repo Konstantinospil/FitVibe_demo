@@ -95,6 +95,24 @@ describe("Integration: Feed Sharing → Reactions Flow", () => {
       );
     }
 
+    // Verify the user_id matches what we created
+    if (foundUser1.id !== userId1) {
+      throw new Error(
+        `User ID mismatch: created ${userId1}, found ${foundUser1.id}. This indicates a data integrity issue.`,
+      );
+    }
+
+    // Verify user exists in database using the found user_id (ensure FK constraint will pass)
+    const verifyUserForFK = await db("users").where({ id: foundUser1.id }).first();
+    if (!verifyUserForFK) {
+      throw new Error(
+        `User ${foundUser1.id} not found in users table. This will cause FK constraint violation in auth_sessions.`,
+      );
+    }
+
+    // Small delay to ensure transaction is fully committed and visible across connections
+    await new Promise((resolve) => setTimeout(resolve, 50));
+
     const login1 = await request(app).post("/api/v1/auth/login").send({
       email: "sharer@example.com",
       password: password,
@@ -168,6 +186,24 @@ describe("Integration: Feed Sharing → Reactions Flow", () => {
         `User2 not found by email after ${retries} retries. User exists: ${!!verifyUser2}, Contact exists: ${!!verifyContact2}`,
       );
     }
+
+    // Verify the user_id matches what we created
+    if (foundUser2.id !== userId2) {
+      throw new Error(
+        `User ID mismatch: created ${userId2}, found ${foundUser2.id}. This indicates a data integrity issue.`,
+      );
+    }
+
+    // Verify user exists in database using the found user_id (ensure FK constraint will pass)
+    const verifyUser2ForFK = await db("users").where({ id: foundUser2.id }).first();
+    if (!verifyUser2ForFK) {
+      throw new Error(
+        `User ${foundUser2.id} not found in users table. This will cause FK constraint violation in auth_sessions.`,
+      );
+    }
+
+    // Small delay to ensure transaction is fully committed and visible across connections
+    await new Promise((resolve) => setTimeout(resolve, 50));
 
     const login2 = await request(app).post("/api/v1/auth/login").send({
       email: "reactor@example.com",

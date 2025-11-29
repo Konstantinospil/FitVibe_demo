@@ -86,6 +86,24 @@ describe("Integration: Session → Points Flow", () => {
       );
     }
 
+    // Verify the user_id matches what we created
+    if (foundUser.id !== userId) {
+      throw new Error(
+        `User ID mismatch: created ${userId}, found ${foundUser.id}. This indicates a data integrity issue.`,
+      );
+    }
+
+    // Verify user exists in database using the found user_id (ensure FK constraint will pass)
+    const verifyUserForFK = await db("users").where({ id: foundUser.id }).first();
+    if (!verifyUserForFK) {
+      throw new Error(
+        `User ${foundUser.id} not found in users table. This will cause FK constraint violation in auth_sessions.`,
+      );
+    }
+
+    // Small delay to ensure transaction is fully committed and visible across connections
+    await new Promise((resolve) => setTimeout(resolve, 50));
+
     // Login to get access token
     const loginResponse = await request(app).post("/api/v1/auth/login").send({
       email: "points@example.com",
