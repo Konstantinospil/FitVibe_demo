@@ -8,6 +8,7 @@ documents to appropriate subfolders: done, progressing, or open.
 
 import os
 import shutil
+import sys
 from pathlib import Path
 from typing import Dict, Literal
 
@@ -35,6 +36,34 @@ STATUS_MAP: Dict[str, Literal["done", "progressing", "open"]] = {
 
 def organize_requirements():
     """Organize requirement files into status-based subfolders."""
+    import argparse
+    import subprocess
+
+    parser = argparse.ArgumentParser(description="Organize requirement files by implementation status")
+    parser.add_argument(
+        "--auto-plan",
+        action="store_true",
+        help="Automatically trigger project-planning agent after organizing requirements",
+    )
+    parser.add_argument(
+        "--git-token",
+        type=str,
+        help="GitHub token for project-planning agent (required if --auto-plan is used with issues mode)",
+    )
+    parser.add_argument(
+        "--plan-mode",
+        type=str,
+        choices=["epics", "stories", "ac", "issues"],
+        default="stories",
+        help="Project-planning agent mode (default: stories)",
+    )
+    parser.add_argument(
+        "--auto-upload",
+        action="store_true",
+        help="Auto-upload issues to GitHub (only for issues mode)",
+    )
+    args = parser.parse_args()
+
     script_dir = Path(__file__).parent
     repo_root = script_dir.parent
     requirements_dir = repo_root / "docs" / "1.Product_Requirements" / "Requirements"
@@ -51,12 +80,20 @@ def organize_requirements():
 
     # Move files based on status
     moved_count = {"done": 0, "progressing": 0, "open": 0}
+    new_open_requirements = False
 
     for filename, status in STATUS_MAP.items():
         source = requirements_dir / filename
         if not source.exists():
-            print(f"Warning: File not found: {source}")
-            continue
+            # Check in subfolders
+            for subfolder in ["done", "progressing", "open"]:
+                potential_source = requirements_dir / subfolder / filename
+                if potential_source.exists():
+                    source = potential_source
+                    break
+            if not source.exists():
+                print(f"Warning: File not found: {filename}")
+                continue
 
         dest = requirements_dir / status / filename
 
@@ -68,6 +105,8 @@ def organize_requirements():
             shutil.move(str(source), str(dest))
             print(f"Moved {filename} → {status}/")
             moved_count[status] += 1
+            if status == "open":
+                new_open_requirements = True
         except Exception as e:
             print(f"Error moving {filename}: {e}")
             return 1
@@ -88,6 +127,7 @@ def organize_requirements():
                 shutil.move(str(f), str(dest))
                 print(f"  → Moved to open/")
                 moved_count["open"] += 1
+                new_open_requirements = True
             except Exception as e:
                 print(f"  → Error: {e}")
 
@@ -100,11 +140,36 @@ def organize_requirements():
     print(f"Open:        {moved_count['open']} files")
     print(f"{'='*60}")
 
+    # Auto-trigger project-planning agent if requested
+    if args.auto_plan:
+        print("\n" + "=" * 60)
+        print("AUTO-TRIGGERING PROJECT-PLANNING AGENT")
+        print("=" * 60)
+        planning_agent = script_dir / "project_planning_agent.py"
+        if not planning_agent.exists():
+            print(f"Warning: Project-planning agent not found at {planning_agent}")
+            return 0
+
+        cmd = [sys.executable, str(planning_agent), "--mode", args.plan_mode]
+        if args.git_token:
+            cmd.extend(["--git-token", args.git_token])
+        if args.auto_upload:
+            cmd.append("--auto-upload")
+
+        try:
+            result = subprocess.run(cmd, check=False, cwd=repo_root)
+            return result.returncode
+        except Exception as e:
+            print(f"Error running project-planning agent: {e}")
+            return 1
+
     return 0
 
 
 if __name__ == "__main__":
+    import sys
     exit(organize_requirements())
+
 
 
 

@@ -35,6 +35,8 @@ EPIC_LABELS = {
     "Epic 9": "epic:observability",
     "Epic 10": "epic:availability-backups",
     "Epic 11": "epic:technical-debt",
+    "Epic 12": "epic:coach-training-units",
+    "Epic 13": "epic:wcag-2.2-compliance",
 }
 
 # Type labels based on story content

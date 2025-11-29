@@ -126,10 +126,10 @@ def create_issue(session: requests.Session, token: str, issue: Dict) -> Optional
 
     if response.status_code == 201:
         issue_data = response.json()
-        print(f"✓ Created issue: {issue['title']} (#{issue_data['number']})")
+        print(f"[OK] Created issue: {issue['title']} (#{issue_data['number']})")
         return issue_data
     else:
-        print(f"✗ Failed to create issue: {issue['title']}")
+        print(f"[X] Failed to create issue: {issue['title']}")
         print(f"  Status: {response.status_code}")
         print(f"  Response: {response.text}")
         return None
