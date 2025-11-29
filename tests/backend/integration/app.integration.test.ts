@@ -1,6 +1,6 @@
 import request from "supertest";
-import app from "../../src/app.js";
-import { env } from "../../src/config/env.js";
+import app from "../../../apps/backend/src/app.js";
+import { env } from "../../../apps/backend/src/config/env.js";
 
 const mutableEnv = env as {
   readOnlyMode: boolean;

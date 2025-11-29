@@ -32,6 +32,7 @@ export async function withTransaction<T>(
 /**
  * Truncate all tables in the test database.
  * Use with caution - only in test environments.
+ * Silently skips tables that don't exist (e.g., if migrations haven't run yet).
  */
 export async function truncateAll(): Promise<void> {
   const tables = [
@@ -59,7 +60,19 @@ export async function truncateAll(): Promise<void> {
   // Disable foreign key checks temporarily
   await db.raw("SET session_replication_role = 'replica'");
   for (const table of tables) {
-    await db.raw(`TRUNCATE TABLE ${table} CASCADE`);
+    try {
+      await db.raw(`TRUNCATE TABLE ${table} CASCADE`);
+    } catch (error) {
+      // Silently skip tables that don't exist (e.g., if migrations haven't run)
+      // This allows tests to run even if some tables haven't been created yet
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      if (errorMessage.includes("does not exist") || errorMessage.includes("relation")) {
+        // Table doesn't exist, skip it
+        continue;
+      }
+      // Re-throw other errors (permissions, etc.)
+      throw error;
+    }
   }
   await db.raw("SET session_replication_role = 'origin'");
 }

@@ -17,6 +17,7 @@ export default tseslint.config(
     ignores: [
       "node_modules/**",
       "dist/**",
+      "**/dist/**",
       "build/**",
       "coverage/**",
       ".turbo/**",
@@ -25,6 +26,8 @@ export default tseslint.config(
       "**/*.mjs",
       "tests/**/*.cjs", // E2E test configs
       "tests/setup/test-helpers.ts", // Test helper file not in tsconfig
+      "tests/setup/jest.setup.ts", // Test setup file not in tsconfig
+      "tests/qa/test-manager-spec.test.ts", // Test spec file not in tsconfig
     ],
   },
   js.configs.recommended,

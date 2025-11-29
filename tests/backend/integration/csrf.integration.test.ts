@@ -8,8 +8,12 @@ import express, {
 import cookieParser from "cookie-parser";
 import request from "supertest";
 
-import { csrfProtection, csrfTokenRoute, validateOrigin } from "../../src/middlewares/csrf.js";
-import { HttpError } from "../../src/utils/http.js";
+import {
+  csrfProtection,
+  csrfTokenRoute,
+  validateOrigin,
+} from "../../../apps/backend/src/middlewares/csrf.js";
+import { HttpError } from "../../../apps/backend/src/utils/http.js";
 
 function createTestApp(): Express {
   const app = express();
