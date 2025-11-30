@@ -519,7 +519,7 @@ const Logger: React.FC = () => {
                               reps: parseInt(e.target.value) || null,
                             })
                           }
-                          placeholder="10"
+                          placeholder={t("logger.repsPlaceholder")}
                           disabled={set.completed}
                           style={{
                             padding: "0.6rem",
@@ -543,7 +543,7 @@ const Logger: React.FC = () => {
                               weight_kg: parseFloat(e.target.value) || null,
                             })
                           }
-                          placeholder="80"
+                          placeholder={t("logger.weightPlaceholder")}
                           disabled={set.completed}
                           style={{
                             padding: "0.6rem",
@@ -568,7 +568,7 @@ const Logger: React.FC = () => {
                               rpe: val >= 1 && val <= 10 ? val : null,
                             });
                           }}
-                          placeholder="7"
+                          placeholder={t("logger.rpePlaceholder")}
                           disabled={set.completed}
                           style={{
                             padding: "0.6rem",

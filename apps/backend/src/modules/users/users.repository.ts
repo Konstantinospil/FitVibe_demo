@@ -8,6 +8,8 @@ const CONTACTS_TABLE = "user_contacts";
 const STATE_TABLE = "user_state_history";
 const MEDIA_TABLE = "media";
 const AVATAR_TARGET_TYPE = "user_avatar";
+const PROFILES_TABLE = "profiles";
+const USER_METRICS_TABLE = "user_metrics";
 
 export interface CreateUserRecordInput {
   id: string;
@@ -324,6 +326,31 @@ export async function deleteContact(
   return withDb(trx)(CONTACTS_TABLE).where({ id: contactId, user_id: userId }).del();
 }
 
+export type ProfileRow = {
+  user_id: string;
+  alias: string | null;
+  bio: string | null;
+  avatar_asset_id: string | null;
+  date_of_birth: string | null;
+  gender_code: string | null;
+  visibility: string;
+  timezone: string | null;
+  unit_preferences: Record<string, unknown>;
+  created_at: string;
+  updated_at: string;
+};
+
+export type UserMetricRow = {
+  id: string;
+  user_id: string;
+  weight: number | null;
+  unit: string | null;
+  fitness_level_code: string | null;
+  training_frequency: string | null;
+  recorded_at: string;
+  created_at: string;
+};
+
 export interface UserMetrics {
   follower_count: number;
   following_count: number;
@@ -424,4 +451,109 @@ export async function getUserMetrics(userId: string, trx?: Knex.Transaction): Pr
     total_points,
     current_streak_days,
   };
+}
+
+export async function getProfileByUserId(
+  userId: string,
+  trx?: Knex.Transaction,
+): Promise<ProfileRow | null> {
+  const row = await withDb(trx)<ProfileRow>(PROFILES_TABLE).where({ user_id: userId }).first();
+  return row ?? null;
+}
+
+export async function checkAliasAvailable(
+  alias: string,
+  excludeUserId?: string,
+  trx?: Knex.Transaction,
+): Promise<boolean> {
+  const query = withDb(trx)<ProfileRow>(PROFILES_TABLE)
+    .whereRaw("LOWER(alias) = ?", [alias.toLowerCase()]);
+  
+  if (excludeUserId) {
+    query.where("user_id", "!=", excludeUserId);
+  }
+  
+  const existing = await query.first();
+  return !existing;
+}
+
+export async function updateProfileAlias(
+  userId: string,
+  alias: string,
+  trx?: Knex.Transaction,
+): Promise<number> {
+  const exec = withDb(trx);
+  // Ensure profile exists
+  const existing = await exec<ProfileRow>(PROFILES_TABLE).where({ user_id: userId }).first();
+  
+  if (existing) {
+    return exec(PROFILES_TABLE)
+      .where({ user_id: userId })
+      .update({
+        alias,
+        updated_at: new Date().toISOString(),
+      });
+  }
+  
+  // Create profile if it doesn't exist
+  return exec(PROFILES_TABLE).insert({
+    user_id: userId,
+    alias,
+    visibility: "private",
+    unit_preferences: {},
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  });
+}
+
+export async function insertUserMetric(
+  userId: string,
+  metric: {
+    weight?: number;
+    unit?: string;
+    fitness_level_code?: string;
+    training_frequency?: string;
+  },
+  trx?: Knex.Transaction,
+): Promise<string> {
+  const exec = withDb(trx);
+  const now = new Date().toISOString();
+  const [record] = await exec(USER_METRICS_TABLE)
+    .insert({
+      id: crypto.randomUUID(),
+      user_id: userId,
+      weight: metric.weight ?? null,
+      unit: metric.unit ?? "kg",
+      fitness_level_code: metric.fitness_level_code ?? null,
+      training_frequency: metric.training_frequency ?? null,
+      recorded_at: now,
+      created_at: now,
+    })
+    .returning("id");
+  return record.id;
+}
+
+export async function getLatestUserMetrics(
+  userId: string,
+  trx?: Knex.Transaction,
+): Promise<{
+  weight: number | null;
+  unit: string | null;
+  fitness_level_code: string | null;
+  training_frequency: string | null;
+} | null> {
+  const row = await withDb(trx)<UserMetricRow>(USER_METRICS_TABLE)
+    .where({ user_id: userId })
+    .orderBy("recorded_at", "desc")
+    .select(["weight", "unit", "fitness_level_code", "training_frequency"])
+    .first();
+  
+  return row
+    ? {
+        weight: row.weight,
+        unit: row.unit,
+        fitness_level_code: row.fitness_level_code,
+        training_frequency: row.training_frequency,
+      }
+    : null;
 }

@@ -321,7 +321,7 @@ const SystemControls: React.FC = () => {
                     type="text"
                     value={enableReason}
                     onChange={(e) => setEnableReason(e.target.value)}
-                    placeholder="e.g., Emergency database maintenance"
+                    placeholder={t("admin.systemControls.maintenanceMessagePlaceholder")}
                     style={{
                       width: "100%",
                       padding: "0.75rem 1rem",
@@ -351,7 +351,7 @@ const SystemControls: React.FC = () => {
                     type="text"
                     value={enableDuration}
                     onChange={(e) => setEnableDuration(e.target.value)}
-                    placeholder="e.g., 30 minutes"
+                    placeholder={t("admin.systemControls.durationPlaceholder")}
                     style={{
                       width: "100%",
                       padding: "0.75rem 1rem",
@@ -435,7 +435,7 @@ const SystemControls: React.FC = () => {
                   type="text"
                   value={disableNotes}
                   onChange={(e) => setDisableNotes(e.target.value)}
-                  placeholder="e.g., Maintenance completed successfully"
+                  placeholder={t("admin.systemControls.completionMessagePlaceholder")}
                   style={{
                     width: "100%",
                     padding: "0.75rem 1rem",

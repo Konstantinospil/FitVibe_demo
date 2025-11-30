@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Button, VisibilityBadge } from "./ui";
+import { logger } from "../utils/logger.js";
 
 interface ShareLink {
   id: string;
@@ -41,7 +42,11 @@ const ShareLinkManager: React.FC = () => {
       await navigator.clipboard?.writeText(buildShareUrl(link.token));
       setCopiedId(link.id);
     } catch (error) {
-      console.warn("Unable to copy link", error);
+      logger.warn("Unable to copy link", {
+        error: error instanceof Error ? error.message : String(error),
+        linkId: link.id,
+        context: "shareLinkManager",
+      });
     } finally {
       setIsCopying(false);
     }

@@ -383,6 +383,46 @@
       "brand": "FitVibe"
     }
   },
+  "settings": {
+    "title": "Einstellungen",
+    "description": "Deine Präferenzen und Kontoeinstellungen",
+    "profile": {
+      "title": "Profileinstellungen",
+      "description": "Aktualisiere deine Profilinformationen",
+      "displayName": "Anzeigename",
+      "displayNamePlaceholder": "Dein Anzeigename",
+      "alias": "Alias",
+      "aliasPlaceholder": "Dein öffentlicher Alias",
+      "aliasHelp": "Alias darf nur Buchstaben, Zahlen, Unterstriche, Punkte oder Bindestriche enthalten",
+      "email": "E-Mail",
+      "emailCannotChange": "E-Mail kann nicht geändert werden",
+      "weight": "Gewicht",
+      "weightUnit": "Gewichtseinheit",
+      "weightKg": "Kilogramm (kg)",
+      "weightLb": "Pfund (lb)",
+      "fitnessLevel": "Fitness-Level",
+      "fitnessLevelBeginner": "Anfänger",
+      "fitnessLevelIntermediate": "Fortgeschritten",
+      "fitnessLevelAdvanced": "Erfahren",
+      "fitnessLevelElite": "Elite",
+      "trainingFrequency": "Trainingshäufigkeit",
+      "trainingFrequencyRarely": "Selten",
+      "trainingFrequency1_2": "1-2 mal pro Woche",
+      "trainingFrequency3_4": "3-4 mal pro Woche",
+      "trainingFrequency5Plus": "5+ mal pro Woche"
+    },
+    "preferences": {
+      "title": "Präferenzen",
+      "description": "Setze deine Standard-Session-Sichtbarkeit, Einheiten und Sprache",
+      "defaultVisibility": "Standard-Session-Sichtbarkeit",
+      "units": "Einheiten",
+      "language": "Sprache",
+      "saveSuccess": "Präferenzen erfolgreich gespeichert!",
+      "saveError": "Fehler beim Speichern der Präferenzen. Bitte versuche es erneut.",
+      "saveButton": "Präferenzen speichern",
+      "saving": "Wird gespeichert..."
+    }
+  },
   "common": {
     "retry": "Erneut versuchen",
     "loading": "Lädt...",

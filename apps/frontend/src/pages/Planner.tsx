@@ -229,7 +229,7 @@ const Planner: React.FC = () => {
                   type="text"
                   value={sessionTitle}
                   onChange={(e) => setSessionTitle(e.target.value)}
-                  placeholder="e.g., Upper Body Strength"
+                  placeholder={t("planner.sessionTitlePlaceholder")}
                   style={{
                     width: "100%",
                     padding: "0.75rem 1rem",
@@ -322,7 +322,7 @@ const Planner: React.FC = () => {
                   id="session-notes"
                   value={sessionNotes}
                   onChange={(e) => setSessionNotes(e.target.value)}
-                  placeholder="Add session notes, training goals, or context..."
+                  placeholder={t("planner.notesPlaceholder")}
                   rows={3}
                   style={{
                     width: "100%",
@@ -364,7 +364,7 @@ const Planner: React.FC = () => {
                   value={exerciseSearch}
                   onChange={(e) => setExerciseSearch(e.target.value)}
                   onFocus={() => exerciseResults.length > 0 && setShowSearchResults(true)}
-                  placeholder="Search for exercises (e.g., squat, bench press)..."
+                  placeholder={t("planner.exerciseSearchPlaceholder")}
                   aria-label="Search exercises"
                   style={{
                     width: "100%",
@@ -609,7 +609,7 @@ const Planner: React.FC = () => {
                           onChange={(e) =>
                             updateExercise(ex.tempId, { reps: parseInt(e.target.value) || null })
                           }
-                          placeholder="10"
+                          placeholder={t("planner.repsPlaceholder")}
                           style={{
                             width: "100%",
                             padding: "0.6rem",
@@ -644,7 +644,7 @@ const Planner: React.FC = () => {
                               weightKg: parseFloat(e.target.value) || null,
                             })
                           }
-                          placeholder="80"
+                          placeholder={t("planner.weightPlaceholder")}
                           style={{
                             width: "100%",
                             padding: "0.6rem",
@@ -678,7 +678,7 @@ const Planner: React.FC = () => {
                             const val = parseInt(e.target.value);
                             updateExercise(ex.tempId, { rpe: val >= 1 && val <= 10 ? val : null });
                           }}
-                          placeholder="7"
+                          placeholder={t("planner.rpePlaceholder")}
                           style={{
                             width: "100%",
                             padding: "0.6rem",
@@ -711,7 +711,7 @@ const Planner: React.FC = () => {
                           onChange={(e) =>
                             updateExercise(ex.tempId, { restSec: parseInt(e.target.value) || null })
                           }
-                          placeholder="90"
+                          placeholder={t("planner.speedPlaceholder")}
                           style={{
                             width: "100%",
                             padding: "0.6rem",
@@ -742,7 +742,7 @@ const Planner: React.FC = () => {
                         type="text"
                         value={ex.notes}
                         onChange={(e) => updateExercise(ex.tempId, { notes: e.target.value })}
-                        placeholder="e.g., Focus on form, slower tempo on eccentrics"
+                        placeholder={t("planner.exerciseNotesPlaceholder")}
                         style={{
                           width: "100%",
                           padding: "0.6rem",

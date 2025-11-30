@@ -5,6 +5,7 @@ import { Eye, EyeOff } from "lucide-react";
 import { Button } from "../components/ui";
 import { useAuth } from "../contexts/AuthContext";
 import { login } from "../services/api";
+import { logger } from "../utils/logger.js";
 
 const inputStyle: React.CSSProperties = {
   width: "100%",
@@ -79,7 +80,9 @@ const LoginFormContent: React.FC = () => {
         setError(t("auth.login.error") || "Login failed. Please try again.");
       }
     } catch (err: unknown) {
-      console.error("Login error:", err);
+      logger.error("Login error", err instanceof Error ? err : new Error(String(err)), {
+        context: "login",
+      });
 
       // Handle terms version outdated error
       if (err && typeof err === "object" && "response" in err) {

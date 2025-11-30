@@ -5,6 +5,7 @@ import { register as registerAccount } from "../services/api";
 import { Button } from "../components/ui";
 import { useTranslation } from "react-i18next";
 import { Eye, EyeOff } from "lucide-react";
+import { logger } from "../utils/logger.js";
 
 const inputStyle: React.CSSProperties = {
   width: "100%",
@@ -105,7 +106,9 @@ const Register: React.FC = () => {
       // Registration successful - show success message
       setSuccess(true);
     } catch (err: unknown) {
-      console.error("Registration error:", err);
+      logger.error("Registration error", err instanceof Error ? err : new Error(String(err)), {
+        context: "register",
+      });
 
       // Show more specific error if available
       if (err && typeof err === "object" && "response" in err) {

@@ -148,7 +148,7 @@ const TwoFactorVerificationLogin: React.FC = () => {
             name="code"
             type="text"
             inputMode="numeric"
-            placeholder="000000"
+            placeholder={t("twoFactor.codePlaceholder")}
             style={inputStyle}
             required
             value={code}

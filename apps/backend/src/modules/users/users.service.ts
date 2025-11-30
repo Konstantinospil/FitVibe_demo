@@ -16,6 +16,13 @@ import {
   markContactVerified,
   deleteContact,
   getContactById,
+  getProfileByUserId,
+  checkAliasAvailable,
+  updateProfileAlias,
+  insertUserMetric,
+  getLatestUserMetrics,
+  type ProfileRow,
+  type UserMetricRow,
 } from "./users.repository.js";
 import type {
   UpdateProfileDTO,
@@ -62,31 +69,7 @@ const CONTACT_VERIFICATION_RESEND_LIMIT = 3;
 const CONTACT_VERIFICATION_RESEND_WINDOW_MS = 60 * 60 * 1000;
 const CONTACT_VERIFICATION_RETENTION_DAYS = 7;
 
-type ProfileRow = {
-  user_id: string;
-  alias: string | null;
-  bio: string | null;
-  avatar_asset_id: string | null;
-  date_of_birth: string | null;
-  gender_code: string | null;
-  visibility: string;
-  timezone: string | null;
-  unit_preferences: Record<string, unknown>;
-  created_at: string;
-  updated_at: string;
-};
-
-type UserMetricRow = {
-  id: string;
-  user_id: string;
-  weight: number | null;
-  unit: string | null;
-  fitness_level_code: string | null;
-  training_frequency: string | null;
-  photo_url: string | null;
-  recorded_at: string;
-  created_at: string;
-};
+// ProfileRow and UserMetricRow are imported from repository
 
 type SessionRow = { id: string; owner_id: string };
 type SessionExerciseRow = { id: string; session_id: string };
@@ -137,11 +120,15 @@ function primaryPhone(contacts: ContactRow[]): string | null {
   return contacts.find((contact) => contact.type === "phone")?.value ?? null;
 }
 
-function toUserDetail(
+async function toUserDetail(
   user: UserRow,
   contacts: ContactRow[],
   avatar?: AvatarRow | null,
-): UserDetail {
+): Promise<UserDetail> {
+  // Fetch profile and latest metrics
+  const profile = await getProfileByUserId(user.id);
+  const latestMetrics = await getLatestUserMetrics(user.id);
+
   return {
     id: user.id,
     username: user.username,
@@ -158,6 +145,14 @@ function toUserDetail(
     phoneNumber: primaryPhone(contacts),
     avatar: toUserAvatar(avatar),
     contacts: contacts.map(toContact),
+    profile: {
+      alias: profile?.alias ?? null,
+      bio: profile?.bio ?? null,
+      weight: latestMetrics?.weight ?? null,
+      weightUnit: latestMetrics?.unit ?? null,
+      fitnessLevel: latestMetrics?.fitness_level_code ?? null,
+      trainingFrequency: latestMetrics?.training_frequency ?? null,
+    },
   };
 }
 
@@ -342,7 +337,7 @@ export async function createUser(
   if (!created) {
     throw new HttpError(500, "USER_REFRESH_FAILED", "USER_REFRESH_FAILED");
   }
-  return toUserDetail(created.user, created.contacts, created.avatar);
+  return await toUserDetail(created.user, created.contacts, created.avatar);
 }
 
 export async function getMe(id: string): Promise<UserDetail | null> {
@@ -350,7 +345,7 @@ export async function getMe(id: string): Promise<UserDetail | null> {
   if (!full) {
     return null;
   }
-  return toUserDetail(full.user, full.contacts, full.avatar);
+  return await toUserDetail(full.user, full.contacts, full.avatar);
 }
 
 export async function listAll(limit = 50, offset = 0): Promise<UserSafe[]> {
@@ -412,12 +407,88 @@ export async function updateProfile(userId: string, dto: UpdateProfileDTO): Prom
     };
   }
 
+  // Handle alias update
+  if (dto.alias !== undefined) {
+    const normalizedAlias = dto.alias.trim();
+    const profile = await getProfileByUserId(userId);
+    const currentAlias = profile?.alias ?? null;
+    
+    if (normalizedAlias !== currentAlias) {
+      // Check alias availability (case-insensitive)
+      const isAvailable = await checkAliasAvailable(normalizedAlias, userId);
+      if (!isAvailable) {
+        throw new HttpError(409, "E.ALIAS_TAKEN", "This alias is already taken");
+      }
+      changes.alias = { old: currentAlias, next: normalizedAlias };
+    }
+  }
+
+  // Handle weight, fitness level, and training frequency updates
+  const metricUpdates: {
+    weight?: number;
+    unit?: string;
+    fitness_level_code?: string;
+    training_frequency?: string;
+  } = {};
+
+  if (dto.weight !== undefined || dto.weightUnit !== undefined) {
+    let weightInKg = dto.weight;
+    if (dto.weight !== undefined && dto.weightUnit === "lb") {
+      // Convert lb to kg
+      weightInKg = dto.weight * 0.453592;
+    }
+    metricUpdates.weight = weightInKg;
+    metricUpdates.unit = dto.weightUnit ?? "kg";
+    
+    const latestMetrics = await getLatestUserMetrics(userId);
+    const currentWeight = latestMetrics?.weight ?? null;
+    if (weightInKg !== currentWeight) {
+      changes.weight = { old: currentWeight, next: weightInKg };
+    }
+  }
+
+  if (dto.fitnessLevel !== undefined) {
+    metricUpdates.fitness_level_code = dto.fitnessLevel;
+    const latestMetrics = await getLatestUserMetrics(userId);
+    const currentFitnessLevel = latestMetrics?.fitness_level_code ?? null;
+    if (dto.fitnessLevel !== currentFitnessLevel) {
+      changes.fitness_level = { old: currentFitnessLevel, next: dto.fitnessLevel };
+    }
+  }
+
+  if (dto.trainingFrequency !== undefined) {
+    metricUpdates.training_frequency = dto.trainingFrequency;
+    const latestMetrics = await getLatestUserMetrics(userId);
+    const currentTrainingFrequency = latestMetrics?.training_frequency ?? null;
+    if (dto.trainingFrequency !== currentTrainingFrequency) {
+      changes.training_frequency = { old: currentTrainingFrequency, next: dto.trainingFrequency };
+    }
+  }
+
   await db.transaction(async (trx) => {
+    // Update user profile fields
     if (Object.keys(patch).length > 0) {
       await updateUserProfile(userId, patch, trx);
-      for (const [field, diff] of Object.entries(changes)) {
-        await insertStateHistory(userId, field, diff.old, diff.next, trx);
+    }
+
+    // Update alias in profiles table
+    if (dto.alias !== undefined) {
+      const normalizedAlias = dto.alias.trim();
+      const profile = await getProfileByUserId(userId, trx);
+      const currentAlias = profile?.alias ?? null;
+      if (normalizedAlias !== currentAlias) {
+        await updateProfileAlias(userId, normalizedAlias, trx);
       }
+    }
+
+    // Insert new user metric record if any metric fields are being updated
+    if (Object.keys(metricUpdates).length > 0) {
+      await insertUserMetric(userId, metricUpdates, trx);
+    }
+
+    // Record state history for all changes
+    for (const [field, diff] of Object.entries(changes)) {
+      await insertStateHistory(userId, field, diff.old, diff.next, trx);
     }
   });
 
@@ -435,7 +506,7 @@ export async function updateProfile(userId: string, dto: UpdateProfileDTO): Prom
   if (!updated) {
     throw new HttpError(500, "USER_REFRESH_FAILED", "USER_REFRESH_FAILED");
   }
-  return toUserDetail(updated.user, updated.contacts, updated.avatar);
+  return await toUserDetail(updated.user, updated.contacts, updated.avatar);
 }
 
 export async function updatePassword(userId: string, dto: ChangePasswordDTO): Promise<void> {
@@ -479,7 +550,7 @@ export async function changeStatus(
     if (!full) {
       throw new HttpError(500, "USER_REFRESH_FAILED", "USER_REFRESH_FAILED");
     }
-    return toUserDetail(full.user, full.contacts, full.avatar);
+    return await toUserDetail(full.user, full.contacts, full.avatar);
   }
   assertStatusTransition(user.status, nextStatus);
 

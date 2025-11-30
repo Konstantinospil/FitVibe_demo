@@ -342,7 +342,15 @@
     "eyebrow": "Session architecture",
     "title": "Design training blocks with intent.",
     "description": "Drag, duplicate, and periodise workouts. Planner keeps intensity, volume, and deload ratios on target.",
-    "editBlock": "Edit block"
+    "editBlock": "Edit block",
+    "sessionTitlePlaceholder": "e.g., Upper Body Strength",
+    "notesPlaceholder": "Add session notes, training goals, or context...",
+    "exerciseSearchPlaceholder": "Search for exercises (e.g., squat, bench press)...",
+    "repsPlaceholder": "10",
+    "weightPlaceholder": "80",
+    "rpePlaceholder": "7",
+    "speedPlaceholder": "90",
+    "exerciseNotesPlaceholder": "e.g., Focus on form, slower tempo on eccentrics"
   },
   "sessions": {
     "eyebrow": "Training management",
@@ -381,6 +389,49 @@
     "mainLayout": {
       "logo": "FV",
       "brand": "FitVibe"
+    }
+  },
+  "settings": {
+    "title": "Settings",
+    "description": "Your preferences and account settings",
+    "profile": {
+      "title": "Profile Settings",
+      "description": "Update your profile information",
+      "displayName": "Display Name",
+      "displayNamePlaceholder": "Your display name",
+      "alias": "Alias",
+      "aliasPlaceholder": "Your public alias",
+      "aliasHelp": "Alias may only contain letters, numbers, underscores, dots, or dashes",
+      "email": "Email",
+      "emailCannotChange": "Email cannot be changed",
+      "weight": "Weight",
+      "weightUnit": "Weight Unit",
+      "weightKg": "Kilograms (kg)",
+      "weightLb": "Pounds (lb)",
+      "fitnessLevel": "Fitness Level",
+      "fitnessLevelBeginner": "Beginner",
+      "fitnessLevelIntermediate": "Intermediate",
+      "fitnessLevelAdvanced": "Advanced",
+      "fitnessLevelElite": "Elite",
+      "trainingFrequency": "Training Frequency",
+      "trainingFrequencyRarely": "Rarely",
+      "trainingFrequency1_2": "1-2 times per week",
+      "trainingFrequency3_4": "3-4 times per week",
+      "trainingFrequency5Plus": "5+ times per week",
+      "weightPlaceholder": "75.5",
+      "passwordPlaceholder": "Enter your password",
+      "twoFactorCodePlaceholder": "000000"
+    },
+    "preferences": {
+      "title": "Preferences",
+      "description": "Set your default session visibility, units, and language",
+      "defaultVisibility": "Default Session Visibility",
+      "units": "Units",
+      "language": "Language",
+      "saveSuccess": "Preferences saved successfully!",
+      "saveError": "Failed to save preferences. Please try again.",
+      "saveButton": "Save Preferences",
+      "saving": "Saving..."
     }
   },
   "common": {
@@ -477,5 +528,23 @@
       "vibe": "Vibe",
       "date": "Date"
     }
+  },
+  "logger": {
+    "repsPlaceholder": "10",
+    "weightPlaceholder": "80",
+    "rpePlaceholder": "7"
+  },
+  "admin": {
+    "userManagement": {
+      "searchPlaceholder": "Search by email, username, or ID..."
+    },
+    "systemControls": {
+      "maintenanceMessagePlaceholder": "e.g., Emergency database maintenance",
+      "durationPlaceholder": "e.g., 30 minutes",
+      "completionMessagePlaceholder": "e.g., Maintenance completed successfully"
+    }
+  },
+  "twoFactor": {
+    "codePlaceholder": "000000"
   }
 }

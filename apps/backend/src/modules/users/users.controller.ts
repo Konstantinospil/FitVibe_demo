@@ -36,6 +36,21 @@ const updateProfileSchema = z.object({
   displayName: z.string().min(1).max(120).optional(),
   locale: z.string().max(10).optional(),
   preferredLang: z.string().max(5).optional(),
+  alias: z
+    .string()
+    .min(3)
+    .max(50)
+    .regex(
+      /^[a-zA-Z0-9_.-]+$/,
+      "Alias may only contain letters, numbers, underscores, dots, or dashes",
+    )
+    .optional(),
+  weight: z.number().positive().min(20).max(500).optional(),
+  weightUnit: z.enum(["kg", "lb"]).optional(),
+  fitnessLevel: z.enum(["beginner", "intermediate", "advanced", "elite"]).optional(),
+  trainingFrequency: z
+    .enum(["rarely", "1_2_per_week", "3_4_per_week", "5_plus_per_week"])
+    .optional(),
 });
 
 const changePasswordSchema = z.object({

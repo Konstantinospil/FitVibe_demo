@@ -27,7 +27,7 @@ import {
   unfollowUserByAlias,
   unblockUserByAlias,
 } from "./feed.service.js";
-import { getIdempotencyKey, getRouteTemplate } from "../common/idempotency.helpers.js";
+import { handleIdempotentRequest, getIdempotencyKey, getRouteTemplate } from "../common/idempotency.helpers.js";
 import { resolveIdempotency, persistIdempotencyResult } from "../common/idempotency.service.js";
 
 function resolveViewerId(req: Request): string | null {
@@ -119,34 +119,21 @@ export async function likeFeedItemHandler(req: Request, res: Response): Promise<
     throw new HttpError(401, "E.UNAUTHENTICATED", "UNAUTHENTICATED");
   }
 
-  // Idempotency support
-  const idempotencyKey = getIdempotencyKey(req);
-  if (idempotencyKey) {
-    const route = getRouteTemplate(req);
-    const resolution = await resolveIdempotency(
-      { userId, method: req.method, route, key: idempotencyKey },
-      { feedItemId: req.params.feedItemId },
-    );
+  const handled = await handleIdempotentRequest(
+    req,
+    res,
+    userId,
+    { feedItemId: req.params.feedItemId },
+    async () => {
+      const result = await likeFeedItem(userId, req.params.feedItemId);
+      return { status: 200, body: result };
+    },
+  );
 
-    if (resolution.type === "replay") {
-      res.set("Idempotency-Key", idempotencyKey);
-      res.set("Idempotent-Replayed", "true");
-      res.status(resolution.status).json(resolution.body);
-      return;
-    }
-
+  if (!handled) {
     const result = await likeFeedItem(userId, req.params.feedItemId);
-
-    if (resolution.recordId) {
-      await persistIdempotencyResult(resolution.recordId, 200, result);
-    }
-
-    res.set("Idempotency-Key", idempotencyKey);
     res.json(result);
   }
-
-  const result = await likeFeedItem(userId, req.params.feedItemId);
-  res.json(result);
 }
 
 export async function unlikeFeedItemHandler(req: Request, res: Response): Promise<void> {
@@ -155,34 +142,21 @@ export async function unlikeFeedItemHandler(req: Request, res: Response): Promis
     throw new HttpError(401, "E.UNAUTHENTICATED", "UNAUTHENTICATED");
   }
 
-  // Idempotency support
-  const idempotencyKey = getIdempotencyKey(req);
-  if (idempotencyKey) {
-    const route = getRouteTemplate(req);
-    const resolution = await resolveIdempotency(
-      { userId, method: req.method, route, key: idempotencyKey },
-      { feedItemId: req.params.feedItemId },
-    );
+  const handled = await handleIdempotentRequest(
+    req,
+    res,
+    userId,
+    { feedItemId: req.params.feedItemId },
+    async () => {
+      const result = await unlikeFeedItem(userId, req.params.feedItemId);
+      return { status: 200, body: result };
+    },
+  );
 
-    if (resolution.type === "replay") {
-      res.set("Idempotency-Key", idempotencyKey);
-      res.set("Idempotent-Replayed", "true");
-      res.status(resolution.status).json(resolution.body);
-      return;
-    }
-
+  if (!handled) {
     const result = await unlikeFeedItem(userId, req.params.feedItemId);
-
-    if (resolution.recordId) {
-      await persistIdempotencyResult(resolution.recordId, 200, result);
-    }
-
-    res.set("Idempotency-Key", idempotencyKey);
     res.json(result);
   }
-
-  const result = await unlikeFeedItem(userId, req.params.feedItemId);
-  res.json(result);
 }
 
 export async function bookmarkSessionHandler(req: Request, res: Response): Promise<void> {
@@ -301,35 +275,21 @@ export async function createCommentHandler(req: Request, res: Response): Promise
             ? commentValue.toISOString()
             : (JSON.stringify(commentValue) ?? "");
 
-  // Idempotency support
-  const idempotencyKey = getIdempotencyKey(req);
-  if (idempotencyKey) {
-    const route = getRouteTemplate(req);
-    const resolution = await resolveIdempotency(
-      { userId, method: req.method, route, key: idempotencyKey },
-      { feedItemId: req.params.feedItemId, body },
-    );
+  const handled = await handleIdempotentRequest(
+    req,
+    res,
+    userId,
+    { feedItemId: req.params.feedItemId, body },
+    async () => {
+      const comment = await createComment(userId, req.params.feedItemId, body);
+      return { status: 201, body: comment };
+    },
+  );
 
-    if (resolution.type === "replay") {
-      res.set("Idempotency-Key", idempotencyKey);
-      res.set("Idempotent-Replayed", "true");
-      res.status(resolution.status).json(resolution.body);
-      return;
-    }
-
+  if (!handled) {
     const comment = await createComment(userId, req.params.feedItemId, body);
-
-    if (resolution.recordId) {
-      await persistIdempotencyResult(resolution.recordId, 201, comment);
-    }
-
-    res.set("Idempotency-Key", idempotencyKey);
     res.status(201).json(comment);
-    return;
   }
-
-  const comment = await createComment(userId, req.params.feedItemId, body);
-  res.status(201).json(comment);
 }
 
 export async function deleteCommentHandler(req: Request, res: Response): Promise<void> {

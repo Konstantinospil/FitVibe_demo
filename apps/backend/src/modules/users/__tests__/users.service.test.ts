@@ -444,6 +444,396 @@ describe("Users Service", () => {
       expect(result.locale).toBe("de");
       expect(result.preferredLang).toBe("de");
     });
+
+    it("should update alias with valid format", async () => {
+      const dto: UpdateProfileDTO = {
+        alias: "newalias",
+      };
+
+      mockUsersRepo.findUserById.mockResolvedValue({
+        id: userId,
+        username: "testuser",
+        display_name: "Test User",
+      } as UserRow);
+
+      mockUsersRepo.getProfileByUserId.mockResolvedValue({
+        user_id: userId,
+        alias: "oldalias",
+      } as never);
+
+      mockUsersRepo.checkAliasAvailable.mockResolvedValue(true);
+      mockUsersRepo.updateProfileAlias.mockResolvedValue(1);
+      mockUsersRepo.fetchUserWithContacts.mockResolvedValue({
+        user: {
+          id: userId,
+          username: "testuser",
+          display_name: "Test User",
+        } as UserRow,
+        contacts: [],
+        avatar: null,
+      });
+      mockUsersRepo.getProfileByUserId.mockResolvedValue({
+        user_id: userId,
+        alias: "newalias",
+      } as never);
+      mockUsersRepo.getLatestUserMetrics.mockResolvedValue(null);
+
+      const result = await usersService.updateProfile(userId, dto);
+
+      expect(mockUsersRepo.checkAliasAvailable).toHaveBeenCalledWith("newalias", userId);
+      expect(mockUsersRepo.updateProfileAlias).toHaveBeenCalledWith(userId, "newalias", {});
+      expect(result.profile?.alias).toBe("newalias");
+    });
+
+    it("should reject taken alias", async () => {
+      const dto: UpdateProfileDTO = {
+        alias: "takenalias",
+      };
+
+      mockUsersRepo.findUserById.mockResolvedValue({
+        id: userId,
+        username: "testuser",
+        display_name: "Test User",
+      } as UserRow);
+
+      mockUsersRepo.getProfileByUserId.mockResolvedValue({
+        user_id: userId,
+        alias: "oldalias",
+      } as never);
+
+      mockUsersRepo.checkAliasAvailable.mockResolvedValue(false);
+
+      await expect(usersService.updateProfile(userId, dto)).rejects.toThrow("E.ALIAS_TAKEN");
+    });
+
+    it("should update weight with kg unit", async () => {
+      const dto: UpdateProfileDTO = {
+        weight: 75.5,
+        weightUnit: "kg",
+      };
+
+      mockUsersRepo.findUserById.mockResolvedValue({
+        id: userId,
+        username: "testuser",
+        display_name: "Test User",
+      } as UserRow);
+
+      mockUsersRepo.getLatestUserMetrics.mockResolvedValue({
+        weight: 70,
+        unit: "kg",
+        fitness_level_code: null,
+        training_frequency: null,
+      });
+      mockUsersRepo.insertUserMetric.mockResolvedValue("metric-123");
+      mockUsersRepo.fetchUserWithContacts.mockResolvedValue({
+        user: {
+          id: userId,
+          username: "testuser",
+          display_name: "Test User",
+        } as UserRow,
+        contacts: [],
+        avatar: null,
+      });
+      mockUsersRepo.getProfileByUserId.mockResolvedValue(null);
+      mockUsersRepo.getLatestUserMetrics.mockResolvedValue({
+        weight: 75.5,
+        unit: "kg",
+        fitness_level_code: null,
+        training_frequency: null,
+      });
+
+      const result = await usersService.updateProfile(userId, dto);
+
+      expect(mockUsersRepo.insertUserMetric).toHaveBeenCalledWith(
+        userId,
+        { weight: 75.5, unit: "kg" },
+        {},
+      );
+      expect(result.profile?.weight).toBe(75.5);
+      expect(result.profile?.weightUnit).toBe("kg");
+    });
+
+    it("should convert weight from lb to kg", async () => {
+      const dto: UpdateProfileDTO = {
+        weight: 165.5, // lbs
+        weightUnit: "lb",
+      };
+
+      mockUsersRepo.findUserById.mockResolvedValue({
+        id: userId,
+        username: "testuser",
+        display_name: "Test User",
+      } as UserRow);
+
+      mockUsersRepo.getLatestUserMetrics.mockResolvedValue({
+        weight: 70,
+        unit: "kg",
+        fitness_level_code: null,
+        training_frequency: null,
+      });
+      mockUsersRepo.insertUserMetric.mockResolvedValue("metric-123");
+      mockUsersRepo.fetchUserWithContacts.mockResolvedValue({
+        user: {
+          id: userId,
+          username: "testuser",
+          display_name: "Test User",
+        } as UserRow,
+        contacts: [],
+        avatar: null,
+      });
+      mockUsersRepo.getProfileByUserId.mockResolvedValue(null);
+      mockUsersRepo.getLatestUserMetrics.mockResolvedValue({
+        weight: 75.07, // 165.5 * 0.453592
+        unit: "kg",
+        fitness_level_code: null,
+        training_frequency: null,
+      });
+
+      await usersService.updateProfile(userId, dto);
+
+      expect(mockUsersRepo.insertUserMetric).toHaveBeenCalledWith(
+        userId,
+        expect.objectContaining({
+          weight: expect.closeTo(75.07, 2),
+          unit: "lb",
+        }),
+        {},
+      );
+    });
+
+    it("should update fitness level", async () => {
+      const dto: UpdateProfileDTO = {
+        fitnessLevel: "intermediate",
+      };
+
+      mockUsersRepo.findUserById.mockResolvedValue({
+        id: userId,
+        username: "testuser",
+        display_name: "Test User",
+      } as UserRow);
+
+      mockUsersRepo.getLatestUserMetrics.mockResolvedValue({
+        weight: null,
+        unit: "kg",
+        fitness_level_code: "beginner",
+        training_frequency: null,
+      });
+      mockUsersRepo.insertUserMetric.mockResolvedValue("metric-123");
+      mockUsersRepo.fetchUserWithContacts.mockResolvedValue({
+        user: {
+          id: userId,
+          username: "testuser",
+          display_name: "Test User",
+        } as UserRow,
+        contacts: [],
+        avatar: null,
+      });
+      mockUsersRepo.getProfileByUserId.mockResolvedValue(null);
+      mockUsersRepo.getLatestUserMetrics.mockResolvedValue({
+        weight: null,
+        unit: "kg",
+        fitness_level_code: "intermediate",
+        training_frequency: null,
+      });
+
+      const result = await usersService.updateProfile(userId, dto);
+
+      expect(mockUsersRepo.insertUserMetric).toHaveBeenCalledWith(
+        userId,
+        { fitness_level_code: "intermediate" },
+        {},
+      );
+      expect(result.profile?.fitnessLevel).toBe("intermediate");
+    });
+
+    it("should update training frequency", async () => {
+      const dto: UpdateProfileDTO = {
+        trainingFrequency: "3_4_per_week",
+      };
+
+      mockUsersRepo.findUserById.mockResolvedValue({
+        id: userId,
+        username: "testuser",
+        display_name: "Test User",
+      } as UserRow);
+
+      mockUsersRepo.getLatestUserMetrics.mockResolvedValue({
+        weight: null,
+        unit: "kg",
+        fitness_level_code: null,
+        training_frequency: "1_2_per_week",
+      });
+      mockUsersRepo.insertUserMetric.mockResolvedValue("metric-123");
+      mockUsersRepo.fetchUserWithContacts.mockResolvedValue({
+        user: {
+          id: userId,
+          username: "testuser",
+          display_name: "Test User",
+        } as UserRow,
+        contacts: [],
+        avatar: null,
+      });
+      mockUsersRepo.getProfileByUserId.mockResolvedValue(null);
+      mockUsersRepo.getLatestUserMetrics.mockResolvedValue({
+        weight: null,
+        unit: "kg",
+        fitness_level_code: null,
+        training_frequency: "3_4_per_week",
+      });
+
+      const result = await usersService.updateProfile(userId, dto);
+
+      expect(mockUsersRepo.insertUserMetric).toHaveBeenCalledWith(
+        userId,
+        { training_frequency: "3_4_per_week" },
+        {},
+      );
+      expect(result.profile?.trainingFrequency).toBe("3_4_per_week");
+    });
+
+    it("should update all new profile fields together", async () => {
+      const dto: UpdateProfileDTO = {
+        alias: "newalias",
+        weight: 80,
+        weightUnit: "kg",
+        fitnessLevel: "advanced",
+        trainingFrequency: "5_plus_per_week",
+      };
+
+      mockUsersRepo.findUserById.mockResolvedValue({
+        id: userId,
+        username: "testuser",
+        display_name: "Test User",
+      } as UserRow);
+
+      mockUsersRepo.getProfileByUserId.mockResolvedValue({
+        user_id: userId,
+        alias: "oldalias",
+      } as never);
+      mockUsersRepo.checkAliasAvailable.mockResolvedValue(true);
+      mockUsersRepo.updateProfileAlias.mockResolvedValue(1);
+
+      mockUsersRepo.getLatestUserMetrics.mockResolvedValue({
+        weight: 75,
+        unit: "kg",
+        fitness_level_code: "intermediate",
+        training_frequency: "3_4_per_week",
+      });
+      mockUsersRepo.insertUserMetric.mockResolvedValue("metric-123");
+      mockUsersRepo.fetchUserWithContacts.mockResolvedValue({
+        user: {
+          id: userId,
+          username: "testuser",
+          display_name: "Test User",
+        } as UserRow,
+        contacts: [],
+        avatar: null,
+      });
+      mockUsersRepo.getProfileByUserId.mockResolvedValue({
+        user_id: userId,
+        alias: "newalias",
+      } as never);
+      mockUsersRepo.getLatestUserMetrics.mockResolvedValue({
+        weight: 80,
+        unit: "kg",
+        fitness_level_code: "advanced",
+        training_frequency: "5_plus_per_week",
+      });
+
+      const result = await usersService.updateProfile(userId, dto);
+
+      expect(mockUsersRepo.updateProfileAlias).toHaveBeenCalledWith(userId, "newalias", {});
+      expect(mockUsersRepo.insertUserMetric).toHaveBeenCalledWith(
+        userId,
+        {
+          weight: 80,
+          unit: "kg",
+          fitness_level_code: "advanced",
+          training_frequency: "5_plus_per_week",
+        },
+        {},
+      );
+      expect(result.profile?.alias).toBe("newalias");
+      expect(result.profile?.weight).toBe(80);
+      expect(result.profile?.fitnessLevel).toBe("advanced");
+      expect(result.profile?.trainingFrequency).toBe("5_plus_per_week");
+    });
+
+    it("should not update alias if value unchanged", async () => {
+      const dto: UpdateProfileDTO = {
+        alias: "existingalias",
+      };
+
+      mockUsersRepo.findUserById.mockResolvedValue({
+        id: userId,
+        username: "testuser",
+        display_name: "Test User",
+      } as UserRow);
+
+      mockUsersRepo.getProfileByUserId.mockResolvedValue({
+        user_id: userId,
+        alias: "existingalias",
+      } as never);
+      mockUsersRepo.fetchUserWithContacts.mockResolvedValue({
+        user: {
+          id: userId,
+          username: "testuser",
+          display_name: "Test User",
+        } as UserRow,
+        contacts: [],
+        avatar: null,
+      });
+      mockUsersRepo.getProfileByUserId.mockResolvedValue({
+        user_id: userId,
+        alias: "existingalias",
+      } as never);
+      mockUsersRepo.getLatestUserMetrics.mockResolvedValue(null);
+
+      await usersService.updateProfile(userId, dto);
+
+      expect(mockUsersRepo.checkAliasAvailable).not.toHaveBeenCalled();
+      expect(mockUsersRepo.updateProfileAlias).not.toHaveBeenCalled();
+    });
+
+    it("should not insert metric if values unchanged", async () => {
+      const dto: UpdateProfileDTO = {
+        weight: 75.5,
+        weightUnit: "kg",
+      };
+
+      mockUsersRepo.findUserById.mockResolvedValue({
+        id: userId,
+        username: "testuser",
+        display_name: "Test User",
+      } as UserRow);
+
+      mockUsersRepo.getLatestUserMetrics.mockResolvedValue({
+        weight: 75.5,
+        unit: "kg",
+        fitness_level_code: null,
+        training_frequency: null,
+      });
+      mockUsersRepo.fetchUserWithContacts.mockResolvedValue({
+        user: {
+          id: userId,
+          username: "testuser",
+          display_name: "Test User",
+        } as UserRow,
+        contacts: [],
+        avatar: null,
+      });
+      mockUsersRepo.getProfileByUserId.mockResolvedValue(null);
+      mockUsersRepo.getLatestUserMetrics.mockResolvedValue({
+        weight: 75.5,
+        unit: "kg",
+        fitness_level_code: null,
+        training_frequency: null,
+      });
+
+      await usersService.updateProfile(userId, dto);
+
+      expect(mockUsersRepo.insertUserMetric).not.toHaveBeenCalled();
+    });
   });
 
   describe("updatePassword", () => {

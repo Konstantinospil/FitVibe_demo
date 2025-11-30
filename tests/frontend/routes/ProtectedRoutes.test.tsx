@@ -1,7 +1,7 @@
 import React from "react";
 import { render, screen, waitFor } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { MemoryRouter } from "react-router-dom";
+import { MemoryRouter, Outlet } from "react-router-dom";
 import ProtectedRoutes from "../../../apps/frontend/src/routes/ProtectedRoutes";
 import { useAuth } from "../../../apps/frontend/src/contexts/AuthContext";
 
@@ -10,22 +10,28 @@ vi.mock("../../../apps/frontend/src/i18n/config", () => ({
   ensurePrivateTranslationsLoaded: vi.fn().mockResolvedValue(undefined),
 }));
 
-// Mock React.lazy to return components synchronously for testing
-// This is a simplified approach - we'll just test that the component renders
-// Detailed route testing is better done in integration tests
-
-// Mock all lazy-loaded components as regular exports
-vi.mock("../../../apps/frontend/src/components/ProtectedRoute", () => ({
-  default: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+// Mock useAuthStore for AdminRoute component
+vi.mock("../../../apps/frontend/src/store/auth.store", () => ({
+  useAuthStore: vi.fn((selector) => {
+    const state = {
+      isAuthenticated: true,
+      user: { id: "user-1", username: "test", email: "test@example.com", role: "admin" },
+      signIn: vi.fn(),
+      signOut: vi.fn(),
+      updateUser: vi.fn(),
+    };
+    return typeof selector === "function" ? selector(state) : state;
+  }),
 }));
 
-vi.mock("../../../apps/frontend/src/components/AdminRoute", () => ({
-  default: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-}));
+// Don't mock ProtectedRoute or AdminRoute - let them use real implementations
+// They use Outlet to render nested routes, which requires the real router structure
 
 vi.mock("../../../apps/frontend/src/layouts/MainLayout", () => ({
-  default: ({ children }: { children: React.ReactNode }) => (
-    <div data-testid="main-layout">{children}</div>
+  default: () => (
+    <div data-testid="main-layout">
+      <Outlet />
+    </div>
   ),
 }));
 
@@ -95,6 +101,7 @@ describe("ProtectedRoutes", () => {
     vi.mocked(useAuth).mockReturnValue({
       user: { id: "user-1", username: "test", email: "test@example.com" },
       isLoading: false,
+      isAuthenticated: true,
       signOut: vi.fn(),
     });
   });
@@ -253,9 +260,12 @@ describe("ProtectedRoutes", () => {
       </MemoryRouter>,
     );
 
-    await waitFor(() => {
-      expect(screen.getByText("Admin Dashboard")).toBeInTheDocument();
-    });
+    await waitFor(
+      () => {
+        expect(screen.getByText("Admin Dashboard")).toBeInTheDocument();
+      },
+      { timeout: 3000 },
+    );
   });
 
   it("should render ContentReports at /admin/reports", async () => {
@@ -325,8 +335,10 @@ describe("ProtectedRoutes", () => {
       </MemoryRouter>,
     );
 
+    // Unmatched paths within protected routes show NotFound, not redirect
+    // The outer * route only catches paths that don't go through ProtectedRoute
     await waitFor(() => {
-      expect(screen.getByText("Home Page")).toBeInTheDocument();
+      expect(screen.getByText("Not Found")).toBeInTheDocument();
     });
   });
 

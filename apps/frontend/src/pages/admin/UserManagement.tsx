@@ -177,7 +177,7 @@ const UserManagement: React.FC = () => {
                       void handleSearch();
                     }
                   }}
-                  placeholder="Search by email, username, or ID..."
+                  placeholder={t("admin.userManagement.searchPlaceholder")}
                   style={{
                     width: "100%",
                     padding: "0.75rem 1rem 0.75rem 3rem",

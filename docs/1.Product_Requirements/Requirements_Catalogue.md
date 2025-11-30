@@ -32,7 +32,7 @@ Requirements are organized by:
 | FR-001 | User Registration  | Done   | High     | GOLD   | [FR-001-user-registration.md](Requirements/done/FR-001-user-registration.md)       | PRD §4.1      |
 | FR-002 | Login & Session    | Done   | High     | GOLD   | [FR-002-login-and-session.md](Requirements/done/FR-002-login-and-session.md)       | PRD §4.1      |
 | FR-003 | Auth-Wall          | Done   | High     | GOLD   | [FR-003-authwall.md](Requirements/done/FR-003-authwall.md)                         | PRD §4.1      |
-| FR-009 | Profile & Settings | Open   | Medium   | SILVER | [FR-009-profile-and-settings.md](Requirements/open/FR-009-profile-and-settings.md) | PRD §4.2      |
+| FR-009 | Profile & Settings | Done   | Medium   | SILVER | [FR-009-profile-and-settings.md](Requirements/done/FR-009-profile-and-settings.md) | PRD §4.2      |
 
 ### Content Management
 
@@ -93,9 +93,9 @@ Requirements are organized by:
 
 ### By Status
 
-- **Done**: 8 requirements (FR-001, FR-002, FR-003, FR-006, FR-007, FR-008, NFR-001, NFR-006)
+- **Done**: 9 requirements (FR-001, FR-002, FR-003, FR-006, FR-007, FR-008, FR-009, NFR-001, NFR-006)
 - **Progressing**: 6 requirements (FR-004, FR-005, NFR-002, NFR-003, NFR-004, NFR-005)
-- **Open**: 5 requirements (FR-009, FR-010, FR-011, NFR-007, REQ-2025-01-20-001)
+- **Open**: 4 requirements (FR-010, FR-011, NFR-007, REQ-2025-01-20-001)
 
 ### By Priority
 

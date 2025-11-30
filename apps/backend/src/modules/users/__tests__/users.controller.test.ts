@@ -206,6 +206,167 @@ describe("Users Controller", () => {
 
       expect(mockResponse.status).toHaveBeenCalledWith(400);
     });
+
+    it("should update profile with alias", async () => {
+      mockRequest.user = createMockJwtPayload();
+      mockRequest.body = {
+        alias: "newalias",
+      };
+
+      const mockUpdatedUser = {
+        id: "user-123",
+        alias: "newalias",
+        profile: {
+          alias: "newalias",
+        },
+      };
+
+      mockUsersService.updateProfile.mockResolvedValue(mockUpdatedUser as never);
+
+      await usersController.updateMe(mockRequest as Request, mockResponse as Response);
+
+      expect(mockUsersService.updateProfile).toHaveBeenCalledWith("user-123", mockRequest.body);
+      expect(mockResponse.json).toHaveBeenCalledWith(mockUpdatedUser);
+    });
+
+    it("should update profile with weight and unit", async () => {
+      mockRequest.user = createMockJwtPayload();
+      mockRequest.body = {
+        weight: 75.5,
+        weightUnit: "kg",
+      };
+
+      const mockUpdatedUser = {
+        id: "user-123",
+        profile: {
+          weight: 75.5,
+          weightUnit: "kg",
+        },
+      };
+
+      mockUsersService.updateProfile.mockResolvedValue(mockUpdatedUser as never);
+
+      await usersController.updateMe(mockRequest as Request, mockResponse as Response);
+
+      expect(mockUsersService.updateProfile).toHaveBeenCalledWith("user-123", mockRequest.body);
+      expect(mockResponse.json).toHaveBeenCalledWith(mockUpdatedUser);
+    });
+
+    it("should update profile with fitness level", async () => {
+      mockRequest.user = createMockJwtPayload();
+      mockRequest.body = {
+        fitnessLevel: "intermediate",
+      };
+
+      const mockUpdatedUser = {
+        id: "user-123",
+        profile: {
+          fitnessLevel: "intermediate",
+        },
+      };
+
+      mockUsersService.updateProfile.mockResolvedValue(mockUpdatedUser as never);
+
+      await usersController.updateMe(mockRequest as Request, mockResponse as Response);
+
+      expect(mockUsersService.updateProfile).toHaveBeenCalledWith("user-123", mockRequest.body);
+      expect(mockResponse.json).toHaveBeenCalledWith(mockUpdatedUser);
+    });
+
+    it("should update profile with training frequency", async () => {
+      mockRequest.user = createMockJwtPayload();
+      mockRequest.body = {
+        trainingFrequency: "3_4_per_week",
+      };
+
+      const mockUpdatedUser = {
+        id: "user-123",
+        profile: {
+          trainingFrequency: "3_4_per_week",
+        },
+      };
+
+      mockUsersService.updateProfile.mockResolvedValue(mockUpdatedUser as never);
+
+      await usersController.updateMe(mockRequest as Request, mockResponse as Response);
+
+      expect(mockUsersService.updateProfile).toHaveBeenCalledWith("user-123", mockRequest.body);
+      expect(mockResponse.json).toHaveBeenCalledWith(mockUpdatedUser);
+    });
+
+    it("should return 400 for invalid alias format", async () => {
+      mockRequest.user = createMockJwtPayload();
+      mockRequest.body = {
+        alias: "ab", // too short
+      };
+
+      await usersController.updateMe(mockRequest as Request, mockResponse as Response);
+
+      expect(mockResponse.status).toHaveBeenCalledWith(400);
+    });
+
+    it("should return 400 for invalid weight range", async () => {
+      mockRequest.user = createMockJwtPayload();
+      mockRequest.body = {
+        weight: 10, // below minimum
+        weightUnit: "kg",
+      };
+
+      await usersController.updateMe(mockRequest as Request, mockResponse as Response);
+
+      expect(mockResponse.status).toHaveBeenCalledWith(400);
+    });
+
+    it("should return 400 for invalid fitness level", async () => {
+      mockRequest.user = createMockJwtPayload();
+      mockRequest.body = {
+        fitnessLevel: "invalid",
+      };
+
+      await usersController.updateMe(mockRequest as Request, mockResponse as Response);
+
+      expect(mockResponse.status).toHaveBeenCalledWith(400);
+    });
+
+    it("should return 400 for invalid training frequency", async () => {
+      mockRequest.user = createMockJwtPayload();
+      mockRequest.body = {
+        trainingFrequency: "invalid",
+      };
+
+      await usersController.updateMe(mockRequest as Request, mockResponse as Response);
+
+      expect(mockResponse.status).toHaveBeenCalledWith(400);
+    });
+
+    it("should update profile with all new fields", async () => {
+      mockRequest.user = createMockJwtPayload();
+      mockRequest.body = {
+        alias: "newalias",
+        weight: 80,
+        weightUnit: "kg",
+        fitnessLevel: "advanced",
+        trainingFrequency: "5_plus_per_week",
+      };
+
+      const mockUpdatedUser = {
+        id: "user-123",
+        profile: {
+          alias: "newalias",
+          weight: 80,
+          weightUnit: "kg",
+          fitnessLevel: "advanced",
+          trainingFrequency: "5_plus_per_week",
+        },
+      };
+
+      mockUsersService.updateProfile.mockResolvedValue(mockUpdatedUser as never);
+
+      await usersController.updateMe(mockRequest as Request, mockResponse as Response);
+
+      expect(mockUsersService.updateProfile).toHaveBeenCalledWith("user-123", mockRequest.body);
+      expect(mockResponse.json).toHaveBeenCalledWith(mockUpdatedUser);
+    });
   });
 
   describe("changePassword", () => {

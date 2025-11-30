@@ -37,6 +37,14 @@ export interface UserSafe {
 
 export interface UserDetail extends UserSafe {
   contacts: UserContact[];
+  profile?: {
+    alias: string | null;
+    bio: string | null;
+    weight: number | null;
+    weightUnit: string | null;
+    fitnessLevel: string | null;
+    trainingFrequency: string | null;
+  };
 }
 
 export interface UpdateProfileDTO {
@@ -46,6 +54,11 @@ export interface UpdateProfileDTO {
   preferredLang?: string;
   defaultVisibility?: string;
   units?: string;
+  alias?: string;
+  weight?: number;
+  weightUnit?: "kg" | "lb";
+  fitnessLevel?: "beginner" | "intermediate" | "advanced" | "elite";
+  trainingFrequency?: "rarely" | "1_2_per_week" | "3_4_per_week" | "5_plus_per_week";
 }
 
 export interface CreateUserDTO {

@@ -595,4 +595,208 @@ describe("Users Repository", () => {
       expect(mockQueryBuilder.del).toHaveBeenCalled();
     });
   });
+
+  describe("getProfileByUserId", () => {
+    it("should get profile by user id", async () => {
+      const mockProfile = {
+        user_id: "user-123",
+        alias: "testalias",
+        bio: "Test bio",
+        avatar_asset_id: null,
+        date_of_birth: "1990-01-01",
+        gender_code: "man",
+        visibility: "private",
+        timezone: "Europe/Berlin",
+        unit_preferences: { weight: "kg" },
+        created_at: "2024-01-01T00:00:00Z",
+        updated_at: "2024-01-01T00:00:00Z",
+      };
+
+      mockQueryBuilder.first.mockResolvedValue(mockProfile);
+
+      const result = await usersRepository.getProfileByUserId("user-123");
+
+      expect(result).toEqual(mockProfile);
+      expect(mockDb).toHaveBeenCalledWith("profiles");
+      expect(mockQueryBuilder.where).toHaveBeenCalledWith({ user_id: "user-123" });
+    });
+
+    it("should return null if profile not found", async () => {
+      mockQueryBuilder.first.mockResolvedValue(undefined);
+
+      const result = await usersRepository.getProfileByUserId("user-123");
+
+      expect(result).toBeNull();
+    });
+  });
+
+  describe("checkAliasAvailable", () => {
+    it("should return true if alias is available", async () => {
+      mockQueryBuilder.first.mockResolvedValue(undefined);
+
+      const result = await usersRepository.checkAliasAvailable("newalias");
+
+      expect(result).toBe(true);
+      expect(mockDb).toHaveBeenCalledWith("profiles");
+      expect(mockQueryBuilder.whereRaw).toHaveBeenCalledWith("LOWER(alias) = ?", ["newalias"]);
+    });
+
+    it("should return false if alias is taken", async () => {
+      mockQueryBuilder.first.mockResolvedValue({
+        user_id: "other-user",
+        alias: "takenalias",
+      });
+
+      const result = await usersRepository.checkAliasAvailable("takenalias");
+
+      expect(result).toBe(false);
+    });
+
+    it("should exclude current user when checking alias", async () => {
+      mockQueryBuilder.first.mockResolvedValue(undefined);
+
+      await usersRepository.checkAliasAvailable("myalias", "user-123");
+
+      expect(mockQueryBuilder.where).toHaveBeenCalledWith("user_id", "!=", "user-123");
+    });
+
+    it("should normalize alias to lowercase", async () => {
+      mockQueryBuilder.first.mockResolvedValue(undefined);
+
+      await usersRepository.checkAliasAvailable("MyAlias");
+
+      expect(mockQueryBuilder.whereRaw).toHaveBeenCalledWith("LOWER(alias) = ?", ["myalias"]);
+    });
+  });
+
+  describe("updateProfileAlias", () => {
+    it("should update alias for existing profile", async () => {
+      mockQueryBuilder.first.mockResolvedValue({
+        user_id: "user-123",
+        alias: "oldalias",
+      });
+      mockQueryBuilder.update.mockResolvedValue(1);
+
+      const result = await usersRepository.updateProfileAlias("user-123", "newalias");
+
+      expect(result).toBe(1);
+      expect(mockDb).toHaveBeenCalledWith("profiles");
+      expect(mockQueryBuilder.where).toHaveBeenCalledWith({ user_id: "user-123" });
+      expect(mockQueryBuilder.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          alias: "newalias",
+        }),
+      );
+    });
+
+    it("should create profile if it doesn't exist", async () => {
+      mockQueryBuilder.first.mockResolvedValue(undefined);
+      mockQueryBuilder.insert.mockResolvedValue([1]);
+
+      const result = await usersRepository.updateProfileAlias("user-123", "newalias");
+
+      expect(result).toEqual([1]);
+      expect(mockQueryBuilder.insert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          user_id: "user-123",
+          alias: "newalias",
+          visibility: "private",
+          unit_preferences: {},
+        }),
+      );
+    });
+  });
+
+  describe("insertUserMetric", () => {
+    it("should insert user metric with all fields", async () => {
+      mockQueryBuilder.returning.mockResolvedValue([{ id: "metric-123" }]);
+
+      const result = await usersRepository.insertUserMetric("user-123", {
+        weight: 75.5,
+        unit: "kg",
+        fitness_level_code: "intermediate",
+        training_frequency: "3_4_per_week",
+      });
+
+      expect(result).toBe("metric-123");
+      expect(mockDb).toHaveBeenCalledWith("user_metrics");
+      expect(mockQueryBuilder.insert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          user_id: "user-123",
+          weight: 75.5,
+          unit: "kg",
+          fitness_level_code: "intermediate",
+          training_frequency: "3_4_per_week",
+        }),
+      );
+      expect(mockQueryBuilder.returning).toHaveBeenCalledWith("id");
+    });
+
+    it("should insert metric with partial fields", async () => {
+      mockQueryBuilder.returning.mockResolvedValue([{ id: "metric-123" }]);
+
+      const result = await usersRepository.insertUserMetric("user-123", {
+        weight: 80,
+        unit: "kg",
+      });
+
+      expect(result).toBe("metric-123");
+      expect(mockQueryBuilder.insert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          weight: 80,
+          unit: "kg",
+          fitness_level_code: null,
+          training_frequency: null,
+        }),
+      );
+    });
+
+    it("should use default unit if not provided", async () => {
+      mockQueryBuilder.returning.mockResolvedValue([{ id: "metric-123" }]);
+
+      await usersRepository.insertUserMetric("user-123", {
+        weight: 75.5,
+      });
+
+      expect(mockQueryBuilder.insert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          unit: "kg",
+        }),
+      );
+    });
+  });
+
+  describe("getLatestUserMetrics", () => {
+    it("should get latest user metrics", async () => {
+      const mockMetrics = {
+        weight: 75.5,
+        unit: "kg",
+        fitness_level_code: "intermediate",
+        training_frequency: "3_4_per_week",
+      };
+
+      mockQueryBuilder.first.mockResolvedValue(mockMetrics);
+
+      const result = await usersRepository.getLatestUserMetrics("user-123");
+
+      expect(result).toEqual(mockMetrics);
+      expect(mockDb).toHaveBeenCalledWith("user_metrics");
+      expect(mockQueryBuilder.where).toHaveBeenCalledWith({ user_id: "user-123" });
+      expect(mockQueryBuilder.orderBy).toHaveBeenCalledWith("recorded_at", "desc");
+      expect(mockQueryBuilder.select).toHaveBeenCalledWith([
+        "weight",
+        "unit",
+        "fitness_level_code",
+        "training_frequency",
+      ]);
+    });
+
+    it("should return null if no metrics found", async () => {
+      mockQueryBuilder.first.mockResolvedValue(undefined);
+
+      const result = await usersRepository.getLatestUserMetrics("user-123");
+
+      expect(result).toBeNull();
+    });
+  });
 });

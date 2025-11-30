@@ -5,6 +5,7 @@
 
 import type { Request, Response, NextFunction } from "express";
 import crypto from "crypto";
+import { logger } from "../config/logger.js";
 
 /**
  * Generate a cryptographically secure nonce for CSP
@@ -143,7 +144,10 @@ export function validateForwardedIP(req: Request, res: Response, next: NextFunct
       const trimmedIP = ip.trim();
       // Limit IP length to prevent ReDoS (IPv6 max length is 45 characters)
       if (trimmedIP.length > 45) {
-        console.warn("[Security] X-Forwarded-For IP too long, skipping validation");
+        logger.warn(
+          { ip: trimmedIP, length: trimmedIP.length },
+          "[Security] X-Forwarded-For IP too long, skipping validation",
+        );
         continue;
       }
       if (!ipv4Regex.test(trimmedIP) && !ipv6Regex.test(trimmedIP)) {
@@ -152,7 +156,10 @@ export function validateForwardedIP(req: Request, res: Response, next: NextFunct
         const sanitized = String(forwardedFor)
           .replace(/[\r\n\t]/g, " ")
           .substring(0, 200);
-        console.warn("[Security] Invalid X-Forwarded-For header:", sanitized);
+        logger.warn(
+          { forwardedFor: sanitized, ip: trimmedIP },
+          "[Security] Invalid X-Forwarded-For header",
+        );
         // Continue anyway - don't block request
       }
     }
@@ -285,12 +292,15 @@ export function detectSuspiciousPatterns(req: Request, res: Response, next: Next
     checkObject(req.params as Record<string, unknown>) ||
     checkObject(req.body as Record<string, unknown>)
   ) {
-    console.warn("[Security] Suspicious pattern detected:", {
-      method: req.method,
-      path: req.path,
-      ip: req.ip,
-      userAgent: req.headers["user-agent"],
-    });
+    logger.warn(
+      {
+        method: req.method,
+        path: req.path,
+        ip: req.ip,
+        userAgent: req.headers["user-agent"],
+      },
+      "[Security] Suspicious pattern detected",
+    );
 
     return res.status(400).json({
       error: {
@@ -340,10 +350,14 @@ export function logSecurityHeaders(req: Request, res: Response, next: NextFuncti
       });
 
       if (Object.keys(headers).length < securityHeaders.length) {
-        console.warn("[Security] Missing security headers:", {
-          path: req.path,
-          headers,
-        });
+        logger.warn(
+          {
+            path: req.path,
+            headers,
+            missingCount: securityHeaders.length - Object.keys(headers).length,
+          },
+          "[Security] Missing security headers",
+        );
       }
     });
   }

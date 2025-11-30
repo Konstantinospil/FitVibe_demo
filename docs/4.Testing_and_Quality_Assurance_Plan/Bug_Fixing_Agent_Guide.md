@@ -1,6 +1,6 @@
 # Bug Fixing Agent System - User Guide
 
-**Date:** 2025-01-26  
+**Date:** 2025-01-26
 **Version:** 1.0
 
 ---
@@ -15,22 +15,22 @@ The FitVibe bug fixing agent system provides systematic bug collection and fixin
 
 ### Components
 
-1. **Bug Collector** (`bug-collector.mjs`)
+1. **Bug Collector** (`.cursor/scripts/bug-collector.mjs`)
    - Collects bugs from all sources (tests, linter, type checker)
    - Maintains persistent bug database
    - Tracks bug history and statistics
 
-2. **Bug Fixer Agent** (`bug-fixer-agent.mjs`)
+2. **Bug Fixer Agent** (`.cursor/scripts/bug-fixer-agent.mjs`)
    - Basic single-agent fixing with safety mechanisms
    - Regression testing and rollback
    - Attempt limiting
 
-3. **Multi-Agent Bug Fixer** (`bug-fixer-multi-agent.mjs`)
+3. **Multi-Agent Bug Fixer** (`.cursor/scripts/bug-fixer-multi-agent.mjs`)
    - Enhanced multi-agent collaboration
    - Specialized agents (Guide, Debug, Feedback, Brainstorm)
    - Continuous learning from past fixes
 
-4. **Brainstorm Coordinator** (`bug-brainstorm-coordinator.mjs`)
+4. **Brainstorm Coordinator** (`.cursor/scripts/bug-brainstorm-coordinator.mjs`)
    - Coordinates multiple LLMs for diverse perspectives
    - Consensus finding
    - Fix proposal generation
@@ -43,7 +43,12 @@ The FitVibe bug fixing agent system provides systematic bug collection and fixin
 
 ```bash
 # Collect all bugs from tests, linter, and type checker
-node scripts/bug-collector.mjs
+node .cursor/scripts/bug-collector.mjs
+```
+
+Or use the npm script:
+```bash
+pnpm bug:collect
 ```
 
 This will:
@@ -51,14 +56,14 @@ This will:
 - Run all test suites
 - Check linter errors
 - Check TypeScript errors
-- Save bugs to `.bug-database/bugs.json`
+- Save bugs to `.cursor/bug-database/bugs.json`
 
 ### 2. View Bugs
 
 ```bash
 # View bug database
-cat .bug-database/bugs.json | jq '.stats'
-cat .bug-database/bugs.json | jq '.bugs[] | select(.status == "open")'
+cat .cursor/bug-database/bugs.json | jq '.stats'
+cat .cursor/bug-database/bugs.json | jq '.bugs[] | select(.status == "open")'
 ```
 
 ### 3. Fix Bugs
@@ -67,24 +72,40 @@ cat .bug-database/bugs.json | jq '.bugs[] | select(.status == "open")'
 
 ```bash
 # Run basic bug fixer
-node scripts/bug-fixer-agent.mjs
+node .cursor/scripts/bug-fixer-agent.mjs
+```
+
+Or use the npm script:
+```bash
+pnpm bug:fix
 ```
 
 #### Option B: Multi-Agent System (Recommended)
 
 ```bash
 # Run multi-agent bug fixer
-node scripts/bug-fixer-multi-agent.mjs
+node .cursor/scripts/bug-fixer-multi-agent.mjs
+```
+
+Or use the npm script:
+```bash
+pnpm bug:fix:multi
 ```
 
 #### Option C: Brainstorm with Multiple LLMs
 
 ```bash
 # Brainstorm solutions for a specific bug
-node scripts/bug-brainstorm-coordinator.mjs <bug-id>
+node .cursor/scripts/bug-brainstorm-coordinator.mjs <bug-id>
 
 # Brainstorm for all open bugs
-node scripts/bug-brainstorm-coordinator.mjs --all
+node .cursor/scripts/bug-brainstorm-coordinator.mjs --all
+```
+
+Or use the npm script:
+```bash
+pnpm bug:brainstorm <bug-id>
+pnpm bug:brainstorm --all
 ```
 
 ---
@@ -247,8 +268,8 @@ The system is designed for LLM integration but currently uses placeholders. To e
    ```
 
 2. **Implement API Calls:**
-   - Update `callLLM()` in `bug-brainstorm-coordinator.mjs`
-   - Update `applyFix()` in `bug-fixer-multi-agent.mjs`
+   - Update `callLLM()` in `.cursor/scripts/bug-brainstorm-coordinator.mjs`
+   - Update `applyFix()` in `.cursor/scripts/bug-fixer-multi-agent.mjs`
 
 3. **Supported Providers:**
    - OpenAI (GPT-4, GPT-3.5)
@@ -261,10 +282,10 @@ The brainstorm coordinator can query multiple LLMs simultaneously:
 
 ```bash
 # Brainstorm for specific bug
-node scripts/bug-brainstorm-coordinator.mjs jest-test-file-test-name
+node .cursor/scripts/bug-brainstorm-coordinator.mjs jest-test-file-test-name
 
 # Review generated proposals
-cat .bug-database/brainstorm-results.json | jq '.[0].consensus'
+cat .cursor/bug-database/brainstorm-results.json | jq '.[0].consensus'
 ```
 
 ---
@@ -277,7 +298,12 @@ Run bug collection frequently:
 
 ```bash
 # In CI/CD pipeline
-node scripts/bug-collector.mjs
+node .cursor/scripts/bug-collector.mjs
+```
+
+Or use the npm script:
+```bash
+pnpm bug:collect
 ```
 
 ### 2. Prioritize High-Severity Bugs
@@ -297,7 +323,7 @@ Fixes with confidence < 70% should be reviewed manually before applying.
 Check fix history for patterns:
 
 ```bash
-cat .bug-database/fix-history.json | jq '.fixes[] | select(.success == false)'
+cat .cursor/bug-database/fix-history.json | jq '.fixes[] | select(.success == false)'
 ```
 
 ### 5. Use Multi-Agent for Complex Bugs
@@ -305,7 +331,12 @@ cat .bug-database/fix-history.json | jq '.fixes[] | select(.success == false)'
 For complex bugs, use the multi-agent system:
 
 ```bash
-node scripts/bug-fixer-multi-agent.mjs
+node .cursor/scripts/bug-fixer-multi-agent.mjs
+```
+
+Or use the npm script:
+```bash
+pnpm bug:fix:multi
 ```
 
 ---
@@ -358,10 +389,12 @@ Add to CI pipeline:
 
 ```yaml
 - name: Collect Bugs
-  run: node scripts/bug-collector.mjs
+  run: node .cursor/scripts/bug-collector.mjs
+  # Or: run: pnpm bug:collect
 
 - name: Fix Bugs
-  run: node scripts/bug-fixer-multi-agent.mjs
+  run: node .cursor/scripts/bug-fixer-multi-agent.mjs
+  # Or: run: pnpm bug:fix:multi
   continue-on-error: true
 ```
 

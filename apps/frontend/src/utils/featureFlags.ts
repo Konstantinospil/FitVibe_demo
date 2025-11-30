@@ -16,6 +16,7 @@
 
 import { useEffect, useState } from "react";
 import { apiClient } from "../services/api";
+import { logger } from "./logger.js";
 
 export interface FeatureFlags {
   socialFeed: boolean;
@@ -57,7 +58,10 @@ export async function fetchSystemConfig(): Promise<SystemConfig> {
     lastFetchTime = Date.now();
     return cachedConfig;
   } catch (error) {
-    console.warn("[featureFlags] Failed to fetch config, using cached/default", error);
+    logger.warn("[featureFlags] Failed to fetch config, using cached/default", {
+      error: error instanceof Error ? error.message : String(error),
+      context: "featureFlags",
+    });
     return cachedConfig;
   }
 }

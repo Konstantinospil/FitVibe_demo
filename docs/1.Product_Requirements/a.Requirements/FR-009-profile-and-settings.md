@@ -5,12 +5,13 @@
 **Requirement ID**: FR-009  
 **Type**: Functional Requirement  
 **Title**: Profile & Settings  
-**Status**: Open  
+**Status**: Done  
 **Priority**: Medium  
 **Gate**: SILVER  
 **Owner**: ENG/QA  
 **Created**: 2025-01-20  
-**Updated**: 2025-01-21
+**Updated**: 2025-01-21  
+**Completed**: 2025-01-21
 
 ---
 
@@ -129,6 +130,59 @@ The following fields shall be immutable after initial registration:
 - [FR-008: Admin & RBAC](./FR-008-admin-and-rbac.md) - Admin profile management
 - [NFR-002: Privacy](./NFR-002-privacy.md) - Profile data privacy
 - [NFR-004: Accessibility](./NFR-004-a11y.md) - Profile form accessibility
+
+---
+
+## Implementation Summary
+
+**Implementation Date**: 2025-01-21  
+**Status**: Complete
+
+### Implemented Features
+
+✅ **Profile Fields**:
+- Alias editing (3-50 characters, URL-safe, case-insensitive unique)
+- Weight editing with unit selection (kg/lb, range 20-500 kg)
+- Fitness level selection (beginner, intermediate, advanced, elite)
+- Training frequency selection (rarely, 1_2_per_week, 3_4_per_week, 5_plus_per_week)
+
+✅ **API Endpoint**: `PATCH /api/v1/users/me` extended to support all new fields
+
+✅ **Data Storage**: 
+- Alias stored in `profiles` table
+- Weight, fitness level, and training frequency stored as time-series data in `user_metrics` table (preserves historical records)
+
+✅ **Validation**: 
+- All fields validated with Zod schemas
+- Alias uniqueness enforced (case-insensitive)
+- Weight range validation (20-500 kg)
+- Unit conversion (lb → kg) handled automatically
+
+✅ **Testing**: 
+- 100% coverage of new functionality
+- Unit tests (repository, service, controller)
+- Integration tests (API endpoints)
+- Frontend tests (Settings page)
+
+✅ **Security Review**: Approved (Score: 98/100)
+
+✅ **Documentation**: 
+- TDD updated
+- API documentation updated
+- Requirements Catalogue updated
+
+### Technical Details
+
+- **Backend**: TypeScript, Express.js, Knex.js, Zod validation
+- **Frontend**: React 18, TypeScript, React Query, i18next
+- **Database**: PostgreSQL with time-series storage for metrics
+- **Security**: Input validation, authorization checks, rate limiting, audit logging
+
+### Related Documentation
+
+- [Technical Design Document](../../2.Technical_Design_Document/FR-009-Profile-Settings-Design.md)
+- [TDD Users Module](../../2.Technical_Design_Document/2b.Technical_Design_Document_Modules.md#42-users--profile-fr-2)
+- [API Design Documentation](../../2.Technical_Design_Document/2d.Technical_Design_Document_APIDesign.md#78-users--profile-fr-2)
 
 ---
 

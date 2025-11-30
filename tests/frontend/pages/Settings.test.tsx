@@ -40,6 +40,14 @@ const mockUserData = {
   username: "testuser",
   roleCode: "athlete",
   status: "active",
+  profile: {
+    alias: "testalias",
+    bio: null,
+    weight: 75.5,
+    weightUnit: "kg",
+    fitnessLevel: "intermediate",
+    trainingFrequency: "3_4_per_week",
+  },
 };
 
 const mockSignOut = vi.fn();
@@ -481,6 +489,248 @@ describe("Settings", () => {
     // Check for error toast instead of alert
     await waitFor(() => {
       expect(screen.getByText("Failed to delete account. Please try again.")).toBeInTheDocument();
+    });
+  });
+
+  describe("Profile Fields (FR-009)", () => {
+    it("loads profile data with new fields", async () => {
+      renderSettings();
+
+      await waitFor(() => {
+        expect(mockGet).toHaveBeenCalledWith("/api/v1/users/me");
+      });
+
+      await waitFor(() => {
+        expect(screen.getByDisplayValue("testalias")).toBeInTheDocument();
+        expect(screen.getByDisplayValue("75.5")).toBeInTheDocument();
+      });
+    });
+
+    it("allows changing alias", async () => {
+      renderSettings();
+
+      await waitFor(() => {
+        expect(screen.getByPlaceholderText("Your public alias")).toBeInTheDocument();
+      });
+
+      const aliasInput = screen.getByPlaceholderText("Your public alias");
+      fireEvent.change(aliasInput, { target: { value: "newalias" } });
+
+      expect(aliasInput).toHaveValue("newalias");
+    });
+
+    it("allows changing weight", async () => {
+      renderSettings();
+
+      await waitFor(() => {
+        expect(screen.getByLabelText("Weight")).toBeInTheDocument();
+      });
+
+      const weightInput = screen.getByLabelText("Weight") as HTMLInputElement;
+      fireEvent.change(weightInput, { target: { value: "80" } });
+
+      expect(weightInput.value).toBe("80");
+    });
+
+    it("allows changing weight unit", async () => {
+      renderSettings();
+
+      await waitFor(() => {
+        expect(screen.getByLabelText("Weight Unit")).toBeInTheDocument();
+      });
+
+      const unitSelect = screen.getByLabelText("Weight Unit") as HTMLSelectElement;
+      fireEvent.change(unitSelect, { target: { value: "lb" } });
+
+      expect(unitSelect.value).toBe("lb");
+    });
+
+    it("allows changing fitness level", async () => {
+      renderSettings();
+
+      await waitFor(() => {
+        expect(screen.getByLabelText("Fitness Level")).toBeInTheDocument();
+      });
+
+      const fitnessSelect = screen.getByLabelText("Fitness Level") as HTMLSelectElement;
+      fireEvent.change(fitnessSelect, { target: { value: "advanced" } });
+
+      expect(fitnessSelect.value).toBe("advanced");
+    });
+
+    it("allows changing training frequency", async () => {
+      renderSettings();
+
+      await waitFor(() => {
+        expect(screen.getByLabelText("Training Frequency")).toBeInTheDocument();
+      });
+
+      const frequencySelect = screen.getByLabelText("Training Frequency") as HTMLSelectElement;
+      fireEvent.change(frequencySelect, { target: { value: "5_plus_per_week" } });
+
+      expect(frequencySelect.value).toBe("5_plus_per_week");
+    });
+
+    it("saves profile fields when save button clicked", async () => {
+      renderSettings();
+
+      await waitFor(() => {
+        expect(screen.getByText("Save Preferences")).toBeInTheDocument();
+      });
+
+      const aliasInput = screen.getByPlaceholderText("Your public alias");
+      fireEvent.change(aliasInput, { target: { value: "newalias" } });
+
+      const weightInput = screen.getByLabelText("Weight") as HTMLInputElement;
+      fireEvent.change(weightInput, { target: { value: "80" } });
+
+      const fitnessSelect = screen.getByLabelText("Fitness Level") as HTMLSelectElement;
+      fireEvent.change(fitnessSelect, { target: { value: "advanced" } });
+
+      const saveButton = screen.getByText("Save Preferences");
+      fireEvent.click(saveButton);
+
+      await waitFor(() => {
+        expect(mockPatch).toHaveBeenCalledWith(
+          "/api/v1/users/me",
+          expect.objectContaining({
+            alias: "newalias",
+            weight: 80,
+            weightUnit: "kg",
+            fitnessLevel: "advanced",
+          }),
+        );
+      });
+    });
+
+    it("saves weight with unit conversion (lb to kg)", async () => {
+      renderSettings();
+
+      await waitFor(() => {
+        expect(screen.getByText("Save Preferences")).toBeInTheDocument();
+      });
+
+      const weightInput = screen.getByLabelText("Weight") as HTMLInputElement;
+      fireEvent.change(weightInput, { target: { value: "165.5" } });
+
+      const unitSelect = screen.getByLabelText("Weight Unit") as HTMLSelectElement;
+      fireEvent.change(unitSelect, { target: { value: "lb" } });
+
+      const saveButton = screen.getByText("Save Preferences");
+      fireEvent.click(saveButton);
+
+      await waitFor(() => {
+        expect(mockPatch).toHaveBeenCalledWith(
+          "/api/v1/users/me",
+          expect.objectContaining({
+            weight: 165.5,
+            weightUnit: "lb",
+          }),
+        );
+      });
+    });
+
+    it("reloads user data after successful save", async () => {
+      renderSettings();
+
+      await waitFor(() => {
+        expect(screen.getByText("Save Preferences")).toBeInTheDocument();
+      });
+
+      const saveButton = screen.getByText("Save Preferences");
+      fireEvent.click(saveButton);
+
+      await waitFor(() => {
+        // Should be called twice: once on mount, once after save
+        expect(mockGet).toHaveBeenCalledTimes(2);
+      });
+    });
+
+    it("handles profile data when profile is null", async () => {
+      mockGet.mockResolvedValue({
+        data: {
+          ...mockUserData,
+          profile: null,
+        },
+      });
+
+      renderSettings();
+
+      await waitFor(() => {
+        expect(screen.getByPlaceholderText("Your public alias")).toBeInTheDocument();
+      });
+
+      const aliasInput = screen.getByPlaceholderText("Your public alias");
+      expect(aliasInput).toHaveValue("");
+    });
+
+    it("handles weight conversion display when loading from API", async () => {
+      mockGet.mockResolvedValue({
+        data: {
+          ...mockUserData,
+          profile: {
+            ...mockUserData.profile,
+            weight: 75.07, // kg (converted from 165.5 lb)
+            weightUnit: "lb",
+          },
+        },
+      });
+
+      renderSettings();
+
+      await waitFor(() => {
+        const weightInput = screen.getByLabelText("Weight") as HTMLInputElement;
+        // Should display in lb (165.5), not kg
+        expect(parseFloat(weightInput.value)).toBeCloseTo(165.5, 1);
+      });
+    });
+
+    it("saves all new profile fields together", async () => {
+      renderSettings();
+
+      await waitFor(() => {
+        expect(screen.getByText("Save Preferences")).toBeInTheDocument();
+      });
+
+      const aliasInput = screen.getByPlaceholderText("Your public alias");
+      fireEvent.change(aliasInput, { target: { value: "newalias" } });
+
+      const weightInput = screen.getByLabelText("Weight") as HTMLInputElement;
+      fireEvent.change(weightInput, { target: { value: "80" } });
+
+      const fitnessSelect = screen.getByLabelText("Fitness Level") as HTMLSelectElement;
+      fireEvent.change(fitnessSelect, { target: { value: "advanced" } });
+
+      const frequencySelect = screen.getByLabelText("Training Frequency") as HTMLSelectElement;
+      fireEvent.change(frequencySelect, { target: { value: "5_plus_per_week" } });
+
+      const saveButton = screen.getByText("Save Preferences");
+      fireEvent.click(saveButton);
+
+      await waitFor(() => {
+        expect(mockPatch).toHaveBeenCalledWith(
+          "/api/v1/users/me",
+          expect.objectContaining({
+            alias: "newalias",
+            weight: 80,
+            weightUnit: "kg",
+            fitnessLevel: "advanced",
+            trainingFrequency: "5_plus_per_week",
+          }),
+        );
+      });
+    });
+
+    it("displays alias help text", async () => {
+      renderSettings();
+
+      await waitFor(() => {
+        expect(
+          screen.getByText(
+            /Alias may only contain letters, numbers, underscores, dots, or dashes/,
+          ),
+        ).toBeInTheDocument();
+      });
     });
   });
 });
