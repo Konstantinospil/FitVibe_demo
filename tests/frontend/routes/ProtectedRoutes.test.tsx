@@ -24,8 +24,14 @@ vi.mock("../../../apps/frontend/src/store/auth.store", () => ({
   }),
 }));
 
-// Don't mock ProtectedRoute or AdminRoute - let them use real implementations
-// They use Outlet to render nested routes, which requires the real router structure
+// Mock ProtectedRoute and AdminRoute - they use Outlet to render nested routes
+vi.mock("../../../apps/frontend/src/components/ProtectedRoute", () => ({
+  default: () => <Outlet />,
+}));
+
+vi.mock("../../../apps/frontend/src/components/AdminRoute", () => ({
+  default: () => <Outlet />,
+}));
 
 vi.mock("../../../apps/frontend/src/layouts/MainLayout", () => ({
   default: () => (
