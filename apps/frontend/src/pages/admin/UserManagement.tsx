@@ -90,7 +90,7 @@ const UserManagement: React.FC = () => {
       }
 
       toast.success(
-        `User ${action}${action === "suspend" ? "ed" : action === "activate" ? "d" : "ned"} successfully`,
+        `User ${action}${action === "suspend" ? "ed" : action === "activate" ? "d" : action === "delete" ? "d" : "ned"} successfully`,
       );
 
       // Refresh search results after action

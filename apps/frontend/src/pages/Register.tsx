@@ -199,7 +199,7 @@ const Register: React.FC = () => {
       description={t("auth.register.description")}
     >
       {/* eslint-disable-next-line @typescript-eslint/no-misused-promises */}
-      <form onSubmit={handleSubmit} style={{ display: "grid", gap: "1rem" }}>
+      <form onSubmit={handleSubmit} noValidate style={{ display: "grid", gap: "1rem" }}>
         <label style={{ display: "grid", gap: "0.35rem" }}>
           <span style={{ fontSize: "0.95rem", color: "var(--color-text-secondary)" }}>
             {t("auth.register.nameLabel")}
@@ -435,12 +435,7 @@ const Register: React.FC = () => {
             {error}
           </div>
         ) : null}
-        <Button
-          type="submit"
-          fullWidth
-          isLoading={isSubmitting}
-          disabled={isSubmitting || !acceptedTerms}
-        >
+        <Button type="submit" fullWidth isLoading={isSubmitting} disabled={isSubmitting}>
           {isSubmitting ? t("auth.register.submitting") : t("auth.register.submit")}
         </Button>
         <p

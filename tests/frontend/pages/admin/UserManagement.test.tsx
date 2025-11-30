@@ -100,7 +100,7 @@ describe("UserManagement", () => {
       </MemoryRouter>,
     );
 
-    const searchButton = screen.getByText("Search");
+    const searchButton = screen.getByRole("button", { name: /search/i });
     expect(searchButton).toBeDisabled();
 
     fireEvent.click(searchButton);
