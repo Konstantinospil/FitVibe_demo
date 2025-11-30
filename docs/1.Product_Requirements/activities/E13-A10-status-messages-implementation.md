@@ -2,13 +2,13 @@
 
 ---
 
-**Activity ID**: E13-A10  
-**Epic ID**: [E13](../epics/E13-wcag-2-2-compliance-update.md)  
-**Title**: Status Messages Implementation  
-**Status**: Open  
-**Difficulty**: 2  
-**Estimated Effort**: 2 story points  
-**Created**: 2025-01-21  
+**Activity ID**: E13-A10
+**Epic ID**: [E13](../b.Epics/E13-wcag-2-2-compliance-update.md)
+**Title**: Status Messages Implementation
+**Status**: Open
+**Difficulty**: 2
+**Estimated Effort**: 2 story points
+**Created**: 2025-01-21
 **Updated**: 2025-01-21
 
 ---
@@ -38,7 +38,7 @@ Implement proper ARIA roles for all status messages to meet WCAG 2.2 success cri
 
 ### Blocking Dependencies
 
-- [E13: WCAG 2.2 Compliance Update](../epics/E13-wcag-2-2-compliance-update.md): Parent epic
+- [E13: WCAG 2.2 Compliance Update](../b.Epics/E13-wcag-2-2-compliance-update.md): Parent epic
 
 ### Non-Blocking Dependencies
 
@@ -73,5 +73,5 @@ Implement proper ARIA roles for all status messages to meet WCAG 2.2 success cri
 
 ---
 
-**Last Updated**: 2025-01-21  
+**Last Updated**: 2025-01-21
 **Next Review**: 2025-02-21

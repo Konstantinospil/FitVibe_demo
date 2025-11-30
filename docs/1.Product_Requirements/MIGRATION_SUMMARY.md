@@ -123,12 +123,10 @@ docs/1.Product_Requirements/
 │   ├── FR-001-user-registration.md
 │   ├── FR-002-login-and-session.md
 │   └── ... (all 20 requirements)
-├── epics/                           # Epic files (to be created)
-├── activities/                      # Activity files (to be created)
-├── user-stories/                    # User story files (to be created)
-├── acceptance-criteria/             # AC files (to be created)
-├── tests/                           # Test files (to be created)
-└── evidence/                        # Evidence files (to be created)
+├── b.Epics/                         # Epic files
+├── c.Activities/                    # Activity files
+├── d.User_stories/                  # User story files
+├── e.Acceptance_Criteria/           # AC files
 ```
 
 ### Old Structure (Preserved)

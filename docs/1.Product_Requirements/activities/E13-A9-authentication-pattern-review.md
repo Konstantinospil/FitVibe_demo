@@ -2,13 +2,13 @@
 
 ---
 
-**Activity ID**: E13-A9  
-**Epic ID**: [E13](../epics/E13-wcag-2-2-compliance-update.md)  
-**Title**: Authentication Pattern Review  
-**Status**: Open  
-**Difficulty**: 2  
-**Estimated Effort**: 2 story points  
-**Created**: 2025-01-21  
+**Activity ID**: E13-A9
+**Epic ID**: [E13](../b.Epics/E13-wcag-2-2-compliance-update.md)
+**Title**: Authentication Pattern Review
+**Status**: Open
+**Difficulty**: 2
+**Estimated Effort**: 2 story points
+**Created**: 2025-01-21
 **Updated**: 2025-01-21
 
 ---
@@ -37,7 +37,7 @@ Review authentication patterns to ensure compliance with WCAG 2.2 success criter
 
 ### Blocking Dependencies
 
-- [E13: WCAG 2.2 Compliance Update](../epics/E13-wcag-2-2-compliance-update.md): Parent epic
+- [E13: WCAG 2.2 Compliance Update](../b.Epics/E13-wcag-2-2-compliance-update.md): Parent epic
 - Auth module must be accessible for review
 
 ### Non-Blocking Dependencies
@@ -73,5 +73,5 @@ Review authentication patterns to ensure compliance with WCAG 2.2 success criter
 
 ---
 
-**Last Updated**: 2025-01-21  
+**Last Updated**: 2025-01-21
 **Next Review**: 2025-02-21

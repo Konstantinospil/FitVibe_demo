@@ -2,13 +2,13 @@
 
 ---
 
-**Activity ID**: E13-A11  
-**Epic ID**: [E13](../epics/E13-wcag-2-2-compliance-update.md)  
-**Title**: Update Accessibility Tests  
-**Status**: Open  
-**Difficulty**: 2  
-**Estimated Effort**: 2 story points  
-**Created**: 2025-01-21  
+**Activity ID**: E13-A11
+**Epic ID**: [E13](../b.Epics/E13-wcag-2-2-compliance-update.md)
+**Title**: Update Accessibility Tests
+**Status**: Open
+**Difficulty**: 2
+**Estimated Effort**: 2 story points
+**Created**: 2025-01-21
 **Updated**: 2025-01-21
 
 ---
@@ -38,8 +38,8 @@ Update accessibility tests to include WCAG 2.2 tags and verify all new criteria.
 
 ### Blocking Dependencies
 
-- [E8-A6: Accessibility Testing](../activities/E8-A6-accessibility-testing.md): Required foundation for accessibility testing
-- [E13: WCAG 2.2 Compliance Update](../epics/E13-wcag-2-2-compliance-update.md): Parent epic
+- [E8-A6: Accessibility Testing](../c.Activities/E8-A6-accessibility-testing.md): Required foundation for accessibility testing
+- [E13: WCAG 2.2 Compliance Update](../b.Epics/E13-wcag-2-2-compliance-update.md): Parent epic
 - All other E13 activities (A1-A10): Tests should verify implementation
 
 ### Non-Blocking Dependencies
@@ -82,5 +82,5 @@ Update accessibility tests to include WCAG 2.2 tags and verify all new criteria.
 
 ---
 
-**Last Updated**: 2025-01-21  
+**Last Updated**: 2025-01-21
 **Next Review**: 2025-02-21

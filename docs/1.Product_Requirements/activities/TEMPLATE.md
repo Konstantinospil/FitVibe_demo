@@ -2,13 +2,13 @@
 
 ---
 
-**Activity ID**: {E1-A1, E1-A2, ...}  
-**Epic ID**: [E{N}](../epics/E{N}-epic-title.md)  
-**Title**: {Activity Title}  
-**Status**: {Open / Progressing / Done}  
-**Difficulty**: {1-5}  
-**Estimated Effort**: {X story points}  
-**Created**: {YYYY-MM-DD}  
+**Activity ID**: {E1-A1, E1-A2, ...}
+**Epic ID**: [E{N}](../b.Epics/E{N}-epic-title.md)
+**Title**: {Activity Title}
+**Status**: {Open / Progressing / Done}
+**Difficulty**: {1-5}
+**Estimated Effort**: {X story points}
+**Created**: {YYYY-MM-DD}
 **Updated**: {YYYY-MM-DD}
 
 ---
@@ -32,19 +32,19 @@
 
 ### Blocking Dependencies
 
-- [E1-A1: Activity Title](../activities/E1-A1-activity-title.md): {Must complete first}
-- [{FR-001}](../requirements/FR-001-requirement-title.md): {Requirement dependency}
+- [E1-A1: Activity Title](../c.Activities/E1-A1-activity-title.md): {Must complete first}
+- [{FR-001}](../a.Requirements/FR-001-requirement-title.md): {Requirement dependency}
 
 ### Non-Blocking Dependencies
 
-- [E1-A2: Activity Title](../activities/E1-A2-activity-title.md): {Can work in parallel}
+- [E1-A2: Activity Title](../c.Activities/E1-A2-activity-title.md): {Can work in parallel}
 
 ## Related User Stories
 
 {Link to user story files, do NOT embed story details}
 
-- [US-1.1: Story Title](../user-stories/US-1.1-story-title.md)
-- [US-1.2: Story Title](../user-stories/US-1.2-story-title.md)
+- [US-1.1: Story Title](../d.User_stories/US-1.1-story-title.md)
+- [US-1.2: Story Title](../d.User_stories/US-1.2-story-title.md)
 
 ## Technical Notes
 
@@ -64,5 +64,5 @@
 
 ---
 
-**Last Updated**: {YYYY-MM-DD}  
+**Last Updated**: {YYYY-MM-DD}
 **Next Review**: {YYYY-MM-DD}

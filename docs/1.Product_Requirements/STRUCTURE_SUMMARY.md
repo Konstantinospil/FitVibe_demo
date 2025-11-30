@@ -15,30 +15,30 @@ A new structured requirements management system has been created following Singl
 
 ```
 docs/1.Product_Requirements/
-├── REQUIREMENTS_SCHEMA.md          # Central schema definition
+├── 0.REQUIREMENTS_SCHEMA.md        # Central schema definition
 ├── STRUCTURE_SUMMARY.md             # This file
 │
-├── requirements/                    # Requirement files (FR/NFR)
+├── a.Requirements/                 # Requirement files (FR/NFR)
 │   ├── TEMPLATE.md
 │   ├── README.md
 │   └── INDEX.md
 │
-├── epics/                          # Epic files
+├── b.Epics/                        # Epic files
 │   ├── TEMPLATE.md
 │   ├── README.md
 │   └── INDEX.md
 │
-├── activities/                     # Activity files
+├── c.Activities/                   # Activity files
 │   ├── TEMPLATE.md
 │   ├── README.md
 │   └── INDEX.md
 │
-├── user-stories/                   # User story files
+├── d.User_stories/                 # User story files
 │   ├── TEMPLATE.md
 │   ├── README.md
 │   └── INDEX.md
 │
-└── acceptance-criteria/            # Acceptance criteria files
+└── e.Acceptance_Criteria/          # Acceptance criteria files
     ├── TEMPLATE.md
     ├── README.md
     └── INDEX.md
@@ -62,10 +62,11 @@ docs/1.Product_Requirements/
 
 Use relative paths to link between files:
 
-- `../epics/E1-epic-title.md`
-- `../activities/E1-A1-activity-title.md`
-- `../user-stories/US-1.1-story-title.md`
-- `../acceptance-criteria/US-1.1-AC01.md`
+- `../a.Requirements/FR-XXX-requirement-title.md`
+- `../b.Epics/E1-epic-title.md`
+- `../c.Activities/E1-A1-activity-title.md`
+- `../d.User_stories/US-1.1-story-title.md`
+- `../e.Acceptance_Criteria/US-1.1-AC01.md`
 
 ---
 
@@ -83,31 +84,31 @@ Use relative paths to link between files:
 
 ### Creating a New Requirement
 
-1. Copy `requirements/TEMPLATE.md` to `requirements/FR-XXX-title.md`
+1. Copy `a.Requirements/TEMPLATE.md` to `a.Requirements/FR-XXX-title.md`
 2. Fill in requirement-specific information
 3. Link to related epics (don't embed epic details)
-4. Update `requirements/INDEX.md`
+4. Update `a.Requirements/INDEX.md`
 
 ### Creating a New Epic
 
-1. Copy `epics/TEMPLATE.md` to `epics/E{N}-title.md`
+1. Copy `b.Epics/TEMPLATE.md` to `b.Epics/E{N}-title.md`
 2. Fill in epic-specific information
 3. Link to related activities and stories (don't embed their details)
-4. Update `epics/INDEX.md`
+4. Update `b.Epics/INDEX.md`
 
 ### Creating a New User Story
 
-1. Copy `user-stories/TEMPLATE.md` to `user-stories/US-{N}.{M}-title.md`
+1. Copy `d.User_stories/TEMPLATE.md` to `d.User_stories/US-{N}.{M}-title.md`
 2. Fill in story-specific information
 3. Link to related acceptance criteria (don't embed AC details)
-4. Update `user-stories/INDEX.md`
+4. Update `d.User_stories/INDEX.md`
 
 ### Creating New Acceptance Criteria
 
-1. Copy `acceptance-criteria/TEMPLATE.md` to `acceptance-criteria/US-{N}.{M}-AC{P}.md`
+1. Copy `e.Acceptance_Criteria/TEMPLATE.md` to `e.Acceptance_Criteria/US-{N}.{M}-AC{P}.md`
 2. Ensure criterion is SMART (Specific, Measurable, Achievable, Relevant, Time-bound)
 3. Include test method and evidence requirements in the AC file
-4. Update `acceptance-criteria/INDEX.md`
+4. Update `e.Acceptance_Criteria/INDEX.md`
 
 ---
 
@@ -146,7 +147,7 @@ When artifacts are added, modified, or completed:
 
 ## Next Steps
 
-1. **Migrate existing requirements** from `Requirements/` folder to new structure
+1. **Migrate existing requirements** from old folder structure to new structure
 2. **Create maintenance procedures** for keeping artifacts synchronized
 3. **Set up automation** (if desired) for index generation
 4. **Train team** on SSOT principles and new structure

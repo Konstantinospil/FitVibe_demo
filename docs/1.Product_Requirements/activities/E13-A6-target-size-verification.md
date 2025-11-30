@@ -2,13 +2,13 @@
 
 ---
 
-**Activity ID**: E13-A6  
-**Epic ID**: [E13](../epics/E13-wcag-2-2-compliance-update.md)  
-**Title**: Target Size Verification  
-**Status**: Open  
-**Difficulty**: 2  
-**Estimated Effort**: 2 story points  
-**Created**: 2025-01-21  
+**Activity ID**: E13-A6
+**Epic ID**: [E13](../b.Epics/E13-wcag-2-2-compliance-update.md)
+**Title**: Target Size Verification
+**Status**: Open
+**Difficulty**: 2
+**Estimated Effort**: 2 story points
+**Created**: 2025-01-21
 **Updated**: 2025-01-21
 
 ---
@@ -38,8 +38,8 @@ Verify all pointer targets meet WCAG 2.2 success criterion 2.5.8 (Target Size - 
 
 ### Blocking Dependencies
 
-- [E8-A3: Color Contrast](../activities/E8-A3-color-contrast.md): Required for visual design consistency
-- [E13: WCAG 2.2 Compliance Update](../epics/E13-wcag-2-2-compliance-update.md): Parent epic
+- [E8-A3: Color Contrast](../c.Activities/E8-A3-color-contrast.md): Required for visual design consistency
+- [E13: WCAG 2.2 Compliance Update](../b.Epics/E13-wcag-2-2-compliance-update.md): Parent epic
 
 ### Non-Blocking Dependencies
 
@@ -74,5 +74,5 @@ Verify all pointer targets meet WCAG 2.2 success criterion 2.5.8 (Target Size - 
 
 ---
 
-**Last Updated**: 2025-01-21  
+**Last Updated**: 2025-01-21
 **Next Review**: 2025-02-21

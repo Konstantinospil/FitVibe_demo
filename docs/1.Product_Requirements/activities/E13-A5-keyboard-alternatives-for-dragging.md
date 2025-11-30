@@ -2,13 +2,13 @@
 
 ---
 
-**Activity ID**: E13-A5  
-**Epic ID**: [E13](../epics/E13-wcag-2-2-compliance-update.md)  
-**Title**: Keyboard Alternatives for Dragging  
-**Status**: Open  
-**Difficulty**: 3  
-**Estimated Effort**: 3 story points  
-**Created**: 2025-01-21  
+**Activity ID**: E13-A5
+**Epic ID**: [E13](../b.Epics/E13-wcag-2-2-compliance-update.md)
+**Title**: Keyboard Alternatives for Dragging
+**Status**: Open
+**Difficulty**: 3
+**Estimated Effort**: 3 story points
+**Created**: 2025-01-21
 **Updated**: 2025-01-21
 
 ---
@@ -38,9 +38,9 @@ Implement keyboard alternatives for all drag-and-drop operations in the Planner 
 
 ### Blocking Dependencies
 
-- [E4-A4: Drag-and-Drop Implementation](../activities/E4-A4-drag-and-drop-implementation.md): Required drag-and-drop foundation
-- [E8-A2: Keyboard Navigation](../activities/E8-A2-keyboard-navigation.md): Required keyboard navigation foundation
-- [E13: WCAG 2.2 Compliance Update](../epics/E13-wcag-2-2-compliance-update.md): Parent epic
+- [E4-A4: Drag-and-Drop Implementation](../c.Activities/E4-A4-drag-and-drop-implementation.md): Required drag-and-drop foundation
+- [E8-A2: Keyboard Navigation](../c.Activities/E8-A2-keyboard-navigation.md): Required keyboard navigation foundation
+- [E13: WCAG 2.2 Compliance Update](../b.Epics/E13-wcag-2-2-compliance-update.md): Parent epic
 
 ### Non-Blocking Dependencies
 
@@ -75,5 +75,5 @@ Implement keyboard alternatives for all drag-and-drop operations in the Planner 
 
 ---
 
-**Last Updated**: 2025-01-21  
+**Last Updated**: 2025-01-21
 **Next Review**: 2025-02-21

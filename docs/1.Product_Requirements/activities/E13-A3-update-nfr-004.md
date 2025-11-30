@@ -2,13 +2,13 @@
 
 ---
 
-**Activity ID**: E13-A3  
-**Epic ID**: [E13](../epics/E13-wcag-2-2-compliance-update.md)  
-**Title**: Update NFR-004  
-**Status**: Done  
-**Difficulty**: 1  
-**Estimated Effort**: 1 story point  
-**Created**: 2025-01-21  
+**Activity ID**: E13-A3
+**Epic ID**: [E13](../b.Epics/E13-wcag-2-2-compliance-update.md)
+**Title**: Update NFR-004
+**Status**: Done
+**Difficulty**: 1
+**Estimated Effort**: 1 story point
+**Created**: 2025-01-21
 **Updated**: 2025-01-21
 
 ---
@@ -34,8 +34,8 @@ Update Non-Functional Requirement NFR-004 (Accessibility) to reference WCAG 2.2 
 
 ### Blocking Dependencies
 
-- [E13: WCAG 2.2 Compliance Update](../epics/E13-wcag-2-2-compliance-update.md): Parent epic
-- [NFR-004: Accessibility](../requirements/NFR-004-a11y.md): Requirement to update
+- [E13: WCAG 2.2 Compliance Update](../b.Epics/E13-wcag-2-2-compliance-update.md): Parent epic
+- [NFR-004: Accessibility](../a.Requirements/NFR-004-a11y.md): Requirement to update
 
 ### Non-Blocking Dependencies
 
@@ -67,5 +67,5 @@ Update Non-Functional Requirement NFR-004 (Accessibility) to reference WCAG 2.2 
 
 ---
 
-**Last Updated**: 2025-01-21  
+**Last Updated**: 2025-01-21
 **Next Review**: 2025-02-21

@@ -2,13 +2,13 @@
 
 ---
 
-**Activity ID**: E13-A1  
-**Epic ID**: [E13](../epics/E13-wcag-2-2-compliance-update.md)  
-**Title**: Update Visual Design System  
-**Status**: Done  
-**Difficulty**: 2  
-**Estimated Effort**: 1 story point  
-**Created**: 2025-01-21  
+**Activity ID**: E13-A1
+**Epic ID**: [E13](../b.Epics/E13-wcag-2-2-compliance-update.md)
+**Title**: Update Visual Design System
+**Status**: Done
+**Difficulty**: 2
+**Estimated Effort**: 1 story point
+**Created**: 2025-01-21
 **Updated**: 2025-01-21
 
 ---
@@ -37,7 +37,7 @@ Update the Visual Design System documentation to reference WCAG 2.2 AA instead o
 
 ### Blocking Dependencies
 
-- [E13: WCAG 2.2 Compliance Update](../epics/E13-wcag-2-2-compliance-update.md): Parent epic
+- [E13: WCAG 2.2 Compliance Update](../b.Epics/E13-wcag-2-2-compliance-update.md): Parent epic
 
 ### Non-Blocking Dependencies
 
@@ -69,5 +69,5 @@ Update the Visual Design System documentation to reference WCAG 2.2 AA instead o
 
 ---
 
-**Last Updated**: 2025-01-21  
+**Last Updated**: 2025-01-21
 **Next Review**: 2025-02-21

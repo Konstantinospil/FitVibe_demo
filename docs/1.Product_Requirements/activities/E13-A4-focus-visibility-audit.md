@@ -2,13 +2,13 @@
 
 ---
 
-**Activity ID**: E13-A4  
-**Epic ID**: [E13](../epics/E13-wcag-2-2-compliance-update.md)  
-**Title**: Focus Visibility Audit  
-**Status**: Open  
-**Difficulty**: 2  
-**Estimated Effort**: 2 story points  
-**Created**: 2025-01-21  
+**Activity ID**: E13-A4
+**Epic ID**: [E13](../b.Epics/E13-wcag-2-2-compliance-update.md)
+**Title**: Focus Visibility Audit
+**Status**: Open
+**Difficulty**: 2
+**Estimated Effort**: 2 story points
+**Created**: 2025-01-21
 **Updated**: 2025-01-21
 
 ---
@@ -38,8 +38,8 @@ Audit all focus indicators across the application to ensure they meet WCAG 2.2 s
 
 ### Blocking Dependencies
 
-- [E8-A5: Focus Management](../activities/E8-A5-focus-management.md): Required foundation for focus visibility work
-- [E13: WCAG 2.2 Compliance Update](../epics/E13-wcag-2-2-compliance-update.md): Parent epic
+- [E8-A5: Focus Management](../c.Activities/E8-A5-focus-management.md): Required foundation for focus visibility work
+- [E13: WCAG 2.2 Compliance Update](../b.Epics/E13-wcag-2-2-compliance-update.md): Parent epic
 
 ### Non-Blocking Dependencies
 
@@ -73,5 +73,5 @@ Audit all focus indicators across the application to ensure they meet WCAG 2.2 s
 
 ---
 
-**Last Updated**: 2025-01-21  
+**Last Updated**: 2025-01-21
 **Next Review**: 2025-02-21
