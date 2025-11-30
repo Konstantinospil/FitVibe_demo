@@ -838,33 +838,29 @@ export async function collectUserData(userId: string): Promise<UserDataExportBun
     .where({ user_id: userId })
     .orderBy("recorded_at", "asc");
 
-  const sessions = await db<SessionRow>("sessions").where({ owner_id: userId });
+  // Parallelize independent queries for better performance
+  const [sessions, plans, exercises, pointsHistory, badges, followers, following] = await Promise.all([
+    db<SessionRow>("sessions").where({ owner_id: userId }),
+    db<GenericRow>("plans").where({ user_id: userId }),
+    db<GenericRow>("exercises").where({ owner_id: userId }),
+    db<UserPointRow>("user_points").where({ user_id: userId }).orderBy("awarded_at", "asc"),
+    db<BadgeRow>("badges").where({ user_id: userId }).orderBy("awarded_at", "asc"),
+    db<GenericRow>("followers").where({ following_id: userId }).orderBy("created_at", "asc"),
+    db<GenericRow>("followers").where({ follower_id: userId }).orderBy("created_at", "asc"),
+  ]);
+
   const sessionIds = sessions.map((session) => session.id);
-
-  const plans = await db<GenericRow>("plans").where({ user_id: userId });
-  const exercises = await db<GenericRow>("exercises").where({ owner_id: userId });
-  const sessionExercises = sessionIds.length
-    ? await db<SessionExerciseRow>("session_exercises").whereIn("session_id", sessionIds)
-    : [];
-  const exerciseSets = sessionIds.length
-    ? await db<GenericRow>("exercise_sets").whereIn("session_id", sessionIds)
-    : [];
-
-  const pointsHistory = await db<UserPointRow>("user_points")
-    .where({ user_id: userId })
-    .orderBy("awarded_at", "asc");
   const totalPoints = pointsHistory.reduce((sum, record) => sum + Number(record.points ?? 0), 0);
 
-  const badges = await db<BadgeRow>("badges")
-    .where({ user_id: userId })
-    .orderBy("awarded_at", "asc");
-
-  const followers = await db<GenericRow>("followers")
-    .where({ following_id: userId })
-    .orderBy("created_at", "asc");
-  const following = await db<GenericRow>("followers")
-    .where({ follower_id: userId })
-    .orderBy("created_at", "asc");
+  // These queries depend on sessionIds, so run them in parallel after sessions are loaded
+  const [sessionExercises, exerciseSets] = await Promise.all([
+    sessionIds.length
+      ? db<SessionExerciseRow>("session_exercises").whereIn("session_id", sessionIds)
+      : Promise.resolve([]),
+    sessionIds.length
+      ? db<GenericRow>("exercise_sets").whereIn("session_id", sessionIds)
+      : Promise.resolve([]),
+  ]);
 
   const mediaRows = await db<MediaRow>("media")
     .where({ owner_id: userId })

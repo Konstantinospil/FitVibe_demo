@@ -68,7 +68,8 @@ const Settings: React.FC = () => {
   useEffect(() => {
     void loadUserData();
     void load2FAStatus();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Intentionally empty - these functions are stable and should only run once on mount
 
   const loadUserData = async () => {
     setLoadingUser(true);
