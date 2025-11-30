@@ -42,12 +42,19 @@ void testI18n.use(initReactI18next).init({
         "auth.register.passwordMismatch": "Passwords do not match",
         "auth.register.passwordsDoNotMatch": "Passwords do not match",
         "auth.register.error": "Registration failed. Please try again.",
+        "auth.register.fillAllFields": "Please fill in all fields",
         "auth.register.acceptTerms": "I have read and accept the",
         "auth.register.termsLink": "Terms and Conditions",
         "auth.register.and": "and",
         "auth.register.privacyLink": "Privacy Policy",
         "auth.register.termsRequired":
           "You must accept the Terms and Conditions and Privacy Policy to create an account",
+        "auth.register.passwordMinLength": "Password must be at least 12 characters long",
+        "auth.register.passwordLowercase": "Password must contain at least one lowercase letter",
+        "auth.register.passwordUppercase": "Password must contain at least one uppercase letter",
+        "auth.register.passwordDigit": "Password must contain at least one digit",
+        "auth.register.passwordSymbol": "Password must contain at least one symbol",
+        "auth.register.passwordSymbolAlt": "Password must contain at least one special character",
         "auth.placeholders.name": "John Doe",
         "auth.placeholders.email": "you@example.com",
         "auth.placeholders.password": "Create a strong password",
@@ -295,5 +302,183 @@ describe("Register", () => {
         },
       });
     });
+  });
+
+  it("validates password minimum length", async () => {
+    renderWithProviders(<Register />);
+
+    const nameInput = screen.getByRole("textbox", { name: /full name/i });
+    const emailInput = screen.getByRole("textbox", { name: /email/i });
+    const passwordInput = screen.getByPlaceholderText(/create a strong password/i);
+    const confirmPasswordInput = screen.getByPlaceholderText(/confirm your password/i);
+    const submitButton = screen.getByRole("button", { name: /create account/i });
+
+    fireEvent.change(nameInput, { target: { value: "John Doe" } });
+    fireEvent.change(emailInput, { target: { value: "john@example.com" } });
+    fireEvent.change(passwordInput, { target: { value: "Short1!" } });
+    fireEvent.change(confirmPasswordInput, { target: { value: "Short1!" } });
+    const termsCheckbox = screen.getByRole("checkbox", { name: /accept the/i });
+    fireEvent.click(termsCheckbox);
+    fireEvent.click(submitButton);
+
+    await waitFor(() => {
+      expect(screen.getByRole("alert")).toHaveTextContent(
+        "Password must be at least 12 characters long",
+      );
+    });
+
+    expect(api.register).not.toHaveBeenCalled();
+  });
+
+  it("validates password contains lowercase letter", async () => {
+    renderWithProviders(<Register />);
+
+    const nameInput = screen.getByRole("textbox", { name: /full name/i });
+    const emailInput = screen.getByRole("textbox", { name: /email/i });
+    const passwordInput = screen.getByPlaceholderText(/create a strong password/i);
+    const confirmPasswordInput = screen.getByPlaceholderText(/confirm your password/i);
+    const submitButton = screen.getByRole("button", { name: /create account/i });
+
+    fireEvent.change(nameInput, { target: { value: "John Doe" } });
+    fireEvent.change(emailInput, { target: { value: "john@example.com" } });
+    fireEvent.change(passwordInput, { target: { value: "PASSWORD123!" } });
+    fireEvent.change(confirmPasswordInput, { target: { value: "PASSWORD123!" } });
+    const termsCheckbox = screen.getByRole("checkbox", { name: /accept the/i });
+    fireEvent.click(termsCheckbox);
+    fireEvent.click(submitButton);
+
+    await waitFor(() => {
+      expect(screen.getByRole("alert")).toHaveTextContent(
+        "Password must contain at least one lowercase letter",
+      );
+    });
+
+    expect(api.register).not.toHaveBeenCalled();
+  });
+
+  it("validates password contains uppercase letter", async () => {
+    renderWithProviders(<Register />);
+
+    const nameInput = screen.getByRole("textbox", { name: /full name/i });
+    const emailInput = screen.getByRole("textbox", { name: /email/i });
+    const passwordInput = screen.getByPlaceholderText(/create a strong password/i);
+    const confirmPasswordInput = screen.getByPlaceholderText(/confirm your password/i);
+    const submitButton = screen.getByRole("button", { name: /create account/i });
+
+    fireEvent.change(nameInput, { target: { value: "John Doe" } });
+    fireEvent.change(emailInput, { target: { value: "john@example.com" } });
+    fireEvent.change(passwordInput, { target: { value: "password123!" } });
+    fireEvent.change(confirmPasswordInput, { target: { value: "password123!" } });
+    const termsCheckbox = screen.getByRole("checkbox", { name: /accept the/i });
+    fireEvent.click(termsCheckbox);
+    fireEvent.click(submitButton);
+
+    await waitFor(() => {
+      expect(screen.getByRole("alert")).toHaveTextContent(
+        "Password must contain at least one uppercase letter",
+      );
+    });
+
+    expect(api.register).not.toHaveBeenCalled();
+  });
+
+  it("validates password contains digit", async () => {
+    renderWithProviders(<Register />);
+
+    const nameInput = screen.getByRole("textbox", { name: /full name/i });
+    const emailInput = screen.getByRole("textbox", { name: /email/i });
+    const passwordInput = screen.getByPlaceholderText(/create a strong password/i);
+    const confirmPasswordInput = screen.getByPlaceholderText(/confirm your password/i);
+    const submitButton = screen.getByRole("button", { name: /create account/i });
+
+    fireEvent.change(nameInput, { target: { value: "John Doe" } });
+    fireEvent.change(emailInput, { target: { value: "john@example.com" } });
+    fireEvent.change(passwordInput, { target: { value: "PasswordLong!" } });
+    fireEvent.change(confirmPasswordInput, { target: { value: "PasswordLong!" } });
+    const termsCheckbox = screen.getByRole("checkbox", { name: /accept the/i });
+    fireEvent.click(termsCheckbox);
+    fireEvent.click(submitButton);
+
+    await waitFor(() => {
+      expect(screen.getByRole("alert")).toHaveTextContent(
+        "Password must contain at least one digit",
+      );
+    });
+
+    expect(api.register).not.toHaveBeenCalled();
+  });
+
+  it("validates password contains symbol", async () => {
+    renderWithProviders(<Register />);
+
+    const nameInput = screen.getByRole("textbox", { name: /full name/i });
+    const emailInput = screen.getByRole("textbox", { name: /email/i });
+    const passwordInput = screen.getByPlaceholderText(/create a strong password/i);
+    const confirmPasswordInput = screen.getByPlaceholderText(/confirm your password/i);
+    const submitButton = screen.getByRole("button", { name: /create account/i });
+
+    fireEvent.change(nameInput, { target: { value: "John Doe" } });
+    fireEvent.change(emailInput, { target: { value: "john@example.com" } });
+    fireEvent.change(passwordInput, { target: { value: "Password123Long" } });
+    fireEvent.change(confirmPasswordInput, { target: { value: "Password123Long" } });
+    const termsCheckbox = screen.getByRole("checkbox", { name: /accept the/i });
+    fireEvent.click(termsCheckbox);
+    fireEvent.click(submitButton);
+
+    await waitFor(() => {
+      expect(screen.getByRole("alert")).toHaveTextContent(
+        "Password must contain at least one symbol",
+      );
+    });
+
+    expect(api.register).not.toHaveBeenCalled();
+  });
+
+  it("requires terms acceptance", async () => {
+    renderWithProviders(<Register />);
+
+    const nameInput = screen.getByRole("textbox", { name: /full name/i });
+    const emailInput = screen.getByRole("textbox", { name: /email/i });
+    const passwordInput = screen.getByPlaceholderText(/create a strong password/i);
+    const confirmPasswordInput = screen.getByPlaceholderText(/confirm your password/i);
+    const submitButton = screen.getByRole("button", { name: /create account/i });
+
+    fireEvent.change(nameInput, { target: { value: "John Doe" } });
+    fireEvent.change(emailInput, { target: { value: "john@example.com" } });
+    fireEvent.change(passwordInput, { target: { value: "Password123!" } });
+    fireEvent.change(confirmPasswordInput, { target: { value: "Password123!" } });
+    // Don't check terms checkbox
+    fireEvent.click(submitButton);
+
+    await waitFor(() => {
+      const alert = screen.queryByRole("alert");
+      if (alert) {
+        expect(alert).toHaveTextContent(/accept.*terms/i);
+      } else {
+        // Fallback: check for error text anywhere
+        expect(screen.getByText(/accept.*terms/i)).toBeInTheDocument();
+      }
+    });
+
+    expect(api.register).not.toHaveBeenCalled();
+  });
+
+  it("validates all fields are filled", async () => {
+    renderWithProviders(<Register />);
+
+    const submitButton = screen.getByRole("button", { name: /create account/i });
+    fireEvent.click(submitButton);
+
+    await waitFor(() => {
+      const alert = screen.queryByRole("alert");
+      if (alert) {
+        expect(alert).toHaveTextContent(/fill.*all.*fields/i);
+      } else {
+        // Fallback: check for error text anywhere
+        expect(screen.getByText(/fill.*all.*fields/i)).toBeInTheDocument();
+      }
+    });
+
+    expect(api.register).not.toHaveBeenCalled();
   });
 });

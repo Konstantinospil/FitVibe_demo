@@ -3,16 +3,18 @@ import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { apiClient, rawHttpClient } from "../../src/services/api";
 import { useAuthStore } from "../../src/store/auth.store";
 
-const apiMock = new MockAdapter(apiClient);
-const rawMock = new MockAdapter(rawHttpClient);
-
 describe("API client interceptors", () => {
+  let apiMock: MockAdapter;
+  let rawMock: MockAdapter;
+
   beforeEach(() => {
-    apiMock.reset();
-    rawMock.reset();
+    apiMock = new MockAdapter(apiClient);
+    rawMock = new MockAdapter(rawHttpClient);
   });
 
   afterEach(() => {
+    apiMock.restore();
+    rawMock.restore();
     vi.restoreAllMocks();
   });
 

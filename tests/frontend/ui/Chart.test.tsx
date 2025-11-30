@@ -68,4 +68,29 @@ describe("Chart", () => {
     // At minimum, verify the chart container renders
     expect(screen.getByTestId("chart")).toBeInTheDocument();
   });
+
+  it("renders with custom height", () => {
+    const { container } = render(<Chart data={sampleData} height={400} />);
+
+    const chartElement = screen.getByTestId("chart");
+    expect(chartElement).toHaveStyle({ height: "400px" });
+  });
+
+  it("renders with custom color", () => {
+    const { container } = render(<Chart data={sampleData} color="#ff0000" />);
+
+    expect(screen.getByTestId("chart")).toBeInTheDocument();
+  });
+
+  it("renders with empty data", () => {
+    render(<Chart data={[]} />);
+
+    expect(screen.getByTestId("chart")).toBeInTheDocument();
+  });
+
+  it("renders with single data point", () => {
+    render(<Chart data={[{ label: "Mon", value: 50 }]} />);
+
+    expect(screen.getByTestId("chart")).toBeInTheDocument();
+  });
 });

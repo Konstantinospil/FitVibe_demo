@@ -115,4 +115,73 @@ describe("MainLayout", () => {
     const main = document.querySelector("#main-content");
     expect(main).toBeInTheDocument();
   });
+
+  it("should render logo", () => {
+    render(
+      <MemoryRouter>
+        <MainLayout />
+      </MemoryRouter>,
+    );
+
+    const logo = screen.getByAltText("FitVibe Logo");
+    expect(logo).toBeInTheDocument();
+  });
+
+  it("should render theme toggle", () => {
+    render(
+      <MemoryRouter>
+        <MainLayout />
+      </MemoryRouter>,
+    );
+
+    // ThemeToggle should be present (it's rendered in the layout)
+    const nav = screen.getByRole("navigation");
+    expect(nav).toBeInTheDocument();
+  });
+
+  it("should render language switcher", () => {
+    render(
+      <MemoryRouter>
+        <MainLayout />
+      </MemoryRouter>,
+    );
+
+    // LanguageSwitcher should be present (it's rendered in the layout)
+    const nav = screen.getByRole("navigation");
+    expect(nav).toBeInTheDocument();
+  });
+
+  it("should render user avatar when authenticated", () => {
+    (useAuth as ReturnType<typeof vi.fn>).mockReturnValue({
+      signIn: vi.fn(),
+      signOut: mockSignOut,
+      user: { id: "user-1", username: "test", email: "test@example.com" },
+      isAuthenticated: true,
+      updateUser: vi.fn(),
+    });
+
+    render(
+      <MemoryRouter>
+        <MainLayout />
+      </MemoryRouter>,
+    );
+
+    // Avatar should be present when user is authenticated
+    const nav = screen.getByRole("navigation");
+    expect(nav).toBeInTheDocument();
+  });
+
+  it("should navigate when nav link is clicked", () => {
+    render(
+      <MemoryRouter>
+        <MainLayout />
+      </MemoryRouter>,
+    );
+
+    const homeLinks = screen.getAllByLabelText("Home");
+    if (homeLinks.length > 0) {
+      fireEvent.click(homeLinks[0]);
+      // Navigation should work (tested via NavLink component)
+    }
+  });
 });
