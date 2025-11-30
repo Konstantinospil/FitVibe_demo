@@ -37,8 +37,15 @@ void import("./src/middlewares/rate-limit.js")
 
 // Global teardown to ensure all async operations complete
 afterAll(async () => {
+  // Increase timeout for cleanup operations
+  jest.setTimeout(60000);
+
   // Switch to real timers to allow proper cleanup
-  jest.useRealTimers();
+  try {
+    jest.useRealTimers();
+  } catch {
+    // Ignore if Jest environment is already torn down
+  }
 
   // CRITICAL: Stop Prometheus metrics collection FIRST and SYNCHRONOUSLY
   // These timers are the main culprit keeping the process alive
@@ -135,8 +142,12 @@ afterAll(async () => {
 
   // Force clear any remaining timers as a last resort
   // This helps catch any timers that weren't properly cleaned up
-  if (typeof jest !== "undefined" && jest.clearAllTimers) {
-    jest.clearAllTimers();
+  try {
+    if (typeof jest !== "undefined" && jest.clearAllTimers) {
+      jest.clearAllTimers();
+    }
+  } catch {
+    // Ignore if Jest environment is already torn down
   }
 
   // Log what's keeping the process alive if available
@@ -151,4 +162,4 @@ afterAll(async () => {
       // why-is-node-running not available, skip
     }
   }
-});
+}, 60000); // Set timeout to 60 seconds for cleanup
