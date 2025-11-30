@@ -1,28 +1,21 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { useNavigate, useLocation, NavLink } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { Eye, EyeOff } from "lucide-react";
 import { Button } from "../components/ui";
+import { LockoutTimer } from "../components/LockoutTimer";
+import { AttemptCounter } from "../components/AttemptCounter";
 import { useAuth } from "../contexts/AuthContext";
 import { login } from "../services/api";
 import { logger } from "../utils/logger.js";
-
-const inputStyle: React.CSSProperties = {
-  width: "100%",
-  borderRadius: "12px",
-  border: "1px solid var(--color-input-border)",
-  background: "var(--color-input-bg)",
-  color: "var(--color-text-primary)",
-  padding: "0.85rem 1rem",
-  fontSize: "1rem",
-  fontFamily: "var(--font-family-base, 'Inter', sans-serif)",
-  transition: "border-color 150ms ease, background-color 150ms ease",
-};
+import { useRequiredFieldValidation } from "../hooks/useRequiredFieldValidation";
 
 const LoginFormContent: React.FC = () => {
   const { signIn } = useAuth();
   const navigate = useNavigate();
   const { t } = useTranslation();
+  const formRef = useRef<HTMLFormElement>(null);
+  useRequiredFieldValidation(formRef, t);
   const location = useLocation();
   const requestedPath = (location.state as { from?: { pathname?: string } })?.from?.pathname;
   const from =
@@ -37,6 +30,18 @@ const LoginFormContent: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [lockoutData, setLockoutData] = useState<{
+    remainingSeconds: number;
+    lockoutType: "account" | "ip";
+  } | null>(null);
+  const [attemptWarning, setAttemptWarning] = useState<{
+    remainingAccountAttempts: number;
+    remainingIPAttempts: number;
+    remainingIPDistinctEmails: number;
+    accountAttemptCount: number;
+    ipTotalAttemptCount: number;
+    ipDistinctEmailCount: number;
+  } | null>(null);
 
   const showPasswordLabel = t("auth.login.showPassword", {
     defaultValue: t("auth.showPassword", { defaultValue: "Show password" }),
@@ -56,6 +61,8 @@ const LoginFormContent: React.FC = () => {
 
     setIsSubmitting(true);
     setError(null);
+    setLockoutData(null);
+    setAttemptWarning(null);
 
     try {
       const response = await login({ email: email.trim(), password });
@@ -92,16 +99,64 @@ const LoginFormContent: React.FC = () => {
               error?: {
                 code?: string;
                 message?: string;
+                details?: {
+                  remainingSeconds?: number;
+                  lockoutType?: "account" | "ip";
+                  attemptCount?: number;
+                  totalAttemptCount?: number;
+                  distinctEmailCount?: number;
+                  maxAttempts?: number;
+                  warning?: boolean;
+                  remainingAccountAttempts?: number;
+                  remainingIPAttempts?: number;
+                  remainingIPDistinctEmails?: number;
+                  accountAttemptCount?: number;
+                  ipTotalAttemptCount?: number;
+                  ipDistinctEmailCount?: number;
+                };
               };
             };
           };
         };
         const errorCode = axiosError.response?.data?.error?.code;
         const errorMessage = axiosError.response?.data?.error?.message;
+        const errorDetails = axiosError.response?.data?.error?.details;
 
         if (errorCode === "TERMS_VERSION_OUTDATED") {
           navigate("/terms-reacceptance", { replace: true });
           return;
+        }
+
+        // Handle lockout errors with timer
+        if (
+          (errorCode === "AUTH_ACCOUNT_LOCKED" || errorCode === "AUTH_IP_LOCKED") &&
+          errorDetails?.remainingSeconds !== undefined &&
+          errorDetails?.lockoutType
+        ) {
+          setLockoutData({
+            remainingSeconds: errorDetails.remainingSeconds,
+            lockoutType: errorDetails.lockoutType,
+          });
+          setError(errorMessage || t("auth.lockout.locked", { defaultValue: "Account locked" }));
+          return;
+        }
+
+        // Handle warning for approaching lockout
+        if (
+          errorCode === "AUTH_INVALID_CREDENTIALS" &&
+          errorDetails?.warning &&
+          errorDetails.remainingAccountAttempts !== undefined &&
+          errorDetails.remainingIPAttempts !== undefined &&
+          errorDetails.remainingIPDistinctEmails !== undefined
+        ) {
+          setAttemptWarning({
+            remainingAccountAttempts: errorDetails.remainingAccountAttempts,
+            remainingIPAttempts: errorDetails.remainingIPAttempts,
+            remainingIPDistinctEmails: errorDetails.remainingIPDistinctEmails,
+            accountAttemptCount: errorDetails.accountAttemptCount ?? 0,
+            ipTotalAttemptCount: errorDetails.ipTotalAttemptCount ?? 0,
+            ipDistinctEmailCount: errorDetails.ipDistinctEmailCount ?? 0,
+          });
         }
 
         // Show specific error message if available
@@ -129,79 +184,39 @@ const LoginFormContent: React.FC = () => {
 
   return (
     // eslint-disable-next-line @typescript-eslint/no-misused-promises
-    <form onSubmit={handleSubmit} style={{ display: "grid", gap: "1rem" }}>
-      <label style={{ display: "grid", gap: "0.35rem" }}>
-        <span style={{ fontSize: "0.95rem", color: "var(--color-text-secondary)" }}>
-          {t("auth.login.emailLabel")}
-        </span>
+    <form ref={formRef} onSubmit={handleSubmit} className="form">
+      <label className="form-label">
+        <span className="form-label-text">{t("auth.login.emailLabel")}</span>
         <input
           name="email"
           type="email"
           placeholder={t("auth.placeholders.email")}
-          style={inputStyle}
+          className="form-input"
           required
           value={email}
           onChange={(event) => setEmail(event.target.value)}
           autoComplete="email"
           disabled={isSubmitting}
-          onFocus={(e) => {
-            e.currentTarget.style.borderColor = "var(--color-accent, #34d399)";
-            e.currentTarget.style.boxShadow = "0 0 0 2px rgba(52, 211, 153, 0.2)";
-          }}
-          onBlur={(e) => {
-            e.currentTarget.style.borderColor = "var(--color-input-border)";
-            e.currentTarget.style.boxShadow = "none";
-          }}
         />
       </label>
-      <label style={{ display: "grid", gap: "0.35rem" }}>
-        <span style={{ fontSize: "0.95rem", color: "var(--color-text-secondary)" }}>
-          {t("auth.login.passwordLabel")}
-        </span>
-        <div style={{ position: "relative" }}>
+      <label className="form-label">
+        <span className="form-label-text">{t("auth.login.passwordLabel")}</span>
+        <div className="form-input-wrapper">
           <input
             name="password"
             type={showPassword ? "text" : "password"}
             placeholder={t("auth.placeholders.password")}
-            style={{ ...inputStyle, paddingRight: "3rem" }}
+            className="form-input form-input--password"
             required
             value={password}
             onChange={(event) => setPassword(event.target.value)}
             autoComplete="current-password"
             disabled={isSubmitting}
-            onFocus={(e) => {
-              e.currentTarget.style.borderColor = "var(--color-accent, #34d399)";
-              e.currentTarget.style.boxShadow = "0 0 0 2px rgba(52, 211, 153, 0.2)";
-            }}
-            onBlur={(e) => {
-              e.currentTarget.style.borderColor = "var(--color-border, rgba(46, 91, 73, 0.2))";
-              e.currentTarget.style.boxShadow = "none";
-            }}
           />
           <button
             type="button"
             onClick={() => setShowPassword(!showPassword)}
-            style={{
-              position: "absolute",
-              right: "0.75rem",
-              top: "50%",
-              transform: "translateY(-50%)",
-              background: "transparent",
-              border: "none",
-              cursor: "pointer",
-              color: "var(--color-text-secondary)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              padding: "0.25rem",
-              transition: "color 150ms ease",
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.color = "var(--color-text-primary)";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.color = "var(--color-text-secondary)";
-            }}
+            className="form-password-toggle"
             aria-label={showPassword ? hidePasswordLabel : showPasswordLabel}
             disabled={isSubmitting}
           >
@@ -210,72 +225,18 @@ const LoginFormContent: React.FC = () => {
         </div>
       </label>
       {error ? (
-        <div
-          role="alert"
-          style={{
-            background: "rgba(248, 113, 113, 0.16)",
-            color: "var(--color-text-primary)",
-            borderRadius: "12px",
-            padding: "0.75rem 1rem",
-            fontSize: "0.95rem",
-          }}
-        >
+        <div role="alert" className="form-error">
           {error}
         </div>
       ) : null}
       <Button type="submit" fullWidth isLoading={isSubmitting} disabled={isSubmitting}>
         {isSubmitting ? t("auth.login.submitting") : t("auth.login.submit")}
       </Button>
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          fontSize: "0.9rem",
-          gap: "1rem",
-        }}
-      >
-        <NavLink
-          to="/register"
-          style={{
-            color: "var(--color-link-form)",
-            textDecoration: "underline",
-            transition: "color 150ms ease",
-            padding: "0.75rem 0.5rem",
-            minHeight: "24px",
-            minWidth: "24px",
-            display: "inline-flex",
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.color = "var(--color-link-form-hover)";
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.color = "var(--color-link-form)";
-          }}
-        >
+      <div className="form-links">
+        <NavLink to="/register" className="form-link">
           {t("auth.login.registerPrompt")}
         </NavLink>
-        <NavLink
-          to="/forgot-password"
-          style={{
-            color: "var(--color-link-form)",
-            textDecoration: "underline",
-            transition: "color 150ms ease",
-            padding: "0.75rem 0.5rem",
-            minHeight: "24px",
-            minWidth: "24px",
-            display: "inline-flex",
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.color = "var(--color-link-form-hover)";
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.color = "var(--color-link-form)";
-          }}
-        >
+        <NavLink to="/forgot-password" className="form-link">
           {t("auth.login.forgot")}
         </NavLink>
       </div>

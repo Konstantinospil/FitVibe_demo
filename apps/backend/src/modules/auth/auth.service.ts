@@ -64,6 +64,16 @@ import {
   resetFailedAttempts,
   isAccountLocked,
   getRemainingLockoutSeconds,
+  getRemainingAccountAttempts,
+  getMaxAccountAttempts,
+  getFailedAttemptByIP,
+  recordFailedAttemptByIP,
+  resetFailedAttemptsByIP,
+  isIPLocked,
+  getRemainingIPLockoutSeconds,
+  getRemainingIPAttempts,
+  getMaxIPAttempts,
+  getMaxIPDistinctEmails,
 } from "./bruteforce.repository.js";
 import { logger } from "../../config/logger.js";
 
@@ -370,7 +380,36 @@ export async function login(
   const userAgent = sanitizeUserAgent(context.userAgent);
 
   try {
-    // Check for brute force lockout
+    // Check for IP-based brute force lockout (prevents cross-email enumeration attacks)
+    const ipFailedAttempt = await getFailedAttemptByIP(ipAddress);
+    if (isIPLocked(ipFailedAttempt)) {
+      const remainingSeconds = getRemainingIPLockoutSeconds(ipFailedAttempt);
+      const remainingMinutes = Math.ceil(remainingSeconds / 60);
+
+      await recordAuditEvent(null, "auth.login_blocked_ip", {
+        ip: ipAddress,
+        remainingSeconds,
+        totalAttemptCount: ipFailedAttempt?.total_attempt_count ?? 0,
+        distinctEmailCount: ipFailedAttempt?.distinct_email_count ?? 0,
+        requestId: context.requestId ?? null,
+      });
+
+      throw new HttpError(
+        429,
+        "AUTH_IP_LOCKED",
+        `IP address temporarily locked due to multiple failed login attempts. Try again in ${remainingMinutes} minute${remainingMinutes === 1 ? "" : "s"}.`,
+        {
+          remainingSeconds,
+          lockoutType: "ip",
+          totalAttemptCount: ipFailedAttempt?.total_attempt_count ?? 0,
+          distinctEmailCount: ipFailedAttempt?.distinct_email_count ?? 0,
+          maxAttempts: getMaxIPAttempts(),
+          maxDistinctEmails: getMaxIPDistinctEmails(),
+        },
+      );
+    }
+
+    // Check for account-level brute force lockout
     const failedAttempt = await getFailedAttempt(identifier, ipAddress);
     if (isAccountLocked(failedAttempt)) {
       const remainingSeconds = getRemainingLockoutSeconds(failedAttempt);
@@ -388,6 +427,12 @@ export async function login(
         429,
         "AUTH_ACCOUNT_LOCKED",
         `Account temporarily locked due to multiple failed login attempts. Try again in ${remainingMinutes} minute${remainingMinutes === 1 ? "" : "s"}.`,
+        {
+          remainingSeconds,
+          lockoutType: "account",
+          attemptCount: failedAttempt?.attempt_count ?? 0,
+          maxAttempts: getMaxAccountAttempts(),
+        },
       );
     }
 
@@ -406,9 +451,37 @@ export async function login(
       signAccess({ sub: dummyUserId, role: "athlete", sid: dummySessionId });
 
       // Record failed attempt (even for non-existent users to prevent enumeration)
-      await recordFailedAttempt(identifier, ipAddress, userAgent);
+      const accountAttempt = await recordFailedAttempt(identifier, ipAddress, userAgent);
+      // Also record IP-based attempt
+      const ipAttempt = await recordFailedAttemptByIP(ipAddress, identifier);
 
-      throw new HttpError(401, "AUTH_INVALID_CREDENTIALS", "AUTH_INVALID_CREDENTIALS");
+      // Check if we should warn about approaching lockout
+      const remainingAccountAttempts = getRemainingAccountAttempts(accountAttempt);
+      const remainingIPAttempts = getRemainingIPAttempts(ipAttempt);
+      const minRemaining = Math.min(
+        remainingAccountAttempts,
+        remainingIPAttempts.remainingAttempts,
+        remainingIPAttempts.remainingDistinctEmails,
+      );
+
+      // Include warning in error details if within 3 attempts of lockout
+      const errorDetails: Record<string, unknown> = {};
+      if (minRemaining <= 3 && minRemaining > 0) {
+        errorDetails.warning = true;
+        errorDetails.remainingAccountAttempts = remainingAccountAttempts;
+        errorDetails.remainingIPAttempts = remainingIPAttempts.remainingAttempts;
+        errorDetails.remainingIPDistinctEmails = remainingIPAttempts.remainingDistinctEmails;
+        errorDetails.accountAttemptCount = accountAttempt.attempt_count;
+        errorDetails.ipTotalAttemptCount = ipAttempt.total_attempt_count;
+        errorDetails.ipDistinctEmailCount = ipAttempt.distinct_email_count;
+      }
+
+      throw new HttpError(
+        401,
+        "AUTH_INVALID_CREDENTIALS",
+        "AUTH_INVALID_CREDENTIALS",
+        Object.keys(errorDetails).length > 0 ? errorDetails : undefined,
+      );
     }
 
     const ok = await bcrypt.compare(dto.password, user.password_hash);
@@ -421,6 +494,8 @@ export async function login(
 
       // Record failed attempt
       const attempt = await recordFailedAttempt(identifier, ipAddress, userAgent);
+      // Also record IP-based attempt
+      const ipAttempt = await recordFailedAttemptByIP(ipAddress, identifier);
 
       await recordAuditEvent(user.id, "auth.login_failed", {
         ip: ipAddress,
@@ -429,11 +504,39 @@ export async function login(
         requestId: context.requestId ?? null,
       });
 
-      throw new HttpError(401, "AUTH_INVALID_CREDENTIALS", "AUTH_INVALID_CREDENTIALS");
+      // Check if we should warn about approaching lockout
+      const remainingAccountAttempts = getRemainingAccountAttempts(attempt);
+      const remainingIPAttempts = getRemainingIPAttempts(ipAttempt);
+      const minRemaining = Math.min(
+        remainingAccountAttempts,
+        remainingIPAttempts.remainingAttempts,
+        remainingIPAttempts.remainingDistinctEmails,
+      );
+
+      // Include warning in error details if within 3 attempts of lockout
+      const errorDetails: Record<string, unknown> = {};
+      if (minRemaining <= 3 && minRemaining > 0) {
+        errorDetails.warning = true;
+        errorDetails.remainingAccountAttempts = remainingAccountAttempts;
+        errorDetails.remainingIPAttempts = remainingIPAttempts.remainingAttempts;
+        errorDetails.remainingIPDistinctEmails = remainingIPAttempts.remainingDistinctEmails;
+        errorDetails.accountAttemptCount = attempt.attempt_count;
+        errorDetails.ipTotalAttemptCount = ipAttempt.total_attempt_count;
+        errorDetails.ipDistinctEmailCount = ipAttempt.distinct_email_count;
+      }
+
+      throw new HttpError(
+        401,
+        "AUTH_INVALID_CREDENTIALS",
+        "AUTH_INVALID_CREDENTIALS",
+        Object.keys(errorDetails).length > 0 ? errorDetails : undefined,
+      );
     }
 
     // Successful password authentication - reset failed attempts
     await resetFailedAttempts(identifier, ipAddress);
+    // Also reset IP-based attempts (legitimate user from this IP)
+    await resetFailedAttemptsByIP(ipAddress);
 
     // Check if user has accepted current terms version
     if (isTermsVersionOutdated(user.terms_version)) {
