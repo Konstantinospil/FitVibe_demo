@@ -290,5 +290,3 @@ Consider using:
 - [Docker Configurations](../docker/README.md)
 - [Observability Stack](../observability/README.md)
 - [Backend README](../../apps/backend/README.md)
-
-

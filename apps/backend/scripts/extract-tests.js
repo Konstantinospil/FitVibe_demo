@@ -147,5 +147,3 @@ if (process.argv[2] === "--write") {
   fs.writeFileSync(outputPath, markdown, "utf-8");
   console.log(`\n✅ Written to ${outputPath}`);
 }
-
-

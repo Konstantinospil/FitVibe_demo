@@ -83,5 +83,3 @@ Implement the backend API and frontend components for profile editing functional
 
 **Last Updated**: 2025-01-21  
 **Next Review**: 2025-02-21
-
-

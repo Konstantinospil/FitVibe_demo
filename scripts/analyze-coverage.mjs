@@ -92,5 +92,3 @@ console.log(`Total files analyzed: ${fileCoverage.length}`);
 console.log(`Average coverage: ${avgCoverage.toFixed(2)}%`);
 console.log(`Files below 80%: ${below80}`);
 console.log(`Files below 90%: ${below90}`);
-
-

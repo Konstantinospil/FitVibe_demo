@@ -56,5 +56,3 @@ Enables platform administration and supports coach functionality. Ensures proper
 
 **Last Updated**: 2025-01-21  
 **Next Review**: 2025-02-21
-
-
