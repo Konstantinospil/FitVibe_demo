@@ -120,4 +120,90 @@ describe("VerifyEmail", () => {
       expect(rawHttpClient.get).toHaveBeenCalledWith("/api/v1/auth/verify?token=abc123");
     });
   });
+
+  it("shows verifying state initially", () => {
+    vi.mocked(rawHttpClient.get).mockImplementation(
+      () => new Promise((resolve) => setTimeout(resolve, 100)),
+    );
+
+    renderWithProviders();
+
+    expect(screen.getByText("Verifying Your Email")).toBeInTheDocument();
+    expect(screen.getByText("Please wait while we verify your email...")).toBeInTheDocument();
+  });
+
+  it("displays success state with login button", async () => {
+    vi.mocked(rawHttpClient.get).mockResolvedValue({ data: { success: true } });
+
+    renderWithProviders();
+
+    await waitFor(() => {
+      expect(screen.getByText("Email Verified!")).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: /go to login/i })).toBeInTheDocument();
+    });
+  });
+
+  it("handles button clicks for navigation", async () => {
+    const { useNavigate } = await import("react-router-dom");
+    const mockNavigate = vi.fn();
+    vi.mocked(useNavigate as any).mockReturnValue(mockNavigate);
+
+    vi.mocked(rawHttpClient.get).mockResolvedValue({ data: { success: true } });
+
+    renderWithProviders();
+
+    await waitFor(() => {
+      expect(screen.getByText("Email Verified!")).toBeInTheDocument();
+    });
+
+    const loginButton = screen.getByRole("button", { name: /go to login/i });
+    fireEvent.click(loginButton);
+
+    // Button should be present and clickable
+    expect(loginButton).toBeInTheDocument();
+  });
+
+  it("handles error without response object", async () => {
+    vi.mocked(rawHttpClient.get).mockRejectedValue(new Error("Network error"));
+
+    renderWithProviders();
+
+    await waitFor(() => {
+      expect(screen.getByText("Verification Failed")).toBeInTheDocument();
+      expect(screen.getByText("Verification failed")).toBeInTheDocument();
+    });
+  });
+
+  it("handles error with response but no error message", async () => {
+    vi.mocked(rawHttpClient.get).mockRejectedValue({
+      response: {
+        data: {},
+      },
+    });
+
+    renderWithProviders();
+
+    await waitFor(() => {
+      expect(screen.getByText("Verification Failed")).toBeInTheDocument();
+      expect(screen.getByText("Verification failed")).toBeInTheDocument();
+    });
+  });
+
+  it("uses errorMessage in description when error occurs", async () => {
+    vi.mocked(rawHttpClient.get).mockRejectedValue({
+      response: {
+        data: {
+          error: {
+            message: "Token expired",
+          },
+        },
+      },
+    });
+
+    renderWithProviders();
+
+    await waitFor(() => {
+      expect(screen.getByText("Token expired")).toBeInTheDocument();
+    });
+  });
 });

@@ -125,4 +125,219 @@ describe("ProtectedRoutes", () => {
       expect(ensurePrivateTranslationsLoaded).toHaveBeenCalled();
     });
   });
+
+  it("should render Home page at root path", async () => {
+    render(
+      <MemoryRouter initialEntries={["/"]}>
+        <ProtectedRoutes />
+      </MemoryRouter>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText("Home Page")).toBeInTheDocument();
+    });
+  });
+
+  it("should render Sessions page at /sessions", async () => {
+    render(
+      <MemoryRouter initialEntries={["/sessions"]}>
+        <ProtectedRoutes />
+      </MemoryRouter>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText("Sessions Page")).toBeInTheDocument();
+    });
+  });
+
+  it("should render Planner page at /planner", async () => {
+    render(
+      <MemoryRouter initialEntries={["/planner"]}>
+        <ProtectedRoutes />
+      </MemoryRouter>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText("Planner Page")).toBeInTheDocument();
+    });
+  });
+
+  it("should render Logger page at /logger/:sessionId", async () => {
+    render(
+      <MemoryRouter initialEntries={["/logger/session-123"]}>
+        <ProtectedRoutes />
+      </MemoryRouter>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText("Logger Page")).toBeInTheDocument();
+    });
+  });
+
+  it("should render Insights page at /insights", async () => {
+    render(
+      <MemoryRouter initialEntries={["/insights"]}>
+        <ProtectedRoutes />
+      </MemoryRouter>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText("Insights Page")).toBeInTheDocument();
+    });
+  });
+
+  it("should render Profile page at /profile", async () => {
+    render(
+      <MemoryRouter initialEntries={["/profile"]}>
+        <ProtectedRoutes />
+      </MemoryRouter>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText("Profile Page")).toBeInTheDocument();
+    });
+  });
+
+  it("should render Settings page at /settings", async () => {
+    render(
+      <MemoryRouter initialEntries={["/settings"]}>
+        <ProtectedRoutes />
+      </MemoryRouter>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText("Settings Page")).toBeInTheDocument();
+    });
+  });
+
+  it("should render Terms page at /terms", async () => {
+    render(
+      <MemoryRouter initialEntries={["/terms"]}>
+        <ProtectedRoutes />
+      </MemoryRouter>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText("Terms Page")).toBeInTheDocument();
+    });
+  });
+
+  it("should render Privacy page at /privacy", async () => {
+    render(
+      <MemoryRouter initialEntries={["/privacy"]}>
+        <ProtectedRoutes />
+      </MemoryRouter>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText("Privacy Page")).toBeInTheDocument();
+    });
+  });
+
+  it("should render TermsReacceptance page at /terms-reacceptance", async () => {
+    render(
+      <MemoryRouter initialEntries={["/terms-reacceptance"]}>
+        <ProtectedRoutes />
+      </MemoryRouter>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText("Terms Reacceptance Page")).toBeInTheDocument();
+    });
+  });
+
+  it("should render AdminDashboard at /admin", async () => {
+    render(
+      <MemoryRouter initialEntries={["/admin"]}>
+        <ProtectedRoutes />
+      </MemoryRouter>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText("Admin Dashboard")).toBeInTheDocument();
+    });
+  });
+
+  it("should render ContentReports at /admin/reports", async () => {
+    render(
+      <MemoryRouter initialEntries={["/admin/reports"]}>
+        <ProtectedRoutes />
+      </MemoryRouter>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText("Content Reports")).toBeInTheDocument();
+    });
+  });
+
+  it("should render UserManagement at /admin/users", async () => {
+    render(
+      <MemoryRouter initialEntries={["/admin/users"]}>
+        <ProtectedRoutes />
+      </MemoryRouter>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText("User Management")).toBeInTheDocument();
+    });
+  });
+
+  it("should render SystemControls at /admin/system", async () => {
+    render(
+      <MemoryRouter initialEntries={["/admin/system"]}>
+        <ProtectedRoutes />
+      </MemoryRouter>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText("System Controls")).toBeInTheDocument();
+    });
+  });
+
+  it("should render NotFound page for unknown routes", async () => {
+    render(
+      <MemoryRouter initialEntries={["/unknown-route"]}>
+        <ProtectedRoutes />
+      </MemoryRouter>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText("Not Found")).toBeInTheDocument();
+    });
+  });
+
+  it("should redirect /login to root", async () => {
+    render(
+      <MemoryRouter initialEntries={["/login"]}>
+        <ProtectedRoutes />
+      </MemoryRouter>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText("Home Page")).toBeInTheDocument();
+    });
+  });
+
+  it("should redirect unmatched paths to root", async () => {
+    render(
+      <MemoryRouter initialEntries={["/some-random-path"]}>
+        <ProtectedRoutes />
+      </MemoryRouter>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText("Home Page")).toBeInTheDocument();
+    });
+  });
+
+  it("should render fallback loading state", () => {
+    render(
+      <MemoryRouter initialEntries={["/"]}>
+        <ProtectedRoutes />
+      </MemoryRouter>,
+    );
+
+    // The component should render (loading state is handled by Suspense)
+    expect(document.body).toBeInTheDocument();
+  });
 });

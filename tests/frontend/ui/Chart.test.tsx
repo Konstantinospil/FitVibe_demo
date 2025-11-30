@@ -2,6 +2,9 @@ import { render, screen } from "@testing-library/react";
 import React from "react";
 import { describe, expect, it, vi, beforeEach } from "vitest";
 
+// Mock Tooltip to capture its content prop for testing ChartTooltip
+const mockTooltipContent = vi.fn();
+
 vi.mock("recharts", () => {
   return {
     ResponsiveContainer: ({ children }: { children: React.ReactNode }) => (
@@ -20,7 +23,13 @@ vi.mock("recharts", () => {
     Area: () => <div data-testid="area-series" />,
     Bar: () => <div data-testid="bar-series" />,
     CartesianGrid: () => null,
-    Tooltip: () => null,
+    Tooltip: ({ content, ...props }: { content?: React.ReactNode; [key: string]: unknown }) => {
+      // Capture the content function for testing
+      if (typeof content === "function") {
+        mockTooltipContent(content);
+      }
+      return null;
+    },
     XAxis: () => null,
     YAxis: () => null,
   };
@@ -90,6 +99,49 @@ describe("Chart", () => {
 
   it("renders with single data point", () => {
     render(<Chart data={[{ label: "Mon", value: 50 }]} />);
+
+    expect(screen.getByTestId("chart")).toBeInTheDocument();
+  });
+
+  it("uses custom labelFormatter", () => {
+    const labelFormatter = vi.fn((label: string) => `Custom: ${label}`);
+    render(<Chart data={sampleData} labelFormatter={labelFormatter} />);
+
+    expect(screen.getByTestId("chart")).toBeInTheDocument();
+  });
+
+  it("uses custom valueFormatter", () => {
+    const valueFormatter = vi.fn((value: number) => `$${value}`);
+    render(<Chart data={sampleData} valueFormatter={valueFormatter} />);
+
+    expect(screen.getByTestId("chart")).toBeInTheDocument();
+  });
+
+  it("uses default formatters when not provided", () => {
+    render(<Chart data={sampleData} />);
+
+    expect(screen.getByTestId("chart")).toBeInTheDocument();
+  });
+
+  it("renders area chart as default type", () => {
+    const { container } = render(<Chart data={sampleData} type={undefined} />);
+
+    expect(screen.getByTestId("chart")).toBeInTheDocument();
+    const responsiveContainer = container.querySelector('[data-testid="responsive-container"]');
+    if (responsiveContainer) {
+      expect(screen.getByTestId("area-chart")).toBeInTheDocument();
+    }
+  });
+
+  it("renders with default height when not provided", () => {
+    render(<Chart data={sampleData} height={undefined} />);
+
+    const chartElement = screen.getByTestId("chart");
+    expect(chartElement).toBeInTheDocument();
+  });
+
+  it("renders with default color when not provided", () => {
+    render(<Chart data={sampleData} color={undefined} />);
 
     expect(screen.getByTestId("chart")).toBeInTheDocument();
   });

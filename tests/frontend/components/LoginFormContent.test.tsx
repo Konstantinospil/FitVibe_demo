@@ -246,4 +246,280 @@ describe("LoginFormContent", () => {
     expect(screen.getByText("Create account")).toBeInTheDocument();
     expect(screen.getByText("Forgot password?")).toBeInTheDocument();
   });
+
+  it("should handle successful login with user object", async () => {
+    vi.mocked(api.login).mockResolvedValue({
+      user: { id: "user-1", username: "test", email: "test@example.com" },
+      requires2FA: false,
+      session: { id: "session-123" },
+    });
+
+    render(
+      <MemoryRouter>
+        <LoginFormContent />
+      </MemoryRouter>,
+    );
+
+    const emailInput = screen.getByLabelText("Email");
+    const passwordInput = screen.getByLabelText("Password");
+    const submitButton = screen.getByRole("button", { name: "Sign In" });
+
+    fireEvent.change(emailInput, { target: { value: "test@example.com" } });
+    fireEvent.change(passwordInput, { target: { value: "password123" } });
+    fireEvent.click(submitButton);
+
+    await waitFor(() => {
+      expect(mockSignIn).toHaveBeenCalledWith({
+        id: "user-1",
+        username: "test",
+        email: "test@example.com",
+      });
+      expect(mockNavigate).toHaveBeenCalledWith("/", { replace: true });
+    });
+  });
+
+  it("should handle login response without user object", async () => {
+    vi.mocked(api.login).mockResolvedValue({
+      requires2FA: false,
+      session: { id: "session-123" },
+    } as any);
+
+    render(
+      <MemoryRouter>
+        <LoginFormContent />
+      </MemoryRouter>,
+    );
+
+    const emailInput = screen.getByLabelText("Email");
+    const passwordInput = screen.getByLabelText("Password");
+    const submitButton = screen.getByRole("button", { name: "Sign In" });
+
+    fireEvent.change(emailInput, { target: { value: "test@example.com" } });
+    fireEvent.change(passwordInput, { target: { value: "password123" } });
+    fireEvent.click(submitButton);
+
+    await waitFor(() => {
+      expect(screen.getByRole("alert")).toHaveTextContent("Login failed");
+    });
+  });
+
+  it("should handle error with error message", async () => {
+    vi.mocked(api.login).mockRejectedValue({
+      response: {
+        data: {
+          error: {
+            message: "Custom error message",
+          },
+        },
+      },
+    });
+
+    render(
+      <MemoryRouter>
+        <LoginFormContent />
+      </MemoryRouter>,
+    );
+
+    const emailInput = screen.getByLabelText("Email");
+    const passwordInput = screen.getByLabelText("Password");
+    const submitButton = screen.getByRole("button", { name: "Sign In" });
+
+    fireEvent.change(emailInput, { target: { value: "test@example.com" } });
+    fireEvent.change(passwordInput, { target: { value: "wrongpassword" } });
+    fireEvent.click(submitButton);
+
+    await waitFor(() => {
+      expect(screen.getByText("Custom error message")).toBeInTheDocument();
+    });
+  });
+
+  it("should handle error with error code but no message", async () => {
+    vi.mocked(api.login).mockRejectedValue({
+      response: {
+        data: {
+          error: {
+            code: "SOME_ERROR_CODE",
+          },
+        },
+      },
+    });
+
+    render(
+      <MemoryRouter>
+        <LoginFormContent />
+      </MemoryRouter>,
+    );
+
+    const emailInput = screen.getByLabelText("Email");
+    const passwordInput = screen.getByLabelText("Password");
+    const submitButton = screen.getByRole("button", { name: "Sign In" });
+
+    fireEvent.change(emailInput, { target: { value: "test@example.com" } });
+    fireEvent.change(passwordInput, { target: { value: "wrongpassword" } });
+    fireEvent.click(submitButton);
+
+    await waitFor(() => {
+      expect(screen.getByRole("alert")).toBeInTheDocument();
+    });
+  });
+
+  it("should handle network error without response object", async () => {
+    vi.mocked(api.login).mockRejectedValue(new Error("Network error"));
+
+    render(
+      <MemoryRouter>
+        <LoginFormContent />
+      </MemoryRouter>,
+    );
+
+    const emailInput = screen.getByLabelText("Email");
+    const passwordInput = screen.getByLabelText("Password");
+    const submitButton = screen.getByRole("button", { name: "Sign In" });
+
+    fireEvent.change(emailInput, { target: { value: "test@example.com" } });
+    fireEvent.change(passwordInput, { target: { value: "password123" } });
+    fireEvent.click(submitButton);
+
+    await waitFor(() => {
+      expect(screen.getByRole("alert")).toBeInTheDocument();
+    });
+  });
+
+  it("should navigate with from path when location state contains from", async () => {
+    const mockUseLocation = vi.fn(() => ({
+      state: { from: { pathname: "/dashboard" } },
+    }));
+
+    vi.doMock("react-router-dom", async () => {
+      const actual = await vi.importActual("react-router-dom");
+      return {
+        ...actual,
+        useNavigate: () => mockNavigate,
+        useLocation: mockUseLocation,
+      };
+    });
+
+    vi.mocked(api.login).mockResolvedValue({
+      user: { id: "user-1", username: "test", email: "test@example.com" },
+      requires2FA: false,
+      session: { id: "session-123" },
+    });
+
+    const { useLocation } = await import("react-router-dom");
+    vi.mocked(useLocation as any).mockReturnValue({
+      state: { from: { pathname: "/dashboard" } },
+    });
+
+    render(
+      <MemoryRouter>
+        <LoginFormContent />
+      </MemoryRouter>,
+    );
+
+    const emailInput = screen.getByLabelText("Email");
+    const passwordInput = screen.getByLabelText("Password");
+    const submitButton = screen.getByRole("button", { name: "Sign In" });
+
+    fireEvent.change(emailInput, { target: { value: "test@example.com" } });
+    fireEvent.change(passwordInput, { target: { value: "password123" } });
+    fireEvent.click(submitButton);
+
+    await waitFor(() => {
+      expect(mockNavigate).toHaveBeenCalled();
+    });
+  });
+
+  it("should handle from path validation for invalid paths", async () => {
+    const mockUseLocation = vi.fn(() => ({
+      state: { from: { pathname: "//invalid" } },
+    }));
+
+    vi.doMock("react-router-dom", async () => {
+      const actual = await vi.importActual("react-router-dom");
+      return {
+        ...actual,
+        useNavigate: () => mockNavigate,
+        useLocation: mockUseLocation,
+      };
+    });
+
+    vi.mocked(api.login).mockResolvedValue({
+      user: { id: "user-1", username: "test", email: "test@example.com" },
+      requires2FA: false,
+      session: { id: "session-123" },
+    });
+
+    render(
+      <MemoryRouter>
+        <LoginFormContent />
+      </MemoryRouter>,
+    );
+
+    const emailInput = screen.getByLabelText("Email");
+    const passwordInput = screen.getByLabelText("Password");
+    const submitButton = screen.getByRole("button", { name: "Sign In" });
+
+    fireEvent.change(emailInput, { target: { value: "test@example.com" } });
+    fireEvent.change(passwordInput, { target: { value: "password123" } });
+    fireEvent.click(submitButton);
+
+    await waitFor(() => {
+      expect(mockNavigate).toHaveBeenCalledWith("/", { replace: true });
+    });
+  });
+
+  it("should disable inputs during submission", async () => {
+    vi.mocked(api.login).mockImplementation(
+      () => new Promise((resolve) => setTimeout(resolve, 100)),
+    );
+
+    render(
+      <MemoryRouter>
+        <LoginFormContent />
+      </MemoryRouter>,
+    );
+
+    const emailInput = screen.getByLabelText("Email");
+    const passwordInput = screen.getByLabelText("Password");
+    const submitButton = screen.getByRole("button", { name: "Sign In" });
+
+    fireEvent.change(emailInput, { target: { value: "test@example.com" } });
+    fireEvent.change(passwordInput, { target: { value: "password123" } });
+    fireEvent.click(submitButton);
+
+    await waitFor(() => {
+      expect(emailInput).toBeDisabled();
+      expect(passwordInput).toBeDisabled();
+      expect(submitButton).toBeDisabled();
+    });
+  });
+
+  it("should trim email input", async () => {
+    vi.mocked(api.login).mockResolvedValue({
+      user: { id: "user-1", username: "test", email: "test@example.com" },
+      requires2FA: false,
+      session: { id: "session-123" },
+    });
+
+    render(
+      <MemoryRouter>
+        <LoginFormContent />
+      </MemoryRouter>,
+    );
+
+    const emailInput = screen.getByLabelText("Email");
+    const passwordInput = screen.getByLabelText("Password");
+    const submitButton = screen.getByRole("button", { name: "Sign In" });
+
+    fireEvent.change(emailInput, { target: { value: "  test@example.com  " } });
+    fireEvent.change(passwordInput, { target: { value: "password123" } });
+    fireEvent.click(submitButton);
+
+    await waitFor(() => {
+      expect(api.login).toHaveBeenCalledWith({
+        email: "test@example.com",
+        password: "password123",
+      });
+    });
+  });
 });

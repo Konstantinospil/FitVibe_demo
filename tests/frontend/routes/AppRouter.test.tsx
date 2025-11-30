@@ -98,17 +98,32 @@ vi.mock("../../src/lib/queryClient", () => ({
   },
 }));
 
-// Mock AuthContext
+// Mock AuthContext with dynamic mock
+const mockUseAuth = vi.fn(() => ({
+  isAuthenticated: false,
+}));
+
 vi.mock("../../src/contexts/AuthContext", () => ({
   AuthProvider: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-  useAuth: () => ({
-    isAuthenticated: false,
-  }),
+  useAuth: () => mockUseAuth(),
+}));
+
+// Mock ProtectedRoutes
+vi.mock("../../src/routes/ProtectedRoutes", () => ({
+  default: () => <div>Protected Routes</div>,
+}));
+
+// Mock PublicRoutes
+vi.mock("../../src/routes/PublicRoutes", () => ({
+  default: () => <div>Public Routes</div>,
 }));
 
 describe("AppRouter", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockUseAuth.mockReturnValue({
+      isAuthenticated: false,
+    });
   });
 
   it("renders without crashing", () => {
@@ -116,16 +131,46 @@ describe("AppRouter", () => {
     expect(container).toBeInTheDocument();
   });
 
+  it("renders PublicRoutes when user is not authenticated", async () => {
+    mockUseAuth.mockReturnValue({
+      isAuthenticated: false,
+    });
+
+    render(<AppRouter />);
+
+    await waitFor(() => {
+      expect(screen.getByText("Public Routes")).toBeInTheDocument();
+    });
+  });
+
+  it("renders ProtectedRoutes when user is authenticated", async () => {
+    mockUseAuth.mockReturnValue({
+      isAuthenticated: true,
+    });
+
+    render(<AppRouter />);
+
+    await waitFor(() => {
+      expect(screen.getByText("Protected Routes")).toBeInTheDocument();
+    });
+  });
+
+  it("renders with authenticated state", async () => {
+    mockUseAuth.mockReturnValue({
+      isAuthenticated: true,
+    });
+
+    render(<AppRouter />);
+
+    await waitFor(() => {
+      expect(screen.getByText("Protected Routes")).toBeInTheDocument();
+    });
+  });
+
   it("shows loading fallback during lazy load", () => {
     render(<AppRouter />);
     // The loading fallback should appear briefly during component lazy loading
     // Since we're mocking components, this test verifies the structure is set up
-    expect(document.body).toBeInTheDocument();
-  });
-
-  it("wraps app in QueryClientProvider", () => {
-    render(<AppRouter />);
-    // Verify the component structure by checking for presence
     expect(document.body).toBeInTheDocument();
   });
 
@@ -157,17 +202,5 @@ describe("AppRouter", () => {
       },
       { timeout: 100 },
     );
-  });
-
-  it("provides query client to the application", () => {
-    render(<AppRouter />);
-    // QueryClient should be provided via QueryClientProvider
-    expect(document.body).toBeInTheDocument();
-  });
-
-  it("provides auth context to the application", () => {
-    render(<AppRouter />);
-    // AuthProvider should wrap the app
-    expect(document.body).toBeInTheDocument();
   });
 });

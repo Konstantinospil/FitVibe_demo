@@ -481,4 +481,258 @@ describe("Register", () => {
 
     expect(api.register).not.toHaveBeenCalled();
   });
+
+  it("handles error with only error message", async () => {
+    vi.mocked(api.register).mockRejectedValue({
+      response: {
+        data: {
+          error: {
+            message: "Custom error message",
+          },
+        },
+      },
+    });
+
+    renderWithProviders(<Register />);
+
+    const nameInput = screen.getByRole("textbox", { name: /full name/i });
+    const emailInput = screen.getByRole("textbox", { name: /email/i });
+    const passwordInput = screen.getByPlaceholderText(/create a strong password/i);
+    const confirmPasswordInput = screen.getByPlaceholderText(/confirm your password/i);
+    const submitButton = screen.getByRole("button", { name: /create account/i });
+
+    fireEvent.change(nameInput, { target: { value: "John Doe" } });
+    fireEvent.change(emailInput, { target: { value: "john@example.com" } });
+    fireEvent.change(passwordInput, { target: { value: "Password123!" } });
+    fireEvent.change(confirmPasswordInput, { target: { value: "Password123!" } });
+    const termsCheckbox = screen.getByRole("checkbox", { name: /accept the/i });
+    fireEvent.click(termsCheckbox);
+    fireEvent.click(submitButton);
+
+    await waitFor(() => {
+      expect(screen.getByRole("alert")).toHaveTextContent("Custom error message");
+    });
+  });
+
+  it("handles error with translated error code", async () => {
+    testI18n.addResource("en", "translation", "errors.UNKNOWN_ERROR", "An unknown error occurred");
+
+    vi.mocked(api.register).mockRejectedValue({
+      response: {
+        data: {
+          error: {
+            code: "UNKNOWN_ERROR",
+          },
+        },
+      },
+    });
+
+    renderWithProviders(<Register />);
+
+    const nameInput = screen.getByRole("textbox", { name: /full name/i });
+    const emailInput = screen.getByRole("textbox", { name: /email/i });
+    const passwordInput = screen.getByPlaceholderText(/create a strong password/i);
+    const confirmPasswordInput = screen.getByPlaceholderText(/confirm your password/i);
+    const submitButton = screen.getByRole("button", { name: /create account/i });
+
+    fireEvent.change(nameInput, { target: { value: "John Doe" } });
+    fireEvent.change(emailInput, { target: { value: "john@example.com" } });
+    fireEvent.change(passwordInput, { target: { value: "Password123!" } });
+    fireEvent.change(confirmPasswordInput, { target: { value: "Password123!" } });
+    const termsCheckbox = screen.getByRole("checkbox", { name: /accept the/i });
+    fireEvent.click(termsCheckbox);
+    fireEvent.click(submitButton);
+
+    await waitFor(() => {
+      expect(screen.getByRole("alert")).toBeInTheDocument();
+    });
+  });
+
+  it("handles network error without response object", async () => {
+    vi.mocked(api.register).mockRejectedValue(new Error("Network error"));
+
+    renderWithProviders(<Register />);
+
+    const nameInput = screen.getByRole("textbox", { name: /full name/i });
+    const emailInput = screen.getByRole("textbox", { name: /email/i });
+    const passwordInput = screen.getByPlaceholderText(/create a strong password/i);
+    const confirmPasswordInput = screen.getByPlaceholderText(/confirm your password/i);
+    const submitButton = screen.getByRole("button", { name: /create account/i });
+
+    fireEvent.change(nameInput, { target: { value: "John Doe" } });
+    fireEvent.change(emailInput, { target: { value: "john@example.com" } });
+    fireEvent.change(passwordInput, { target: { value: "Password123!" } });
+    fireEvent.change(confirmPasswordInput, { target: { value: "Password123!" } });
+    const termsCheckbox = screen.getByRole("checkbox", { name: /accept the/i });
+    fireEvent.click(termsCheckbox);
+    fireEvent.click(submitButton);
+
+    await waitFor(() => {
+      expect(screen.getByRole("alert")).toBeInTheDocument();
+    });
+  });
+
+  it("handles input focus and blur events", () => {
+    renderWithProviders(<Register />);
+
+    const nameInput = screen.getByRole("textbox", { name: /full name/i });
+    const emailInput = screen.getByRole("textbox", { name: /email/i });
+    const passwordInput = screen.getByPlaceholderText(/create a strong password/i);
+    const confirmPasswordInput = screen.getByPlaceholderText(/confirm your password/i);
+
+    // Test focus events
+    fireEvent.focus(nameInput);
+    expect(nameInput).toHaveStyle({ borderColor: "var(--color-accent, #34d399)" });
+
+    fireEvent.focus(emailInput);
+    expect(emailInput).toHaveStyle({ borderColor: "var(--color-accent, #34d399)" });
+
+    fireEvent.focus(passwordInput);
+    expect(passwordInput).toHaveStyle({ borderColor: "var(--color-accent, #34d399)" });
+
+    fireEvent.focus(confirmPasswordInput);
+    expect(confirmPasswordInput).toHaveStyle({ borderColor: "var(--color-accent, #34d399)" });
+
+    // Test blur events
+    fireEvent.blur(nameInput);
+    expect(nameInput).toHaveStyle({ borderColor: "var(--color-input-border)" });
+
+    fireEvent.blur(emailInput);
+    expect(emailInput).toHaveStyle({ borderColor: "var(--color-input-border)" });
+
+    fireEvent.blur(passwordInput);
+    expect(passwordInput).toHaveStyle({ borderColor: "var(--color-input-border)" });
+
+    fireEvent.blur(confirmPasswordInput);
+    expect(confirmPasswordInput).toHaveStyle({ borderColor: "var(--color-input-border)" });
+  });
+
+  it("handles password toggle hover states", () => {
+    renderWithProviders(<Register />);
+
+    const passwordToggles = screen.getAllByLabelText(/show password/i);
+    const passwordToggle = passwordToggles[0];
+    const confirmPasswordToggle = passwordToggles[1];
+
+    // Test hover events
+    fireEvent.mouseEnter(passwordToggle);
+    expect(passwordToggle).toHaveStyle({ color: "var(--color-text-primary)" });
+
+    fireEvent.mouseLeave(passwordToggle);
+    expect(passwordToggle).toHaveStyle({ color: "var(--color-text-secondary)" });
+
+    fireEvent.mouseEnter(confirmPasswordToggle);
+    expect(confirmPasswordToggle).toHaveStyle({ color: "var(--color-text-primary)" });
+
+    fireEvent.mouseLeave(confirmPasswordToggle);
+    expect(confirmPasswordToggle).toHaveStyle({ color: "var(--color-text-secondary)" });
+  });
+
+  it("shows error styling on terms checkbox when error exists", async () => {
+    renderWithProviders(<Register />);
+
+    const nameInput = screen.getByRole("textbox", { name: /full name/i });
+    const emailInput = screen.getByRole("textbox", { name: /email/i });
+    const passwordInput = screen.getByPlaceholderText(/create a strong password/i);
+    const confirmPasswordInput = screen.getByPlaceholderText(/confirm your password/i);
+    const submitButton = screen.getByRole("button", { name: /create account/i });
+
+    fireEvent.change(nameInput, { target: { value: "John Doe" } });
+    fireEvent.change(emailInput, { target: { value: "john@example.com" } });
+    fireEvent.change(passwordInput, { target: { value: "Password123!" } });
+    fireEvent.change(confirmPasswordInput, { target: { value: "Password123!" } });
+    // Don't check terms checkbox
+    fireEvent.click(submitButton);
+
+    await waitFor(() => {
+      const termsCheckbox = screen.getByRole("checkbox", { name: /accept the/i });
+      const termsLabel = termsCheckbox.closest("label");
+      expect(termsLabel).toHaveStyle({
+        border: expect.stringContaining("rgba(248, 113, 113, 0.5)"),
+      });
+    });
+  });
+
+  it("trims whitespace from name and email inputs", async () => {
+    vi.mocked(api.register).mockResolvedValue({
+      user: { id: "123", username: "john", email: "john@example.com" },
+      session: { id: "session123" },
+    });
+
+    renderWithProviders(<Register />);
+
+    const nameInput = screen.getByRole("textbox", { name: /full name/i });
+    const emailInput = screen.getByRole("textbox", { name: /email/i });
+    const passwordInput = screen.getByPlaceholderText(/create a strong password/i);
+    const confirmPasswordInput = screen.getByPlaceholderText(/confirm your password/i);
+    const submitButton = screen.getByRole("button", { name: /create account/i });
+
+    fireEvent.change(nameInput, { target: { value: "  John Doe  " } });
+    fireEvent.change(emailInput, { target: { value: "  john@example.com  " } });
+    fireEvent.change(passwordInput, { target: { value: "Password123!" } });
+    fireEvent.change(confirmPasswordInput, { target: { value: "Password123!" } });
+    const termsCheckbox = screen.getByRole("checkbox", { name: /accept the/i });
+    fireEvent.click(termsCheckbox);
+    fireEvent.click(submitButton);
+
+    await waitFor(() => {
+      expect(api.register).toHaveBeenCalledWith({
+        email: "john@example.com",
+        password: "Password123!",
+        username: "john",
+        terms_accepted: true,
+        profile: {
+          display_name: "John Doe",
+        },
+      });
+    });
+  });
+
+  it("handles empty name validation", async () => {
+    renderWithProviders(<Register />);
+
+    const nameInput = screen.getByRole("textbox", { name: /full name/i });
+    const emailInput = screen.getByRole("textbox", { name: /email/i });
+    const passwordInput = screen.getByPlaceholderText(/create a strong password/i);
+    const confirmPasswordInput = screen.getByPlaceholderText(/confirm your password/i);
+    const submitButton = screen.getByRole("button", { name: /create account/i });
+
+    fireEvent.change(nameInput, { target: { value: "   " } }); // Only whitespace
+    fireEvent.change(emailInput, { target: { value: "john@example.com" } });
+    fireEvent.change(passwordInput, { target: { value: "Password123!" } });
+    fireEvent.change(confirmPasswordInput, { target: { value: "Password123!" } });
+    const termsCheckbox = screen.getByRole("checkbox", { name: /accept the/i });
+    fireEvent.click(termsCheckbox);
+    fireEvent.click(submitButton);
+
+    await waitFor(() => {
+      expect(screen.getByRole("alert")).toBeInTheDocument();
+    });
+
+    expect(api.register).not.toHaveBeenCalled();
+  });
+
+  it("handles empty email validation", async () => {
+    renderWithProviders(<Register />);
+
+    const nameInput = screen.getByRole("textbox", { name: /full name/i });
+    const emailInput = screen.getByRole("textbox", { name: /email/i });
+    const passwordInput = screen.getByPlaceholderText(/create a strong password/i);
+    const confirmPasswordInput = screen.getByPlaceholderText(/confirm your password/i);
+    const submitButton = screen.getByRole("button", { name: /create account/i });
+
+    fireEvent.change(nameInput, { target: { value: "John Doe" } });
+    fireEvent.change(emailInput, { target: { value: "   " } }); // Only whitespace
+    fireEvent.change(passwordInput, { target: { value: "Password123!" } });
+    fireEvent.change(confirmPasswordInput, { target: { value: "Password123!" } });
+    const termsCheckbox = screen.getByRole("checkbox", { name: /accept the/i });
+    fireEvent.click(termsCheckbox);
+    fireEvent.click(submitButton);
+
+    await waitFor(() => {
+      expect(screen.getByRole("alert")).toBeInTheDocument();
+    });
+
+    expect(api.register).not.toHaveBeenCalled();
+  });
 });
