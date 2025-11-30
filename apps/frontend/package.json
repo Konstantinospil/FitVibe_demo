@@ -8,7 +8,7 @@
     "preview": "vite preview",
     "lint": "eslint \"src\" --max-warnings=0",
     "lint:check": "turbo run lint -- --max-warnings=0",
-    "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.test.json",
+    "typecheck": "tsc --noEmit && (if [ -d tests ] && [ -n \"$(find tests -name '*.ts' -o -name '*.tsx' 2>/dev/null | head -1)\" ]; then tsc --noEmit -p tsconfig.test.json; fi)",
     "test": "node ./scripts/run-vitest.mjs",
     "test:watch": "vitest"
   },
