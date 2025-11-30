@@ -412,7 +412,7 @@ export async function updateProfile(userId: string, dto: UpdateProfileDTO): Prom
     const normalizedAlias = dto.alias.trim();
     const profile = await getProfileByUserId(userId);
     const currentAlias = profile?.alias ?? null;
-    
+
     if (normalizedAlias !== currentAlias) {
       // Check alias availability (case-insensitive)
       const isAvailable = await checkAliasAvailable(normalizedAlias, userId);
@@ -437,30 +437,30 @@ export async function updateProfile(userId: string, dto: UpdateProfileDTO): Prom
       // Convert lb to kg
       weightInKg = dto.weight * 0.453592;
     }
-    metricUpdates.weight = weightInKg;
-    metricUpdates.unit = dto.weightUnit ?? "kg";
-    
+
     const latestMetrics = await getLatestUserMetrics(userId);
     const currentWeight = latestMetrics?.weight ?? null;
     if (weightInKg !== currentWeight) {
+      metricUpdates.weight = weightInKg;
+      metricUpdates.unit = dto.weightUnit ?? "kg";
       changes.weight = { old: currentWeight, next: weightInKg };
     }
   }
 
   if (dto.fitnessLevel !== undefined) {
-    metricUpdates.fitness_level_code = dto.fitnessLevel;
     const latestMetrics = await getLatestUserMetrics(userId);
     const currentFitnessLevel = latestMetrics?.fitness_level_code ?? null;
     if (dto.fitnessLevel !== currentFitnessLevel) {
+      metricUpdates.fitness_level_code = dto.fitnessLevel;
       changes.fitness_level = { old: currentFitnessLevel, next: dto.fitnessLevel };
     }
   }
 
   if (dto.trainingFrequency !== undefined) {
-    metricUpdates.training_frequency = dto.trainingFrequency;
     const latestMetrics = await getLatestUserMetrics(userId);
     const currentTrainingFrequency = latestMetrics?.training_frequency ?? null;
     if (dto.trainingFrequency !== currentTrainingFrequency) {
+      metricUpdates.training_frequency = dto.trainingFrequency;
       changes.training_frequency = { old: currentTrainingFrequency, next: dto.trainingFrequency };
     }
   }
@@ -839,15 +839,16 @@ export async function collectUserData(userId: string): Promise<UserDataExportBun
     .orderBy("recorded_at", "asc");
 
   // Parallelize independent queries for better performance
-  const [sessions, plans, exercises, pointsHistory, badges, followers, following] = await Promise.all([
-    db<SessionRow>("sessions").where({ owner_id: userId }),
-    db<GenericRow>("plans").where({ user_id: userId }),
-    db<GenericRow>("exercises").where({ owner_id: userId }),
-    db<UserPointRow>("user_points").where({ user_id: userId }).orderBy("awarded_at", "asc"),
-    db<BadgeRow>("badges").where({ user_id: userId }).orderBy("awarded_at", "asc"),
-    db<GenericRow>("followers").where({ following_id: userId }).orderBy("created_at", "asc"),
-    db<GenericRow>("followers").where({ follower_id: userId }).orderBy("created_at", "asc"),
-  ]);
+  const [sessions, plans, exercises, pointsHistory, badges, followers, following] =
+    await Promise.all([
+      db<SessionRow>("sessions").where({ owner_id: userId }),
+      db<GenericRow>("plans").where({ user_id: userId }),
+      db<GenericRow>("exercises").where({ owner_id: userId }),
+      db<UserPointRow>("user_points").where({ user_id: userId }).orderBy("awarded_at", "asc"),
+      db<BadgeRow>("badges").where({ user_id: userId }).orderBy("awarded_at", "asc"),
+      db<GenericRow>("followers").where({ following_id: userId }).orderBy("created_at", "asc"),
+      db<GenericRow>("followers").where({ follower_id: userId }).orderBy("created_at", "asc"),
+    ]);
 
   const sessionIds = sessions.map((session) => session.id);
   const totalPoints = pointsHistory.reduce((sum, record) => sum + Number(record.points ?? 0), 0);

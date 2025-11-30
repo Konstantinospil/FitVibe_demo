@@ -1,25 +1,29 @@
 import bcrypt from "bcryptjs";
-import { db } from "../../../db/connection.js";
-import * as usersService from "../users.service.js";
-import * as usersRepository from "../users.repository.js";
-import * as authRepository from "../../auth/auth.repository.js";
-import * as dsrService from "../dsr.service.js";
-import * as auditUtil from "../../common/audit.util.js";
-import { HttpError } from "../../../utils/http.js";
+import { db } from "../../../../apps/backend/src/db/connection.js";
+import * as usersService from "../../../../apps/backend/src/modules/users/users.service.js";
+import * as usersRepository from "../../../../apps/backend/src/modules/users/users.repository.js";
+import * as authRepository from "../../../../apps/backend/src/modules/auth/auth.repository.js";
+import * as dsrService from "../../../../apps/backend/src/modules/users/dsr.service.js";
+import * as auditUtil from "../../../../apps/backend/src/modules/common/audit.util.js";
+import { HttpError } from "../../../../apps/backend/src/utils/http.js";
 import type {
   CreateUserDTO,
   UpdateProfileDTO,
   ChangePasswordDTO,
   UserStatus,
-} from "../users.types.js";
-import type { UserRow, ContactRow, AvatarRow } from "../users.repository.js";
-import type { DeleteSchedule } from "../dsr.service.js";
+} from "../../../../apps/backend/src/modules/users/users.types.js";
+import type {
+  UserRow,
+  ContactRow,
+  AvatarRow,
+} from "../../../../apps/backend/src/modules/users/users.repository.js";
+import type { DeleteSchedule } from "../../../../apps/backend/src/modules/users/dsr.service.js";
 
 // Mock dependencies
-jest.mock("../users.repository.js");
-jest.mock("../../auth/auth.repository.js");
-jest.mock("../dsr.service.js");
-jest.mock("../../common/audit.util.js");
+jest.mock("../../../../apps/backend/src/modules/users/users.repository.js");
+jest.mock("../../../../apps/backend/src/modules/auth/auth.repository.js");
+jest.mock("../../../../apps/backend/src/modules/users/dsr.service.js");
+jest.mock("../../../../apps/backend/src/modules/common/audit.util.js");
 jest.mock("bcryptjs");
 
 const mockUsersRepo = jest.mocked(usersRepository);
@@ -29,7 +33,7 @@ const mockAuditUtil = jest.mocked(auditUtil);
 const mockBcrypt = jest.mocked(bcrypt);
 
 // Mock db - needs to be both a function and have methods like transaction
-jest.mock("../../../db/connection.js", () => {
+jest.mock("../../../../apps/backend/src/db/connection.js", () => {
   const createQueryBuilder = (defaultValue: unknown[] = []) => {
     const builder = Object.assign(Promise.resolve(defaultValue), {
       whereRaw: jest.fn().mockReturnThis(),
