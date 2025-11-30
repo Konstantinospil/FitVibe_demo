@@ -2,10 +2,16 @@ import i18n from "i18next";
 import { initReactI18next } from "react-i18next";
 import enAuth from "./locales/en/auth.json";
 import deAuth from "./locales/de/auth.json";
+import frAuth from "./locales/fr/auth.json";
+import esAuth from "./locales/es/auth.json";
+import elAuth from "./locales/el/auth.json";
 import enCommon from "./locales/en/common.json";
 import deCommon from "./locales/de/common.json";
+import frCommon from "./locales/fr/common.json";
+import esCommon from "./locales/es/common.json";
+import elCommon from "./locales/el/common.json";
 
-type SupportedLanguage = "en" | "de";
+type SupportedLanguage = "en" | "de" | "fr" | "es" | "el";
 
 const mergeTranslations = <T extends Record<string, unknown>, U extends Record<string, unknown>>(
   base: T,
@@ -15,6 +21,9 @@ const mergeTranslations = <T extends Record<string, unknown>, U extends Record<s
 const resources = {
   en: { translation: mergeTranslations(enCommon, enAuth) },
   de: { translation: mergeTranslations(deCommon, deAuth) },
+  fr: { translation: mergeTranslations(frCommon, frAuth) },
+  es: { translation: mergeTranslations(esCommon, esAuth) },
+  el: { translation: mergeTranslations(elCommon, elAuth) },
 } as const;
 
 const FALLBACK_LANGUAGE: SupportedLanguage = "en";

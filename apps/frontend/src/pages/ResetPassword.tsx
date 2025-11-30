@@ -105,13 +105,15 @@ const ResetPassword: React.FC = () => {
             color: "var(--color-text-secondary)",
           }}
         >
-          <div style={{ fontWeight: 600, marginBottom: "0.5rem" }}>Password Requirements:</div>
+          <div style={{ fontWeight: 600, marginBottom: "0.5rem" }}>
+            {t("resetPassword.passwordRequirements.title")}
+          </div>
           <ul style={{ margin: 0, paddingLeft: "1.5rem", display: "grid", gap: "0.25rem" }}>
-            <li>At least 12 characters</li>
-            <li>At least one uppercase letter (A-Z)</li>
-            <li>At least one lowercase letter (a-z)</li>
-            <li>At least one digit (0-9)</li>
-            <li>At least one special character (!@#$%^&*...)</li>
+            <li>{t("resetPassword.passwordRequirements.minLength")}</li>
+            <li>{t("resetPassword.passwordRequirements.uppercase")}</li>
+            <li>{t("resetPassword.passwordRequirements.lowercase")}</li>
+            <li>{t("resetPassword.passwordRequirements.digit")}</li>
+            <li>{t("resetPassword.passwordRequirements.special")}</li>
           </ul>
         </div>
         <label style={{ display: "grid", gap: "0.35rem" }}>
@@ -205,7 +207,7 @@ const ResetPassword: React.FC = () => {
             role="alert"
             style={{
               background: "rgba(248, 113, 113, 0.16)",
-              color: "#FFFFFF",
+              color: "var(--color-text-primary)",
               borderRadius: "12px",
               padding: "0.75rem 1rem",
               fontSize: "0.95rem",

@@ -327,7 +327,15 @@
     "successText": "You can now log in with your new password.",
     "passwordMismatch": "Passwords do not match",
     "invalidToken": "Invalid reset token. Please request a new one.",
-    "errorReset": "Failed to reset password"
+    "errorReset": "Failed to reset password",
+    "passwordRequirements": {
+      "title": "Password Requirements:",
+      "minLength": "At least 12 characters",
+      "uppercase": "At least one uppercase letter (A-Z)",
+      "lowercase": "At least one lowercase letter (a-z)",
+      "digit": "At least one digit (0-9)",
+      "special": "At least one special character (!@#$%^&*...)"
+    }
   },
   "logger": {
     "eyebrow": "Logbook",

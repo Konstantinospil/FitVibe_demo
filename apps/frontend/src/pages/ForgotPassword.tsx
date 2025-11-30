@@ -106,7 +106,7 @@ const ForgotPassword: React.FC = () => {
             role="alert"
             style={{
               background: "rgba(248, 113, 113, 0.16)",
-              color: "#FFFFFF",
+              color: "var(--color-text-primary)",
               borderRadius: "12px",
               padding: "0.75rem 1rem",
               fontSize: "0.95rem",
@@ -123,7 +123,7 @@ const ForgotPassword: React.FC = () => {
           style={{
             display: "block",
             textAlign: "center",
-            color: "#FFFFFF",
+            color: "var(--color-text-secondary)",
             fontSize: "0.9rem",
           }}
         >

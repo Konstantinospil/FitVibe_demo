@@ -144,10 +144,6 @@ describe("VerifyEmail", () => {
   });
 
   it("handles button clicks for navigation", async () => {
-    const { useNavigate } = await import("react-router-dom");
-    const mockNavigate = vi.fn();
-    vi.mocked(useNavigate as any).mockReturnValue(mockNavigate);
-
     vi.mocked(rawHttpClient.get).mockResolvedValue({ data: { success: true } });
 
     renderWithProviders();

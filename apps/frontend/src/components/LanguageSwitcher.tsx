@@ -8,7 +8,7 @@ import { ChevronDown } from "lucide-react";
  * - Falls back to inline SVGs when the platform/font cannot render emoji flags (Windows w/o color emoji fonts, some Linux distros).
  */
 
-type LangCode = "en" | "de";
+type LangCode = "en" | "de" | "fr" | "es" | "el";
 
 type LanguageOption = {
   code: LangCode;
@@ -56,10 +56,60 @@ const DeFlag: React.FC<{ size?: number; style?: React.CSSProperties }> = ({ size
   </svg>
 );
 
+const FrFlag: React.FC<{ size?: number; style?: React.CSSProperties }> = ({ size = 20, style }) => (
+  <svg
+    width={size}
+    height={(size * 3) / 5}
+    viewBox="0 0 3 2"
+    xmlns="http://www.w3.org/2000/svg"
+    aria-hidden="true"
+    style={{ display: "inline-block", verticalAlign: "-0.2em", borderRadius: 2, ...style }}
+  >
+    <rect width="1" height="2" fill="#002654" />
+    <rect width="1" height="2" x="1" fill="#FFFFFF" />
+    <rect width="1" height="2" x="2" fill="#ED2939" />
+  </svg>
+);
+
+const EsFlag: React.FC<{ size?: number; style?: React.CSSProperties }> = ({ size = 20, style }) => (
+  <svg
+    width={size}
+    height={(size * 3) / 5}
+    viewBox="0 0 3 2"
+    xmlns="http://www.w3.org/2000/svg"
+    aria-hidden="true"
+    style={{ display: "inline-block", verticalAlign: "-0.2em", borderRadius: 2, ...style }}
+  >
+    <rect width="3" height="0.5" fill="#AA151B" />
+    <rect width="3" height="1" y="0.5" fill="#F1BF00" />
+    <rect width="3" height="0.5" y="1.5" fill="#AA151B" />
+  </svg>
+);
+
+const ElFlag: React.FC<{ size?: number; style?: React.CSSProperties }> = ({ size = 20, style }) => (
+  <svg
+    width={size}
+    height={(size * 3) / 5}
+    viewBox="0 0 3 2"
+    xmlns="http://www.w3.org/2000/svg"
+    aria-hidden="true"
+    style={{ display: "inline-block", verticalAlign: "-0.2em", borderRadius: 2, ...style }}
+  >
+    <rect width="3" height="2" fill="#0D5EAF" />
+    <rect width="3" height="0.2857" fill="#FFFFFF" />
+    <rect width="3" height="0.2857" y="0.5714" fill="#FFFFFF" />
+    <rect width="3" height="0.2857" y="1.1429" fill="#FFFFFF" />
+    <rect width="3" height="0.2857" y="1.7143" fill="#FFFFFF" />
+  </svg>
+);
+
 // --- Language list ---
 const LANGUAGES: LanguageOption[] = [
   { code: "en", labelKey: "language.english", emoji: "\uD83C\uDDEC\uD83C\uDDE7", Svg: GbFlag },
   { code: "de", labelKey: "language.german", emoji: "\uD83C\uDDE9\uD83C\uDDEA", Svg: DeFlag },
+  { code: "fr", labelKey: "language.french", emoji: "\uD83C\uDDEB\uD83C\uDDF7", Svg: FrFlag },
+  { code: "es", labelKey: "language.spanish", emoji: "\uD83C\uDDEA\uD83C\uDDF8", Svg: EsFlag },
+  { code: "el", labelKey: "language.greek", emoji: "\uD83C\uDDEC\uD83C\uDDF7", Svg: ElFlag },
 ];
 
 // --- Emoji-support detection (fast heuristic) ---
@@ -170,7 +220,12 @@ const LanguageSwitcher: React.FC = () => {
   const dropdownRef = useRef<HTMLDivElement>(null);
   const activeLanguage = (i18n.language?.slice(0, 2) || "en") as LangCode;
 
-  const currentLanguage = LANGUAGES.find((lang) => lang.code === activeLanguage) ?? LANGUAGES[0];
+  // Fallback to 'en' if language is not in LANGUAGES
+  const validLanguage: LangCode = LANGUAGES.find((lang) => lang.code === activeLanguage)
+    ? activeLanguage
+    : "en";
+
+  const currentLanguage = LANGUAGES.find((lang) => lang.code === validLanguage) ?? LANGUAGES[0];
 
   const handleLanguageChange = (code: LangCode) => {
     void i18n.changeLanguage(code);
@@ -218,21 +273,21 @@ const LanguageSwitcher: React.FC = () => {
               style={{
                 ...optionStyle,
                 background:
-                  option.code === activeLanguage ? "var(--color-surface-muted)" : "transparent",
-                fontWeight: option.code === activeLanguage ? 600 : 400,
+                  option.code === validLanguage ? "var(--color-surface-muted)" : "transparent",
+                fontWeight: option.code === validLanguage ? 600 : 400,
               }}
               onMouseEnter={(e) => {
-                if (option.code !== activeLanguage) {
+                if (option.code !== validLanguage) {
                   e.currentTarget.style.background = "var(--color-surface-muted)";
                 }
               }}
               onMouseLeave={(e) => {
-                if (option.code !== activeLanguage) {
+                if (option.code !== validLanguage) {
                   e.currentTarget.style.background = "transparent";
                 }
               }}
               role="menuitemradio"
-              aria-checked={option.code === activeLanguage}
+              aria-checked={option.code === validLanguage}
             >
               <FlagIcon option={option} size={20} />
               <span>{t(option.labelKey)}</span>

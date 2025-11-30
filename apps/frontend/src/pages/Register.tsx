@@ -5,18 +5,15 @@ import { register as registerAccount } from "../services/api";
 import { Button } from "../components/ui";
 import { useTranslation } from "react-i18next";
 import { Eye, EyeOff } from "lucide-react";
-import { logger } from "../utils/logger.js";
 
 const inputStyle: React.CSSProperties = {
   width: "100%",
   borderRadius: "12px",
-  border: "1px solid var(--color-input-border)",
-  background: "var(--color-input-bg)",
+  border: "1px solid var(--color-border)",
+  background: "var(--color-surface-glass)",
   color: "var(--color-text-primary)",
   padding: "0.85rem 1rem",
   fontSize: "1rem",
-  fontFamily: "var(--font-family-base, 'Inter', sans-serif)",
-  transition: "border-color 150ms ease, background-color 150ms ease",
 };
 
 const Register: React.FC = () => {
@@ -30,60 +27,51 @@ const Register: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
-  const [acceptedTerms, setAcceptedTerms] = useState(false);
+  const [termsAccepted, setTermsAccepted] = useState(false);
+  const [privacyAccepted, setPrivacyAccepted] = useState(false);
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setError(null);
 
-    // Validate inputs
+    // Validate required fields
     if (!name.trim() || !email.trim() || !password || !confirmPassword) {
-      setError(t("auth.register.fillAllFields") || "Please fill in all fields");
+      setError(t("auth.register.fillAllFields"));
       return;
     }
 
-    // Check if terms are accepted
-    if (!acceptedTerms) {
-      setError(
-        t("auth.register.termsRequired") ||
-          "You must accept the terms and conditions to create an account",
-      );
+    // Check if terms and privacy are accepted
+    if (!termsAccepted || !privacyAccepted) {
+      setError(t("auth.register.termsRequired"));
       return;
     }
 
     // Check if passwords match
     if (password !== confirmPassword) {
-      setError(t("auth.register.passwordsDoNotMatch") || "Passwords do not match");
+      setError(t("auth.register.passwordMismatch"));
       return;
     }
 
-    // Validate password strength (matches backend requirements)
+    // Validate password strength
+    const passwordErrors: string[] = [];
     if (password.length < 12) {
-      setError(
-        t("auth.register.passwordMinLength") || "Password must be at least 12 characters long",
-      );
-      return;
+      passwordErrors.push(t("validation.passwordMinLength"));
     }
-    if (!/(?=.*[a-z])/.test(password)) {
-      setError(
-        t("auth.register.passwordLowercase") ||
-          "Password must contain at least one lowercase letter",
-      );
-      return;
+    if (!/[a-z]/.test(password)) {
+      passwordErrors.push(t("validation.passwordLowercase"));
     }
-    if (!/(?=.*[A-Z])/.test(password)) {
-      setError(
-        t("auth.register.passwordUppercase") ||
-          "Password must contain at least one uppercase letter",
-      );
-      return;
+    if (!/[A-Z]/.test(password)) {
+      passwordErrors.push(t("validation.passwordUppercase"));
     }
-    if (!/(?=.*\d)/.test(password)) {
-      setError(t("auth.register.passwordDigit") || "Password must contain at least one digit");
-      return;
+    if (!/\d/.test(password)) {
+      passwordErrors.push(t("validation.passwordDigit"));
     }
-    if (!/(?=.*[^\w\s])/.test(password)) {
-      setError(t("auth.register.passwordSymbol") || "Password must contain at least one symbol");
+    if (!/[^\w\s]/.test(password)) {
+      passwordErrors.push(t("validation.passwordSymbol"));
+    }
+
+    if (passwordErrors.length > 0) {
+      setError(t("errors.WEAK_PASSWORD") + ": " + passwordErrors.join(", "));
       return;
     }
 
@@ -94,46 +82,27 @@ const Register: React.FC = () => {
       const username = email.split("@")[0].replace(/[^a-zA-Z0-9_.-]/g, "_");
 
       await registerAccount({
-        email: email.trim(),
+        email,
         password,
         username,
-        terms_accepted: acceptedTerms,
+        terms_accepted: termsAccepted && privacyAccepted,
         profile: {
-          display_name: name.trim(),
+          display_name: name,
         },
       });
 
       // Registration successful - show success message
       setSuccess(true);
     } catch (err: unknown) {
-      logger.error("Registration error", err instanceof Error ? err : new Error(String(err)), {
-        context: "register",
-      });
-
       // Show more specific error if available
       if (err && typeof err === "object" && "response" in err) {
         const axiosError = err as {
           response?: { data?: { error?: { code?: string; message?: string } } };
         };
         const errorCode = axiosError.response?.data?.error?.code;
-        const errorMessage = axiosError.response?.data?.error?.message;
-
-        if (errorMessage) {
-          setError(errorMessage);
-        } else if (errorCode) {
-          const translatedError = t(`errors.${errorCode}`);
-          setError(
-            translatedError !== `errors.${errorCode}` ? translatedError : t("auth.register.error"),
-          );
-        } else {
-          setError(t("auth.register.error") || "Registration failed. Please try again.");
-        }
+        setError(errorCode ? t(`errors.${errorCode}`) : t("auth.register.error"));
       } else {
-        // Network error or other issues
-        setError(
-          t("auth.register.error") ||
-            "Unable to connect to server. Please check if the backend is running.",
-        );
+        setError(t("auth.register.error"));
       }
     } finally {
       setIsSubmitting(false);
@@ -202,7 +171,7 @@ const Register: React.FC = () => {
       description={t("auth.register.description")}
     >
       {/* eslint-disable-next-line @typescript-eslint/no-misused-promises */}
-      <form onSubmit={handleSubmit} noValidate style={{ display: "grid", gap: "1rem" }}>
+      <form onSubmit={handleSubmit} style={{ display: "grid", gap: "1rem" }}>
         <label style={{ display: "grid", gap: "0.35rem" }}>
           <span style={{ fontSize: "0.95rem", color: "var(--color-text-secondary)" }}>
             {t("auth.register.nameLabel")}
@@ -217,14 +186,6 @@ const Register: React.FC = () => {
             onChange={(event) => setName(event.target.value)}
             autoComplete="name"
             disabled={isSubmitting}
-            onFocus={(e) => {
-              e.currentTarget.style.borderColor = "var(--color-accent, #34d399)";
-              e.currentTarget.style.boxShadow = "0 0 0 2px rgba(52, 211, 153, 0.2)";
-            }}
-            onBlur={(e) => {
-              e.currentTarget.style.borderColor = "var(--color-input-border)";
-              e.currentTarget.style.boxShadow = "none";
-            }}
           />
         </label>
         <label style={{ display: "grid", gap: "0.35rem" }}>
@@ -241,14 +202,6 @@ const Register: React.FC = () => {
             onChange={(event) => setEmail(event.target.value)}
             autoComplete="email"
             disabled={isSubmitting}
-            onFocus={(e) => {
-              e.currentTarget.style.borderColor = "var(--color-accent, #34d399)";
-              e.currentTarget.style.boxShadow = "0 0 0 2px rgba(52, 211, 153, 0.2)";
-            }}
-            onBlur={(e) => {
-              e.currentTarget.style.borderColor = "var(--color-input-border)";
-              e.currentTarget.style.boxShadow = "none";
-            }}
           />
         </label>
         <label style={{ display: "grid", gap: "0.35rem" }}>
@@ -266,14 +219,6 @@ const Register: React.FC = () => {
               onChange={(event) => setPassword(event.target.value)}
               autoComplete="new-password"
               disabled={isSubmitting}
-              onFocus={(e) => {
-                e.currentTarget.style.borderColor = "var(--color-accent, #34d399)";
-                e.currentTarget.style.boxShadow = "0 0 0 2px rgba(52, 211, 153, 0.2)";
-              }}
-              onBlur={(e) => {
-                e.currentTarget.style.borderColor = "var(--color-input-border)";
-                e.currentTarget.style.boxShadow = "none";
-              }}
             />
             <button
               type="button"
@@ -321,14 +266,6 @@ const Register: React.FC = () => {
               onChange={(event) => setConfirmPassword(event.target.value)}
               autoComplete="new-password"
               disabled={isSubmitting}
-              onFocus={(e) => {
-                e.currentTarget.style.borderColor = "var(--color-accent, #34d399)";
-                e.currentTarget.style.boxShadow = "0 0 0 2px rgba(52, 211, 153, 0.2)";
-              }}
-              onBlur={(e) => {
-                e.currentTarget.style.borderColor = "var(--color-input-border)";
-                e.currentTarget.style.boxShadow = "none";
-              }}
             />
             <button
               type="button"
@@ -361,75 +298,86 @@ const Register: React.FC = () => {
             </button>
           </div>
         </label>
-        <label
-          style={{
-            display: "flex",
-            alignItems: "flex-start",
-            gap: "0.75rem",
-            cursor: "pointer",
-            padding: "0.75rem",
-            borderRadius: "8px",
-            background: "var(--color-surface-glass)",
-            border:
-              error && !acceptedTerms
-                ? "1px solid rgba(248, 113, 113, 0.5)"
-                : "1px solid var(--color-input-border)",
-            transition: "border-color 150ms ease",
-          }}
-        >
-          <input
-            type="checkbox"
-            checked={acceptedTerms}
-            onChange={(e) => setAcceptedTerms(e.target.checked)}
-            required
-            disabled={isSubmitting}
+        <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+          <label
             style={{
-              marginTop: "0.2rem",
+              display: "flex",
+              alignItems: "flex-start",
+              gap: "0.5rem",
               cursor: "pointer",
-              width: "18px",
-              height: "18px",
-              accentColor: "var(--color-accent)",
+              fontSize: "0.9rem",
+              color: "var(--color-text-secondary)",
             }}
-            aria-required="true"
-            aria-invalid={error && !acceptedTerms ? "true" : "false"}
-          />
-          <span
-            style={{ fontSize: "0.9rem", color: "var(--color-text-secondary)", lineHeight: 1.5 }}
           >
-            {t("auth.register.acceptTerms")}{" "}
-            <NavLink
-              to="/terms"
-              target="_blank"
-              rel="noopener noreferrer"
+            <input
+              type="checkbox"
+              checked={termsAccepted}
+              onChange={(e) => setTermsAccepted(e.target.checked)}
+              disabled={isSubmitting}
               style={{
-                color: "var(--color-accent)",
-                textDecoration: "underline",
+                marginTop: "0.2rem",
+                cursor: isSubmitting ? "not-allowed" : "pointer",
               }}
-              onClick={(e) => e.stopPropagation()}
-            >
-              {t("auth.register.termsLink")}
-            </NavLink>{" "}
-            {t("auth.register.and")}{" "}
-            <NavLink
-              to="/privacy"
-              target="_blank"
-              rel="noopener noreferrer"
+            />
+            <span>
+              {t("auth.register.acceptTerms")}{" "}
+              <NavLink
+                to="/terms"
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  color: "var(--color-accent)",
+                  textDecoration: "none",
+                }}
+                onClick={(e) => e.stopPropagation()}
+              >
+                {t("auth.register.termsLink")}
+              </NavLink>
+            </span>
+          </label>
+          <label
+            style={{
+              display: "flex",
+              alignItems: "flex-start",
+              gap: "0.5rem",
+              cursor: "pointer",
+              fontSize: "0.9rem",
+              color: "var(--color-text-secondary)",
+            }}
+          >
+            <input
+              type="checkbox"
+              checked={privacyAccepted}
+              onChange={(e) => setPrivacyAccepted(e.target.checked)}
+              disabled={isSubmitting}
               style={{
-                color: "var(--color-accent)",
-                textDecoration: "underline",
+                marginTop: "0.2rem",
+                cursor: isSubmitting ? "not-allowed" : "pointer",
               }}
-              onClick={(e) => e.stopPropagation()}
-            >
-              {t("auth.register.privacyLink")}
-            </NavLink>
-          </span>
-        </label>
+            />
+            <span>
+              {t("auth.register.acceptTerms")}{" "}
+              <NavLink
+                to="/privacy"
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  color: "var(--color-accent)",
+                  textDecoration: "none",
+                }}
+                onClick={(e) => e.stopPropagation()}
+              >
+                {t("auth.register.privacyLink")}
+              </NavLink>
+            </span>
+          </label>
+        </div>
         {error ? (
           <div
             role="alert"
             style={{
               background: "rgba(248, 113, 113, 0.16)",
-              color: "#FFFFFF",
+              color: "var(--color-text-primary)",
               borderRadius: "12px",
               padding: "0.75rem 1rem",
               fontSize: "0.95rem",
@@ -450,26 +398,7 @@ const Register: React.FC = () => {
           }}
         >
           {t("auth.register.loginPrompt")}{" "}
-          <NavLink
-            to="/login"
-            style={{
-              color: "var(--color-link-form)",
-              textDecoration: "underline",
-              transition: "color 150ms ease",
-              padding: "0.75rem 0.5rem",
-              minHeight: "24px",
-              minWidth: "24px",
-              display: "inline-flex",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.color = "var(--color-link-form-hover)";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.color = "var(--color-link-form)";
-            }}
-          >
+          <NavLink to="/login" style={{ color: "var(--color-text-secondary)" }}>
             {t("auth.register.loginLink")}
           </NavLink>
         </p>

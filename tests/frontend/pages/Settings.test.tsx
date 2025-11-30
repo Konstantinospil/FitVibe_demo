@@ -5,6 +5,9 @@ import Settings from "../../src/pages/Settings";
 import { useAuthStore } from "../../src/store/auth.store";
 import { apiClient, setup2FA, verify2FA, disable2FA, get2FAStatus } from "../../src/services/api";
 import { ToastProvider } from "../../src/contexts/ToastContext";
+import { I18nextProvider } from "react-i18next";
+import i18n from "i18next";
+import { initReactI18next } from "react-i18next";
 
 // Mock auth store
 vi.mock("../../src/store/auth.store", () => ({
@@ -52,14 +55,64 @@ const mockUserData = {
 
 const mockSignOut = vi.fn();
 
+// Initialize i18n for tests
+const testI18n = i18n.createInstance();
+void testI18n.use(initReactI18next).init({
+  lng: "en",
+  fallbackLng: "en",
+  resources: {
+    en: {
+      translation: {
+        "settings.title": "Settings",
+        "settings.description": "Your preferences and account settings",
+        "settings.profile.title": "Profile Settings",
+        "settings.profile.description": "Update your display name and basic information",
+        "settings.profile.displayName": "Display Name",
+        "settings.profile.displayNamePlaceholder": "Your display name",
+        "settings.profile.alias": "Alias",
+        "settings.profile.aliasPlaceholder": "Your public alias",
+        "settings.profile.aliasHelp":
+          "Alias may only contain letters, numbers, underscores, dots, or dashes",
+        "settings.profile.email": "Email",
+        "settings.profile.weight": "Weight",
+        "settings.profile.weightUnit": "Weight Unit",
+        "settings.preferences.title": "Preferences",
+        "settings.preferences.description":
+          "Set your default session visibility, units, and language",
+        "settings.preferences.saveButton": "Save Preferences",
+        "settings.preferences.saveSuccess": "Preferences saved successfully!",
+        "settings.preferences.saveError": "Failed to save preferences. Please try again.",
+        "settings.security.title": "Two-Factor Authentication (2FA)",
+        "settings.security.enable2FA": "Enable 2FA",
+        "settings.security.disable2FA": "Disable 2FA",
+        "settings.security.verifyAndEnable": "Verify and Enable",
+        "settings.security.2FAEnabled": "2FA is currently enabled",
+        "settings.security.2FAEnabledSuccess": "2FA enabled successfully!",
+        "settings.security.scanQRCode": "Scan this QR code",
+        "settings.account.title": "Danger Zone",
+        "settings.account.deleteAccount": "Delete My Account",
+        "settings.account.deleteWarning": "⚠️ Warning: This will permanently delete your account",
+        "settings.account.passwordPlaceholder": "Enter your password",
+        "settings.account.yesDelete": "Yes, Delete My Account",
+        "settings.account.confirmDelete": "Delete Account",
+        "settings.account.deleteError": "Failed to delete account. Please try again.",
+        "common.cancel": "Cancel",
+        "common.confirm": "Confirm",
+      },
+    },
+  },
+});
+
 // Helper to render Settings with all required providers
 const renderSettings = () => {
   return render(
-    <ToastProvider>
-      <MemoryRouter>
-        <Settings />
-      </MemoryRouter>
-    </ToastProvider>,
+    <I18nextProvider i18n={testI18n}>
+      <ToastProvider>
+        <MemoryRouter>
+          <Settings />
+        </MemoryRouter>
+      </ToastProvider>
+    </I18nextProvider>,
   );
 };
 
@@ -726,9 +779,7 @@ describe("Settings", () => {
 
       await waitFor(() => {
         expect(
-          screen.getByText(
-            /Alias may only contain letters, numbers, underscores, dots, or dashes/,
-          ),
+          screen.getByText(/Alias may only contain letters, numbers, underscores, dots, or dashes/),
         ).toBeInTheDocument();
       });
     });

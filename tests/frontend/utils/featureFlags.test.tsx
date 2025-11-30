@@ -72,8 +72,11 @@ describe("feature flag utilities", () => {
 
     expect(fallback).toBe(cached);
     expect(warnSpy).toHaveBeenCalledWith(
-      "[featureFlags] Failed to fetch config, using cached/default",
-      expect.any(Error),
+      "[WARN] [featureFlags] Failed to fetch config, using cached/default",
+      expect.objectContaining({
+        context: "featureFlags",
+        error: expect.any(String),
+      }),
     );
   });
 

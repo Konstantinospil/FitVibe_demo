@@ -214,7 +214,7 @@ const LoginFormContent: React.FC = () => {
           role="alert"
           style={{
             background: "rgba(248, 113, 113, 0.16)",
-            color: "#FFFFFF",
+            color: "var(--color-text-primary)",
             borderRadius: "12px",
             padding: "0.75rem 1rem",
             fontSize: "0.95rem",
