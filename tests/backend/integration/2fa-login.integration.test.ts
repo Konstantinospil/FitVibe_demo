@@ -66,7 +66,7 @@ describe("2-Stage Login Flow (AC-1.6)", () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    // Mock bruteforce repository functions
+    // Mock bruteforce repository functions (account-level)
     mockBruteforceRepo.getFailedAttempt.mockResolvedValue(null);
     mockBruteforceRepo.recordFailedAttempt.mockResolvedValue({
       id: "attempt-123",
@@ -94,6 +94,31 @@ describe("2-Stage Login Flow (AC-1.6)", () => {
       },
     );
     (mockBruteforceRepo.getRemainingLockoutSeconds as jest.Mock).mockReturnValue(0);
+
+    // Mock IP-based bruteforce repository functions
+    mockBruteforceRepo.getFailedAttemptByIP.mockResolvedValue(null);
+    mockBruteforceRepo.recordFailedAttemptByIP.mockResolvedValue({
+      id: "ip-attempt-123",
+      ip_address: "127.0.0.1",
+      distinct_email_count: 1,
+      total_attempt_count: 1,
+      locked_until: null,
+      last_attempt_at: new Date().toISOString(),
+      first_attempt_at: new Date().toISOString(),
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    });
+    mockBruteforceRepo.resetFailedAttemptsByIP.mockResolvedValue(undefined);
+    // Mock IP-based synchronous functions
+    (mockBruteforceRepo.isIPLocked as jest.Mock).mockImplementation((attempt) => {
+      if (!attempt || !attempt.locked_until) {
+        return false;
+      }
+      const now = new Date();
+      const lockoutExpiry = new Date(attempt.locked_until);
+      return now < lockoutExpiry;
+    });
+    (mockBruteforceRepo.getRemainingIPLockoutSeconds as jest.Mock).mockReturnValue(0);
   });
 
   afterEach(() => {
