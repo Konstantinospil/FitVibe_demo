@@ -24,7 +24,11 @@ High availability builds user trust and ensures business continuity. Reliable ba
 
 ## Related Activities
 
-{Note: Activities will be created and linked here as they are defined}
+- [E10-A1: Automated Backup System](../c.Activities/E10-A1-automated-backup-system.md)
+- [E10-A2: Backup Restore Procedures](../c.Activities/E10-A2-backup-restore-procedures.md)
+- [E10-A3: Disaster Recovery Planning](../c.Activities/E10-A3-disaster-recovery-planning.md)
+- [E10-A4: Health Check Endpoints](../c.Activities/E10-A4-health-check-endpoints.md)
+- [E10-A5: Read-Only Mode Implementation](../c.Activities/E10-A5-read-only-mode-implementation.md)
 
 ## Related User Stories
 

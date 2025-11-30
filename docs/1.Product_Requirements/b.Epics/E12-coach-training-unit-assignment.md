@@ -24,11 +24,17 @@ Enables coaches to efficiently create, manage, and distribute standardized train
 
 ## Related Activities
 
-{Note: Activities will be created and linked here as they are defined}
+- [E12-A1: Training Unit CRUD](../c.Activities/E12-A1-training-unit-crud.md)
+- [E12-A2: Training Unit Assignment System](../c.Activities/E12-A2-training-unit-assignment-system.md)
+- [E12-A3: Exercise Parameter Modification](../c.Activities/E12-A3-exercise-parameter-modification.md)
+- [E12-A4: Coach-Athlete Relationship Management](../c.Activities/E12-A4-coach-athlete-relationship-management.md)
 
 ## Related User Stories
 
-{Note: User stories will be created and linked here as they are defined}
+- [US-12.1: Training Unit CRUD](../d.User_stories/US-12.1-training-unit-crud.md)
+- [US-12.2: Training Unit Assignment](../d.User_stories/US-12.2-training-unit-assignment.md)
+- [US-12.3: Exercise Parameter Modification](../d.User_stories/US-12.3-exercise-parameter-modification.md)
+- [US-12.4: Coach-Athlete Relationship Management](../d.User_stories/US-12.4-coach-athlete-relationship-management.md)
 
 ## Dependencies
 

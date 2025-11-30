@@ -24,7 +24,12 @@ Allows users to capture their training data efficiently, either through manual e
 
 ## Related Activities
 
-{Note: Activities will be created and linked here as they are defined}
+- [E5-A1: Manual Session Logging](../c.Activities/E5-A1-manual-session-logging.md)
+- [E5-A2: GPX File Import](../c.Activities/E5-A2-gpx-file-import.md)
+- [E5-A3: FIT File Import](../c.Activities/E5-A3-fit-file-import.md)
+- [E5-A4: Metric Calculation Engine](../c.Activities/E5-A4-metric-calculation-engine.md)
+- [E5-A5: Offline Support & Sync](../c.Activities/E5-A5-offline-support-&-sync.md)
+- [E5-A6: Import Testing Suite](../c.Activities/E5-A6-import-testing-suite.md)
 
 ## Related User Stories
 

@@ -24,7 +24,14 @@ Performance directly impacts user satisfaction and retention. Fast, responsive a
 
 ## Related Activities
 
-{Note: Activities will be created and linked here as they are defined}
+- [E7-A1: API Performance Optimization](../c.Activities/E7-A1-api-performance-optimization.md)
+- [E7-A2: Database Query Optimization](../c.Activities/E7-A2-database-query-optimization.md)
+- [E7-A3: Frontend Bundle Optimization](../c.Activities/E7-A3-frontend-bundle-optimization.md)
+- [E7-A4: Core Web Vitals Implementation](../c.Activities/E7-A4-core-web-vitals-implementation.md)
+- [E7-A5: Caching Strategy Implementation](../c.Activities/E7-A5-caching-strategy-implementation.md)
+- [E7-A6: Materialized Views Setup](../c.Activities/E7-A6-materialized-views-setup.md)
+- [E7-A7: Load Testing Infrastructure](../c.Activities/E7-A7-load-testing-infrastructure.md)
+- [E7-A8: Performance Monitoring Setup](../c.Activities/E7-A8-performance-monitoring-setup.md)
 
 ## Related User Stories
 

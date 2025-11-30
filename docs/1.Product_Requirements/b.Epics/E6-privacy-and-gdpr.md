@@ -24,7 +24,12 @@ Legal compliance requirement that builds user trust. GDPR compliance is mandator
 
 ## Related Activities
 
-{Note: Activities will be created and linked here as they are defined}
+- [E6-A1: Data Export System](../c.Activities/E6-A1-data-export-system.md)
+- [E6-A2: Account Deletion & Cleanup](../c.Activities/E6-A2-account-deletion-&-cleanup.md)
+- [E6-A3: Consent Management System](../c.Activities/E6-A3-consent-management-system.md)
+- [E6-A4: Privacy Settings UI](../c.Activities/E6-A4-privacy-settings-ui.md)
+- [E6-A5: Audit Logging System](../c.Activities/E6-A5-audit-logging-system.md)
+- [E6-A6: GDPR Testing Suite](../c.Activities/E6-A6-gdpr-testing-suite.md)
 
 ## Related User Stories
 

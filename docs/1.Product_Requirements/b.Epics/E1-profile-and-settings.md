@@ -24,7 +24,9 @@ Allows users to personalize their FitVibe experience by managing their profile i
 
 ## Related Activities
 
-{Note: Activities will be created and linked here as they are defined}
+- [E1-A1: Profile Management API](../c.Activities/E1-A1-profile-management-api.md)
+- [E1-A2: Avatar Upload System](../c.Activities/E1-A2-avatar-upload-system.md)
+- [E1-A3: Profile Testing Suite](../c.Activities/E1-A3-profile-testing-suite.md)
 
 ## Related User Stories
 

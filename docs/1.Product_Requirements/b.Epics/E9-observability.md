@@ -24,7 +24,12 @@ Enables rapid issue detection, debugging, and performance optimization. Observab
 
 ## Related Activities
 
-{Note: Activities will be created and linked here as they are defined}
+- [E9-A1: Structured Logging Implementation](../c.Activities/E9-A1-structured-logging-implementation.md)
+- [E9-A2: Prometheus Metrics Setup](../c.Activities/E9-A2-prometheus-metrics-setup.md)
+- [E9-A3: OpenTelemetry Tracing](../c.Activities/E9-A3-opentelemetry-tracing.md)
+- [E9-A4: Grafana Dashboards Creation](../c.Activities/E9-A4-grafana-dashboards-creation.md)
+- [E9-A5: Alerting Rules Configuration](../c.Activities/E9-A5-alerting-rules-configuration.md)
+- [E9-A6: Log Aggregation Setup](../c.Activities/E9-A6-log-aggregation-setup.md)
 
 ## Related User Stories
 

@@ -2,7 +2,7 @@ import React from "react";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { describe, it, expect, vi } from "vitest";
 import { MemoryRouter } from "react-router-dom";
-import AdminDashboard from "../../../src/pages/admin/AdminDashboard";
+import AdminDashboard from "../../../../apps/frontend/src/pages/admin/AdminDashboard";
 
 const mockNavigate = vi.fn();
 

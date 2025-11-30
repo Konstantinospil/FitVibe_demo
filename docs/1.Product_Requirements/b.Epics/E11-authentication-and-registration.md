@@ -24,11 +24,15 @@ Provides the foundation for secure platform access and user account management. 
 
 ## Related Activities
 
-{Note: Activities will be created and linked here as they are defined}
+- [E11-A1: User Registration System](../c.Activities/E11-A1-user-registration-system.md)
+- [E11-A2: Authentication & Session Management](../c.Activities/E11-A2-authentication-&-session-management.md)
+- [E11-A3: Auth-Wall Implementation](../c.Activities/E11-A3-auth-wall-implementation.md)
 
 ## Related User Stories
 
-{Note: User stories will be created and linked here as they are defined}
+- [US-11.1: User Registration](../d.User_stories/US-11.1-user-registration.md)
+- [US-11.2: Authentication & Session Management](../d.User_stories/US-11.2-authentication-and-session.md)
+- [US-11.3: Auth-Wall Implementation](../d.User_stories/US-11.3-auth-wall.md)
 
 ## Dependencies
 

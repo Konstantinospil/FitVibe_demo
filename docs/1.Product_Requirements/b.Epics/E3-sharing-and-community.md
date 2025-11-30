@@ -24,7 +24,14 @@ Fosters community engagement and knowledge sharing, increasing user retention an
 
 ## Related Activities
 
-{Note: Activities will be created and linked here as they are defined}
+- [E3-A1: Public Feed Implementation](../c.Activities/E3-A1-public-feed-implementation.md)
+- [E3-A2: Session Visibility Controls](../c.Activities/E3-A2-session-visibility-controls.md)
+- [E3-A3: Social Engagement Features](../c.Activities/E3-A3-social-engagement-features.md)
+- [E3-A4: Comments System](../c.Activities/E3-A4-comments-system.md)
+- [E3-A5: User Following System](../c.Activities/E3-A5-user-following-system.md)
+- [E3-A6: Session Cloning](../c.Activities/E3-A6-session-cloning.md)
+- [E3-A7: Content Moderation](../c.Activities/E3-A7-content-moderation.md)
+- [E3-A8: Social Features Testing](../c.Activities/E3-A8-social-features-testing.md)
 
 ## Related User Stories
 

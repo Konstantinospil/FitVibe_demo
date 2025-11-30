@@ -24,7 +24,12 @@ Enables users to create, manage, and discover exercises, providing a foundation 
 
 ## Related Activities
 
-{Note: Activities will be created and linked here as they are defined}
+- [E2-A1: Exercise CRUD Operations](../c.Activities/E2-A1-exercise-crud-operations.md)
+- [E2-A2: Exercise Search & Discovery](../c.Activities/E2-A2-exercise-search-&-discovery.md)
+- [E2-A3: Exercise Snapshots & History](../c.Activities/E2-A3-exercise-snapshots-&-history.md)
+- [E2-A4: Global Exercise Management](../c.Activities/E2-A4-global-exercise-management.md)
+- [E2-A5: Exercise Selector Component](../c.Activities/E2-A5-exercise-selector-component.md)
+- [E2-A6: Exercise Testing Suite](../c.Activities/E2-A6-exercise-testing-suite.md)
 
 ## Related User Stories
 
