@@ -148,12 +148,12 @@ const SystemControls: React.FC = () => {
   }
 
   return (
-    <div style={{ display: "grid", gap: "1.5rem" }}>
+    <div className="grid grid--gap-15">
       {/* System Health */}
       <Card>
         <CardHeader>
-          <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
-            <Activity size={20} style={{ color: "var(--color-accent)" }} />
+          <div className="flex flex--align-center flex--gap-075">
+            <Activity size={20} className="icon--accent" />
             <CardTitle>System Health</CardTitle>
           </div>
           <CardDescription>Real-time system status and uptime</CardDescription>
@@ -176,7 +176,7 @@ const SystemControls: React.FC = () => {
               >
                 Status
               </div>
-              <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+              <div className="flex flex--align-center flex--gap-05">
                 <div
                   style={{
                     width: "12px",
@@ -186,7 +186,7 @@ const SystemControls: React.FC = () => {
                       healthStatus?.status === "ok" ? "var(--color-accent)" : "var(--color-danger)",
                   }}
                 />
-                <span style={{ fontSize: "1.25rem", fontWeight: 600 }}>
+                <span className="text-125 font-weight-600">
                   {healthStatus?.status === "ok" ? "Healthy" : "Degraded"}
                 </span>
               </div>
@@ -202,7 +202,7 @@ const SystemControls: React.FC = () => {
               >
                 Uptime
               </div>
-              <div style={{ fontSize: "1.25rem", fontWeight: 600 }}>
+              <div className="text-125 font-weight-600">
                 {healthStatus?.uptime ? formatUptime(healthStatus.uptime) : "—"}
               </div>
             </div>
@@ -264,7 +264,7 @@ const SystemControls: React.FC = () => {
 
           {!readOnlyStatus?.readOnlyMode && !showEnableConfirm && (
             <div>
-              <p style={{ marginBottom: "1rem", color: "var(--color-text-secondary)" }}>
+              <p className="mb-1 text-secondary">
                 System is currently operating normally. Enable read-only mode to block all write
                 operations for emergency maintenance.
               </p>
@@ -305,7 +305,7 @@ const SystemControls: React.FC = () => {
                 emergency maintenance.
               </div>
 
-              <div style={{ display: "grid", gap: "1rem", marginBottom: "1rem" }}>
+              <div className="grid grid--gap-md mb-1">
                 <div>
                   <label
                     htmlFor="enable-reason"

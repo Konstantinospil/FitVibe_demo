@@ -62,14 +62,14 @@ const VerifyEmail: React.FC = () => {
       }
     >
       {status === "verifying" && (
-        <div style={{ textAlign: "center", padding: "2rem 0" }}>
+        <div className="text-center p-2rem">
           <div
+            className="rounded-full"
             style={{
               width: "48px",
               height: "48px",
               border: "4px solid rgba(79, 70, 229, 0.2)",
               borderTopColor: "#4F46E5",
-              borderRadius: "50%",
               margin: "0 auto",
               animation: "spin 1s linear infinite",
             }}
@@ -83,17 +83,14 @@ const VerifyEmail: React.FC = () => {
       )}
 
       {status === "success" && (
-        <div style={{ textAlign: "center", padding: "2rem 0" }}>
+        <div className="text-center p-2rem">
           <div
+            className="flex flex--center mb-1 rounded-full"
             style={{
               width: "64px",
               height: "64px",
               margin: "0 auto 1rem",
-              borderRadius: "50%",
               backgroundColor: "rgba(34, 197, 94, 0.1)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
             }}
           >
             <svg
@@ -109,24 +106,21 @@ const VerifyEmail: React.FC = () => {
               <polyline points="20 6 9 17 4 12" />
             </svg>
           </div>
-          <Button onClick={() => navigate("/login")} style={{ marginTop: "1rem" }}>
+          <Button onClick={() => navigate("/login")} className="mt-1">
             {t("verifyEmail.goToLogin")}
           </Button>
         </div>
       )}
 
       {status === "error" && (
-        <div style={{ textAlign: "center", padding: "2rem 0" }}>
+        <div className="text-center p-2rem">
           <div
+            className="flex flex--center mb-1 rounded-full"
             style={{
               width: "64px",
               height: "64px",
               margin: "0 auto 1rem",
-              borderRadius: "50%",
               backgroundColor: "rgba(239, 68, 68, 0.1)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
             }}
           >
             <svg
@@ -143,7 +137,7 @@ const VerifyEmail: React.FC = () => {
               <line x1="6" y1="6" x2="18" y2="18" />
             </svg>
           </div>
-          <Button onClick={() => navigate("/register")} style={{ marginTop: "1rem" }}>
+          <Button onClick={() => navigate("/register")} className="mt-1">
             {t("verifyEmail.backToRegister")}
           </Button>
         </div>

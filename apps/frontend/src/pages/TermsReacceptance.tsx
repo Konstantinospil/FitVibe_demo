@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import AuthPageLayout from "../components/AuthPageLayout";
@@ -6,9 +6,12 @@ import { Button } from "../components/ui";
 import { acceptTerms } from "../services/api";
 import { useAuth } from "../contexts/AuthContext";
 import { NavLink } from "react-router-dom";
+import { useRequiredFieldValidation } from "../hooks/useRequiredFieldValidation";
 
 const TermsReacceptance: React.FC = () => {
   const { t } = useTranslation();
+  const formRef = useRef<HTMLFormElement>(null);
+  useRequiredFieldValidation(formRef, t);
   const navigate = useNavigate();
   const { signOut } = useAuth();
   const [acceptedTerms, setAcceptedTerms] = useState(false);
@@ -57,27 +60,20 @@ const TermsReacceptance: React.FC = () => {
       description={t("auth.termsReacceptance.description")}
     >
       {/* eslint-disable-next-line @typescript-eslint/no-misused-promises */}
-      <form onSubmit={handleSubmit} style={{ display: "grid", gap: "1rem" }}>
+      <form ref={formRef} onSubmit={handleSubmit} className="form">
         <div
+          className="p-md rounded-md mb-1"
           style={{
-            padding: "1rem",
-            borderRadius: "12px",
             background: "rgba(251, 191, 36, 0.1)",
             border: "1px solid rgba(251, 191, 36, 0.3)",
-            marginBottom: "1rem",
           }}
         >
-          <p style={{ margin: 0, color: "var(--color-text-secondary)", fontSize: "0.95rem" }}>
-            {t("auth.termsReacceptance.notice")}
-          </p>
+          <p className="m-0 text-secondary text-095">{t("auth.termsReacceptance.notice")}</p>
         </div>
 
         <label
+          className="checkbox-wrapper"
           style={{
-            display: "flex",
-            alignItems: "flex-start",
-            gap: "0.75rem",
-            cursor: "pointer",
             padding: "0.75rem",
             borderRadius: "8px",
             background: "var(--color-surface-glass)",
@@ -104,18 +100,12 @@ const TermsReacceptance: React.FC = () => {
             aria-required="true"
             aria-invalid={error && !acceptedTerms ? "true" : "false"}
           />
-          <span
-            style={{ fontSize: "0.9rem", color: "var(--color-text-secondary)", lineHeight: 1.5 }}
-          >
+          <span className="checkbox-label">
             {t("auth.termsReacceptance.acceptTerms")}{" "}
             <NavLink
               to="/terms"
               target="_blank"
               rel="noopener noreferrer"
-              style={{
-                color: "var(--color-accent)",
-                textDecoration: "underline",
-              }}
               onClick={(e) => e.stopPropagation()}
             >
               {t("auth.termsReacceptance.termsLink")}
@@ -125,10 +115,6 @@ const TermsReacceptance: React.FC = () => {
               to="/privacy"
               target="_blank"
               rel="noopener noreferrer"
-              style={{
-                color: "var(--color-accent)",
-                textDecoration: "underline",
-              }}
               onClick={(e) => e.stopPropagation()}
             >
               {t("auth.termsReacceptance.privacyLink")}
@@ -137,21 +123,12 @@ const TermsReacceptance: React.FC = () => {
         </label>
 
         {error ? (
-          <div
-            role="alert"
-            style={{
-              background: "rgba(248, 113, 113, 0.16)",
-              color: "#FFFFFF",
-              borderRadius: "12px",
-              padding: "0.75rem 1rem",
-              fontSize: "0.95rem",
-            }}
-          >
+          <div role="alert" className="form-error">
             {error}
           </div>
         ) : null}
 
-        <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap" }}>
+        <div className="flex flex--gap-md flex--wrap">
           <Button
             type="submit"
             fullWidth

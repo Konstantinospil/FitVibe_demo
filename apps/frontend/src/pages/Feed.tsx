@@ -7,15 +7,6 @@ import { getFeed, likeFeedItem, unlikeFeedItem, cloneSessionFromFeed } from "../
 import type { VisibilityLevel } from "../components/ui";
 import { useToast } from "../contexts/ToastContext";
 
-const cardStyle: React.CSSProperties = {
-  display: "grid",
-  gap: "0.75rem",
-  background: "var(--color-surface-glass)",
-  borderRadius: "18px",
-  padding: "1.5rem",
-  border: "1px solid var(--color-border)",
-};
-
 const Feed: React.FC = () => {
   const { t } = useTranslation();
   const toast = useToast();
@@ -68,9 +59,9 @@ const Feed: React.FC = () => {
         title={t("feed.title")}
         description={t("feed.description")}
       >
-        <div style={{ display: "grid", gap: "1rem" }}>
+        <div className="grid grid--gap-md">
           {[1, 2, 3].map((i) => (
-            <div key={i} style={cardStyle}>
+            <div key={i} className="card card--compact">
               <Skeleton width="100%" height="60px" />
               <Skeleton width="100%" height="40px" />
               <Skeleton width="100%" height="30px" />
@@ -88,17 +79,10 @@ const Feed: React.FC = () => {
         title={t("feed.title")}
         description={t("feed.description")}
       >
-        <div
-          style={{
-            padding: "2rem",
-            textAlign: "center",
-            color: "var(--color-text-secondary)",
-            background: "var(--color-surface-glass)",
-            borderRadius: "18px",
-            border: "1px solid var(--color-border)",
-          }}
-        >
-          <p>{t("feed.error") || "Failed to load feed. Please try again later."}</p>
+        <div className="empty-state card">
+          <p className="text-secondary">
+            {t("feed.error") || "Failed to load feed. Please try again later."}
+          </p>
         </div>
       </PageIntro>
     );
@@ -113,17 +97,10 @@ const Feed: React.FC = () => {
         title={t("feed.title")}
         description={t("feed.description")}
       >
-        <div
-          style={{
-            padding: "2rem",
-            textAlign: "center",
-            color: "var(--color-text-muted)",
-            background: "var(--color-surface-glass)",
-            borderRadius: "18px",
-            border: "1px solid var(--color-border)",
-          }}
-        >
-          <p>{t("feed.empty") || "No activity yet. Start training and share your sessions!"}</p>
+        <div className="empty-state card">
+          <p className="text-muted">
+            {t("feed.empty") || "No activity yet. Start training and share your sessions!"}
+          </p>
         </div>
       </PageIntro>
     );
@@ -135,24 +112,17 @@ const Feed: React.FC = () => {
       title={t("feed.title")}
       description={t("feed.description")}
     >
-      <div style={{ display: "grid", gap: "1rem" }}>
+      <div className="grid grid--gap-md">
         {items.map((item) => {
           const isRestricted = item.visibility === "private";
           const displayName = item.user.displayName || item.user.username;
 
           return (
-            <article key={item.id} style={cardStyle}>
-              <header
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  gap: "1rem",
-                }}
-              >
-                <div style={{ display: "grid", gap: "0.25rem" }}>
-                  <strong style={{ fontSize: "1.05rem" }}>{displayName}</strong>
-                  <span style={{ fontSize: "0.85rem", color: "var(--color-text-muted)" }}>
+            <article key={item.id} className="card card--compact">
+              <header className="flex flex--justify-between flex--align-center flex--gap-md">
+                <div className="grid" style={{ gap: "0.25rem" }}>
+                  <strong className="text-105">{displayName}</strong>
+                  <span className="text-085 text-muted">
                     {new Date(item.createdAt).toLocaleDateString()}
                   </span>
                 </div>
@@ -160,40 +130,20 @@ const Feed: React.FC = () => {
               </header>
               <div>
                 {item.session.title && (
-                  <strong style={{ display: "block", marginBottom: "0.5rem" }}>
-                    {item.session.title}
-                  </strong>
+                  <strong className="block mb-05">{item.session.title}</strong>
                 )}
                 {item.session.notes && (
-                  <p
-                    style={{
-                      margin: 0,
-                      color: "var(--color-text-secondary)",
-                      fontSize: "0.95rem",
-                    }}
-                  >
-                    {item.session.notes}
-                  </p>
+                  <p className="m-0 text-secondary text-095">{item.session.notes}</p>
                 )}
               </div>
-              <footer
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  flexWrap: "wrap",
-                  gap: "0.75rem",
-                  fontSize: "0.9rem",
-                  color: "var(--color-text-secondary)",
-                }}
-              >
+              <footer className="flex flex--justify-between flex--align-center flex--wrap flex--gap-075 text-09 text-secondary">
                 <span>
                   {item.session.exerciseCount} {t("feed.exercises") || "exercises"} •{" "}
                   {item.session.totalVolume
                     ? `${(item.session.totalVolume / 1000).toFixed(1)}k kg`
                     : "No volume data"}
                 </span>
-                <div style={{ display: "flex", alignItems: "center", gap: "0.6rem" }}>
+                <div className="flex flex--align-center flex--gap-06">
                   <Button
                     type="button"
                     size="sm"

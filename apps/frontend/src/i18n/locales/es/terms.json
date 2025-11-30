@@ -1,0 +1,100 @@
+{
+  "eyebrow": "Legal",
+  "title": "Términos y Condiciones",
+  "description": "Por favor, lea cuidadosamente nuestros Términos y Condiciones antes de usar FitVibe.",
+  "effectiveDate": "Fecha de vigencia",
+  "effectiveDateValue": "2024-06-01",
+  "intro": "Estos Términos y Condiciones / Acuerdo de Licencia de Usuario Final (\"Términos\") rigen su acceso y uso de los sitios web de FitVibe, aplicaciones móviles, API y servicios relacionados (colectivamente, los \"Servicios\"). Al usar los Servicios, usted acepta estos Términos y la Política de Privacidad y la Política de Cookies.",
+  "section1": {
+    "title": "1. Elegibilidad y registro de cuenta",
+    "items": [
+      "Debe tener al menos 16 años o la edad requerida por su jurisdicción. Si está aceptando en nombre de una organización, declara que tiene autoridad para vincularla.",
+      "Usted es responsable de mantener información de cuenta precisa y de proteger las credenciales de inicio de sesión. Notifique inmediatamente a FitVibe de cualquier uso no autorizado."
+    ]
+  },
+  "section2": {
+    "title": "2. Concesión de licencia y propiedad intelectual",
+    "items": [
+      "FitVibe le otorga una licencia limitada, revocable, no exclusiva y no transferible para instalar y usar los Servicios para uso personal u organizacional autorizado de acuerdo con estos Términos.",
+      "Los Servicios y toda la propiedad intelectual relacionada son propiedad de FitVibe y sus licenciantes. No se otorgan derechos excepto como se indica expresamente."
+    ]
+  },
+  "section3": {
+    "title": "3. Uso aceptable",
+    "subtitle": "Usted acepta no:",
+    "items": [
+      "Realizar ingeniería inversa, modificar o crear obras derivadas de los Servicios excepto según lo permitido por la ley.",
+      "Eludir medidas de seguridad, acceder a áreas no públicas o interferir con la integridad del sistema.",
+      "Cargar contenido ilegal, difamatorio o que infrinja derechos, o contenido que incluya datos personales de otros sin permiso.",
+      "Usar los Servicios para proporcionar diagnóstico médico o respuesta de emergencia o participar en acoso, discriminación o conducta abusiva.",
+      "Usar medios automatizados para acceder o extraer datos excepto a través de API aprobadas y límites de velocidad."
+    ]
+  },
+  "section4": {
+    "title": "4. Contenido del usuario",
+    "items": [
+      "Usted conserva la propiedad del contenido que envía (por ejemplo, registros de entrenamiento, comentarios, medios). Usted otorga a FitVibe una licencia mundial, libre de regalías, para alojar, usar, reproducir, modificar, publicar y mostrar ese contenido únicamente para operar y mejorar los Servicios.",
+      "Usted declara que tiene los derechos para compartir el contenido que envía y que no viola los derechos de otros o la ley aplicable."
+    ]
+  },
+  "section5": {
+    "title": "5. Aviso de salud y seguridad",
+    "content": "FitVibe proporciona herramientas de entrenamiento y bienestar y no proporciona consejo médico. Consulte a un médico antes de comenzar nuevos programas de entrenamiento. Deje de usar los Servicios y busque atención médica si experimenta síntomas adversos."
+  },
+  "section6": {
+    "title": "6. Servicios e integraciones de terceros",
+    "content": "Algunas características dependen de servicios de terceros (por ejemplo, análisis, procesadores de pago, integraciones de dispositivos). Su uso de esos servicios puede estar sujeto a sus términos. FitVibe no es responsable de los servicios de terceros."
+  },
+  "section7": {
+    "title": "7. Tarifas y suscripciones",
+    "items": [
+      "Si se ofrecen suscripciones o características de pago, los precios y términos de facturación se presentarán en los Servicios. Pueden aplicarse impuestos. Los pagos son procesados por procesadores de terceros; usted autoriza a FitVibe y a los procesadores a cobrar las tarifas aplicables.",
+      "FitVibe puede cambiar los precios con aviso razonable, sujeto a la ley aplicable. Si no está de acuerdo con los cambios, puede cancelar antes de que los nuevos precios entren en vigor."
+    ]
+  },
+  "section8": {
+    "title": "8. Terminación",
+    "items": [
+      "Usted puede dejar de usar los Servicios en cualquier momento. Puede solicitar la eliminación de la cuenta como se describe en la Política de Privacidad.",
+      "FitVibe puede suspender o terminar el acceso por incumplimiento de estos Términos, requisitos legales o para proteger los Servicios o usuarios. Podemos proporcionar aviso cuando sea factible."
+    ]
+  },
+  "section9": {
+    "title": "9. Renuncias",
+    "content": "Los Servicios se proporcionan \"tal cual\" y \"según disponibilidad\" sin garantías de ningún tipo, expresas o implícitas, incluyendo comerciabilidad, idoneidad para un propósito particular, no infracción y precisión. Algunas jurisdicciones no permiten la exclusión de ciertas garantías, por lo que estas exclusiones pueden no aplicarse."
+  },
+  "section10": {
+    "title": "10. Limitación de responsabilidad",
+    "content": "En la máxima medida permitida por la ley, FitVibe no será responsable de daños indirectos, incidentales, especiales, consecuentes o punitivos, o por pérdida de ganancias, datos, buena voluntad o interrupción comercial, incluso si se le informa de la posibilidad de tales daños. La responsabilidad total de FitVibe por reclamos que surjan o estén relacionados con los Servicios no excederá el mayor de (a) los montos que pagó a FitVibe por los Servicios en los doce meses anteriores al reclamo o (b) $100 USD, excepto donde esté prohibido por la ley."
+  },
+  "section11": {
+    "title": "11. Indemnización",
+    "content": "Usted acepta indemnizar y eximir de responsabilidad a FitVibe, sus afiliados y sus funcionarios, empleados y agentes de cualquier reclamo, daño, pérdida o gasto que surja de su uso de los Servicios o incumplimiento de estos Términos."
+  },
+  "section12": {
+    "title": "12. Ley aplicable y resolución de disputas",
+    "content": "Estos Términos se rigen por las leyes del Estado de Delaware, EE.UU., sin tener en cuenta los principios de conflicto de leyes, excepto donde se aplique la ley local obligatoria. Las disputas deben plantearse primero con el soporte de FitVibe. Donde lo permita la ley, las disputas se resolverán mediante arbitraje vinculante en Delaware de forma individual, y usted renuncia a acciones colectivas. Si el arbitraje no está permitido, las disputas se resolverán en los tribunales ubicados en Delaware. Los consumidores pueden tener derechos estatutarios para presentar reclamos en sus jurisdicciones de origen; estos Términos no limitan tales derechos."
+  },
+  "section13": {
+    "title": "13. Cumplimiento de exportación y sanciones",
+    "content": "Debe cumplir con las leyes aplicables de control de exportaciones y sanciones. No puede usar los Servicios si se encuentra en o reside habitualmente en países embargados por los EE.UU. o si está en listas de sanciones aplicables."
+  },
+  "section14": {
+    "title": "14. Cambios en los Servicios y Términos",
+    "items": [
+      "Podemos modificar o discontinuar características para mejorar el rendimiento, seguridad o cumplimiento. Proporcionaremos aviso de cambios materiales cuando se requiera.",
+      "El uso continuado después de que los cambios entren en vigor constituye aceptación. Si no está de acuerdo, deje de usar los Servicios."
+    ]
+  },
+  "section15": {
+    "title": "15. Avisos",
+    "items": [
+      "Avisos a FitVibe: legal@fitvibe.example.com.",
+      "Avisos a usted: por correo electrónico, mensajes en el producto u otros medios razonables. Usted es responsable de mantener actualizados los detalles de contacto."
+    ]
+  },
+  "section16": {
+    "title": "16. Contacto",
+    "content": "Las preguntas sobre estos Términos pueden enviarse a legal@fitvibe.example.com."
+  }
+}

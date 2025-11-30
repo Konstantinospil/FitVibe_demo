@@ -145,7 +145,72 @@ function sendEmail(to: string, subject: string) {
 
 ---
 
-### 4. **Internationalization (i18n) for All Text**
+### 4. **Global CSS Classes Over Inline Styles**
+
+**Principle**: All static styling must use global CSS classes from `apps/frontend/src/styles/global.css`, never inline styles.
+
+**Rules**:
+
+- ❌ **Never** use inline `style={{ ... }}` attributes for static styling
+- ❌ **Never** create local style constants (`const inputStyle: React.CSSProperties = { ... }`) for reusable patterns
+- ❌ **Never** hardcode CSS values in components when utility classes exist
+- ✅ **Always** use utility classes from `global.css` (e.g., `.form-input`, `.card`, `.flex`, `.text-secondary`)
+- ✅ **Always** check `global.css` first - if a class doesn't exist, add it there rather than using inline styles
+- ✅ **Only** use inline styles for truly dynamic values (e.g., conditional colors, calculated widths, state-dependent transforms)
+
+**Examples**:
+
+```tsx
+// ❌ BAD: Inline styles for static values
+<div style={{ display: "flex", gap: "1rem", padding: "1.5rem" }}>
+  <input style={{ width: "100%", padding: "0.75rem", borderRadius: "12px" }} />
+</div>
+
+// ❌ BAD: Local style constants
+const inputStyle: React.CSSProperties = {
+  width: "100%",
+  padding: "0.75rem",
+  borderRadius: "12px",
+};
+<input style={inputStyle} />
+
+// ✅ GOOD: Global CSS classes
+<div className="flex flex--gap-md p-lg">
+  <input className="form-input" />
+</div>
+
+// ✅ ACCEPTABLE: Dynamic inline styles (conditional/dynamic values only)
+<div 
+  className="card"
+  style={{ 
+    borderColor: selectedVibe?.colorBorder,  // Dynamic color from data
+    transform: isHovered ? "scale(1.1)" : "scale(1)"  // Conditional transform
+  }}
+/>
+```
+
+**Available Utility Classes**:
+
+The `global.css` file provides comprehensive utility classes for:
+- Forms: `.form`, `.form-input`, `.form-label`, `.form-error`, `.form-select`
+- Layout: `.flex`, `.grid`, `.flex--gap-*`, `.grid--gap-*`
+- Typography: `.text-*`, `.font-weight-*`, `.text-primary`, `.text-secondary`, `.text-muted`
+- Spacing: `.p-*`, `.m-*`, `.mb-*`, `.mt-*`, `.gap-*`
+- Cards: `.card`, `.card-content`
+- Alerts: `.alert`, `.alert--error`, `.alert--success`
+- Sections: `.section`, `.section-title`, `.section-text`
+- Lists: `.list`, `.list-item`
+
+**Adding New Utility Classes**:
+
+1. Check if a similar class already exists in `global.css`
+2. If not, add it to `global.css` following the existing naming conventions
+3. Use CSS variables (e.g., `var(--color-text-primary)`) instead of hardcoded values
+4. Document the class in a comment if it's not self-explanatory
+
+---
+
+### 5. **Internationalization (i18n) for All Text**
 
 **Principle**: All user-facing text must come from i18n translation files, never hardcoded.
 
@@ -454,6 +519,11 @@ const TIMEOUT = 5000;
 // 3. Hardcoded text
 <button>Submit</button>
 <input placeholder="Enter email" />
+
+// 4. Inline styles instead of global CSS classes
+<div style={{ display: "flex", gap: "1rem" }}>
+  <input style={{ width: "100%", padding: "0.75rem" }} />
+</div>
 
 // 4. Simplified error handling
 try {

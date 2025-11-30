@@ -1,22 +1,15 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { NavLink } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import AuthPageLayout from "../components/AuthPageLayout";
 import { Button } from "../components/ui";
 import { forgotPassword } from "../services/api";
-
-const inputStyle: React.CSSProperties = {
-  width: "100%",
-  borderRadius: "12px",
-  border: "1px solid var(--color-border)",
-  background: "var(--color-surface-glass)",
-  color: "var(--color-text-primary)",
-  padding: "0.85rem 1rem",
-  fontSize: "1rem",
-};
+import { useRequiredFieldValidation } from "../hooks/useRequiredFieldValidation";
 
 const ForgotPassword: React.FC = () => {
   const { t } = useTranslation();
+  const formRef = useRef<HTMLFormElement>(null);
+  useRequiredFieldValidation(formRef, t);
   const [email, setEmail] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -49,27 +42,9 @@ const ForgotPassword: React.FC = () => {
         title={t("forgotPassword.titleSuccess")}
         description={t("forgotPassword.descSuccess")}
       >
-        <div style={{ display: "grid", gap: "1rem" }}>
-          <div
-            style={{
-              background: "rgba(34, 197, 94, 0.16)",
-              color: "#86efac",
-              borderRadius: "12px",
-              padding: "0.75rem 1rem",
-              fontSize: "0.95rem",
-            }}
-          >
-            {t("forgotPassword.successMessage")}
-          </div>
-          <NavLink
-            to="/login"
-            style={{
-              display: "block",
-              textAlign: "center",
-              color: "var(--color-text-secondary)",
-              fontSize: "0.9rem",
-            }}
-          >
+        <div className="form">
+          <div className="form-success">{t("forgotPassword.successMessage")}</div>
+          <NavLink to="/login" className="form-link form-link--block">
             {t("forgotPassword.backToLogin")}
           </NavLink>
         </div>
@@ -84,16 +59,14 @@ const ForgotPassword: React.FC = () => {
       description={t("forgotPassword.description")}
     >
       {/* eslint-disable-next-line @typescript-eslint/no-misused-promises */}
-      <form onSubmit={handleSubmit} style={{ display: "grid", gap: "1rem" }}>
-        <label style={{ display: "grid", gap: "0.35rem" }}>
-          <span style={{ fontSize: "0.95rem", color: "var(--color-text-secondary)" }}>
-            {t("forgotPassword.emailLabel")}
-          </span>
+      <form ref={formRef} onSubmit={handleSubmit} className="form">
+        <label className="form-label">
+          <span className="form-label-text">{t("forgotPassword.emailLabel")}</span>
           <input
             name="email"
             type="email"
             placeholder={t("forgotPassword.emailPlaceholder")}
-            style={inputStyle}
+            className="form-input"
             required
             value={email}
             onChange={(event) => setEmail(event.target.value)}
@@ -102,31 +75,14 @@ const ForgotPassword: React.FC = () => {
           />
         </label>
         {error ? (
-          <div
-            role="alert"
-            style={{
-              background: "rgba(248, 113, 113, 0.16)",
-              color: "var(--color-text-primary)",
-              borderRadius: "12px",
-              padding: "0.75rem 1rem",
-              fontSize: "0.95rem",
-            }}
-          >
+          <div role="alert" className="form-error">
             {error}
           </div>
         ) : null}
         <Button type="submit" fullWidth isLoading={isSubmitting} disabled={isSubmitting}>
           {isSubmitting ? t("forgotPassword.sending") : t("forgotPassword.sendLink")}
         </Button>
-        <NavLink
-          to="/login"
-          style={{
-            display: "block",
-            textAlign: "center",
-            color: "var(--color-text-secondary)",
-            fontSize: "0.9rem",
-          }}
-        >
+        <NavLink to="/login" className="form-link form-link--block">
           {t("forgotPassword.backToLogin")}
         </NavLink>
       </form>

@@ -113,9 +113,12 @@
     }
   },
   "footer": {
-    "note": "Built for athletes who love data‑driven progress — Fitvibe",
+    "brand": "FitVibe",
     "terms": "Terms and Conditions",
-    "privacy": "Privacy Policy"
+    "privacy": "Privacy Policy",
+    "navigationLabel": "Footer navigation",
+    "termsAriaLabel": "View Terms and Conditions",
+    "privacyAriaLabel": "View Privacy Policy"
   },
   "terms": {
     "eyebrow": "Legal",
@@ -220,6 +223,7 @@
     "EMAIL_SERVICE_UNAVAILABLE": "Email service unavailable"
   },
   "validation": {
+    "required": "Fill in this field",
     "passwordMinLength": "Password must be at least 12 characters long",
     "passwordLowercase": "Password must include a lowercase letter",
     "passwordUppercase": "Password must include an uppercase letter",

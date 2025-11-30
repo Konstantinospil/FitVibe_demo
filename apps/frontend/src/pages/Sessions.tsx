@@ -112,30 +112,13 @@ const Sessions: React.FC = () => {
       description={t("sessions.description")}
     >
       {/* Tab Navigation */}
-      <div
-        style={{
-          display: "flex",
-          gap: "0.5rem",
-          marginBottom: "1.5rem",
-          borderBottom: "1px solid var(--color-border)",
-          paddingBottom: "0.5rem",
-        }}
-      >
+      <div className="tabs">
         <button
           type="button"
           onClick={() => setActiveTab("planner")}
           aria-selected={activeTab === "planner"}
           role="tab"
-          style={{
-            padding: "0.75rem 1.5rem",
-            borderRadius: "8px 8px 0 0",
-            background: activeTab === "planner" ? "var(--color-accent)" : "transparent",
-            color: activeTab === "planner" ? "#0f172a" : "var(--color-text-secondary)",
-            fontWeight: activeTab === "planner" ? 600 : 500,
-            border: "none",
-            cursor: "pointer",
-            transition: "all 150ms ease",
-          }}
+          className={activeTab === "planner" ? "tab tab--active" : "tab"}
         >
           {t("sessions.plannerTab")}
         </button>
@@ -144,16 +127,7 @@ const Sessions: React.FC = () => {
           onClick={() => setActiveTab("logger")}
           aria-selected={activeTab === "logger"}
           role="tab"
-          style={{
-            padding: "0.75rem 1.5rem",
-            borderRadius: "8px 8px 0 0",
-            background: activeTab === "logger" ? "var(--color-accent)" : "transparent",
-            color: activeTab === "logger" ? "#0f172a" : "var(--color-text-secondary)",
-            fontWeight: activeTab === "logger" ? 600 : 500,
-            border: "none",
-            cursor: "pointer",
-            transition: "all 150ms ease",
-          }}
+          className={activeTab === "logger" ? "tab tab--active" : "tab"}
         >
           {t("sessions.loggerTab")}
         </button>
@@ -161,8 +135,8 @@ const Sessions: React.FC = () => {
 
       {/* Planner Tab Content */}
       {activeTab === "planner" && (
-        <div style={{ display: "grid", gap: "1.5rem" }}>
-          <div style={{ display: "flex", justifyContent: "flex-end" }}>
+        <div className="grid grid--gap-15">
+          <div className="flex flex--justify-end">
             <Button
               variant="primary"
               leftIcon={<Plus size={18} />}
@@ -175,26 +149,20 @@ const Sessions: React.FC = () => {
           {loadingPlanned ? (
             <Card>
               <CardContent>
-                <div
-                  style={{
-                    padding: "2rem",
-                    textAlign: "center",
-                    color: "var(--color-text-secondary)",
-                  }}
-                >
-                  {t("common.loading")}
-                </div>
+                <div className="empty-state text-secondary">{t("common.loading")}</div>
               </CardContent>
             </Card>
           ) : plannedSessions.length === 0 ? (
             <Card>
               <CardContent>
-                <div style={{ padding: "3rem 2rem", textAlign: "center" }}>
-                  <Calendar size={48} style={{ margin: "0 auto 1rem", opacity: 0.3 }} />
-                  <h3 style={{ fontSize: "1.25rem", marginBottom: "0.5rem" }}>
-                    No planned sessions
-                  </h3>
-                  <p style={{ color: "var(--color-text-secondary)", marginBottom: "1.5rem" }}>
+                <div className="empty-state">
+                  <Calendar
+                    size={48}
+                    className="icon icon--muted"
+                    style={{ margin: "0 auto 1rem" }}
+                  />
+                  <h3 className="text-125 mb-05">No planned sessions</h3>
+                  <p className="text-secondary mb-15">
                     Create your first workout session to get started
                   </p>
                   <Button
@@ -208,21 +176,14 @@ const Sessions: React.FC = () => {
               </CardContent>
             </Card>
           ) : (
-            <div style={{ display: "grid", gap: "1rem" }}>
+            <div className="grid grid--gap-md">
               {plannedSessions.map((session) => (
                 <Card key={session.id}>
                   <CardContent>
-                    <div style={{ display: "flex", alignItems: "flex-start", gap: "1rem" }}>
-                      <div style={{ flex: 1 }}>
-                        <div
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: "0.75rem",
-                            marginBottom: "0.5rem",
-                          }}
-                        >
-                          <h3 style={{ fontSize: "1.1rem", fontWeight: 600, margin: 0 }}>
+                    <div className="flex flex--align-start flex--gap-md">
+                      <div className="flex-1">
+                        <div className="flex flex--align-center flex--gap-075 mb-05">
+                          <h3 className="text-11 font-weight-600 m-0">
                             {session.title || "Untitled Session"}
                           </h3>
                           <span
@@ -260,9 +221,7 @@ const Sessions: React.FC = () => {
                             {formatDate(session.planned_at)}
                           </div>
                           {session.exercises && session.exercises.length > 0 && (
-                            <div
-                              style={{ color: "var(--color-text-secondary)", fontSize: "0.9rem" }}
-                            >
+                            <div className="text-09 text-secondary">
                               {session.exercises.length}{" "}
                               {session.exercises.length === 1 ? "exercise" : "exercises"}
                             </div>
@@ -270,29 +229,21 @@ const Sessions: React.FC = () => {
                         </div>
 
                         {session.notes && (
-                          <p
-                            style={{
-                              color: "var(--color-text-secondary)",
-                              fontSize: "0.9rem",
-                              margin: "0.5rem 0 0",
-                            }}
-                          >
+                          <p className="text-09 text-secondary" style={{ margin: "0.5rem 0 0" }}>
                             {session.notes}
                           </p>
                         )}
 
                         {session.exercises && session.exercises.length > 0 && (
-                          <div style={{ marginTop: "0.75rem" }}>
-                            <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem" }}>
+                          <div className="mt-075">
+                            <div className="flex flex--wrap flex--gap-05">
                               {session.exercises.slice(0, 5).map((ex, idx) => (
                                 <span
                                   key={idx}
+                                  className="rounded-sm text-085 text-secondary"
                                   style={{
                                     padding: "0.35rem 0.75rem",
-                                    borderRadius: "8px",
                                     background: "rgba(148, 163, 184, 0.1)",
-                                    color: "var(--color-text-secondary)",
-                                    fontSize: "0.85rem",
                                   }}
                                 >
                                   {ex.exercise_id || "Custom Exercise"}
@@ -300,12 +251,8 @@ const Sessions: React.FC = () => {
                               ))}
                               {session.exercises.length > 5 && (
                                 <span
-                                  style={{
-                                    padding: "0.35rem 0.75rem",
-                                    borderRadius: "8px",
-                                    color: "var(--color-text-muted)",
-                                    fontSize: "0.85rem",
-                                  }}
+                                  className="rounded-sm text-085 text-muted"
+                                  style={{ padding: "0.35rem 0.75rem" }}
                                 >
                                   +{session.exercises.length - 5} more
                                 </span>
@@ -315,13 +262,13 @@ const Sessions: React.FC = () => {
                         )}
                       </div>
 
-                      <div style={{ display: "flex", gap: "0.5rem" }}>
+                      <div className="flex flex--gap-05">
                         <button
                           onClick={() => navigate(`/logger/${session.id}`)}
                           aria-label="Start session"
+                          className="rounded-sm"
                           style={{
                             padding: "0.5rem",
-                            borderRadius: "8px",
                             background: "rgba(52, 211, 153, 0.15)",
                             color: "var(--color-accent)",
                             border: "none",
@@ -334,9 +281,9 @@ const Sessions: React.FC = () => {
                         <button
                           onClick={() => navigate(`/sessions/${session.id}`)}
                           aria-label="View session"
+                          className="rounded-sm"
                           style={{
                             padding: "0.5rem",
-                            borderRadius: "8px",
                             background: "rgba(148, 163, 184, 0.1)",
                             color: "var(--color-text-secondary)",
                             border: "none",
@@ -349,9 +296,9 @@ const Sessions: React.FC = () => {
                         <button
                           onClick={() => void handleDeleteSession(session.id)}
                           aria-label="Delete session"
+                          className="rounded-sm"
                           style={{
                             padding: "0.5rem",
-                            borderRadius: "8px",
                             background: "rgba(239, 68, 68, 0.1)",
                             color: "var(--color-danger)",
                             border: "none",

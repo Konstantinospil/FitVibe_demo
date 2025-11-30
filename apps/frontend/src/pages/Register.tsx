@@ -1,23 +1,16 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import AuthPageLayout from "../components/AuthPageLayout";
 import { NavLink } from "react-router-dom";
 import { register as registerAccount } from "../services/api";
 import { Button } from "../components/ui";
 import { useTranslation } from "react-i18next";
 import { Eye, EyeOff } from "lucide-react";
-
-const inputStyle: React.CSSProperties = {
-  width: "100%",
-  borderRadius: "12px",
-  border: "1px solid var(--color-border)",
-  background: "var(--color-surface-glass)",
-  color: "var(--color-text-primary)",
-  padding: "0.85rem 1rem",
-  fontSize: "1rem",
-};
+import { useRequiredFieldValidation } from "../hooks/useRequiredFieldValidation";
 
 const Register: React.FC = () => {
   const { t } = useTranslation();
+  const formRef = useRef<HTMLFormElement>(null);
+  useRequiredFieldValidation(formRef, t);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -116,17 +109,15 @@ const Register: React.FC = () => {
         title={t("auth.register.successTitle")}
         description={t("auth.register.successDescription")}
       >
-        <div style={{ textAlign: "center", padding: "2rem 0" }}>
+        <div className="text-center p-2rem">
           <div
+            className="flex flex--center mb-1"
             style={{
               width: "64px",
               height: "64px",
               margin: "0 auto 1rem",
               borderRadius: "50%",
               backgroundColor: "rgba(34, 197, 94, 0.1)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
             }}
           >
             <svg
@@ -142,14 +133,12 @@ const Register: React.FC = () => {
               <polyline points="20 6 9 17 4 12" />
             </svg>
           </div>
-          <p style={{ marginBottom: "1rem", color: "var(--color-text-secondary)" }}>
-            {t("auth.register.checkEmail", { email })}
-          </p>
+          <p className="mb-1 text-secondary">{t("auth.register.checkEmail", { email })}</p>
           <NavLink
             to="/login"
+            className="rounded-xl"
             style={{
               padding: "0.9rem 1.4rem",
-              borderRadius: "999px",
               background: "var(--color-accent)",
               color: "#0f172a",
               fontWeight: 600,
@@ -171,16 +160,14 @@ const Register: React.FC = () => {
       description={t("auth.register.description")}
     >
       {/* eslint-disable-next-line @typescript-eslint/no-misused-promises */}
-      <form onSubmit={handleSubmit} style={{ display: "grid", gap: "1rem" }}>
-        <label style={{ display: "grid", gap: "0.35rem" }}>
-          <span style={{ fontSize: "0.95rem", color: "var(--color-text-secondary)" }}>
-            {t("auth.register.nameLabel")}
-          </span>
+      <form ref={formRef} onSubmit={handleSubmit} className="form">
+        <label className="form-label">
+          <span className="form-label-text">{t("auth.register.nameLabel")}</span>
           <input
             name="name"
             type="text"
             placeholder={t("auth.placeholders.name")}
-            style={inputStyle}
+            className="form-input"
             required
             value={name}
             onChange={(event) => setName(event.target.value)}
@@ -188,15 +175,13 @@ const Register: React.FC = () => {
             disabled={isSubmitting}
           />
         </label>
-        <label style={{ display: "grid", gap: "0.35rem" }}>
-          <span style={{ fontSize: "0.95rem", color: "var(--color-text-secondary)" }}>
-            {t("auth.register.emailLabel")}
-          </span>
+        <label className="form-label">
+          <span className="form-label-text">{t("auth.register.emailLabel")}</span>
           <input
             name="email"
             type="email"
             placeholder={t("auth.placeholders.email")}
-            style={inputStyle}
+            className="form-input"
             required
             value={email}
             onChange={(event) => setEmail(event.target.value)}
@@ -204,16 +189,14 @@ const Register: React.FC = () => {
             disabled={isSubmitting}
           />
         </label>
-        <label style={{ display: "grid", gap: "0.35rem" }}>
-          <span style={{ fontSize: "0.95rem", color: "var(--color-text-secondary)" }}>
-            {t("auth.register.passwordLabel")}
-          </span>
-          <div style={{ position: "relative" }}>
+        <label className="form-label">
+          <span className="form-label-text">{t("auth.register.passwordLabel")}</span>
+          <div className="form-input-wrapper">
             <input
               name="password"
               type={showPassword ? "text" : "password"}
               placeholder={t("auth.placeholders.password")}
-              style={inputStyle}
+              className="form-input form-input--password"
               required
               value={password}
               onChange={(event) => setPassword(event.target.value)}
@@ -223,27 +206,7 @@ const Register: React.FC = () => {
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              style={{
-                position: "absolute",
-                right: "0.75rem",
-                top: "50%",
-                transform: "translateY(-50%)",
-                background: "transparent",
-                border: "none",
-                cursor: "pointer",
-                color: "var(--color-text-secondary)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                padding: "0.25rem",
-                transition: "color 150ms ease",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.color = "var(--color-text-primary)";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.color = "var(--color-text-secondary)";
-              }}
+              className="form-password-toggle"
               aria-label={showPassword ? t("auth.hidePassword") : t("auth.showPassword")}
               disabled={isSubmitting}
             >
@@ -251,16 +214,14 @@ const Register: React.FC = () => {
             </button>
           </div>
         </label>
-        <label style={{ display: "grid", gap: "0.35rem" }}>
-          <span style={{ fontSize: "0.95rem", color: "var(--color-text-secondary)" }}>
-            {t("auth.register.confirmPasswordLabel")}
-          </span>
-          <div style={{ position: "relative" }}>
+        <label className="form-label">
+          <span className="form-label-text">{t("auth.register.confirmPasswordLabel")}</span>
+          <div className="form-input-wrapper">
             <input
               name="confirmPassword"
               type={showConfirmPassword ? "text" : "password"}
               placeholder={t("auth.placeholders.confirmPassword")}
-              style={inputStyle}
+              className="form-input form-input--password"
               required
               value={confirmPassword}
               onChange={(event) => setConfirmPassword(event.target.value)}
@@ -270,27 +231,7 @@ const Register: React.FC = () => {
             <button
               type="button"
               onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-              style={{
-                position: "absolute",
-                right: "0.75rem",
-                top: "50%",
-                transform: "translateY(-50%)",
-                background: "transparent",
-                border: "none",
-                cursor: "pointer",
-                color: "var(--color-text-secondary)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                padding: "0.25rem",
-                transition: "color 150ms ease",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.color = "var(--color-text-primary)";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.color = "var(--color-text-secondary)";
-              }}
+              className="form-password-toggle"
               aria-label={showConfirmPassword ? t("auth.hidePassword") : t("auth.showPassword")}
               disabled={isSubmitting}
             >
@@ -298,17 +239,8 @@ const Register: React.FC = () => {
             </button>
           </div>
         </label>
-        <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
-          <label
-            style={{
-              display: "flex",
-              alignItems: "flex-start",
-              gap: "0.5rem",
-              cursor: "pointer",
-              fontSize: "0.9rem",
-              color: "var(--color-text-secondary)",
-            }}
-          >
+        <div className="password-requirements">
+          <label className="checkbox-wrapper">
             <input
               type="checkbox"
               checked={termsAccepted}
@@ -319,32 +251,19 @@ const Register: React.FC = () => {
                 cursor: isSubmitting ? "not-allowed" : "pointer",
               }}
             />
-            <span>
+            <span className="checkbox-label">
               {t("auth.register.acceptTerms")}{" "}
               <NavLink
                 to="/terms"
                 target="_blank"
                 rel="noopener noreferrer"
-                style={{
-                  color: "var(--color-accent)",
-                  textDecoration: "none",
-                }}
                 onClick={(e) => e.stopPropagation()}
               >
                 {t("auth.register.termsLink")}
               </NavLink>
             </span>
           </label>
-          <label
-            style={{
-              display: "flex",
-              alignItems: "flex-start",
-              gap: "0.5rem",
-              cursor: "pointer",
-              fontSize: "0.9rem",
-              color: "var(--color-text-secondary)",
-            }}
-          >
+          <label className="checkbox-wrapper">
             <input
               type="checkbox"
               checked={privacyAccepted}
@@ -355,16 +274,12 @@ const Register: React.FC = () => {
                 cursor: isSubmitting ? "not-allowed" : "pointer",
               }}
             />
-            <span>
+            <span className="checkbox-label">
               {t("auth.register.acceptTerms")}{" "}
               <NavLink
                 to="/privacy"
                 target="_blank"
                 rel="noopener noreferrer"
-                style={{
-                  color: "var(--color-accent)",
-                  textDecoration: "none",
-                }}
                 onClick={(e) => e.stopPropagation()}
               >
                 {t("auth.register.privacyLink")}
@@ -373,32 +288,16 @@ const Register: React.FC = () => {
           </label>
         </div>
         {error ? (
-          <div
-            role="alert"
-            style={{
-              background: "rgba(248, 113, 113, 0.16)",
-              color: "var(--color-text-primary)",
-              borderRadius: "12px",
-              padding: "0.75rem 1rem",
-              fontSize: "0.95rem",
-            }}
-          >
+          <div role="alert" className="form-error">
             {error}
           </div>
         ) : null}
         <Button type="submit" fullWidth isLoading={isSubmitting} disabled={isSubmitting}>
           {isSubmitting ? t("auth.register.submitting") : t("auth.register.submit")}
         </Button>
-        <p
-          style={{
-            margin: 0,
-            fontSize: "0.9rem",
-            color: "var(--color-text-secondary)",
-            textAlign: "center",
-          }}
-        >
+        <p className="m-0 text-09 text-secondary text-center">
           {t("auth.register.loginPrompt")}{" "}
-          <NavLink to="/login" style={{ color: "var(--color-text-secondary)" }}>
+          <NavLink to="/login" className="text-secondary">
             {t("auth.register.loginLink")}
           </NavLink>
         </p>

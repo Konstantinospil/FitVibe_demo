@@ -1,0 +1,100 @@
+{
+  "eyebrow": "Légal",
+  "title": "Conditions générales",
+  "description": "Veuillez lire attentivement nos Conditions générales avant d'utiliser FitVibe.",
+  "effectiveDate": "Date d'entrée en vigueur",
+  "effectiveDateValue": "2024-06-01",
+  "intro": "Ces Conditions générales / Contrat de licence utilisateur final (\"Conditions\") régissent votre accès et votre utilisation des sites Web FitVibe, applications mobiles, API et services connexes (collectivement, les \"Services\"). En utilisant les Services, vous acceptez ces Conditions ainsi que la Politique de confidentialité et la Politique des cookies.",
+  "section1": {
+    "title": "1. Éligibilité et inscription du compte",
+    "items": [
+      "Vous devez avoir au moins 16 ans ou l'âge requis par votre juridiction. Si vous acceptez au nom d'une organisation, vous déclarez avoir l'autorité de l'engager.",
+      "Vous êtes responsable de maintenir des informations de compte exactes et de protéger les identifiants de connexion. Notifiez immédiatement FitVibe de toute utilisation non autorisée."
+    ]
+  },
+  "section2": {
+    "title": "2. Octroi de licence et propriété intellectuelle",
+    "items": [
+      "FitVibe vous accorde une licence limitée, révocable, non exclusive et non transférable pour installer et utiliser les Services à des fins personnelles ou organisationnelles autorisées conformément à ces Conditions.",
+      "Les Services et tous les droits de propriété intellectuelle connexes appartiennent à FitVibe et à ses concédants de licence. Aucun droit n'est accordé sauf indication expresse."
+    ]
+  },
+  "section3": {
+    "title": "3. Utilisation acceptable",
+    "subtitle": "Vous acceptez de ne pas :",
+    "items": [
+      "Effectuer de rétro-ingénierie, modifier ou créer des œuvres dérivées des Services sauf dans la mesure permise par la loi.",
+      "Contourner les mesures de sécurité, accéder à des zones non publiques ou perturber l'intégrité du système.",
+      "Télécharger du contenu illégal, diffamatoire ou portant atteinte, ou du contenu incluant des données personnelles d'autrui sans autorisation.",
+      "Utiliser les Services pour fournir un diagnostic médical ou une réponse d'urgence ou pour s'engager dans du harcèlement, de la discrimination ou des comportements abusifs.",
+      "Utiliser des moyens automatisés pour accéder ou extraire des données sauf via les API approuvées et les limites de débit."
+    ]
+  },
+  "section4": {
+    "title": "4. Contenu utilisateur",
+    "items": [
+      "Vous conservez la propriété du contenu que vous soumettez (par exemple, journaux d'entraînement, commentaires, médias). Vous accordez à FitVibe une licence mondiale, sans redevance, pour héberger, utiliser, reproduire, modifier, publier et afficher ce contenu uniquement pour exploiter et améliorer les Services.",
+      "Vous déclarez avoir les droits de partager le contenu que vous soumettez et qu'il ne viole pas les droits d'autrui ou la loi applicable."
+    ]
+  },
+  "section5": {
+    "title": "5. Avis de santé et de sécurité",
+    "content": "FitVibe fournit des outils d'entraînement et de bien-être et ne fournit pas de conseils médicaux. Consultez un médecin avant de commencer de nouveaux programmes d'entraînement. Arrêtez d'utiliser les Services et consultez un médecin si vous ressentez des symptômes indésirables."
+  },
+  "section6": {
+    "title": "6. Services et intégrations tiers",
+    "content": "Certaines fonctionnalités reposent sur des services tiers (par exemple, analytiques, processeurs de paiement, intégrations d'appareils). Votre utilisation de ces services peut être soumise à leurs conditions. FitVibe n'est pas responsable des services tiers."
+  },
+  "section7": {
+    "title": "7. Frais et abonnements",
+    "items": [
+      "Si des abonnements ou des fonctionnalités payantes sont proposés, les prix et conditions de facturation seront présentés dans les Services. Des taxes peuvent s'appliquer. Les paiements sont traités par des processeurs tiers ; vous autorisez FitVibe et les processeurs à facturer les frais applicables.",
+      "FitVibe peut modifier les prix avec un préavis raisonnable, sous réserve de la loi applicable. Si vous n'acceptez pas les modifications, vous pouvez annuler avant que les nouveaux prix n'entrent en vigueur."
+    ]
+  },
+  "section8": {
+    "title": "8. Résiliation",
+    "items": [
+      "Vous pouvez cesser d'utiliser les Services à tout moment. Vous pouvez demander la suppression du compte comme décrit dans la Politique de confidentialité.",
+      "FitVibe peut suspendre ou résilier l'accès en cas de violation de ces Conditions, d'exigences légales ou pour protéger les Services ou les utilisateurs. Nous pouvons fournir un avis lorsque cela est possible."
+    ]
+  },
+  "section9": {
+    "title": "9. Avertissements",
+    "content": "Les Services sont fournis \"en l'état\" et \"selon disponibilité\" sans garanties d'aucune sorte, expresses ou implicites, y compris la qualité marchande, l'adéquation à un usage particulier, la non-contrefaçon et l'exactitude. Certaines juridictions n'autorisent pas l'exclusion de certaines garanties, donc ces exclusions peuvent ne pas s'appliquer."
+  },
+  "section10": {
+    "title": "10. Limitation de responsabilité",
+    "content": "Dans toute la mesure permise par la loi, FitVibe ne sera pas responsable des dommages indirects, accessoires, spéciaux, consécutifs ou punitifs, ou de la perte de profits, de données, de goodwill ou d'interruption d'activité, même si informé de la possibilité de tels dommages. La responsabilité totale de FitVibe pour les réclamations découlant ou liées aux Services ne dépassera pas le plus élevé de (a) les montants que vous avez payés à FitVibe pour les Services au cours des douze mois précédant la réclamation ou (b) 100 USD, sauf si interdit par la loi."
+  },
+  "section11": {
+    "title": "11. Indemnisation",
+    "content": "Vous acceptez d'indemniser et de dégager de toute responsabilité FitVibe, ses affiliés et leurs dirigeants, employés et agents de toute réclamation, dommage, perte ou dépense découlant de votre utilisation des Services ou de la violation de ces Conditions."
+  },
+  "section12": {
+    "title": "12. Droit applicable et règlement des différends",
+    "content": "Ces Conditions sont régies par les lois de l'État du Delaware, USA, sans égard aux principes de conflit de lois, sauf où le droit local impératif s'applique. Les différends doivent d'abord être soulevés auprès du support FitVibe. Lorsque permis par la loi, les différends seront résolus par arbitrage contraignant au Delaware sur une base individuelle, et vous renoncez aux actions collectives. Si l'arbitrage n'est pas permis, les différends seront résolus devant les tribunaux situés au Delaware. Les consommateurs peuvent avoir des droits statutaires pour intenter des actions dans leurs juridictions d'origine ; ces Conditions ne limitent pas ces droits."
+  },
+  "section13": {
+    "title": "13. Conformité aux exportations et sanctions",
+    "content": "Vous devez vous conformer aux lois applicables en matière de contrôle des exportations et de sanctions. Vous ne pouvez pas utiliser les Services si vous vous trouvez dans ou résidez habituellement dans des pays sous embargo par les États-Unis ou si vous êtes sur des listes de sanctions applicables."
+  },
+  "section14": {
+    "title": "14. Modifications des Services et Conditions",
+    "items": [
+      "Nous pouvons modifier ou interrompre des fonctionnalités pour améliorer les performances, la sécurité ou la conformité. Nous fournirons un avis des modifications importantes lorsque requis.",
+      "L'utilisation continue après que les modifications entrent en vigueur constitue une acceptation. Si vous n'acceptez pas, arrêtez d'utiliser les Services."
+    ]
+  },
+  "section15": {
+    "title": "15. Avis",
+    "items": [
+      "Avis à FitVibe : legal@fitvibe.example.com.",
+      "Avis à vous : par courriel, messages dans le produit ou autres moyens raisonnables. Vous êtes responsable de maintenir à jour les coordonnées."
+    ]
+  },
+  "section16": {
+    "title": "16. Contact",
+    "content": "Les questions concernant ces Conditions peuvent être envoyées à legal@fitvibe.example.com."
+  }
+}

@@ -113,9 +113,12 @@
     }
   },
   "footer": {
-    "note": "Conçu pour les athlètes qui aiment les progrès basés sur les données — Fitvibe",
+    "brand": "FitVibe",
     "terms": "Conditions générales",
-    "privacy": "Politique de confidentialité"
+    "privacy": "Politique de confidentialité",
+    "navigationLabel": "Navigation du pied de page",
+    "termsAriaLabel": "Voir les Conditions générales",
+    "privacyAriaLabel": "Voir la Politique de confidentialité"
   },
   "terms": {
     "eyebrow": "Légal",
@@ -220,6 +223,7 @@
     "EMAIL_SERVICE_UNAVAILABLE": "Service e-mail indisponible"
   },
   "validation": {
+    "required": "Remplissez ce champ",
     "passwordMinLength": "Le mot de passe doit contenir au moins 12 caractères",
     "passwordLowercase": "Le mot de passe doit inclure une lettre minuscule",
     "passwordUppercase": "Le mot de passe doit inclure une lettre majuscule",

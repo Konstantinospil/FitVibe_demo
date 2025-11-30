@@ -10,6 +10,16 @@ import deCommon from "./locales/de/common.json";
 import frCommon from "./locales/fr/common.json";
 import esCommon from "./locales/es/common.json";
 import elCommon from "./locales/el/common.json";
+import enTerms from "./locales/en/terms.json";
+import deTerms from "./locales/de/terms.json";
+import frTerms from "./locales/fr/terms.json";
+import esTerms from "./locales/es/terms.json";
+import elTerms from "./locales/el/terms.json";
+import enPrivacy from "./locales/en/privacy.json";
+import dePrivacy from "./locales/de/privacy.json";
+import frPrivacy from "./locales/fr/privacy.json";
+import esPrivacy from "./locales/es/privacy.json";
+import elPrivacy from "./locales/el/privacy.json";
 
 type SupportedLanguage = "en" | "de" | "fr" | "es" | "el";
 
@@ -18,13 +28,38 @@ const mergeTranslations = <T extends Record<string, unknown>, U extends Record<s
   extra: U,
 ) => ({ ...base, ...extra });
 
-const resources = {
-  en: { translation: mergeTranslations(enCommon, enAuth) },
-  de: { translation: mergeTranslations(deCommon, deAuth) },
-  fr: { translation: mergeTranslations(frCommon, frAuth) },
-  es: { translation: mergeTranslations(esCommon, esAuth) },
-  el: { translation: mergeTranslations(elCommon, elAuth) },
-} as const;
+const resources: Record<SupportedLanguage, { translation: Record<string, unknown> }> = {
+  en: {
+    translation: mergeTranslations(
+      mergeTranslations(mergeTranslations(enCommon, enAuth), enTerms),
+      enPrivacy,
+    ) as Record<string, unknown>,
+  },
+  de: {
+    translation: mergeTranslations(
+      mergeTranslations(mergeTranslations(deCommon, deAuth), deTerms),
+      dePrivacy,
+    ) as Record<string, unknown>,
+  },
+  fr: {
+    translation: mergeTranslations(
+      mergeTranslations(mergeTranslations(frCommon, frAuth), frTerms),
+      frPrivacy,
+    ) as Record<string, unknown>,
+  },
+  es: {
+    translation: mergeTranslations(
+      mergeTranslations(mergeTranslations(esCommon, esAuth), esTerms),
+      esPrivacy,
+    ) as Record<string, unknown>,
+  },
+  el: {
+    translation: mergeTranslations(
+      mergeTranslations(mergeTranslations(elCommon, elAuth), elTerms),
+      elPrivacy,
+    ) as Record<string, unknown>,
+  },
+};
 
 const FALLBACK_LANGUAGE: SupportedLanguage = "en";
 

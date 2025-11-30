@@ -1,6 +1,7 @@
 import React, { Suspense, lazy } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import Login from "../pages/Login";
+import PublicPageLayout from "../components/PublicPageLayout";
 
 const TwoFactorVerificationLogin = lazy(() => import("../pages/TwoFactorVerificationLogin"));
 const Register = lazy(() => import("../pages/Register"));
@@ -30,8 +31,22 @@ const PublicRoutes: React.FC = () => (
       <Route path="/verify" element={<VerifyEmail />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/reset-password" element={<ResetPassword />} />
-      <Route path="/terms" element={<Terms />} />
-      <Route path="/privacy" element={<Privacy />} />
+      <Route
+        path="/terms"
+        element={
+          <PublicPageLayout>
+            <Terms />
+          </PublicPageLayout>
+        }
+      />
+      <Route
+        path="/privacy"
+        element={
+          <PublicPageLayout>
+            <Privacy />
+          </PublicPageLayout>
+        }
+      />
       <Route path="/terms-reacceptance" element={<TermsReacceptance />} />
       <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>

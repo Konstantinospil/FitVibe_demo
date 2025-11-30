@@ -113,9 +113,12 @@
     }
   },
   "footer": {
-    "note": "Construido para atletas que aman el progreso basado en datos — Fitvibe",
+    "brand": "FitVibe",
     "terms": "Términos y Condiciones",
-    "privacy": "Política de Privacidad"
+    "privacy": "Política de Privacidad",
+    "navigationLabel": "Navegación del pie de página",
+    "termsAriaLabel": "Ver Términos y Condiciones",
+    "privacyAriaLabel": "Ver Política de Privacidad"
   },
   "terms": {
     "eyebrow": "Legal",
@@ -220,6 +223,7 @@
     "EMAIL_SERVICE_UNAVAILABLE": "Servicio de correo electrónico no disponible"
   },
   "validation": {
+    "required": "Completa este campo",
     "passwordMinLength": "La contraseña debe tener al menos 12 caracteres",
     "passwordLowercase": "La contraseña debe incluir una letra minúscula",
     "passwordUppercase": "La contraseña debe incluir una letra mayúscula",

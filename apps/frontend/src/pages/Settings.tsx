@@ -292,27 +292,22 @@ const Settings: React.FC = () => {
       title="Your preferences and account settings"
       description="Manage your profile, privacy, security, and account settings."
     >
-      <div style={{ display: "grid", gap: "1.5rem", maxWidth: "900px" }}>
+      <div className="grid grid--gap-15" style={{ maxWidth: "900px" }}>
         {/* Profile Settings */}
         <Card>
           <CardHeader>
-            <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+            <div className="flex flex--align-center flex--gap-075">
               <User size={20} />
               <CardTitle>Profile Settings</CardTitle>
             </div>
             <CardDescription>Update your display name and basic information</CardDescription>
           </CardHeader>
           <CardContent>
-            <div style={{ display: "grid", gap: "1rem" }}>
+            <div className="grid grid--gap-md">
               <div>
                 <label
                   htmlFor="display-name"
-                  style={{
-                    display: "block",
-                    marginBottom: "0.5rem",
-                    fontSize: "0.9rem",
-                    fontWeight: 600,
-                  }}
+                  className="form-label-text block mb-05 font-weight-600"
                 >
                   Display Name
                 </label>
@@ -322,28 +317,13 @@ const Settings: React.FC = () => {
                   value={displayName}
                   onChange={(e) => setDisplayName(e.target.value)}
                   placeholder={t("settings.profile.displayNamePlaceholder")}
-                  style={{
-                    width: "100%",
-                    padding: "0.75rem 1rem",
-                    borderRadius: "12px",
-                    border: "1px solid var(--color-border)",
-                    background: "var(--color-surface)",
-                    color: "var(--color-text-primary)",
-                    fontSize: "1rem",
-                  }}
+                  className="form-input"
+                  style={{ background: "var(--color-surface)" }}
                 />
               </div>
 
               <div>
-                <label
-                  htmlFor="email"
-                  style={{
-                    display: "block",
-                    marginBottom: "0.5rem",
-                    fontSize: "0.9rem",
-                    fontWeight: 600,
-                  }}
-                >
+                <label htmlFor="email" className="form-label-text block mb-05 font-weight-600">
                   {t("settings.profile.email")}
                 </label>
                 <input
@@ -351,38 +331,20 @@ const Settings: React.FC = () => {
                   type="email"
                   value={loadingUser ? "Loading..." : (userData?.email ?? "Not available")}
                   disabled
+                  className="form-input"
                   style={{
-                    width: "100%",
-                    padding: "0.75rem 1rem",
-                    borderRadius: "12px",
-                    border: "1px solid var(--color-border)",
                     background: "rgba(0, 0, 0, 0.2)",
                     color: "var(--color-text-secondary)",
-                    fontSize: "1rem",
                   }}
                 />
-                <p
-                  style={{
-                    marginTop: "0.5rem",
-                    fontSize: "0.85rem",
-                    color: "var(--color-text-muted)",
-                  }}
-                >
+                <p className="mt-05 text-085 text-muted">
                   {t("settings.profile.emailCannotChange")}
                 </p>
               </div>
 
               {/* Alias field (FR-009) */}
               <div>
-                <label
-                  htmlFor="alias"
-                  style={{
-                    display: "block",
-                    marginBottom: "0.5rem",
-                    fontSize: "0.9rem",
-                    fontWeight: 600,
-                  }}
-                >
+                <label htmlFor="alias" className="form-label-text block mb-05 font-weight-600">
                   {t("settings.profile.alias")}
                 </label>
                 <input
@@ -391,39 +353,16 @@ const Settings: React.FC = () => {
                   value={alias}
                   onChange={(e) => setAlias(e.target.value)}
                   placeholder={t("settings.profile.aliasPlaceholder")}
-                  style={{
-                    width: "100%",
-                    padding: "0.75rem 1rem",
-                    borderRadius: "12px",
-                    border: "1px solid var(--color-border)",
-                    background: "var(--color-surface)",
-                    color: "var(--color-text-primary)",
-                    fontSize: "1rem",
-                  }}
+                  className="form-input"
+                  style={{ background: "var(--color-surface)" }}
                 />
-                <p
-                  style={{
-                    marginTop: "0.5rem",
-                    fontSize: "0.85rem",
-                    color: "var(--color-text-muted)",
-                  }}
-                >
-                  {t("settings.profile.aliasHelp")}
-                </p>
+                <p className="mt-05 text-085 text-muted">{t("settings.profile.aliasHelp")}</p>
               </div>
 
               {/* Weight field (FR-009) */}
-              <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: "0.75rem" }}>
+              <div className="grid" style={{ gridTemplateColumns: "2fr 1fr", gap: "0.75rem" }}>
                 <div>
-                  <label
-                    htmlFor="weight"
-                    style={{
-                      display: "block",
-                      marginBottom: "0.5rem",
-                      fontSize: "0.9rem",
-                      fontWeight: 600,
-                    }}
-                  >
+                  <label htmlFor="weight" className="form-label-text block mb-05 font-weight-600">
                     {t("settings.profile.weight")}
                   </label>
                   <input
@@ -435,6 +374,7 @@ const Settings: React.FC = () => {
                     value={weight}
                     onChange={(e) => setWeight(e.target.value)}
                     placeholder={t("settings.profile.weightPlaceholder")}
+                    className="form-input"
                     style={{
                       width: "100%",
                       padding: "0.75rem 1rem",

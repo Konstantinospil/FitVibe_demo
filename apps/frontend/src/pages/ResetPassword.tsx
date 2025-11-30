@@ -1,23 +1,16 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { NavLink, useNavigate, useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import AuthPageLayout from "../components/AuthPageLayout";
 import { Button } from "../components/ui";
 import { resetPassword } from "../services/api";
 import { Eye, EyeOff } from "lucide-react";
-
-const inputStyle: React.CSSProperties = {
-  width: "100%",
-  borderRadius: "12px",
-  border: "1px solid var(--color-border)",
-  background: "var(--color-surface-glass)",
-  color: "var(--color-text-primary)",
-  padding: "0.85rem 1rem",
-  fontSize: "1rem",
-};
+import { useRequiredFieldValidation } from "../hooks/useRequiredFieldValidation";
 
 const ResetPassword: React.FC = () => {
   const { t } = useTranslation();
+  const formRef = useRef<HTMLFormElement>(null);
+  useRequiredFieldValidation(formRef, t);
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const token = searchParams.get("token") || "";
@@ -72,17 +65,7 @@ const ResetPassword: React.FC = () => {
         title={t("resetPassword.titleSuccess")}
         description={t("resetPassword.descSuccess")}
       >
-        <div
-          style={{
-            background: "rgba(34, 197, 94, 0.16)",
-            color: "#86efac",
-            borderRadius: "12px",
-            padding: "0.75rem 1rem",
-            fontSize: "0.95rem",
-          }}
-        >
-          {t("resetPassword.successText")}
-        </div>
+        <div className="form-success">{t("resetPassword.successText")}</div>
       </AuthPageLayout>
     );
   }
@@ -94,38 +77,33 @@ const ResetPassword: React.FC = () => {
       description={t("resetPassword.description")}
     >
       {/* eslint-disable-next-line @typescript-eslint/no-misused-promises */}
-      <form onSubmit={handleSubmit} style={{ display: "grid", gap: "1rem" }}>
+      <form ref={formRef} onSubmit={handleSubmit} className="form">
         <div
+          className="rounded-md p-md text-sm text-secondary"
           style={{
             background: "var(--color-surface-glass)",
             border: "1px solid var(--color-border)",
-            borderRadius: "12px",
-            padding: "1rem",
-            fontSize: "0.875rem",
-            color: "var(--color-text-secondary)",
           }}
         >
-          <div style={{ fontWeight: 600, marginBottom: "0.5rem" }}>
+          <div className="font-weight-600 mb-05">
             {t("resetPassword.passwordRequirements.title")}
           </div>
-          <ul style={{ margin: 0, paddingLeft: "1.5rem", display: "grid", gap: "0.25rem" }}>
-            <li>{t("resetPassword.passwordRequirements.minLength")}</li>
-            <li>{t("resetPassword.passwordRequirements.uppercase")}</li>
-            <li>{t("resetPassword.passwordRequirements.lowercase")}</li>
-            <li>{t("resetPassword.passwordRequirements.digit")}</li>
-            <li>{t("resetPassword.passwordRequirements.special")}</li>
+          <ul className="list">
+            <li className="list-item">{t("resetPassword.passwordRequirements.minLength")}</li>
+            <li className="list-item">{t("resetPassword.passwordRequirements.uppercase")}</li>
+            <li className="list-item">{t("resetPassword.passwordRequirements.lowercase")}</li>
+            <li className="list-item">{t("resetPassword.passwordRequirements.digit")}</li>
+            <li className="list-item">{t("resetPassword.passwordRequirements.special")}</li>
           </ul>
         </div>
-        <label style={{ display: "grid", gap: "0.35rem" }}>
-          <span style={{ fontSize: "0.95rem", color: "var(--color-text-secondary)" }}>
-            {t("resetPassword.newPasswordLabel")}
-          </span>
-          <div style={{ position: "relative" }}>
+        <label className="form-label">
+          <span className="form-label-text">{t("resetPassword.newPasswordLabel")}</span>
+          <div className="form-input-wrapper">
             <input
               name="password"
               type={showPassword ? "text" : "password"}
               placeholder={t("resetPassword.newPasswordPlaceholder")}
-              style={inputStyle}
+              className="form-input form-input--password"
               required
               minLength={12}
               value={password}
@@ -140,35 +118,21 @@ const ResetPassword: React.FC = () => {
               onMouseLeave={() => setShowPassword(false)}
               onTouchStart={() => setShowPassword(true)}
               onTouchEnd={() => setShowPassword(false)}
-              style={{
-                position: "absolute",
-                right: "1rem",
-                top: "50%",
-                transform: "translateY(-50%)",
-                background: "transparent",
-                border: "none",
-                color: "var(--color-text-muted)",
-                cursor: "pointer",
-                padding: "0.25rem",
-                display: "flex",
-                alignItems: "center",
-              }}
+              className="form-password-toggle"
               aria-label={showPassword ? t("auth.hidePassword") : t("auth.showPassword")}
             >
               {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
             </button>
           </div>
         </label>
-        <label style={{ display: "grid", gap: "0.35rem" }}>
-          <span style={{ fontSize: "0.95rem", color: "var(--color-text-secondary)" }}>
-            {t("resetPassword.confirmPasswordLabel")}
-          </span>
-          <div style={{ position: "relative" }}>
+        <label className="form-label">
+          <span className="form-label-text">{t("resetPassword.confirmPasswordLabel")}</span>
+          <div className="form-input-wrapper">
             <input
               name="confirmPassword"
               type={showConfirmPassword ? "text" : "password"}
               placeholder={t("resetPassword.confirmPasswordPlaceholder")}
-              style={inputStyle}
+              className="form-input form-input--password"
               required
               minLength={12}
               value={confirmPassword}
@@ -183,19 +147,7 @@ const ResetPassword: React.FC = () => {
               onMouseLeave={() => setShowConfirmPassword(false)}
               onTouchStart={() => setShowConfirmPassword(true)}
               onTouchEnd={() => setShowConfirmPassword(false)}
-              style={{
-                position: "absolute",
-                right: "1rem",
-                top: "50%",
-                transform: "translateY(-50%)",
-                background: "transparent",
-                border: "none",
-                color: "var(--color-text-muted)",
-                cursor: "pointer",
-                padding: "0.25rem",
-                display: "flex",
-                alignItems: "center",
-              }}
+              className="form-password-toggle"
               aria-label={showConfirmPassword ? t("auth.hidePassword") : t("auth.showPassword")}
             >
               {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
@@ -203,31 +155,14 @@ const ResetPassword: React.FC = () => {
           </div>
         </label>
         {error ? (
-          <div
-            role="alert"
-            style={{
-              background: "rgba(248, 113, 113, 0.16)",
-              color: "var(--color-text-primary)",
-              borderRadius: "12px",
-              padding: "0.75rem 1rem",
-              fontSize: "0.95rem",
-            }}
-          >
+          <div role="alert" className="form-error">
             {error}
           </div>
         ) : null}
         <Button type="submit" fullWidth isLoading={isSubmitting} disabled={isSubmitting}>
           {isSubmitting ? t("resetPassword.resetting") : t("resetPassword.resetButton")}
         </Button>
-        <NavLink
-          to="/login"
-          style={{
-            display: "block",
-            textAlign: "center",
-            color: "var(--color-text-secondary)",
-            fontSize: "0.9rem",
-          }}
-        >
+        <NavLink to="/login" className="form-link form-link--block">
           {t("resetPassword.backToLogin")}
         </NavLink>
       </form>

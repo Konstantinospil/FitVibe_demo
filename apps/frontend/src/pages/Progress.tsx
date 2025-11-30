@@ -15,36 +15,6 @@ import {
 import { logger } from "../utils/logger";
 import { useToast } from "../contexts/ToastContext";
 
-const cardStyle: React.CSSProperties = {
-  display: "grid",
-  gap: "1rem",
-  background: "var(--color-surface-glass)}",
-  borderRadius: "18px",
-  padding: "1.75rem",
-  border: "1px solid var(--color-border)}",
-};
-
-const selectStyle: React.CSSProperties = {
-  padding: "0.5rem 1rem",
-  borderRadius: "8px",
-  border: "1px solid var(--color-border)}",
-  background: "rgba(15, 23, 42, 0.5)}",
-  color: "var(--color-text-primary)}",
-  fontSize: "0.9rem",
-  cursor: "pointer",
-};
-
-const toggleButtonStyle = (active: boolean): React.CSSProperties => ({
-  padding: "0.5rem 1rem",
-  borderRadius: "8px",
-  border: `1px solid ${active ? "rgb(52, 211, 153)}" : "var(--color-border)}"}`,
-  background: active ? "rgba(52, 211, 153, 0.15)}" : "rgba(15, 23, 42, 0.5)}",
-  color: active ? "rgb(52, 211, 153)}" : "var(--color-text-primary)}",
-  fontSize: "0.9rem",
-  cursor: "pointer",
-  fontWeight: active ? 600 : 400,
-});
-
 // Helper to calculate date range from period
 const calculateDateRange = (period: number): DateRange => {
   const to = new Date().toISOString().split("T")[0];
@@ -154,17 +124,8 @@ const Progress: React.FC = () => {
   );
 
   const chartErrorFallback = (chartName: string) => (
-    <div
-      style={{
-        padding: "2rem",
-        textAlign: "center",
-        color: "var(--color-text-secondary)}",
-        background: "rgba(248, 113, 113, 0.1)}",
-        borderRadius: "12px",
-        border: "1px solid rgba(248, 113, 113, 0.3)}",
-      }}
-    >
-      <p style={{ margin: 0, marginBottom: "1rem" }}>
+    <div className="empty-state alert alert--error rounded-md">
+      <p className="m-0 mb-1">
         {t("progress.chartError") || `Failed to render ${chartName} chart`}
       </p>
       <Button type="button" size="sm" variant="secondary" onClick={() => window.location.reload()}>
@@ -179,26 +140,25 @@ const Progress: React.FC = () => {
       title={t("progress.title") || t("progress.title")}
       description={t("progress.description")}
     >
-      <div style={{ display: "grid", gap: "1.5rem" }}>
+      <div className="grid grid--gap-15">
         {/* Controls */}
-        <div
-          style={{
-            display: "grid",
-            gap: "1rem",
-          }}
-        >
+        <div className="grid grid--gap-md">
           {/* Range Mode Toggle */}
-          <div style={{ display: "flex", gap: "0.5rem" }}>
+          <div className="flex flex--gap-05">
             <button
               type="button"
-              style={toggleButtonStyle(rangeMode === "preset")}
+              className={
+                rangeMode === "preset" ? "toggle-button toggle-button--active" : "toggle-button"
+              }
               onClick={() => setRangeMode("preset")}
             >
               {t("progress.presetRange") || t("progress.presetRange")}
             </button>
             <button
               type="button"
-              style={toggleButtonStyle(rangeMode === "custom")}
+              className={
+                rangeMode === "custom" ? "toggle-button toggle-button--active" : "toggle-button"
+              }
               onClick={() => setRangeMode("custom")}
             >
               {t("progress.customRange") || t("progress.customRange")}
@@ -206,23 +166,15 @@ const Progress: React.FC = () => {
           </div>
 
           {/* Controls Row */}
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              flexWrap: "wrap",
-              gap: "1rem",
-            }}
-          >
-            <div style={{ display: "flex", gap: "1rem", alignItems: "center", flexWrap: "wrap" }}>
+          <div className="flex flex--justify-between flex--align-center flex--wrap flex--gap-md">
+            <div className="flex flex--gap-md flex--align-center flex--wrap">
               {rangeMode === "preset" ? (
-                <label style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
-                  <span style={{ fontSize: "0.9rem", color: "var(--color-text-secondary)}" }}>
+                <label className="flex flex--gap-05 flex--align-center">
+                  <span className="text-09 text-secondary">
                     {t("progress.period") || "Period"}:
                   </span>
                   <select
-                    style={selectStyle}
+                    className="form-input"
                     value={period}
                     onChange={(e) => setPeriod(Number(e.target.value))}
                   >
@@ -234,12 +186,12 @@ const Progress: React.FC = () => {
               ) : (
                 <DateRangePicker value={customRange} onChange={setCustomRange} />
               )}
-              <label style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
-                <span style={{ fontSize: "0.9rem", color: "var(--color-text-secondary)}" }}>
+              <label className="flex flex--gap-05 flex--align-center">
+                <span className="text-09 text-secondary">
                   {t("progress.groupBy") || "Group by"}:
                 </span>
                 <select
-                  style={selectStyle}
+                  className="form-input"
                   value={groupBy}
                   onChange={(e) => setGroupBy(e.target.value as "day" | "week")}
                 >
@@ -262,18 +214,12 @@ const Progress: React.FC = () => {
         </div>
 
         {/* Volume Trend Chart */}
-        <section style={cardStyle}>
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-            }}
-          >
-            <strong style={{ fontSize: "1.05rem" }}>
+        <section className="card">
+          <div className="flex flex--justify-between flex--align-center">
+            <strong className="text-105">
               {t("progress.volumeTrend") || t("progress.volumeTrend")}
             </strong>
-            <span style={{ color: "var(--color-text-secondary)}", fontSize: "0.9rem" }}>
+            <span className="text-09 text-secondary">
               {effectiveDateRange.from} → {effectiveDateRange.to}
             </span>
           </div>
@@ -329,7 +275,7 @@ const Progress: React.FC = () => {
         </section>
 
         {/* Sessions Trend Chart */}
-        <section style={cardStyle}>
+        <section className="card">
           <div
             style={{
               display: "flex",
@@ -393,7 +339,7 @@ const Progress: React.FC = () => {
         </section>
 
         {/* Average Intensity Trend Chart */}
-        <section style={cardStyle}>
+        <section className="card">
           <div
             style={{
               display: "flex",
@@ -457,7 +403,7 @@ const Progress: React.FC = () => {
         </section>
 
         {/* Exercise Breakdown */}
-        <section style={cardStyle}>
+        <section className="card">
           <strong style={{ fontSize: "1.05rem" }}>
             {t("progress.exerciseBreakdown") || t("progress.exerciseBreakdown")}
           </strong>

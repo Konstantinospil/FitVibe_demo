@@ -4,6 +4,7 @@ import { useAuth } from "../contexts/AuthContext";
 import { Avatar, Button } from "../components/ui";
 import LanguageSwitcher from "../components/LanguageSwitcher";
 import ThemeToggle from "../components/ThemeToggle";
+import Footer from "../components/Footer";
 import { useTranslation } from "react-i18next";
 import { LogOut, Home, User, type LucideIcon } from "lucide-react";
 import logoFull from "../assets/logo_full.ico";
@@ -155,57 +156,7 @@ const MainLayout: React.FC = () => {
       <main id="main-content" style={{ flex: 1, display: "flex", flexDirection: "column" }}>
         <Outlet />
       </main>
-      <footer
-        style={{
-          padding: "2rem 0",
-          textAlign: "center",
-          fontSize: "var(--font-size-xs)",
-          color: "var(--color-text-muted)",
-        }}
-      >
-        <div style={{ marginBottom: "0.5rem" }}>{t("footer.note")}</div>
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "center",
-            gap: "1.5rem",
-            flexWrap: "wrap",
-          }}
-        >
-          <NavLink
-            to="/terms"
-            style={{
-              color: "var(--color-text-muted)",
-              textDecoration: "none",
-              transition: "color 150ms ease",
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.color = "var(--color-text-secondary)";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.color = "var(--color-text-muted)";
-            }}
-          >
-            {t("footer.terms")}
-          </NavLink>
-          <NavLink
-            to="/privacy"
-            style={{
-              color: "var(--color-text-muted)",
-              textDecoration: "none",
-              transition: "color 150ms ease",
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.color = "var(--color-text-secondary)";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.color = "var(--color-text-muted)";
-            }}
-          >
-            {t("footer.privacy")}
-          </NavLink>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 };
