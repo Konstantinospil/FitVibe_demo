@@ -1,4 +1,4 @@
-import dotenv from "dotenv";
+import * as dotenv from "dotenv";
 import type { Knex } from "knex";
 import path from "node:path";
 
