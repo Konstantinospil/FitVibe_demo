@@ -151,6 +151,7 @@ describe("LoginFormContent", () => {
           pendingSessionId: "session-123",
           from: "/",
         },
+        replace: false,
       });
     });
   });

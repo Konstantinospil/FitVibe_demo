@@ -16,13 +16,26 @@ export default defineConfig(() => {
     resolve: {
       alias: {
         "@": fileURLToPath(new URL("./src", import.meta.url)),
-        // Explicitly resolve @testing-library/jest-dom for setup files in tests/frontend/
+        // Explicitly resolve testing libraries for setup files in tests/frontend/
         ...(isVitest
           ? {
               "@testing-library/jest-dom": pathResolve(
                 root,
                 "node_modules/@testing-library/jest-dom",
               ),
+              "@testing-library/react": pathResolve(root, "node_modules/@testing-library/react"),
+              "@testing-library/user-event": pathResolve(
+                root,
+                "node_modules/@testing-library/user-event",
+              ),
+              "@testing-library/dom": pathResolve(root, "node_modules/@testing-library/dom"),
+              "react-router-dom": pathResolve(root, "node_modules/react-router-dom"),
+              "react-router": pathResolve(root, "node_modules/react-router"),
+              "@remix-run/router": pathResolve(root, "node_modules/@remix-run/router"),
+              i18next: pathResolve(root, "node_modules/i18next"),
+              "react-i18next": pathResolve(root, "node_modules/react-i18next"),
+              "@tanstack/react-query": pathResolve(root, "node_modules/@tanstack/react-query"),
+              "axios-mock-adapter": pathResolve(root, "node_modules/axios-mock-adapter"),
               // Resolve relative imports from tests/frontend/ to apps/frontend/src/
               // This allows tests in tests/frontend/ to use ../src to import from apps/frontend/src/
               "../src": pathResolve(root, "src"),
@@ -76,18 +89,26 @@ export default defineConfig(() => {
       server: {
         deps: {
           inline: [
+            // Explicit package names first
             "@testing-library/jest-dom",
             "@testing-library/react",
             "@testing-library/user-event",
             "@testing-library/dom",
-            "axios-mock-adapter",
             "react-router-dom",
             "react-router",
             "@remix-run/router",
             "i18next",
             "react-i18next",
+            "@tanstack/react-query",
+            "axios-mock-adapter",
+            "axios",
+            "recharts",
+            // Regex patterns to catch all sub-packages
             /^@testing-library\//,
             /^vitest\//,
+            /^react-router/,
+            /^@remix-run\//,
+            /^@tanstack\//,
           ],
         },
       },

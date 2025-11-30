@@ -57,8 +57,9 @@ describe("ErrorBoundary", () => {
 
     expect(screen.getByText("Something went wrong")).toBeInTheDocument();
     expect(screen.getByText("Test error")).toBeInTheDocument();
-    expect(screen.getByText("Try again")).toBeInTheDocument();
-    const button = screen.getByText("Try again").closest("button");
+    const tryAgainText = screen.getByText(/try again/i);
+    expect(tryAgainText).toBeInTheDocument();
+    const button = tryAgainText.closest("button");
     expect(button).toBeInTheDocument();
   });
 
@@ -99,7 +100,7 @@ describe("ErrorBoundary", () => {
     );
 
     // Initial error state - find button by text
-    const tryAgainButton = screen.getByText("Try again").closest("button");
+    const tryAgainButton = screen.getByText(/try again/i).closest("button");
     expect(tryAgainButton).toBeInTheDocument();
     expect(screen.getByText("Something went wrong")).toBeInTheDocument();
 
@@ -114,7 +115,7 @@ describe("ErrorBoundary", () => {
     expect(screen.getByText("Something went wrong")).toBeInTheDocument();
 
     // Click Try Again to reset and render the (now non-throwing) child
-    const tryAgainBtn = screen.getByText("Try again").closest("button");
+    const tryAgainBtn = screen.getByText(/try again/i).closest("button");
     if (tryAgainBtn) {
       fireEvent.click(tryAgainBtn);
     }

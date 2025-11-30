@@ -144,6 +144,7 @@ describe("Login", () => {
           pendingSessionId: "pending123",
           from: "/",
         },
+        replace: false,
       });
     });
   });

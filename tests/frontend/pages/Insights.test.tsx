@@ -247,19 +247,16 @@ describe("Insights page", () => {
     anchorElement.click = clickSpy;
     anchorElement.remove = removeSpy;
 
+    // Save original implementation before spying
+    const originalCreateElement = document.createElement;
     // Spy on createElement
     const createElementSpy = vi.spyOn(document, "createElement");
-    const originalImpl = createElementSpy.getOriginalImplementation();
     createElementSpy.mockImplementation((tagName: string) => {
       if (tagName === "a") {
         return anchorElement;
       }
       // For other elements, use the original implementation
-      if (originalImpl) {
-        return originalImpl.call(document, tagName);
-      }
-      // Fallback - should not happen if document is available
-      throw new Error(`Cannot create element ${tagName}: document.createElement not available`);
+      return originalCreateElement.call(document, tagName);
     });
 
     renderInsights();

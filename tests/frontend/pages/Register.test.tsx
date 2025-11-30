@@ -40,6 +40,7 @@ void testI18n.use(initReactI18next).init({
         "auth.showPassword": "Show password",
         "auth.hidePassword": "Hide password",
         "auth.register.passwordMismatch": "Passwords do not match",
+        "auth.register.passwordsDoNotMatch": "Passwords do not match",
         "auth.register.error": "Registration failed. Please try again.",
         "auth.register.acceptTerms": "I have read and accept the",
         "auth.register.termsLink": "Terms and Conditions",

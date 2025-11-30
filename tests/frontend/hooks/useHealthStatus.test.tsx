@@ -63,7 +63,7 @@ describe("useHealthStatus", () => {
     expect(result.current.error).toBeDefined();
   });
 
-  it("should return loading state initially", () => {
+  it("should return loading state initially", async () => {
     mockApi.getHealthStatus.mockImplementation(
       () =>
         new Promise((resolve) => {
@@ -77,6 +77,11 @@ describe("useHealthStatus", () => {
 
     expect(result.current.isLoading).toBe(true);
     expect(result.current.data).toBeUndefined();
+
+    // Wait for the promise to resolve to prevent leaving open timer handles
+    await waitFor(() => {
+      expect(result.current.isSuccess).toBe(true);
+    });
   });
 
   it("should refetch on configured interval", async () => {

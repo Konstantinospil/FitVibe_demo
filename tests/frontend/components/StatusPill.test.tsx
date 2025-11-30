@@ -9,8 +9,8 @@ vi.mock("react-i18next", () => ({
     t: (key: string, options?: { defaultValue?: string }) => {
       const translations: Record<string, string> = {
         "status.checking": "Checking",
-        "status.online": "Online",
-        "status.offline": "Offline",
+        "status.online": "Server online",
+        "status.offline": "Server offline",
       };
       return translations[key] || options?.defaultValue || key;
     },
