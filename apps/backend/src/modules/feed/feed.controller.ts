@@ -27,7 +27,11 @@ import {
   unfollowUserByAlias,
   unblockUserByAlias,
 } from "./feed.service.js";
-import { handleIdempotentRequest, getIdempotencyKey, getRouteTemplate } from "../common/idempotency.helpers.js";
+import {
+  handleIdempotentRequest,
+  getIdempotencyKey,
+  getRouteTemplate,
+} from "../common/idempotency.helpers.js";
 import { resolveIdempotency, persistIdempotencyResult } from "../common/idempotency.service.js";
 
 function resolveViewerId(req: Request): string | null {

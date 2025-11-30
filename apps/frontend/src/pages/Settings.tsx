@@ -68,7 +68,6 @@ const Settings: React.FC = () => {
   useEffect(() => {
     void loadUserData();
     void load2FAStatus();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Intentionally empty - these functions are stable and should only run once on mount
 
   const loadUserData = async () => {
@@ -187,8 +186,8 @@ const Settings: React.FC = () => {
     } catch (error) {
       logger.apiError("Failed to save preferences", error, "/api/v1/users/me", "PATCH");
       const errorMessage =
-        (error as { response?: { data?: { error?: { message?: string } } } })?.response?.data
-          ?.error?.message ?? t("settings.preferences.saveError");
+        (error as { response?: { data?: { error?: { message?: string } } } })?.response?.data?.error
+          ?.message ?? t("settings.preferences.saveError");
       setSaveError(errorMessage);
     } finally {
       setIsSaving(false);
@@ -545,12 +544,8 @@ const Settings: React.FC = () => {
                 >
                   <option value="">{t("common.loading")}</option>
                   <option value="rarely">{t("settings.profile.trainingFrequencyRarely")}</option>
-                  <option value="1_2_per_week">
-                    {t("settings.profile.trainingFrequency1_2")}
-                  </option>
-                  <option value="3_4_per_week">
-                    {t("settings.profile.trainingFrequency3_4")}
-                  </option>
+                  <option value="1_2_per_week">{t("settings.profile.trainingFrequency1_2")}</option>
+                  <option value="3_4_per_week">{t("settings.profile.trainingFrequency3_4")}</option>
                   <option value="5_plus_per_week">
                     {t("settings.profile.trainingFrequency5Plus")}
                   </option>

@@ -466,13 +466,14 @@ export async function checkAliasAvailable(
   excludeUserId?: string,
   trx?: Knex.Transaction,
 ): Promise<boolean> {
-  const query = withDb(trx)<ProfileRow>(PROFILES_TABLE)
-    .whereRaw("LOWER(alias) = ?", [alias.toLowerCase()]);
-  
+  const query = withDb(trx)<ProfileRow>(PROFILES_TABLE).whereRaw("LOWER(alias) = ?", [
+    alias.toLowerCase(),
+  ]);
+
   if (excludeUserId) {
     query.where("user_id", "!=", excludeUserId);
   }
-  
+
   const existing = await query.first();
   return !existing;
 }
@@ -485,16 +486,14 @@ export async function updateProfileAlias(
   const exec = withDb(trx);
   // Ensure profile exists
   const existing = await exec<ProfileRow>(PROFILES_TABLE).where({ user_id: userId }).first();
-  
+
   if (existing) {
-    return exec(PROFILES_TABLE)
-      .where({ user_id: userId })
-      .update({
-        alias,
-        updated_at: new Date().toISOString(),
-      });
+    return exec(PROFILES_TABLE).where({ user_id: userId }).update({
+      alias,
+      updated_at: new Date().toISOString(),
+    });
   }
-  
+
   // Create profile if it doesn't exist
   return exec(PROFILES_TABLE).insert({
     user_id: userId,
@@ -518,7 +517,7 @@ export async function insertUserMetric(
 ): Promise<string> {
   const exec = withDb(trx);
   const now = new Date().toISOString();
-  const [record] = await exec(USER_METRICS_TABLE)
+  const [record] = (await exec(USER_METRICS_TABLE)
     .insert({
       id: crypto.randomUUID(),
       user_id: userId,
@@ -529,7 +528,7 @@ export async function insertUserMetric(
       recorded_at: now,
       created_at: now,
     })
-    .returning("id");
+    .returning("id")) as Array<{ id: string }>;
   return record.id;
 }
 
@@ -547,7 +546,7 @@ export async function getLatestUserMetrics(
     .orderBy("recorded_at", "desc")
     .select(["weight", "unit", "fitness_level_code", "training_frequency"])
     .first();
-  
+
   return row
     ? {
         weight: row.weight,

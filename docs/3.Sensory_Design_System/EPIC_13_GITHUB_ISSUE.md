@@ -132,3 +132,5 @@ Update FitVibe's accessibility compliance from WCAG 2.1 AA to WCAG 2.2 AA by imp
 **Implementation Phase**: 🔄 Pending
 
 - Code changes for all 9 new criteria need to be implemented
+
+

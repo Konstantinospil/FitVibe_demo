@@ -39,9 +39,13 @@ export function decodeJwt(token: string | null): JwtPayload | null {
     const decoded = atob(payload.replace(/-/g, "+").replace(/_/g, "/"));
     return JSON.parse(decoded) as JwtPayload;
   } catch (error) {
-    logger.error("Failed to decode JWT", error instanceof Error ? error : new Error(String(error)), {
-      context: "jwt",
-    });
+    logger.error(
+      "Failed to decode JWT",
+      error instanceof Error ? error : new Error(String(error)),
+      {
+        context: "jwt",
+      },
+    );
     return null;
   }
 }

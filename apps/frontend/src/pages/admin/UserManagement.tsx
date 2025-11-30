@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Users, Search, Ban, UserX, Trash2, Shield } from "lucide-react";
 import {
   Card,
@@ -21,6 +22,7 @@ import { useToast } from "../../contexts/ToastContext";
 import { ConfirmDialog } from "../../components/ConfirmDialog";
 
 const UserManagement: React.FC = () => {
+  const { t } = useTranslation();
   const toast = useToast();
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(false);

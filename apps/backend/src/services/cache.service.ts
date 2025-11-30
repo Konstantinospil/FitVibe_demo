@@ -30,7 +30,10 @@ export class CacheService {
         });
 
         this.redis.on("error", (error: Error) => {
-          logger.warn({ error: error.message }, "[Cache] Redis connection error, falling back to in-memory");
+          logger.warn(
+            { error: error.message },
+            "[Cache] Redis connection error, falling back to in-memory",
+          );
           this.useRedis = false;
         });
 
@@ -39,12 +42,20 @@ export class CacheService {
         });
 
         // Attempt to connect (non-blocking)
-        this.redis.connect().catch((error) => {
-          logger.warn({ error: error.message }, "[Cache] Redis connection failed, using in-memory cache");
+        this.redis.connect().catch((error: unknown) => {
+          logger.warn(
+            {
+              error: error instanceof Error ? error.message : String(error),
+            },
+            "[Cache] Redis connection failed, using in-memory cache",
+          );
           this.useRedis = false;
         });
       } catch (error) {
-        logger.warn({ error: error instanceof Error ? error.message : String(error) }, "[Cache] Redis initialization failed, using in-memory cache");
+        logger.warn(
+          { error: error instanceof Error ? error.message : String(error) },
+          "[Cache] Redis initialization failed, using in-memory cache",
+        );
         this.useRedis = false;
       }
     }
@@ -64,7 +75,10 @@ export class CacheService {
         }
         return JSON.parse(value) as T;
       } catch (error) {
-        logger.warn({ error: error instanceof Error ? error.message : String(error), key }, "[Cache] Redis get failed, falling back to in-memory");
+        logger.warn(
+          { error: error instanceof Error ? error.message : String(error), key },
+          "[Cache] Redis get failed, falling back to in-memory",
+        );
         // Fallback to in-memory
         return this.getFromMemory<T>(key);
       }
@@ -90,7 +104,10 @@ export class CacheService {
         }
         return;
       } catch (error) {
-        logger.warn({ error: error instanceof Error ? error.message : String(error), key }, "[Cache] Redis set failed, falling back to in-memory");
+        logger.warn(
+          { error: error instanceof Error ? error.message : String(error), key },
+          "[Cache] Redis set failed, falling back to in-memory",
+        );
         // Fallback to in-memory
         this.setInMemory(key, value, ttlSeconds);
         return;
@@ -110,7 +127,10 @@ export class CacheService {
         await this.redis.del(key);
         return;
       } catch (error) {
-        logger.warn({ error: error instanceof Error ? error.message : String(error), key }, "[Cache] Redis delete failed, falling back to in-memory");
+        logger.warn(
+          { error: error instanceof Error ? error.message : String(error), key },
+          "[Cache] Redis delete failed, falling back to in-memory",
+        );
         // Fallback to in-memory
         this.store.delete(key);
         return;
@@ -129,7 +149,10 @@ export class CacheService {
         await this.redis.flushdb();
         return;
       } catch (error) {
-        logger.warn({ error: error instanceof Error ? error.message : String(error) }, "[Cache] Redis clear failed, falling back to in-memory");
+        logger.warn(
+          { error: error instanceof Error ? error.message : String(error) },
+          "[Cache] Redis clear failed, falling back to in-memory",
+        );
         // Fallback to in-memory
         this.store.clear();
         return;

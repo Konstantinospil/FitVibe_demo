@@ -47,18 +47,24 @@ function normalizeError(err: unknown): HttpError {
 export function errorHandler(err: unknown, req: Request, res: Response, _next: NextFunction) {
   const normalized = normalizeError(err);
   const requestId = typeof res.locals.requestId === "string" ? res.locals.requestId : undefined;
-  
+
   // Extract user ID from request
-  const userId = req.user && typeof req.user === "object" && "sub" in req.user 
-    ? (req.user as { sub?: unknown }).sub 
-    : undefined;
+  const userId =
+    req.user && typeof req.user === "object" && "sub" in req.user
+      ? (req.user as { sub?: unknown }).sub
+      : undefined;
 
   // Safely extract body keys for logging (avoid logging sensitive data)
-  const bodyKeys = req.method !== "GET" && req.method !== "HEAD" && req.body && typeof req.body === "object" && !Array.isArray(req.body)
-    ? Object.keys(req.body).length > 0 
-      ? { keys: Object.keys(req.body) } 
-      : undefined
-    : undefined;
+  const bodyKeys =
+    req.method !== "GET" &&
+    req.method !== "HEAD" &&
+    req.body &&
+    typeof req.body === "object" &&
+    !Array.isArray(req.body)
+      ? Object.keys(req.body as Record<string, unknown>).length > 0
+        ? { keys: Object.keys(req.body as Record<string, unknown>) }
+        : undefined
+      : undefined;
 
   logger.error(
     {

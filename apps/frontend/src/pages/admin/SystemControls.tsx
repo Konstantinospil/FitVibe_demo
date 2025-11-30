@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { Power, PowerOff, Activity, Clock, AlertCircle } from "lucide-react";
 import {
   Card,
@@ -21,6 +22,7 @@ import { useToast } from "../../contexts/ToastContext";
 import { ConfirmDialog } from "../../components/ConfirmDialog";
 
 const SystemControls: React.FC = () => {
+  const { t } = useTranslation();
   const toast = useToast();
   const [readOnlyStatus, setReadOnlyStatus] = useState<SystemReadOnlyStatus | null>(null);
   const [healthStatus, setHealthStatus] = useState<HealthStatusResponse | null>(null);
