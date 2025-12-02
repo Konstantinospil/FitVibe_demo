@@ -4,7 +4,7 @@
  * Tests both account-level (email+IP) and IP-based brute force protection
  */
 
-import { describe, it, expect, beforeEach, afterEach } from "@jest/globals";
+import { describe, it, expect, beforeAll, beforeEach, afterEach } from "@jest/globals";
 import db from "../../../../apps/backend/src/db/index.js";
 import {
   getFailedAttempt,
@@ -23,6 +23,11 @@ import {
 import { truncateAll } from "../../../setup/test-helpers";
 
 describe("Brute Force Protection Repository", () => {
+  beforeAll(async () => {
+    // Run migrations to ensure tables exist
+    await db.migrate.latest();
+  });
+
   beforeEach(async () => {
     await truncateAll();
   });
