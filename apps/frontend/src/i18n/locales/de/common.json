@@ -331,22 +331,29 @@
     "successText": "Du kannst dich jetzt mit deinem neuen Passwort anmelden.",
     "passwordMismatch": "Passwörter stimmen nicht überein",
     "invalidToken": "Ungültiger Reset-Token. Bitte fordere ein neues Passwort-Reset an.",
-    "errorReset": "Fehler beim Zurücksetzen des Passworts"
-  },
-  "logger": {
-    "eyebrow": "Logbuch",
-    "title": "Erfasse jede Wiederholung ohne den Flow zu verlieren.",
-    "description": "Ob im Fitnessstudio oder beim Synchronisieren von Wearables, der Logger verfolgt Sätze, RPE und Tempo, damit deine Daten Coach-bereit bleiben.",
-    "exercise": "Übung",
-    "sets": "Sätze",
-    "reps": "Wiederholungen",
-    "load": "Last"
+    "errorReset": "Fehler beim Zurücksetzen des Passworts",
+    "passwordRequirements": {
+      "title": "Passwort-Anforderungen:",
+      "minLength": "Mindestens 12 Zeichen",
+      "uppercase": "Mindestens ein Großbuchstabe (A-Z)",
+      "lowercase": "Mindestens ein Kleinbuchstabe (a-z)",
+      "digit": "Mindestens eine Ziffer (0-9)",
+      "special": "Mindestens ein Sonderzeichen (!@#$%^&*...)"
+    }
   },
   "planner": {
     "eyebrow": "Einheiten-Architektur",
     "title": "Gestalte Trainingsblöcke mit Absicht.",
     "description": "Ziehe, dupliziere und periodisiere Workouts. Der Planer hält Intensität, Volumen und Deload-Verhältnisse im Einklang mit deinem Makrozyklus.",
-    "editBlock": "Block bearbeiten"
+    "editBlock": "Block bearbeiten",
+    "sessionTitlePlaceholder": "z.B., Oberkörper-Kraft",
+    "notesPlaceholder": "Einheitsnotizen, Trainingsziele oder Kontext hinzufügen...",
+    "exerciseSearchPlaceholder": "Nach Übungen suchen (z.B., Kniebeuge, Bankdrücken)...",
+    "repsPlaceholder": "10",
+    "weightPlaceholder": "80",
+    "rpePlaceholder": "7",
+    "speedPlaceholder": "90",
+    "exerciseNotesPlaceholder": "z.B., Fokus auf Form, langsameres Tempo bei Exzentrik"
   },
   "sessions": {
     "eyebrow": "Training-Management",
@@ -521,5 +528,10 @@
       "vibe": "Vibe",
       "date": "Datum"
     }
+  },
+  "logger": {
+    "repsPlaceholder": "10",
+    "weightPlaceholder": "80",
+    "rpePlaceholder": "7"
   }
 }

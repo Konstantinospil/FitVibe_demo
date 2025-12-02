@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, fireEvent } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import VerifyEmail from "../../src/pages/VerifyEmail";
@@ -146,17 +146,23 @@ describe("VerifyEmail", () => {
   it("handles button clicks for navigation", async () => {
     vi.mocked(rawHttpClient.get).mockResolvedValue({ data: { success: true } });
 
-    renderWithProviders();
+    const { getByRole } = renderWithProviders();
 
     await waitFor(() => {
       expect(screen.getByText("Email Verified!")).toBeInTheDocument();
     });
 
-    const loginButton = screen.getByRole("button", { name: /go to login/i });
-    fireEvent.click(loginButton);
-
-    // Button should be present and clickable
+    // Wait for button to be present before clicking
+    const loginButton = await screen.findByRole("button", { name: /go to login/i });
     expect(loginButton).toBeInTheDocument();
+    
+    // Verify button is clickable
+    expect(loginButton).not.toBeDisabled();
+    
+    fireEvent.click(loginButton);
+    
+    // After clicking, the button should trigger navigation
+    // The component may unmount or navigate, so we just verify it was clickable
   });
 
   it("handles error without response object", async () => {

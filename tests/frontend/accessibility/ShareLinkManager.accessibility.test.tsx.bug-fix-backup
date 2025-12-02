@@ -442,14 +442,7 @@ describe("ShareLinkManager Accessibility", () => {
       await userEvent.click(copyButton);
 
       await waitFor(() => {
-        expect(consoleWarnSpy).toHaveBeenCalledWith(
-          "[WARN] Unable to copy link",
-          expect.objectContaining({
-            error: "Clipboard error",
-            linkId: expect.any(String),
-            context: "shareLinkManager",
-          }),
-        );
+        expect(consoleWarnSpy).toHaveBeenCalledWith("Unable to copy link", expect.any(Error));
       });
 
       consoleWarnSpy.mockRestore();

@@ -98,7 +98,7 @@ describe("LanguageSwitcher Accessibility", () => {
       fireEvent.click(button);
 
       const menuItems = screen.getAllByRole("menuitemradio");
-      expect(menuItems).toHaveLength(5); // en, de, fr, es, el
+      expect(menuItems).toHaveLength(2);
     });
 
     it("should have aria-checked=true for current language", () => {

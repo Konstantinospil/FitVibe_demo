@@ -60,6 +60,13 @@ export const Footer: React.FC = () => {
     e.currentTarget.style.textDecoration = isHover ? "underline" : "none";
   };
 
+  const handleLinkFocus = (e: React.FocusEvent<HTMLAnchorElement>, isFocus: boolean) => {
+    e.currentTarget.style.color = isFocus
+      ? "var(--color-text-secondary)"
+      : "var(--color-text-muted)";
+    e.currentTarget.style.textDecoration = isFocus ? "underline" : "none";
+  };
+
   return (
     <footer role="contentinfo" style={footerStyle}>
       <div style={containerStyle}>
@@ -71,8 +78,8 @@ export const Footer: React.FC = () => {
               style={linkStyle}
               onMouseEnter={(e) => handleLinkHover(e, true)}
               onMouseLeave={(e) => handleLinkHover(e, false)}
-              onFocus={(e) => handleLinkHover(e, true)}
-              onBlur={(e) => handleLinkHover(e, false)}
+              onFocus={(e) => handleLinkFocus(e, true)}
+              onBlur={(e) => handleLinkFocus(e, false)}
               aria-label={t("footer.termsAriaLabel", { defaultValue: "View Terms and Conditions" })}
             >
               {t("footer.terms")}
@@ -82,8 +89,8 @@ export const Footer: React.FC = () => {
               style={linkStyle}
               onMouseEnter={(e) => handleLinkHover(e, true)}
               onMouseLeave={(e) => handleLinkHover(e, false)}
-              onFocus={(e) => handleLinkHover(e, true)}
-              onBlur={(e) => handleLinkHover(e, false)}
+              onFocus={(e) => handleLinkFocus(e, true)}
+              onBlur={(e) => handleLinkFocus(e, false)}
               aria-label={t("footer.privacyAriaLabel", { defaultValue: "View Privacy Policy" })}
             >
               {t("footer.privacy")}

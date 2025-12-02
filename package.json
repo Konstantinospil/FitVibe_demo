@@ -17,6 +17,8 @@
     "test:frontend": "turbo run test --filter=@fitvibe/frontend -- --coverage",
     "test:a11y": "pnpm --filter @fitvibe/frontend run build && playwright test tests/frontend/e2e/accessibility.spec.cjs --config tests/frontend/e2e/playwright.config.cjs --reporter=line",
     "test:coverage:gate": "node tests/qa/check-coverage.cjs",
+    "test:fails:collect": "node .cursor/scripts/test-fails-collector.mjs",
+    "test:fix": "node .cursor/scripts/test-failure-fixer.mjs",
     "perf:test": "node tests/perf/run-local-perf.mjs",
     "qa:summary": "node tests/qa/generate-summary.mjs",
     "i18n:check": "node tests/qa/check-i18n.cjs",
@@ -76,6 +78,8 @@
   },
   "dependencies": {
     "@anthropic-ai/claude-agent-sdk": "^0.1.30",
+    "@anthropic-ai/sdk": "^0.27.3",
+    "openai": "^4.67.3",
     "snyk": "^1.1300.2"
   }
 }

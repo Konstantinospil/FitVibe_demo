@@ -1,4 +1,3 @@
-const STATIC_PUBLIC_ROUTES = new Set<string>(["/login"]);
 const PUBLIC_ROUTES = new Set<string>([
   "/login",
   "/register",

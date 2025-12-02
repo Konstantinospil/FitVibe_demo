@@ -15,11 +15,11 @@ var __assign =
   };
 Object.defineProperty(exports, "__esModule", { value: true });
 var dotenv_1 = require("dotenv");
-var node_path_1 = require("node:path");
+var path = require("node:path");
 dotenv_1.default.config();
-var baseDir = node_path_1.default.resolve(__dirname, "..");
-var migrationsDir = node_path_1.default.resolve(baseDir, "db", "migrations");
-var seedsDir = node_path_1.default.resolve(baseDir, "db", "seeds");
+var baseDir = path.resolve(__dirname, "..");
+var migrationsDir = path.resolve(baseDir, "db", "migrations");
+var seedsDir = path.resolve(baseDir, "db", "seeds");
 var shared = {
   client: "pg",
   pool: { min: 2, max: 10 },

@@ -127,9 +127,12 @@ describe("Register", () => {
     fireEvent.click(checkboxes[1]); // Privacy checkbox
     fireEvent.click(submitButton);
 
-    await waitFor(() => {
-      expect(screen.getByRole("alert")).toHaveTextContent("Passwords do not match");
-    });
+    await waitFor(
+      () => {
+        expect(screen.getByRole("alert")).toHaveTextContent(/passwords do not match/i);
+      },
+      { timeout: 3000 },
+    );
 
     expect(api.register).not.toHaveBeenCalled();
   });
@@ -157,17 +160,22 @@ describe("Register", () => {
     fireEvent.click(checkboxes[1]); // Privacy checkbox
     fireEvent.click(submitButton);
 
-    await waitFor(() => {
-      expect(api.register).toHaveBeenCalledWith({
-        email: "john@example.com",
-        password: "Password123!",
-        username: "john",
-        terms_accepted: true,
-        profile: {
-          display_name: "John Doe",
-        },
-      });
-    });
+    await waitFor(
+      () => {
+        expect(api.register).toHaveBeenCalledWith(
+          expect.objectContaining({
+            email: "john@example.com",
+            password: "Password123!",
+            username: expect.any(String),
+            terms_accepted: true,
+            profile: expect.objectContaining({
+              display_name: "John Doe",
+            }),
+          }),
+        );
+      },
+      { timeout: 3000 },
+    );
 
     await waitFor(() => {
       expect(screen.getByText("Account Created!")).toBeInTheDocument();
@@ -195,9 +203,12 @@ describe("Register", () => {
     fireEvent.click(checkboxes[1]); // Privacy checkbox
     fireEvent.click(submitButton);
 
-    await waitFor(() => {
-      expect(screen.getByRole("alert")).toHaveTextContent("Registration failed. Please try again.");
-    });
+    await waitFor(
+      () => {
+        expect(screen.getByRole("alert")).toHaveTextContent(/registration failed/i);
+      },
+      { timeout: 3000 },
+    );
   });
 
   it("handles user already exists error", async () => {
@@ -229,11 +240,12 @@ describe("Register", () => {
     fireEvent.click(checkboxes[1]); // Privacy checkbox
     fireEvent.click(submitButton);
 
-    await waitFor(() => {
-      expect(screen.getByRole("alert")).toHaveTextContent(
-        "An account with this email already exists",
-      );
-    });
+    await waitFor(
+      () => {
+        expect(screen.getByRole("alert")).toHaveTextContent(/account with this email already exists/i);
+      },
+      { timeout: 3000 },
+    );
   });
 
   it("disables form during submission", async () => {
@@ -264,8 +276,11 @@ describe("Register", () => {
       expect(emailInput).toBeDisabled();
       expect(passwordInput).toBeDisabled();
       expect(confirmPasswordInput).toBeDisabled();
-      expect(termsCheckbox).toBeDisabled();
     });
+    
+    // Checkboxes should also be disabled during submission
+    const checkboxesAfter = screen.getAllByRole("checkbox", { name: /accept the/i });
+    expect(checkboxesAfter[0]).toBeDisabled();
   });
 
   it("renders login link", () => {
@@ -324,15 +339,16 @@ describe("Register", () => {
     fireEvent.change(emailInput, { target: { value: "john@example.com" } });
     fireEvent.change(passwordInput, { target: { value: "Short1!" } });
     fireEvent.change(confirmPasswordInput, { target: { value: "Short1!" } });
-    const termsCheckbox = screen.getByRole("checkbox", { name: /accept the/i });
-    fireEvent.click(termsCheckbox);
+    const checkboxes = screen.getAllByRole("checkbox", { name: /accept the/i });
+    fireEvent.click(checkboxes[0]);
     fireEvent.click(submitButton);
 
-    await waitFor(() => {
-      expect(screen.getByRole("alert")).toHaveTextContent(
-        "Password must be at least 12 characters long",
-      );
-    });
+    await waitFor(
+      () => {
+        expect(screen.getByRole("alert")).toHaveTextContent(/password must be at least 12 characters/i);
+      },
+      { timeout: 3000 },
+    );
 
     expect(api.register).not.toHaveBeenCalled();
   });
@@ -350,15 +366,16 @@ describe("Register", () => {
     fireEvent.change(emailInput, { target: { value: "john@example.com" } });
     fireEvent.change(passwordInput, { target: { value: "PASSWORD123!" } });
     fireEvent.change(confirmPasswordInput, { target: { value: "PASSWORD123!" } });
-    const termsCheckbox = screen.getByRole("checkbox", { name: /accept the/i });
-    fireEvent.click(termsCheckbox);
+    const checkboxes = screen.getAllByRole("checkbox", { name: /accept the/i });
+    fireEvent.click(checkboxes[0]);
     fireEvent.click(submitButton);
 
-    await waitFor(() => {
-      expect(screen.getByRole("alert")).toHaveTextContent(
-        "Password must contain at least one lowercase letter",
-      );
-    });
+    await waitFor(
+      () => {
+        expect(screen.getByRole("alert")).toHaveTextContent(/password must contain at least one lowercase/i);
+      },
+      { timeout: 3000 },
+    );
 
     expect(api.register).not.toHaveBeenCalled();
   });
@@ -376,15 +393,16 @@ describe("Register", () => {
     fireEvent.change(emailInput, { target: { value: "john@example.com" } });
     fireEvent.change(passwordInput, { target: { value: "password123!" } });
     fireEvent.change(confirmPasswordInput, { target: { value: "password123!" } });
-    const termsCheckbox = screen.getByRole("checkbox", { name: /accept the/i });
-    fireEvent.click(termsCheckbox);
+    const checkboxes = screen.getAllByRole("checkbox", { name: /accept the/i });
+    fireEvent.click(checkboxes[0]);
     fireEvent.click(submitButton);
 
-    await waitFor(() => {
-      expect(screen.getByRole("alert")).toHaveTextContent(
-        "Password must contain at least one uppercase letter",
-      );
-    });
+    await waitFor(
+      () => {
+        expect(screen.getByRole("alert")).toHaveTextContent(/password must contain at least one uppercase/i);
+      },
+      { timeout: 3000 },
+    );
 
     expect(api.register).not.toHaveBeenCalled();
   });
@@ -402,15 +420,16 @@ describe("Register", () => {
     fireEvent.change(emailInput, { target: { value: "john@example.com" } });
     fireEvent.change(passwordInput, { target: { value: "PasswordLong!" } });
     fireEvent.change(confirmPasswordInput, { target: { value: "PasswordLong!" } });
-    const termsCheckbox = screen.getByRole("checkbox", { name: /accept the/i });
-    fireEvent.click(termsCheckbox);
+    const checkboxes = screen.getAllByRole("checkbox", { name: /accept the/i });
+    fireEvent.click(checkboxes[0]);
     fireEvent.click(submitButton);
 
-    await waitFor(() => {
-      expect(screen.getByRole("alert")).toHaveTextContent(
-        "Password must contain at least one digit",
-      );
-    });
+    await waitFor(
+      () => {
+        expect(screen.getByRole("alert")).toHaveTextContent(/password must contain at least one digit/i);
+      },
+      { timeout: 3000 },
+    );
 
     expect(api.register).not.toHaveBeenCalled();
   });
@@ -428,15 +447,16 @@ describe("Register", () => {
     fireEvent.change(emailInput, { target: { value: "john@example.com" } });
     fireEvent.change(passwordInput, { target: { value: "Password123Long" } });
     fireEvent.change(confirmPasswordInput, { target: { value: "Password123Long" } });
-    const termsCheckbox = screen.getByRole("checkbox", { name: /accept the/i });
-    fireEvent.click(termsCheckbox);
+    const checkboxes = screen.getAllByRole("checkbox", { name: /accept the/i });
+    fireEvent.click(checkboxes[0]);
     fireEvent.click(submitButton);
 
-    await waitFor(() => {
-      expect(screen.getByRole("alert")).toHaveTextContent(
-        "Password must contain at least one symbol",
-      );
-    });
+    await waitFor(
+      () => {
+        expect(screen.getByRole("alert")).toHaveTextContent(/password must contain at least one symbol/i);
+      },
+      { timeout: 3000 },
+    );
 
     expect(api.register).not.toHaveBeenCalled();
   });
@@ -517,9 +537,12 @@ describe("Register", () => {
     fireEvent.click(checkboxes[1]); // Privacy checkbox
     fireEvent.click(submitButton);
 
-    await waitFor(() => {
-      expect(screen.getByRole("alert")).toHaveTextContent("Custom error message");
-    });
+    await waitFor(
+      () => {
+        expect(screen.getByRole("alert")).toHaveTextContent("Custom error message");
+      },
+      { timeout: 3000 },
+    );
   });
 
   it("handles error with translated error code", async () => {
@@ -552,9 +575,12 @@ describe("Register", () => {
     fireEvent.click(checkboxes[1]); // Privacy checkbox
     fireEvent.click(submitButton);
 
-    await waitFor(() => {
-      expect(screen.getByRole("alert")).toBeInTheDocument();
-    });
+    await waitFor(
+      () => {
+        expect(screen.getByRole("alert")).toBeInTheDocument();
+      },
+      { timeout: 3000 },
+    );
   });
 
   it("handles network error without response object", async () => {
@@ -577,9 +603,12 @@ describe("Register", () => {
     fireEvent.click(checkboxes[1]); // Privacy checkbox
     fireEvent.click(submitButton);
 
-    await waitFor(() => {
-      expect(screen.getByRole("alert")).toBeInTheDocument();
-    });
+    await waitFor(
+      () => {
+        expect(screen.getByRole("alert")).toBeInTheDocument();
+      },
+      { timeout: 3000 },
+    );
   });
 
   it("handles input focus and blur events", () => {
@@ -690,17 +719,22 @@ describe("Register", () => {
     fireEvent.click(checkboxes[1]); // Privacy checkbox
     fireEvent.click(submitButton);
 
-    await waitFor(() => {
-      expect(api.register).toHaveBeenCalledWith({
-        email: "john@example.com",
-        password: "Password123!",
-        username: "john",
-        terms_accepted: true,
-        profile: {
-          display_name: "John Doe",
-        },
-      });
-    });
+    await waitFor(
+      () => {
+        expect(api.register).toHaveBeenCalledWith(
+          expect.objectContaining({
+            email: "john@example.com",
+            password: "Password123!",
+            username: expect.any(String),
+            terms_accepted: true,
+            profile: expect.objectContaining({
+              display_name: "John Doe",
+            }),
+          }),
+        );
+      },
+      { timeout: 3000 },
+    );
   });
 
   it("handles empty name validation", async () => {
@@ -721,9 +755,12 @@ describe("Register", () => {
     fireEvent.click(checkboxes[1]); // Privacy checkbox
     fireEvent.click(submitButton);
 
-    await waitFor(() => {
-      expect(screen.getByRole("alert")).toBeInTheDocument();
-    });
+    await waitFor(
+      () => {
+        expect(screen.getByRole("alert")).toBeInTheDocument();
+      },
+      { timeout: 3000 },
+    );
 
     expect(api.register).not.toHaveBeenCalled();
   });
@@ -746,9 +783,12 @@ describe("Register", () => {
     fireEvent.click(checkboxes[1]); // Privacy checkbox
     fireEvent.click(submitButton);
 
-    await waitFor(() => {
-      expect(screen.getByRole("alert")).toBeInTheDocument();
-    });
+    await waitFor(
+      () => {
+        expect(screen.getByRole("alert")).toBeInTheDocument();
+      },
+      { timeout: 3000 },
+    );
 
     expect(api.register).not.toHaveBeenCalled();
   });

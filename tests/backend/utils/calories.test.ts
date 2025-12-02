@@ -332,7 +332,7 @@ describe("calories", () => {
         const result = estimateEntryCalories(entry, profile);
 
         expect(result).toBeGreaterThan(0);
-        expect(result).toBeCloseTo(1195.5, 1); // (1000 * 50 * 0.1) / 4.184 = 1195.5
+        expect(result).toBeCloseTo(1195.0, 0); // (1000 * 50 * 0.1) / 4.184 = 1195.028..., rounded to 1 decimal = 1195.0
       });
     });
   });

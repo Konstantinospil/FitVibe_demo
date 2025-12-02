@@ -12,34 +12,6 @@ const contentStyle: React.CSSProperties = {
   fontSize: "0.95rem",
 };
 
-const sectionStyle: React.CSSProperties = {
-  marginBottom: "2.5rem",
-};
-
-const headingStyle: React.CSSProperties = {
-  fontSize: "1.5rem",
-  fontWeight: 600,
-  marginBottom: "1rem",
-  marginTop: "2rem",
-  color: "var(--color-text-primary)",
-};
-
-const paragraphStyle: React.CSSProperties = {
-  marginBottom: "1rem",
-  color: "var(--color-text-secondary)",
-};
-
-const listStyle: React.CSSProperties = {
-  marginLeft: "1.5rem",
-  marginBottom: "1rem",
-  color: "var(--color-text-secondary)",
-  listStyleType: "disc",
-};
-
-const listItemStyle: React.CSSProperties = {
-  marginBottom: "0.75rem",
-};
-
 const Terms: React.FC = () => {
   const { t } = useTranslation();
 

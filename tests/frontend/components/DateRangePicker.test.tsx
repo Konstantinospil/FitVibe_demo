@@ -153,3 +153,4 @@ describe("DateRangePicker", () => {
     expect(toInput).toHaveAttribute("max", today);
   });
 });
+

@@ -143,3 +143,4 @@ describe("AuthContext", () => {
     expect(mockUpdateUser).toHaveBeenCalledWith(updatedUser);
   });
 });
+

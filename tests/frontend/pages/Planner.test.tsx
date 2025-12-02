@@ -48,6 +48,9 @@ vi.mock("react-i18next", () => ({
         "planner.eyebrow": "Planner",
         "planner.title": "Session Planner",
         "planner.description": "Plan your workout",
+        "planner.exerciseSearchPlaceholder": "Search for exercises",
+        "planner.sessionTitlePlaceholder": "Session title",
+        "planner.notesPlaceholder": "Session notes",
       };
       return translations[key] || key;
     },
@@ -100,7 +103,7 @@ describe("Planner page", () => {
       </MemoryRouter>,
     );
 
-    const searchInput = screen.getByPlaceholderText(/Search for exercises/i);
+    const searchInput = screen.getByLabelText(/search exercises/i);
     fireEvent.change(searchInput, { target: { value: "bench" } });
 
     // Wait for debounced search (300ms delay)
@@ -138,7 +141,7 @@ describe("Planner page", () => {
       </MemoryRouter>,
     );
 
-    const searchInput = screen.getByPlaceholderText(/Search for exercises/i);
+    const searchInput = screen.getByLabelText(/search exercises/i);
     fireEvent.change(searchInput, { target: { value: "squat" } });
 
     // Wait for debounced search and results to appear
@@ -176,7 +179,7 @@ describe("Planner page", () => {
       </MemoryRouter>,
     );
 
-    const searchInput = screen.getByPlaceholderText(/Search for exercises/i);
+    const searchInput = screen.getByLabelText(/search exercises/i);
     fireEvent.change(searchInput, { target: { value: "deadlift" } });
 
     // Wait for debounced search and results to appear
@@ -241,7 +244,7 @@ describe("Planner page", () => {
       </MemoryRouter>,
     );
 
-    const searchInput = screen.getByPlaceholderText(/Search for exercises/i);
+    const searchInput = screen.getByLabelText(/search exercises/i);
     fireEvent.change(searchInput, { target: { value: "push" } });
 
     // Wait for debounced search
@@ -329,7 +332,7 @@ describe("Planner page", () => {
       </MemoryRouter>,
     );
 
-    const searchInput = screen.getByPlaceholderText(/Search for exercises/i);
+    const searchInput = screen.getByLabelText(/search exercises/i);
     fireEvent.change(searchInput, { target: { value: "bench" } });
 
     // Wait for debounced search

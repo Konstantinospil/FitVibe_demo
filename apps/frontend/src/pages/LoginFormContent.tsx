@@ -3,8 +3,6 @@ import { useNavigate, useLocation, NavLink } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { Eye, EyeOff } from "lucide-react";
 import { Button } from "../components/ui";
-import { LockoutTimer } from "../components/LockoutTimer";
-import { AttemptCounter } from "../components/AttemptCounter";
 import { useAuth } from "../contexts/AuthContext";
 import { login } from "../services/api";
 import { logger } from "../utils/logger.js";
@@ -30,18 +28,6 @@ const LoginFormContent: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [lockoutData, setLockoutData] = useState<{
-    remainingSeconds: number;
-    lockoutType: "account" | "ip";
-  } | null>(null);
-  const [attemptWarning, setAttemptWarning] = useState<{
-    remainingAccountAttempts: number;
-    remainingIPAttempts: number;
-    remainingIPDistinctEmails: number;
-    accountAttemptCount: number;
-    ipTotalAttemptCount: number;
-    ipDistinctEmailCount: number;
-  } | null>(null);
 
   const showPasswordLabel = t("auth.login.showPassword", {
     defaultValue: t("auth.showPassword", { defaultValue: "Show password" }),
@@ -61,8 +47,6 @@ const LoginFormContent: React.FC = () => {
 
     setIsSubmitting(true);
     setError(null);
-    setLockoutData(null);
-    setAttemptWarning(null);
 
     try {
       const response = await login({ email: email.trim(), password });
@@ -133,10 +117,6 @@ const LoginFormContent: React.FC = () => {
           errorDetails?.remainingSeconds !== undefined &&
           errorDetails?.lockoutType
         ) {
-          setLockoutData({
-            remainingSeconds: errorDetails.remainingSeconds,
-            lockoutType: errorDetails.lockoutType,
-          });
           setError(errorMessage || t("auth.lockout.locked", { defaultValue: "Account locked" }));
           return;
         }
@@ -149,14 +129,7 @@ const LoginFormContent: React.FC = () => {
           errorDetails.remainingIPAttempts !== undefined &&
           errorDetails.remainingIPDistinctEmails !== undefined
         ) {
-          setAttemptWarning({
-            remainingAccountAttempts: errorDetails.remainingAccountAttempts,
-            remainingIPAttempts: errorDetails.remainingIPAttempts,
-            remainingIPDistinctEmails: errorDetails.remainingIPDistinctEmails,
-            accountAttemptCount: errorDetails.accountAttemptCount ?? 0,
-            ipTotalAttemptCount: errorDetails.ipTotalAttemptCount ?? 0,
-            ipDistinctEmailCount: errorDetails.ipDistinctEmailCount ?? 0,
-          });
+          // Warning state is handled by error message
         }
 
         // Show specific error message if available

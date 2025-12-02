@@ -155,3 +155,4 @@ describe("useDashboardAnalytics", () => {
     expect(result.current.error).toBeInstanceOf(Error);
   });
 });
+

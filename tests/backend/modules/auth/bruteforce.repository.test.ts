@@ -20,7 +20,7 @@ import {
   cleanupOldAttempts,
   cleanupOldIPAttempts,
 } from "../../../../apps/backend/src/modules/auth/bruteforce.repository.js";
-import { truncateAll } from "../../setup/test-helpers.js";
+import { truncateAll } from "../../../setup/test-helpers";
 
 describe("Brute Force Protection Repository", () => {
   beforeEach(async () => {

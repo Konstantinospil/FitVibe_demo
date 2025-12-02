@@ -2,9 +2,9 @@
 import React, { useRef, type ReactElement } from "react";
 import { render, screen, fireEvent, waitFor, act } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { useRequiredFieldValidation } from "../../../src/hooks/useRequiredFieldValidation";
+import { useRequiredFieldValidation } from "../../../src/hooks/useRequiredFieldValidation.js";
 import { I18nextProvider } from "react-i18next";
-import i18n from "../../../src/i18n/config";
+import i18n from "../../../src/i18n/config.js";
 
 // Test component that uses the hook
 function TestForm({ requiredMessage }: { requiredMessage: string }): ReactElement {

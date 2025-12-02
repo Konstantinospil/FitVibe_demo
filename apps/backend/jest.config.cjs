@@ -6,6 +6,7 @@ module.exports = {
   rootDir: __dirname,
   roots: ["<rootDir>/../../tests/backend"],
   testMatch: ["**/*.(spec|test).ts", "**/?(*.)+(spec|test).ts"],
+  setupFiles: ["<rootDir>/jest.setup.mock.ts"],
   setupFilesAfterEnv: ["<rootDir>/jest.setup.ts"],
   transform: {
     "^.+\\.ts$": [

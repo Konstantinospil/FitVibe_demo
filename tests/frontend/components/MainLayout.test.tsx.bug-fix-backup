@@ -36,11 +36,8 @@ vi.mock("react-i18next", () => ({
         "navigation.you": "You",
         "navigation.activeSession": "Active session",
         "navigation.signOut": "Sign out",
-        "footer.brand": "FitVibe",
+        "footer.note": "FitVibe",
         "footer.terms": "Terms",
-        "footer.privacy": "Privacy",
-        "footer.termsAriaLabel": "View Terms and Conditions",
-        "footer.privacyAriaLabel": "View Privacy Policy",
         "footer.privacy": "Privacy",
       };
       return translations[key] || key;
@@ -70,9 +67,7 @@ describe("MainLayout", () => {
   it("should render navigation header", () => {
     render(<MainLayout />, { wrapper });
 
-    // There are multiple navigation elements (header nav + footer nav)
-    const navElements = screen.getAllByRole("navigation");
-    expect(navElements.length).toBeGreaterThan(0);
+    expect(screen.getByRole("navigation")).toBeInTheDocument();
     // NavLink uses title/aria-label for accessibility, not visible text
     // The nav element also has aria-label="Home", so we need to get all and check NavLinks
     const homeLinks = screen.getAllByLabelText("Home");
@@ -91,7 +86,6 @@ describe("MainLayout", () => {
   it("should render footer", () => {
     render(<MainLayout />, { wrapper });
 
-    // Footer uses i18n translations
     expect(screen.getByText("FitVibe")).toBeInTheDocument();
     expect(screen.getByText("Terms")).toBeInTheDocument();
     expect(screen.getByText("Privacy")).toBeInTheDocument();
@@ -134,8 +128,7 @@ describe("MainLayout", () => {
 
     // The main content area is rendered via Outlet, which requires routes
     // For this test, we'll verify the layout structure exists
-    const navElements = screen.getAllByRole("navigation");
-    expect(navElements.length).toBeGreaterThan(0);
+    expect(screen.getByRole("navigation")).toBeInTheDocument();
     expect(screen.getByText("FitVibe")).toBeInTheDocument(); // Footer
   });
 });

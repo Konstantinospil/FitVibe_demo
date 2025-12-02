@@ -110,24 +110,16 @@ describe("Login", () => {
     fireEvent.change(passwordInput, { target: { value: "password123" } });
     fireEvent.click(submitButton);
 
-    await waitFor(
-      () => {
-        expect(api.login).toHaveBeenCalledWith(
-          expect.objectContaining({
-            email: "test@example.com",
-            password: "password123",
-          }),
-        );
-      },
-      { timeout: 3000 },
-    );
+    await waitFor(() => {
+      expect(api.login).toHaveBeenCalledWith({
+        email: "test@example.com",
+        password: "password123",
+      });
+    });
 
-    await waitFor(
-      () => {
-        expect(mockNavigate).toHaveBeenCalled();
-      },
-      { timeout: 3000 },
-    );
+    await waitFor(() => {
+      expect(mockNavigate).toHaveBeenCalled();
+    });
   });
 
   it("navigates to 2FA verification when 2FA is required", async () => {
@@ -170,13 +162,9 @@ describe("Login", () => {
     fireEvent.change(passwordInput, { target: { value: "wrongpassword" } });
     fireEvent.click(submitButton);
 
-    await waitFor(
-      () => {
-        const alert = screen.getByRole("alert");
-        expect(alert).toHaveTextContent(/invalid email or password|unable to connect/i);
-      },
-      { timeout: 3000 },
-    );
+    await waitFor(() => {
+      expect(screen.getByRole("alert")).toHaveTextContent("Invalid email or password");
+    });
   });
 
   it("disables form during submission", async () => {

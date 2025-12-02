@@ -104,6 +104,9 @@ export async function truncateAll(): Promise<void> {
     "user_contacts",
     "profiles",
     "users",
+    // Brute force protection tables
+    "failed_login_attempts",
+    "failed_login_attempts_by_ip",
     // Removed "user_streaks" - doesn't exist
     // Removed "feed_posts" - use "feed_items" instead
     // Removed other legacy table names

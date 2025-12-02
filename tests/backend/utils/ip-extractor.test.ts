@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from "@jest/globals";
+import { describe, it, expect, beforeEach, jest } from "@jest/globals";
 import type { Request } from "express";
 import {
   extractClientIp,
@@ -6,7 +6,7 @@ import {
 } from "../../../apps/backend/src/utils/ip-extractor.js";
 import { env } from "../../../apps/backend/src/config/env.js";
 
-vi.mock("../../../apps/backend/src/config/env.js", () => ({
+jest.mock("../../../apps/backend/src/config/env.js", () => ({
   env: {
     trustProxy: false,
   },
@@ -16,7 +16,7 @@ describe("ip-extractor", () => {
   let mockRequest: Partial<Request>;
 
   beforeEach(() => {
-    vi.clearAllMocks();
+    jest.clearAllMocks();
     mockRequest = {
       socket: {
         remoteAddress: "192.168.1.1",
@@ -29,7 +29,7 @@ describe("ip-extractor", () => {
   describe("extractClientIp", () => {
     describe("when not behind trusted proxy", () => {
       beforeEach(() => {
-        vi.mocked(env).trustProxy = false;
+        jest.mocked(env).trustProxy = false;
       });
 
       it("should return socket remote address when valid IPv4", () => {
@@ -87,7 +87,7 @@ describe("ip-extractor", () => {
 
     describe("when behind trusted proxy", () => {
       beforeEach(() => {
-        vi.mocked(env).trustProxy = true;
+        jest.mocked(env).trustProxy = true;
       });
 
       it("should use leftmost IP from X-Forwarded-For header", () => {
@@ -158,7 +158,7 @@ describe("ip-extractor", () => {
     });
 
     it("should work with trusted proxy", () => {
-      vi.mocked(env).trustProxy = true;
+      jest.mocked(env).trustProxy = true;
       mockRequest.headers = { "x-forwarded-for": "1.2.3.4" };
       const ip = extractClientIpForRateLimit(mockRequest as Request);
       expect(ip).toBe("1.2.3.4");

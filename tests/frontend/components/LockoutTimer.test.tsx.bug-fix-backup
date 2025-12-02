@@ -26,12 +26,15 @@ describe("LockoutTimer", () => {
 
     expect(screen.getByText("02:05")).toBeInTheDocument();
 
-    // Advance timers and wait for React to update
-    await vi.advanceTimersByTimeAsync(1000);
-    expect(screen.getByText("02:04")).toBeInTheDocument();
+    vi.advanceTimersByTime(1000);
+    await waitFor(() => {
+      expect(screen.getByText("02:04")).toBeInTheDocument();
+    });
 
-    await vi.advanceTimersByTimeAsync(1000);
-    expect(screen.getByText("02:03")).toBeInTheDocument();
+    vi.advanceTimersByTime(1000);
+    await waitFor(() => {
+      expect(screen.getByText("02:03")).toBeInTheDocument();
+    });
   });
 
   it("should call onExpired when timer reaches zero", async () => {
@@ -40,17 +43,10 @@ describe("LockoutTimer", () => {
 
     expect(screen.getByText("00:02")).toBeInTheDocument();
 
-    // Advance by 1 second - timer should update to 00:01
-    await vi.advanceTimersByTimeAsync(1000);
-    await waitFor(() => {
-      expect(screen.getByText("00:01")).toBeInTheDocument();
-    });
-
-    // Advance by another second - timer should reach 0 and call onExpired
-    await vi.advanceTimersByTimeAsync(1000);
+    vi.advanceTimersByTime(2000);
     await waitFor(() => {
       expect(onExpired).toHaveBeenCalledTimes(1);
-    }, { timeout: 1000 });
+    });
   });
 
   it("should not render when remainingSeconds is 0", () => {
@@ -86,12 +82,13 @@ describe("LockoutTimer", () => {
     expect(screen.getByText("01:05")).toBeInTheDocument();
   });
 
-  it("should update when remainingSeconds prop changes", () => {
+  it("should update when remainingSeconds prop changes", async () => {
     const { rerender } = render(<LockoutTimer remainingSeconds={60} lockoutType="account" />);
     expect(screen.getByText("01:00")).toBeInTheDocument();
 
     rerender(<LockoutTimer remainingSeconds={30} lockoutType="account" />);
-    // Component should update immediately when prop changes
-    expect(screen.getByText("00:30")).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText("00:30")).toBeInTheDocument();
+    });
   });
 });

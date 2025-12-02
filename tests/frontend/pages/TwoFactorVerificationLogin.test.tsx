@@ -188,10 +188,15 @@ describe("TwoFactorVerificationLogin", () => {
     fireEvent.change(codeInput, { target: { value: "123456" } });
     fireEvent.click(submitButton);
 
-    await waitFor(() => {
-      expect(submitButton).toHaveTextContent("Verifying...");
-      expect(codeInput).toBeDisabled();
-    });
+    // Wait for async state updates
+    await waitFor(
+      () => {
+        expect(submitButton).toHaveAttribute("aria-busy", "true");
+      },
+      { timeout: 2000 },
+    );
+    expect(submitButton).toBeDisabled();
+    expect(codeInput).toBeDisabled();
   });
 
   it("renders back to login button", () => {

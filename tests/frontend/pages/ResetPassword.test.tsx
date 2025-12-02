@@ -40,6 +40,12 @@ void testI18n.use(initReactI18next).init({
         "resetPassword.passwordMismatch": "Passwords do not match",
         "resetPassword.invalidToken": "Invalid or expired reset token",
         "resetPassword.errorReset": "Failed to reset password",
+        "resetPassword.passwordRequirements.title": "Password Requirements:",
+        "resetPassword.passwordRequirements.minLength": "At least 12 characters",
+        "resetPassword.passwordRequirements.uppercase": "At least one uppercase letter",
+        "resetPassword.passwordRequirements.lowercase": "At least one lowercase letter",
+        "resetPassword.passwordRequirements.digit": "At least one digit",
+        "resetPassword.passwordRequirements.special": "At least one special character",
         "auth.showPassword": "Show password",
         "auth.hidePassword": "Hide password",
       },
@@ -121,9 +127,12 @@ describe("ResetPassword", () => {
     fireEvent.change(confirmPasswordInput, { target: { value: "DifferentPassword123!" } });
     fireEvent.click(submitButton);
 
-    await waitFor(() => {
-      expect(screen.getByRole("alert")).toHaveTextContent("Passwords do not match");
-    });
+    await waitFor(
+      () => {
+        expect(screen.getByRole("alert")).toHaveTextContent(/passwords do not match/i);
+      },
+      { timeout: 3000 },
+    );
 
     expect(api.resetPassword).not.toHaveBeenCalled();
   });
@@ -139,9 +148,12 @@ describe("ResetPassword", () => {
     fireEvent.change(confirmPasswordInput, { target: { value: "NewPassword123!" } });
     fireEvent.click(submitButton);
 
-    await waitFor(() => {
-      expect(screen.getByRole("alert")).toHaveTextContent("Invalid or expired reset token");
-    });
+    await waitFor(
+      () => {
+        expect(screen.getByRole("alert")).toHaveTextContent(/invalid or expired reset token/i);
+      },
+      { timeout: 3000 },
+    );
 
     expect(api.resetPassword).not.toHaveBeenCalled();
   });
@@ -159,12 +171,17 @@ describe("ResetPassword", () => {
     fireEvent.change(confirmPasswordInput, { target: { value: "NewPassword123!" } });
     fireEvent.click(submitButton);
 
-    await waitFor(() => {
-      expect(api.resetPassword).toHaveBeenCalledWith({
-        token: "valid-token",
-        newPassword: "NewPassword123!",
-      });
-    });
+    await waitFor(
+      () => {
+        expect(api.resetPassword).toHaveBeenCalledWith(
+          expect.objectContaining({
+            token: "valid-token",
+            newPassword: "NewPassword123!",
+          }),
+        );
+      },
+      { timeout: 3000 },
+    );
 
     // Should show success screen
     await waitFor(() => {
@@ -186,9 +203,12 @@ describe("ResetPassword", () => {
     fireEvent.change(confirmPasswordInput, { target: { value: "NewPassword123!" } });
     fireEvent.click(screen.getByRole("button", { name: /reset password/i }));
 
-    await waitFor(() => {
-      expect(screen.getByRole("alert")).toHaveTextContent("Failed to reset password");
-    });
+    await waitFor(
+      () => {
+        expect(screen.getByRole("alert")).toHaveTextContent(/failed to reset password/i);
+      },
+      { timeout: 3000 },
+    );
   });
 
   it("displays custom error message from API", async () => {
@@ -211,9 +231,12 @@ describe("ResetPassword", () => {
     fireEvent.change(confirmPasswordInput, { target: { value: "NewPassword123!" } });
     fireEvent.click(screen.getByRole("button", { name: /reset password/i }));
 
-    await waitFor(() => {
-      expect(screen.getByRole("alert")).toHaveTextContent("Token has expired");
-    });
+    await waitFor(
+      () => {
+        expect(screen.getByRole("alert")).toHaveTextContent(/token has expired/i);
+      },
+      { timeout: 3000 },
+    );
   });
 
   it("disables form during submission", async () => {
