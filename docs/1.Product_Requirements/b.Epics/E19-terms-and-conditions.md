@@ -55,6 +55,3 @@ Ensures legal compliance and protects the platform by requiring explicit user co
 
 **Last Updated**: 2025-01-21  
 **Next Review**: 2025-02-21
-
-
-

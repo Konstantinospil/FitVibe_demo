@@ -70,4 +70,3 @@ describe("ThemeToggle", () => {
     expect(button).toHaveAttribute("title");
   });
 });
-

@@ -48,9 +48,12 @@ describe("LockoutTimer", () => {
 
     // Advance by another second - timer should reach 0 and call onExpired
     await vi.advanceTimersByTimeAsync(1000);
-    await waitFor(() => {
-      expect(onExpired).toHaveBeenCalledTimes(1);
-    }, { timeout: 1000 });
+    await waitFor(
+      () => {
+        expect(onExpired).toHaveBeenCalledTimes(1);
+      },
+      { timeout: 1000 },
+    );
   });
 
   it("should not render when remainingSeconds is 0", () => {

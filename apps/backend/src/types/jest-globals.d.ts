@@ -15,4 +15,3 @@ declare module "@jest/globals" {
   export const afterAll: jest.Lifecycle;
   export const jest: typeof jest;
 }
-

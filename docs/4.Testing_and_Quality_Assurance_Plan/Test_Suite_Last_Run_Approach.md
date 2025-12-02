@@ -137,6 +137,7 @@ jestResults.testResults.forEach((testFile) => {
 ✅ **COMPLETED**: Option 2 (Persistent History File) has been implemented.
 
 The test fails collector script (`.cursor/scripts/test-fails-collector.mjs`) now:
+
 - Runs Jest and Vitest test suites
 - Collects all test results (passing and failing)
 - Tracks last run time and result for each test
@@ -144,11 +145,13 @@ The test fails collector script (`.cursor/scripts/test-fails-collector.mjs`) now
 - Provides statistics and failing tests database for repair planning
 
 **Usage:**
+
 ```bash
 pnpm test:fails:collect
 ```
 
 The test database includes:
+
 - Test identification (ID, file, test name, suite)
 - Last run time (ISO timestamp)
 - Test result (passed, failed, pending, skipped)
@@ -157,5 +160,3 @@ The test database includes:
 - Aggregated statistics
 
 See `.cursor/test-database/README.md` for more details.
-
-

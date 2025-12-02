@@ -110,4 +110,3 @@ describe("LanguageSwitcher", () => {
     expect(screen.queryByRole("menu")).not.toBeInTheDocument();
   });
 });
-

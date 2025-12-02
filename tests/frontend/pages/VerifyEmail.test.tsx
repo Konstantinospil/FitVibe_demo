@@ -155,12 +155,12 @@ describe("VerifyEmail", () => {
     // Wait for button to be present before clicking
     const loginButton = await screen.findByRole("button", { name: /go to login/i });
     expect(loginButton).toBeInTheDocument();
-    
+
     // Verify button is clickable
     expect(loginButton).not.toBeDisabled();
-    
+
     fireEvent.click(loginButton);
-    
+
     // After clicking, the button should trigger navigation
     // The component may unmount or navigate, so we just verify it was clickable
   });

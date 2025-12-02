@@ -284,6 +284,3 @@ tail -f /var/log/nginx/error.log
 - [Infrastructure README](../README.md)
 - [Docker Configurations](../docker/README.md)
 - [Backend README](../../apps/backend/README.md)
-
-
-

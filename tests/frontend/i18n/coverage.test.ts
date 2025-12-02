@@ -18,18 +18,24 @@ describe("i18n coverage", () => {
   it("keeps German translations aligned with English", () => {
     const enKeys = new Set(flattenKeys(en as TranslationRecord));
     const deKeys = new Set(flattenKeys(de as TranslationRecord));
-    
+
     const missingKeys = Array.from(enKeys).filter((key) => !deKeys.has(key));
     const extraKeys = Array.from(deKeys).filter((key) => !enKeys.has(key));
-    
+
     if (missingKeys.length > 0 || extraKeys.length > 0) {
       const message = [
-        missingKeys.length > 0 ? `Missing in German (${missingKeys.length}): ${missingKeys.slice(0, 10).join(", ")}${missingKeys.length > 10 ? "..." : ""}` : "",
-        extraKeys.length > 0 ? `Extra in German (${extraKeys.length}): ${extraKeys.slice(0, 10).join(", ")}${extraKeys.length > 10 ? "..." : ""}` : "",
-      ].filter(Boolean).join("\n");
+        missingKeys.length > 0
+          ? `Missing in German (${missingKeys.length}): ${missingKeys.slice(0, 10).join(", ")}${missingKeys.length > 10 ? "..." : ""}`
+          : "",
+        extraKeys.length > 0
+          ? `Extra in German (${extraKeys.length}): ${extraKeys.slice(0, 10).join(", ")}${extraKeys.length > 10 ? "..." : ""}`
+          : "",
+      ]
+        .filter(Boolean)
+        .join("\n");
       throw new Error(message || "Keys mismatch");
     }
-    
+
     expect(deKeys).toEqual(enKeys);
   });
 });

@@ -242,7 +242,9 @@ describe("Register", () => {
 
     await waitFor(
       () => {
-        expect(screen.getByRole("alert")).toHaveTextContent(/account with this email already exists/i);
+        expect(screen.getByRole("alert")).toHaveTextContent(
+          /account with this email already exists/i,
+        );
       },
       { timeout: 3000 },
     );
@@ -277,7 +279,7 @@ describe("Register", () => {
       expect(passwordInput).toBeDisabled();
       expect(confirmPasswordInput).toBeDisabled();
     });
-    
+
     // Checkboxes should also be disabled during submission
     const checkboxesAfter = screen.getAllByRole("checkbox", { name: /accept the/i });
     expect(checkboxesAfter[0]).toBeDisabled();
@@ -345,7 +347,9 @@ describe("Register", () => {
 
     await waitFor(
       () => {
-        expect(screen.getByRole("alert")).toHaveTextContent(/password must be at least 12 characters/i);
+        expect(screen.getByRole("alert")).toHaveTextContent(
+          /password must be at least 12 characters/i,
+        );
       },
       { timeout: 3000 },
     );
@@ -372,7 +376,9 @@ describe("Register", () => {
 
     await waitFor(
       () => {
-        expect(screen.getByRole("alert")).toHaveTextContent(/password must contain at least one lowercase/i);
+        expect(screen.getByRole("alert")).toHaveTextContent(
+          /password must contain at least one lowercase/i,
+        );
       },
       { timeout: 3000 },
     );
@@ -399,7 +405,9 @@ describe("Register", () => {
 
     await waitFor(
       () => {
-        expect(screen.getByRole("alert")).toHaveTextContent(/password must contain at least one uppercase/i);
+        expect(screen.getByRole("alert")).toHaveTextContent(
+          /password must contain at least one uppercase/i,
+        );
       },
       { timeout: 3000 },
     );
@@ -426,7 +434,9 @@ describe("Register", () => {
 
     await waitFor(
       () => {
-        expect(screen.getByRole("alert")).toHaveTextContent(/password must contain at least one digit/i);
+        expect(screen.getByRole("alert")).toHaveTextContent(
+          /password must contain at least one digit/i,
+        );
       },
       { timeout: 3000 },
     );
@@ -453,7 +463,9 @@ describe("Register", () => {
 
     await waitFor(
       () => {
-        expect(screen.getByRole("alert")).toHaveTextContent(/password must contain at least one symbol/i);
+        expect(screen.getByRole("alert")).toHaveTextContent(
+          /password must contain at least one symbol/i,
+        );
       },
       { timeout: 3000 },
     );

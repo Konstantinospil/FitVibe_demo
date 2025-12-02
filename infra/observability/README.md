@@ -300,6 +300,3 @@ Defined in `grafana/dashboards/slo-dashboard.json`:
 - [Infrastructure README](../README.md)
 - [Backend README](../../apps/backend/README.md)
 - [Kubernetes Configurations](../kubernetes/README.md)
-
-
-
