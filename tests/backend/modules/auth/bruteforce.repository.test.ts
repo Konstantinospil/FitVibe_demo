@@ -444,16 +444,17 @@ describe("Brute Force Protection Repository", () => {
 
   describe("Cleanup Functions", () => {
     it("should cleanup old account-level attempts", async () => {
-      const identifier = "test@example.com";
+      const oldIdentifier = "old@example.com";
+      const recentIdentifier = "recent@example.com";
       const ipAddress = "192.168.1.1";
       const userAgent = "Mozilla/5.0";
 
-      // Create old attempt (31 days ago)
+      // Create old attempt (31 days ago) with different identifier
       const oldDate = new Date();
       oldDate.setDate(oldDate.getDate() - 31);
       await db("failed_login_attempts").insert({
         id: crypto.randomUUID(),
-        identifier,
+        identifier: oldIdentifier,
         ip_address: ipAddress,
         user_agent: userAgent,
         attempt_count: 1,
@@ -464,25 +465,31 @@ describe("Brute Force Protection Repository", () => {
         updated_at: oldDate.toISOString(),
       });
 
-      // Create recent attempt
-      await recordFailedAttempt(identifier, ipAddress, userAgent);
+      // Create recent attempt with different identifier (so it doesn't update the old one)
+      await recordFailedAttempt(recentIdentifier, ipAddress, userAgent);
 
       const deleted = await cleanupOldAttempts();
       expect(deleted).toBe(1);
 
-      const remaining = await getFailedAttempt(identifier, ipAddress);
-      expect(remaining).not.toBeNull(); // Recent attempt should remain
+      // Old attempt should be deleted
+      const oldRemaining = await getFailedAttempt(oldIdentifier, ipAddress);
+      expect(oldRemaining).toBeNull();
+
+      // Recent attempt should remain
+      const recentRemaining = await getFailedAttempt(recentIdentifier, ipAddress);
+      expect(recentRemaining).not.toBeNull();
     });
 
     it("should cleanup old IP-based attempts", async () => {
-      const ipAddress = "192.168.1.1";
+      const oldIPAddress = "192.168.1.1";
+      const recentIPAddress = "192.168.1.2";
 
-      // Create old attempt (31 days ago)
+      // Create old attempt (31 days ago) with different IP
       const oldDate = new Date();
       oldDate.setDate(oldDate.getDate() - 31);
       await db("failed_login_attempts_by_ip").insert({
         id: crypto.randomUUID(),
-        ip_address: ipAddress,
+        ip_address: oldIPAddress,
         distinct_email_count: 1,
         total_attempt_count: 1,
         locked_until: null,
@@ -492,14 +499,19 @@ describe("Brute Force Protection Repository", () => {
         updated_at: oldDate.toISOString(),
       });
 
-      // Create recent attempt
-      await recordFailedAttemptByIP(ipAddress, "test@example.com");
+      // Create recent attempt with different IP (so it doesn't update the old one)
+      await recordFailedAttemptByIP(recentIPAddress, "test@example.com");
 
       const deleted = await cleanupOldIPAttempts();
       expect(deleted).toBe(1);
 
-      const remaining = await getFailedAttemptByIP(ipAddress);
-      expect(remaining).not.toBeNull(); // Recent attempt should remain
+      // Old attempt should be deleted
+      const oldRemaining = await getFailedAttemptByIP(oldIPAddress);
+      expect(oldRemaining).toBeNull();
+
+      // Recent attempt should remain
+      const recentRemaining = await getFailedAttemptByIP(recentIPAddress);
+      expect(recentRemaining).not.toBeNull();
     });
   });
 });

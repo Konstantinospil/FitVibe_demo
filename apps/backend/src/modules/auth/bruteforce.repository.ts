@@ -334,21 +334,21 @@ export async function recordFailedAttemptByIP(
 
   if (existing) {
     // Check if this is a new email address for this IP
-    // Query all distinct identifiers attempted from this IP to see if we've seen this email before
+    // Query to see if we've seen this email before from this IP
     const existingEmailAttempts = await exec(TABLE)
       .where({ ip_address: ipAddress, identifier: normalizedIdentifier })
       .count("* as count")
       .first();
 
-    const isNewEmail = !existingEmailAttempts || Number(existingEmailAttempts.count) === 0;
+    let isNewEmail = !existingEmailAttempts || Number(existingEmailAttempts.count) === 0;
 
-    // If this is a new email, create a minimal record in failed_login_attempts for tracking
+    // If this might be a new email, try to create a minimal record in failed_login_attempts for tracking
     // This ensures subsequent calls can correctly identify it as an existing email
     // Use onConflict to handle case where record already exists (e.g., from recordFailedAttempt)
     if (isNewEmail) {
       try {
         const accountAttemptId = crypto.randomUUID();
-        await exec(TABLE)
+        const inserted = await exec(TABLE)
           .insert({
             id: accountAttemptId,
             identifier: normalizedIdentifier,
@@ -362,12 +362,20 @@ export async function recordFailedAttemptByIP(
             updated_at: now,
           })
           .onConflict(["identifier", "ip_address"])
-          .ignore();
+          .ignore()
+          .returning("*");
+
+        // If insert was ignored (conflict), the record already existed, so it's not a new email
+        if (inserted.length === 0) {
+          isNewEmail = false;
+        }
       } catch (error) {
         // If insert fails (e.g., unique constraint), that's OK - record already exists
         // This can happen in race conditions or if recordFailedAttempt was called first
         const errorMessage = error instanceof Error ? error.message : String(error);
-        if (!errorMessage.includes("unique") && !errorMessage.includes("duplicate")) {
+        if (errorMessage.includes("unique") || errorMessage.includes("duplicate")) {
+          isNewEmail = false;
+        } else {
           throw error;
         }
       }
