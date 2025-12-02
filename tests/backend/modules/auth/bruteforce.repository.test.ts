@@ -5,6 +5,7 @@
  */
 
 import { describe, it, expect, beforeAll, beforeEach, afterEach } from "@jest/globals";
+import crypto from "crypto";
 import db from "../../../../apps/backend/src/db/index.js";
 import {
   getFailedAttempt,
@@ -451,7 +452,7 @@ describe("Brute Force Protection Repository", () => {
       const oldDate = new Date();
       oldDate.setDate(oldDate.getDate() - 31);
       await db("failed_login_attempts").insert({
-        id: "old-attempt-1",
+        id: crypto.randomUUID(),
         identifier,
         ip_address: ipAddress,
         user_agent: userAgent,
@@ -480,7 +481,7 @@ describe("Brute Force Protection Repository", () => {
       const oldDate = new Date();
       oldDate.setDate(oldDate.getDate() - 31);
       await db("failed_login_attempts_by_ip").insert({
-        id: "old-ip-attempt-1",
+        id: crypto.randomUUID(),
         ip_address: ipAddress,
         distinct_email_count: 1,
         total_attempt_count: 1,

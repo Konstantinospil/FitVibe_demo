@@ -334,12 +334,44 @@ export async function recordFailedAttemptByIP(
 
   if (existing) {
     // Check if this is a new email address for this IP
+    // Query all distinct identifiers attempted from this IP to see if we've seen this email before
     const existingEmailAttempts = await exec(TABLE)
       .where({ ip_address: ipAddress, identifier: normalizedIdentifier })
       .count("* as count")
       .first();
 
     const isNewEmail = !existingEmailAttempts || Number(existingEmailAttempts.count) === 0;
+
+    // If this is a new email, create a minimal record in failed_login_attempts for tracking
+    // This ensures subsequent calls can correctly identify it as an existing email
+    // Use onConflict to handle case where record already exists (e.g., from recordFailedAttempt)
+    if (isNewEmail) {
+      try {
+        const accountAttemptId = crypto.randomUUID();
+        await exec(TABLE)
+          .insert({
+            id: accountAttemptId,
+            identifier: normalizedIdentifier,
+            ip_address: ipAddress,
+            user_agent: null,
+            attempt_count: 1,
+            locked_until: null,
+            last_attempt_at: now,
+            first_attempt_at: now,
+            created_at: now,
+            updated_at: now,
+          })
+          .onConflict(["identifier", "ip_address"])
+          .ignore();
+      } catch (error) {
+        // If insert fails (e.g., unique constraint), that's OK - record already exists
+        // This can happen in race conditions or if recordFailedAttempt was called first
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        if (!errorMessage.includes("unique") && !errorMessage.includes("duplicate")) {
+          throw error;
+        }
+      }
+    }
 
     // Calculate lockout duration based on total attempt count
     const newTotalAttemptCount = existing.total_attempt_count + 1;
