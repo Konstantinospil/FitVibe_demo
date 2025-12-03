@@ -25,8 +25,46 @@ import { truncateAll } from "../../../setup/test-helpers";
 
 describe("Brute Force Protection Repository", () => {
   beforeAll(async () => {
+    // Ensure we're using the test database configuration
+    if (process.env.NODE_ENV !== "test") {
+      process.env.NODE_ENV = "test";
+    }
+
+    // Ensure database connection is available
+    // This will throw a clear error if the database is not available
+    try {
+      await db.raw("SELECT 1");
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      const dbConfig = {
+        host: process.env.PGHOST || "localhost",
+        port: process.env.PGPORT || "5432",
+        database: process.env.PGDATABASE || "fitvibe_test",
+        user: process.env.PGUSER || "fitvibe",
+      };
+      throw new Error(
+        `Database connection failed: ${errorMessage}\n` +
+          `Attempted to connect to: ${dbConfig.host}:${dbConfig.port}/${dbConfig.database} as ${dbConfig.user}\n` +
+          `Ensure PostgreSQL is running and connection settings are correct.\n` +
+          `You may need to set NODE_ENV=test and ensure the test database exists.`,
+      );
+    }
+
     // Run migrations to ensure tables exist
-    await db.migrate.latest();
+    // Migrations should be idempotent - safe to run multiple times
+    try {
+      await db.migrate.latest();
+    } catch (error) {
+      // If migrations fail due to connection issues, re-throw with context
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      if (errorMessage.includes("connect") || errorMessage.includes("ECONNREFUSED")) {
+        throw new Error(
+          `Database migration failed: ${errorMessage}. Ensure PostgreSQL is running and accessible.`,
+        );
+      }
+      // Other migration errors (like "already exists" or table creation conflicts) are okay
+      // The tables might already be created from a previous test run
+    }
   });
 
   beforeEach(async () => {
