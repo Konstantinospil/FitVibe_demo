@@ -420,7 +420,10 @@
       "trainingFrequencyRarely": "Selten",
       "trainingFrequency1_2": "1-2 mal pro Woche",
       "trainingFrequency3_4": "3-4 mal pro Woche",
-      "trainingFrequency5Plus": "5+ mal pro Woche"
+      "trainingFrequency5Plus": "5+ mal pro Woche",
+      "weightPlaceholder": "75.5",
+      "passwordPlaceholder": "Gib dein Passwort ein",
+      "twoFactorCodePlaceholder": "000000"
     },
     "preferences": {
       "title": "Präferenzen",
@@ -533,5 +536,18 @@
     "repsPlaceholder": "10",
     "weightPlaceholder": "80",
     "rpePlaceholder": "7"
+  },
+  "admin": {
+    "userManagement": {
+      "searchPlaceholder": "Suche nach E-Mail, Benutzername oder ID..."
+    },
+    "systemControls": {
+      "maintenanceMessagePlaceholder": "z.B. Notfall-Datenbankwartung",
+      "durationPlaceholder": "z.B. 30 Minuten",
+      "completionMessagePlaceholder": "z.B. Wartung erfolgreich abgeschlossen"
+    }
+  },
+  "twoFactor": {
+    "codePlaceholder": "000000"
   }
 }
