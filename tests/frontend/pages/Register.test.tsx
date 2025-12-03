@@ -1,4 +1,4 @@
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor, act } from "@testing-library/react";
 import { BrowserRouter } from "react-router-dom";
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import Register from "../../src/pages/Register";
@@ -118,20 +118,28 @@ describe("Register", () => {
     const confirmPasswordInput = screen.getByPlaceholderText(/confirm your password/i);
     const submitButton = screen.getByRole("button", { name: /create account/i });
 
-    fireEvent.change(nameInput, { target: { value: "John Doe" } });
-    fireEvent.change(emailInput, { target: { value: "john@example.com" } });
-    fireEvent.change(passwordInput, { target: { value: "Password123!" } });
-    fireEvent.change(confirmPasswordInput, { target: { value: "Different123!" } });
-    const checkboxes = screen.getAllByRole("checkbox", { name: /accept the/i });
-    fireEvent.click(checkboxes[0]); // Terms checkbox
-    fireEvent.click(checkboxes[1]); // Privacy checkbox
-    fireEvent.click(submitButton);
+    act(() => {
+      fireEvent.change(nameInput, { target: { value: "John Doe" } });
+      fireEvent.change(emailInput, { target: { value: "john@example.com" } });
+      fireEvent.change(passwordInput, { target: { value: "Password123!" } });
+      fireEvent.change(confirmPasswordInput, { target: { value: "Different123!" } });
+    });
 
+    const checkboxes = screen.getAllByRole("checkbox", { name: /accept the/i });
+    act(() => {
+      fireEvent.click(checkboxes[0]); // Terms checkbox
+      fireEvent.click(checkboxes[1]); // Privacy checkbox
+      fireEvent.click(submitButton);
+    });
+
+    // Wait for error to appear - check if alert exists first, then check text
     await waitFor(
       () => {
-        expect(screen.getByRole("alert")).toHaveTextContent(/passwords do not match/i);
+        const alert = screen.queryByRole("alert");
+        expect(alert).toBeInTheDocument();
+        expect(alert).toHaveTextContent(/passwords do not match/i);
       },
-      { timeout: 3000 },
+      { timeout: 1000 },
     );
 
     expect(api.register).not.toHaveBeenCalled();

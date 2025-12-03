@@ -1,4 +1,4 @@
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor, act } from "@testing-library/react";
 import { MemoryRouter, Routes, Route } from "react-router-dom";
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import TwoFactorVerificationLogin from "../../src/pages/TwoFactorVerificationLogin";
@@ -185,18 +185,20 @@ describe("TwoFactorVerificationLogin", () => {
     const codeInput = screen.getByRole("textbox");
     const submitButton = screen.getByRole("button", { name: /verify and continue/i });
 
-    fireEvent.change(codeInput, { target: { value: "123456" } });
-    fireEvent.click(submitButton);
+    act(() => {
+      fireEvent.change(codeInput, { target: { value: "123456" } });
+      fireEvent.click(submitButton);
+    });
 
-    // Wait for async state updates
+    // Wait for async state updates - check loading state appears quickly
     await waitFor(
       () => {
         expect(submitButton).toHaveAttribute("aria-busy", "true");
+        expect(submitButton).toBeDisabled();
+        expect(codeInput).toBeDisabled();
       },
-      { timeout: 2000 },
+      { timeout: 1000 },
     );
-    expect(submitButton).toBeDisabled();
-    expect(codeInput).toBeDisabled();
   });
 
   it("renders back to login button", () => {
