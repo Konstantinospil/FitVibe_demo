@@ -47,6 +47,7 @@ node .cursor/scripts/bug-collector.mjs
 ```
 
 Or use the npm script:
+
 ```bash
 pnpm bug:collect
 ```
@@ -76,6 +77,7 @@ node .cursor/scripts/bug-fixer-agent.mjs
 ```
 
 Or use the npm script:
+
 ```bash
 pnpm bug:fix
 ```
@@ -88,6 +90,7 @@ node .cursor/scripts/bug-fixer-multi-agent.mjs
 ```
 
 Or use the npm script:
+
 ```bash
 pnpm bug:fix:multi
 ```
@@ -103,6 +106,7 @@ node .cursor/scripts/bug-brainstorm-coordinator.mjs --all
 ```
 
 Or use the npm script:
+
 ```bash
 pnpm bug:brainstorm <bug-id>
 pnpm bug:brainstorm --all
@@ -302,6 +306,7 @@ node .cursor/scripts/bug-collector.mjs
 ```
 
 Or use the npm script:
+
 ```bash
 pnpm bug:collect
 ```
@@ -335,6 +340,7 @@ node .cursor/scripts/bug-fixer-multi-agent.mjs
 ```
 
 Or use the npm script:
+
 ```bash
 pnpm bug:fix:multi
 ```

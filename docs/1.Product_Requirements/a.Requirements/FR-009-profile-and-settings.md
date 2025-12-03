@@ -141,6 +141,7 @@ The following fields shall be immutable after initial registration:
 ### Implemented Features
 
 ✅ **Profile Fields**:
+
 - Alias editing (3-50 characters, URL-safe, case-insensitive unique)
 - Weight editing with unit selection (kg/lb, range 20-500 kg)
 - Fitness level selection (beginner, intermediate, advanced, elite)
@@ -148,17 +149,20 @@ The following fields shall be immutable after initial registration:
 
 ✅ **API Endpoint**: `PATCH /api/v1/users/me` extended to support all new fields
 
-✅ **Data Storage**: 
+✅ **Data Storage**:
+
 - Alias stored in `profiles` table
 - Weight, fitness level, and training frequency stored as time-series data in `user_metrics` table (preserves historical records)
 
-✅ **Validation**: 
+✅ **Validation**:
+
 - All fields validated with Zod schemas
 - Alias uniqueness enforced (case-insensitive)
 - Weight range validation (20-500 kg)
 - Unit conversion (lb → kg) handled automatically
 
-✅ **Testing**: 
+✅ **Testing**:
+
 - 100% coverage of new functionality
 - Unit tests (repository, service, controller)
 - Integration tests (API endpoints)
@@ -166,7 +170,8 @@ The following fields shall be immutable after initial registration:
 
 ✅ **Security Review**: Approved (Score: 98/100)
 
-✅ **Documentation**: 
+✅ **Documentation**:
+
 - TDD updated
 - API documentation updated
 - Requirements Catalogue updated

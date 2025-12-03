@@ -23,9 +23,9 @@ This Privacy Policy:
 
 ## 2. Who we are and how to contact us
 
-- **Controller:** FitVibe  
-- **Data protection and privacy inquiries:** `kpilpilidis@gmail.com`  
-- **Data Protection Officer (where required):** `kpilpilidis@gmail.com`  
+- **Controller:** FitVibe
+- **Data protection and privacy inquiries:** `kpilpilidis@gmail.com`
+- **Data Protection Officer (where required):** `kpilpilidis@gmail.com`
 - **EU/UK representative (if appointed):** details will be published in localized supplements to this notice.
 
 You may contact us at these addresses for any questions about this Policy or our handling of your personal data.
@@ -36,17 +36,17 @@ You may contact us at these addresses for any questions about this Policy or our
 
 We group the personal data we process into the following categories.
 
-| Category                     | Examples                                                                                  | Source                         |
-| ---------------------------- | ----------------------------------------------------------------------------------------- | ------------------------------ |
-| Account data                 | Email address, username, password hash, account identifiers                               | Provided by you                |
-| Profile & preferences        | Display name, avatar, locale, time zone, units (kg/lb, km/mi), language, visibility settings, contact preferences | Provided by you                |
+| Category                     | Examples                                                                                                                                       | Source                                          |
+| ---------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------- |
+| Account data                 | Email address, username, password hash, account identifiers                                                                                    | Provided by you                                 |
+| Profile & preferences        | Display name, avatar, locale, time zone, units (kg/lb, km/mi), language, visibility settings, contact preferences                              | Provided by you                                 |
 | Training & wellness data     | Workout logs, exercises performed, sets/reps, loads, pace, heart‑rate or power data (if connected), RPE, body measurements, wellness check‑ins | Provided by you or via integrations you connect |
-| Social & community content   | Comments, likes, messages, profile information visible to others, participation in teams or groups | Provided by you                |
-| Device & technical data      | IP address, device identifiers, operating system, app version, browser type, language, time zone | Collected automatically        |
-| Usage and diagnostics data   | Feature usage, clickstream and navigation data, performance metrics, crash reports, error logs | Collected automatically        |
-| Support & communication data | Messages you send to support, feedback, survey responses, and related metadata           | Provided by you                |
-| Payment and billing data     | Limited billing details such as billing address, transaction IDs (full card data is handled by our payment processor) | Provided by you / payment provider |
-| Cookies and similar IDs      | Cookie identifiers, mobile advertising IDs, and similar technology used for analytics and, where permitted, marketing | Collected automatically        |
+| Social & community content   | Comments, likes, messages, profile information visible to others, participation in teams or groups                                             | Provided by you                                 |
+| Device & technical data      | IP address, device identifiers, operating system, app version, browser type, language, time zone                                               | Collected automatically                         |
+| Usage and diagnostics data   | Feature usage, clickstream and navigation data, performance metrics, crash reports, error logs                                                 | Collected automatically                         |
+| Support & communication data | Messages you send to support, feedback, survey responses, and related metadata                                                                 | Provided by you                                 |
+| Payment and billing data     | Limited billing details such as billing address, transaction IDs (full card data is handled by our payment processor)                          | Provided by you / payment provider              |
+| Cookies and similar IDs      | Cookie identifiers, mobile advertising IDs, and similar technology used for analytics and, where permitted, marketing                          | Collected automatically                         |
 
 We do **not** intend to collect special categories of data (such as medical diagnoses) unless clearly necessary for a feature and permitted by law. Where applicable, we will seek your explicit consent.
 
@@ -87,10 +87,10 @@ Where the GDPR, UK GDPR, or comparable laws apply, we rely on one or more of the
   To create and manage your account, provide the Services you request, and support your use of FitVibe.
 - **Consent:**  
   For example, when:
-  - you opt‑in to marketing emails or push notifications,  
-  - you make certain content publicly visible,  
+  - you opt‑in to marketing emails or push notifications,
+  - you make certain content publicly visible,
   - you connect third‑party integrations or enable optional analytics and cookies where required by law.  
-  You may withdraw consent at any time, without affecting the lawfulness of processing before withdrawal.
+    You may withdraw consent at any time, without affecting the lawfulness of processing before withdrawal.
 - **Legitimate interests:**  
   To maintain and improve the security, performance, and usability of the Services; to prevent abuse; and to understand how the Services are used, provided that these interests are balanced against your rights and freedoms.
 - **Legal obligations:**  
@@ -208,7 +208,7 @@ We may need to verify your identity before acting on your request and may declin
 
 The Services are **not directed to children under 16**, or any higher age set by applicable law in your jurisdiction for online consent.
 
-- We do not knowingly collect personal data from children under the applicable minimum age.  
+- We do not knowingly collect personal data from children under the applicable minimum age.
 - If we learn that we have collected personal data from such a child without appropriate consent, we will delete it as soon as reasonably possible.
 
 If you believe that a child has provided personal data to FitVibe in breach of this Policy, please contact us at `privacy@fitvibe.example.com`.
@@ -239,7 +239,7 @@ Your continued use of the Services after changes take effect constitutes your ac
 
 If you have questions about this Privacy Policy, our use of your personal data, or if you wish to exercise your rights, please contact:
 
-- **Email:** `kpilpilidis@gmail.com`  
+- **Email:** `kpilpilidis@gmail.com`
 - **(Where applicable) Data Protection Officer:** `kpilpilidis@gmail`
 
 We will respond without undue delay and within the time limits required by applicable data protection law (for example, one month under the GDPR, subject to permitted extensions for complex requests).

@@ -38,11 +38,13 @@ This document provides the technical design for implementing FR-009 Profile & Se
 ### Current Implementation Status
 
 ✅ **Already Implemented**:
+
 - Avatar upload endpoint (`POST /api/v1/users/avatar`)
 - Basic profile update (`PATCH /api/v1/users/me`) for: username, displayName, locale, preferredLang, defaultVisibility, units
 - User metrics retrieval (`GET /api/v1/users/:userId/metrics`)
 
 ❌ **Missing**:
+
 - Alias update in profile update endpoint
 - Weight update (currently only in time-series `user_metrics` table)
 - Fitness level update (currently only in time-series `user_metrics` table)
@@ -61,6 +63,7 @@ The implementation extends the existing `users` module. No new modules are requi
 #### Current Schema
 
 **profiles table**:
+
 - `user_id` (PK, FK → users.id)
 - `alias` (citext, unique, nullable)
 - `bio` (text, nullable, max 500 chars)
@@ -72,6 +75,7 @@ The implementation extends the existing `users` module. No new modules are requi
 - `unit_preferences` (jsonb, default '{}')
 
 **user_metrics table** (time-series):
+
 - `id` (uuid, PK)
 - `user_id` (uuid, FK → users.id)
 - `weight` (decimal(6,2), nullable)
@@ -82,6 +86,7 @@ The implementation extends the existing `users` module. No new modules are requi
 - `created_at` (timestamptz, default now())
 
 **fitness_levels table**:
+
 - `code` (text, PK) - values: 'beginner', 'intermediate', 'advanced', 'elite'
 
 #### Schema Changes Required
@@ -111,25 +116,33 @@ const updateProfileSchema = z.object({
   displayName: z.string().min(1).max(120).optional(),
   locale: z.string().max(10).optional(),
   preferredLang: z.string().max(5).optional(),
-  
+
   // New fields for FR-009
-  alias: z.string()
+  alias: z
+    .string()
     .min(3)
     .max(50)
-    .regex(/^[a-zA-Z0-9_.-]+$/, "Alias may only contain letters, numbers, underscores, dots, or dashes")
+    .regex(
+      /^[a-zA-Z0-9_.-]+$/,
+      "Alias may only contain letters, numbers, underscores, dots, or dashes",
+    )
     .optional(),
-  weight: z.number()
+  weight: z
+    .number()
     .positive()
-    .min(20)  // Minimum reasonable weight in kg
+    .min(20) // Minimum reasonable weight in kg
     .max(500) // Maximum reasonable weight in kg
     .optional(),
   weightUnit: z.enum(["kg", "lb"]).optional(),
   fitnessLevel: z.enum(["beginner", "intermediate", "advanced", "elite"]).optional(),
-  trainingFrequency: z.enum(["rarely", "1_2_per_week", "3_4_per_week", "5_plus_per_week"]).optional(),
+  trainingFrequency: z
+    .enum(["rarely", "1_2_per_week", "3_4_per_week", "5_plus_per_week"])
+    .optional(),
 });
 ```
 
 **Request Body Example**:
+
 ```json
 {
   "alias": "fituser123",
@@ -141,6 +154,7 @@ const updateProfileSchema = z.object({
 ```
 
 **Response** (200 OK):
+
 ```json
 {
   "id": "uuid",
@@ -178,6 +192,7 @@ const updateProfileSchema = z.object({
 **Error Responses**:
 
 - `400 Bad Request`: Validation error
+
   ```json
   {
     "error": {
@@ -192,6 +207,7 @@ const updateProfileSchema = z.object({
   ```
 
 - `401 Unauthorized`: Missing or invalid authentication
+
   ```json
   {
     "error": {
@@ -228,7 +244,7 @@ export interface UpdateProfileDTO {
   preferredLang?: string;
   defaultVisibility?: string;
   units?: string;
-  
+
   // New fields for FR-009
   alias?: string;
   weight?: number;
@@ -267,12 +283,13 @@ export interface UserDetail extends UserSafe {
 **Updated Function**: `updateProfile(userId: string, dto: UpdateProfileDTO): Promise<UserDetail>`
 
 **Logic Flow**:
+
 1. Validate user exists
 2. If `alias` provided:
    - Validate alias format and uniqueness (case-insensitive)
    - Update `profiles.alias`
 3. If `weight`, `weightUnit`, `fitnessLevel`, or `trainingFrequency` provided:
-   - Normalize weight to kg if unit is 'lb' (weight * 0.453592)
+   - Normalize weight to kg if unit is 'lb' (weight \* 0.453592)
    - Insert new record in `user_metrics` table with current timestamp
 4. Update existing fields (username, displayName, etc.) as before
 5. Return updated user detail with latest metrics
@@ -290,12 +307,10 @@ export async function updateProfileAlias(
   trx?: Knex.Transaction,
 ): Promise<number> {
   const exec = withDb(trx);
-  return exec("profiles")
-    .where({ user_id: userId })
-    .update({
-      alias,
-      updated_at: new Date().toISOString(),
-    });
+  return exec("profiles").where({ user_id: userId }).update({
+    alias,
+    updated_at: new Date().toISOString(),
+  });
 }
 
 export async function insertUserMetric(
@@ -332,11 +347,13 @@ export async function getLatestUserMetrics(
   training_frequency: string | null;
 } | null> {
   const exec = withDb(trx);
-  return exec("user_metrics")
-    .where({ user_id: userId })
-    .orderBy("recorded_at", "desc")
-    .select(["weight", "unit", "fitness_level_code", "training_frequency"])
-    .first() ?? null;
+  return (
+    exec("user_metrics")
+      .where({ user_id: userId })
+      .orderBy("recorded_at", "desc")
+      .select(["weight", "unit", "fitness_level_code", "training_frequency"])
+      .first() ?? null
+  );
 }
 ```
 
@@ -363,7 +380,7 @@ export async function getLatestUserMetrics(
 
 ## Performance Considerations
 
-1. **Indexes**: 
+1. **Indexes**:
    - `profiles.alias` already has unique index
    - `user_metrics(user_id, recorded_at)` already has index for latest metrics query
 2. **Transaction**: Single transaction for all updates ensures consistency
@@ -456,7 +473,7 @@ export async function getLatestUserMetrics(
 **Security Review**: Approved with score 98/100. No critical or high-priority vulnerabilities identified.
 
 **Files Modified**:
+
 - Backend: `users.repository.ts`, `users.service.ts`, `users.controller.ts`, `users.types.ts`
 - Frontend: `Settings.tsx`, `common.json` (en/de)
 - Tests: `users.repository.test.ts`, `users.service.test.ts`, `users.controller.test.ts`, `Settings.test.tsx`
-
