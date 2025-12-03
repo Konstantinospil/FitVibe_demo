@@ -91,17 +91,10 @@ describe("i18n config", () => {
   it("saves language to localStorage when language changes", async () => {
     const setItemSpy = vi.spyOn(window.localStorage, "setItem");
 
-    // Ensure the event listener is set up (it's set up in config.ts when window is defined)
-    // Wait for language change to complete and event to fire
-    await new Promise<void>((resolve) => {
-      const handler = () => {
-        i18n.off("languageChanged", handler);
-        resolve();
-      };
-      i18n.on("languageChanged", handler);
-      void i18n.changeLanguage("de");
-    });
+    // Change language and wait for the change to complete
+    await i18n.changeLanguage("de");
 
+    // The event listener in config.ts should have called setItem
     expect(setItemSpy).toHaveBeenCalledWith("fitvibe:language", "de");
     setItemSpy.mockRestore();
   });

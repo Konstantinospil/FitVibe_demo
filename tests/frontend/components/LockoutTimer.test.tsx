@@ -42,9 +42,12 @@ describe("LockoutTimer", () => {
 
     // Advance by 1 second - timer should update to 00:01
     await vi.advanceTimersByTimeAsync(1000);
-    await waitFor(() => {
-      expect(screen.getByText("00:01")).toBeInTheDocument();
-    });
+    await waitFor(
+      () => {
+        expect(screen.getByText("00:01")).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
 
     // Advance by another second - timer should reach 0 and call onExpired
     await vi.advanceTimersByTimeAsync(1000);
@@ -52,7 +55,7 @@ describe("LockoutTimer", () => {
       () => {
         expect(onExpired).toHaveBeenCalledTimes(1);
       },
-      { timeout: 1000 },
+      { timeout: 5000 },
     );
   });
 

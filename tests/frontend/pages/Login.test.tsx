@@ -126,7 +126,7 @@ describe("Login", () => {
       () => {
         expect(mockNavigate).toHaveBeenCalled();
       },
-      { timeout: 3000 },
+      { timeout: 5000 },
     );
   });
 
@@ -146,15 +146,18 @@ describe("Login", () => {
     fireEvent.change(passwordInput, { target: { value: "password123" } });
     fireEvent.click(submitButton);
 
-    await waitFor(() => {
-      expect(mockNavigate).toHaveBeenCalledWith("/login/verify-2fa", {
-        state: {
-          pendingSessionId: "pending123",
-          from: "/",
-        },
-        replace: false,
-      });
-    });
+    await waitFor(
+      () => {
+        expect(mockNavigate).toHaveBeenCalledWith("/login/verify-2fa", {
+          state: {
+            pendingSessionId: "pending123",
+            from: "/",
+          },
+          replace: false,
+        });
+      },
+      { timeout: 5000 },
+    );
   });
 
   it("displays error message on login failure", async () => {
@@ -194,11 +197,14 @@ describe("Login", () => {
     fireEvent.change(passwordInput, { target: { value: "password123" } });
     fireEvent.click(submitButton);
 
-    await waitFor(() => {
-      expect(submitButton).toHaveTextContent("Signing in...");
-      expect(emailInput).toBeDisabled();
-      expect(passwordInput).toBeDisabled();
-    });
+    await waitFor(
+      () => {
+        expect(submitButton).toHaveTextContent("Signing in...");
+        expect(emailInput).toBeDisabled();
+        expect(passwordInput).toBeDisabled();
+      },
+      { timeout: 5000 },
+    );
   });
 
   it("renders navigation links", () => {

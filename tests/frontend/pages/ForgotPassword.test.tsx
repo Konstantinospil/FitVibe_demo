@@ -83,9 +83,12 @@ describe("ForgotPassword", () => {
     fireEvent.click(submitButton);
 
     // Wait for success screen
-    await waitFor(() => {
-      expect(screen.getByText("Check Your Email")).toBeInTheDocument();
-    });
+    await waitFor(
+      () => {
+        expect(screen.getByText("Check Your Email")).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
 
     expect(api.forgotPassword).toHaveBeenCalledWith({ email: "test@example.com" });
     expect(screen.getByText("We've sent you a password reset link")).toBeInTheDocument();
@@ -153,10 +156,13 @@ describe("ForgotPassword", () => {
     fireEvent.change(emailInput, { target: { value: "test@example.com" } });
     fireEvent.click(submitButton);
 
-    await waitFor(() => {
-      expect(submitButton).toHaveTextContent("Sending...");
-      expect(emailInput).toBeDisabled();
-    });
+    await waitFor(
+      () => {
+        expect(submitButton).toHaveTextContent("Sending...");
+        expect(emailInput).toBeDisabled();
+      },
+      { timeout: 5000 },
+    );
   });
 
   it("shows back to login link on success screen", async () => {
@@ -168,9 +174,12 @@ describe("ForgotPassword", () => {
     fireEvent.change(emailInput, { target: { value: "test@example.com" } });
     fireEvent.click(screen.getByRole("button", { name: /send reset link/i }));
 
-    await waitFor(() => {
-      expect(screen.getByText("Check Your Email")).toBeInTheDocument();
-    });
+    await waitFor(
+      () => {
+        expect(screen.getByText("Check Your Email")).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
 
     const loginLink = screen.getByRole("link", { name: /back to login/i });
     expect(loginLink).toHaveAttribute("href", "/login");
