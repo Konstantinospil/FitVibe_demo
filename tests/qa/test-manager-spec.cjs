@@ -17,15 +17,13 @@ function extractFrontmatter(content) {
     return null;
   }
 
-  return frontmatterMatch[1]
-    .split("\n")
-    .reduce((acc, line) => {
-      const [key, ...valueParts] = line.split(":");
-      if (key && valueParts.length > 0) {
-        acc[key.trim()] = valueParts.join(":").trim();
-      }
-      return acc;
-    }, {});
+  return frontmatterMatch[1].split("\n").reduce((acc, line) => {
+    const [key, ...valueParts] = line.split(":");
+    if (key && valueParts.length > 0) {
+      acc[key.trim()] = valueParts.join(":").trim();
+    }
+    return acc;
+  }, {});
 }
 
 function runTests() {
@@ -243,7 +241,13 @@ function runTests() {
   });
 
   test("Defines quality standards", () => {
-    const standards = ["Zero Linting Errors", "Type Safety", "Security", "Coverage", "Maintainability"];
+    const standards = [
+      "Zero Linting Errors",
+      "Type Safety",
+      "Security",
+      "Coverage",
+      "Maintainability",
+    ];
     standards.forEach((standard) => {
       if (!specContent.includes(standard)) {
         throw new Error(`Missing quality standard: ${standard}`);
@@ -312,7 +316,10 @@ function runTests() {
       throw new Error("Missing time estimate for Phase 1");
     }
     // Phase 2 may have complexity-based time estimates
-    if (!specContent.match(/Phase 2:.*\(10-20 minutes/) && !specContent.match(/Phase 2:.*\(10-40 minutes/)) {
+    if (
+      !specContent.match(/Phase 2:.*\(10-20 minutes/) &&
+      !specContent.match(/Phase 2:.*\(10-40 minutes/)
+    ) {
       throw new Error("Missing time estimate for Phase 2");
     }
     if (!specContent.match(/Phase 3:.*\(5-10 minutes\)/)) {
@@ -516,7 +523,9 @@ function runTests() {
 
       const sectionContent = specContent.substring(sectionStart, sectionEnd);
       if (sectionContent.length < minLength) {
-        throw new Error(`Section too short: ${name} (${sectionContent.length} chars, need ${minLength})`);
+        throw new Error(
+          `Section too short: ${name} (${sectionContent.length} chars, need ${minLength})`,
+        );
       }
     });
   });
@@ -536,7 +545,11 @@ function runTests() {
     const example = specContent.substring(exampleStart, exampleEnd);
 
     // Check for input example (can be "### Input Example" or "**Example Input:**")
-    if (!example.includes("### Input Example") && !example.includes("**Example Input:**") && !example.includes('"request_id": "TEST-')) {
+    if (
+      !example.includes("### Input Example") &&
+      !example.includes("**Example Input:**") &&
+      !example.includes('"request_id": "TEST-')
+    ) {
       throw new Error("Missing Input Example in workflow");
     }
     if (!example.includes("### Processing Steps")) {
@@ -566,4 +579,3 @@ function runTests() {
 }
 
 runTests();
-

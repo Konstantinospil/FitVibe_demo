@@ -12,15 +12,15 @@ The Test Manager Agent specification is **mostly aligned** with the QA Plan, but
 
 ### Overall Alignment Score: **85%** ⚠️
 
-| Aspect | QA Plan Requirement | Test Manager Spec | Alignment | Status |
-|--------|-------------------|-------------------|-----------|--------|
-| **Coverage (Repo-wide)** | ≥80% lines & branches | ≥85% minimum | ⚠️ **Mismatch** | Test Manager stricter |
-| **Coverage (Critical)** | ≥90% auth/session/points | 100% critical paths | ✅ Aligned | Test Manager stricter |
-| **Test Frameworks** | Jest/Vitest | Jest/Vitest/Mocha/Pytest | ✅ Aligned | Supports all |
-| **Type Safety** | Not explicitly stated | 100% TypeScript coverage | ✅ Aligned | Test Manager adds requirement |
-| **Security** | 0 High/Critical SCA | No vulnerabilities | ✅ Aligned | Compatible |
-| **Flakiness** | ≤2% repo-wide, ≤1% critical | No flakiness detected | ✅ Aligned | Test Manager stricter |
-| **Test Types** | Unit/Integration/E2E/Contract | Unit/Integration/E2E | ⚠️ **Partial** | Missing Contract tests |
+| Aspect                   | QA Plan Requirement           | Test Manager Spec        | Alignment       | Status                        |
+| ------------------------ | ----------------------------- | ------------------------ | --------------- | ----------------------------- |
+| **Coverage (Repo-wide)** | ≥80% lines & branches         | ≥85% minimum             | ⚠️ **Mismatch** | Test Manager stricter         |
+| **Coverage (Critical)**  | ≥90% auth/session/points      | 100% critical paths      | ✅ Aligned      | Test Manager stricter         |
+| **Test Frameworks**      | Jest/Vitest                   | Jest/Vitest/Mocha/Pytest | ✅ Aligned      | Supports all                  |
+| **Type Safety**          | Not explicitly stated         | 100% TypeScript coverage | ✅ Aligned      | Test Manager adds requirement |
+| **Security**             | 0 High/Critical SCA           | No vulnerabilities       | ✅ Aligned      | Compatible                    |
+| **Flakiness**            | ≤2% repo-wide, ≤1% critical   | No flakiness detected    | ✅ Aligned      | Test Manager stricter         |
+| **Test Types**           | Unit/Integration/E2E/Contract | Unit/Integration/E2E     | ⚠️ **Partial**  | Missing Contract tests        |
 
 ---
 
@@ -29,12 +29,14 @@ The Test Manager Agent specification is **mostly aligned** with the QA Plan, but
 ### 1. Test Coverage Requirements
 
 #### QA Plan Requirements (Section 2, Line 24)
+
 ```
 Test coverage: ≥80% lines & branches repo-wide
                 ≥90% on auth/session/points critical code
 ```
 
 #### Test Manager Specification (Line 42, 503-507)
+
 ```
 Coverage: Minimum 85% code coverage, 100% for critical paths
 - Line coverage ≥ 85% (or target specified in requirements)
@@ -52,17 +54,21 @@ Coverage: Minimum 85% code coverage, 100% for critical paths
 - **Gap**: 5% difference
 
 **Impact**:
+
 - Tests that meet QA plan (80-84%) would be rejected by test manager
 - Could cause friction between QA standards and agent behavior
 - May require manual override or configuration
 
 **Recommendation**:
+
 1. **Option A (Recommended)**: Update test manager to use QA plan thresholds:
+
    ```markdown
    Coverage: Minimum 80% code coverage (repo-wide), 90% for critical paths, 100% for auth/session/points
    ```
 
 2. **Option B**: Keep test manager stricter but add flexibility:
+
    ```markdown
    Coverage: Minimum 85% code coverage (default), or target specified in requirements (respects QA plan 80% when specified)
    ```
@@ -78,6 +84,7 @@ Coverage: Minimum 85% code coverage, 100% for critical paths
 ### 2. Test Framework Support
 
 #### QA Plan Requirements (Section 7, Line 78)
+
 ```
 Unit: Jest/Vitest
 Integration: Supertest against API
@@ -85,6 +92,7 @@ E2E: Playwright
 ```
 
 #### Test Manager Specification (Lines 109-112, 192-214)
+
 ```
 test_framework: jest|vitest|mocha|pytest
 test_runner: jest|vitest|pytest
@@ -108,6 +116,7 @@ test_runner: jest|vitest|pytest
 ### 3. Test Types
 
 #### QA Plan Requirements (Section 7, Lines 78-83)
+
 ```
 - Unit: Jest/Vitest
 - Integration: Supertest against API with ephemeral Postgres
@@ -118,6 +127,7 @@ test_runner: jest|vitest|pytest
 ```
 
 #### Test Manager Specification (Lines 32, 90, 201-206)
+
 ```
 Test types: unit_test|integration_test|e2e_test
 - Happy Path Tests
@@ -132,21 +142,25 @@ Test types: unit_test|integration_test|e2e_test
 **Status**: ⚠️ **Partially Aligned**
 
 **Missing from Test Manager**:
+
 - ❌ Contract tests (zod ↔ OpenAPI)
 - ❌ Data migration tests
 - ❌ Observability/metrics contract tests
 
 **Present in Test Manager**:
+
 - ✅ Unit tests
 - ✅ Integration tests
 - ✅ E2E tests
 - ✅ Type safety tests (additional)
 
 **Impact**:
+
 - Test manager may not generate contract tests required by QA plan
 - Missing migration and observability test patterns
 
 **Recommendation**: Add contract test support to test manager specification:
+
 ```markdown
 - **Contract Tests**: Validate API contracts (zod ↔ OpenAPI), schema parity
 - **Migration Tests**: Test database migration order, drift, constraints
@@ -160,6 +174,7 @@ Test types: unit_test|integration_test|e2e_test
 ### 4. Quality Standards
 
 #### QA Plan Requirements (Section 2, Lines 19-35)
+
 ```
 - Test coverage: ≥80% lines & branches
 - Security: 0 High/Critical SCA
@@ -169,6 +184,7 @@ Test types: unit_test|integration_test|e2e_test
 ```
 
 #### Test Manager Specification (Lines 39-43, 458-463)
+
 ```
 - Zero Linting Errors
 - Type Safety: 100% TypeScript coverage
@@ -182,20 +198,24 @@ Test types: unit_test|integration_test|e2e_test
 **Status**: ✅ **Mostly Aligned**
 
 **Aligned**:
+
 - ✅ Security: Both require 0 vulnerabilities
 - ✅ Linting: Test manager enforces (QA plan implies via CI gates)
 - ✅ Type Safety: Test manager adds explicit requirement (good addition)
 
 **Missing from Test Manager**:
+
 - ❌ Accessibility requirements (WCAG 2.1 AA, axe ≥90)
 - ❌ Performance targets (API p95 by group)
 - ❌ Flakiness SLO (≤2% repo-wide)
 
 **Additional in Test Manager**:
+
 - ✅ Maintainability standards (DRY, clear descriptions)
 - ✅ Type safety requirements (100% TypeScript coverage)
 
 **Impact**:
+
 - Test manager focuses on code quality, not runtime quality (a11y, perf)
 - This is acceptable as test manager generates tests, not validates runtime behavior
 
@@ -206,6 +226,7 @@ Test types: unit_test|integration_test|e2e_test
 ### 5. Test Execution Requirements
 
 #### QA Plan Requirements (Section 7.1, Lines 87-192)
+
 ```
 - Flake Rate: ≤2% repo-wide, ≤1% critical
 - Retries: CI only (2 retries max)
@@ -215,6 +236,7 @@ Test types: unit_test|integration_test|e2e_test
 ```
 
 #### Test Manager Specification (Lines 472-476, 545-553)
+
 ```
 - All tests pass locally
 - No test flakiness (run multiple times)
@@ -230,12 +252,14 @@ Test types: unit_test|integration_test|e2e_test
 **Status**: ✅ **Fully Aligned**
 
 **Aligned Requirements**:
+
 - ✅ Test independence (both require)
 - ✅ No flakiness (test manager stricter: 0% vs 2%)
 - ✅ Deterministic behavior (test manager implies via "no flakiness")
 - ✅ Performance targets (test manager: <5s unit, QA plan: implicit)
 
 **Test Manager Adds**:
+
 - ✅ Explicit time targets (<5s unit, <30s integration)
 - ✅ Explicit cleanup requirements
 - ✅ Explicit async handling requirements
@@ -247,6 +271,7 @@ Test types: unit_test|integration_test|e2e_test
 ### 6. Security Requirements
 
 #### QA Plan Requirements (Section 2, Line 31, Section 8.2, Line 212)
+
 ```
 - 0 High/Critical SCA vulnerabilities
 - ZAP baseline no High
@@ -258,6 +283,7 @@ Test types: unit_test|integration_test|e2e_test
 ```
 
 #### Test Manager Specification (Lines 41, 458-463)
+
 ```
 - Security: No vulnerabilities (dependencies, code patterns, or test data exposure)
 - npm audit / pip audit shows 0 vulnerabilities
@@ -272,11 +298,13 @@ Test types: unit_test|integration_test|e2e_test
 **Status**: ✅ **Aligned** (Different Scopes)
 
 **Test Manager Focus** (Code/Test Security):
+
 - ✅ Dependency vulnerabilities (npm audit, Snyk)
 - ✅ Code patterns (no eval, innerHTML)
 - ✅ Test data security (no real user data)
 
 **QA Plan Focus** (Runtime/Infrastructure Security):
+
 - ✅ SCA vulnerabilities (aligned)
 - ✅ Application security (ZAP, headers, CSRF)
 - ✅ Supply chain (SBOM, signing)
@@ -288,6 +316,7 @@ Test types: unit_test|integration_test|e2e_test
 ### 7. Test Architecture & Patterns
 
 #### QA Plan Requirements (Section 7, Lines 78-83)
+
 ```
 - Unit: Jest/Vitest; fakes for clock/UUID; seeded PRNG
 - Integration: Supertest, ephemeral Postgres, transactional tests
@@ -295,6 +324,7 @@ Test types: unit_test|integration_test|e2e_test
 ```
 
 #### Test Manager Specification (Lines 557-665)
+
 ```
 - Async function testing patterns
 - Mocking dependencies patterns
@@ -308,12 +338,14 @@ Test types: unit_test|integration_test|e2e_test
 **Status**: ⚠️ **Partially Aligned**
 
 **Aligned**:
+
 - ✅ Async testing patterns
 - ✅ Mocking patterns
 - ✅ Error handling patterns
 - ✅ Express route testing (matches Supertest requirement)
 
 **Missing from Test Manager**:
+
 - ❌ Fake clock/UUID patterns
 - ❌ Seeded PRNG patterns
 - ❌ Transactional test patterns
@@ -322,17 +354,21 @@ Test types: unit_test|integration_test|e2e_test
 - ❌ Snapshot masking patterns
 
 **Impact**:
+
 - Test manager may not generate tests with proper determinism patterns
 - Missing integration test setup patterns (transactions, ephemeral DB)
 
 **Recommendation**: Add patterns section for:
+
 ```markdown
 ### Determinism Patterns
+
 - Fake clock for time-dependent tests
 - Seeded PRNG for random data
 - Deterministic UUIDs
 
 ### Integration Test Patterns
+
 - Transactional test setup
 - Ephemeral database configuration
 - Test data cleanup patterns
@@ -350,10 +386,12 @@ Test types: unit_test|integration_test|e2e_test
 **Impact**: Tests meeting QA plan (80%) may be rejected by test manager (85%)
 
 **Current State**:
+
 - QA Plan: 80% repo-wide minimum
 - Test Manager: 85% minimum (default)
 
 **Resolution Options**:
+
 1. Update test manager default to 80% (match QA plan)
 2. Keep 85% but ensure "target specified in requirements" clause is respected
 3. Update QA plan to 85% (if higher standards desired)
@@ -370,6 +408,7 @@ Test types: unit_test|integration_test|e2e_test
 **Impact**: Test manager cannot generate contract tests required by QA plan
 
 **Missing**:
+
 - Contract tests (zod ↔ OpenAPI)
 - Migration tests
 - Observability tests
@@ -384,6 +423,7 @@ Test types: unit_test|integration_test|e2e_test
 **Impact**: Generated tests may be flaky without proper determinism patterns
 
 **Missing**:
+
 - Fake clock patterns
 - Seeded PRNG patterns
 - Deterministic UUID patterns
@@ -463,6 +503,7 @@ The Test Manager Agent specification is **85% aligned** with the QA Plan. The ma
 **Overall Verdict**: ✅ **Mostly Aligned** with minor gaps that can be addressed
 
 **Action Required**:
+
 - Verify coverage flexibility works correctly
 - Add contract test support
 - Add determinism patterns
@@ -471,4 +512,3 @@ The Test Manager Agent specification is **85% aligned** with the QA Plan. The ma
 
 **Report Generated**: 2025-01-20
 **Next Review**: When QA plan or test manager spec is updated
-

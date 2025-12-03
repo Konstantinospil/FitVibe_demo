@@ -107,9 +107,11 @@ function ensureThreshold(metricName, threshold) {
     if (interpreted === false) {
       const actual =
         (thresholdRecord && typeof thresholdRecord === "object"
-          ? thresholdRecord.actual ?? thresholdRecord.value
+          ? (thresholdRecord.actual ?? thresholdRecord.value)
           : null) ?? "(see k6 output)";
-      console.error(`Threshold "${threshold}" for metric "${metricName}" breached. Actual: ${actual}`);
+      console.error(
+        `Threshold "${threshold}" for metric "${metricName}" breached. Actual: ${actual}`,
+      );
       process.exit(1);
     }
     // Unknown structure: fall back to manual verification below.
@@ -127,9 +129,7 @@ function ensureThreshold(metricName, threshold) {
     }
     if (actual >= limit) {
       console.error(
-        `Metric "${metricName}" p95 of ${actual.toFixed(
-          2,
-        )}ms breaches fallback limit ${limit}ms.`,
+        `Metric "${metricName}" p95 of ${actual.toFixed(2)}ms breaches fallback limit ${limit}ms.`,
       );
       process.exit(1);
     }
@@ -152,9 +152,7 @@ function ensureThreshold(metricName, threshold) {
       process.exit(1);
     }
     if (actual >= limit) {
-      console.error(
-        `Metric "${metricName}" rate of ${actual} breaches fallback limit ${limit}.`,
-      );
+      console.error(`Metric "${metricName}" rate of ${actual} breaches fallback limit ${limit}.`);
       process.exit(1);
     }
     console.warn(
@@ -201,9 +199,7 @@ if (fs.existsSync(baselinePath)) {
     );
   }
 } else {
-  console.warn(
-    `Baseline file not found at ${baselinePath}. Skipping regression comparison.`,
-  );
+  console.warn(`Baseline file not found at ${baselinePath}. Skipping regression comparison.`);
 }
 
 console.log("k6 performance budgets satisfied.");

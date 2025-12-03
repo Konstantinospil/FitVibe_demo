@@ -13,7 +13,9 @@ async function main() {
   try {
     contents = await readFile(envExamplePath, "utf8");
   } catch (err) {
-    console.error(`Could not read ${envExamplePath}: ${err instanceof Error ? err.message : String(err)}`);
+    console.error(
+      `Could not read ${envExamplePath}: ${err instanceof Error ? err.message : String(err)}`,
+    );
     process.exit(1);
   }
 

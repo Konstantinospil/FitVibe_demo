@@ -48,7 +48,9 @@ const jsonResponse = (body, status = 200) => ({
   body: JSON.stringify(body),
 });
 
-test("user can register, login, plan a session, and review logged workout details", async ({ page }) => {
+test("user can register, login, plan a session, and review logged workout details", async ({
+  page,
+}) => {
   await page.route("**/health", async (route) => {
     await route.fulfill(jsonResponse({ status: "ok" }));
   });

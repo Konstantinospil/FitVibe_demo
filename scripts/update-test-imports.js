@@ -32,44 +32,41 @@ function getAllTestFiles(dir, fileList = []) {
 function updateImportsInFile(filePath) {
   let content = readFileSync(filePath, "utf-8");
   const originalContent = content;
-  
+
   // Calculate relative path from test file to source directory
   const testDir = dirname(filePath);
   const relativeToSource = relative(testDir, sourceDir).replace(/\\/g, "/");
-  
+
   // Pattern to match: from "../something" or from "../../something" etc.
   // We need to resolve these relative to the test file location and convert to absolute path from source
-  
+
   // Match import/require statements with relative paths
-  content = content.replace(
-    /from\s+["']((?:\.\.\/)+)([^"']+)["']/g,
-    (match, dots, importPath) => {
-      // Calculate the depth (number of ../)
-      const depth = (dots.match(/\.\.\//g) || []).length;
-      
-      // Get the directory of the test file
-      const testFileDir = dirname(filePath);
-      
-      // Resolve the import path relative to the test file
-      const resolvedPath = resolve(testFileDir, dots + importPath);
-      
-      // Calculate relative path from resolved path to source directory
-      let newRelative = relative(sourceDir, resolvedPath).replace(/\\/g, "/");
-      
-      // If the path is outside source, we need to go up first
-      if (!newRelative.startsWith("..")) {
-        newRelative = join(relativeToSource, newRelative).replace(/\\/g, "/");
-      }
-      
-      // Ensure it starts with ./
-      if (!newRelative.startsWith(".")) {
-        newRelative = "./" + newRelative;
-      }
-      
-      return `from "${newRelative}"`;
+  content = content.replace(/from\s+["']((?:\.\.\/)+)([^"']+)["']/g, (match, dots, importPath) => {
+    // Calculate the depth (number of ../)
+    const depth = (dots.match(/\.\.\//g) || []).length;
+
+    // Get the directory of the test file
+    const testFileDir = dirname(filePath);
+
+    // Resolve the import path relative to the test file
+    const resolvedPath = resolve(testFileDir, dots + importPath);
+
+    // Calculate relative path from resolved path to source directory
+    let newRelative = relative(sourceDir, resolvedPath).replace(/\\/g, "/");
+
+    // If the path is outside source, we need to go up first
+    if (!newRelative.startsWith("..")) {
+      newRelative = join(relativeToSource, newRelative).replace(/\\/g, "/");
     }
-  );
-  
+
+    // Ensure it starts with ./
+    if (!newRelative.startsWith(".")) {
+      newRelative = "./" + newRelative;
+    }
+
+    return `from "${newRelative}"`;
+  });
+
   // Also handle jest.mock() calls
   content = content.replace(
     /jest\.mock\(["']((?:\.\.\/)+)([^"']+)["']/g,
@@ -78,19 +75,19 @@ function updateImportsInFile(filePath) {
       const testFileDir = dirname(filePath);
       const resolvedPath = resolve(testFileDir, dots + importPath);
       let newRelative = relative(sourceDir, resolvedPath).replace(/\\/g, "/");
-      
+
       if (!newRelative.startsWith("..")) {
         newRelative = join(relativeToSource, newRelative).replace(/\\/g, "/");
       }
-      
+
       if (!newRelative.startsWith(".")) {
         newRelative = "./" + newRelative;
       }
-      
+
       return `jest.mock("${newRelative}"`;
-    }
+    },
   );
-  
+
   if (content !== originalContent) {
     writeFileSync(filePath, content, "utf-8");
     console.log(`Updated imports in ${relative(rootDir, filePath)}`);
@@ -111,4 +108,3 @@ for (const file of testFiles) {
 }
 
 console.log(`\nUpdated ${updatedCount} files`);
-
