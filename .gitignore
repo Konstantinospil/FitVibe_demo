@@ -61,6 +61,9 @@ test-results/
 cypress/videos/
 cypress/screenshots/
 cypress/downloads/
+# Visual regression test screenshots (baselines should be committed, but generated diffs should not)
+tests/frontend/visual/__screenshots__/
+!tests/frontend/visual/__screenshots__/.gitkeep
 
 # --- Security scan reports ---
 security-reports/
