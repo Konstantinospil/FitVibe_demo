@@ -1,7 +1,8 @@
 import React, { Suspense, lazy } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
-import Login from "../pages/Login";
 import PublicPageLayout from "../components/PublicPageLayout";
+
+const Login = lazy(() => import("../pages/Login"));
 
 const TwoFactorVerificationLogin = lazy(() => import("../pages/TwoFactorVerificationLogin"));
 const Register = lazy(() => import("../pages/Register"));

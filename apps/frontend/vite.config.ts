@@ -153,6 +153,12 @@ export default defineConfig(() => {
               if (id.includes("zustand")) {
                 return "state-vendor";
               }
+              if (id.includes("i18next") || id.includes("react-i18next")) {
+                return "i18n-vendor";
+              }
+              if (id.includes("axios")) {
+                return "http-vendor";
+              }
               // Other vendor code
               return "vendor";
             }
@@ -167,6 +173,10 @@ export default defineConfig(() => {
       chunkSizeWarningLimit: 300,
       // Enable tree shaking
       treeshake: true,
+      // Enable compression
+      reportCompressedSize: true,
+      // Optimize asset inlining threshold
+      assetsInlineLimit: 4096, // Inline assets smaller than 4KB
     },
   };
 });
