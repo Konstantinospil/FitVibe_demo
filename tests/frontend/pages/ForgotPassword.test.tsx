@@ -1,4 +1,4 @@
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor, act } from "@testing-library/react";
 import { BrowserRouter } from "react-router-dom";
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import ForgotPassword from "../../src/pages/ForgotPassword";
@@ -79,15 +79,17 @@ describe("ForgotPassword", () => {
     const emailInput = screen.getByRole("textbox", { name: /email/i });
     const submitButton = screen.getByRole("button", { name: /send reset link/i });
 
-    fireEvent.change(emailInput, { target: { value: "test@example.com" } });
-    fireEvent.click(submitButton);
+    act(() => {
+      fireEvent.change(emailInput, { target: { value: "test@example.com" } });
+      fireEvent.click(submitButton);
+    });
 
     // Wait for success screen
     await waitFor(
       () => {
         expect(screen.getByText("Check Your Email")).toBeInTheDocument();
       },
-      { timeout: 5000 },
+      { timeout: 3000 },
     );
 
     expect(api.forgotPassword).toHaveBeenCalledWith({ email: "test@example.com" });
@@ -103,15 +105,18 @@ describe("ForgotPassword", () => {
     const emailInput = screen.getByRole("textbox", { name: /email/i });
     const submitButton = screen.getByRole("button", { name: /send reset link/i });
 
-    fireEvent.change(emailInput, { target: { value: "test@example.com" } });
-    fireEvent.click(submitButton);
+    act(() => {
+      fireEvent.change(emailInput, { target: { value: "test@example.com" } });
+      fireEvent.click(submitButton);
+    });
 
     await waitFor(
       () => {
-        const alert = screen.getByRole("alert");
+        const alert = screen.queryByRole("alert");
+        expect(alert).toBeInTheDocument();
         expect(alert).toHaveTextContent(/failed to send reset link/i);
       },
-      { timeout: 3000 },
+      { timeout: 1000 },
     );
   });
 
@@ -131,15 +136,18 @@ describe("ForgotPassword", () => {
     const emailInput = screen.getByRole("textbox", { name: /email/i });
     const submitButton = screen.getByRole("button", { name: /send reset link/i });
 
-    fireEvent.change(emailInput, { target: { value: "notfound@example.com" } });
-    fireEvent.click(submitButton);
+    act(() => {
+      fireEvent.change(emailInput, { target: { value: "notfound@example.com" } });
+      fireEvent.click(submitButton);
+    });
 
     await waitFor(
       () => {
-        const alert = screen.getByRole("alert");
+        const alert = screen.queryByRole("alert");
+        expect(alert).toBeInTheDocument();
         expect(alert).toHaveTextContent("Email not found");
       },
-      { timeout: 3000 },
+      { timeout: 1000 },
     );
   });
 
@@ -153,15 +161,17 @@ describe("ForgotPassword", () => {
     const emailInput = screen.getByRole("textbox", { name: /email/i });
     const submitButton = screen.getByRole("button", { name: /send reset link/i });
 
-    fireEvent.change(emailInput, { target: { value: "test@example.com" } });
-    fireEvent.click(submitButton);
+    act(() => {
+      fireEvent.change(emailInput, { target: { value: "test@example.com" } });
+      fireEvent.click(submitButton);
+    });
 
     await waitFor(
       () => {
         expect(submitButton).toHaveTextContent("Sending...");
         expect(emailInput).toBeDisabled();
       },
-      { timeout: 5000 },
+      { timeout: 1000 },
     );
   });
 

@@ -1,4 +1,4 @@
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor, act } from "@testing-library/react";
 import { BrowserRouter } from "react-router-dom";
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import Login from "../../src/pages/Login";
@@ -106,9 +106,11 @@ describe("Login", () => {
     const passwordInput = screen.getByPlaceholderText(/enter your password/i);
     const submitButton = screen.getByRole("button", { name: /^sign in$/i });
 
-    fireEvent.change(emailInput, { target: { value: "test@example.com" } });
-    fireEvent.change(passwordInput, { target: { value: "password123" } });
-    fireEvent.click(submitButton);
+    act(() => {
+      fireEvent.change(emailInput, { target: { value: "test@example.com" } });
+      fireEvent.change(passwordInput, { target: { value: "password123" } });
+      fireEvent.click(submitButton);
+    });
 
     await waitFor(
       () => {
@@ -126,7 +128,7 @@ describe("Login", () => {
       () => {
         expect(mockNavigate).toHaveBeenCalled();
       },
-      { timeout: 5000 },
+      { timeout: 3000 },
     );
   });
 
@@ -142,9 +144,11 @@ describe("Login", () => {
     const passwordInput = screen.getByPlaceholderText(/enter your password/i);
     const submitButton = screen.getByRole("button", { name: /sign in/i });
 
-    fireEvent.change(emailInput, { target: { value: "test@example.com" } });
-    fireEvent.change(passwordInput, { target: { value: "password123" } });
-    fireEvent.click(submitButton);
+    act(() => {
+      fireEvent.change(emailInput, { target: { value: "test@example.com" } });
+      fireEvent.change(passwordInput, { target: { value: "password123" } });
+      fireEvent.click(submitButton);
+    });
 
     await waitFor(
       () => {
@@ -156,7 +160,7 @@ describe("Login", () => {
           replace: false,
         });
       },
-      { timeout: 5000 },
+      { timeout: 3000 },
     );
   });
 
@@ -169,16 +173,19 @@ describe("Login", () => {
     const passwordInput = screen.getByPlaceholderText(/enter your password/i);
     const submitButton = screen.getByRole("button", { name: /sign in/i });
 
-    fireEvent.change(emailInput, { target: { value: "test@example.com" } });
-    fireEvent.change(passwordInput, { target: { value: "wrongpassword" } });
-    fireEvent.click(submitButton);
+    act(() => {
+      fireEvent.change(emailInput, { target: { value: "test@example.com" } });
+      fireEvent.change(passwordInput, { target: { value: "wrongpassword" } });
+      fireEvent.click(submitButton);
+    });
 
     await waitFor(
       () => {
-        const alert = screen.getByRole("alert");
+        const alert = screen.queryByRole("alert");
+        expect(alert).toBeInTheDocument();
         expect(alert).toHaveTextContent(/invalid email or password|unable to connect/i);
       },
-      { timeout: 3000 },
+      { timeout: 1000 },
     );
   });
 
@@ -193,9 +200,11 @@ describe("Login", () => {
     const passwordInput = screen.getByPlaceholderText(/enter your password/i);
     const submitButton = screen.getByRole("button", { name: /sign in/i });
 
-    fireEvent.change(emailInput, { target: { value: "test@example.com" } });
-    fireEvent.change(passwordInput, { target: { value: "password123" } });
-    fireEvent.click(submitButton);
+    act(() => {
+      fireEvent.change(emailInput, { target: { value: "test@example.com" } });
+      fireEvent.change(passwordInput, { target: { value: "password123" } });
+      fireEvent.click(submitButton);
+    });
 
     await waitFor(
       () => {
@@ -203,7 +212,7 @@ describe("Login", () => {
         expect(emailInput).toBeDisabled();
         expect(passwordInput).toBeDisabled();
       },
-      { timeout: 5000 },
+      { timeout: 1000 },
     );
   });
 

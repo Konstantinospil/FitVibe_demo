@@ -1,5 +1,5 @@
 import React from "react";
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor, act } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { MemoryRouter } from "react-router-dom";
 import TermsReacceptance from "../../src/pages/TermsReacceptance";
@@ -126,14 +126,19 @@ describe("TermsReacceptance page", () => {
     );
 
     const checkbox = screen.getByRole("checkbox");
-    fireEvent.click(checkbox);
-
     const submitButton = screen.getByRole("button", { name: "Accept" });
-    fireEvent.click(submitButton);
 
-    await waitFor(() => {
-      expect(api.acceptTerms).toHaveBeenCalledWith({ terms_accepted: true });
+    act(() => {
+      fireEvent.click(checkbox);
+      fireEvent.click(submitButton);
     });
+
+    await waitFor(
+      () => {
+        expect(api.acceptTerms).toHaveBeenCalledWith({ terms_accepted: true });
+      },
+      { timeout: 1000 },
+    );
   });
 
   it("should reload page after successful submission", async () => {
@@ -156,14 +161,19 @@ describe("TermsReacceptance page", () => {
     );
 
     const checkbox = screen.getByRole("checkbox");
-    fireEvent.click(checkbox);
-
     const submitButton = screen.getByRole("button", { name: "Accept" });
-    fireEvent.click(submitButton);
 
-    await waitFor(() => {
-      expect(reloadSpy).toHaveBeenCalled();
+    act(() => {
+      fireEvent.click(checkbox);
+      fireEvent.click(submitButton);
     });
+
+    await waitFor(
+      () => {
+        expect(reloadSpy).toHaveBeenCalled();
+      },
+      { timeout: 1000 },
+    );
   });
 
   it("should show error message when API call fails", async () => {
@@ -185,14 +195,19 @@ describe("TermsReacceptance page", () => {
     );
 
     const checkbox = screen.getByRole("checkbox");
-    fireEvent.click(checkbox);
-
     const submitButton = screen.getByRole("button", { name: "Accept" });
-    fireEvent.click(submitButton);
 
-    await waitFor(() => {
-      expect(screen.getByText("Network error")).toBeInTheDocument();
+    act(() => {
+      fireEvent.click(checkbox);
+      fireEvent.click(submitButton);
     });
+
+    await waitFor(
+      () => {
+        expect(screen.getByText("Network error")).toBeInTheDocument();
+      },
+      { timeout: 1000 },
+    );
   });
 
   it("should show generic error when API call fails without error code", async () => {
@@ -201,14 +216,19 @@ describe("TermsReacceptance page", () => {
     render(<TermsReacceptance />);
 
     const checkbox = screen.getByRole("checkbox");
-    fireEvent.click(checkbox);
-
     const submitButton = screen.getByRole("button", { name: "Accept" });
-    fireEvent.click(submitButton);
 
-    await waitFor(() => {
-      expect(screen.getByText("Failed to accept terms")).toBeInTheDocument();
+    act(() => {
+      fireEvent.click(checkbox);
+      fireEvent.click(submitButton);
     });
+
+    await waitFor(
+      () => {
+        expect(screen.getByText("Failed to accept terms")).toBeInTheDocument();
+      },
+      { timeout: 1000 },
+    );
   });
 
   it("should disable form while submitting", async () => {
@@ -223,17 +243,21 @@ describe("TermsReacceptance page", () => {
     );
 
     const checkbox = screen.getByRole("checkbox");
-    fireEvent.click(checkbox);
-
     const submitButton = screen.getByRole("button", { name: "Accept" });
-    fireEvent.click(submitButton);
 
-    expect(submitButton).toBeDisabled();
-    expect(checkbox).toBeDisabled();
-
-    await waitFor(() => {
-      expect(api.acceptTerms).toHaveBeenCalled();
+    act(() => {
+      fireEvent.click(checkbox);
+      fireEvent.click(submitButton);
     });
+
+    await waitFor(
+      () => {
+        expect(submitButton).toBeDisabled();
+        expect(checkbox).toBeDisabled();
+        expect(api.acceptTerms).toHaveBeenCalled();
+      },
+      { timeout: 1000 },
+    );
   });
 
   it("should allow signing out", () => {

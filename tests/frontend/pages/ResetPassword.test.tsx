@@ -1,4 +1,4 @@
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor, act } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import ResetPassword from "../../src/pages/ResetPassword";
@@ -123,15 +123,19 @@ describe("ResetPassword", () => {
     const confirmPasswordInput = screen.getByPlaceholderText(/confirm your password/i);
     const submitButton = screen.getByRole("button", { name: /reset password/i });
 
-    fireEvent.change(passwordInput, { target: { value: "NewPassword123!" } });
-    fireEvent.change(confirmPasswordInput, { target: { value: "DifferentPassword123!" } });
-    fireEvent.click(submitButton);
+    act(() => {
+      fireEvent.change(passwordInput, { target: { value: "NewPassword123!" } });
+      fireEvent.change(confirmPasswordInput, { target: { value: "DifferentPassword123!" } });
+      fireEvent.click(submitButton);
+    });
 
     await waitFor(
       () => {
-        expect(screen.getByRole("alert")).toHaveTextContent(/passwords do not match/i);
+        const alert = screen.queryByRole("alert");
+        expect(alert).toBeInTheDocument();
+        expect(alert).toHaveTextContent(/passwords do not match/i);
       },
-      { timeout: 3000 },
+      { timeout: 1000 },
     );
 
     expect(api.resetPassword).not.toHaveBeenCalled();
@@ -144,15 +148,19 @@ describe("ResetPassword", () => {
     const confirmPasswordInput = screen.getByPlaceholderText(/confirm your password/i);
     const submitButton = screen.getByRole("button", { name: /reset password/i });
 
-    fireEvent.change(passwordInput, { target: { value: "NewPassword123!" } });
-    fireEvent.change(confirmPasswordInput, { target: { value: "NewPassword123!" } });
-    fireEvent.click(submitButton);
+    act(() => {
+      fireEvent.change(passwordInput, { target: { value: "NewPassword123!" } });
+      fireEvent.change(confirmPasswordInput, { target: { value: "NewPassword123!" } });
+      fireEvent.click(submitButton);
+    });
 
     await waitFor(
       () => {
-        expect(screen.getByRole("alert")).toHaveTextContent(/invalid or expired reset token/i);
+        const alert = screen.queryByRole("alert");
+        expect(alert).toBeInTheDocument();
+        expect(alert).toHaveTextContent(/invalid or expired reset token/i);
       },
-      { timeout: 3000 },
+      { timeout: 1000 },
     );
 
     expect(api.resetPassword).not.toHaveBeenCalled();
@@ -199,15 +207,19 @@ describe("ResetPassword", () => {
     const passwordInput = screen.getByPlaceholderText(/enter new password/i);
     const confirmPasswordInput = screen.getByPlaceholderText(/confirm your password/i);
 
-    fireEvent.change(passwordInput, { target: { value: "NewPassword123!" } });
-    fireEvent.change(confirmPasswordInput, { target: { value: "NewPassword123!" } });
-    fireEvent.click(screen.getByRole("button", { name: /reset password/i }));
+    act(() => {
+      fireEvent.change(passwordInput, { target: { value: "NewPassword123!" } });
+      fireEvent.change(confirmPasswordInput, { target: { value: "NewPassword123!" } });
+      fireEvent.click(screen.getByRole("button", { name: /reset password/i }));
+    });
 
     await waitFor(
       () => {
-        expect(screen.getByRole("alert")).toHaveTextContent(/failed to reset password/i);
+        const alert = screen.queryByRole("alert");
+        expect(alert).toBeInTheDocument();
+        expect(alert).toHaveTextContent(/failed to reset password/i);
       },
-      { timeout: 3000 },
+      { timeout: 1000 },
     );
   });
 
@@ -227,15 +239,19 @@ describe("ResetPassword", () => {
     const passwordInput = screen.getByPlaceholderText(/enter new password/i);
     const confirmPasswordInput = screen.getByPlaceholderText(/confirm your password/i);
 
-    fireEvent.change(passwordInput, { target: { value: "NewPassword123!" } });
-    fireEvent.change(confirmPasswordInput, { target: { value: "NewPassword123!" } });
-    fireEvent.click(screen.getByRole("button", { name: /reset password/i }));
+    act(() => {
+      fireEvent.change(passwordInput, { target: { value: "NewPassword123!" } });
+      fireEvent.change(confirmPasswordInput, { target: { value: "NewPassword123!" } });
+      fireEvent.click(screen.getByRole("button", { name: /reset password/i }));
+    });
 
     await waitFor(
       () => {
-        expect(screen.getByRole("alert")).toHaveTextContent(/token has expired/i);
+        const alert = screen.queryByRole("alert");
+        expect(alert).toBeInTheDocument();
+        expect(alert).toHaveTextContent(/token has expired/i);
       },
-      { timeout: 3000 },
+      { timeout: 1000 },
     );
   });
 
@@ -250,15 +266,20 @@ describe("ResetPassword", () => {
     const confirmPasswordInput = screen.getByPlaceholderText(/confirm your password/i);
     const submitButton = screen.getByRole("button", { name: /reset password/i });
 
-    fireEvent.change(passwordInput, { target: { value: "NewPassword123!" } });
-    fireEvent.change(confirmPasswordInput, { target: { value: "NewPassword123!" } });
-    fireEvent.click(submitButton);
-
-    await waitFor(() => {
-      expect(submitButton).toHaveTextContent("Resetting...");
-      expect(passwordInput).toBeDisabled();
-      expect(confirmPasswordInput).toBeDisabled();
+    act(() => {
+      fireEvent.change(passwordInput, { target: { value: "NewPassword123!" } });
+      fireEvent.change(confirmPasswordInput, { target: { value: "NewPassword123!" } });
+      fireEvent.click(submitButton);
     });
+
+    await waitFor(
+      () => {
+        expect(submitButton).toHaveTextContent("Resetting...");
+        expect(passwordInput).toBeDisabled();
+        expect(confirmPasswordInput).toBeDisabled();
+      },
+      { timeout: 1000 },
+    );
   });
 
   it("renders back to login link", () => {
