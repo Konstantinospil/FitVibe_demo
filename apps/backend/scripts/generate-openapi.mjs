@@ -346,8 +346,9 @@ const schemas = {
         },
         additionalProperties: false,
       },
+      terms_accepted: { type: "boolean" },
     },
-    required: ["email", "username", "password"],
+    required: ["email", "username", "password", "terms_accepted"],
     additionalProperties: false,
   },
   LoginRequest: {
