@@ -331,7 +331,15 @@
     "successText": "Vous pouvez maintenant vous connecter avec votre nouveau mot de passe.",
     "passwordMismatch": "Les mots de passe ne correspondent pas",
     "invalidToken": "Jeton de réinitialisation invalide. Veuillez en demander un nouveau.",
-    "errorReset": "Échec de la réinitialisation du mot de passe"
+    "errorReset": "Échec de la réinitialisation du mot de passe",
+    "passwordRequirements": {
+      "title": "Exigences du mot de passe :",
+      "minLength": "Au moins 12 caractères",
+      "uppercase": "Au moins une lettre majuscule (A-Z)",
+      "lowercase": "Au moins une lettre minuscule (a-z)",
+      "digit": "Au moins un chiffre (0-9)",
+      "special": "Au moins un caractère spécial (!@#$%^&*...)"
+    }
   },
   "logger": {
     "eyebrow": "Carnet d'entraînement",
@@ -340,13 +348,24 @@
     "exercise": "Exercice",
     "sets": "Séries",
     "reps": "Répétitions",
-    "load": "Charge"
+    "load": "Charge",
+    "repsPlaceholder": "10",
+    "weightPlaceholder": "80",
+    "rpePlaceholder": "7"
   },
   "planner": {
     "eyebrow": "Architecture de séance",
     "title": "Concevez des blocs d'entraînement avec intention.",
     "description": "Glissez, dupliquez et périodisez les entraînements. Le planificateur maintient l'intensité, le volume et les ratios de décharge sur la cible.",
-    "editBlock": "Modifier le bloc"
+    "editBlock": "Modifier le bloc",
+    "sessionTitlePlaceholder": "ex. Force du haut du corps",
+    "notesPlaceholder": "Ajoutez des notes de séance, des objectifs d'entraînement ou du contexte...",
+    "exerciseSearchPlaceholder": "Rechercher des exercices (ex. squat, développé couché)...",
+    "repsPlaceholder": "10",
+    "weightPlaceholder": "80",
+    "rpePlaceholder": "7",
+    "speedPlaceholder": "90",
+    "exerciseNotesPlaceholder": "ex. Concentrez-vous sur la forme, tempo plus lent sur les excentriques"
   },
   "sessions": {
     "eyebrow": "Gestion de l'entraînement",
@@ -481,5 +500,61 @@
       "vibe": "Vibe",
       "date": "Date"
     }
+  },
+  "settings": {
+    "title": "Paramètres",
+    "description": "Vos préférences et paramètres de compte",
+    "profile": {
+      "title": "Paramètres de Profil",
+      "description": "Mettez à jour les informations de votre profil",
+      "displayName": "Nom d'Affichage",
+      "displayNamePlaceholder": "Votre nom d'affichage",
+      "alias": "Alias",
+      "aliasPlaceholder": "Votre alias public",
+      "aliasHelp": "L'alias ne peut contenir que des lettres, chiffres, underscores, points ou tirets",
+      "email": "E-mail",
+      "emailCannotChange": "L'e-mail ne peut pas être modifié",
+      "weight": "Poids",
+      "weightUnit": "Unité de Poids",
+      "weightKg": "Kilogrammes (kg)",
+      "weightLb": "Livres (lb)",
+      "fitnessLevel": "Niveau de Fitness",
+      "fitnessLevelBeginner": "Débutant",
+      "fitnessLevelIntermediate": "Intermédiaire",
+      "fitnessLevelAdvanced": "Avancé",
+      "fitnessLevelElite": "Élite",
+      "trainingFrequency": "Fréquence d'Entraînement",
+      "trainingFrequencyRarely": "Rarement",
+      "trainingFrequency1_2": "1-2 fois par semaine",
+      "trainingFrequency3_4": "3-4 fois par semaine",
+      "trainingFrequency5Plus": "5+ fois par semaine",
+      "weightPlaceholder": "75.5",
+      "passwordPlaceholder": "Entrez votre mot de passe",
+      "twoFactorCodePlaceholder": "000000"
+    },
+    "preferences": {
+      "title": "Préférences",
+      "description": "Définissez la visibilité de séance par défaut, les unités et la langue",
+      "defaultVisibility": "Visibilité de Séance par Défaut",
+      "units": "Unités",
+      "language": "Langue",
+      "saveSuccess": "Préférences enregistrées avec succès !",
+      "saveError": "Échec de l'enregistrement des préférences. Veuillez réessayer.",
+      "saveButton": "Enregistrer les Préférences",
+      "saving": "Enregistrement..."
+    }
+  },
+  "admin": {
+    "userManagement": {
+      "searchPlaceholder": "Rechercher par e-mail, nom d'utilisateur ou ID..."
+    },
+    "systemControls": {
+      "maintenanceMessagePlaceholder": "ex. Maintenance d'urgence de la base de données",
+      "durationPlaceholder": "ex. 30 minutes",
+      "completionMessagePlaceholder": "ex. Maintenance terminée avec succès"
+    }
+  },
+  "twoFactor": {
+    "codePlaceholder": "000000"
   }
 }

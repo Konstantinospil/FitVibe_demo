@@ -331,7 +331,15 @@
     "successText": "Ahora puedes iniciar sesión con tu nueva contraseña.",
     "passwordMismatch": "Las contraseñas no coinciden",
     "invalidToken": "Token de restablecimiento inválido. Por favor solicita uno nuevo.",
-    "errorReset": "Error al restablecer contraseña"
+    "errorReset": "Error al restablecer contraseña",
+    "passwordRequirements": {
+      "title": "Requisitos de Contraseña:",
+      "minLength": "Al menos 12 caracteres",
+      "uppercase": "Al menos una letra mayúscula (A-Z)",
+      "lowercase": "Al menos una letra minúscula (a-z)",
+      "digit": "Al menos un dígito (0-9)",
+      "special": "Al menos un carácter especial (!@#$%^&*...)"
+    }
   },
   "logger": {
     "eyebrow": "Registro",
@@ -340,13 +348,24 @@
     "exercise": "Ejercicio",
     "sets": "Series",
     "reps": "Repeticiones",
-    "load": "Carga"
+    "load": "Carga",
+    "repsPlaceholder": "10",
+    "weightPlaceholder": "80",
+    "rpePlaceholder": "7"
   },
   "planner": {
     "eyebrow": "Arquitectura de sesión",
     "title": "Diseña bloques de entrenamiento con intención.",
     "description": "Arrastra, duplica y periodiza entrenamientos. El planificador mantiene la intensidad, el volumen y las proporciones de descarga en el objetivo.",
-    "editBlock": "Editar bloque"
+    "editBlock": "Editar bloque",
+    "sessionTitlePlaceholder": "p. ej., Fuerza Tren Superior",
+    "notesPlaceholder": "Agrega notas de sesión, objetivos de entrenamiento o contexto...",
+    "exerciseSearchPlaceholder": "Buscar ejercicios (p. ej., sentadilla, press banca)...",
+    "repsPlaceholder": "10",
+    "weightPlaceholder": "80",
+    "rpePlaceholder": "7",
+    "speedPlaceholder": "90",
+    "exerciseNotesPlaceholder": "p. ej., Enfócate en la forma, tempo más lento en excéntricos"
   },
   "sessions": {
     "eyebrow": "Gestión de entrenamiento",
@@ -481,5 +500,61 @@
       "vibe": "Vibe",
       "date": "Fecha"
     }
+  },
+  "settings": {
+    "title": "Configuración",
+    "description": "Tus preferencias y configuración de cuenta",
+    "profile": {
+      "title": "Configuración de Perfil",
+      "description": "Actualiza la información de tu perfil",
+      "displayName": "Nombre para Mostrar",
+      "displayNamePlaceholder": "Tu nombre para mostrar",
+      "alias": "Alias",
+      "aliasPlaceholder": "Tu alias público",
+      "aliasHelp": "El alias solo puede contener letras, números, guiones bajos, puntos o guiones",
+      "email": "Correo Electrónico",
+      "emailCannotChange": "El correo electrónico no se puede cambiar",
+      "weight": "Peso",
+      "weightUnit": "Unidad de Peso",
+      "weightKg": "Kilogramos (kg)",
+      "weightLb": "Libras (lb)",
+      "fitnessLevel": "Nivel de Fitness",
+      "fitnessLevelBeginner": "Principiante",
+      "fitnessLevelIntermediate": "Intermedio",
+      "fitnessLevelAdvanced": "Avanzado",
+      "fitnessLevelElite": "Élite",
+      "trainingFrequency": "Frecuencia de Entrenamiento",
+      "trainingFrequencyRarely": "Raramente",
+      "trainingFrequency1_2": "1-2 veces por semana",
+      "trainingFrequency3_4": "3-4 veces por semana",
+      "trainingFrequency5Plus": "5+ veces por semana",
+      "weightPlaceholder": "75.5",
+      "passwordPlaceholder": "Ingresa tu contraseña",
+      "twoFactorCodePlaceholder": "000000"
+    },
+    "preferences": {
+      "title": "Preferencias",
+      "description": "Establece la visibilidad predeterminada de sesión, unidades e idioma",
+      "defaultVisibility": "Visibilidad Predeterminada de Sesión",
+      "units": "Unidades",
+      "language": "Idioma",
+      "saveSuccess": "¡Preferencias guardadas exitosamente!",
+      "saveError": "Error al guardar preferencias. Por favor, inténtalo de nuevo.",
+      "saveButton": "Guardar Preferencias",
+      "saving": "Guardando..."
+    }
+  },
+  "admin": {
+    "userManagement": {
+      "searchPlaceholder": "Buscar por correo electrónico, nombre de usuario o ID..."
+    },
+    "systemControls": {
+      "maintenanceMessagePlaceholder": "p. ej., Mantenimiento de emergencia de base de datos",
+      "durationPlaceholder": "p. ej., 30 minutos",
+      "completionMessagePlaceholder": "p. ej., Mantenimiento completado exitosamente"
+    }
+  },
+  "twoFactor": {
+    "codePlaceholder": "000000"
   }
 }

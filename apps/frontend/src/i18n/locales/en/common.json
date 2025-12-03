@@ -348,7 +348,10 @@
     "exercise": "Exercise",
     "sets": "Sets",
     "reps": "Reps",
-    "load": "Load"
+    "load": "Load",
+    "repsPlaceholder": "10",
+    "weightPlaceholder": "80",
+    "rpePlaceholder": "7"
   },
   "planner": {
     "eyebrow": "Session architecture",
@@ -540,11 +543,6 @@
       "vibe": "Vibe",
       "date": "Date"
     }
-  },
-  "logger": {
-    "repsPlaceholder": "10",
-    "weightPlaceholder": "80",
-    "rpePlaceholder": "7"
   },
   "admin": {
     "userManagement": {

@@ -533,6 +533,13 @@
     }
   },
   "logger": {
+    "eyebrow": "Protokoll",
+    "title": "Erfasse jede Wiederholung ohne Unterbrechung.",
+    "description": "Verfolge Sätze, Last, Tempo und RPE. Synchronisiere mit Wearables oder protokolliere manuell—deine Daten bleiben trainerbereit.",
+    "exercise": "Übung",
+    "sets": "Sätze",
+    "reps": "Wiederholungen",
+    "load": "Last",
     "repsPlaceholder": "10",
     "weightPlaceholder": "80",
     "rpePlaceholder": "7"

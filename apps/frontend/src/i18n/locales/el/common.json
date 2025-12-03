@@ -331,7 +331,15 @@
     "successText": "Μπορείτε τώρα να συνδεθείτε με τον νέο σας κωδικό πρόσβασης.",
     "passwordMismatch": "Οι κωδικοί πρόσβασης δεν ταιριάζουν",
     "invalidToken": "Μη έγκυρο διακριτικό επαναφοράς. Παρακαλώ ζητήστε ένα νέο.",
-    "errorReset": "Αποτυχία επαναφοράς κωδικού πρόσβασης"
+    "errorReset": "Αποτυχία επαναφοράς κωδικού πρόσβασης",
+    "passwordRequirements": {
+      "title": "Απαιτήσεις Κωδικού Πρόσβασης:",
+      "minLength": "Τουλάχιστον 12 χαρακτήρες",
+      "uppercase": "Τουλάχιστον ένα κεφαλαίο γράμμα (A-Z)",
+      "lowercase": "Τουλάχιστον ένα πεζό γράμμα (a-z)",
+      "digit": "Τουλάχιστον ένα ψηφίο (0-9)",
+      "special": "Τουλάχιστον ένα ειδικό χαρακτήρα (!@#$%^&*...)"
+    }
   },
   "logger": {
     "eyebrow": "Ημερολόγιο",
@@ -340,13 +348,24 @@
     "exercise": "Άσκηση",
     "sets": "Σετ",
     "reps": "Επαναλήψεις",
-    "load": "Φορτίο"
+    "load": "Φορτίο",
+    "repsPlaceholder": "10",
+    "weightPlaceholder": "80",
+    "rpePlaceholder": "7"
   },
   "planner": {
     "eyebrow": "Αρχιτεκτονική συνεδρίας",
     "title": "Σχεδίασε μπλοκ προπόνησης με πρόθεση.",
     "description": "Σύρε, αντιγράψε και περιοδικοποίησε προπονήσεις. Ο σχεδιαστής διατηρεί την ένταση, τον όγκο και τους λόγους αποφόρτισης στο στόχο.",
-    "editBlock": "Επεξεργασία μπλοκ"
+    "editBlock": "Επεξεργασία μπλοκ",
+    "sessionTitlePlaceholder": "π.χ., Αντοχή Άνω Σώματος",
+    "notesPlaceholder": "Προσθέστε σημειώσεις συνεδρίας, στόχους προπόνησης ή πλαίσιο...",
+    "exerciseSearchPlaceholder": "Αναζήτηση ασκήσεων (π.χ., squat, bench press)...",
+    "repsPlaceholder": "10",
+    "weightPlaceholder": "80",
+    "rpePlaceholder": "7",
+    "speedPlaceholder": "90",
+    "exerciseNotesPlaceholder": "π.χ., Εστίαση στη μορφή, πιο αργό tempo σε εκκεντρικά"
   },
   "sessions": {
     "eyebrow": "Διαχείριση προπόνησης",
@@ -491,5 +510,61 @@
     "punctuation": "·;",
     "numbers": "0123456789",
     "special": "΄"
+  },
+  "settings": {
+    "title": "Ρυθμίσεις",
+    "description": "Οι προτιμήσεις και οι ρυθμίσεις λογαριασμού σας",
+    "profile": {
+      "title": "Ρυθμίσεις Προφίλ",
+      "description": "Ενημερώστε τις πληροφορίες του προφίλ σας",
+      "displayName": "Όνομα Εμφάνισης",
+      "displayNamePlaceholder": "Το όνομά σας για εμφάνιση",
+      "alias": "Ψευδώνυμο",
+      "aliasPlaceholder": "Το δημόσιο ψευδώνυμο σας",
+      "aliasHelp": "Το ψευδώνυμο μπορεί να περιέχει μόνο γράμματα, αριθμούς, υπογράμμισης, τελείες ή παύλες",
+      "email": "E-mail",
+      "emailCannotChange": "Το e-mail δεν μπορεί να αλλάξει",
+      "weight": "Βάρος",
+      "weightUnit": "Μονάδα Βάρους",
+      "weightKg": "Κιλά (kg)",
+      "weightLb": "Λίβρες (lb)",
+      "fitnessLevel": "Επίπεδο Φυσικής Κατάστασης",
+      "fitnessLevelBeginner": "Αρχάριος",
+      "fitnessLevelIntermediate": "Μεσαίος",
+      "fitnessLevelAdvanced": "Προχωρημένος",
+      "fitnessLevelElite": "Έλιτ",
+      "trainingFrequency": "Συχνότητα Προπόνησης",
+      "trainingFrequencyRarely": "Σπάνια",
+      "trainingFrequency1_2": "1-2 φορές την εβδομάδα",
+      "trainingFrequency3_4": "3-4 φορές την εβδομάδα",
+      "trainingFrequency5Plus": "5+ φορές την εβδομάδα",
+      "weightPlaceholder": "75.5",
+      "passwordPlaceholder": "Εισάγετε τον κωδικό πρόσβασης σας",
+      "twoFactorCodePlaceholder": "000000"
+    },
+    "preferences": {
+      "title": "Προτιμήσεις",
+      "description": "Ορίστε την προεπιλεγμένη ορατότητα συνεδρίας, τις μονάδες και τη γλώσσα",
+      "defaultVisibility": "Προεπιλεγμένη Ορατότητα Συνεδρίας",
+      "units": "Μονάδες",
+      "language": "Γλώσσα",
+      "saveSuccess": "Οι προτιμήσεις αποθηκεύτηκαν με επιτυχία!",
+      "saveError": "Αποτυχία αποθήκευσης προτιμήσεων. Παρακαλώ δοκιμάστε ξανά.",
+      "saveButton": "Αποθήκευση Προτιμήσεων",
+      "saving": "Αποθήκευση..."
+    }
+  },
+  "admin": {
+    "userManagement": {
+      "searchPlaceholder": "Αναζήτηση με e-mail, όνομα χρήστη ή ID..."
+    },
+    "systemControls": {
+      "maintenanceMessagePlaceholder": "π.χ., Επείγουσα συντήρηση βάσης δεδομένων",
+      "durationPlaceholder": "π.χ., 30 λεπτά",
+      "completionMessagePlaceholder": "π.χ., Η συντήρηση ολοκληρώθηκε με επιτυχία"
+    }
+  },
+  "twoFactor": {
+    "codePlaceholder": "000000"
   }
 }
