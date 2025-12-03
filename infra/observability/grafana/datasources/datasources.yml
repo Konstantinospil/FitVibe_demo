@@ -37,28 +37,28 @@ datasources:
     jsonData:
       httpMethod: GET
       tracesToLogs:
-        datasourceUid: 'Loki'
-        tags: ['job', 'instance', 'pod', 'namespace']
-        mappedTags: [{ key: 'service.name', value: 'job' }]
+        datasourceUid: "Loki"
+        tags: ["job", "instance", "pod", "namespace"]
+        mappedTags: [{ key: "service.name", value: "job" }]
         mapTagNamesEnabled: false
-        spanStartTimeShift: '1h'
-        spanEndTimeShift: '1h'
+        spanStartTimeShift: "1h"
+        spanEndTimeShift: "1h"
         filterByTraceID: true
         filterBySpanID: false
       tracesToMetrics:
-        datasourceUid: 'Prometheus'
-        tags: [{ key: 'service.name', value: 'job' }, { key: 'job' }]
+        datasourceUid: "Prometheus"
+        tags: [{ key: "service.name", value: "job" }, { key: "job" }]
         queries:
-          - name: 'Sample query'
-            query: 'sum(rate(traces_spanmetrics_latency_bucket{$$__tags}[5m]))'
+          - name: "Sample query"
+            query: "sum(rate(traces_spanmetrics_latency_bucket{$$__tags}[5m]))"
       serviceMap:
-        datasourceUid: 'Prometheus'
+        datasourceUid: "Prometheus"
       nodeGraph:
         enabled: true
       search:
         hide: false
       lokiSearch:
-        datasourceUid: 'Loki'
+        datasourceUid: "Loki"
 
   # PostgreSQL datasource (for direct DB queries in dashboards)
   - name: PostgreSQL
@@ -69,7 +69,7 @@ datasources:
     secureJsonData:
       password: fitvibe
     jsonData:
-      sslmode: 'disable'
+      sslmode: "disable"
       maxOpenConns: 5
       maxIdleConns: 2
       connMaxLifetime: 14400

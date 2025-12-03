@@ -51,7 +51,7 @@ scrape_configs:
       # Redact sensitive information (defense in depth)
       - replace:
           expression: '(?i)(password|token|secret|authorization|cookie)[\s:=]+[^\s]+'
-          replace: '${1}=[REDACTED]'
+          replace: "${1}=[REDACTED]"
 
   # NGINX access logs
   - job_name: nginx-access
@@ -71,7 +71,7 @@ scrape_configs:
       # Extract timestamp
       - timestamp:
           source: time_local
-          format: '02/Jan/2006:15:04:05 -0700'
+          format: "02/Jan/2006:15:04:05 -0700"
 
       # Set labels
       - labels:
@@ -103,7 +103,7 @@ scrape_configs:
       # Extract timestamp
       - timestamp:
           source: timestamp
-          format: '2006/01/02 15:04:05'
+          format: "2006/01/02 15:04:05"
 
       # Set labels
       - labels:
@@ -128,7 +128,7 @@ scrape_configs:
       # Extract timestamp
       - timestamp:
           source: timestamp
-          format: '2006-01-02 15:04:05.000 MST'
+          format: "2006-01-02 15:04:05.000 MST"
 
       # Set labels
       - labels:
@@ -138,7 +138,7 @@ scrape_configs:
       # Drop connection logs (reduce noise)
       - drop:
           source: message
-          expression: '^(connection received|connection authorized|disconnection)'
+          expression: "^(connection received|connection authorized|disconnection)"
 
   # Docker container logs (for development)
   - job_name: docker
@@ -150,15 +150,15 @@ scrape_configs:
             values: ["logging=promtail"]
 
     relabel_configs:
-      - source_labels: ['__meta_docker_container_name']
-        regex: '/(.*)'
-        target_label: 'container'
-      - source_labels: ['__meta_docker_container_log_stream']
-        target_label: 'stream'
-      - source_labels: ['__meta_docker_container_label_com_docker_compose_project']
-        target_label: 'project'
-      - source_labels: ['__meta_docker_container_label_com_docker_compose_service']
-        target_label: 'service'
+      - source_labels: ["__meta_docker_container_name"]
+        regex: "/(.*)"
+        target_label: "container"
+      - source_labels: ["__meta_docker_container_log_stream"]
+        target_label: "stream"
+      - source_labels: ["__meta_docker_container_label_com_docker_compose_project"]
+        target_label: "project"
+      - source_labels: ["__meta_docker_container_label_com_docker_compose_service"]
+        target_label: "service"
 
     pipeline_stages:
       # Attempt to parse JSON logs

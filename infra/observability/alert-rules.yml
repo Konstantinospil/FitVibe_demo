@@ -207,7 +207,7 @@ groups:
     interval: 1h
     rules:
       - alert: JWTKeyRotationDue
-        expr: (time() - jwt_key_created_timestamp) > (90 * 24 * 3600)  # 90 days
+        expr: (time() - jwt_key_created_timestamp) > (90 * 24 * 3600) # 90 days
         for: 1h
         labels:
           severity: warning
@@ -218,7 +218,7 @@ groups:
           runbook_url: "https://docs.fitvibe.app/runbooks/jwt-key-rotation"
 
       - alert: JWTKeyRotationOverdue
-        expr: (time() - jwt_key_created_timestamp) > (105 * 24 * 3600)  # 105 days (14 day grace)
+        expr: (time() - jwt_key_created_timestamp) > (105 * 24 * 3600) # 105 days (14 day grace)
         for: 1h
         labels:
           severity: critical
