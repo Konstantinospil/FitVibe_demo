@@ -15,7 +15,7 @@ const mergeTranslations = <T extends Record<string, unknown>, U extends Record<s
 
 // Only load English (default) translations eagerly
 // Other languages will be loaded on-demand via dynamic imports
-const resources: Record<SupportedLanguage, { translation: Record<string, unknown> }> = {
+const resources: Partial<Record<SupportedLanguage, { translation: Record<string, unknown> }>> = {
   en: {
     translation: mergeTranslations(
       mergeTranslations(mergeTranslations(enCommon, enAuth), enTerms),
