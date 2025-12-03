@@ -131,6 +131,10 @@ export default defineConfig(() => {
       target: "es2020",
       cssMinify: true,
       sourcemap: false,
+      // Reduce bundle size by optimizing module resolution
+      modulePreload: {
+        polyfill: false, // Disable module preload polyfill to reduce size
+      },
       rollupOptions: {
         output: {
           // Optimize chunk splitting for better caching and loading
@@ -159,8 +163,18 @@ export default defineConfig(() => {
               if (id.includes("axios")) {
                 return "http-vendor";
               }
+              if (id.includes("lucide-react")) {
+                return "icons-vendor";
+              }
               // Other vendor code
               return "vendor";
+            }
+            // Split i18n locale files into separate chunks for lazy loading
+            if (id.includes("/locales/") && !id.includes("/locales/en/")) {
+              const match = id.match(/locales\/([^/]+)\//);
+              if (match) {
+                return `locale-${match[1]}`;
+              }
             }
           },
           // Optimize chunk file names for better caching
@@ -177,6 +191,8 @@ export default defineConfig(() => {
       reportCompressedSize: true,
       // Optimize asset inlining threshold
       assetsInlineLimit: 4096, // Inline assets smaller than 4KB
+      // Reduce CSS code splitting to minimize initial bundle
+      cssCodeSplit: true,
     },
   };
 });
