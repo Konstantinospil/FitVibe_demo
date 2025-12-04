@@ -40,7 +40,8 @@ void testI18n.use(initReactI18next).init({
         "verifyEmail.descSuccess": "Your email has been successfully verified",
         "verifyEmail.descFailed": "We couldn't verify your email",
         "verifyEmail.titleExpired": "Verification link expired",
-        "verifyEmail.descExpired": "Your verification link has expired. Please request a new verification email.",
+        "verifyEmail.descExpired":
+          "Your verification link has expired. Please request a new verification email.",
         "verifyEmail.noToken": "No verification token provided",
         "verifyEmail.goToLogin": "Go to Login",
         "verifyEmail.backToRegister": "Back to Register",
@@ -245,7 +246,9 @@ describe("VerifyEmail", () => {
     await waitFor(() => {
       expect(screen.getByText("Verification link expired")).toBeInTheDocument();
       expect(
-        screen.getByText("Your verification link has expired. Please request a new verification email."),
+        screen.getByText(
+          "Your verification link has expired. Please request a new verification email.",
+        ),
       ).toBeInTheDocument();
     });
   });
@@ -484,7 +487,9 @@ describe("VerifyEmail", () => {
     await waitFor(() => {
       expect(screen.getByText("Verification link expired")).toBeInTheDocument();
       expect(
-        screen.getByText("Your verification link has expired. Please request a new verification email."),
+        screen.getByText(
+          "Your verification link has expired. Please request a new verification email.",
+        ),
       ).toBeInTheDocument();
     });
   });

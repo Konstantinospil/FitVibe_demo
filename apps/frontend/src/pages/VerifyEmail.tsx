@@ -52,9 +52,7 @@ const VerifyEmail: React.FC = () => {
             );
           } else {
             setStatus("error");
-            setErrorMessage(
-              axiosError.response?.data?.error?.message || "Verification failed",
-            );
+            setErrorMessage(axiosError.response?.data?.error?.message || "Verification failed");
           }
         } else {
           setStatus("error");
@@ -176,52 +174,56 @@ const VerifyEmail: React.FC = () => {
             </div>
           ) : (
             <form
-              onSubmit={async (e) => {
+              onSubmit={(e) => {
                 e.preventDefault();
-                if (!resendEmail.trim()) {
-                  setResendError(t("auth.register.fillAllFields"));
-                  return;
-                }
-
-                setIsResending(true);
-                setResendError("");
-                setResendSuccess(false);
-
-                try {
-                  await resendVerificationEmail({ email: resendEmail.trim() });
-                  setResendSuccess(true);
-                } catch (err: unknown) {
-                  setResendSuccess(false);
-                  if (err && typeof err === "object" && "response" in err) {
-                    const axiosError = err as {
-                      response?: {
-                        data?: { error?: { code?: string; message?: string; retryAfter?: number } };
-                        headers?: { "retry-after"?: string };
-                      };
-                    };
-                    const errorCode = axiosError.response?.data?.error?.code;
-                    const retryAfterValue =
-                      axiosError.response?.data?.error?.retryAfter ||
-                      (axiosError.response?.headers?.["retry-after"]
-                        ? parseInt(axiosError.response.headers["retry-after"], 10)
-                        : null);
-                    
-                    if (errorCode === "RATE_LIMITED" && retryAfterValue) {
-                      setRetryAfter(retryAfterValue);
-                      resetCountdown(retryAfterValue);
-                    }
-                    
-                    setResendError(
-                      errorCode
-                        ? t(`errors.${errorCode}`) || axiosError.response?.data?.error?.message
-                        : t("verifyEmail.resendError"),
-                    );
-                  } else {
-                    setResendError(t("verifyEmail.resendError"));
+                void (async () => {
+                  if (!resendEmail.trim()) {
+                    setResendError(t("auth.register.fillAllFields"));
+                    return;
                   }
-                } finally {
-                  setIsResending(false);
-                }
+
+                  setIsResending(true);
+                  setResendError("");
+                  setResendSuccess(false);
+
+                  try {
+                    await resendVerificationEmail({ email: resendEmail.trim() });
+                    setResendSuccess(true);
+                  } catch (err: unknown) {
+                    setResendSuccess(false);
+                    if (err && typeof err === "object" && "response" in err) {
+                      const axiosError = err as {
+                        response?: {
+                          data?: {
+                            error?: { code?: string; message?: string; retryAfter?: number };
+                          };
+                          headers?: { "retry-after"?: string };
+                        };
+                      };
+                      const errorCode = axiosError.response?.data?.error?.code;
+                      const retryAfterValue =
+                        axiosError.response?.data?.error?.retryAfter ||
+                        (axiosError.response?.headers?.["retry-after"]
+                          ? parseInt(axiosError.response.headers["retry-after"], 10)
+                          : null);
+
+                      if (errorCode === "RATE_LIMITED" && retryAfterValue) {
+                        setRetryAfter(retryAfterValue);
+                        resetCountdown(retryAfterValue);
+                      }
+
+                      setResendError(
+                        errorCode
+                          ? t(`errors.${errorCode}`) || axiosError.response?.data?.error?.message
+                          : t("verifyEmail.resendError"),
+                      );
+                    } else {
+                      setResendError(t("verifyEmail.resendError"));
+                    }
+                  } finally {
+                    setIsResending(false);
+                  }
+                })();
               }}
               style={{ maxWidth: "400px", margin: "0 auto" }}
             >
@@ -266,7 +268,12 @@ const VerifyEmail: React.FC = () => {
                   )}
                 </div>
               )}
-              <Button type="submit" disabled={isResending} className="mt-1" style={{ width: "100%" }}>
+              <Button
+                type="submit"
+                disabled={isResending}
+                className="mt-1"
+                style={{ width: "100%" }}
+              >
                 {isResending ? t("verifyEmail.resending") : t("verifyEmail.resendButton")}
               </Button>
               <Button

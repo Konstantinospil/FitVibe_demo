@@ -10,7 +10,8 @@
 **Gate**: GOLD  
 **Owner**: ENG/QA  
 **Created**: 2025-11-21  
-**Updated**: 2025-01-21
+**Updated**: 2025-12-04  
+**Completed**: 2025-12-04
 
 ---
 
@@ -45,16 +46,16 @@ The system shall provide a secure user registration process with the following c
 
 ### Email Verification
 
-- **Verification Token**: Generate time-limited verification tokens (TTL = 24h)
+- **Verification Token**: Generate time-limited verification tokens (TTL = 15 minutes)
 - **Token Expiration**: Expired tokens return 410 Gone with resend option
-- **Resend Limits**: Maximum 5 resend requests per 24 hours per IP address
+- **Resend Limits**: Maximum 3 resend requests per hour per user
 - **Access Control**: Unverified users cannot access protected routes (401 API, redirect to /login SPA)
 
 ### Security Features
 
 - **Password Validation**: Enforce password policy at registration
 - **Email Normalization**: Case-folding and trimming to prevent duplicate accounts
-- **Rate Limiting**: Prevent abuse with IP-based rate limits
+- **Rate Limiting**: Prevent abuse with user-based rate limits (3 resend requests per hour per user)
 
 ## Related Epics
 
@@ -76,8 +77,9 @@ The system shall provide a secure user registration process with the following c
 
 ### Technical Constraints
 
-- Email verification token TTL = 24h
-- Rate limiting: 5 resend requests/24h/IP
+- Email verification token TTL = 15 minutes
+- Rate limiting: 3 resend requests/hour/user
+- Auto-purge: Unverified accounts older than 7 days are automatically deleted
 
 ### Business Constraints
 
@@ -108,5 +110,12 @@ The system shall provide a secure user registration process with the following c
 
 ---
 
-**Last Updated**: 2025-01-21  
-**Next Review**: 2025-02-21
+**Last Updated**: 2025-12-04  
+**Next Review**: 2026-01-04
+
+---
+
+## Change Log
+
+- **2025-12-04** (Documentation Update): Updated token TTL from 24h to 15 minutes, resend limits from 5/24h/IP to 3/hour/user, and added auto-purge constraint to match PRD and implementation. This change aligns the FR-001 specification with the actual implementation and PRD requirements.
+- **2025-12-04** (Completion): FR-001 marked as complete. All critical and non-critical issues resolved including: dedicated resend verification endpoint, frontend resend UI, username input field, email template localization (5 languages), rate limit countdown display, and comprehensive test coverage. Implementation review completed and all acceptance criteria met.

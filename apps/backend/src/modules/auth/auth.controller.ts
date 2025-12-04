@@ -206,7 +206,8 @@ export async function resendVerificationEmail(
     await doResendVerificationEmail(payload.email);
     // Always return success to prevent user enumeration
     res.status(200).json({
-      message: "If the email is registered and pending verification, a verification link will be sent shortly.",
+      message:
+        "If the email is registered and pending verification, a verification link will be sent shortly.",
     });
     return;
   } catch (error) {

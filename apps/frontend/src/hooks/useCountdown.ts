@@ -48,4 +48,3 @@ export function useCountdown(initialSeconds: number): [number, boolean, () => vo
 
   return [seconds, isActive, reset];
 }
-

@@ -35,7 +35,7 @@ export function rateLimit(key: string, points = 60, duration = 60) {
     limiter
       .consume(ip)
       .then(() => next())
-      .catch((rejRes) => {
+      .catch((rejRes: { msBeforeNext?: number }) => {
         // Calculate retry-after in seconds
         const retryAfter = Math.ceil((rejRes.msBeforeNext || duration * 1000) / 1000);
         res.setHeader("Retry-After", retryAfter.toString());
@@ -70,7 +70,7 @@ export function rateLimitByUser(key: string, points = 60, duration = 60) {
     limiter
       .consume(identity)
       .then(() => next())
-      .catch((rejRes) => {
+      .catch((rejRes: { msBeforeNext?: number }) => {
         // Calculate retry-after in seconds
         const retryAfter = Math.ceil((rejRes.msBeforeNext || duration * 1000) / 1000);
         res.setHeader("Retry-After", retryAfter.toString());

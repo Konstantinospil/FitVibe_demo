@@ -203,4 +203,3 @@ describe("Integration: Resend Verification Email", () => {
     expect(tokens.length).toBeGreaterThanOrEqual(2);
   });
 });
-

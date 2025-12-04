@@ -1,7 +1,7 @@
 # FitVibe Requirements Catalogue
 
 **Version**: 2.0  
-**Last Updated**: 2025-01-20  
+**Last Updated**: 2025-12-04  
 **Status**: Active
 
 ---

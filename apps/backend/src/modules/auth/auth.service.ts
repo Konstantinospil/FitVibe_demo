@@ -287,7 +287,7 @@ export async function register(
     if (env.email.enabled) {
       const verificationUrl = `${env.frontendUrl}/verify?token=${verificationToken}`;
       const expiresInMinutes = Math.floor(EMAIL_VERIFICATION_TTL / 60);
-      
+
       // Get user's locale if available (for new users, use default)
       const user = await findUserById(id);
       const locale = user?.locale;

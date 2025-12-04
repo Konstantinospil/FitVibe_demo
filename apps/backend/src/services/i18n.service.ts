@@ -38,7 +38,8 @@ const translations: Record<SupportedLanguage, EmailTranslations> = {
     resend: {
       subject: "Verify your FitVibe account",
       title: "Verify your FitVibe account",
-      message: "We received a request to resend your verification email. Please verify your email address by clicking the link below:",
+      message:
+        "We received a request to resend your verification email. Please verify your email address by clicking the link below:",
       verifyButton: "Verify Email Address",
       orCopy: "Or copy and paste this link into your browser:",
       expiresIn: "This link will expire in",
@@ -57,7 +58,8 @@ const translations: Record<SupportedLanguage, EmailTranslations> = {
     resend: {
       subject: "Bestätigen Sie Ihr FitVibe-Konto",
       title: "Bestätigen Sie Ihr FitVibe-Konto",
-      message: "Wir haben eine Anfrage erhalten, Ihre Bestätigungs-E-Mail erneut zu senden. Bitte bestätigen Sie Ihre E-Mail-Adresse, indem Sie auf den untenstehenden Link klicken:",
+      message:
+        "Wir haben eine Anfrage erhalten, Ihre Bestätigungs-E-Mail erneut zu senden. Bitte bestätigen Sie Ihre E-Mail-Adresse, indem Sie auf den untenstehenden Link klicken:",
       verifyButton: "E-Mail-Adresse bestätigen",
       orCopy: "Oder kopieren Sie diesen Link in Ihren Browser:",
       expiresIn: "Dieser Link läuft ab in",
@@ -76,7 +78,8 @@ const translations: Record<SupportedLanguage, EmailTranslations> = {
     resend: {
       subject: "Verifica tu cuenta de FitVibe",
       title: "Verifica tu cuenta de FitVibe",
-      message: "Recibimos una solicitud para reenviar tu correo de verificación. Por favor, verifica tu dirección de correo haciendo clic en el enlace a continuación:",
+      message:
+        "Recibimos una solicitud para reenviar tu correo de verificación. Por favor, verifica tu dirección de correo haciendo clic en el enlace a continuación:",
       verifyButton: "Verificar dirección de correo",
       orCopy: "O copia y pega este enlace en tu navegador:",
       expiresIn: "Este enlace expirará en",
@@ -95,7 +98,8 @@ const translations: Record<SupportedLanguage, EmailTranslations> = {
     resend: {
       subject: "Vérifiez votre compte FitVibe",
       title: "Vérifiez votre compte FitVibe",
-      message: "Nous avons reçu une demande de renvoi de votre e-mail de vérification. Veuillez vérifier votre adresse e-mail en cliquant sur le lien ci-dessous :",
+      message:
+        "Nous avons reçu une demande de renvoi de votre e-mail de vérification. Veuillez vérifier votre adresse e-mail en cliquant sur le lien ci-dessous :",
       verifyButton: "Vérifier l'adresse e-mail",
       orCopy: "Ou copiez et collez ce lien dans votre navigateur :",
       expiresIn: "Ce lien expirera dans",
@@ -114,7 +118,8 @@ const translations: Record<SupportedLanguage, EmailTranslations> = {
     resend: {
       subject: "Επαληθεύστε τον λογαριασμό σας στο FitVibe",
       title: "Επαληθεύστε τον λογαριασμό σας στο FitVibe",
-      message: "Λάβαμε αίτημα για επαναποστολή του email επαλήθευσης. Παρακαλώ επαληθεύστε τη διεύθυνση email σας κάνοντας κλικ στον παρακάτω σύνδεσμο:",
+      message:
+        "Λάβαμε αίτημα για επαναποστολή του email επαλήθευσης. Παρακαλώ επαληθεύστε τη διεύθυνση email σας κάνοντας κλικ στον παρακάτω σύνδεσμο:",
       verifyButton: "Επαλήθευση διεύθυνσης email",
       orCopy: "Ή αντιγράψτε και επικολλήστε αυτόν τον σύνδεσμο στον περιηγητή σας:",
       expiresIn: "Αυτός ο σύνδεσμος θα λήξει σε",
@@ -209,4 +214,3 @@ export function generateResendVerificationEmailText(
   const t = getEmailTranslations(lang);
   return `${t.resend.title} ${t.resend.message} ${verificationUrl}\n\n${t.resend.expiresIn} ${expiresInMinutes} ${t.resend.minutes}.`;
 }
-

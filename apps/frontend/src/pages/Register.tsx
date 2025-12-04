@@ -16,7 +16,7 @@ const Register: React.FC = () => {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [username, setUsername] = useState("");
-  
+
   // Pre-fill email from location state (e.g., from expired verification token)
   useEffect(() => {
     const state = location.state as { email?: string; resendVerification?: boolean } | null;
@@ -182,45 +182,49 @@ const Register: React.FC = () => {
               {t("auth.register.didntReceiveEmail")}{" "}
               <button
                 type="button"
-                onClick={async () => {
-                  setIsResending(true);
-                  setResendError(null);
-                  setResendSuccess(false);
-                  try {
-                    await resendVerificationEmail({ email });
-                    setResendSuccess(true);
-                  } catch (err: unknown) {
+                onClick={() => {
+                  void (async () => {
+                    setIsResending(true);
+                    setResendError(null);
                     setResendSuccess(false);
-                    if (err && typeof err === "object" && "response" in err) {
-                      const axiosError = err as {
-                        response?: {
-                          data?: { error?: { code?: string; message?: string; retryAfter?: number } };
-                          headers?: { "retry-after"?: string };
+                    try {
+                      await resendVerificationEmail({ email });
+                      setResendSuccess(true);
+                    } catch (err: unknown) {
+                      setResendSuccess(false);
+                      if (err && typeof err === "object" && "response" in err) {
+                        const axiosError = err as {
+                          response?: {
+                            data?: {
+                              error?: { code?: string; message?: string; retryAfter?: number };
+                            };
+                            headers?: { "retry-after"?: string };
+                          };
                         };
-                      };
-                      const errorCode = axiosError.response?.data?.error?.code;
-                      const retryAfterValue =
-                        axiosError.response?.data?.error?.retryAfter ||
-                        (axiosError.response?.headers?.["retry-after"]
-                          ? parseInt(axiosError.response.headers["retry-after"], 10)
-                          : null);
-                      
-                      if (errorCode === "RATE_LIMITED" && retryAfterValue) {
-                        setRetryAfter(retryAfterValue);
-                        resetCountdown(retryAfterValue);
+                        const errorCode = axiosError.response?.data?.error?.code;
+                        const retryAfterValue =
+                          axiosError.response?.data?.error?.retryAfter ||
+                          (axiosError.response?.headers?.["retry-after"]
+                            ? parseInt(axiosError.response.headers["retry-after"], 10)
+                            : null);
+
+                        if (errorCode === "RATE_LIMITED" && retryAfterValue) {
+                          setRetryAfter(retryAfterValue);
+                          resetCountdown(retryAfterValue);
+                        }
+
+                        setResendError(
+                          errorCode
+                            ? t(`errors.${errorCode}`) || axiosError.response?.data?.error?.message
+                            : t("verifyEmail.resendError"),
+                        );
+                      } else {
+                        setResendError(t("verifyEmail.resendError"));
                       }
-                      
-                      setResendError(
-                        errorCode
-                          ? t(`errors.${errorCode}`) || axiosError.response?.data?.error?.message
-                          : t("verifyEmail.resendError"),
-                      );
-                    } else {
-                      setResendError(t("verifyEmail.resendError"));
+                    } finally {
+                      setIsResending(false);
                     }
-                  } finally {
-                    setIsResending(false);
-                  }
+                  })();
                 }}
                 disabled={isResending}
                 style={{
@@ -319,7 +323,10 @@ const Register: React.FC = () => {
             maxLength={50}
             pattern="[a-zA-Z0-9_.-]+"
           />
-          <small className="text-secondary" style={{ fontSize: "0.75rem", marginTop: "0.25rem", display: "block" }}>
+          <small
+            className="text-secondary"
+            style={{ fontSize: "0.75rem", marginTop: "0.25rem", display: "block" }}
+          >
             {t("auth.register.usernameHelp")}
           </small>
         </label>
