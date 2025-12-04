@@ -1299,6 +1299,45 @@ jobs:
           echo "- ✅ Secret scan completed" >> $GITHUB_STEP_SUMMARY
           echo "- ✅ Container scan completed" >> $GITHUB_STEP_SUMMARY
 
+  codeql:
+    name: CodeQL Static Analysis
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    needs:
+      - quality
+    permissions:
+      contents: read
+      security-events: write
+      actions: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: javascript
+
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@v3
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: "/language:javascript"
+
+      - name: Job summary
+        if: always()
+        run: |
+          echo "## CodeQL Analysis Summary" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ job.status }}" == "success" ]; then
+            echo "- ✅ CodeQL static analysis completed" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "- ❌ CodeQL analysis failed" >> $GITHUB_STEP_SUMMARY
+          fi
+
   zap_baseline:
     name: OWASP ZAP Baseline
     runs-on: ubuntu-latest
@@ -1744,6 +1783,7 @@ jobs:
       - qa_summary
       - performance
       - security
+      - codeql
       - openapi_spec
       - lighthouse
       - i18n
