@@ -3,14 +3,21 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import PageIntro from "../components/PageIntro";
 import { Button } from "../components/ui";
 import { useTranslation } from "react-i18next";
-import { rawHttpClient } from "../services/api";
+import { rawHttpClient, resendVerificationEmail } from "../services/api";
+import { useCountdown } from "../hooks/useCountdown";
 
 const VerifyEmail: React.FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const [status, setStatus] = useState<"verifying" | "success" | "error">("verifying");
+  const [status, setStatus] = useState<"verifying" | "success" | "error" | "expired">("verifying");
   const [errorMessage, setErrorMessage] = useState<string>("");
+  const [resendEmail, setResendEmail] = useState<string>("");
+  const [resendError, setResendError] = useState<string>("");
+  const [isResending, setIsResending] = useState<boolean>(false);
+  const [resendSuccess, setResendSuccess] = useState<boolean>(false);
+  const [retryAfter, setRetryAfter] = useState<number | null>(null);
+  const [countdown, , resetCountdown] = useCountdown(0);
 
   useEffect(() => {
     const token = searchParams.get("token");
@@ -30,11 +37,27 @@ const VerifyEmail: React.FC = () => {
           navigate("/login");
         }, 3000);
       } catch (error: unknown) {
-        setStatus("error");
         if (error && typeof error === "object" && "response" in error) {
-          const axiosError = error as { response?: { data?: { error?: { message?: string } } } };
-          setErrorMessage(axiosError.response?.data?.error?.message || "Verification failed");
+          const axiosError = error as {
+            response?: { status?: number; data?: { error?: { code?: string; message?: string } } };
+          };
+          const statusCode = axiosError.response?.status;
+          const errorCode = axiosError.response?.data?.error?.code;
+
+          // Check for 410 Gone (expired token)
+          if (statusCode === 410 || errorCode === "AUTH_TOKEN_EXPIRED") {
+            setStatus("expired");
+            setErrorMessage(
+              axiosError.response?.data?.error?.message || t("errors.AUTH_TOKEN_EXPIRED"),
+            );
+          } else {
+            setStatus("error");
+            setErrorMessage(
+              axiosError.response?.data?.error?.message || "Verification failed",
+            );
+          }
         } else {
+          setStatus("error");
           setErrorMessage("Verification failed");
         }
       }
@@ -51,14 +74,18 @@ const VerifyEmail: React.FC = () => {
           ? t("verifyEmail.titleVerifying")
           : status === "success"
             ? t("verifyEmail.titleSuccess")
-            : t("verifyEmail.titleFailed")
+            : status === "expired"
+              ? t("verifyEmail.titleExpired")
+              : t("verifyEmail.titleFailed")
       }
       description={
         status === "verifying"
           ? t("verifyEmail.descVerifying")
           : status === "success"
             ? t("verifyEmail.descSuccess")
-            : errorMessage || t("verifyEmail.descFailed")
+            : status === "expired"
+              ? t("verifyEmail.descExpired")
+              : errorMessage || t("verifyEmail.descFailed")
       }
     >
       {status === "verifying" && (
@@ -109,6 +136,154 @@ const VerifyEmail: React.FC = () => {
           <Button onClick={() => navigate("/login")} className="mt-1">
             {t("verifyEmail.goToLogin")}
           </Button>
+        </div>
+      )}
+
+      {status === "expired" && (
+        <div className="text-center p-2rem">
+          <div
+            className="flex flex--center mb-1 rounded-full"
+            style={{
+              width: "64px",
+              height: "64px",
+              margin: "0 auto 1rem",
+              backgroundColor: "rgba(239, 68, 68, 0.1)",
+            }}
+          >
+            <svg
+              width="32"
+              height="32"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="#ef4444"
+              strokeWidth="3"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </div>
+
+          {resendSuccess ? (
+            <div className="mb-1">
+              <p style={{ color: "#22c55e", marginBottom: "1rem" }}>
+                {t("verifyEmail.resendSuccess")}
+              </p>
+              <Button onClick={() => navigate("/login")} className="mt-1">
+                {t("verifyEmail.goToLogin")}
+              </Button>
+            </div>
+          ) : (
+            <form
+              onSubmit={async (e) => {
+                e.preventDefault();
+                if (!resendEmail.trim()) {
+                  setResendError(t("auth.register.fillAllFields"));
+                  return;
+                }
+
+                setIsResending(true);
+                setResendError("");
+                setResendSuccess(false);
+
+                try {
+                  await resendVerificationEmail({ email: resendEmail.trim() });
+                  setResendSuccess(true);
+                } catch (err: unknown) {
+                  setResendSuccess(false);
+                  if (err && typeof err === "object" && "response" in err) {
+                    const axiosError = err as {
+                      response?: {
+                        data?: { error?: { code?: string; message?: string; retryAfter?: number } };
+                        headers?: { "retry-after"?: string };
+                      };
+                    };
+                    const errorCode = axiosError.response?.data?.error?.code;
+                    const retryAfterValue =
+                      axiosError.response?.data?.error?.retryAfter ||
+                      (axiosError.response?.headers?.["retry-after"]
+                        ? parseInt(axiosError.response.headers["retry-after"], 10)
+                        : null);
+                    
+                    if (errorCode === "RATE_LIMITED" && retryAfterValue) {
+                      setRetryAfter(retryAfterValue);
+                      resetCountdown(retryAfterValue);
+                    }
+                    
+                    setResendError(
+                      errorCode
+                        ? t(`errors.${errorCode}`) || axiosError.response?.data?.error?.message
+                        : t("verifyEmail.resendError"),
+                    );
+                  } else {
+                    setResendError(t("verifyEmail.resendError"));
+                  }
+                } finally {
+                  setIsResending(false);
+                }
+              }}
+              style={{ maxWidth: "400px", margin: "0 auto" }}
+            >
+              <div style={{ marginBottom: "1rem" }}>
+                <label
+                  htmlFor="resend-email"
+                  style={{
+                    display: "block",
+                    marginBottom: "0.5rem",
+                    fontWeight: "500",
+                    textAlign: "left",
+                  }}
+                >
+                  {t("verifyEmail.resendEmailLabel")}
+                </label>
+                <input
+                  id="resend-email"
+                  type="email"
+                  value={resendEmail}
+                  onChange={(e) => setResendEmail(e.target.value)}
+                  placeholder={t("verifyEmail.resendEmailPlaceholder")}
+                  required
+                  disabled={isResending}
+                  style={{
+                    width: "100%",
+                    padding: "0.75rem",
+                    border: "1px solid #d1d5db",
+                    borderRadius: "6px",
+                    fontSize: "1rem",
+                  }}
+                />
+              </div>
+              {resendError && (
+                <div style={{ marginBottom: "1rem" }}>
+                  <p style={{ color: "#ef4444", fontSize: "0.875rem", marginBottom: "0.25rem" }}>
+                    {resendError}
+                  </p>
+                  {retryAfter !== null && countdown > 0 && (
+                    <p style={{ color: "#666", fontSize: "0.75rem" }}>
+                      {t("verifyEmail.retryAfter", { seconds: countdown })}
+                    </p>
+                  )}
+                </div>
+              )}
+              <Button type="submit" disabled={isResending} className="mt-1" style={{ width: "100%" }}>
+                {isResending ? t("verifyEmail.resending") : t("verifyEmail.resendButton")}
+              </Button>
+              <Button
+                type="button"
+                onClick={() => navigate("/register")}
+                className="mt-1"
+                style={{
+                  width: "100%",
+                  backgroundColor: "transparent",
+                  color: "#6b7280",
+                  border: "1px solid #d1d5db",
+                }}
+              >
+                {t("verifyEmail.backToRegister")}
+              </Button>
+            </form>
+          )}
         </div>
       )}
 

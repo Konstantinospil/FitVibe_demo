@@ -35,12 +35,16 @@ export function rateLimit(key: string, points = 60, duration = 60) {
     limiter
       .consume(ip)
       .then(() => next())
-      .catch(() => {
+      .catch((rejRes) => {
+        // Calculate retry-after in seconds
+        const retryAfter = Math.ceil((rejRes.msBeforeNext || duration * 1000) / 1000);
+        res.setHeader("Retry-After", retryAfter.toString());
         res.status(429).json({
           error: {
             code: "RATE_LIMITED",
             message: "Too many requests",
             requestId: res.locals.requestId,
+            retryAfter,
           },
         });
       });
@@ -66,12 +70,16 @@ export function rateLimitByUser(key: string, points = 60, duration = 60) {
     limiter
       .consume(identity)
       .then(() => next())
-      .catch(() => {
+      .catch((rejRes) => {
+        // Calculate retry-after in seconds
+        const retryAfter = Math.ceil((rejRes.msBeforeNext || duration * 1000) / 1000);
+        res.setHeader("Retry-After", retryAfter.toString());
         res.status(429).json({
           error: {
             code: "RATE_LIMITED",
             message: "Too many requests",
             requestId: res.locals.requestId,
+            retryAfter,
           },
         });
       });

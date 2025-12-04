@@ -6,6 +6,7 @@ import {
   refresh as doRefresh,
   logout as doLogout,
   verifyEmail as doVerifyEmail,
+  resendVerificationEmail as doResendVerificationEmail,
   requestPasswordReset,
   resetPassword as doResetPassword,
   listSessions as doListSessions,
@@ -21,6 +22,7 @@ import {
   ResetPasswordSchema,
   RevokeSessionsSchema,
   AcceptTermsSchema,
+  ResendVerificationSchema,
 } from "./auth.schemas.js";
 import type { z } from "zod";
 import type { LoginContext } from "./auth.types.js";
@@ -186,6 +188,26 @@ export async function verifyEmail(req: Request, res: Response, next: NextFunctio
     }
     const user = await doVerifyEmail(token);
     res.json({ user });
+    return;
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function resendVerificationEmail(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> {
+  try {
+    const payload: z.infer<typeof ResendVerificationSchema> = ResendVerificationSchema.parse(
+      req.body,
+    );
+    await doResendVerificationEmail(payload.email);
+    // Always return success to prevent user enumeration
+    res.status(200).json({
+      message: "If the email is registered and pending verification, a verification link will be sent shortly.",
+    });
     return;
   } catch (error) {
     next(error);

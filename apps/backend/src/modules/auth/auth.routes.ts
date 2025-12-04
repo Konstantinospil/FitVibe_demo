@@ -6,6 +6,7 @@ import {
   refresh,
   logout,
   verifyEmail,
+  resendVerificationEmail,
   forgotPassword,
   resetPassword,
   listSessions,
@@ -24,6 +25,7 @@ import {
   ResetPasswordSchema,
   RevokeSessionsSchema,
   AcceptTermsSchema,
+  ResendVerificationSchema,
 } from "./auth.schemas.js";
 import { requireAccessToken } from "./auth.middleware.js";
 import { asyncHandler } from "../../utils/async-handler.js";
@@ -38,6 +40,12 @@ authRouter.post(
   asyncHandler(register),
 );
 authRouter.get("/verify", rateLimit("auth_verify", 60, 60), asyncHandler(verifyEmail));
+authRouter.post(
+  "/verify/resend",
+  rateLimit("auth_verify_resend", 3, 3600), // 3 requests per hour
+  validate(ResendVerificationSchema),
+  asyncHandler(resendVerificationEmail),
+);
 authRouter.post(
   "/login",
   rateLimit("auth_login", 10, 60),

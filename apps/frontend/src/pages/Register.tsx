@@ -1,18 +1,38 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import AuthPageLayout from "../components/AuthPageLayout";
-import { NavLink } from "react-router-dom";
-import { register as registerAccount } from "../services/api";
+import { NavLink, useLocation } from "react-router-dom";
+import { register as registerAccount, resendVerificationEmail } from "../services/api";
 import { Button } from "../components/ui";
 import { useTranslation } from "react-i18next";
 import { Eye, EyeOff } from "lucide-react";
 import { useRequiredFieldValidation } from "../hooks/useRequiredFieldValidation";
+import { useCountdown } from "../hooks/useCountdown";
 
 const Register: React.FC = () => {
   const { t } = useTranslation();
+  const location = useLocation();
   const formRef = useRef<HTMLFormElement>(null);
   useRequiredFieldValidation(formRef, t);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
+  
+  // Pre-fill email from location state (e.g., from expired verification token)
+  useEffect(() => {
+    const state = location.state as { email?: string; resendVerification?: boolean } | null;
+    if (state?.email) {
+      setEmail(state.email);
+    }
+  }, [location.state]);
+
+  // Auto-generate username from email when email changes
+  useEffect(() => {
+    if (email && !username) {
+      const generated = email.split("@")[0].replace(/[^a-zA-Z0-9_.-]/g, "_");
+      setUsername(generated);
+    }
+  }, [email, username]);
+
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -22,6 +42,11 @@ const Register: React.FC = () => {
   const [success, setSuccess] = useState(false);
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [privacyAccepted, setPrivacyAccepted] = useState(false);
+  const [isResending, setIsResending] = useState(false);
+  const [resendSuccess, setResendSuccess] = useState(false);
+  const [resendError, setResendError] = useState<string | null>(null);
+  const [retryAfter, setRetryAfter] = useState<number | null>(null);
+  const [countdown, , resetCountdown] = useCountdown(0);
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -68,16 +93,28 @@ const Register: React.FC = () => {
       return;
     }
 
+    // Validate username if provided
+    if (username) {
+      if (username.length < 3 || username.length > 50) {
+        setError(t("errors.USER_USERNAME_INVALID"));
+        return;
+      }
+      if (!/^[a-zA-Z0-9_.-]+$/.test(username)) {
+        setError(t("errors.USER_USERNAME_INVALID"));
+        return;
+      }
+    }
+
     setIsSubmitting(true);
 
     try {
-      // Generate username from email (use part before @, sanitized)
-      const username = email.split("@")[0].replace(/[^a-zA-Z0-9_.-]/g, "_");
+      // Use provided username or generate from email
+      const finalUsername = username.trim() || email.split("@")[0].replace(/[^a-zA-Z0-9_.-]/g, "_");
 
       await registerAccount({
         email,
         password,
-        username,
+        username: finalUsername,
         terms_accepted: termsAccepted && privacyAccepted,
         profile: {
           display_name: name,
@@ -134,6 +171,84 @@ const Register: React.FC = () => {
             </svg>
           </div>
           <p className="mb-1 text-secondary">{t("auth.register.checkEmail", { email })}</p>
+          {resendSuccess ? (
+            <div className="mb-1">
+              <p style={{ color: "#22c55e", marginBottom: "1rem", fontSize: "0.875rem" }}>
+                {t("verifyEmail.resendSuccess")}
+              </p>
+            </div>
+          ) : (
+            <p className="mb-1 text-secondary" style={{ fontSize: "0.875rem" }}>
+              {t("auth.register.didntReceiveEmail")}{" "}
+              <button
+                type="button"
+                onClick={async () => {
+                  setIsResending(true);
+                  setResendError(null);
+                  setResendSuccess(false);
+                  try {
+                    await resendVerificationEmail({ email });
+                    setResendSuccess(true);
+                  } catch (err: unknown) {
+                    setResendSuccess(false);
+                    if (err && typeof err === "object" && "response" in err) {
+                      const axiosError = err as {
+                        response?: {
+                          data?: { error?: { code?: string; message?: string; retryAfter?: number } };
+                          headers?: { "retry-after"?: string };
+                        };
+                      };
+                      const errorCode = axiosError.response?.data?.error?.code;
+                      const retryAfterValue =
+                        axiosError.response?.data?.error?.retryAfter ||
+                        (axiosError.response?.headers?.["retry-after"]
+                          ? parseInt(axiosError.response.headers["retry-after"], 10)
+                          : null);
+                      
+                      if (errorCode === "RATE_LIMITED" && retryAfterValue) {
+                        setRetryAfter(retryAfterValue);
+                        resetCountdown(retryAfterValue);
+                      }
+                      
+                      setResendError(
+                        errorCode
+                          ? t(`errors.${errorCode}`) || axiosError.response?.data?.error?.message
+                          : t("verifyEmail.resendError"),
+                      );
+                    } else {
+                      setResendError(t("verifyEmail.resendError"));
+                    }
+                  } finally {
+                    setIsResending(false);
+                  }
+                }}
+                disabled={isResending}
+                style={{
+                  background: "none",
+                  border: "none",
+                  color: "var(--color-accent)",
+                  textDecoration: "underline",
+                  cursor: isResending ? "not-allowed" : "pointer",
+                  padding: 0,
+                  fontSize: "inherit",
+                }}
+              >
+                {isResending ? t("verifyEmail.resending") : t("auth.register.resendEmail")}
+              </button>
+            </p>
+          )}
+          {resendError && (
+            <div role="alert" style={{ marginBottom: "1rem" }}>
+              <p style={{ color: "#ef4444", fontSize: "0.875rem", marginBottom: "0.25rem" }}>
+                {resendError}
+              </p>
+              {retryAfter !== null && countdown > 0 && (
+                <p style={{ color: "#666", fontSize: "0.75rem" }}>
+                  {t("verifyEmail.retryAfter", { seconds: countdown })}
+                </p>
+              )}
+            </div>
+          )}
           <NavLink
             to="/login"
             className="rounded-xl"
@@ -188,6 +303,25 @@ const Register: React.FC = () => {
             autoComplete="email"
             disabled={isSubmitting}
           />
+        </label>
+        <label className="form-label">
+          <span className="form-label-text">{t("auth.register.usernameLabel")}</span>
+          <input
+            name="username"
+            type="text"
+            placeholder={t("auth.placeholders.username")}
+            className="form-input"
+            value={username}
+            onChange={(event) => setUsername(event.target.value)}
+            autoComplete="username"
+            disabled={isSubmitting}
+            minLength={3}
+            maxLength={50}
+            pattern="[a-zA-Z0-9_.-]+"
+          />
+          <small className="text-secondary" style={{ fontSize: "0.75rem", marginTop: "0.25rem", display: "block" }}>
+            {t("auth.register.usernameHelp")}
+          </small>
         </label>
         <label className="form-label">
           <span className="form-label-text">{t("auth.register.passwordLabel")}</span>

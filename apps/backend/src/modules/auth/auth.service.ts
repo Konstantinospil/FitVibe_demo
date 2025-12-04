@@ -59,6 +59,13 @@ import { assertPasswordPolicy } from "./passwordPolicy.js";
 import { incrementRefreshReuse } from "../../observability/metrics.js";
 import { mailerService } from "../../services/mailer.service.js";
 import {
+  generateVerificationEmailHtml,
+  generateVerificationEmailText,
+  generateResendVerificationEmailHtml,
+  generateResendVerificationEmailText,
+  getEmailTranslations,
+} from "../../services/i18n.service.js";
+import {
   getFailedAttempt,
   recordFailedAttempt,
   resetFailedAttempts,
@@ -230,26 +237,15 @@ export async function register(
         // Resend verification email
         if (env.email.enabled) {
           const verificationUrl = `${env.frontendUrl}/verify?token=${token}`;
+          const expiresInMinutes = Math.floor(EMAIL_VERIFICATION_TTL / 60);
+          const locale = existingByEmail.locale;
+          const t = getEmailTranslations(locale);
+
           await mailerService.send({
             to: email,
-            subject: "Verify your FitVibe account",
-            html: `
-            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-              <h2>Welcome back to FitVibe!</h2>
-              <p>We noticed you tried to register again. Please verify your email address by clicking the link below:</p>
-              <p>
-                <a href="${verificationUrl}" style="display: inline-block; padding: 12px 24px; background-color: #4F46E5; color: white; text-decoration: none; border-radius: 6px;">
-                  Verify Email Address
-                </a>
-              </p>
-              <p>Or copy and paste this link into your browser:</p>
-              <p style="color: #666; word-break: break-all;">${verificationUrl}</p>
-              <p style="color: #999; font-size: 12px; margin-top: 32px;">
-                This link will expire in ${Math.floor(EMAIL_VERIFICATION_TTL / 60)} minutes.
-              </p>
-            </div>
-          `,
-            text: `Welcome back to FitVibe! Please verify your email address by visiting: ${verificationUrl}\n\nThis link will expire in ${Math.floor(EMAIL_VERIFICATION_TTL / 60)} minutes.`,
+            subject: t.resend.subject,
+            html: generateResendVerificationEmailHtml(verificationUrl, expiresInMinutes, locale),
+            text: generateResendVerificationEmailText(verificationUrl, expiresInMinutes, locale),
           });
         }
 
@@ -290,31 +286,65 @@ export async function register(
     // Send verification email
     if (env.email.enabled) {
       const verificationUrl = `${env.frontendUrl}/verify?token=${verificationToken}`;
+      const expiresInMinutes = Math.floor(EMAIL_VERIFICATION_TTL / 60);
+      
+      // Get user's locale if available (for new users, use default)
+      const user = await findUserById(id);
+      const locale = user?.locale;
+      const t = getEmailTranslations(locale);
+
       await mailerService.send({
         to: email,
-        subject: "Verify your FitVibe account",
-        html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <h2>Welcome to FitVibe!</h2>
-          <p>Thank you for registering. Please verify your email address by clicking the link below:</p>
-          <p>
-            <a href="${verificationUrl}" style="display: inline-block; padding: 12px 24px; background-color: #4F46E5; color: white; text-decoration: none; border-radius: 6px;">
-              Verify Email Address
-            </a>
-          </p>
-          <p>Or copy and paste this link into your browser:</p>
-          <p style="color: #666; word-break: break-all;">${verificationUrl}</p>
-          <p style="color: #999; font-size: 12px; margin-top: 32px;">
-            This link will expire in ${Math.floor(EMAIL_VERIFICATION_TTL / 60)} minutes.
-          </p>
-        </div>
-      `,
-        text: `Welcome to FitVibe! Please verify your email address by visiting: ${verificationUrl}\n\nThis link will expire in ${Math.floor(EMAIL_VERIFICATION_TTL / 60)} minutes.`,
+        subject: t.verification.subject,
+        html: generateVerificationEmailHtml(verificationUrl, expiresInMinutes, locale),
+        text: generateVerificationEmailText(verificationUrl, expiresInMinutes, locale),
       });
     }
 
     const user = await findUserById(id);
     return { verificationToken, user: user ? toSafeUser(user) : undefined };
+  } finally {
+    // Normalize timing to prevent user enumeration (AC-1.12)
+    await normalizeAuthTiming(startTime);
+  }
+}
+
+export async function resendVerificationEmail(email: string): Promise<void> {
+  // Start timing for enumeration protection (AC-1.12)
+  const startTime = Date.now();
+
+  try {
+    const normalizedEmail = email.toLowerCase();
+    const user = await findUserByEmail(normalizedEmail);
+
+    // Always return success to prevent user enumeration
+    // Only send email if user exists and is pending verification
+    if (user && user.status === "pending_verification") {
+      // Check rate limiting (3 per hour per user)
+      const token = await issueAuthToken(
+        user.id,
+        TOKEN_TYPES.EMAIL_VERIFICATION,
+        EMAIL_VERIFICATION_TTL,
+      );
+
+      // Send verification email
+      if (env.email.enabled) {
+        const verificationUrl = `${env.frontendUrl}/verify?token=${token}`;
+        const expiresInMinutes = Math.floor(EMAIL_VERIFICATION_TTL / 60);
+        const locale = user.locale;
+        const t = getEmailTranslations(locale);
+
+        await mailerService.send({
+          to: normalizedEmail,
+          subject: t.resend.subject,
+          html: generateResendVerificationEmailHtml(verificationUrl, expiresInMinutes, locale),
+          text: generateResendVerificationEmailText(verificationUrl, expiresInMinutes, locale),
+        });
+      }
+    }
+
+    // Always return success to prevent user enumeration
+    // The actual email sending happens asynchronously if conditions are met
   } finally {
     // Normalize timing to prevent user enumeration (AC-1.12)
     await normalizeAuthTiming(startTime);

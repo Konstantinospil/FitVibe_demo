@@ -233,6 +233,24 @@ export async function acceptTerms(payload: AcceptTermsRequest): Promise<AcceptTe
   return res.data;
 }
 
+export type ResendVerificationRequest = {
+  email: string;
+};
+
+export type ResendVerificationResponse = {
+  message: string;
+};
+
+export async function resendVerificationEmail(
+  payload: ResendVerificationRequest,
+): Promise<ResendVerificationResponse> {
+  const res = await rawHttpClient.post<ResendVerificationResponse>(
+    "/api/v1/auth/verify/resend",
+    payload,
+  );
+  return res.data;
+}
+
 export type ForgotPasswordRequest = {
   email: string;
 };

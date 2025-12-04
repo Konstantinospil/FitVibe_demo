@@ -76,3 +76,7 @@ export const AcceptTermsSchema = z
     message: "TERMS_ACCEPTANCE_REQUIRED",
     path: ["terms_accepted"],
   });
+
+export const ResendVerificationSchema = z.object({
+  email: z.string().email(),
+});

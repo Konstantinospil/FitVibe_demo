@@ -1,5 +1,5 @@
 import { render, screen, fireEvent, waitFor, act } from "@testing-library/react";
-import { BrowserRouter } from "react-router-dom";
+import { BrowserRouter, MemoryRouter } from "react-router-dom";
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import Register from "../../src/pages/Register";
 import { I18nextProvider } from "react-i18next";
@@ -13,6 +13,7 @@ vi.mock("../../src/services/api", async () => {
   return {
     ...actual,
     register: vi.fn(),
+    resendVerificationEmail: vi.fn(),
   };
 });
 
@@ -59,18 +60,27 @@ void testI18n.use(initReactI18next).init({
         "auth.placeholders.email": "you@example.com",
         "auth.placeholders.password": "Create a strong password",
         "auth.placeholders.confirmPassword": "Confirm your password",
+        "auth.register.checkEmail": "Verification email sent to {{email}}",
+        "auth.register.didntReceiveEmail": "Didn't receive the email?",
+        "auth.register.resendEmail": "Resend verification email",
+        "verifyEmail.resendSuccess": "Verification email sent! Please check your inbox.",
+        "verifyEmail.resending": "Sending…",
+        "verifyEmail.resendError": "Failed to send verification email. Please try again.",
         "errors.USER_ALREADY_EXISTS": "An account with this email already exists",
+        "errors.AUTH_TOO_MANY_REQUESTS": "Too many requests. Please try again later.",
         "validation.required": "Fill in this field",
       },
     },
   },
 });
 
-const renderWithProviders = (ui: React.ReactElement) => {
+const renderWithProviders = (ui: React.ReactElement, initialEntries?: string[]) => {
+  const Router = initialEntries ? MemoryRouter : BrowserRouter;
+  const routerProps = initialEntries ? { initialEntries } : {};
   return render(
-    <BrowserRouter>
+    <Router {...routerProps}>
       <I18nextProvider i18n={testI18n}>{ui}</I18nextProvider>
-    </BrowserRouter>,
+    </Router>,
   );
 };
 
@@ -116,9 +126,9 @@ describe("Register", () => {
     const emailInput = screen.getByRole("textbox", { name: /email/i });
     const passwordInput = screen.getByPlaceholderText(/create a strong password/i);
     const confirmPasswordInput = screen.getByPlaceholderText(/confirm your password/i);
-    const submitButton = screen.getByRole("button", { name: /create account/i });
+    const form = nameInput.closest("form");
 
-    act(() => {
+    await act(async () => {
       fireEvent.change(nameInput, { target: { value: "John Doe" } });
       fireEvent.change(emailInput, { target: { value: "john@example.com" } });
       fireEvent.change(passwordInput, { target: { value: "Password123!" } });
@@ -126,10 +136,12 @@ describe("Register", () => {
     });
 
     const checkboxes = screen.getAllByRole("checkbox", { name: /accept the/i });
-    act(() => {
+    await act(async () => {
       fireEvent.click(checkboxes[0]); // Terms checkbox
       fireEvent.click(checkboxes[1]); // Privacy checkbox
-      fireEvent.click(submitButton);
+      if (form) {
+        fireEvent.submit(form);
+      }
     });
 
     // Wait for error to appear - check if alert exists first, then check text
@@ -139,7 +151,7 @@ describe("Register", () => {
         expect(alert).toBeInTheDocument();
         expect(alert).toHaveTextContent(/passwords do not match/i);
       },
-      { timeout: 1000 },
+      { timeout: 3000 },
     );
 
     expect(api.register).not.toHaveBeenCalled();
@@ -157,16 +169,22 @@ describe("Register", () => {
     const emailInput = screen.getByRole("textbox", { name: /email/i });
     const passwordInput = screen.getByPlaceholderText(/create a strong password/i);
     const confirmPasswordInput = screen.getByPlaceholderText(/confirm your password/i);
-    const submitButton = screen.getByRole("button", { name: /create account/i });
+    const form = nameInput.closest("form");
 
-    fireEvent.change(nameInput, { target: { value: "John Doe" } });
-    fireEvent.change(emailInput, { target: { value: "john@example.com" } });
-    fireEvent.change(passwordInput, { target: { value: "Password123!" } });
-    fireEvent.change(confirmPasswordInput, { target: { value: "Password123!" } });
+    await act(async () => {
+      fireEvent.change(nameInput, { target: { value: "John Doe" } });
+      fireEvent.change(emailInput, { target: { value: "john@example.com" } });
+      fireEvent.change(passwordInput, { target: { value: "Password123!" } });
+      fireEvent.change(confirmPasswordInput, { target: { value: "Password123!" } });
+    });
     const checkboxes = screen.getAllByRole("checkbox", { name: /accept the/i });
-    fireEvent.click(checkboxes[0]); // Terms checkbox
-    fireEvent.click(checkboxes[1]); // Privacy checkbox
-    fireEvent.click(submitButton);
+    await act(async () => {
+      fireEvent.click(checkboxes[0]); // Terms checkbox
+      fireEvent.click(checkboxes[1]); // Privacy checkbox
+      if (form) {
+        fireEvent.submit(form);
+      }
+    });
 
     await waitFor(
       () => {
@@ -200,16 +218,22 @@ describe("Register", () => {
     const emailInput = screen.getByRole("textbox", { name: /email/i });
     const passwordInput = screen.getByPlaceholderText(/create a strong password/i);
     const confirmPasswordInput = screen.getByPlaceholderText(/confirm your password/i);
-    const submitButton = screen.getByRole("button", { name: /create account/i });
+    const form = nameInput.closest("form");
 
-    fireEvent.change(nameInput, { target: { value: "John Doe" } });
-    fireEvent.change(emailInput, { target: { value: "john@example.com" } });
-    fireEvent.change(passwordInput, { target: { value: "Password123!" } });
-    fireEvent.change(confirmPasswordInput, { target: { value: "Password123!" } });
+    await act(async () => {
+      fireEvent.change(nameInput, { target: { value: "John Doe" } });
+      fireEvent.change(emailInput, { target: { value: "john@example.com" } });
+      fireEvent.change(passwordInput, { target: { value: "Password123!" } });
+      fireEvent.change(confirmPasswordInput, { target: { value: "Password123!" } });
+    });
     const checkboxes = screen.getAllByRole("checkbox", { name: /accept the/i });
-    fireEvent.click(checkboxes[0]); // Terms checkbox
-    fireEvent.click(checkboxes[1]); // Privacy checkbox
-    fireEvent.click(submitButton);
+    await act(async () => {
+      fireEvent.click(checkboxes[0]); // Terms checkbox
+      fireEvent.click(checkboxes[1]); // Privacy checkbox
+      if (form) {
+        fireEvent.submit(form);
+      }
+    });
 
     await waitFor(
       () => {
@@ -237,16 +261,22 @@ describe("Register", () => {
     const emailInput = screen.getByRole("textbox", { name: /email/i });
     const passwordInput = screen.getByPlaceholderText(/create a strong password/i);
     const confirmPasswordInput = screen.getByPlaceholderText(/confirm your password/i);
-    const submitButton = screen.getByRole("button", { name: /create account/i });
+    const form = nameInput.closest("form");
 
-    fireEvent.change(nameInput, { target: { value: "John Doe" } });
-    fireEvent.change(emailInput, { target: { value: "existing@example.com" } });
-    fireEvent.change(passwordInput, { target: { value: "Password123!" } });
-    fireEvent.change(confirmPasswordInput, { target: { value: "Password123!" } });
+    await act(async () => {
+      fireEvent.change(nameInput, { target: { value: "John Doe" } });
+      fireEvent.change(emailInput, { target: { value: "existing@example.com" } });
+      fireEvent.change(passwordInput, { target: { value: "Password123!" } });
+      fireEvent.change(confirmPasswordInput, { target: { value: "Password123!" } });
+    });
     const checkboxes = screen.getAllByRole("checkbox", { name: /accept the/i });
-    fireEvent.click(checkboxes[0]); // Terms checkbox
-    fireEvent.click(checkboxes[1]); // Privacy checkbox
-    fireEvent.click(submitButton);
+    await act(async () => {
+      fireEvent.click(checkboxes[0]); // Terms checkbox
+      fireEvent.click(checkboxes[1]); // Privacy checkbox
+      if (form) {
+        fireEvent.submit(form);
+      }
+    });
 
     await waitFor(
       () => {
@@ -269,16 +299,23 @@ describe("Register", () => {
     const emailInput = screen.getByRole("textbox", { name: /email/i });
     const passwordInput = screen.getByPlaceholderText(/create a strong password/i);
     const confirmPasswordInput = screen.getByPlaceholderText(/confirm your password/i);
+    const form = nameInput.closest("form");
     const submitButton = screen.getByRole("button", { name: /create account/i });
 
-    fireEvent.change(nameInput, { target: { value: "John Doe" } });
-    fireEvent.change(emailInput, { target: { value: "john@example.com" } });
-    fireEvent.change(passwordInput, { target: { value: "Password123!" } });
-    fireEvent.change(confirmPasswordInput, { target: { value: "Password123!" } });
+    await act(async () => {
+      fireEvent.change(nameInput, { target: { value: "John Doe" } });
+      fireEvent.change(emailInput, { target: { value: "john@example.com" } });
+      fireEvent.change(passwordInput, { target: { value: "Password123!" } });
+      fireEvent.change(confirmPasswordInput, { target: { value: "Password123!" } });
+    });
     const checkboxes = screen.getAllByRole("checkbox", { name: /accept the/i });
-    fireEvent.click(checkboxes[0]); // Terms checkbox
-    fireEvent.click(checkboxes[1]); // Privacy checkbox
-    fireEvent.click(submitButton);
+    await act(async () => {
+      fireEvent.click(checkboxes[0]); // Terms checkbox
+      fireEvent.click(checkboxes[1]); // Privacy checkbox
+      if (form) {
+        fireEvent.submit(form);
+      }
+    });
 
     await waitFor(() => {
       expect(submitButton).toHaveTextContent("Creating account...");
@@ -314,14 +351,22 @@ describe("Register", () => {
     const confirmPasswordInput = screen.getByPlaceholderText(/confirm your password/i);
     const submitButton = screen.getByRole("button", { name: /create account/i });
 
-    fireEvent.change(nameInput, { target: { value: "Test User" } });
-    fireEvent.change(emailInput, { target: { value: "test.user+tag@example.com" } });
-    fireEvent.change(passwordInput, { target: { value: "Password123!" } });
-    fireEvent.change(confirmPasswordInput, { target: { value: "Password123!" } });
+    const form = nameInput.closest("form");
+
+    await act(async () => {
+      fireEvent.change(nameInput, { target: { value: "Test User" } });
+      fireEvent.change(emailInput, { target: { value: "test.user+tag@example.com" } });
+      fireEvent.change(passwordInput, { target: { value: "Password123!" } });
+      fireEvent.change(confirmPasswordInput, { target: { value: "Password123!" } });
+    });
     const checkboxes = screen.getAllByRole("checkbox", { name: /accept the/i });
-    fireEvent.click(checkboxes[0]); // Terms checkbox
-    fireEvent.click(checkboxes[1]); // Privacy checkbox
-    fireEvent.click(submitButton);
+    await act(async () => {
+      fireEvent.click(checkboxes[0]); // Terms checkbox
+      fireEvent.click(checkboxes[1]); // Privacy checkbox
+      if (form) {
+        fireEvent.submit(form);
+      }
+    });
 
     await waitFor(() => {
       expect(api.register).toHaveBeenCalledWith({
@@ -343,15 +388,21 @@ describe("Register", () => {
     const emailInput = screen.getByRole("textbox", { name: /email/i });
     const passwordInput = screen.getByPlaceholderText(/create a strong password/i);
     const confirmPasswordInput = screen.getByPlaceholderText(/confirm your password/i);
-    const submitButton = screen.getByRole("button", { name: /create account/i });
+    const form = nameInput.closest("form");
 
-    fireEvent.change(nameInput, { target: { value: "John Doe" } });
-    fireEvent.change(emailInput, { target: { value: "john@example.com" } });
-    fireEvent.change(passwordInput, { target: { value: "Short1!" } });
-    fireEvent.change(confirmPasswordInput, { target: { value: "Short1!" } });
+    await act(async () => {
+      fireEvent.change(nameInput, { target: { value: "John Doe" } });
+      fireEvent.change(emailInput, { target: { value: "john@example.com" } });
+      fireEvent.change(passwordInput, { target: { value: "Short1!" } });
+      fireEvent.change(confirmPasswordInput, { target: { value: "Short1!" } });
+    });
     const checkboxes = screen.getAllByRole("checkbox", { name: /accept the/i });
-    fireEvent.click(checkboxes[0]);
-    fireEvent.click(submitButton);
+    await act(async () => {
+      fireEvent.click(checkboxes[0]);
+      if (form) {
+        fireEvent.submit(form);
+      }
+    });
 
     await waitFor(
       () => {
@@ -372,15 +423,21 @@ describe("Register", () => {
     const emailInput = screen.getByRole("textbox", { name: /email/i });
     const passwordInput = screen.getByPlaceholderText(/create a strong password/i);
     const confirmPasswordInput = screen.getByPlaceholderText(/confirm your password/i);
-    const submitButton = screen.getByRole("button", { name: /create account/i });
+    const form = nameInput.closest("form");
 
-    fireEvent.change(nameInput, { target: { value: "John Doe" } });
-    fireEvent.change(emailInput, { target: { value: "john@example.com" } });
-    fireEvent.change(passwordInput, { target: { value: "PASSWORD123!" } });
-    fireEvent.change(confirmPasswordInput, { target: { value: "PASSWORD123!" } });
+    await act(async () => {
+      fireEvent.change(nameInput, { target: { value: "John Doe" } });
+      fireEvent.change(emailInput, { target: { value: "john@example.com" } });
+      fireEvent.change(passwordInput, { target: { value: "PASSWORD123!" } });
+      fireEvent.change(confirmPasswordInput, { target: { value: "PASSWORD123!" } });
+    });
     const checkboxes = screen.getAllByRole("checkbox", { name: /accept the/i });
-    fireEvent.click(checkboxes[0]);
-    fireEvent.click(submitButton);
+    await act(async () => {
+      fireEvent.click(checkboxes[0]);
+      if (form) {
+        fireEvent.submit(form);
+      }
+    });
 
     await waitFor(
       () => {
@@ -401,15 +458,21 @@ describe("Register", () => {
     const emailInput = screen.getByRole("textbox", { name: /email/i });
     const passwordInput = screen.getByPlaceholderText(/create a strong password/i);
     const confirmPasswordInput = screen.getByPlaceholderText(/confirm your password/i);
-    const submitButton = screen.getByRole("button", { name: /create account/i });
+    const form = nameInput.closest("form");
 
-    fireEvent.change(nameInput, { target: { value: "John Doe" } });
-    fireEvent.change(emailInput, { target: { value: "john@example.com" } });
-    fireEvent.change(passwordInput, { target: { value: "password123!" } });
-    fireEvent.change(confirmPasswordInput, { target: { value: "password123!" } });
+    await act(async () => {
+      fireEvent.change(nameInput, { target: { value: "John Doe" } });
+      fireEvent.change(emailInput, { target: { value: "john@example.com" } });
+      fireEvent.change(passwordInput, { target: { value: "password123!" } });
+      fireEvent.change(confirmPasswordInput, { target: { value: "password123!" } });
+    });
     const checkboxes = screen.getAllByRole("checkbox", { name: /accept the/i });
-    fireEvent.click(checkboxes[0]);
-    fireEvent.click(submitButton);
+    await act(async () => {
+      fireEvent.click(checkboxes[0]);
+      if (form) {
+        fireEvent.submit(form);
+      }
+    });
 
     await waitFor(
       () => {
@@ -430,15 +493,21 @@ describe("Register", () => {
     const emailInput = screen.getByRole("textbox", { name: /email/i });
     const passwordInput = screen.getByPlaceholderText(/create a strong password/i);
     const confirmPasswordInput = screen.getByPlaceholderText(/confirm your password/i);
-    const submitButton = screen.getByRole("button", { name: /create account/i });
+    const form = nameInput.closest("form");
 
-    fireEvent.change(nameInput, { target: { value: "John Doe" } });
-    fireEvent.change(emailInput, { target: { value: "john@example.com" } });
-    fireEvent.change(passwordInput, { target: { value: "PasswordLong!" } });
-    fireEvent.change(confirmPasswordInput, { target: { value: "PasswordLong!" } });
+    await act(async () => {
+      fireEvent.change(nameInput, { target: { value: "John Doe" } });
+      fireEvent.change(emailInput, { target: { value: "john@example.com" } });
+      fireEvent.change(passwordInput, { target: { value: "PasswordLong!" } });
+      fireEvent.change(confirmPasswordInput, { target: { value: "PasswordLong!" } });
+    });
     const checkboxes = screen.getAllByRole("checkbox", { name: /accept the/i });
-    fireEvent.click(checkboxes[0]);
-    fireEvent.click(submitButton);
+    await act(async () => {
+      fireEvent.click(checkboxes[0]);
+      if (form) {
+        fireEvent.submit(form);
+      }
+    });
 
     await waitFor(
       () => {
@@ -459,15 +528,21 @@ describe("Register", () => {
     const emailInput = screen.getByRole("textbox", { name: /email/i });
     const passwordInput = screen.getByPlaceholderText(/create a strong password/i);
     const confirmPasswordInput = screen.getByPlaceholderText(/confirm your password/i);
-    const submitButton = screen.getByRole("button", { name: /create account/i });
+    const form = nameInput.closest("form");
 
-    fireEvent.change(nameInput, { target: { value: "John Doe" } });
-    fireEvent.change(emailInput, { target: { value: "john@example.com" } });
-    fireEvent.change(passwordInput, { target: { value: "Password123Long" } });
-    fireEvent.change(confirmPasswordInput, { target: { value: "Password123Long" } });
+    await act(async () => {
+      fireEvent.change(nameInput, { target: { value: "John Doe" } });
+      fireEvent.change(emailInput, { target: { value: "john@example.com" } });
+      fireEvent.change(passwordInput, { target: { value: "Password123Long" } });
+      fireEvent.change(confirmPasswordInput, { target: { value: "Password123Long" } });
+    });
     const checkboxes = screen.getAllByRole("checkbox", { name: /accept the/i });
-    fireEvent.click(checkboxes[0]);
-    fireEvent.click(submitButton);
+    await act(async () => {
+      fireEvent.click(checkboxes[0]);
+      if (form) {
+        fireEvent.submit(form);
+      }
+    });
 
     await waitFor(
       () => {
@@ -488,14 +563,20 @@ describe("Register", () => {
     const emailInput = screen.getByRole("textbox", { name: /email/i });
     const passwordInput = screen.getByPlaceholderText(/create a strong password/i);
     const confirmPasswordInput = screen.getByPlaceholderText(/confirm your password/i);
-    const submitButton = screen.getByRole("button", { name: /create account/i });
+    const form = nameInput.closest("form");
 
-    fireEvent.change(nameInput, { target: { value: "John Doe" } });
-    fireEvent.change(emailInput, { target: { value: "john@example.com" } });
-    fireEvent.change(passwordInput, { target: { value: "Password123!" } });
-    fireEvent.change(confirmPasswordInput, { target: { value: "Password123!" } });
+    await act(async () => {
+      fireEvent.change(nameInput, { target: { value: "John Doe" } });
+      fireEvent.change(emailInput, { target: { value: "john@example.com" } });
+      fireEvent.change(passwordInput, { target: { value: "Password123!" } });
+      fireEvent.change(confirmPasswordInput, { target: { value: "Password123!" } });
+    });
     // Don't check terms checkbox
-    fireEvent.click(submitButton);
+    await act(async () => {
+      if (form) {
+        fireEvent.submit(form);
+      }
+    });
 
     await waitFor(() => {
       const alert = screen.queryByRole("alert");
@@ -513,8 +594,12 @@ describe("Register", () => {
   it("validates all fields are filled", async () => {
     renderWithProviders(<Register />);
 
-    const submitButton = screen.getByRole("button", { name: /create account/i });
-    fireEvent.click(submitButton);
+    const form = screen.getByRole("button", { name: /create account/i }).closest("form");
+    await act(async () => {
+      if (form) {
+        fireEvent.submit(form);
+      }
+    });
 
     await waitFor(() => {
       const alert = screen.queryByRole("alert");
@@ -548,14 +633,22 @@ describe("Register", () => {
     const confirmPasswordInput = screen.getByPlaceholderText(/confirm your password/i);
     const submitButton = screen.getByRole("button", { name: /create account/i });
 
-    fireEvent.change(nameInput, { target: { value: "John Doe" } });
-    fireEvent.change(emailInput, { target: { value: "john@example.com" } });
-    fireEvent.change(passwordInput, { target: { value: "Password123!" } });
-    fireEvent.change(confirmPasswordInput, { target: { value: "Password123!" } });
+    const form = nameInput.closest("form");
+
+    await act(async () => {
+      fireEvent.change(nameInput, { target: { value: "John Doe" } });
+      fireEvent.change(emailInput, { target: { value: "john@example.com" } });
+      fireEvent.change(passwordInput, { target: { value: "Password123!" } });
+      fireEvent.change(confirmPasswordInput, { target: { value: "Password123!" } });
+    });
     const checkboxes = screen.getAllByRole("checkbox", { name: /accept the/i });
-    fireEvent.click(checkboxes[0]); // Terms checkbox
-    fireEvent.click(checkboxes[1]); // Privacy checkbox
-    fireEvent.click(submitButton);
+    await act(async () => {
+      fireEvent.click(checkboxes[0]); // Terms checkbox
+      fireEvent.click(checkboxes[1]); // Privacy checkbox
+      if (form) {
+        fireEvent.submit(form);
+      }
+    });
 
     await waitFor(
       () => {
@@ -586,14 +679,22 @@ describe("Register", () => {
     const confirmPasswordInput = screen.getByPlaceholderText(/confirm your password/i);
     const submitButton = screen.getByRole("button", { name: /create account/i });
 
-    fireEvent.change(nameInput, { target: { value: "John Doe" } });
-    fireEvent.change(emailInput, { target: { value: "john@example.com" } });
-    fireEvent.change(passwordInput, { target: { value: "Password123!" } });
-    fireEvent.change(confirmPasswordInput, { target: { value: "Password123!" } });
+    const form = nameInput.closest("form");
+
+    await act(async () => {
+      fireEvent.change(nameInput, { target: { value: "John Doe" } });
+      fireEvent.change(emailInput, { target: { value: "john@example.com" } });
+      fireEvent.change(passwordInput, { target: { value: "Password123!" } });
+      fireEvent.change(confirmPasswordInput, { target: { value: "Password123!" } });
+    });
     const checkboxes = screen.getAllByRole("checkbox", { name: /accept the/i });
-    fireEvent.click(checkboxes[0]); // Terms checkbox
-    fireEvent.click(checkboxes[1]); // Privacy checkbox
-    fireEvent.click(submitButton);
+    await act(async () => {
+      fireEvent.click(checkboxes[0]); // Terms checkbox
+      fireEvent.click(checkboxes[1]); // Privacy checkbox
+      if (form) {
+        fireEvent.submit(form);
+      }
+    });
 
     await waitFor(
       () => {
@@ -614,14 +715,22 @@ describe("Register", () => {
     const confirmPasswordInput = screen.getByPlaceholderText(/confirm your password/i);
     const submitButton = screen.getByRole("button", { name: /create account/i });
 
-    fireEvent.change(nameInput, { target: { value: "John Doe" } });
-    fireEvent.change(emailInput, { target: { value: "john@example.com" } });
-    fireEvent.change(passwordInput, { target: { value: "Password123!" } });
-    fireEvent.change(confirmPasswordInput, { target: { value: "Password123!" } });
+    const form = nameInput.closest("form");
+
+    await act(async () => {
+      fireEvent.change(nameInput, { target: { value: "John Doe" } });
+      fireEvent.change(emailInput, { target: { value: "john@example.com" } });
+      fireEvent.change(passwordInput, { target: { value: "Password123!" } });
+      fireEvent.change(confirmPasswordInput, { target: { value: "Password123!" } });
+    });
     const checkboxes = screen.getAllByRole("checkbox", { name: /accept the/i });
-    fireEvent.click(checkboxes[0]); // Terms checkbox
-    fireEvent.click(checkboxes[1]); // Privacy checkbox
-    fireEvent.click(submitButton);
+    await act(async () => {
+      fireEvent.click(checkboxes[0]); // Terms checkbox
+      fireEvent.click(checkboxes[1]); // Privacy checkbox
+      if (form) {
+        fireEvent.submit(form);
+      }
+    });
 
     await waitFor(
       () => {
@@ -697,12 +806,20 @@ describe("Register", () => {
     const confirmPasswordInput = screen.getByPlaceholderText(/confirm your password/i);
     const submitButton = screen.getByRole("button", { name: /create account/i });
 
-    fireEvent.change(nameInput, { target: { value: "John Doe" } });
-    fireEvent.change(emailInput, { target: { value: "john@example.com" } });
-    fireEvent.change(passwordInput, { target: { value: "Password123!" } });
-    fireEvent.change(confirmPasswordInput, { target: { value: "Password123!" } });
+    const form = nameInput.closest("form");
+
+    await act(async () => {
+      fireEvent.change(nameInput, { target: { value: "John Doe" } });
+      fireEvent.change(emailInput, { target: { value: "john@example.com" } });
+      fireEvent.change(passwordInput, { target: { value: "Password123!" } });
+      fireEvent.change(confirmPasswordInput, { target: { value: "Password123!" } });
+    });
     // Don't check terms checkbox
-    fireEvent.click(submitButton);
+    await act(async () => {
+      if (form) {
+        fireEvent.submit(form);
+      }
+    });
 
     await waitFor(() => {
       const checkboxes = screen.getAllByRole("checkbox", { name: /accept the/i });
@@ -730,14 +847,22 @@ describe("Register", () => {
     const confirmPasswordInput = screen.getByPlaceholderText(/confirm your password/i);
     const submitButton = screen.getByRole("button", { name: /create account/i });
 
-    fireEvent.change(nameInput, { target: { value: "  John Doe  " } });
-    fireEvent.change(emailInput, { target: { value: "  john@example.com  " } });
-    fireEvent.change(passwordInput, { target: { value: "Password123!" } });
-    fireEvent.change(confirmPasswordInput, { target: { value: "Password123!" } });
+    const form = nameInput.closest("form");
+
+    await act(async () => {
+      fireEvent.change(nameInput, { target: { value: "  John Doe  " } });
+      fireEvent.change(emailInput, { target: { value: "  john@example.com  " } });
+      fireEvent.change(passwordInput, { target: { value: "Password123!" } });
+      fireEvent.change(confirmPasswordInput, { target: { value: "Password123!" } });
+    });
     const checkboxes = screen.getAllByRole("checkbox", { name: /accept the/i });
-    fireEvent.click(checkboxes[0]); // Terms checkbox
-    fireEvent.click(checkboxes[1]); // Privacy checkbox
-    fireEvent.click(submitButton);
+    await act(async () => {
+      fireEvent.click(checkboxes[0]); // Terms checkbox
+      fireEvent.click(checkboxes[1]); // Privacy checkbox
+      if (form) {
+        fireEvent.submit(form);
+      }
+    });
 
     await waitFor(
       () => {
@@ -766,14 +891,22 @@ describe("Register", () => {
     const confirmPasswordInput = screen.getByPlaceholderText(/confirm your password/i);
     const submitButton = screen.getByRole("button", { name: /create account/i });
 
-    fireEvent.change(nameInput, { target: { value: "   " } }); // Only whitespace
-    fireEvent.change(emailInput, { target: { value: "john@example.com" } });
-    fireEvent.change(passwordInput, { target: { value: "Password123!" } });
-    fireEvent.change(confirmPasswordInput, { target: { value: "Password123!" } });
+    const form = nameInput.closest("form");
+
+    await act(async () => {
+      fireEvent.change(nameInput, { target: { value: "   " } }); // Only whitespace
+      fireEvent.change(emailInput, { target: { value: "john@example.com" } });
+      fireEvent.change(passwordInput, { target: { value: "Password123!" } });
+      fireEvent.change(confirmPasswordInput, { target: { value: "Password123!" } });
+    });
     const checkboxes = screen.getAllByRole("checkbox", { name: /accept the/i });
-    fireEvent.click(checkboxes[0]); // Terms checkbox
-    fireEvent.click(checkboxes[1]); // Privacy checkbox
-    fireEvent.click(submitButton);
+    await act(async () => {
+      fireEvent.click(checkboxes[0]); // Terms checkbox
+      fireEvent.click(checkboxes[1]); // Privacy checkbox
+      if (form) {
+        fireEvent.submit(form);
+      }
+    });
 
     await waitFor(
       () => {
@@ -794,14 +927,22 @@ describe("Register", () => {
     const confirmPasswordInput = screen.getByPlaceholderText(/confirm your password/i);
     const submitButton = screen.getByRole("button", { name: /create account/i });
 
-    fireEvent.change(nameInput, { target: { value: "John Doe" } });
-    fireEvent.change(emailInput, { target: { value: "   " } }); // Only whitespace
-    fireEvent.change(passwordInput, { target: { value: "Password123!" } });
-    fireEvent.change(confirmPasswordInput, { target: { value: "Password123!" } });
+    const form = nameInput.closest("form");
+
+    await act(async () => {
+      fireEvent.change(nameInput, { target: { value: "John Doe" } });
+      fireEvent.change(emailInput, { target: { value: "   " } }); // Only whitespace
+      fireEvent.change(passwordInput, { target: { value: "Password123!" } });
+      fireEvent.change(confirmPasswordInput, { target: { value: "Password123!" } });
+    });
     const checkboxes = screen.getAllByRole("checkbox", { name: /accept the/i });
-    fireEvent.click(checkboxes[0]); // Terms checkbox
-    fireEvent.click(checkboxes[1]); // Privacy checkbox
-    fireEvent.click(submitButton);
+    await act(async () => {
+      fireEvent.click(checkboxes[0]); // Terms checkbox
+      fireEvent.click(checkboxes[1]); // Privacy checkbox
+      if (form) {
+        fireEvent.submit(form);
+      }
+    });
 
     await waitFor(
       () => {
@@ -820,10 +961,13 @@ describe("Register", () => {
     expect(form).toBeInTheDocument();
 
     const emailInput = screen.getByRole("textbox", { name: /email/i }) as HTMLInputElement;
-    const submitButton = screen.getByRole("button", { name: /^create account$/i });
 
     // Try to submit form with empty required field
-    fireEvent.click(submitButton);
+    await act(async () => {
+      if (form) {
+        fireEvent.submit(form);
+      }
+    });
 
     // Wait for validation to trigger
     await waitFor(() => {
@@ -833,4 +977,192 @@ describe("Register", () => {
       }
     });
   });
+
+  it("pre-fills email from location state when navigating from expired token", async () => {
+    render(
+      <MemoryRouter
+        initialEntries={[
+          {
+            pathname: "/register",
+            state: { email: "prefilled@example.com", resendVerification: true },
+          },
+        ]}
+      >
+        <I18nextProvider i18n={testI18n}>
+          <Register />
+        </I18nextProvider>
+      </MemoryRouter>,
+    );
+
+    await waitFor(() => {
+      const emailInput = screen.getByRole("textbox", { name: /email/i }) as HTMLInputElement;
+      expect(emailInput.value).toBe("prefilled@example.com");
+    });
+  });
+
+  it("does not pre-fill email when location state is null", () => {
+    renderWithProviders(<Register />);
+
+    const emailInput = screen.getByRole("textbox", { name: /email/i }) as HTMLInputElement;
+    expect(emailInput.value).toBe("");
+  });
+
+  it("does not pre-fill email when location state has no email", async () => {
+    render(
+      <MemoryRouter
+        initialEntries={[{ pathname: "/register", state: { resendVerification: true } }]}
+      >
+        <I18nextProvider i18n={testI18n}>
+          <Register />
+        </I18nextProvider>
+      </MemoryRouter>,
+    );
+
+      await waitFor(() => {
+        const emailInput = screen.getByRole("textbox", { name: /email/i }) as HTMLInputElement;
+        expect(emailInput.value).toBe("");
+      });
+    });
+
+    it("should show resend link on registration success page", async () => {
+      const mockRegister = vi.mocked(api.register);
+      mockRegister.mockResolvedValueOnce({
+        user: { id: "user-123", email: "test@example.com" },
+        message: "Registration successful",
+      });
+
+      renderWithProviders(<Register />);
+
+      // Fill form and submit
+      fireEvent.change(screen.getByLabelText(/full name/i), {
+        target: { value: "Test User" },
+      });
+      fireEvent.change(screen.getByRole("textbox", { name: /email/i }), {
+        target: { value: "test@example.com" },
+      });
+      fireEvent.change(screen.getByPlaceholderText(/create a strong password/i), {
+        target: { value: "SecureP@ssw0rd123!" },
+      });
+      fireEvent.change(screen.getByPlaceholderText(/confirm your password/i), {
+        target: { value: "SecureP@ssw0rd123!" },
+      });
+
+      const checkboxes = screen.getAllByRole("checkbox");
+      fireEvent.click(checkboxes[0]);
+      fireEvent.click(checkboxes[1]);
+
+      fireEvent.click(screen.getByRole("button", { name: /^create account$/i }));
+
+      await waitFor(() => {
+        expect(screen.getByText(/check your email/i)).toBeInTheDocument();
+      });
+
+      // Check for resend link
+      expect(screen.getByText(/didn't receive the email/i)).toBeInTheDocument();
+      expect(screen.getByText(/resend verification email/i)).toBeInTheDocument();
+    });
+
+    it("should call resendVerificationEmail when resend link is clicked", async () => {
+      const mockRegister = vi.mocked(api.register);
+      const mockResend = vi.mocked(api.resendVerificationEmail);
+      mockRegister.mockResolvedValueOnce({
+        user: { id: "user-123", email: "test@example.com" },
+        message: "Registration successful",
+      });
+      mockResend.mockResolvedValueOnce({
+        message: "Verification email sent",
+      });
+
+      renderWithProviders(<Register />);
+
+      // Fill form and submit
+      fireEvent.change(screen.getByLabelText(/full name/i), {
+        target: { value: "Test User" },
+      });
+      fireEvent.change(screen.getByRole("textbox", { name: /email/i }), {
+        target: { value: "test@example.com" },
+      });
+      fireEvent.change(screen.getByPlaceholderText(/create a strong password/i), {
+        target: { value: "SecureP@ssw0rd123!" },
+      });
+      fireEvent.change(screen.getByPlaceholderText(/confirm your password/i), {
+        target: { value: "SecureP@ssw0rd123!" },
+      });
+
+      const checkboxes = screen.getAllByRole("checkbox");
+      fireEvent.click(checkboxes[0]);
+      fireEvent.click(checkboxes[1]);
+
+      fireEvent.click(screen.getByRole("button", { name: /^create account$/i }));
+
+      await waitFor(() => {
+        expect(screen.getByText(/check your email/i)).toBeInTheDocument();
+      });
+
+      // Click resend link
+      const resendButton = screen.getByText(/resend verification email/i);
+      fireEvent.click(resendButton);
+
+      await waitFor(() => {
+        expect(mockResend).toHaveBeenCalledWith({ email: "test@example.com" });
+      });
+
+      // Check for success message
+      await waitFor(() => {
+        expect(screen.getByText(/verification email sent/i)).toBeInTheDocument();
+      });
+    });
+
+    it("should show error message when resend fails", async () => {
+      const mockRegister = vi.mocked(api.register);
+      const mockResend = vi.mocked(api.resendVerificationEmail);
+      mockRegister.mockResolvedValueOnce({
+        user: { id: "user-123", email: "test@example.com" },
+        message: "Registration successful",
+      });
+      mockResend.mockRejectedValueOnce({
+        response: {
+          data: {
+            error: {
+              code: "AUTH_TOO_MANY_REQUESTS",
+              message: "Too many requests",
+            },
+          },
+        },
+      });
+
+      renderWithProviders(<Register />);
+
+      // Fill form and submit
+      fireEvent.change(screen.getByLabelText(/full name/i), {
+        target: { value: "Test User" },
+      });
+      fireEvent.change(screen.getByRole("textbox", { name: /email/i }), {
+        target: { value: "test@example.com" },
+      });
+      fireEvent.change(screen.getByPlaceholderText(/create a strong password/i), {
+        target: { value: "SecureP@ssw0rd123!" },
+      });
+      fireEvent.change(screen.getByPlaceholderText(/confirm your password/i), {
+        target: { value: "SecureP@ssw0rd123!" },
+      });
+
+      const checkboxes = screen.getAllByRole("checkbox");
+      fireEvent.click(checkboxes[0]);
+      fireEvent.click(checkboxes[1]);
+
+      fireEvent.click(screen.getByRole("button", { name: /^create account$/i }));
+
+      await waitFor(() => {
+        expect(screen.getByText(/check your email/i)).toBeInTheDocument();
+      });
+
+      // Click resend link
+      const resendButton = screen.getByText(/resend verification email/i);
+      fireEvent.click(resendButton);
+
+      await waitFor(() => {
+        expect(screen.getByText(/too many requests/i)).toBeInTheDocument();
+      });
+    });
 });

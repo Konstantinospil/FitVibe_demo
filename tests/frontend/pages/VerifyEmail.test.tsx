@@ -7,6 +7,16 @@ import i18n from "i18next";
 import { initReactI18next } from "react-i18next";
 import { rawHttpClient } from "../../src/services/api";
 
+// Mock useNavigate
+const mockNavigate = vi.fn();
+vi.mock("react-router-dom", async () => {
+  const actual = await vi.importActual("react-router-dom");
+  return {
+    ...actual,
+    useNavigate: () => mockNavigate,
+  };
+});
+
 // Mock API
 vi.mock("../../src/services/api", () => ({
   rawHttpClient: {
@@ -29,9 +39,16 @@ void testI18n.use(initReactI18next).init({
         "verifyEmail.descVerifying": "Please wait while we verify your email...",
         "verifyEmail.descSuccess": "Your email has been successfully verified",
         "verifyEmail.descFailed": "We couldn't verify your email",
+        "verifyEmail.titleExpired": "Verification link expired",
+        "verifyEmail.descExpired": "Your verification link has expired. Please request a new verification email.",
         "verifyEmail.noToken": "No verification token provided",
         "verifyEmail.goToLogin": "Go to Login",
         "verifyEmail.backToRegister": "Back to Register",
+        "verifyEmail.resendEmailLabel": "Email address",
+        "verifyEmail.resendEmailPlaceholder": "your@email.com",
+        "verifyEmail.resendButton": "Send verification email",
+        "errors.AUTH_TOKEN_EXPIRED": "Your verification link has expired. Please request a new one",
+        "auth.register.fillAllFields": "Please fill in all fields",
       },
     },
   },
@@ -51,6 +68,7 @@ const renderWithProviders = (token = "test-token") => {
 describe("VerifyEmail", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockNavigate.mockClear();
   });
 
   it("shows success state after successful verification", async () => {
@@ -206,6 +224,288 @@ describe("VerifyEmail", () => {
 
     await waitFor(() => {
       expect(screen.getByText("Token expired")).toBeInTheDocument();
+    });
+  });
+
+  it("shows expired state when token expires (410 status)", async () => {
+    vi.mocked(rawHttpClient.get).mockRejectedValue({
+      response: {
+        status: 410,
+        data: {
+          error: {
+            code: "AUTH_TOKEN_EXPIRED",
+            message: "Your verification link has expired. Please request a new one",
+          },
+        },
+      },
+    });
+
+    renderWithProviders();
+
+    await waitFor(() => {
+      expect(screen.getByText("Verification link expired")).toBeInTheDocument();
+      expect(
+        screen.getByText("Your verification link has expired. Please request a new verification email."),
+      ).toBeInTheDocument();
+    });
+  });
+
+  it("shows expired state when AUTH_TOKEN_EXPIRED error code is returned", async () => {
+    vi.mocked(rawHttpClient.get).mockRejectedValue({
+      response: {
+        status: 200, // Status might not be 410, but error code indicates expiry
+        data: {
+          error: {
+            code: "AUTH_TOKEN_EXPIRED",
+            message: "Token expired",
+          },
+        },
+      },
+    });
+
+    renderWithProviders();
+
+    await waitFor(() => {
+      expect(screen.getByText("Verification link expired")).toBeInTheDocument();
+    });
+  });
+
+  it("displays resend form when token is expired", async () => {
+    vi.mocked(rawHttpClient.get).mockRejectedValue({
+      response: {
+        status: 410,
+        data: {
+          error: {
+            code: "AUTH_TOKEN_EXPIRED",
+            message: "Token expired",
+          },
+        },
+      },
+    });
+
+    renderWithProviders();
+
+    await waitFor(() => {
+      expect(screen.getByLabelText(/email address/i)).toBeInTheDocument();
+      expect(screen.getByPlaceholderText(/your@email.com/i)).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: /send verification email/i })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: /back to register/i })).toBeInTheDocument();
+    });
+  });
+
+  it("validates email input in resend form", async () => {
+    vi.mocked(rawHttpClient.get).mockRejectedValue({
+      response: {
+        status: 410,
+        data: {
+          error: {
+            code: "AUTH_TOKEN_EXPIRED",
+            message: "Token expired",
+          },
+        },
+      },
+    });
+
+    renderWithProviders();
+
+    await waitFor(() => {
+      expect(screen.getByLabelText(/email address/i)).toBeInTheDocument();
+    });
+
+    const submitButton = screen.getByRole("button", { name: /send verification email/i });
+    fireEvent.click(submitButton);
+
+    // Form validation should prevent submission
+    await waitFor(() => {
+      const emailInput = screen.getByLabelText(/email address/i) as HTMLInputElement;
+      expect(emailInput.validity.valid).toBe(false);
+    });
+  });
+
+  it("navigates to register page with email when resend form is submitted", async () => {
+    vi.mocked(rawHttpClient.get).mockRejectedValue({
+      response: {
+        status: 410,
+        data: {
+          error: {
+            code: "AUTH_TOKEN_EXPIRED",
+            message: "Token expired",
+          },
+        },
+      },
+    });
+
+    renderWithProviders();
+
+    await waitFor(() => {
+      expect(screen.getByLabelText(/email address/i)).toBeInTheDocument();
+    });
+
+    const emailInput = screen.getByLabelText(/email address/i);
+    const submitButton = screen.getByRole("button", { name: /send verification email/i });
+
+    fireEvent.change(emailInput, { target: { value: "test@example.com" } });
+    fireEvent.click(submitButton);
+
+    await waitFor(() => {
+      expect(mockNavigate).toHaveBeenCalledWith("/register", {
+        state: { email: "test@example.com", resendVerification: true },
+      });
+    });
+  });
+
+  it("navigates to register page when back to register button is clicked in expired state", async () => {
+    vi.mocked(rawHttpClient.get).mockRejectedValue({
+      response: {
+        status: 410,
+        data: {
+          error: {
+            code: "AUTH_TOKEN_EXPIRED",
+            message: "Token expired",
+          },
+        },
+      },
+    });
+
+    renderWithProviders();
+
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: /back to register/i })).toBeInTheDocument();
+    });
+
+    const backButton = screen.getByRole("button", { name: /back to register/i });
+    fireEvent.click(backButton);
+
+    expect(mockNavigate).toHaveBeenCalledWith("/register");
+  });
+
+  it("shows error message when resend form is submitted with empty email", async () => {
+    vi.mocked(rawHttpClient.get).mockRejectedValue({
+      response: {
+        status: 410,
+        data: {
+          error: {
+            code: "AUTH_TOKEN_EXPIRED",
+            message: "Token expired",
+          },
+        },
+      },
+    });
+
+    renderWithProviders();
+
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: /send verification email/i })).toBeInTheDocument();
+    });
+
+    const submitButton = screen.getByRole("button", { name: /send verification email/i });
+    fireEvent.click(submitButton);
+
+    await waitFor(() => {
+      expect(screen.getByText("Please fill in all fields")).toBeInTheDocument();
+    });
+
+    // Should not navigate when email is empty
+    expect(mockNavigate).not.toHaveBeenCalled();
+  });
+
+  it("updates email input value in resend form", async () => {
+    vi.mocked(rawHttpClient.get).mockRejectedValue({
+      response: {
+        status: 410,
+        data: {
+          error: {
+            code: "AUTH_TOKEN_EXPIRED",
+            message: "Token expired",
+          },
+        },
+      },
+    });
+
+    renderWithProviders();
+
+    await waitFor(() => {
+      expect(screen.getByLabelText(/email address/i)).toBeInTheDocument();
+    });
+
+    const emailInput = screen.getByLabelText(/email address/i) as HTMLInputElement;
+    fireEvent.change(emailInput, { target: { value: "newemail@example.com" } });
+
+    expect(emailInput.value).toBe("newemail@example.com");
+  });
+
+  it("trims whitespace from email before navigating", async () => {
+    vi.mocked(rawHttpClient.get).mockRejectedValue({
+      response: {
+        status: 410,
+        data: {
+          error: {
+            code: "AUTH_TOKEN_EXPIRED",
+            message: "Token expired",
+          },
+        },
+      },
+    });
+
+    renderWithProviders();
+
+    await waitFor(() => {
+      expect(screen.getByLabelText(/email address/i)).toBeInTheDocument();
+    });
+
+    const emailInput = screen.getByLabelText(/email address/i);
+    const submitButton = screen.getByRole("button", { name: /send verification email/i });
+
+    fireEvent.change(emailInput, { target: { value: "  test@example.com  " } });
+    fireEvent.click(submitButton);
+
+    await waitFor(() => {
+      expect(mockNavigate).toHaveBeenCalledWith("/register", {
+        state: { email: "test@example.com", resendVerification: true },
+      });
+    });
+  });
+
+  it("displays correct title and description for expired state", async () => {
+    vi.mocked(rawHttpClient.get).mockRejectedValue({
+      response: {
+        status: 410,
+        data: {
+          error: {
+            code: "AUTH_TOKEN_EXPIRED",
+            message: "Your verification link has expired. Please request a new one",
+          },
+        },
+      },
+    });
+
+    renderWithProviders();
+
+    await waitFor(() => {
+      expect(screen.getByText("Verification link expired")).toBeInTheDocument();
+      expect(
+        screen.getByText("Your verification link has expired. Please request a new verification email."),
+      ).toBeInTheDocument();
+    });
+  });
+
+  it("uses translated error message when AUTH_TOKEN_EXPIRED code is present", async () => {
+    vi.mocked(rawHttpClient.get).mockRejectedValue({
+      response: {
+        status: 410,
+        data: {
+          error: {
+            code: "AUTH_TOKEN_EXPIRED",
+            // No message, should use translation
+          },
+        },
+      },
+    });
+
+    renderWithProviders();
+
+    await waitFor(() => {
+      expect(screen.getByText("Verification link expired")).toBeInTheDocument();
     });
   });
 });
