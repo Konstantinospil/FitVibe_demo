@@ -185,16 +185,15 @@ describe("TwoFactorVerificationLogin", () => {
     const codeInput = screen.getByRole("textbox");
     const submitButton = screen.getByRole("button", { name: /verify and continue/i });
 
-    act(() => {
-      fireEvent.change(codeInput, { target: { value: "123456" } });
-      fireEvent.click(submitButton);
-    });
+    fireEvent.change(codeInput, { target: { value: "123456" } });
+    fireEvent.click(submitButton);
 
     // Wait for async state updates - check loading state appears quickly
     await waitFor(
       () => {
-        expect(submitButton).toHaveAttribute("aria-busy", "true");
-        expect(submitButton).toBeDisabled();
+        const button = screen.getByRole("button", { name: /verify and continue/i });
+        expect(button).toHaveAttribute("aria-busy", "true");
+        expect(button).toBeDisabled();
         expect(codeInput).toBeDisabled();
       },
       { timeout: 1000 },

@@ -188,7 +188,10 @@ const VerifyEmail: React.FC = () => {
 
                   try {
                     await resendVerificationEmail({ email: resendEmail.trim() });
-                    setResendSuccess(true);
+                    // Navigate to register page with trimmed email for user to complete registration
+                    navigate("/register", {
+                      state: { email: resendEmail.trim(), resendVerification: true },
+                    });
                   } catch (err: unknown) {
                     setResendSuccess(false);
                     if (err && typeof err === "object" && "response" in err) {

@@ -17,6 +17,7 @@ import { apiClient, setup2FA, verify2FA, disable2FA, get2FAStatus } from "../ser
 import { logger } from "../utils/logger";
 import { useToast } from "../contexts/ToastContext";
 import { ConfirmDialog } from "../components/ConfirmDialog";
+import { SessionManagement } from "../components/SessionManagement";
 
 type SessionVisibility = "private" | "followers" | "link" | "public";
 type Units = "metric" | "imperial";
@@ -277,8 +278,10 @@ const Settings: React.FC = () => {
 
       toast.success("Your account has been scheduled for deletion. You will be logged out now.");
       setTimeout(() => {
-        signOut();
-        navigate("/");
+        void (async () => {
+          await signOut();
+          navigate("/");
+        })();
       }, 2000);
     } catch (error) {
       logger.apiError("Failed to delete account", error, "/api/v1/users/me", "DELETE");
@@ -854,6 +857,9 @@ const Settings: React.FC = () => {
             )}
           </CardContent>
         </Card>
+
+        {/* Session Management */}
+        <SessionManagement />
 
         {/* Danger Zone */}
         <Card>

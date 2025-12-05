@@ -5,7 +5,7 @@ import VerifyEmail from "../../src/pages/VerifyEmail";
 import { I18nextProvider } from "react-i18next";
 import i18n from "i18next";
 import { initReactI18next } from "react-i18next";
-import { rawHttpClient } from "../../src/services/api";
+import { rawHttpClient, resendVerificationEmail } from "../../src/services/api";
 
 // Mock useNavigate
 const mockNavigate = vi.fn();
@@ -18,11 +18,17 @@ vi.mock("react-router-dom", async () => {
 });
 
 // Mock API
-vi.mock("../../src/services/api", () => ({
-  rawHttpClient: {
-    get: vi.fn(),
-  },
-}));
+vi.mock("../../src/services/api", async () => {
+  const actual = await vi.importActual("../../src/services/api");
+  return {
+    ...actual,
+    rawHttpClient: {
+      get: vi.fn(),
+      post: vi.fn(),
+    },
+    resendVerificationEmail: vi.fn(),
+  };
+});
 
 // Initialize i18n for tests
 const testI18n = i18n.createInstance();
@@ -449,6 +455,9 @@ describe("VerifyEmail", () => {
         },
       },
     });
+
+    // Mock successful resend
+    vi.mocked(resendVerificationEmail).mockResolvedValue({ success: true });
 
     renderWithProviders();
 

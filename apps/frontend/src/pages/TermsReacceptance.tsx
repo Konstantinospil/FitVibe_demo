@@ -48,8 +48,8 @@ const TermsReacceptance: React.FC = () => {
     }
   };
 
-  const handleSignOut = (): void => {
-    signOut();
+  const handleSignOut = async (): Promise<void> => {
+    await signOut();
     navigate("/login", { replace: true });
   };
 
@@ -143,7 +143,9 @@ const TermsReacceptance: React.FC = () => {
             type="button"
             variant="ghost"
             fullWidth
-            onClick={handleSignOut}
+            onClick={() => {
+              void handleSignOut();
+            }}
             disabled={isSubmitting}
           >
             {t("auth.termsReacceptance.signOut")}

@@ -299,6 +299,49 @@ export async function logout(): Promise<void> {
   await rawHttpClient.post("/api/v1/auth/logout");
 }
 
+// Session Management API
+export interface SessionInfo {
+  id: string;
+  userAgent: string | null;
+  ip: string | null;
+  createdAt: string;
+  expiresAt: string;
+  revokedAt: string | null;
+  isCurrent: boolean;
+}
+
+export interface SessionsListResponse {
+  sessions: SessionInfo[];
+}
+
+export interface RevokeSessionsRequest {
+  sessionId?: string | null;
+  revokeAll?: boolean;
+  revokeOthers?: boolean;
+}
+
+export interface RevokeSessionsResponse {
+  revoked: number;
+}
+
+/**
+ * List all active sessions for the current user
+ */
+export async function listAuthSessions(): Promise<SessionsListResponse> {
+  const res = await apiClient.get<SessionsListResponse>("/api/v1/auth/sessions");
+  return res.data;
+}
+
+/**
+ * Revoke one or more sessions
+ */
+export async function revokeAuthSessions(
+  payload: RevokeSessionsRequest,
+): Promise<RevokeSessionsResponse> {
+  const res = await apiClient.post<RevokeSessionsResponse>("/api/v1/auth/sessions/revoke", payload);
+  return res.data;
+}
+
 export type DashboardRange = "4w" | "8w";
 export type DashboardGrain = "weekly" | "monthly";
 
@@ -1005,5 +1048,42 @@ export async function disable2FA(password: string): Promise<{ success: boolean; 
 
 export async function get2FAStatus(): Promise<TwoFactorStatusResponse> {
   const res = await apiClient.get<TwoFactorStatusResponse>("/api/v1/auth/2fa/status");
+  return res.data;
+}
+
+// Session Management API
+export interface SessionInfo {
+  id: string;
+  userAgent: string | null;
+  ip: string | null;
+  createdAt: string;
+  expiresAt: string;
+  revokedAt: string | null;
+  isCurrent: boolean;
+}
+
+export interface ListSessionsResponse {
+  sessions: SessionInfo[];
+}
+
+export interface RevokeSessionsRequest {
+  sessionId?: string;
+  revokeAll?: boolean;
+  revokeOthers?: boolean;
+}
+
+export interface RevokeSessionsResponse {
+  revoked: number;
+}
+
+export async function listAuthSessions(): Promise<ListSessionsResponse> {
+  const res = await apiClient.get<ListSessionsResponse>("/api/v1/auth/sessions");
+  return res.data;
+}
+
+export async function revokeAuthSessions(
+  payload: RevokeSessionsRequest,
+): Promise<RevokeSessionsResponse> {
+  const res = await apiClient.post<RevokeSessionsResponse>("/api/v1/auth/sessions/revoke", payload);
   return res.data;
 }
