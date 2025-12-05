@@ -67,22 +67,6 @@
         "title": "Réalisations marquantes",
         "description": "Squat arrière 180 kg • Développé couché 115 kg • Soulevé de terre 210 kg • Qualifié pour le Marathon de Boston."
       }
-    },
-    "share": {
-      "title": "Liens de partage",
-      "description": "Créez des liens de partage personnels pour les entraîneurs ou les juges. Révoquez l'accès instantanément à tout moment.",
-      "create": "Créer un lien de partage",
-      "empty": "Aucun lien de partage actif pour le moment.",
-      "copy": "Copier le lien",
-      "copyAria": "Copier le lien",
-      "revoke": "Révoquer",
-      "revoked": "Révoqué",
-      "copied": "Lien copié",
-      "copiedAria": "Lien copié dans le presse-papiers",
-      "guards": {
-        "active": "Partagez cette URL uniquement avec des personnes en qui vous avez confiance.",
-        "revoked": "Ce lien n'est plus accessible."
-      }
     }
   },
   "feed": {
@@ -192,10 +176,6 @@
     "FEED_REPORT_REASON_TOO_LONG": "La raison dépasse 200 caractères",
     "FEED_NOT_OWNER": "Vous n'êtes pas propriétaire de cette séance",
     "FEED_INVALID_STATUS": "Seules les séances terminées peuvent être partagées",
-    "FEED_LINK_REVOKED": "Le lien de partage a été révoqué",
-    "FEED_LINK_EXPIRED": "Le lien de partage a expiré",
-    "FEED_LINK_EXHAUSTED": "Limite de vues du lien de partage atteinte",
-    "FEED_LINK_NOT_FOUND": "Lien de partage introuvable",
     "FEED_USER_NOT_FOUND": "Utilisateur introuvable",
     "FEED_CANNOT_FOLLOW_SELF": "Vous ne pouvez pas vous suivre vous-même",
     "FEED_CANNOT_BLOCK_SELF": "Vous ne pouvez pas vous bloquer vous-même",
@@ -294,12 +274,22 @@
     "titleVerifying": "Vérification de votre e-mail…",
     "titleSuccess": "E-mail vérifié",
     "titleFailed": "Échec de la vérification",
+    "titleExpired": "Lien de vérification expiré",
     "descVerifying": "Veuillez patienter pendant que nous vérifions votre adresse e-mail.",
     "descSuccess": "Votre e-mail a été vérifié. Redirection vers la connexion…",
     "descFailed": "Nous n'avons pas pu vérifier votre e-mail. Le lien a peut-être expiré ou est invalide.",
+    "descExpired": "Votre lien de vérification a expiré. Veuillez demander un nouvel e-mail de vérification.",
     "noToken": "Aucun jeton de vérification fourni",
     "goToLogin": "Aller à la connexion",
-    "backToRegister": "Retour à l'inscription"
+    "backToRegister": "Retour à l'inscription",
+    "resendVerification": "Renvoyer l'e-mail de vérification",
+    "resendEmailLabel": "Adresse e-mail",
+    "resendEmailPlaceholder": "vous@email.com",
+    "resendButton": "Envoyer l'e-mail de vérification",
+    "resending": "Envoi…",
+    "resendSuccess": "E-mail de vérification envoyé ! Veuillez vérifier votre boîte de réception.",
+    "resendError": "Échec de l'envoi de l'e-mail de vérification. Veuillez réessayer.",
+    "retryAfter": "Veuillez réessayer dans {{seconds}} seconde(s)."
   },
   "forgotPassword": {
     "eyebrow": "Réinitialisation du mot de passe",

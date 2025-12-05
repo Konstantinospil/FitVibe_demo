@@ -13,10 +13,8 @@ const SHARE_LINK_SESSION_INDEX = "share_links_session_idx";
  * Share links are no longer supported - all content requires authentication.
  */
 export async function up(knex: Knex): Promise<void> {
-  // Drop indexes first
-  await knex.schema.alterTable(TABLE, (table) => {
-    table.dropIndex(["session_id"], SHARE_LINK_SESSION_INDEX);
-  });
+  // Drop indexes first (using raw SQL to handle IF EXISTS)
+  await knex.raw(`DROP INDEX IF EXISTS ${SHARE_LINK_SESSION_INDEX};`);
 
   // Drop the table (this will also drop the unique constraint on token)
   await knex.schema.dropTableIfExists(TABLE);

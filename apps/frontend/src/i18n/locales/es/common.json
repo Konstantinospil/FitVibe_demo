@@ -67,22 +67,6 @@
         "title": "Logros destacados",
         "description": "Sentadilla trasera 180 kg • Press banca 115 kg • Peso muerto 210 kg • Clasificado para el Maratón de Boston."
       }
-    },
-    "share": {
-      "title": "Enlaces de compartir",
-      "description": "Crea enlaces de compartir personales para entrenadores o jueces. Revoca el acceso instantáneamente en cualquier momento.",
-      "create": "Crear enlace de compartir",
-      "empty": "Aún no hay enlaces de compartir activos.",
-      "copy": "Copiar enlace",
-      "copyAria": "Copiar enlace",
-      "revoke": "Revocar",
-      "revoked": "Revocado",
-      "copied": "Enlace copiado",
-      "copiedAria": "Enlace copiado al portapapeles",
-      "guards": {
-        "active": "Comparte esta URL solo con personas en las que confíes.",
-        "revoked": "Este enlace ya no es accesible."
-      }
     }
   },
   "feed": {
@@ -192,10 +176,6 @@
     "FEED_REPORT_REASON_TOO_LONG": "La razón excede 200 caracteres",
     "FEED_NOT_OWNER": "No eres el propietario de esta sesión",
     "FEED_INVALID_STATUS": "Solo las sesiones completadas pueden ser compartidas",
-    "FEED_LINK_REVOKED": "El enlace de compartir ha sido revocado",
-    "FEED_LINK_EXPIRED": "El enlace de compartir ha expirado",
-    "FEED_LINK_EXHAUSTED": "Límite de visualización del enlace de compartir alcanzado",
-    "FEED_LINK_NOT_FOUND": "Enlace de compartir no encontrado",
     "FEED_USER_NOT_FOUND": "Usuario no encontrado",
     "FEED_CANNOT_FOLLOW_SELF": "No puedes seguirte a ti mismo",
     "FEED_CANNOT_BLOCK_SELF": "No puedes bloquearte a ti mismo",
@@ -294,12 +274,22 @@
     "titleVerifying": "Verificando tu correo electrónico…",
     "titleSuccess": "Correo electrónico verificado",
     "titleFailed": "Verificación fallida",
+    "titleExpired": "Enlace de verificación expirado",
     "descVerifying": "Por favor espera mientras verificamos tu dirección de correo electrónico.",
     "descSuccess": "Tu correo electrónico ha sido verificado. Redirigiendo al inicio de sesión…",
     "descFailed": "No pudimos verificar tu correo electrónico. El enlace puede haber expirado o ser inválido.",
+    "descExpired": "Tu enlace de verificación ha expirado. Por favor solicita un nuevo correo de verificación.",
     "noToken": "No se proporcionó token de verificación",
     "goToLogin": "Ir al inicio de sesión",
-    "backToRegister": "Volver al registro"
+    "backToRegister": "Volver al registro",
+    "resendVerification": "Reenviar correo de verificación",
+    "resendEmailLabel": "Dirección de correo electrónico",
+    "resendEmailPlaceholder": "tu@email.com",
+    "resendButton": "Enviar correo de verificación",
+    "resending": "Enviando…",
+    "resendSuccess": "¡Correo de verificación enviado! Por favor revisa tu bandeja de entrada.",
+    "resendError": "Error al enviar correo de verificación. Por favor intenta de nuevo.",
+    "retryAfter": "Por favor intenta de nuevo en {{seconds}} segundo(s)."
   },
   "forgotPassword": {
     "eyebrow": "Restablecimiento de contraseña",
