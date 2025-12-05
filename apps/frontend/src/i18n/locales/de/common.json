@@ -294,12 +294,21 @@
     "titleVerifying": "E-Mail wird verifiziert...",
     "titleSuccess": "E-Mail verifiziert!",
     "titleFailed": "Verifizierung fehlgeschlagen",
+    "titleExpired": "Verifizierungslink abgelaufen",
     "descVerifying": "Bitte warte, während wir deine E-Mail-Adresse verifizieren...",
     "descSuccess": "Deine E-Mail wurde erfolgreich verifiziert. Weiterleitung zum Login...",
     "descFailed": "Wir konnten deine E-Mail nicht verifizieren. Der Link ist möglicherweise abgelaufen oder ungültig.",
+    "descExpired": "Dein Verifizierungslink ist abgelaufen. Bitte fordere eine neue Verifizierungs-E-Mail an.",
     "noToken": "Kein Verifizierungstoken angegeben",
     "goToLogin": "Zum Login",
-    "backToRegister": "Zurück zur Registrierung"
+    "backToRegister": "Zurück zur Registrierung",
+    "resendVerification": "Verifizierungs-E-Mail erneut senden",
+    "resendEmailLabel": "E-Mail-Adresse",
+    "resendEmailPlaceholder": "deine@email.de",
+    "resendButton": "Verifizierungs-E-Mail senden",
+    "resending": "Wird gesendet...",
+    "resendSuccess": "Verifizierungs-E-Mail gesendet! Bitte überprüfe dein Postfach.",
+    "resendError": "Fehler beim Senden der Verifizierungs-E-Mail. Bitte versuche es erneut."
   },
   "forgotPassword": {
     "eyebrow": "Passwort zurücksetzen",

@@ -1,6 +1,7 @@
-import React, { useState, useEffect, useCallback, useRef } from "react";
+import React, { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuthStore } from "../store/auth.store";
 import { useRequiredFieldValidation } from "../hooks/useRequiredFieldValidation";
 import {
@@ -11,7 +12,6 @@ import {
   type Exercise,
 } from "../services/api";
 import { logger } from "../utils/logger";
-import { scheduleIdleTask } from "../utils/idleScheduler";
 
 // Import SVG icons
 import earthStrengthIcon from "../assets/icons/earth-strength.svg";
@@ -117,9 +117,8 @@ const Home: React.FC = () => {
   const [exerciseMode, setExerciseMode] = useState<"select" | "create">("select");
   const [exercises, setExercises] = useState<Exercise[]>([]);
   const [selectedExerciseId, setSelectedExerciseId] = useState<string>("");
-  const [exerciseHistory, setExerciseHistory] = useState<ExerciseHistoryItem[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const queryClient = useQueryClient();
 
   // Exercise detail form fields
   const [sets, setSets] = useState<string>("");
@@ -132,220 +131,131 @@ const Home: React.FC = () => {
   const [rpe, setRpe] = useState<string>("");
   const [notes, setNotes] = useState<string>("");
 
-  // Fetch exercises for the select dropdown
-  const fetchExercises = useCallback(async () => {
-    if (!selectedVibe) {
-      return;
+  // Calculate date range based on selected period (memoized)
+  const dateRange = useMemo(() => {
+    const now = new Date();
+    const fromDate = new Date(now);
+    const toDate = new Date(now.getTime() + 10000);
+
+    switch (period) {
+      case "day":
+        fromDate.setDate(now.getDate() - 1);
+        break;
+      case "week":
+        fromDate.setDate(now.getDate() - 7);
+        break;
+      case "month":
+        fromDate.setMonth(now.getMonth() - 1);
+        break;
+      case "quarter":
+        fromDate.setMonth(now.getMonth() - 3);
+        break;
+      case "semester":
+        fromDate.setMonth(now.getMonth() - 6);
+        break;
+      case "year":
+        fromDate.setFullYear(now.getFullYear() - 1);
+        break;
     }
-    try {
-      setIsLoading(true);
-      setError(null);
-      const result = await listExercises({
-        type_code: VIBE_TO_TYPE_CODE[selectedVibe],
-        limit: 100,
-      });
-      setExercises(result.data);
-    } catch (err) {
-      logger.apiError("Failed to fetch exercises", err, "/api/v1/exercises", "GET");
-      setError("Failed to load exercises");
-    } finally {
-      setIsLoading(false);
-    }
-  }, [selectedVibe]);
 
-  // Fetch exercise history from sessions
-  const fetchExerciseHistory = useCallback(async () => {
-    try {
-      setIsLoading(true);
-      setError(null);
-
-      // Calculate date range based on selected period
-      const now = new Date();
-      const fromDate = new Date(now);
-      // Add 10 seconds buffer to ensure we catch recently created sessions
-      const toDate = new Date(now.getTime() + 10000);
-
-      switch (period) {
-        case "day":
-          fromDate.setDate(now.getDate() - 1);
-          break;
-        case "week":
-          fromDate.setDate(now.getDate() - 7);
-          break;
-        case "month":
-          fromDate.setMonth(now.getMonth() - 1);
-          break;
-        case "quarter":
-          fromDate.setMonth(now.getMonth() - 3);
-          break;
-        case "semester":
-          fromDate.setMonth(now.getMonth() - 6);
-          break;
-        case "year":
-          fromDate.setFullYear(now.getFullYear() - 1);
-          break;
-      }
-
-      // Fetch all exercises once
-      const allExercisesResult = await listExercises({ limit: 1000 });
-      const exerciseCache = new Map<string, Exercise>();
-      allExercisesResult.data.forEach((ex) => exerciseCache.set(ex.id, ex));
-
-      // Fetch sessions
-      const sessions = await listSessions({
-        planned_from: fromDate.toISOString(),
-        planned_to: toDate.toISOString(),
-        limit: 100,
-      });
-
-      // Extract exercises from sessions and build history
-      const history: ExerciseHistoryItem[] = [];
-
-      for (const session of sessions.data) {
-        for (const sessionExercise of session.exercises) {
-          if (!sessionExercise.exercise_id) {
-            continue;
-          }
-
-          const exercise = exerciseCache.get(sessionExercise.exercise_id);
-          if (exercise && exercise.type_code) {
-            // Map type_code back to vibe
-            const vibeKey = Object.entries(VIBE_TO_TYPE_CODE).find(
-              ([, typeCode]) => typeCode === exercise.type_code,
-            )?.[0] as VibeKey | undefined;
-
-            if (vibeKey) {
-              history.push({
-                id: `${session.id}-${sessionExercise.id}`,
-                name: exercise.name,
-                vibe: vibeKey,
-                date: session.planned_at,
-              });
-            }
-          }
-        }
-      }
-
-      // Sort by date descending (newest first)
-      history.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-
-      setExerciseHistory(history);
-    } catch (err) {
-      logger.apiError("Failed to fetch exercise history", err, "/api/v1/sessions", "GET");
-      setError("Failed to load exercise history");
-    } finally {
-      setIsLoading(false);
-    }
+    return {
+      from: fromDate.toISOString(),
+      to: toDate.toISOString(),
+    };
   }, [period]);
 
-  // Fetch exercises when modal opens in select mode
-  useEffect(() => {
-    if (showModal && exerciseMode === "select" && selectedVibe) {
-      void fetchExercises();
+  // Fetch sessions for history - using React Query for caching
+  const {
+    data: sessionsData,
+    isLoading: sessionsLoading,
+    error: sessionsError,
+  } = useQuery({
+    queryKey: ["sessions", "history", dateRange],
+    queryFn: () =>
+      listSessions({
+        planned_from: dateRange.from,
+        planned_to: dateRange.to,
+        limit: 100,
+      }),
+    staleTime: 60 * 1000, // Cache for 1 minute
+    enabled: isAuthenticated,
+  });
+
+  // Fetch exercises list - cached and only when needed
+  const { data: allExercisesData, isLoading: exercisesLoading } = useQuery({
+    queryKey: ["exercises", "all"],
+    queryFn: () => listExercises({ limit: 1000 }),
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes - exercises don't change often
+    enabled: isAuthenticated && !!sessionsData, // Only fetch after sessions are loaded
+  });
+
+  // Fetch exercises for the select dropdown - only when modal opens
+  const { data: filteredExercises, isLoading: filteredExercisesLoading } = useQuery({
+    queryKey: ["exercises", "filtered", selectedVibe],
+    queryFn: () =>
+      listExercises({
+        type_code: selectedVibe ? VIBE_TO_TYPE_CODE[selectedVibe] : undefined,
+        limit: 100,
+      }),
+    enabled: showModal && exerciseMode === "select" && !!selectedVibe,
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+  });
+
+  // Process exercise history from cached data (memoized)
+  const exerciseHistory = useMemo(() => {
+    if (!sessionsData?.data || !allExercisesData?.data) {
+      return [];
     }
-  }, [showModal, exerciseMode, selectedVibe, fetchExercises]);
 
-  // Fetch exercise history when period changes
-  useEffect(() => {
-    let isCancelled = false;
+    // Build exercise cache once
+    const exerciseCache = new Map<string, Exercise>();
+    allExercisesData.data.forEach((ex) => exerciseCache.set(ex.id, ex));
 
-    setIsLoading(true);
-    const { cancel } = scheduleIdleTask(
-      () => {
-        if (!isCancelled) {
-          void fetchExerciseHistory();
+    // Extract exercises from sessions - optimized single pass
+    const history: ExerciseHistoryItem[] = [];
+
+    for (const session of sessionsData.data) {
+      for (const sessionExercise of session.exercises) {
+        if (!sessionExercise.exercise_id) {
+          continue;
         }
-      },
-      { timeout: 1800 },
-    );
 
-    return () => {
-      isCancelled = true;
-      cancel();
-    };
-  }, [period, fetchExerciseHistory]);
+        const exercise = exerciseCache.get(sessionExercise.exercise_id);
+        if (exercise?.type_code) {
+          // Direct lookup instead of Object.entries().find()
+          const vibeKey = Object.keys(VIBE_TO_TYPE_CODE).find(
+            (key) => VIBE_TO_TYPE_CODE[key as VibeKey] === exercise.type_code,
+          ) as VibeKey | undefined;
 
-  // Authentication guard - redirect to login if not authenticated
-  useEffect(() => {
-    if (!isAuthenticated) {
-      navigate("/login", { replace: true, state: { from: { pathname: "/" } } });
+          if (vibeKey) {
+            history.push({
+              id: `${session.id}-${sessionExercise.id}`,
+              name: exercise.name,
+              vibe: vibeKey,
+              date: session.planned_at,
+            });
+          }
+        }
+      }
     }
-  }, [isAuthenticated, navigate]);
 
-  // Don't render anything if not authenticated (prevents flash before redirect)
-  if (!isAuthenticated) {
-    return null;
-  }
+    // Sort by date descending (newest first)
+    return history.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  }, [sessionsData, allExercisesData]);
 
-  const handleVibeClick = (vibeKey: VibeKey) => {
+  // All hooks must be declared before any early returns
+  const handleVibeClick = useCallback((vibeKey: VibeKey) => {
     setSelectedVibe(vibeKey);
     setShowModal(true);
-  };
+  }, []);
 
-  const handleAddExercise = async (event?: React.FormEvent<HTMLFormElement>) => {
-    if (event) {
-      event.preventDefault();
-    }
-
-    if (!selectedVibe) {
-      return;
-    }
-
-    try {
-      setIsLoading(true);
-      setError(null);
-
-      let exerciseId = selectedExerciseId;
-
-      if (exerciseMode === "create") {
-        // Create new exercise
-        const newExercise = await createExercise({
-          name: exerciseName,
-          type_code: VIBE_TO_TYPE_CODE[selectedVibe],
-          is_public: false,
-        });
-        exerciseId = newExercise.id;
-      }
-
-      // Create a session with the exercise data
-      const createdSession = await createSession({
-        planned_at: new Date().toISOString(),
-        visibility: "private",
-        exercises: [
-          {
-            exercise_id: exerciseId,
-            order: 1,
-            notes: notes || null,
-            actual: {
-              sets: sets ? parseInt(sets, 10) : null,
-              reps: reps ? parseInt(reps, 10) : null,
-              load: weight ? parseFloat(weight) : null,
-              distance: distance ? parseFloat(distance) : null,
-              duration: duration ? `PT${duration}M` : null, // ISO 8601 duration format
-              rpe: rpe ? parseInt(rpe, 10) : null,
-              extras: {
-                resistance: resistance || null,
-                speed: speed || null,
-              },
-            },
-          },
-        ],
-      });
-
-      // Optimistically add the new exercise to history
-      const displayName =
-        exerciseMode === "create"
-          ? exerciseName
-          : exercises.find((ex) => ex.id === exerciseId)?.name || "Unknown";
-
-      const newHistoryItem: ExerciseHistoryItem = {
-        id: `${createdSession.id}-${createdSession.exercises[0]?.id || "new"}`,
-        name: displayName,
-        vibe: selectedVibe,
-        date: createdSession.planned_at,
-      };
-
-      setExerciseHistory((prev) => [newHistoryItem, ...prev]);
+  // Create session mutation with React Query
+  const createSessionMutation = useMutation({
+    mutationFn: createSession,
+    onSuccess: () => {
+      // Invalidate queries to refetch fresh data
+      void queryClient.invalidateQueries({ queryKey: ["sessions", "history"] });
+      void queryClient.invalidateQueries({ queryKey: ["exercises"] });
 
       // Close modal and reset
       setShowModal(false);
@@ -362,17 +272,101 @@ const Home: React.FC = () => {
       setSpeed("");
       setRpe("");
       setNotes("");
-
-      // Refresh exercise history in the background to sync with server
-      setTimeout(() => {
-        void fetchExerciseHistory();
-      }, 500);
-    } catch (err) {
+      setError(null);
+    },
+    onError: (err) => {
       logger.apiError("Failed to add exercise", err, "/api/v1/sessions", "POST");
       setError("Failed to add exercise");
-    } finally {
-      setIsLoading(false);
+    },
+  });
+
+  // Create exercise mutation
+  const createExerciseMutation = useMutation({
+    mutationFn: createExercise,
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["exercises"] });
+    },
+  });
+
+  const isLoading = sessionsLoading || exercisesLoading;
+  const isSubmitting = createSessionMutation.isPending || createExerciseMutation.isPending;
+
+  // Update local state when filtered exercises change
+  useEffect(() => {
+    if (filteredExercises?.data) {
+      setExercises(filteredExercises.data);
+    } else {
+      setExercises([]);
     }
+  }, [filteredExercises]);
+
+  // Handle errors
+  useEffect(() => {
+    if (sessionsError) {
+      logger.apiError("Failed to fetch exercise history", sessionsError, "/api/v1/sessions", "GET");
+      setError("Failed to load exercise history");
+    }
+  }, [sessionsError]);
+
+  // Authentication guard - redirect to login if not authenticated
+  useEffect(() => {
+    if (!isAuthenticated) {
+      navigate("/login", { replace: true, state: { from: { pathname: "/" } } });
+    }
+  }, [isAuthenticated, navigate]);
+
+  // Don't render anything if not authenticated (prevents flash before redirect)
+  if (!isAuthenticated) {
+    return null;
+  }
+
+  const handleAddExercise = async (event?: React.FormEvent<HTMLFormElement>) => {
+    if (event) {
+      event.preventDefault();
+    }
+
+    if (!selectedVibe) {
+      return;
+    }
+
+    setError(null);
+
+    let exerciseId = selectedExerciseId;
+
+    if (exerciseMode === "create") {
+      // Create new exercise
+      const newExercise = await createExerciseMutation.mutateAsync({
+        name: exerciseName,
+        type_code: VIBE_TO_TYPE_CODE[selectedVibe],
+        is_public: false,
+      });
+      exerciseId = newExercise.id;
+    }
+
+    // Create a session with the exercise data
+    await createSessionMutation.mutateAsync({
+      planned_at: new Date().toISOString(),
+      visibility: "private",
+      exercises: [
+        {
+          exercise_id: exerciseId,
+          order: 1,
+          notes: notes || null,
+          actual: {
+            sets: sets ? parseInt(sets, 10) : null,
+            reps: reps ? parseInt(reps, 10) : null,
+            load: weight ? parseFloat(weight) : null,
+            distance: distance ? parseFloat(distance) : null,
+            duration: duration ? `PT${duration}M` : null, // ISO 8601 duration format
+            rpe: rpe ? parseInt(rpe, 10) : null,
+            extras: {
+              resistance: resistance || null,
+              speed: speed || null,
+            },
+          },
+        },
+      ],
+    });
   };
 
   const handleCloseModal = () => {
@@ -450,6 +444,10 @@ const Home: React.FC = () => {
                   <img
                     src={vibe.icon}
                     alt=""
+                    fetchPriority="high"
+                    loading="eager"
+                    width="64"
+                    height="64"
                     style={{
                       width: "64px",
                       height: "64px",
@@ -762,7 +760,7 @@ const Home: React.FC = () => {
                     name="exercise-name"
                     value={selectedExerciseId}
                     onChange={(e) => setSelectedExerciseId(e.target.value)}
-                    disabled={isLoading}
+                    disabled={isSubmitting || filteredExercisesLoading}
                     required={exerciseMode === "select"}
                     style={{
                       width: "100%",
@@ -792,7 +790,7 @@ const Home: React.FC = () => {
                     value={exerciseName}
                     onChange={(e) => setExerciseName(e.target.value)}
                     placeholder={t("vibesHome.addExercise.exerciseNamePlaceholder")}
-                    disabled={isLoading}
+                    disabled={isSubmitting || filteredExercisesLoading}
                     required={exerciseMode === "create"}
                     style={{
                       width: "100%",
@@ -855,7 +853,7 @@ const Home: React.FC = () => {
                       value={sets}
                       onChange={(e) => setSets(e.target.value)}
                       placeholder={t("vibesHome.addExercise.setsPlaceholder")}
-                      disabled={isLoading}
+                      disabled={isSubmitting || filteredExercisesLoading}
                       style={{
                         width: "100%",
                         padding: "0.75rem",
@@ -888,7 +886,7 @@ const Home: React.FC = () => {
                       value={reps}
                       onChange={(e) => setReps(e.target.value)}
                       placeholder={t("vibesHome.addExercise.repsPlaceholder")}
-                      disabled={isLoading}
+                      disabled={isSubmitting || filteredExercisesLoading}
                       style={{
                         width: "100%",
                         padding: "0.75rem",
@@ -922,7 +920,7 @@ const Home: React.FC = () => {
                       value={weight}
                       onChange={(e) => setWeight(e.target.value)}
                       placeholder={t("vibesHome.addExercise.weightPlaceholder")}
-                      disabled={isLoading}
+                      disabled={isSubmitting || filteredExercisesLoading}
                       style={{
                         width: "100%",
                         padding: "0.75rem",
@@ -956,7 +954,7 @@ const Home: React.FC = () => {
                       value={rpe}
                       onChange={(e) => setRpe(e.target.value)}
                       placeholder={t("vibesHome.addExercise.rpePlaceholder")}
-                      disabled={isLoading}
+                      disabled={isSubmitting || filteredExercisesLoading}
                       style={{
                         width: "100%",
                         padding: "0.75rem",
@@ -989,7 +987,7 @@ const Home: React.FC = () => {
                       value={duration}
                       onChange={(e) => setDuration(e.target.value)}
                       placeholder={t("vibesHome.addExercise.durationPlaceholder")}
-                      disabled={isLoading}
+                      disabled={isSubmitting || filteredExercisesLoading}
                       style={{
                         width: "100%",
                         padding: "0.75rem",
@@ -1023,7 +1021,7 @@ const Home: React.FC = () => {
                       value={distance}
                       onChange={(e) => setDistance(e.target.value)}
                       placeholder={t("vibesHome.addExercise.distancePlaceholder")}
-                      disabled={isLoading}
+                      disabled={isSubmitting || filteredExercisesLoading}
                       style={{
                         width: "100%",
                         padding: "0.75rem",
@@ -1055,7 +1053,7 @@ const Home: React.FC = () => {
                       value={resistance}
                       onChange={(e) => setResistance(e.target.value)}
                       placeholder={t("vibesHome.addExercise.resistancePlaceholder")}
-                      disabled={isLoading}
+                      disabled={isSubmitting || filteredExercisesLoading}
                       style={{
                         width: "100%",
                         padding: "0.75rem",
@@ -1079,7 +1077,7 @@ const Home: React.FC = () => {
                       value={speed}
                       onChange={(e) => setSpeed(e.target.value)}
                       placeholder={t("vibesHome.addExercise.speedPlaceholder")}
-                      disabled={isLoading}
+                      disabled={isSubmitting || filteredExercisesLoading}
                       className="form-input"
                       style={{ background: "var(--color-surface)" }}
                     />
@@ -1096,7 +1094,7 @@ const Home: React.FC = () => {
                     value={notes}
                     onChange={(e) => setNotes(e.target.value)}
                     placeholder={t("vibesHome.addExercise.notesPlaceholder")}
-                    disabled={isLoading}
+                    disabled={isSubmitting || filteredExercisesLoading}
                     rows={3}
                     style={{
                       width: "100%",
@@ -1153,7 +1151,7 @@ const Home: React.FC = () => {
                 <button
                   type="button"
                   onClick={handleCloseModal}
-                  disabled={isLoading}
+                  disabled={isSubmitting}
                   style={{
                     flex: 1,
                     padding: "0.75rem",
@@ -1162,35 +1160,35 @@ const Home: React.FC = () => {
                     background: "transparent",
                     color: "var(--color-text-primary)",
                     fontSize: "var(--font-size-md)",
-                    cursor: isLoading ? "wait" : "pointer",
+                    cursor: isSubmitting ? "wait" : "pointer",
                     fontWeight: 500,
-                    opacity: isLoading ? 0.5 : 1,
+                    opacity: isSubmitting ? 0.5 : 1,
                   }}
                 >
                   {t("vibesHome.addExercise.cancel")}
                 </button>
                 <button
                   type="submit"
-                  disabled={!isFormValid || isLoading}
+                  disabled={!isFormValid || isSubmitting}
                   style={{
                     flex: 1,
                     padding: "0.75rem",
                     borderRadius: "12px",
                     border: "none",
                     background:
-                      isFormValid && !isLoading
+                      isFormValid && !isSubmitting
                         ? VIBES.find((v) => v.key === selectedVibe)?.colorBg
                         : "var(--color-border)",
                     color:
-                      isFormValid && !isLoading
+                      isFormValid && !isSubmitting
                         ? VIBES.find((v) => v.key === selectedVibe)?.colorText
                         : "var(--color-text-muted)",
                     fontSize: "var(--font-size-md)",
-                    cursor: isFormValid && !isLoading ? "pointer" : "not-allowed",
+                    cursor: isFormValid && !isSubmitting ? "pointer" : "not-allowed",
                     fontWeight: 600,
                   }}
                 >
-                  {isLoading ? t("common.loading") : t("vibesHome.addExercise.add")}
+                  {isSubmitting ? t("common.loading") : t("vibesHome.addExercise.add")}
                 </button>
               </div>
             </form>

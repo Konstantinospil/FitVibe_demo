@@ -5,7 +5,9 @@ import { useState, useEffect, useRef } from "react";
  * @param initialSeconds - Initial countdown time in seconds
  * @returns [seconds, isActive, reset] - Current seconds, whether timer is active, and reset function
  */
-export function useCountdown(initialSeconds: number): [number, boolean, () => void] {
+export function useCountdown(
+  initialSeconds: number,
+): [number, boolean, (newSeconds?: number) => void] {
   const [seconds, setSeconds] = useState(initialSeconds);
   const [isActive, setIsActive] = useState(initialSeconds > 0);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);

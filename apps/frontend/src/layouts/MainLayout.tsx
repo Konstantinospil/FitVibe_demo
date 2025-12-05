@@ -29,7 +29,7 @@ const MainLayout: React.FC = () => {
   const { t } = useTranslation();
 
   const handleSignOut = () => {
-    signOut();
+    void signOut();
     navigate("/login", { replace: true });
   };
 
@@ -80,6 +80,10 @@ const MainLayout: React.FC = () => {
             <img
               src={logoFull}
               alt="FitVibe Logo"
+              fetchPriority="high"
+              loading="eager"
+              width="36"
+              height="36"
               style={{
                 height: "36px",
                 width: "auto",
@@ -143,7 +147,9 @@ const MainLayout: React.FC = () => {
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={handleSignOut}
+                onClick={() => {
+                  void handleSignOut();
+                }}
                 aria-label={t("navigation.signOut")}
                 title={t("navigation.signOut")}
               >

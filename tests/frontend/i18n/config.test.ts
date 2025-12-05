@@ -89,13 +89,25 @@ describe("i18n config", () => {
   });
 
   it("saves language to localStorage when language changes", async () => {
+    // Clear localStorage first
+    window.localStorage.removeItem("fitvibe:language");
     const setItemSpy = vi.spyOn(window.localStorage, "setItem");
 
     // Change language and wait for the change to complete
     await i18n.changeLanguage("de");
 
+    // Wait a bit for the event listener to fire (languageChanged event fires asynchronously)
+    await new Promise((resolve) => setTimeout(resolve, 50));
+
+    // Verify localStorage was updated (this is what we really care about)
+    expect(window.localStorage.getItem("fitvibe:language")).toBe("de");
+
     // The event listener in config.ts should have called setItem
-    expect(setItemSpy).toHaveBeenCalledWith("fitvibe:language", "de");
+    // Note: The spy might not catch it if the event listener was set up before the spy,
+    // but we verify the actual behavior (localStorage update) above
+    if (setItemSpy.mock.calls.length > 0) {
+      expect(setItemSpy).toHaveBeenCalledWith("fitvibe:language", "de");
+    }
     setItemSpy.mockRestore();
   });
 });

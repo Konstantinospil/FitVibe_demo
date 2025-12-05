@@ -11,6 +11,11 @@
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon.ico" />
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon.ico" />
     <link rel="apple-touch-icon" sizes="180x180" href="/favicon.ico" />
+    <!-- Preconnect to external domains for faster resource loading -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin />
+    <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
+    <!-- Preload critical assets for faster LCP -->
+    <link rel="preload" href="/src/assets/logo_full.ico" as="image" type="image/x-icon" />
     <style>
       /* Minimal inline styles for login fallback form (before CSS loads) - WCAG 2.2 AA compliant */
       .login-fallback {

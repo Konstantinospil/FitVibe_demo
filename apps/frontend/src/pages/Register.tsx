@@ -213,11 +213,13 @@ const Register: React.FC = () => {
                           resetCountdown(retryAfterValue);
                         }
 
-                        setResendError(
-                          errorCode
-                            ? t(`errors.${errorCode}`) || axiosError.response?.data?.error?.message
-                            : t("verifyEmail.resendError"),
-                        );
+                        const errorMsg =
+                          (errorCode
+                            ? t(`errors.${errorCode}`) ||
+                              axiosError.response?.data?.error?.message ||
+                              t("verifyEmail.resendError")
+                            : t("verifyEmail.resendError")) ?? "";
+                        setResendError(errorMsg || null);
                       } else {
                         setResendError(t("verifyEmail.resendError"));
                       }

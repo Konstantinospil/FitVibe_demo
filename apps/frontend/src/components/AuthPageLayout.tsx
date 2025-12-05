@@ -18,7 +18,7 @@ const HeaderUtilities: React.FC = () => {
   const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
-    const { cancel } = scheduleIdleTask(() => setIsReady(true), { timeout: 1600 });
+    const { cancel } = scheduleIdleTask(() => setIsReady(true), { timeout: 300 }); // Reduced from 1600ms for faster initial render
     return () => cancel();
   }, []);
 

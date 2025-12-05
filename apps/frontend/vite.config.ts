@@ -68,7 +68,12 @@ export default defineConfig(() => {
       globals: true,
       environment: "jsdom",
       setupFiles: "../../tests/frontend/setupTests.ts",
-      include: ["../../tests/frontend/**/*.{test,spec}.{ts,tsx}"],
+      include: ["../../tests/frontend/**/*.test.{ts,tsx}"],
+      exclude: [
+        "../../tests/frontend/**/*.spec.{ts,tsx}",
+        "../../tests/frontend/visual/**",
+        "../../tests/frontend/e2e/**",
+      ],
       css: true,
       pool: "threads",
       poolOptions: {
@@ -135,38 +140,37 @@ export default defineConfig(() => {
       modulePreload: {
         polyfill: false, // Disable module preload polyfill to reduce size
       },
+      // Improve loading performance with better chunking strategy
       rollupOptions: {
         output: {
           // Optimize chunk splitting for better caching and loading
           manualChunks: (id) => {
-            // Vendor chunks
+            // Vendor chunks - prioritize critical chunks for faster initial load
             if (id.includes("node_modules")) {
-              // Separate large dependencies
+              // Core React/Preact should load first (critical for LCP)
               if (id.includes("react") || id.includes("react-dom") || id.includes("preact")) {
                 return "react-vendor";
               }
-              if (id.includes("@tanstack/react-query")) {
-                return "query-vendor";
-              }
+              // Router is needed for initial routing
               if (id.includes("react-router")) {
                 return "router-vendor";
               }
+              // Large dependencies that can be loaded later
               if (id.includes("recharts")) {
                 return "charts-vendor";
               }
-              if (id.includes("zustand")) {
-                return "state-vendor";
+              // Other vendor code - keep together to reduce initial requests
+              if (
+                id.includes("@tanstack/react-query") ||
+                id.includes("zustand") ||
+                id.includes("i18next") ||
+                id.includes("react-i18next") ||
+                id.includes("axios") ||
+                id.includes("lucide-react")
+              ) {
+                return "vendor";
               }
-              if (id.includes("i18next") || id.includes("react-i18next")) {
-                return "i18n-vendor";
-              }
-              if (id.includes("axios")) {
-                return "http-vendor";
-              }
-              if (id.includes("lucide-react")) {
-                return "icons-vendor";
-              }
-              // Other vendor code
+              // Default vendor chunk
               return "vendor";
             }
             // Split i18n locale files into separate chunks for lazy loading

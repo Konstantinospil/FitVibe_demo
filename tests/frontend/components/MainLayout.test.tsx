@@ -41,7 +41,6 @@ vi.mock("react-i18next", () => ({
         "footer.privacy": "Privacy",
         "footer.termsAriaLabel": "View Terms and Conditions",
         "footer.privacyAriaLabel": "View Privacy Policy",
-        "footer.privacy": "Privacy",
       };
       return translations[key] || key;
     },

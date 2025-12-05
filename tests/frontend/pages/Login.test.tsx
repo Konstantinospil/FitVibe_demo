@@ -104,12 +104,14 @@ describe("Login", () => {
 
     const emailInput = screen.getByRole("textbox", { name: /email/i });
     const passwordInput = screen.getByPlaceholderText(/enter your password/i);
-    const submitButton = screen.getByRole("button", { name: /^sign in$/i });
+    const form = emailInput.closest("form");
 
-    act(() => {
+    await act(() => {
       fireEvent.change(emailInput, { target: { value: "test@example.com" } });
       fireEvent.change(passwordInput, { target: { value: "password123" } });
-      fireEvent.click(submitButton);
+      if (form) {
+        fireEvent.submit(form);
+      }
     });
 
     await waitFor(
@@ -142,12 +144,14 @@ describe("Login", () => {
 
     const emailInput = screen.getByRole("textbox", { name: /email/i });
     const passwordInput = screen.getByPlaceholderText(/enter your password/i);
-    const submitButton = screen.getByRole("button", { name: /sign in/i });
+    const form = emailInput.closest("form");
 
-    act(() => {
+    await act(() => {
       fireEvent.change(emailInput, { target: { value: "test@example.com" } });
       fireEvent.change(passwordInput, { target: { value: "password123" } });
-      fireEvent.click(submitButton);
+      if (form) {
+        fireEvent.submit(form);
+      }
     });
 
     await waitFor(
@@ -171,12 +175,14 @@ describe("Login", () => {
 
     const emailInput = screen.getByRole("textbox", { name: /email/i });
     const passwordInput = screen.getByPlaceholderText(/enter your password/i);
-    const submitButton = screen.getByRole("button", { name: /sign in/i });
+    const form = emailInput.closest("form");
 
-    act(() => {
+    await act(() => {
       fireEvent.change(emailInput, { target: { value: "test@example.com" } });
       fireEvent.change(passwordInput, { target: { value: "wrongpassword" } });
-      fireEvent.click(submitButton);
+      if (form) {
+        fireEvent.submit(form);
+      }
     });
 
     await waitFor(
@@ -198,12 +204,15 @@ describe("Login", () => {
 
     const emailInput = screen.getByRole("textbox", { name: /email/i });
     const passwordInput = screen.getByPlaceholderText(/enter your password/i);
+    const form = emailInput.closest("form");
     const submitButton = screen.getByRole("button", { name: /sign in/i });
 
-    act(() => {
+    await act(() => {
       fireEvent.change(emailInput, { target: { value: "test@example.com" } });
       fireEvent.change(passwordInput, { target: { value: "password123" } });
-      fireEvent.click(submitButton);
+      if (form) {
+        fireEvent.submit(form);
+      }
     });
 
     await waitFor(

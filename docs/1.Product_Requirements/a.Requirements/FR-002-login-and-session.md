@@ -2,14 +2,14 @@
 
 ---
 
-**Requirement ID**: FR-002  
-**Type**: Functional Requirement  
-**Title**: Login & Session  
-**Status**: Done  
-**Priority**: High  
-**Gate**: GOLD  
-**Owner**: ENG/QA  
-**Created**: 2025-11-21  
+**Requirement ID**: FR-002
+**Type**: Functional Requirement
+**Title**: Login & Session
+**Status**: Done
+**Priority**: High
+**Gate**: GOLD
+**Owner**: ENG/QA
+**Created**: 2025-11-21
 **Updated**: 2025-01-21
 
 ---
@@ -46,6 +46,8 @@ The system shall provide secure authentication with the following capabilities:
 - **Token Refresh**: Refresh token rotation with replay detection
 - **Logout**: Server-side token invalidation within ≤1s
 - **Session Locking**: Reused rotated tokens trigger session lock and security event logging
+- **Session Listing**: Users can view their active sessions with device metadata
+- **Session Revocation**: Users can revoke specific sessions or all sessions except current
 
 ### Security Features
 
@@ -107,5 +109,5 @@ The system shall provide secure authentication with the following capabilities:
 
 ---
 
-**Last Updated**: 2025-01-21  
+**Last Updated**: 2025-01-21
 **Next Review**: 2025-02-21

@@ -10,7 +10,7 @@ overrides:
   glob: link:packages/patched-glob
   esbuild: ^0.25.0
   js-yaml: ^4.1.1
-  jws: ^3.2.3
+  jws: ">=3.2.3 <4.0.0 || >=4.0.1"
   "@smithy/core": ^3.18.7
 
 pnpmfileChecksum: grrypyllm2ewjqhri5aw4olxvu

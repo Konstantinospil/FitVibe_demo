@@ -132,7 +132,12 @@ apiClient.interceptors.response.use(
 
       // Refresh failed - sign out and clear cookies
       processQueue(refreshError);
-      useAuthStore.getState().signOut();
+      useAuthStore
+        .getState()
+        .signOut()
+        .catch(() => {
+          // Ignore sign out errors during token refresh failure
+        });
 
       // Optionally call logout endpoint to clear server-side session
       try {
@@ -284,6 +289,14 @@ export async function resetPassword(payload: ResetPasswordRequest): Promise<Rese
     payload,
   );
   return res.data;
+}
+
+/**
+ * Logout function - calls backend to invalidate session and clear cookies
+ * Backend clears HttpOnly cookies automatically
+ */
+export async function logout(): Promise<void> {
+  await rawHttpClient.post("/api/v1/auth/logout");
 }
 
 export type DashboardRange = "4w" | "8w";
