@@ -8,12 +8,10 @@ import {
   bookmarkSessionHandler,
   cloneSessionFromFeedHandler,
   createCommentHandler,
-  createShareLinkHandler,
   deleteCommentHandler,
   followUserHandler,
   getFeedHandler,
   getLeaderboardHandler,
-  getSharedSessionHandler,
   likeFeedItemHandler,
   listBookmarksHandler,
   listCommentsHandler,
@@ -22,7 +20,6 @@ import {
   removeBookmarkHandler,
   reportCommentHandler,
   reportFeedItemHandler,
-  revokeShareLinkHandler,
   unlikeFeedItemHandler,
   unfollowUserHandler,
   unblockUserHandler,
@@ -36,28 +33,6 @@ feedRouter.get(
   "/leaderboard",
   rateLimit("feed_leaderboard", 60, 60),
   asyncHandler(getLeaderboardHandler),
-);
-
-feedRouter.get(
-  "/link/:token",
-  rateLimit("feed_link_view", 240, 60),
-  asyncHandler(getSharedSessionHandler),
-);
-
-feedRouter.post(
-  "/session/:sessionId/link",
-  requireAuth,
-  rateLimitByUser("feed_link_create_user", 20, 60),
-  rateLimit("feed_link_create", 20, 60),
-  asyncHandler(createShareLinkHandler),
-);
-
-feedRouter.delete(
-  "/session/:sessionId/link",
-  requireAuth,
-  rateLimitByUser("feed_link_revoke_user", 20, 60),
-  rateLimit("feed_link_revoke", 20, 60),
-  asyncHandler(revokeShareLinkHandler),
 );
 
 feedRouter.post(

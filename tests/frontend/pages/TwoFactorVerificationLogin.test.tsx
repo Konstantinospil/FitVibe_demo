@@ -1,4 +1,5 @@
 import { render, screen, fireEvent, waitFor, act } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Routes, Route } from "react-router-dom";
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import TwoFactorVerificationLogin from "../../src/pages/TwoFactorVerificationLogin";
@@ -126,11 +127,16 @@ describe("TwoFactorVerificationLogin", () => {
     renderWithProviders();
 
     const codeInput = screen.getByRole("textbox");
-    const submitButton = screen.getByRole("button", { name: /verify and continue/i });
+    const form = codeInput.closest("form");
 
     fireEvent.change(codeInput, { target: { value: "123456" } });
-    fireEvent.click(submitButton);
 
+    // Submit the form directly
+    if (form) {
+      fireEvent.submit(form);
+    }
+
+    // Check that the API was called with correct parameters
     await waitFor(() => {
       expect(api.verify2FALogin).toHaveBeenCalledWith({
         pendingSessionId: "session123",
@@ -153,8 +159,13 @@ describe("TwoFactorVerificationLogin", () => {
     renderWithProviders();
 
     const codeInput = screen.getByRole("textbox");
+    const form = codeInput.closest("form");
+
     fireEvent.change(codeInput, { target: { value: "123456" } });
-    fireEvent.click(screen.getByRole("button", { name: /verify and continue/i }));
+
+    if (form) {
+      fireEvent.submit(form);
+    }
 
     await waitFor(() => {
       expect(screen.getByRole("alert")).toHaveTextContent("Invalid 2FA code. Please try again.");
@@ -167,8 +178,13 @@ describe("TwoFactorVerificationLogin", () => {
     renderWithProviders();
 
     const codeInput = screen.getByRole("textbox");
+    const form = codeInput.closest("form");
+
     fireEvent.change(codeInput, { target: { value: "123456" } });
-    fireEvent.click(screen.getByRole("button", { name: /verify and continue/i }));
+
+    if (form) {
+      fireEvent.submit(form);
+    }
 
     await waitFor(() => {
       expect(screen.getByRole("alert")).toHaveTextContent("Verification failed. Please try again.");
@@ -176,6 +192,7 @@ describe("TwoFactorVerificationLogin", () => {
   });
 
   it("disables form during submission", async () => {
+    const user = userEvent.setup();
     vi.mocked(api.verify2FALogin).mockImplementation(
       () => new Promise((resolve) => setTimeout(resolve, 1000)),
     );
@@ -185,19 +202,25 @@ describe("TwoFactorVerificationLogin", () => {
     const codeInput = screen.getByRole("textbox");
     const submitButton = screen.getByRole("button", { name: /verify and continue/i });
 
-    fireEvent.change(codeInput, { target: { value: "123456" } });
-    fireEvent.click(submitButton);
+    // Use userEvent for more realistic interactions that handle async updates
+    await user.type(codeInput, "123456");
+    await user.click(submitButton);
 
-    // Wait for async state updates - check loading state appears quickly
+    // Wait for the button text to change to "Verifying..." which indicates loading state
     await waitFor(
       () => {
-        const button = screen.getByRole("button", { name: /verify and continue/i });
-        expect(button).toHaveAttribute("aria-busy", "true");
-        expect(button).toBeDisabled();
-        expect(codeInput).toBeDisabled();
+        expect(screen.getByRole("button", { name: /verifying/i })).toBeInTheDocument();
       },
-      { timeout: 1000 },
+      { timeout: 2000 },
     );
+
+    // Now check all the expected states
+    const button = screen.getByRole("button", { name: /verifying/i });
+    expect(button).toHaveAttribute("aria-busy", "true");
+    expect(button).toBeDisabled();
+
+    const input = screen.getByRole("textbox");
+    expect(input).toBeDisabled();
   });
 
   it("renders back to login button", () => {

@@ -3,7 +3,7 @@
  *
  * Tests the cross-module flow:
  * 1. User creates and completes a session
- * 2. User shares session to feed
+ * 2. User makes session public (creates feed item)
  * 3. Another user reacts to the shared session
  * 4. Points are awarded for sharing and reactions
  *
@@ -302,15 +302,15 @@ describe("Integration: Feed Sharing → Reactions Flow", () => {
       throw new Error(`Session ${sessionId} status is ${foundSession.status}, expected completed`);
     }
 
-    // Step 2: User 1 shares session to feed (creates share link which creates feed item)
-    const shareResponse = await request(app)
-      .post(`/api/v1/feed/session/${sessionId}/link`)
+    // Step 2: User 1 makes session public (creates feed item)
+    const updateResponse = await request(app)
+      .patch(`/api/v1/sessions/${sessionId}`)
       .set("Authorization", `Bearer ${user1.accessToken}`)
-      .send({});
+      .send({ visibility: "public" });
 
-    if (shareResponse.status !== 201) {
+    if (updateResponse.status !== 200) {
       throw new Error(
-        `Failed to share session: ${shareResponse.status} - ${JSON.stringify(shareResponse.body)}`,
+        `Failed to make session public: ${updateResponse.status} - ${JSON.stringify(updateResponse.body)}`,
       );
     }
 

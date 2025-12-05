@@ -63,13 +63,4 @@ describe("Profile", () => {
     const editButton = screen.getByRole("button", { name: /edit profile/i });
     expect(editButton).toBeInTheDocument();
   });
-
-  it("renders ShareLinkManager component", () => {
-    renderWithProviders(<Profile />);
-
-    // ShareLinkManager should be rendered (check for its typical content)
-    // This assumes ShareLinkManager has some visible content
-    const container = screen.getByText("Profile Settings").closest("div");
-    expect(container).toBeInTheDocument();
-  });
 });

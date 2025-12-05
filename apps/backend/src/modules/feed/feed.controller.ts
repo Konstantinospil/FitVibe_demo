@@ -8,12 +8,10 @@ import {
   bookmarkSession,
   cloneSessionFromFeed,
   createComment,
-  createShareLink,
   deleteComment,
   followUserByAlias,
   getFeed,
   getLeaderboard,
-  getSharedSession,
   likeFeedItem,
   listBookmarks,
   listComments,
@@ -22,7 +20,6 @@ import {
   removeBookmark,
   reportComment,
   reportFeedItem,
-  revokeShareLink,
   unlikeFeedItem,
   unfollowUserByAlias,
   unblockUserByAlias,
@@ -501,141 +498,6 @@ export async function getLeaderboardHandler(req: Request, res: Response): Promis
   const limit = parseLimit(req.query.limit, 25, 100);
   const leaderboard = await getLeaderboard(viewerId, { scope, period, limit });
   res.json({ leaderboard, scope, period });
-}
-export async function createShareLinkHandler(req: Request, res: Response): Promise<void> {
-  const userId = req.user?.sub;
-  if (!userId) {
-    throw new HttpError(401, "E.UNAUTHENTICATED", "UNAUTHENTICATED");
-  }
-  const rawBody: unknown = req.body;
-  const payload = isRecord(rawBody) ? rawBody : undefined;
-  const maxViewsRaw = payload?.maxViews;
-  const expiresAtRaw = payload?.expiresAt;
-
-  let parsedExpiresAt: Date | null = null;
-  if (expiresAtRaw !== undefined && expiresAtRaw !== null) {
-    const candidate =
-      expiresAtRaw instanceof Date
-        ? expiresAtRaw
-        : typeof expiresAtRaw === "string" || typeof expiresAtRaw === "number"
-          ? new Date(expiresAtRaw)
-          : null;
-    if (!candidate || Number.isNaN(candidate.getTime())) {
-      throw new HttpError(400, "E.FEED.INVALID_EXPIRES_AT", "FEED_INVALID_EXPIRES_AT");
-    }
-    parsedExpiresAt = candidate;
-  }
-
-  // Idempotency support
-  const idempotencyKey = getIdempotencyKey(req);
-  if (idempotencyKey) {
-    const route = getRouteTemplate(req);
-    const resolution = await resolveIdempotency(
-      { userId, method: req.method, route, key: idempotencyKey },
-      {
-        sessionId: req.params.sessionId,
-        maxViews: typeof maxViewsRaw === "number" ? maxViewsRaw : null,
-        expiresAt: parsedExpiresAt,
-      },
-    );
-
-    if (resolution.type === "replay") {
-      res.set("Idempotency-Key", idempotencyKey);
-      res.set("Idempotent-Replayed", "true");
-      res.status(resolution.status).json(resolution.body);
-      return;
-    }
-
-    const link = await createShareLink(userId, req.params.sessionId, {
-      maxViews: typeof maxViewsRaw === "number" ? maxViewsRaw : null,
-      expiresAt: parsedExpiresAt,
-    });
-
-    const response = {
-      id: link.id,
-      token: link.token,
-      maxViews: link.max_views,
-      expiresAt: link.expires_at,
-      viewCount: link.view_count,
-      createdAt: link.created_at,
-    };
-
-    if (resolution.recordId) {
-      await persistIdempotencyResult(resolution.recordId, 201, response);
-    }
-
-    res.set("Idempotency-Key", idempotencyKey);
-    res.status(201).json(response);
-    return;
-  }
-
-  const link = await createShareLink(userId, req.params.sessionId, {
-    maxViews: typeof maxViewsRaw === "number" ? maxViewsRaw : null,
-    expiresAt: parsedExpiresAt,
-  });
-
-  res.status(201).json({
-    id: link.id,
-    token: link.token,
-    maxViews: link.max_views,
-    expiresAt: link.expires_at,
-    viewCount: link.view_count,
-    createdAt: link.created_at,
-  });
-}
-
-export async function getSharedSessionHandler(req: Request, res: Response): Promise<void> {
-  const { link, session, feedItem } = await getSharedSession(req.params.token);
-
-  res.json({
-    link: {
-      id: link.id,
-      maxViews: link.max_views,
-      viewCount: link.view_count + 1, // optimistic increment
-      expiresAt: link.expires_at,
-    },
-    feedItem,
-    session,
-  });
-}
-
-export async function revokeShareLinkHandler(req: Request, res: Response): Promise<void> {
-  const userId = req.user?.sub;
-  if (!userId) {
-    throw new HttpError(401, "E.UNAUTHENTICATED", "UNAUTHENTICATED");
-  }
-
-  // Idempotency support
-  const idempotencyKey = getIdempotencyKey(req);
-  if (idempotencyKey) {
-    const route = getRouteTemplate(req);
-    const resolution = await resolveIdempotency(
-      { userId, method: req.method, route, key: idempotencyKey },
-      { sessionId: req.params.sessionId },
-    );
-
-    if (resolution.type === "replay") {
-      res.set("Idempotency-Key", idempotencyKey);
-      res.set("Idempotent-Replayed", "true");
-      res.status(resolution.status).json(resolution.body);
-      return;
-    }
-
-    const revoked = await revokeShareLink(userId, req.params.sessionId);
-
-    const response = { revoked };
-
-    if (resolution.recordId) {
-      await persistIdempotencyResult(resolution.recordId, 200, response);
-    }
-
-    res.set("Idempotency-Key", idempotencyKey);
-    res.json(response);
-    return;
-  }
-
-  const revoked = await revokeShareLink(userId, req.params.sessionId);
-  res.json({ revoked });
 }
 
 export async function cloneSessionFromFeedHandler(req: Request, res: Response): Promise<void> {

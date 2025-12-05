@@ -85,7 +85,6 @@ export async function truncateAll(): Promise<void> {
     "feed_likes",
     "feed_items", // Changed from "feed_posts"
     "session_bookmarks",
-    "share_links",
     "user_blocks",
     "followers",
     "badges",

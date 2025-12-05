@@ -1,7 +1,6 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
 import PageIntro from "../components/PageIntro";
-import ShareLinkManager from "../components/ShareLinkManager";
 import { Button } from "../components/ui";
 
 const Profile: React.FC = () => {
@@ -34,8 +33,6 @@ const Profile: React.FC = () => {
           {t("profile.edit")}
         </Button>
       </div>
-
-      <ShareLinkManager />
     </PageIntro>
   );
 };

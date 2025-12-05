@@ -31,7 +31,6 @@ const TABLES = [
   "feed_comments",
   "feed_likes",
   "session_bookmarks",
-  "share_links",
   "user_blocks",
   "idempotency_keys",
   "pending_2fa_sessions",

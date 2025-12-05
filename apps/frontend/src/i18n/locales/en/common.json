@@ -67,22 +67,6 @@
         "title": "Signature achievements",
         "description": "Back squat 180 kg • Bench 115 kg • Deadlift 210 kg • Boston Marathon qualifier."
       }
-    },
-    "share": {
-      "title": "Share links",
-      "description": "Create personal share links for coaches or judges. Revoke access instantly at any time.",
-      "create": "Create share link",
-      "empty": "No active share links yet.",
-      "copy": "Copy link",
-      "copyAria": "Copy link",
-      "revoke": "Revoke",
-      "revoked": "Revoked",
-      "copied": "Link copied",
-      "copiedAria": "Link copied to clipboard",
-      "guards": {
-        "active": "Share this URL only with people you trust.",
-        "revoked": "This link is no longer accessible."
-      }
     }
   },
   "feed": {
@@ -192,10 +176,6 @@
     "FEED_REPORT_REASON_TOO_LONG": "Reason exceeds 200 characters",
     "FEED_NOT_OWNER": "You do not own this session",
     "FEED_INVALID_STATUS": "Only completed sessions can be shared",
-    "FEED_LINK_REVOKED": "Share link has been revoked",
-    "FEED_LINK_EXPIRED": "Share link has expired",
-    "FEED_LINK_EXHAUSTED": "Share link view limit reached",
-    "FEED_LINK_NOT_FOUND": "Share link not found",
     "FEED_USER_NOT_FOUND": "User not found",
     "FEED_CANNOT_FOLLOW_SELF": "You cannot follow yourself",
     "FEED_CANNOT_BLOCK_SELF": "You cannot block yourself",

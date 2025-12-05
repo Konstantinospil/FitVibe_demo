@@ -4,16 +4,11 @@ import { HttpError } from "../../utils/http.js";
 import { insertAudit } from "../common/audit.util.js";
 import type { FeedScope } from "./feed.repository.js";
 import {
-  findActiveShareLinkBySession,
   findFeedItemById,
   findFeedItemBySessionId,
   findSessionById,
-  findShareLinkByToken,
   insertFeedItem,
-  insertShareLink,
   listFeedSessions,
-  incrementShareLinkView,
-  revokeShareLinksForSession,
   updateFeedItem,
   upsertFollower,
   deleteFollower,
@@ -195,172 +190,6 @@ function sanitizeDetails(details?: string | null) {
     return null;
   }
   return trimmed.slice(0, 500);
-}
-
-export interface ShareLinkOptions {
-  maxViews?: number | null;
-  expiresAt?: Date | null;
-}
-
-export async function createShareLink(
-  userId: string,
-  sessionId: string,
-  options: ShareLinkOptions = {},
-) {
-  const session = await findSessionById(sessionId);
-  if (!session) {
-    throw new HttpError(404, "E.FEED.SESSION_NOT_FOUND", "FEED_SESSION_NOT_FOUND");
-  }
-  if (session.owner_id !== userId) {
-    throw new HttpError(403, "E.FEED.NOT_OWNER", "FEED_NOT_OWNER");
-  }
-  if (session.status !== "completed") {
-    throw new HttpError(400, "E.FEED.INVALID_STATUS", "FEED_INVALID_STATUS");
-  }
-
-  let feedItem = await findFeedItemBySessionId(sessionId);
-  if (!feedItem) {
-    feedItem = await insertFeedItem({
-      ownerId: session.owner_id,
-      sessionId,
-      visibility: session.visibility === "public" ? "public" : "link",
-      publishedAt: session.completed_at ?? new Date(),
-    });
-  }
-
-  const existing = await findActiveShareLinkBySession(sessionId);
-  if (existing) {
-    return existing;
-  }
-
-  const token = crypto.randomBytes(24).toString("base64url");
-  const link = await insertShareLink({
-    sessionId,
-    feedItemId: feedItem.id,
-    token,
-    createdBy: userId,
-    maxViews: options.maxViews ?? null,
-    expiresAt: options.expiresAt ?? null,
-  });
-
-  const targetVisibility = session.visibility === "public" ? "public" : "link";
-  await updateFeedItem(feedItem.id, {
-    visibility: targetVisibility,
-    published_at: session.completed_at ?? new Date().toISOString(),
-  });
-
-  if (session.visibility === "private") {
-    await updateSession(sessionId, userId, { visibility: "link" });
-  }
-
-  await insertAudit({
-    actorUserId: userId,
-    entity: "sessions",
-    action: "share_link.create",
-    entityId: sessionId,
-    metadata: {
-      share_link_id: link.id,
-      max_views: link.max_views,
-      expires_at: link.expires_at,
-    },
-  });
-
-  return link;
-}
-
-function ensureShareLinkIsActive(link: {
-  revoked_at: string | null;
-  expires_at: string | null;
-  max_views: number | null;
-  view_count: number;
-}) {
-  if (link.revoked_at) {
-    throw new HttpError(404, "E.FEED.LINK_REVOKED", "FEED_LINK_REVOKED");
-  }
-  if (link.expires_at && new Date(link.expires_at) < new Date()) {
-    throw new HttpError(404, "E.FEED.LINK_EXPIRED", "FEED_LINK_EXPIRED");
-  }
-  if (link.max_views !== null && link.view_count >= link.max_views) {
-    throw new HttpError(404, "E.FEED.LINK_EXHAUSTED", "FEED_LINK_EXHAUSTED");
-  }
-}
-
-export async function getSharedSession(token: string): Promise<{
-  link: { id: string; view_count: number; [key: string]: unknown };
-  feedItem: unknown;
-  session: SessionRow;
-}> {
-  const link = await findShareLinkByToken(token);
-  if (!link) {
-    throw new HttpError(404, "E.FEED.LINK_NOT_FOUND", "FEED_LINK_NOT_FOUND");
-  }
-
-  ensureShareLinkIsActive(link);
-
-  let session = null;
-  let feedItem = null;
-
-  if (link.feed_item_id) {
-    feedItem = await findFeedItemById(link.feed_item_id);
-    if (feedItem?.session_id) {
-      session = await findSessionById(feedItem.session_id);
-    }
-  }
-
-  if (!session && link.session_id) {
-    session = await findSessionById(link.session_id);
-  }
-
-  if (!session || session.status !== "completed") {
-    throw new HttpError(404, "E.FEED.SESSION_NOT_FOUND", "FEED_SESSION_NOT_FOUND");
-  }
-
-  if (!feedItem) {
-    feedItem = await findFeedItemBySessionId(session.id);
-  }
-
-  await incrementShareLinkView(link.id);
-
-  return {
-    link: {
-      ...link,
-      view_count: link.view_count + 1,
-    },
-    feedItem,
-    session,
-  };
-}
-
-export async function revokeShareLink(userId: string, sessionId: string): Promise<number> {
-  const session = await findSessionById(sessionId);
-  if (!session) {
-    throw new HttpError(404, "E.FEED.SESSION_NOT_FOUND", "FEED_SESSION_NOT_FOUND");
-  }
-  if (session.owner_id !== userId) {
-    throw new HttpError(403, "E.FEED.NOT_OWNER", "FEED_NOT_OWNER");
-  }
-
-  const feedItem = await findFeedItemBySessionId(sessionId);
-  const revokedCount = await revokeShareLinksForSession(sessionId);
-
-  if (revokedCount > 0 && session.visibility === "link") {
-    await updateSession(sessionId, userId, { visibility: "private" });
-    if (feedItem) {
-      await updateFeedItem(feedItem.id, { visibility: "private" });
-    }
-  }
-
-  await insertAudit({
-    actorUserId: userId,
-    entity: "sessions",
-    action: "share_link.revoke",
-    entityId: sessionId,
-    metadata: {
-      revoked_count: revokedCount,
-    },
-  });
-
-  return revokedCount;
 }
 
 export async function cloneSessionFromFeed(

@@ -174,14 +174,19 @@ const VerifyEmail: React.FC = () => {
             </div>
           ) : (
             <form
+              noValidate
               onSubmit={(e) => {
                 e.preventDefault();
-                void (async () => {
-                  if (!resendEmail.trim()) {
-                    setResendError(t("auth.register.fillAllFields"));
-                    return;
-                  }
+                // Clear any previous errors
+                setResendError("");
 
+                // Check our custom validation
+                if (!resendEmail.trim()) {
+                  setResendError(t("auth.register.fillAllFields"));
+                  return;
+                }
+
+                void (async () => {
                   setIsResending(true);
                   setResendError("");
                   setResendSuccess(false);

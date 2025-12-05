@@ -1061,13 +1061,3 @@ export interface SessionInfo {
   revokedAt: string | null;
   isCurrent: boolean;
 }
-
-export interface RevokeSessionsRequest {
-  sessionId?: string;
-  revokeAll?: boolean;
-  revokeOthers?: boolean;
-}
-
-export interface RevokeSessionsResponse {
-  revoked: number;
-}

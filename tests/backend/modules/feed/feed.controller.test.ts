@@ -399,100 +399,6 @@ describe("Feed Controller", () => {
     });
   });
 
-  describe("createShareLinkHandler", () => {
-    it("should create share link for session", async () => {
-      mockRequest.params = { sessionId: "session-123" };
-
-      const mockShareLink = {
-        id: "link-id",
-        token: "abc123xyz",
-        expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-        max_views: null,
-        view_count: 0,
-        created_at: new Date().toISOString(),
-      };
-
-      mockFeedService.createShareLink.mockResolvedValue(mockShareLink as never);
-
-      await feedController.createShareLinkHandler(mockRequest as Request, mockResponse as Response);
-
-      expect(mockFeedService.createShareLink).toHaveBeenCalledWith("user-123", "session-123", {
-        expiresAt: null,
-        maxViews: null,
-      });
-      expect(mockResponse.status).toHaveBeenCalledWith(201);
-      expect(mockResponse.json).toHaveBeenCalledWith({
-        id: mockShareLink.id,
-        token: mockShareLink.token,
-        maxViews: mockShareLink.max_views,
-        expiresAt: mockShareLink.expires_at,
-        viewCount: mockShareLink.view_count,
-        createdAt: mockShareLink.created_at,
-      });
-    });
-  });
-
-  describe("getSharedSessionHandler", () => {
-    it("should get shared session by token", async () => {
-      mockRequest.params = { token: "share-token-123" };
-
-      const mockData = {
-        link: { id: "link-id", max_views: null, view_count: 0, expires_at: null },
-        session: { id: "session-123", title: "Shared Workout" },
-        feedItem: { id: "feed-item-id" },
-      };
-
-      mockFeedService.getSharedSession.mockResolvedValue(mockData as never);
-
-      await feedController.getSharedSessionHandler(
-        mockRequest as Request,
-        mockResponse as Response,
-      );
-
-      expect(mockFeedService.getSharedSession).toHaveBeenCalledWith("share-token-123");
-      expect(mockResponse.json).toHaveBeenCalledWith({
-        link: {
-          id: mockData.link.id,
-          maxViews: mockData.link.max_views,
-          viewCount: 1,
-          expiresAt: mockData.link.expires_at,
-        },
-        feedItem: mockData.feedItem,
-        session: mockData.session,
-      });
-    });
-
-    it("should return 404 if share link not found", async () => {
-      mockRequest.params = { token: "invalid-token" };
-
-      mockFeedService.getSharedSession.mockRejectedValue(new Error("Not found"));
-
-      try {
-        await feedController.getSharedSessionHandler(
-          mockRequest as Request,
-          mockResponse as Response,
-        );
-      } catch (error) {
-        expect(error).toBeDefined();
-      }
-    });
-  });
-
-  describe("revokeShareLinkHandler", () => {
-    it("should revoke share link", async () => {
-      mockRequest.params = { sessionId: "session-123" };
-
-      const mockResult = true;
-
-      mockFeedService.revokeShareLink.mockResolvedValue(mockResult as never);
-
-      await feedController.revokeShareLinkHandler(mockRequest as Request, mockResponse as Response);
-
-      expect(mockFeedService.revokeShareLink).toHaveBeenCalledWith("user-123", "session-123");
-      expect(mockResponse.json).toHaveBeenCalledWith({ revoked: mockResult });
-    });
-  });
-
   describe("cloneSessionFromFeedHandler", () => {
     it("should clone session from feed", async () => {
       mockRequest.params = { sessionId: "session-123" };
@@ -1032,32 +938,6 @@ describe("Feed Controller", () => {
     });
   });
 
-  describe("createShareLinkHandler error cases", () => {
-    it("should throw 401 when user is not authenticated", async () => {
-      mockRequest.user = undefined;
-      mockRequest.params = { sessionId: "session-1" };
-
-      await expect(
-        feedController.createShareLinkHandler(mockRequest as Request, mockResponse as Response),
-      ).rejects.toThrow("UNAUTHENTICATED");
-
-      expect(mockFeedService.createShareLink).not.toHaveBeenCalled();
-    });
-  });
-
-  describe("revokeShareLinkHandler error cases", () => {
-    it("should throw 401 when user is not authenticated", async () => {
-      mockRequest.user = undefined;
-      mockRequest.params = { sessionId: "session-1" };
-
-      await expect(
-        feedController.revokeShareLinkHandler(mockRequest as Request, mockResponse as Response),
-      ).rejects.toThrow("UNAUTHENTICATED");
-
-      expect(mockFeedService.revokeShareLink).not.toHaveBeenCalled();
-    });
-  });
-
   describe("cloneSessionFromFeedHandler error cases", () => {
     it("should throw 401 when user is not authenticated", async () => {
       mockRequest.user = undefined;
@@ -1071,19 +951,6 @@ describe("Feed Controller", () => {
       ).rejects.toThrow("UNAUTHENTICATED");
 
       expect(mockFeedService.cloneSessionFromFeed).not.toHaveBeenCalled();
-    });
-  });
-
-  describe("getSharedSessionHandler error cases", () => {
-    it("should handle service errors", async () => {
-      mockRequest.params = { token: "invalid-token" };
-      mockFeedService.getSharedSession.mockRejectedValue(
-        new HttpError(404, "E.NOT_FOUND", "Share link not found"),
-      );
-
-      await expect(
-        feedController.getSharedSessionHandler(mockRequest as Request, mockResponse as Response),
-      ).rejects.toThrow("Share link not found");
     });
   });
 

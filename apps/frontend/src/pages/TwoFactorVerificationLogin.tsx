@@ -38,6 +38,7 @@ const TwoFactorVerificationLogin: React.FC = () => {
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    // Set submitting state synchronously before async operations
     setIsSubmitting(true);
     setError(null);
 

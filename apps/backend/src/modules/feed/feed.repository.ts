@@ -4,7 +4,6 @@ const FEED_ITEMS_TABLE = "feed_items";
 const SESSIONS_TABLE = "sessions";
 const USERS_TABLE = "users";
 const FOLLOWERS_TABLE = "followers";
-const SHARE_LINKS_TABLE = "share_links";
 const FEED_LIKES_TABLE = "feed_likes";
 const SESSION_BOOKMARKS_TABLE = "session_bookmarks";
 const FEED_COMMENTS_TABLE = "feed_comments";
@@ -190,74 +189,6 @@ export async function updateFeedItem(
       ...patch,
       updated_at: new Date().toISOString(),
     });
-}
-
-export interface ShareLinkRow {
-  id: string;
-  session_id: string | null;
-  feed_item_id: string | null;
-  token: string;
-  view_count: number;
-  max_views: number | null;
-  expires_at: string | null;
-  revoked_at: string | null;
-  created_at: string;
-  created_by: string;
-}
-
-export async function findActiveShareLinkBySession(
-  sessionId: string,
-): Promise<ShareLinkRow | undefined> {
-  return db<ShareLinkRow>(SHARE_LINKS_TABLE)
-    .where({ session_id: sessionId })
-    .whereNull("revoked_at")
-    .orderBy("created_at", "desc")
-    .first();
-}
-
-export async function findShareLinkByToken(token: string): Promise<ShareLinkRow | undefined> {
-  return db<ShareLinkRow>(SHARE_LINKS_TABLE).where({ token }).first();
-}
-
-export interface CreateShareLinkInput {
-  sessionId: string | null;
-  feedItemId: string | null;
-  token: string;
-  createdBy: string;
-  maxViews?: number | null;
-  expiresAt?: Date | null;
-}
-
-export async function insertShareLink({
-  sessionId,
-  feedItemId,
-  token,
-  createdBy,
-  maxViews,
-  expiresAt,
-}: CreateShareLinkInput): Promise<ShareLinkRow> {
-  const [row] = await db(SHARE_LINKS_TABLE)
-    .insert({
-      session_id: sessionId,
-      feed_item_id: feedItemId,
-      token,
-      created_by: createdBy,
-      max_views: maxViews ?? null,
-      expires_at: expiresAt ?? null,
-    })
-    .returning<ShareLinkRow[]>("*");
-  return row;
-}
-
-export async function incrementShareLinkView(linkId: string): Promise<void> {
-  await db(SHARE_LINKS_TABLE).where({ id: linkId }).increment("view_count", 1);
-}
-
-export async function revokeShareLinksForSession(sessionId: string): Promise<number> {
-  return db(SHARE_LINKS_TABLE)
-    .where({ session_id: sessionId })
-    .whereNull("revoked_at")
-    .update({ revoked_at: new Date().toISOString() });
 }
 
 export async function deleteFollower(followerId: string, followingId: string): Promise<number> {
