@@ -1,15 +1,10 @@
-import crypto from "crypto";
-
 import { HttpError } from "../../utils/http.js";
 import { insertAudit } from "../common/audit.util.js";
 import type { FeedScope } from "./feed.repository.js";
 import {
   findFeedItemById,
-  findFeedItemBySessionId,
   findSessionById,
-  insertFeedItem,
   listFeedSessions,
-  updateFeedItem,
   upsertFollower,
   deleteFollower,
   listFollowers,
@@ -35,7 +30,6 @@ import {
   type FeedItemStats,
   type SessionRow,
 } from "./feed.repository.js";
-import { updateSession } from "../sessions/sessions.repository.js";
 import { cloneOne } from "../sessions/sessions.service.js";
 import type { SessionWithExercises } from "../sessions/sessions.types.js";
 import { findUserByUsername } from "../users/users.repository.js";
