@@ -1062,10 +1062,6 @@ export interface SessionInfo {
   isCurrent: boolean;
 }
 
-export interface ListSessionsResponse {
-  sessions: SessionInfo[];
-}
-
 export interface RevokeSessionsRequest {
   sessionId?: string;
   revokeAll?: boolean;
@@ -1074,16 +1070,4 @@ export interface RevokeSessionsRequest {
 
 export interface RevokeSessionsResponse {
   revoked: number;
-}
-
-export async function listAuthSessions(): Promise<ListSessionsResponse> {
-  const res = await apiClient.get<ListSessionsResponse>("/api/v1/auth/sessions");
-  return res.data;
-}
-
-export async function revokeAuthSessions(
-  payload: RevokeSessionsRequest,
-): Promise<RevokeSessionsResponse> {
-  const res = await apiClient.post<RevokeSessionsResponse>("/api/v1/auth/sessions/revoke", payload);
-  return res.data;
 }
