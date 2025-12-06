@@ -280,7 +280,7 @@ const Settings: React.FC = () => {
       setTimeout(() => {
         void (async () => {
           await signOut();
-          navigate("/");
+          void navigate("/");
         })();
       }, 2000);
     } catch (error) {

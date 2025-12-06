@@ -65,7 +65,7 @@ const Logger: React.FC = () => {
   // Load session
   useEffect(() => {
     if (!sessionId) {
-      navigate("/sessions");
+      void navigate("/sessions");
       return;
     }
 
@@ -117,7 +117,7 @@ const Logger: React.FC = () => {
       } catch (error) {
         logger.apiError("Failed to load session", error, `/api/v1/sessions/${sessionId}`, "GET");
         toast.error("Failed to load session");
-        navigate("/sessions");
+        void navigate("/sessions");
       } finally {
         setLoading(false);
       }
@@ -265,7 +265,7 @@ const Logger: React.FC = () => {
       });
 
       toast.success("Session completed successfully!");
-      navigate("/sessions");
+      void navigate("/sessions");
     } catch (error) {
       logger.apiError(
         "Failed to complete session",
@@ -566,12 +566,14 @@ const Logger: React.FC = () => {
         <Card>
           <CardContent>
             <div style={{ display: "flex", gap: "1rem", justifyContent: "space-between" }}>
-              <Button variant="secondary" onClick={() => navigate("/sessions")}>
+              <Button variant="secondary" onClick={() => void navigate("/sessions")}>
                 Save & Exit
               </Button>
               <Button
                 variant="primary"
-                onClick={() => void handleCompleteSession()}
+                onClick={() => {
+                  handleCompleteSession();
+                }}
                 isLoading={isSaving}
                 leftIcon={<Check size={18} />}
                 disabled={completedSetsCount === 0}

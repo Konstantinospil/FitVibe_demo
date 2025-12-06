@@ -39,7 +39,13 @@ export default tseslint.config(
       ecmaVersion: 2023,
       sourceType: "module",
       parserOptions: {
-        projectService: true,
+        // Use projectService for monorepo support - it's more efficient than parsing multiple tsconfigs
+        // Optimize by limiting scope and using caching
+        projectService: {
+          allowDefaultProject: ["*.js", "*.cjs", "*.mjs"],
+          // Limit to specific tsconfig files for better performance
+          defaultProject: "./tsconfig.json",
+        },
         tsconfigRootDir: tsconfigRoot,
       },
       globals: {

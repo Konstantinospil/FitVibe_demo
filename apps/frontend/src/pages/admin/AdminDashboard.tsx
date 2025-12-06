@@ -51,7 +51,7 @@ const AdminDashboard: React.FC = () => {
               {navItems.map((item) => (
                 <button
                   key={item.path}
-                  onClick={() => navigate(item.path)}
+                  onClick={() => void navigate(item.path)}
                   style={{
                     padding: "1.5rem",
                     borderRadius: "12px",

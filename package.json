@@ -10,7 +10,7 @@
   "scripts": {
     "dev": "turbo run dev --parallel",
     "build": "turbo run build",
-    "lint": "turbo run lint",
+    "lint": "turbo run lint --parallel",
     "lint:check": "turbo run lint --concurrency=1 -- --max-warnings=0",
     "test": "turbo run test --",
     "test:backend": "turbo run test --filter=@fitvibe/backend -- --coverage",

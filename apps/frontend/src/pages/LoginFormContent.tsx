@@ -53,7 +53,7 @@ const LoginFormContent: React.FC = () => {
 
       if (response.requires2FA) {
         // Navigate to 2FA verification page
-        navigate("/login/verify-2fa", {
+        void navigate("/login/verify-2fa", {
           state: {
             pendingSessionId: response.pendingSessionId,
             from,
@@ -66,7 +66,7 @@ const LoginFormContent: React.FC = () => {
       // Login successful - sign in and navigate
       if (response.user) {
         signIn(response.user);
-        navigate(from, { replace: true });
+        void navigate(from, { replace: true });
       } else {
         setError(t("auth.login.error") || "Login failed. Please try again.");
       }
@@ -107,7 +107,7 @@ const LoginFormContent: React.FC = () => {
         const errorDetails = axiosError.response?.data?.error?.details;
 
         if (errorCode === "TERMS_VERSION_OUTDATED") {
-          navigate("/terms-reacceptance", { replace: true });
+          void navigate("/terms-reacceptance", { replace: true });
           return;
         }
 

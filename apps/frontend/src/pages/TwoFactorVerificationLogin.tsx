@@ -32,7 +32,7 @@ const TwoFactorVerificationLogin: React.FC = () => {
   // Redirect to login if no pending session
   useEffect(() => {
     if (!pendingSessionId) {
-      navigate("/login", { replace: true });
+      void navigate("/login", { replace: true });
     }
   }, [pendingSessionId, navigate]);
 
@@ -47,7 +47,7 @@ const TwoFactorVerificationLogin: React.FC = () => {
         t("auth.twoFactor.invalidSession") || "Invalid session. Please try logging in again.",
       );
       setIsSubmitting(false);
-      setTimeout(() => navigate("/login", { replace: true }), 2000);
+      setTimeout(() => void navigate("/login", { replace: true }), 2000);
       return;
     }
 
@@ -59,7 +59,7 @@ const TwoFactorVerificationLogin: React.FC = () => {
 
       // Backend has set HttpOnly cookies; just update auth state with user data
       signIn(response.user);
-      navigate(from, { replace: true });
+      void navigate(from, { replace: true });
     } catch (err) {
       // Handle specific error types
       if (err && typeof err === "object" && "response" in err) {
@@ -67,7 +67,7 @@ const TwoFactorVerificationLogin: React.FC = () => {
         const errorCode = axiosError.response?.data?.error?.code;
 
         if (errorCode === "TERMS_VERSION_OUTDATED") {
-          navigate("/terms-reacceptance", { replace: true });
+          void navigate("/terms-reacceptance", { replace: true });
           return;
         }
 
@@ -75,7 +75,7 @@ const TwoFactorVerificationLogin: React.FC = () => {
           setError(t("auth.twoFactor.invalidCode") || "Invalid 2FA code. Please try again.");
         } else if (errorCode === "AUTH_2FA_SESSION_EXPIRED") {
           setError(t("auth.twoFactor.sessionExpired") || "Session expired. Please log in again.");
-          setTimeout(() => navigate("/login", { replace: true }), 2000);
+          setTimeout(() => void navigate("/login", { replace: true }), 2000);
         } else {
           setError(t("auth.twoFactor.error") || "Verification failed. Please try again.");
         }
@@ -93,7 +93,7 @@ const TwoFactorVerificationLogin: React.FC = () => {
   };
 
   const handleBackToLogin = () => {
-    navigate("/login", { replace: true });
+    void navigate("/login", { replace: true });
   };
 
   return (

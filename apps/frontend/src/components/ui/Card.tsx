@@ -1,7 +1,7 @@
 import React from "react";
 
 export interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
-  as?: keyof JSX.IntrinsicElements;
+  as?: keyof React.JSX.IntrinsicElements;
 }
 
 const cardBaseStyle: React.CSSProperties = {

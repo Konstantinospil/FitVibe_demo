@@ -9,7 +9,7 @@ import type { TFunction } from "i18next";
  * @param t - Translation function from i18next
  */
 export function useRequiredFieldValidation(
-  formRef: RefObject<HTMLFormElement>,
+  formRef: RefObject<HTMLFormElement | null>,
   t: TFunction,
 ): void {
   useEffect(() => {

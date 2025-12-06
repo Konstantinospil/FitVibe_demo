@@ -34,7 +34,7 @@ const VerifyEmail: React.FC = () => {
         setStatus("success");
         // Redirect to login after 3 seconds
         setTimeout(() => {
-          navigate("/login");
+          void navigate("/login");
         }, 3000);
       } catch (error: unknown) {
         if (error && typeof error === "object" && "response" in error) {
@@ -131,7 +131,7 @@ const VerifyEmail: React.FC = () => {
               <polyline points="20 6 9 17 4 12" />
             </svg>
           </div>
-          <Button onClick={() => navigate("/login")} className="mt-1">
+          <Button onClick={() => void navigate("/login")} className="mt-1">
             {t("verifyEmail.goToLogin")}
           </Button>
         </div>
@@ -168,7 +168,7 @@ const VerifyEmail: React.FC = () => {
               <p style={{ color: "#22c55e", marginBottom: "1rem" }}>
                 {t("verifyEmail.resendSuccess")}
               </p>
-              <Button onClick={() => navigate("/login")} className="mt-1">
+              <Button onClick={() => void navigate("/login")} className="mt-1">
                 {t("verifyEmail.goToLogin")}
               </Button>
             </div>
@@ -194,7 +194,7 @@ const VerifyEmail: React.FC = () => {
                   try {
                     await resendVerificationEmail({ email: resendEmail.trim() });
                     // Navigate to register page with trimmed email for user to complete registration
-                    navigate("/register", {
+                    void navigate("/register", {
                       state: { email: resendEmail.trim(), resendVerification: true },
                     });
                   } catch (err: unknown) {
@@ -288,7 +288,7 @@ const VerifyEmail: React.FC = () => {
               </Button>
               <Button
                 type="button"
-                onClick={() => navigate("/register")}
+                onClick={() => void navigate("/register")}
                 className="mt-1"
                 style={{
                   width: "100%",
@@ -329,7 +329,7 @@ const VerifyEmail: React.FC = () => {
               <line x1="6" y1="6" x2="18" y2="18" />
             </svg>
           </div>
-          <Button onClick={() => navigate("/register")} className="mt-1">
+          <Button onClick={() => void navigate("/register")} className="mt-1">
             {t("verifyEmail.backToRegister")}
           </Button>
         </div>

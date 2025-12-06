@@ -140,7 +140,7 @@ const Sessions: React.FC = () => {
             <Button
               variant="primary"
               leftIcon={<Plus size={18} />}
-              onClick={() => navigate("/planner")}
+              onClick={() => void navigate("/planner")}
             >
               Create New Session
             </Button>
@@ -168,7 +168,7 @@ const Sessions: React.FC = () => {
                   <Button
                     variant="primary"
                     leftIcon={<Plus size={18} />}
-                    onClick={() => navigate("/planner")}
+                    onClick={() => void navigate("/planner")}
                   >
                     Create Session
                   </Button>
@@ -264,7 +264,7 @@ const Sessions: React.FC = () => {
 
                       <div className="flex flex--gap-05">
                         <button
-                          onClick={() => navigate(`/logger/${session.id}`)}
+                          onClick={() => void navigate(`/logger/${session.id}`)}
                           aria-label="Start session"
                           className="rounded-sm"
                           style={{
@@ -279,7 +279,7 @@ const Sessions: React.FC = () => {
                           <Play size={18} />
                         </button>
                         <button
-                          onClick={() => navigate(`/sessions/${session.id}`)}
+                          onClick={() => void navigate(`/sessions/${session.id}`)}
                           aria-label="View session"
                           className="rounded-sm"
                           style={{
@@ -420,7 +420,7 @@ const Sessions: React.FC = () => {
                         variant="primary"
                         size="sm"
                         leftIcon={<Play size={16} />}
-                        onClick={() => navigate(`/logger/${session.id}`)}
+                        onClick={() => void navigate(`/logger/${session.id}`)}
                       >
                         Continue
                       </Button>

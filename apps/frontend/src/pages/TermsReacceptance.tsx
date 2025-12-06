@@ -50,7 +50,7 @@ const TermsReacceptance: React.FC = () => {
 
   const handleSignOut = async (): Promise<void> => {
     await signOut();
-    navigate("/login", { replace: true });
+    void navigate("/login", { replace: true });
   };
 
   return (

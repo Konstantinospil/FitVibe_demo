@@ -124,9 +124,8 @@ describe("ProtectedRoutes", () => {
   });
 
   it("should load private translations on mount", async () => {
-    const { ensurePrivateTranslationsLoaded } = await import(
-      "../../../apps/frontend/src/i18n/config"
-    );
+    const { ensurePrivateTranslationsLoaded } =
+      await import("../../../apps/frontend/src/i18n/config");
 
     render(
       <MemoryRouter initialEntries={["/"]}>

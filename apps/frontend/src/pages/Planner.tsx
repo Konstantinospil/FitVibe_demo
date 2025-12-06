@@ -196,7 +196,7 @@ const Planner: React.FC = () => {
       await createSession(payload);
 
       // Navigate to sessions list or show success
-      navigate("/sessions");
+      void navigate("/sessions");
     } catch (error: unknown) {
       logger.apiError("Failed to create session", error, "/api/v1/sessions", "POST");
       setSaveError("Failed to save session. Please try again.");
@@ -735,7 +735,11 @@ const Planner: React.FC = () => {
             )}
 
             <div style={{ display: "flex", gap: "1rem", justifyContent: "flex-end" }}>
-              <Button variant="secondary" onClick={() => navigate("/sessions")} disabled={isSaving}>
+              <Button
+                variant="secondary"
+                onClick={() => void navigate("/sessions")}
+                disabled={isSaving}
+              >
                 Cancel
               </Button>
               <Button

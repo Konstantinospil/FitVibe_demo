@@ -44,7 +44,7 @@ const ResetPassword: React.FC = () => {
       setSuccess(true);
       // Redirect to login after 2 seconds
       setTimeout(() => {
-        navigate("/login");
+        void navigate("/login");
       }, 2000);
     } catch (err: unknown) {
       if (err && typeof err === "object" && "response" in err) {

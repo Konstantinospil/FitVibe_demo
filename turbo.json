@@ -10,7 +10,9 @@
     },
     "lint": {
       "outputs": [],
-      "cache": false
+      "cache": true,
+      // Enable parallel execution for faster linting
+      "dependsOn": []
     },
     "test": {
       "outputs": [],

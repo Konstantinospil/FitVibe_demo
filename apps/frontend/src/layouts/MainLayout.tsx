@@ -28,9 +28,9 @@ const MainLayout: React.FC = () => {
   const navigate = useNavigate();
   const { t } = useTranslation();
 
-  const handleSignOut = () => {
-    void signOut();
-    navigate("/login", { replace: true });
+  const handleSignOut = async () => {
+    await signOut();
+    void navigate("/login", { replace: true });
   };
 
   return (
@@ -148,7 +148,10 @@ const MainLayout: React.FC = () => {
                 variant="ghost"
                 size="sm"
                 onClick={() => {
-                  void handleSignOut();
+                  void handleSignOut().catch(() => {
+                    // Sign out failed, navigate anyway
+                    void navigate("/login", { replace: true });
+                  });
                 }}
                 aria-label={t("navigation.signOut")}
                 title={t("navigation.signOut")}
