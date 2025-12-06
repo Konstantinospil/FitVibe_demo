@@ -9,7 +9,10 @@ import {
   renderProgressReportCsv,
 } from "./progress.service.js";
 
-const periodEnum = z.enum(["7", "30", "90"]).transform((v) => parseInt(v, 10));
+const periodEnum = z
+  .enum(["7", "30", "90"])
+  .transform((v) => parseInt(v, 10))
+  .default(30);
 const groupByEnum = z.enum(["day", "week"]);
 
 function requireUserId(req: Request, res: Response): string | null {
@@ -22,7 +25,7 @@ function requireUserId(req: Request, res: Response): string | null {
 }
 
 export async function summaryHandler(req: Request, res: Response): Promise<void> {
-  const parsed = z.object({ period: periodEnum.default("30") }).safeParse(req.query);
+  const parsed = z.object({ period: periodEnum }).safeParse(req.query);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.flatten() });
     return;
@@ -38,7 +41,7 @@ export async function summaryHandler(req: Request, res: Response): Promise<void>
 export async function trendsHandler(req: Request, res: Response): Promise<void> {
   const parsed = z
     .object({
-      period: periodEnum.default("30"),
+      period: periodEnum,
       group_by: groupByEnum.default("day"),
     })
     .safeParse(req.query);
@@ -55,7 +58,11 @@ export async function trendsHandler(req: Request, res: Response): Promise<void> 
 }
 
 export async function exercisesHandler(req: Request, res: Response): Promise<void> {
-  const parsed = z.object({ period: periodEnum.default("90") }).safeParse(req.query);
+  const periodEnum90 = z
+    .enum(["7", "30", "90"])
+    .transform((v) => parseInt(v, 10))
+    .default(90);
+  const parsed = z.object({ period: periodEnum90 }).safeParse(req.query);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.flatten() });
     return;
@@ -80,7 +87,7 @@ export async function plansHandler(req: Request, res: Response): Promise<void> {
 const exportParams = z
   .object({
     format: z.enum(["json", "csv"]).default("json"),
-    period: periodEnum.default("30"),
+    period: periodEnum,
     group_by: groupByEnum.default("week"),
   })
   .strict();

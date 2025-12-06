@@ -30,10 +30,7 @@ const intervalSchema = z
   .nullable()
   .optional();
 
-const extrasSchema = z
-  .record(z.unknown())
-  .refine((value) => !Array.isArray(value), { message: "SESSION_INVALID_PLAN" })
-  .optional();
+const extrasSchema = z.record(z.string(), z.unknown()).optional();
 
 const plannedAttributesSchema = z
   .object({

@@ -1,6 +1,5 @@
 import type { Request, Response } from "express";
 
-import { verifyAccess } from "../../services/tokens.js";
 import { HttpError } from "../../utils/http.js";
 import type { FeedScope } from "./feed.repository.js";
 import {
@@ -31,19 +30,8 @@ import {
 } from "../common/idempotency.helpers.js";
 import { resolveIdempotency, persistIdempotencyResult } from "../common/idempotency.service.js";
 
-function resolveViewerId(req: Request): string | null {
-  const auth = req.headers.authorization;
-  if (!auth?.startsWith("Bearer ")) {
-    return null;
-  }
-  const token = auth.split(" ")[1];
-  try {
-    const payload = verifyAccess(token);
-    return payload.sub ?? null;
-  } catch {
-    return null;
-  }
-}
+// Removed resolveViewerId - all feed endpoints now require authentication per FR-003 (privacy-by-default)
+// Authentication is enforced via requireAuth middleware in routes
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -92,20 +80,22 @@ function parseOffset(input: unknown, fallback: number): number {
 }
 
 export async function getFeedHandler(req: Request, res: Response): Promise<void> {
-  const viewerId = resolveViewerId(req);
+  // Authentication is required per FR-003 (privacy-by-default)
+  const userId = req.user?.sub;
+  if (!userId) {
+    throw new HttpError(401, "E.UNAUTHENTICATED", "UNAUTHENTICATED");
+  }
+
   const requestedScope = getQueryValue(req.query.scope);
   const limit = parseLimit(req.query.limit, 20, 100);
   const offset = parseOffset(req.query.offset, 0);
   let scope: FeedScope = "public";
   if (requestedScope === "me" || requestedScope === "following") {
-    // Only allow "me" or "following" scope if viewerId is present
-    if (viewerId !== null) {
-      scope = requestedScope;
-    }
+    scope = requestedScope;
   }
 
   const result = await getFeed({
-    viewerId,
+    viewerId: userId,
     scope,
     limit,
     offset,
@@ -246,13 +236,17 @@ export async function listBookmarksHandler(req: Request, res: Response): Promise
 }
 
 export async function listCommentsHandler(req: Request, res: Response): Promise<void> {
-  const viewerId = resolveViewerId(req);
+  // Authentication required per FR-003 (privacy-by-default)
+  const viewerId = req.user?.sub;
+  if (!viewerId) {
+    throw new HttpError(401, "E.UNAUTHENTICATED", "UNAUTHENTICATED");
+  }
   const limit = parseLimit(req.query.limit, 50, 200);
   const offset = parseOffset(req.query.offset, 0);
   const comments = await listComments(req.params.feedItemId, {
     limit,
     offset,
-    viewerId: viewerId ?? undefined,
+    viewerId,
   });
   res.json({ comments });
 }
@@ -491,7 +485,11 @@ export async function reportCommentHandler(req: Request, res: Response): Promise
 }
 
 export async function getLeaderboardHandler(req: Request, res: Response): Promise<void> {
-  const viewerId = resolveViewerId(req);
+  // Authentication required per FR-003 (privacy-by-default)
+  const viewerId = req.user?.sub;
+  if (!viewerId) {
+    throw new HttpError(401, "E.UNAUTHENTICATED", "UNAUTHENTICATED");
+  }
   const requestedScope = req.query.scope as string | undefined;
   const scope = requestedScope === "friends" ? "friends" : "global";
   const period = (req.query.period as "week" | "month" | undefined) ?? "week";

@@ -27,10 +27,19 @@ import {
 
 export const feedRouter = Router();
 
-feedRouter.get("/", rateLimit("feed_public", 120, 60), asyncHandler(getFeedHandler));
+// All feed endpoints require authentication per FR-003 (privacy-by-default)
+feedRouter.get(
+  "/",
+  requireAuth,
+  rateLimitByUser("feed_user", 120, 60),
+  rateLimit("feed_public", 120, 60),
+  asyncHandler(getFeedHandler),
+);
 
 feedRouter.get(
   "/leaderboard",
+  requireAuth,
+  rateLimitByUser("feed_leaderboard_user", 60, 60),
   rateLimit("feed_leaderboard", 60, 60),
   asyncHandler(getLeaderboardHandler),
 );
@@ -85,6 +94,8 @@ feedRouter.delete(
 
 feedRouter.get(
   "/item/:feedItemId/comments",
+  requireAuth,
+  rateLimitByUser("feed_comments_list_user", 120, 60),
   rateLimit("feed_comments_list", 120, 60),
   asyncHandler(listCommentsHandler),
 );
@@ -155,12 +166,16 @@ feedRouter.delete(
 
 feedRouter.get(
   "/users/:alias/followers",
+  requireAuth,
+  rateLimitByUser("feed_followers_list_user", 120, 60),
   rateLimit("feed_followers_list", 120, 60),
   asyncHandler(listFollowersHandler),
 );
 
 feedRouter.get(
   "/users/:alias/following",
+  requireAuth,
+  rateLimitByUser("feed_following_list_user", 120, 60),
   rateLimit("feed_following_list", 120, 60),
   asyncHandler(listFollowingHandler),
 );
