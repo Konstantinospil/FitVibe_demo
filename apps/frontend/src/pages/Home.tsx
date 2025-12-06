@@ -13,14 +13,6 @@ import {
 } from "../services/api";
 import { logger } from "../utils/logger";
 
-// Import SVG icons
-import earthStrengthIcon from "../assets/icons/earth-strength.svg";
-import airAgilityIcon from "../assets/icons/air-agility.svg";
-import waterEnduranceIcon from "../assets/icons/water-endurance.svg";
-import fireExplosivityIcon from "../assets/icons/fire-explosivity.svg";
-import shadowIntelligenceIcon from "../assets/icons/shadow-intelligence.svg";
-import aetherRegenerationIcon from "../assets/icons/aether-regeneration.svg";
-
 type VibeKey =
   | "strength"
   | "agility"
@@ -46,50 +38,55 @@ type ExerciseHistoryItem = {
   date: string;
 };
 
-const VIBES: Vibe[] = [
+// Base VIBES configuration without icons (icons loaded dynamically)
+const VIBES_BASE: Omit<Vibe, "icon">[] = [
   {
     key: "strength",
     colorBg: "#FB951D",
     colorText: "#0B0C10",
     colorBorder: "#FB951D",
-    icon: earthStrengthIcon,
   },
   {
     key: "agility",
     colorBg: "#FAE919",
     colorText: "#0B0C10",
     colorBorder: "#FAE919",
-    icon: airAgilityIcon,
   },
   {
     key: "endurance",
     colorBg: "#002322",
     colorText: "#FFFFFF",
     colorBorder: "#5CB2F5",
-    icon: waterEnduranceIcon,
   },
   {
     key: "explosivity",
     colorBg: "#9F2406",
     colorText: "#FFFFFF",
     colorBorder: "#FDC54D",
-    icon: fireExplosivityIcon,
   },
   {
     key: "intelligence",
     colorBg: "#001817",
     colorText: "#FFFFFF",
     colorBorder: "#5CB2F5",
-    icon: shadowIntelligenceIcon,
   },
   {
     key: "regeneration",
     colorBg: "#15523A",
     colorText: "#FFFFFF",
     colorBorder: "#4D7C62",
-    icon: aetherRegenerationIcon,
   },
 ];
+
+// Icon import map for lazy loading
+const ICON_IMPORTS: Record<VibeKey, () => Promise<{ default: string }>> = {
+  strength: () => import("../assets/icons/earth-strength.svg"),
+  agility: () => import("../assets/icons/air-agility.svg"),
+  endurance: () => import("../assets/icons/water-endurance.svg"),
+  explosivity: () => import("../assets/icons/fire-explosivity.svg"),
+  intelligence: () => import("../assets/icons/shadow-intelligence.svg"),
+  regeneration: () => import("../assets/icons/aether-regeneration.svg"),
+};
 
 // Map vibe names to type_code used by backend
 const VIBE_TO_TYPE_CODE: Record<VibeKey, string> = {
@@ -118,7 +115,25 @@ const Home: React.FC = () => {
   const [exercises, setExercises] = useState<Exercise[]>([]);
   const [selectedExerciseId, setSelectedExerciseId] = useState<string>("");
   const [error, setError] = useState<string | null>(null);
+  const [vibes, setVibes] = useState<Vibe[]>([]);
   const queryClient = useQueryClient();
+
+  // Lazy load icons after component mount to reduce initial bundle size
+  useEffect(() => {
+    const loadIcons = async () => {
+      const loadedVibes: Vibe[] = await Promise.all(
+        VIBES_BASE.map(async (vibeBase) => {
+          const iconModule = await ICON_IMPORTS[vibeBase.key]();
+          return {
+            ...vibeBase,
+            icon: iconModule.default,
+          };
+        }),
+      );
+      setVibes(loadedVibes);
+    };
+    void loadIcons();
+  }, []);
 
   // Exercise detail form fields
   const [sets, setSets] = useState<string>("");
@@ -311,7 +326,7 @@ const Home: React.FC = () => {
   // Authentication guard - redirect to login if not authenticated
   useEffect(() => {
     if (!isAuthenticated) {
-      navigate("/login", { replace: true, state: { from: { pathname: "/" } } });
+      void navigate("/login", { replace: true, state: { from: { pathname: "/" } } });
     }
   }, [isAuthenticated, navigate]);
 
@@ -413,73 +428,78 @@ const Home: React.FC = () => {
 
           {/* Vibe Buttons Grid */}
           <div className="grid p-xl flex--gap-xl" style={{ gridTemplateColumns: "repeat(3, 1fr)" }}>
-            {VIBES.map((vibe) => (
-              <div key={vibe.key} className="flex flex--column flex--align-center flex--gap-md">
-                <button
-                  type="button"
-                  onClick={() => handleVibeClick(vibe.key)}
-                  onMouseEnter={() => setHoveredVibe(vibe.key)}
-                  onMouseLeave={() => setHoveredVibe(null)}
-                  style={{
-                    width: "140px",
-                    height: "140px",
-                    borderRadius: "50%",
-                    border: `4px solid ${vibe.colorBorder}`,
-                    background: vibe.colorBg,
-                    cursor: "pointer",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    transition: "all 0.3s ease",
-                    transform: hoveredVibe === vibe.key ? "scale(1.1)" : "scale(1)",
-                    boxShadow:
-                      hoveredVibe === vibe.key
-                        ? `0 0 30px ${vibe.colorBorder}88`
-                        : `0 0 15px ${vibe.colorBorder}44`,
-                    padding: "0",
-                    color: vibe.colorText,
-                  }}
-                  aria-label={t(`vibes.${vibe.key}.name`)}
-                >
-                  <img
-                    src={vibe.icon}
-                    alt=""
-                    fetchPriority="high"
-                    loading="eager"
-                    width="64"
-                    height="64"
+            {vibes.length > 0 ? (
+              vibes.map((vibe) => (
+                <div key={vibe.key} className="flex flex--column flex--align-center flex--gap-md">
+                  <button
+                    type="button"
+                    onClick={() => handleVibeClick(vibe.key)}
+                    onMouseEnter={() => setHoveredVibe(vibe.key)}
+                    onMouseLeave={() => setHoveredVibe(null)}
                     style={{
-                      width: "64px",
-                      height: "64px",
-                      filter:
-                        vibe.colorText === "#FFFFFF" ? "brightness(0) invert(1)" : "brightness(0)",
+                      width: "140px",
+                      height: "140px",
+                      borderRadius: "50%",
+                      border: `4px solid ${vibe.colorBorder}`,
+                      background: vibe.colorBg,
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      transition: "all 0.3s ease",
+                      transform: hoveredVibe === vibe.key ? "scale(1.1)" : "scale(1)",
+                      boxShadow:
+                        hoveredVibe === vibe.key
+                          ? `0 0 30px ${vibe.colorBorder}88`
+                          : `0 0 15px ${vibe.colorBorder}44`,
+                      padding: "0",
+                      color: vibe.colorText,
                     }}
-                  />
-                </button>
+                    aria-label={t(`vibes.${vibe.key}.name`)}
+                  >
+                    <img
+                      src={vibe.icon}
+                      alt=""
+                      loading="lazy"
+                      width="64"
+                      height="64"
+                      style={{
+                        width: "64px",
+                        height: "64px",
+                        filter:
+                          vibe.colorText === "#FFFFFF"
+                            ? "brightness(0) invert(1)"
+                            : "brightness(0)",
+                      }}
+                    />
+                  </button>
 
-                {/* Hover Info */}
-                <div
-                  className="text-center"
-                  style={{
-                    opacity: hoveredVibe === vibe.key ? 1 : 0.6,
-                    transition: "opacity 0.3s ease",
-                    minHeight: "80px",
-                  }}
-                >
-                  <div className="text-lg font-weight-600 mb-025" style={{ color: vibe.colorBg }}>
-                    {t(`vibes.${vibe.key}.name`)}
-                  </div>
-                  <div className="text-xs text-secondary mb-05" style={{ fontStyle: "italic" }}>
-                    {t(`vibes.${vibe.key}.element`)}
-                  </div>
-                  {hoveredVibe === vibe.key && (
-                    <div className="text-sm text-muted" style={{ lineHeight: "1.4" }}>
-                      {t(`vibes.${vibe.key}.activities`)}
+                  {/* Hover Info */}
+                  <div
+                    className="text-center"
+                    style={{
+                      opacity: hoveredVibe === vibe.key ? 1 : 0.6,
+                      transition: "opacity 0.3s ease",
+                      minHeight: "80px",
+                    }}
+                  >
+                    <div className="text-lg font-weight-600 mb-025" style={{ color: vibe.colorBg }}>
+                      {t(`vibes.${vibe.key}.name`)}
                     </div>
-                  )}
+                    <div className="text-xs text-secondary mb-05" style={{ fontStyle: "italic" }}>
+                      {t(`vibes.${vibe.key}.element`)}
+                    </div>
+                    {hoveredVibe === vibe.key && (
+                      <div className="text-sm text-muted" style={{ lineHeight: "1.4" }}>
+                        {t(`vibes.${vibe.key}.activities`)}
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))
+            ) : (
+              <div className="text-center text-muted">Loading vibes...</div>
+            )}
           </div>
         </div>
 
@@ -568,7 +588,7 @@ const Home: React.FC = () => {
               </div>
             ) : (
               exerciseHistory.map((exercise) => {
-                const vibeColor = VIBES.find((v) => v.key === exercise.vibe)?.colorBg || "#ccc";
+                const vibeColor = vibes.find((v) => v.key === exercise.vibe)?.colorBg || "#ccc";
                 return (
                   <div
                     key={exercise.id}
@@ -640,7 +660,7 @@ const Home: React.FC = () => {
             style={{
               background: "var(--color-surface)",
               borderRadius: "18px",
-              border: `2px solid ${VIBES.find((v) => v.key === selectedVibe)?.colorBorder}`,
+              border: `2px solid ${vibes.find((v) => v.key === selectedVibe)?.colorBorder}`,
               padding: "2rem",
               maxWidth: "700px",
               width: "100%",
@@ -702,10 +722,10 @@ const Home: React.FC = () => {
                     flex: 1,
                     padding: "0.75rem",
                     borderRadius: "12px",
-                    border: `2px solid ${exerciseMode === "select" ? VIBES.find((v) => v.key === selectedVibe)?.colorBorder : "var(--color-border)"}`,
+                    border: `2px solid ${exerciseMode === "select" ? vibes.find((v) => v.key === selectedVibe)?.colorBorder : "var(--color-border)"}`,
                     background:
                       exerciseMode === "select"
-                        ? `${VIBES.find((v) => v.key === selectedVibe)?.colorBg}22`
+                        ? `${vibes.find((v) => v.key === selectedVibe)?.colorBg}22`
                         : "transparent",
                     color: "var(--color-text-primary)",
                     fontSize: "var(--font-size-md)",
@@ -726,10 +746,10 @@ const Home: React.FC = () => {
                     flex: 1,
                     padding: "0.75rem",
                     borderRadius: "12px",
-                    border: `2px solid ${exerciseMode === "create" ? VIBES.find((v) => v.key === selectedVibe)?.colorBorder : "var(--color-border)"}`,
+                    border: `2px solid ${exerciseMode === "create" ? vibes.find((v) => v.key === selectedVibe)?.colorBorder : "var(--color-border)"}`,
                     background:
                       exerciseMode === "create"
-                        ? `${VIBES.find((v) => v.key === selectedVibe)?.colorBg}22`
+                        ? `${vibes.find((v) => v.key === selectedVibe)?.colorBg}22`
                         : "transparent",
                     color: "var(--color-text-primary)",
                     fontSize: "var(--font-size-md)",
@@ -1116,8 +1136,8 @@ const Home: React.FC = () => {
                 style={{
                   padding: "1rem",
                   borderRadius: "12px",
-                  background: `${VIBES.find((v) => v.key === selectedVibe)?.colorBg}22`,
-                  border: `1px solid ${VIBES.find((v) => v.key === selectedVibe)?.colorBorder}`,
+                  background: `${vibes.find((v) => v.key === selectedVibe)?.colorBg}22`,
+                  border: `1px solid ${vibes.find((v) => v.key === selectedVibe)?.colorBorder}`,
                   marginBottom: "1.5rem",
                 }}
               >
@@ -1134,7 +1154,7 @@ const Home: React.FC = () => {
                   style={{
                     fontSize: "var(--font-size-lg)",
                     fontWeight: 600,
-                    color: VIBES.find((v) => v.key === selectedVibe)?.colorBg,
+                    color: vibes.find((v) => v.key === selectedVibe)?.colorBg,
                   }}
                 >
                   {t(`vibes.${selectedVibe}.name`)} ({t(`vibes.${selectedVibe}.element`)})
@@ -1177,11 +1197,11 @@ const Home: React.FC = () => {
                     border: "none",
                     background:
                       isFormValid && !isSubmitting
-                        ? VIBES.find((v) => v.key === selectedVibe)?.colorBg
+                        ? vibes.find((v) => v.key === selectedVibe)?.colorBg
                         : "var(--color-border)",
                     color:
                       isFormValid && !isSubmitting
-                        ? VIBES.find((v) => v.key === selectedVibe)?.colorText
+                        ? vibes.find((v) => v.key === selectedVibe)?.colorText
                         : "var(--color-text-muted)",
                     fontSize: "var(--font-size-md)",
                     cursor: isFormValid && !isSubmitting ? "pointer" : "not-allowed",

@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "vite",
-    "build": "tsc -p tsconfig.json && vite build",
+    "build": "tsc -p tsconfig.build.json && vite build",
     "preview": "vite preview",
     "lint": "eslint \"src\" \"../../tests/frontend\" --max-warnings=0",
     "lint:check": "turbo run lint -- --max-warnings=0",

@@ -10,6 +10,12 @@ export default defineConfig(() => {
   const root = fileURLToPath(new URL(".", import.meta.url));
   const workspaceRoot = pathResolve(root, "../..");
 
+  // Allow thread count to be configured via environment variable
+  // Default to 4 threads for local development, CI can override with fewer threads
+  const maxThreads = process.env.VITEST_MAX_THREADS
+    ? parseInt(process.env.VITEST_MAX_THREADS, 10)
+    : 4;
+
   return {
     root,
     plugins: isVitest ? [react()] : [preact()],
@@ -78,13 +84,19 @@ export default defineConfig(() => {
       pool: "threads",
       poolOptions: {
         threads: {
-          // Explicitly set thread limits to avoid minThreads/maxThreads conflict
-          // In CI, use fewer threads to avoid resource contention
-          // Ensure minThreads <= maxThreads to prevent RangeError
-          // Reduced threads to prevent memory issues - single thread for stability
+          // Enable parallel test execution for faster test runs
+          // Use multiple threads to balance speed and resource usage
+          // Vitest will auto-detect optimal thread count if not specified
           minThreads: 1,
-          maxThreads: 1, // Use single thread to prevent memory accumulation
+          maxThreads: maxThreads, // Configurable via VITEST_MAX_THREADS env var (default: 4)
+          // Use isolate: true to ensure test isolation and prevent shared state issues
+          isolate: true,
         },
+      },
+      // Enable test-level parallelization within files (use with caution if tests share state)
+      sequence: {
+        shuffle: false,
+        concurrent: true, // Allow tests within the same file to run concurrently if they don't share state
       },
       testTimeout: 10000, // 10 second timeout per test
       hookTimeout: 10000, // 10 second timeout for hooks
@@ -159,18 +171,26 @@ export default defineConfig(() => {
               if (id.includes("recharts")) {
                 return "charts-vendor";
               }
-              // Other vendor code - keep together to reduce initial requests
-              if (
-                id.includes("@tanstack/react-query") ||
-                id.includes("zustand") ||
-                id.includes("i18next") ||
-                id.includes("react-i18next") ||
-                id.includes("axios") ||
-                id.includes("lucide-react")
-              ) {
-                return "vendor";
+              // Split state management libraries
+              if (id.includes("@tanstack/react-query")) {
+                return "query-vendor";
               }
-              // Default vendor chunk
+              if (id.includes("zustand")) {
+                return "state-vendor";
+              }
+              // Split i18n libraries
+              if (id.includes("i18next") || id.includes("react-i18next")) {
+                return "i18n-vendor";
+              }
+              // Split HTTP client
+              if (id.includes("axios")) {
+                return "http-vendor";
+              }
+              // Split icon library
+              if (id.includes("lucide-react")) {
+                return "icons-vendor";
+              }
+              // Default vendor chunk for other dependencies
               return "vendor";
             }
             // Split i18n locale files into separate chunks for lazy loading
@@ -185,6 +205,8 @@ export default defineConfig(() => {
           chunkFileNames: "assets/js/[name]-[hash].js",
           entryFileNames: "assets/js/[name]-[hash].js",
           assetFileNames: "assets/[ext]/[name]-[hash].[ext]",
+          // Compact output to reduce whitespace
+          compact: true,
         },
       },
       // Chunk size warnings threshold (300KB as per PRD)
