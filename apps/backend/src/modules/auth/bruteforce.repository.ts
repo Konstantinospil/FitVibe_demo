@@ -135,13 +135,19 @@ export async function recordFailedAttempt(
       updated_at: now,
     });
 
-    return {
-      ...existing,
-      attempt_count: newAttemptCount,
-      locked_until: lockedUntil,
-      last_attempt_at: now,
-      updated_at: now,
-    };
+    // Fetch the updated record to ensure we return the correct values
+    const updated = await getFailedAttempt(normalizedIdentifier, ipAddress, trx);
+    if (!updated) {
+      // Fallback to constructing the return value if fetch fails
+      return {
+        ...existing,
+        attempt_count: newAttemptCount,
+        locked_until: lockedUntil,
+        last_attempt_at: now,
+        updated_at: now,
+      };
+    }
+    return updated;
   }
 
   // Create new record

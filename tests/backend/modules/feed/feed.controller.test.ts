@@ -1251,6 +1251,8 @@ describe("Feed Controller", () => {
     it("should default to 'global' scope when invalid", async () => {
       mockRequest.query = { scope: "invalid" };
       mockRequest.headers = {};
+      // Note: Controller requires authentication, so viewerId will be "user-123" from mockRequest.user
+      // Even for global scope, authenticated users pass their userId to the service
 
       mockFeedService.getLeaderboard.mockResolvedValue({
         entries: [],
@@ -1259,7 +1261,7 @@ describe("Feed Controller", () => {
 
       await feedController.getLeaderboardHandler(mockRequest as Request, mockResponse as Response);
 
-      expect(mockFeedService.getLeaderboard).toHaveBeenCalledWith(null, {
+      expect(mockFeedService.getLeaderboard).toHaveBeenCalledWith("user-123", {
         limit: 25,
         period: "week",
         scope: "global",

@@ -11,13 +11,8 @@
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon.ico" />
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon.ico" />
     <link rel="apple-touch-icon" sizes="180x180" href="/favicon.ico" />
-    <!-- Preload critical fonts for faster LCP -->
-    <link rel="preload" href="/fonts/Inter/Inter-VariableFont_opsz,wght.ttf" as="font" type="font/ttf" crossorigin />
-    <link rel="preload" href="/fonts/Roboto_Flex/RobotoFlex-VariableFont_GRAD,XOPQ,XTRA,YOPQ,YTAS,YTDE,YTFI,YTLC,YTUC,opsz,slnt,wdth,wght.ttf" as="font" type="font/ttf" crossorigin />
-    <!-- Preload critical CSS -->
-    <link rel="preload" href="/src/styles/global.css" as="style" />
-    <!-- Prefetch likely next resources -->
-    <link rel="prefetch" href="/src/main.tsx" as="script" />
+    <!-- Fonts use font-display: optional in CSS, so no preload needed -->
+    <!-- Critical CSS is inlined in the build, no preload needed -->
     <style>
       /* Minimal inline styles for login fallback form (before CSS loads) - WCAG 2.2 AA compliant */
       .login-fallback {

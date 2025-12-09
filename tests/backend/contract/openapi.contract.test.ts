@@ -23,13 +23,21 @@ type JsonSchemaObject = {
 
 function extractSchemaFromZod(entry: SchemaMapEntry): JsonSchemaObject {
   const result = zodToJsonSchema(entry.schema, entry.name, { target: "openApi3" });
-  const definition =
-    (result as any).definitions?.[entry.name] ??
-    (result as any).components?.schemas?.[entry.name] ??
-    result;
+  // zodToJsonSchema can return the schema directly or wrapped in definitions/components
+  let definition: JsonSchemaObject;
+  if ((result as any).definitions?.[entry.name]) {
+    definition = (result as any).definitions[entry.name];
+  } else if ((result as any).components?.schemas?.[entry.name]) {
+    definition = (result as any).components.schemas[entry.name];
+  } else if ((result as any).$defs?.[entry.name]) {
+    definition = (result as any).$defs[entry.name];
+  } else {
+    // Schema is returned directly
+    definition = result as JsonSchemaObject;
+  }
   return {
-    properties: (definition as JsonSchemaObject).properties ?? {},
-    required: (definition as JsonSchemaObject).required ?? [],
+    properties: definition.properties ?? {},
+    required: definition.required ?? [],
   };
 }
 

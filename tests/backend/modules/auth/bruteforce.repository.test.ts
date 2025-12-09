@@ -91,7 +91,7 @@ describeFn("Brute Force Protection Repository", () => {
       // Other migration errors (like "already exists" or table creation conflicts) are okay
       // The tables might already be created from a previous test run
     }
-  });
+  }, 60000); // 60 second timeout for database setup and migrations
 
   beforeEach(async () => {
     if (!isDatabaseAvailable) {

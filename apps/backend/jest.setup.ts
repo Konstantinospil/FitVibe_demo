@@ -37,7 +37,7 @@ void import("./src/middlewares/rate-limit.js")
 
 // Global teardown to ensure all async operations complete
 afterAll(async () => {
-  // Increase timeout for cleanup operations
+  // Set timeout BEFORE async operations (Jest requires this)
   jest.setTimeout(60000);
 
   // Switch to real timers to allow proper cleanup

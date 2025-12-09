@@ -156,9 +156,13 @@ export default defineConfig(() => {
       rollupOptions: {
         output: {
           // Optimize chunk splitting for better caching and loading
-          manualChunks: (id) => {
+          manualChunks: (id: string) => {
             // Vendor chunks - prioritize critical chunks for faster initial load
             if (id.includes("node_modules")) {
+              // Large charting library - MUST be lazy loaded (only used in Insights)
+              if (id.includes("recharts")) {
+                return "charts-vendor";
+              }
               // Split Preact into smaller chunks to reduce initial bundle size
               // Preact core (small, critical for hydration)
               if (
@@ -181,10 +185,6 @@ export default defineConfig(() => {
               if (id.includes("react-router")) {
                 return "router-vendor";
               }
-              // Large charting library - lazy load when needed
-              if (id.includes("recharts")) {
-                return "charts-vendor";
-              }
               // State management - split for better caching
               if (id.includes("@tanstack/react-query")) {
                 return "query-vendor";
@@ -201,7 +201,10 @@ export default defineConfig(() => {
                 return "http-vendor";
               }
               // Icon library - large, can be code-split
+              // Split lucide-react into smaller chunks per icon set
               if (id.includes("lucide-react")) {
+                // Try to split by icon usage patterns
+                // This will help tree-shaking work better
                 return "icons-vendor";
               }
               // Date utilities
@@ -212,7 +215,14 @@ export default defineConfig(() => {
               return "vendor";
             }
             // Split i18n locale files into separate chunks for lazy loading
-            if (id.includes("/locales/") && !id.includes("/locales/en/")) {
+            // IMPORTANT: Only English should be in initial bundle, others lazy-loaded
+            if (id.includes("/locales/")) {
+              // English translations go into main bundle (needed for login)
+              if (id.includes("/locales/en/")) {
+                // Keep English in main bundle but in a separate chunk for better caching
+                return "locale-en";
+              }
+              // All other locales are lazy-loaded
               const match = id.match(/locales\/([^/]+)\//);
               if (match) {
                 return `locale-${match[1]}`;
@@ -227,15 +237,22 @@ export default defineConfig(() => {
           compact: true,
         },
       },
-      // Chunk size warnings threshold (500KB to allow for reasonable chunk sizes)
-      // We'll optimize chunks to stay under 300KB where possible
-      chunkSizeWarningLimit: 500,
+      // Chunk size warnings threshold - reduce to catch large chunks
+      chunkSizeWarningLimit: 300, // Warn if chunks exceed 300KB
       // Enable tree shaking
-      treeshake: true,
+      treeshake: {
+        moduleSideEffects: (id: string) => {
+          // Allow side effects for CSS and JSON imports
+          if (id.includes(".css") || id.includes(".json")) {
+            return true;
+          }
+          return false;
+        },
+      },
       // Enable compression
       reportCompressedSize: true,
-      // Optimize asset inlining threshold
-      assetsInlineLimit: 4096, // Inline assets smaller than 4KB
+      // Optimize asset inlining threshold - inline more small assets
+      assetsInlineLimit: 8192, // Inline assets smaller than 8KB (was 4KB)
       // Reduce CSS code splitting to minimize initial bundle
       cssCodeSplit: true,
     },

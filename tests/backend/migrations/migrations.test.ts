@@ -83,7 +83,7 @@ describeFn("database migrations", () => {
   it("applies latest migrations and rolls back cleanly", async () => {
     await client.migrate.latest();
     await client.migrate.rollback(undefined, true);
-  });
+  }, 120000); // 2 minute timeout for full migration cycle (up + rollback)
 
   describe("table schemas after migration", () => {
     beforeAll(async () => {

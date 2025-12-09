@@ -125,7 +125,14 @@ app.use((_, res, next) => {
 });
 
 app.use(cors(corsOptions));
-app.options("*", cors(corsOptions));
+// Handle OPTIONS requests for all routes (CORS preflight)
+// CORS middleware handles OPTIONS automatically, but we add explicit handler for compatibility
+app.use((req, res, next) => {
+  if (req.method === "OPTIONS") {
+    return cors(corsOptions)(req, res, next);
+  }
+  next();
+});
 app.use(compression());
 app.use(cookieParser());
 app.use(express.json({ limit: "1mb" }));

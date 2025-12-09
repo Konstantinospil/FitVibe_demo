@@ -274,17 +274,18 @@ describe("TermsReacceptance page", () => {
     expect(mockNavigate).toHaveBeenCalledWith("/login", { replace: true });
   });
 
-  it("should render links to terms and privacy", () => {
+  it("should render links to terms and privacy", async () => {
     render(
       <MemoryRouter>
         <TermsReacceptance />
       </MemoryRouter>,
     );
 
-    const termsLink = screen.getByText("Terms");
-    const privacyLink = screen.getByText("Privacy Policy");
-
-    expect(termsLink.closest("a")).toHaveAttribute("href", "/terms");
-    expect(privacyLink.closest("a")).toHaveAttribute("href", "/privacy");
+    await waitFor(() => {
+      const termsLink = screen.getByText("Terms");
+      const privacyLink = screen.getByText("Privacy Policy");
+      expect(termsLink.closest("a")).toHaveAttribute("href", "/terms");
+      expect(privacyLink.closest("a")).toHaveAttribute("href", "/privacy");
+    });
   });
 });

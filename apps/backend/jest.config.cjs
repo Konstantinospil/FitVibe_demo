@@ -20,6 +20,8 @@ module.exports = {
   coverageProvider: "v8",
   moduleNameMapper: {
     ...baseConfig.moduleNameMapper,
+    // Map uuid to use CommonJS entry point if available
+    "^uuid$": require.resolve("uuid"),
   },
   collectCoverageFrom: [
     "<rootDir>/src/**/*.{ts,tsx}",

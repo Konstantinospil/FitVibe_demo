@@ -35,5 +35,8 @@
 .cursor/data/agent_states/backups/**
 .cursor/data/agent_states/versions/**
 
+# Agent current state files (runtime, frequently changing)
+.cursor/agents/current_state/*.md
+
 
 

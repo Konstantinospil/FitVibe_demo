@@ -1,10 +1,20 @@
 import i18n from "i18next";
 import { initReactI18next } from "react-i18next";
-// Only load English translations eagerly (default language)
-import enAuth from "./locales/en/auth.json";
-import enCommon from "./locales/en/common.json";
-import enTerms from "./locales/en/terms.json";
-import enPrivacy from "./locales/en/privacy.json";
+// Load English translations eagerly (needed for login page)
+// Use dynamic imports to allow Vite to code-split properly
+const loadEnglishTranslations = async () => {
+  const [enCommon, enAuth, enTerms, enPrivacy] = await Promise.all([
+    import("./locales/en/common.json") as Promise<{ default: Record<string, unknown> }>,
+    import("./locales/en/auth.json") as Promise<{ default: Record<string, unknown> }>,
+    import("./locales/en/terms.json") as Promise<{ default: Record<string, unknown> }>,
+    import("./locales/en/privacy.json") as Promise<{ default: Record<string, unknown> }>,
+  ]);
+
+  return mergeTranslations(
+    mergeTranslations(mergeTranslations(enCommon.default, enAuth.default), enTerms.default),
+    enPrivacy.default,
+  );
+};
 
 type SupportedLanguage = "en" | "de" | "fr" | "es" | "el";
 
@@ -13,16 +23,8 @@ const mergeTranslations = <T extends Record<string, unknown>, U extends Record<s
   extra: U,
 ) => ({ ...base, ...extra });
 
-// Only load English (default) translations eagerly
-// Other languages will be loaded on-demand via dynamic imports
-const resources: Partial<Record<SupportedLanguage, { translation: Record<string, unknown> }>> = {
-  en: {
-    translation: mergeTranslations(
-      mergeTranslations(mergeTranslations(enCommon, enAuth), enTerms),
-      enPrivacy,
-    ) as Record<string, unknown>,
-  },
-};
+// Resources will be populated after loading translations
+const resources: Partial<Record<SupportedLanguage, { translation: Record<string, unknown> }>> = {};
 
 const FALLBACK_LANGUAGE: SupportedLanguage = "en";
 
@@ -46,14 +48,15 @@ const detectLanguage = (): SupportedLanguage => {
 
 const initialLanguage = detectLanguage();
 
-// Lazy load non-English translations on-demand
+// Load translations on-demand (including English) to reduce initial bundle size
 const loadLanguage = async (lng: SupportedLanguage): Promise<void> => {
-  if (lng === "en" || resources[lng]) {
+  if (resources[lng]) {
     return; // Already loaded
   }
 
   try {
     // Dynamically import translation files only when needed
+    // This includes English to allow proper code-splitting
     const [common, auth, terms, privacy] = await Promise.all([
       import(`./locales/${lng}/common.json`) as Promise<{ default: Record<string, unknown> }>,
       import(`./locales/${lng}/auth.json`) as Promise<{ default: Record<string, unknown> }>,
@@ -61,37 +64,49 @@ const loadLanguage = async (lng: SupportedLanguage): Promise<void> => {
       import(`./locales/${lng}/privacy.json`) as Promise<{ default: Record<string, unknown> }>,
     ]);
 
-    i18n.addResourceBundle(
-      lng,
-      "translation",
-      mergeTranslations(
-        mergeTranslations(mergeTranslations(common.default, auth.default), terms.default),
-        privacy.default,
-      ),
-      true,
-      true,
+    const translations = mergeTranslations(
+      mergeTranslations(mergeTranslations(common.default, auth.default), terms.default),
+      privacy.default,
     );
+
+    i18n.addResourceBundle(lng, "translation", translations, true, true);
+    resources[lng] = { translation: translations };
   } catch (error) {
     console.warn(`Failed to load language ${lng}:`, error);
     // Fallback to English if language loading fails
+    if (lng !== "en") {
+      // Try to load English as fallback
+      await loadLanguage("en");
+    }
   }
 };
 
+// Initialize i18n with empty resources, then load English immediately
 void i18n.use(initReactI18next).init({
-  resources,
-  lng: initialLanguage === "en" ? "en" : FALLBACK_LANGUAGE, // Only use en if detected, fallback otherwise
+  resources: {},
+  lng: FALLBACK_LANGUAGE,
   fallbackLng: FALLBACK_LANGUAGE,
   interpolation: {
     escapeValue: false,
   },
 });
 
-// Load the detected language if it's not English
-if (initialLanguage !== "en") {
-  void loadLanguage(initialLanguage).then(() => {
-    void i18n.changeLanguage(initialLanguage);
-  });
-}
+// Load English translations immediately (needed for login page)
+// This is done asynchronously but eagerly to allow code-splitting
+void loadEnglishTranslations().then((enTranslations) => {
+  i18n.addResourceBundle("en", "translation", enTranslations, true, true);
+  resources.en = { translation: enTranslations };
+
+  // If initial language is not English, load it too
+  if (initialLanguage !== "en") {
+    void loadLanguage(initialLanguage).then(() => {
+      void i18n.changeLanguage(initialLanguage);
+    });
+  } else {
+    // Ensure English is set as the language
+    void i18n.changeLanguage("en");
+  }
+});
 
 // Export function to load languages on-demand
 export const loadLanguageTranslations = loadLanguage;
