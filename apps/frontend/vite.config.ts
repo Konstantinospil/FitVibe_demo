@@ -144,7 +144,7 @@ export default defineConfig(() => {
     },
     build: {
       // Optimize build for performance
-      minify: "esbuild",
+      minify: "esbuild" as const,
       target: "es2020",
       cssMinify: true,
       sourcemap: false,

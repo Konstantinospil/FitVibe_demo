@@ -7,7 +7,8 @@
       "../../src/*": ["../../apps/frontend/src/*"],
       "../src/*": ["../../apps/frontend/src/*"]
     },
-    "types": ["vite/client", "node", "vitest/globals", "@testing-library/jest-dom"]
+    "skipLibCheck": true,
+    "types": []
   },
   "include": ["**/*.ts", "**/*.tsx"],
   "exclude": ["node_modules", "e2e"]
