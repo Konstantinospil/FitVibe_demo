@@ -25,6 +25,10 @@ env:
   FRONTEND_IMAGE: ghcr.io/${{ github.repository_owner }}/fitvibe-frontend
   NODE_VERSION: "20"
   PNPM_VERSION: "9.14.4"
+  # Disable all caching
+  TURBO_TOKEN: ""
+  TURBO_REMOTE_CACHE: "false"
+  PNPM_STORE_DIR: "/tmp/pnpm-store"
 
 jobs:
   quality:
@@ -49,21 +53,13 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: pnpm
+          cache: "none"
 
       - name: Enable corepack
         run: corepack enable
 
-      - name: Cache pnpm store
-        uses: actions/cache@v4
-        with:
-          path: ~/.pnpm-store
-          key: pnpm-store-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: |
-            pnpm-store-${{ runner.os }}-
-
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile --prefer-offline
+        run: pnpm install --frozen-lockfile --no-offline
 
       - name: Verify dependency integrity
         run: |
@@ -147,28 +143,10 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: pnpm
+          cache: "none"
 
       - name: Enable corepack
         run: corepack enable
-
-      - name: Cache pnpm store
-        uses: actions/cache@v4
-        with:
-          path: ~/.pnpm-store
-          key: pnpm-store-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: |
-            pnpm-store-${{ runner.os }}-
-
-      - name: Cache native dependencies
-        uses: actions/cache@v4
-        with:
-          path: |
-            node_modules/.cache
-            **/node_modules/.cache
-          key: native-deps-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: |
-            native-deps-${{ runner.os }}-
 
       - name: Install native canvas prerequisites
         run: |
@@ -216,7 +194,7 @@ jobs:
           PY
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile --prefer-offline
+        run: pnpm install --frozen-lockfile --no-offline
 
       - name: Backend unit tests & coverage
         timeout-minutes: 15
@@ -265,28 +243,10 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: pnpm
+          cache: "none"
 
       - name: Enable corepack
         run: corepack enable
-
-      - name: Cache pnpm store
-        uses: actions/cache@v4
-        with:
-          path: ~/.pnpm-store
-          key: pnpm-store-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: |
-            pnpm-store-${{ runner.os }}-
-
-      - name: Cache native dependencies
-        uses: actions/cache@v4
-        with:
-          path: |
-            node_modules/.cache
-            **/node_modules/.cache
-          key: native-deps-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: |
-            native-deps-${{ runner.os }}-
 
       - name: Install native canvas prerequisites
         run: |
@@ -301,7 +261,7 @@ jobs:
             postgresql-client
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile --prefer-offline
+        run: pnpm install --frozen-lockfile --no-offline
 
       - name: Frontend unit tests & coverage
         timeout-minutes: 10
@@ -373,18 +333,10 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: pnpm
+          cache: "none"
 
       - name: Enable corepack
         run: corepack enable
-
-      - name: Cache pnpm store
-        uses: actions/cache@v4
-        with:
-          path: ~/.pnpm-store
-          key: pnpm-store-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: |
-            pnpm-store-${{ runner.os }}-
 
       - name: Install native canvas prerequisites
         run: |
@@ -418,7 +370,7 @@ jobs:
           done
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile --prefer-offline
+        run: pnpm install --frozen-lockfile --no-offline
 
       - name: Run database migration tests
         timeout-minutes: 10
@@ -477,21 +429,13 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: pnpm
+          cache: "none"
 
       - name: Enable corepack
         run: corepack enable
 
-      - name: Cache pnpm store
-        uses: actions/cache@v4
-        with:
-          path: ~/.pnpm-store
-          key: pnpm-store-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: |
-            pnpm-store-${{ runner.os }}-
-
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile --prefer-offline
+        run: pnpm install --frozen-lockfile --no-offline
 
       - name: Download backend coverage artifact
         continue-on-error: true
@@ -572,15 +516,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: pnpm
-
-      - name: Cache pnpm store
-        uses: actions/cache@v4
-        with:
-          path: ~/.pnpm-store
-          key: pnpm-store-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: |
-            pnpm-store-${{ runner.os }}-
+          cache: "none"
 
       - name: Install native canvas prerequisites
         run: |
@@ -595,7 +531,7 @@ jobs:
             postgresql-client
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile --prefer-offline
+        run: pnpm install --frozen-lockfile --no-offline
 
       - name: Build frontend
         run: pnpm --filter @fitvibe/frontend run build
@@ -673,21 +609,13 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: pnpm
+          cache: "none"
 
       - name: Enable corepack
         run: corepack enable
 
-      - name: Cache pnpm store
-        uses: actions/cache@v4
-        with:
-          path: ~/.pnpm-store
-          key: pnpm-store-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: |
-            pnpm-store-${{ runner.os }}-
-
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile --prefer-offline
+        run: pnpm install --frozen-lockfile --no-offline
 
       - name: Check i18n coverage
         timeout-minutes: 10
@@ -728,21 +656,13 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: pnpm
+          cache: "none"
 
       - name: Enable corepack
         run: corepack enable
 
-      - name: Cache pnpm store
-        uses: actions/cache@v4
-        with:
-          path: ~/.pnpm-store
-          key: pnpm-store-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: |
-            pnpm-store-${{ runner.os }}-
-
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile --prefer-offline
+        run: pnpm install --frozen-lockfile --no-offline
 
       - name: Generate OpenAPI spec
         timeout-minutes: 5
@@ -832,18 +752,10 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: pnpm
+          cache: "none"
 
       - name: Enable corepack
         run: corepack enable
-
-      - name: Cache pnpm store
-        uses: actions/cache@v4
-        with:
-          path: ~/.pnpm-store
-          key: pnpm-store-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: |
-            pnpm-store-${{ runner.os }}-
 
       - name: Install native canvas prerequisites
         run: |
@@ -892,7 +804,7 @@ jobs:
           PY
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile --prefer-offline
+        run: pnpm install --frozen-lockfile --no-offline
 
       - name: Run database migrations
         timeout-minutes: 10
@@ -945,18 +857,10 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: pnpm
+          cache: "none"
 
       - name: Enable corepack
         run: corepack enable
-
-      - name: Cache pnpm store
-        uses: actions/cache@v4
-        with:
-          path: ~/.pnpm-store
-          key: pnpm-store-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: |
-            pnpm-store-${{ runner.os }}-
 
       - name: Install native canvas prerequisites
         run: |
@@ -971,7 +875,7 @@ jobs:
             postgresql-client
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile --prefer-offline
+        run: pnpm install --frozen-lockfile --no-offline
 
       - name: Generate OpenAPI JSON
         timeout-minutes: 5
@@ -1051,15 +955,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: pnpm
-
-      - name: Cache pnpm store
-        uses: actions/cache@v4
-        with:
-          path: ~/.pnpm-store
-          key: pnpm-store-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: |
-            pnpm-store-${{ runner.os }}-
+          cache: "none"
 
       - name: Install native canvas prerequisites
         run: |
@@ -1108,7 +1004,7 @@ jobs:
           PY
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile --prefer-offline
+        run: pnpm install --frozen-lockfile --no-offline
 
       - name: Run database migrations
         timeout-minutes: 10
@@ -1174,6 +1070,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
+          cache: "none"
 
       - name: Validate metrics exposure
         timeout-minutes: 3
@@ -1206,15 +1103,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: pnpm
-
-      - name: Cache pnpm store
-        uses: actions/cache@v4
-        with:
-          path: ~/.pnpm-store
-          key: pnpm-store-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: |
-            pnpm-store-${{ runner.os }}-
+          cache: "none"
 
       - name: Install native canvas prerequisites
         run: |
@@ -1229,7 +1118,7 @@ jobs:
             postgresql-client
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile --prefer-offline
+        run: pnpm install --frozen-lockfile --no-offline
 
       - name: Dependency audit (fail on high severity)
         timeout-minutes: 5
@@ -1385,15 +1274,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: pnpm
-
-      - name: Cache pnpm store
-        uses: actions/cache@v4
-        with:
-          path: ~/.pnpm-store
-          key: pnpm-store-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: |
-            pnpm-store-${{ runner.os }}-
+          cache: "none"
 
       - name: Install native canvas prerequisites
         run: |
@@ -1408,7 +1289,7 @@ jobs:
             postgresql-client
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile --prefer-offline
+        run: pnpm install --frozen-lockfile --no-offline
 
       - name: Install k6
         uses: grafana/setup-k6-action@v1
@@ -1499,10 +1380,10 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: pnpm
+          cache: "none"
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile --prefer-offline
+        run: pnpm install --frozen-lockfile --no-offline
 
       - name: Download coverage artifact
         continue-on-error: true
@@ -1561,15 +1442,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: pnpm
-
-      - name: Cache pnpm store
-        uses: actions/cache@v4
-        with:
-          path: ~/.pnpm-store
-          key: pnpm-store-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: |
-            pnpm-store-${{ runner.os }}-
+          cache: "none"
 
       - name: Install native canvas prerequisites
         run: |
@@ -1584,7 +1457,7 @@ jobs:
             postgresql-client
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile --prefer-offline
+        run: pnpm install --frozen-lockfile --no-offline
 
       - name: Build frontend bundle
         timeout-minutes: 10
@@ -1635,15 +1508,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: pnpm
-
-      - name: Cache pnpm store
-        uses: actions/cache@v4
-        with:
-          path: ~/.pnpm-store
-          key: pnpm-store-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: |
-            pnpm-store-${{ runner.os }}-
+          cache: "none"
 
       - name: Install native canvas prerequisites
         run: |
@@ -1658,7 +1523,7 @@ jobs:
             postgresql-client
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile --prefer-offline
+        run: pnpm install --frozen-lockfile --no-offline
 
       - name: Build frontend
         timeout-minutes: 10
@@ -1720,15 +1585,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: pnpm
-
-      - name: Cache pnpm store
-        uses: actions/cache@v4
-        with:
-          path: ~/.pnpm-store
-          key: pnpm-store-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: |
-            pnpm-store-${{ runner.os }}-
+          cache: "none"
 
       - name: Install native canvas prerequisites
         run: |
@@ -1743,7 +1600,7 @@ jobs:
             postgresql-client
 
       - name: Install project dependencies
-        run: pnpm install --frozen-lockfile --prefer-offline
+        run: pnpm install --frozen-lockfile --no-offline
 
       - name: Install Playwright browsers
         timeout-minutes: 10
@@ -1841,8 +1698,6 @@ jobs:
           tags: |
             ${{ env.BACKEND_IMAGE }}:sha-${{ github.sha }}
             ${{ env.BACKEND_IMAGE }}:v${{ steps.versions.outputs.backend }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
           provenance: true
           sbom: true
 
@@ -1858,8 +1713,6 @@ jobs:
           tags: |
             ${{ env.FRONTEND_IMAGE }}:sha-${{ github.sha }}
             ${{ env.FRONTEND_IMAGE }}:v${{ steps.versions.outputs.frontend }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
           provenance: true
           sbom: true
 
