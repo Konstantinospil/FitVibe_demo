@@ -69,30 +69,16 @@ describe("Feed Controller", () => {
 
   describe("getFeedHandler", () => {
     it("should get public feed without authentication", async () => {
-      mockRequest.headers = {};
+      mockRequest.user = undefined; // No authentication
 
-      const mockFeedItems = [
-        { id: "item-1", type: "session", visibility: "public" },
-        { id: "item-2", type: "session", visibility: "public" },
-      ];
+      await expect(
+        feedController.getFeedHandler(mockRequest as Request, mockResponse as Response),
+      ).rejects.toThrow(HttpError);
+      await expect(
+        feedController.getFeedHandler(mockRequest as Request, mockResponse as Response),
+      ).rejects.toThrow("UNAUTHENTICATED");
 
-      mockFeedService.getFeed.mockResolvedValue({
-        items: mockFeedItems,
-        hasMore: false,
-      } as never);
-
-      await feedController.getFeedHandler(mockRequest as Request, mockResponse as Response);
-
-      expect(mockFeedService.getFeed).toHaveBeenCalledWith({
-        viewerId: null,
-        scope: "public",
-        limit: 20,
-        offset: 0,
-      });
-      expect(mockResponse.json).toHaveBeenCalledWith({
-        items: mockFeedItems,
-        hasMore: false,
-      });
+      expect(mockFeedService.getFeed).not.toHaveBeenCalled();
     });
 
     it("should get authenticated user feed", async () => {
@@ -127,7 +113,7 @@ describe("Feed Controller", () => {
       await feedController.getFeedHandler(mockRequest as Request, mockResponse as Response);
 
       expect(mockFeedService.getFeed).toHaveBeenCalledWith({
-        viewerId: null,
+        viewerId: "user-123",
         scope: "public",
         limit: 50,
         offset: 20,
@@ -248,7 +234,7 @@ describe("Feed Controller", () => {
       expect(mockFeedService.listComments).toHaveBeenCalledWith("item-123", {
         limit: 50,
         offset: 0,
-        viewerId: undefined,
+        viewerId: "user-123",
       });
       expect(mockResponse.json).toHaveBeenCalledWith({ comments: mockComments });
     });
@@ -386,7 +372,7 @@ describe("Feed Controller", () => {
 
       await feedController.getLeaderboardHandler(mockRequest as Request, mockResponse as Response);
 
-      expect(mockFeedService.getLeaderboard).toHaveBeenCalledWith(null, {
+      expect(mockFeedService.getLeaderboard).toHaveBeenCalledWith("user-123", {
         limit: 25,
         period: "week",
         scope: "global",
@@ -523,8 +509,8 @@ describe("Feed Controller", () => {
       await feedController.getFeedHandler(mockRequest as Request, mockResponse as Response);
 
       expect(mockFeedService.getFeed).toHaveBeenCalledWith({
-        viewerId: null,
-        scope: "public",
+        viewerId: "user-123",
+        scope: "me",
         limit: 20,
         offset: 0,
       });
@@ -539,8 +525,8 @@ describe("Feed Controller", () => {
       await feedController.getFeedHandler(mockRequest as Request, mockResponse as Response);
 
       expect(mockFeedService.getFeed).toHaveBeenCalledWith({
-        viewerId: null,
-        scope: "public",
+        viewerId: "user-123",
+        scope: "me",
         limit: 20,
         offset: 0,
       });
@@ -555,8 +541,8 @@ describe("Feed Controller", () => {
       await feedController.getFeedHandler(mockRequest as Request, mockResponse as Response);
 
       expect(mockFeedService.getFeed).toHaveBeenCalledWith({
-        viewerId: null,
-        scope: "public",
+        viewerId: "user-123",
+        scope: "me",
         limit: 20,
         offset: 0,
       });
@@ -588,7 +574,7 @@ describe("Feed Controller", () => {
       await feedController.getFeedHandler(mockRequest as Request, mockResponse as Response);
 
       expect(mockFeedService.getFeed).toHaveBeenCalledWith({
-        viewerId: null,
+        viewerId: "user-123",
         scope: "public",
         limit: 20,
         offset: 0,
@@ -604,7 +590,7 @@ describe("Feed Controller", () => {
       await feedController.getFeedHandler(mockRequest as Request, mockResponse as Response);
 
       expect(mockFeedService.getFeed).toHaveBeenCalledWith({
-        viewerId: null,
+        viewerId: "user-123",
         scope: "public",
         limit: 50,
         offset: 10,
@@ -620,7 +606,7 @@ describe("Feed Controller", () => {
       await feedController.getFeedHandler(mockRequest as Request, mockResponse as Response);
 
       expect(mockFeedService.getFeed).toHaveBeenCalledWith({
-        viewerId: null,
+        viewerId: "user-123",
         scope: "public",
         limit: 20, // default
         offset: 0,
@@ -636,7 +622,7 @@ describe("Feed Controller", () => {
       await feedController.getFeedHandler(mockRequest as Request, mockResponse as Response);
 
       expect(mockFeedService.getFeed).toHaveBeenCalledWith({
-        viewerId: null,
+        viewerId: "user-123",
         scope: "public",
         limit: 20,
         offset: 0, // default for negative
@@ -1179,8 +1165,7 @@ describe("Feed Controller", () => {
   describe("listCommentsHandler edge cases", () => {
     it("should handle authenticated viewer", async () => {
       mockRequest.params = { feedItemId: "item-1" };
-      mockRequest.headers = { authorization: "Bearer token" };
-      mockTokensService.verifyAccess.mockReturnValue({ sub: "viewer-123" } as never);
+      mockRequest.user = { sub: "viewer-123", role: "user", sid: "session-123" };
 
       mockFeedService.listComments.mockResolvedValue([] as never);
 
@@ -1205,7 +1190,7 @@ describe("Feed Controller", () => {
       expect(mockFeedService.listComments).toHaveBeenCalledWith("item-1", {
         limit: 200,
         offset: 0,
-        viewerId: undefined,
+        viewerId: "user-123",
       });
     });
   });
@@ -1222,7 +1207,7 @@ describe("Feed Controller", () => {
 
       await feedController.getLeaderboardHandler(mockRequest as Request, mockResponse as Response);
 
-      expect(mockFeedService.getLeaderboard).toHaveBeenCalledWith(null, {
+      expect(mockFeedService.getLeaderboard).toHaveBeenCalledWith("user-123", {
         limit: 25,
         period: "week",
         scope: "global",

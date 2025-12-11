@@ -55,8 +55,9 @@ describe("Integration: Auth → Session Flow", () => {
 
     // Get user ID from database since registration response doesn't include user object
     // primary_email is a computed field from user_contacts, so we need to join or use findUserByEmail
-    const { findUserByEmail } =
-      await import("../../../apps/backend/src/modules/auth/auth.repository.js");
+    const { findUserByEmail } = await import(
+      "../../../apps/backend/src/modules/auth/auth.repository.js"
+    );
     const user = await findUserByEmail("testuser@example.com");
     expect(user).toBeDefined();
     expect(user?.status).toBe("pending_verification");
@@ -167,8 +168,9 @@ describe("Integration: Auth → Session Flow", () => {
     }
 
     // Verify user can be found by email (same query login uses)
-    const { findUserByEmail } =
-      await import("../../../apps/backend/src/modules/auth/auth.repository.js");
+    const { findUserByEmail } = await import(
+      "../../../apps/backend/src/modules/auth/auth.repository.js"
+    );
     let foundUser = await findUserByEmail("existing@example.com");
     let retries = 0;
     while (!foundUser && retries < 10) {

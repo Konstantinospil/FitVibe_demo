@@ -285,8 +285,9 @@ describe("Integration: Feed Sharing → Reactions Flow", () => {
     }
 
     // Verify session can be found using the same query feed service uses
-    const { findSessionById } =
-      await import("../../../apps/backend/src/modules/feed/feed.repository.js");
+    const { findSessionById } = await import(
+      "../../../apps/backend/src/modules/feed/feed.repository.js"
+    );
     let foundSession = await findSessionById(sessionId);
     let retries = 0;
     while (!foundSession && retries < 10) {
@@ -388,8 +389,9 @@ describe("Integration: Feed Sharing → Reactions Flow", () => {
     }
 
     // Verify session can be found using the same query feed service uses
-    const { findSessionById } =
-      await import("../../../apps/backend/src/modules/feed/feed.repository.js");
+    const { findSessionById } = await import(
+      "../../../apps/backend/src/modules/feed/feed.repository.js"
+    );
     let foundSession = await findSessionById(sessionId);
     let retries = 0;
     while (!foundSession && retries < 10) {
@@ -462,8 +464,9 @@ describe("Integration: Feed Sharing → Reactions Flow", () => {
     }
 
     // Verify session can be found using the same query feed service uses
-    const { findSessionById } =
-      await import("../../../apps/backend/src/modules/feed/feed.repository.js");
+    const { findSessionById } = await import(
+      "../../../apps/backend/src/modules/feed/feed.repository.js"
+    );
     let foundSession = await findSessionById(sessionId);
     let retries = 0;
     while (!foundSession && retries < 10) {

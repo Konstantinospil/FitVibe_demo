@@ -1,12 +1,10 @@
 #!/usr/bin/env python3
 """
 Cursor Chat History Analyzer
-Analyzes Cursor chat history to improve .cursor/rules/
+Analyzes Cursor chat history to improve .cursorrules
 
 Usage:
-    python .cursor/scripts/analyze_cursor_chats.py [--chat-dir <path>] [--output <output.md>]
-    # Or from root directory:
-    python -m .cursor.scripts.analyze_cursor_chats [--chat-dir <path>] [--output <output.md>]
+    python scripts/analyze_cursor_chats.py [--chat-dir <path>] [--output <output.md>]
 """
 
 import argparse

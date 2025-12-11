@@ -1,12 +1,10 @@
 #!/usr/bin/env python3
 """
 Cursor Rules Compliance Checker
-Checks if the repository complies with .cursor/rules/ standards
+Checks if the repository complies with .cursorrules standards
 
 Usage:
-    python .cursor/scripts/check_cursor_rules_compliance.py [--output <report.md>]
-    # Or from root directory:
-    python -m .cursor.scripts.check_cursor_rules_compliance [--output <report.md>]
+    python scripts/check_cursor_rules_compliance.py [--output <report.md>]
 """
 
 import argparse
@@ -18,7 +16,7 @@ from collections import defaultdict
 from typing import List, Dict, Any, Tuple
 from datetime import datetime
 
-ROOT_DIR = Path(__file__).parent.parent.parent  # .cursor/scripts -> .cursor -> root
+ROOT_DIR = Path(__file__).parent.parent
 
 class ComplianceChecker:
     def __init__(self, root_dir: Path):
@@ -370,7 +368,7 @@ class ComplianceChecker:
                         )
 
         # Frontend tests should be in tests/ directory
-        frontend_tests = self.root_dir / 'apps/frontend/tests'
+        frontend_tests = self.root_dir / 'tests/frontend'
         if frontend_tests.exists():
             test_files = list(frontend_tests.rglob('*.test.{ts,tsx}'))
             if test_files:
@@ -489,7 +487,7 @@ class ComplianceChecker:
             report += "3. **Run Linting**: Execute `pnpm lint` to catch formatting issues\n"
             report += "4. **Type Checking**: Run `pnpm typecheck` to verify TypeScript compliance\n"
         else:
-            report += "[OK] **Excellent!** The repository appears to be fully compliant with .cursor/rules/.\n"
+            report += "[OK] **Excellent!** The repository appears to be fully compliant with .cursorrules.\n"
 
         report += "\n## Next Steps\n\n"
         report += "1. Review the issues above\n"
@@ -511,7 +509,7 @@ def main():
         sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
 
     parser = argparse.ArgumentParser(
-        description="Check repository compliance with .cursor/rules/"
+        description="Check repository compliance with .cursorrules"
     )
     parser.add_argument(
         '--output',
@@ -537,7 +535,7 @@ def main():
     print(f"Compliant Items: {sum(len(items) for items in checker.compliant.values())}")
 
     if checker.stats['issues_found'] == 0:
-        print("\n[OK] Repository is compliant with .cursor/rules/!")
+        print("\n[OK] Repository is compliant with .cursorrules!")
         return 0
     else:
         print(f"\n[WARNING] Found {checker.stats['issues_found']} issue(s) - see report for details")
