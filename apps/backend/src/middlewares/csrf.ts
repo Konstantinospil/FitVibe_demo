@@ -28,13 +28,16 @@ function ensureSecret(req: CsrfRequest, res: Response): string {
   const secret = existing || tokens.secretSync();
 
   if (!existing) {
-    // lgtm[js/clear-text-storage-of-sensitive-data] - This is the standard double-submit cookie pattern
-    // for CSRF protection. The secret is stored in an HttpOnly cookie (not accessible to JavaScript)
-    // and is only sent over HTTPS in production. This is NOT clear-text storage of sensitive data.
+    // SECURITY: Double-submit cookie pattern for CSRF protection
+    // The secret is stored in an HttpOnly cookie (not accessible to JavaScript),
+    // sent only over HTTPS in production (secure flag), and uses SameSite to prevent CSRF.
+    // This is the standard OWASP-recommended pattern and is NOT clear-text storage.
+    // codeql[js/clear-text-storage-of-sensitive-data] - HttpOnly + Secure + SameSite cookie is secure
+    // lgtm[js/clear-text-storage-of-sensitive-data] - HttpOnly + Secure + SameSite cookie is secure
     res.cookie(CSRF_COOKIE_NAME, secret, {
-      httpOnly: true,
-      sameSite: "lax",
-      secure: env.isProduction,
+      httpOnly: true, // Prevents JavaScript access (XSS protection)
+      sameSite: "lax", // CSRF protection
+      secure: env.isProduction, // HTTPS-only in production
       path: "/",
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     });

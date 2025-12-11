@@ -1,6 +1,7 @@
 import React, { Suspense, lazy } from "react";
 import { BrowserRouter } from "react-router-dom";
 import * as AuthContext from "../contexts/AuthContext";
+import { ErrorBoundary } from "../components/ErrorBoundary.js";
 import PublicRoutes from "./PublicRoutes";
 const ProtectedRoutes = lazy(() => import("./ProtectedRoutes"));
 
@@ -27,13 +28,15 @@ const RouterContent: React.FC = () => {
 };
 
 const AppRouter: React.FC = () => (
-  <AuthContext.AuthProvider>
-    <BrowserRouter>
-      <Suspense fallback={loadingFallback}>
-        <RouterContent />
-      </Suspense>
-    </BrowserRouter>
-  </AuthContext.AuthProvider>
+  <ErrorBoundary>
+    <AuthContext.AuthProvider>
+      <BrowserRouter>
+        <Suspense fallback={loadingFallback}>
+          <RouterContent />
+        </Suspense>
+      </BrowserRouter>
+    </AuthContext.AuthProvider>
+  </ErrorBoundary>
 );
 
 export default AppRouter;

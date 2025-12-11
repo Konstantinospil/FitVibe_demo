@@ -84,16 +84,16 @@ EMAIL_ENABLED=true
 
 ### Configuration Details
 
-| Variable | Value | Description |
-|----------|-------|-------------|
-| `SMTP_HOST` | `smtp.gmail.com` | Gmail SMTP server address |
-| `SMTP_PORT` | `587` | TLS port (recommended) |
-| `SMTP_SECURE` | `false` | Use STARTTLS (not SSL) |
-| `SMTP_USER` | Your Gmail address | Full email address |
-| `SMTP_PASS` | Your app password | 16-character app password (no spaces) |
-| `SMTP_FROM_NAME` | `FitVibe` | Sender name shown in emails |
-| `SMTP_FROM_EMAIL` | Your Gmail address | Reply-to email address |
-| `EMAIL_ENABLED` | `true` | Enable/disable email sending |
+| Variable          | Value              | Description                           |
+| ----------------- | ------------------ | ------------------------------------- |
+| `SMTP_HOST`       | `smtp.gmail.com`   | Gmail SMTP server address             |
+| `SMTP_PORT`       | `587`              | TLS port (recommended)                |
+| `SMTP_SECURE`     | `false`            | Use STARTTLS (not SSL)                |
+| `SMTP_USER`       | Your Gmail address | Full email address                    |
+| `SMTP_PASS`       | Your app password  | 16-character app password (no spaces) |
+| `SMTP_FROM_NAME`  | `FitVibe`          | Sender name shown in emails           |
+| `SMTP_FROM_EMAIL` | Your Gmail address | Reply-to email address                |
+| `EMAIL_ENABLED`   | `true`             | Enable/disable email sending          |
 
 ### Example Configuration
 
@@ -139,6 +139,7 @@ curl -X POST http://localhost:4000/api/v1/auth/register \
 ```
 
 **Expected Result**:
+
 - ✅ User created successfully
 - ✅ Verification email sent to test@example.com
 - Check email inbox for verification link
@@ -154,6 +155,7 @@ curl -X POST http://localhost:4000/api/v1/auth/password/forgot \
 ```
 
 **Expected Result**:
+
 - ✅ Returns success message
 - ✅ Password reset email sent
 - Check email inbox for reset link
@@ -182,6 +184,7 @@ Or errors:
 **Cause**: App password is incorrect or 2FA is not enabled
 
 **Solution**:
+
 1. Verify 2FA is enabled on your Gmail account
 2. Generate a new app password
 3. Copy the entire 16-character password (remove spaces)
@@ -193,6 +196,7 @@ Or errors:
 **Cause**: SMTP port is blocked by firewall or incorrect host/port
 
 **Solution**:
+
 1. Verify `SMTP_HOST=smtp.gmail.com`
 2. Try alternate port: `SMTP_PORT=465` with `SMTP_SECURE=true`
 3. Check firewall settings allow outbound connections to port 587/465
@@ -204,6 +208,7 @@ Or errors:
 
 **Solution**:
 Add to `.env`:
+
 ```bash
 NODE_TLS_REJECT_UNAUTHORIZED=0  # Only for development!
 ```
@@ -215,6 +220,7 @@ NODE_TLS_REJECT_UNAUTHORIZED=0  # Only for development!
 **Cause**: Gmail's spam filters or missing SPF/DKIM records
 
 **Solution**:
+
 1. **Short-term**: Check spam folder, mark as "Not Spam"
 2. **Long-term**: Use a dedicated email service (SendGrid, Mailgun, AWS SES)
 3. Add SPF record to your domain (if using custom domain)
@@ -223,11 +229,13 @@ NODE_TLS_REJECT_UNAUTHORIZED=0  # Only for development!
 ### Rate Limiting
 
 **Gmail Limits**:
+
 - 500 emails per day (personal Gmail)
 - 2000 emails per day (Google Workspace)
 - 100 recipients per email
 
 **Solution**:
+
 - For production, use transactional email service
 - Implement email queuing for bulk operations
 
@@ -240,6 +248,7 @@ NODE_TLS_REJECT_UNAUTHORIZED=0  # Only for development!
 **Why**: High deliverability, detailed analytics, generous free tier
 
 **Setup**:
+
 ```bash
 SMTP_HOST=smtp.sendgrid.net
 SMTP_PORT=587
@@ -253,6 +262,7 @@ SMTP_FROM_NAME=FitVibe
 **Free Tier**: 100 emails/day forever
 
 **Steps**:
+
 1. Sign up at [sendgrid.com](https://sendgrid.com)
 2. Verify your sender identity
 3. Create API key
@@ -294,6 +304,7 @@ SMTP_PASS=your-mailtrap-password
 ```
 
 **Perfect for**:
+
 - Development
 - Testing email templates
 - CI/CD pipelines
@@ -309,6 +320,7 @@ FitVibe sends these types of emails:
 **Subject**: "Verify your FitVibe account"
 
 **Content**:
+
 - Welcome message
 - Verification link (expires in 15 minutes)
 - Instructions
@@ -318,6 +330,7 @@ FitVibe sends these types of emails:
 **Subject**: "Reset your FitVibe password"
 
 **Content**:
+
 - Reset link (expires in 15 minutes)
 - Security notice
 - Contact support link
@@ -327,6 +340,7 @@ FitVibe sends these types of emails:
 **Subject**: "Your FitVibe password was changed"
 
 **Content**:
+
 - Confirmation of password change
 - Timestamp
 - Security alert if not initiated by user
@@ -336,6 +350,7 @@ FitVibe sends these types of emails:
 **Subject**: "Your FitVibe account will be deleted"
 
 **Content**:
+
 - Notification of upcoming deletion
 - Date of deletion
 - How to cancel deletion
@@ -347,12 +362,14 @@ FitVibe sends these types of emails:
 ### 1. Use Dedicated Email Service
 
 Don't use Gmail for production:
+
 - ❌ Limited sending quota
 - ❌ Can be marked as spam
 - ❌ No detailed analytics
 - ❌ No email queueing
 
 Use instead:
+
 - ✅ SendGrid
 - ✅ Mailgun
 - ✅ AWS SES
@@ -361,18 +378,20 @@ Use instead:
 ### 2. Set Up Email Queue
 
 Implement background job processing:
+
 ```typescript
 // Use Bull or BullMQ for email queue
-await emailQueue.add('send-email', {
+await emailQueue.add("send-email", {
   to: user.email,
-  template: 'verification',
-  data: { token }
+  template: "verification",
+  data: { token },
 });
 ```
 
 ### 3. Monitor Email Delivery
 
 Track:
+
 - Delivery rate
 - Bounce rate
 - Spam complaints
@@ -397,15 +416,16 @@ const sendWithRetry = async (message, retries = 3) => {
 ### 5. Validate Email Addresses
 
 Use email validation library:
+
 ```bash
 pnpm add email-validator
 ```
 
 ```typescript
-import * as EmailValidator from 'email-validator';
+import * as EmailValidator from "email-validator";
 
 if (!EmailValidator.validate(email)) {
-  throw new Error('Invalid email address');
+  throw new Error("Invalid email address");
 }
 ```
 

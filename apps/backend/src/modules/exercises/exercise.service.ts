@@ -91,7 +91,7 @@ export async function getAll(
   return listExercises(userId, query, isAdmin);
 }
 
-export async function getOne(id: string, userId: string, isAdmin = false) {
+export async function getOne(id: string, userId: string, isAdmin = false): Promise<Exercise> {
   const exercise = isAdmin ? await getExerciseRaw(id) : await getExercise(id, userId);
   if (!exercise || (!isAdmin && exercise.owner_id && exercise.owner_id !== userId)) {
     throw new HttpError(404, ERROR_NOT_FOUND, "EXERCISE_NOT_FOUND");
@@ -102,7 +102,11 @@ export async function getOne(id: string, userId: string, isAdmin = false) {
   return exercise;
 }
 
-export async function createOne(userId: string, dto: CreateExerciseDTO, isAdmin = false) {
+export async function createOne(
+  userId: string,
+  dto: CreateExerciseDTO,
+  isAdmin = false,
+): Promise<Exercise> {
   if (!isAdmin) {
     if (dto.owner_id && dto.owner_id !== userId) {
       throw new HttpError(403, ERROR_FORBIDDEN, "EXERCISE_FORBIDDEN");
@@ -221,7 +225,7 @@ export async function updateOne(
   return refreshed;
 }
 
-export async function archiveOne(id: string, userId: string, isAdmin = false) {
+export async function archiveOne(id: string, userId: string, isAdmin = false): Promise<void> {
   const existing = await getExerciseRaw(id);
   if (!existing) {
     throw new HttpError(404, ERROR_NOT_FOUND, "EXERCISE_NOT_FOUND");

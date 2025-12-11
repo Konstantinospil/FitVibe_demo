@@ -89,15 +89,6 @@ const DEFAULT_AGGREGATES: Record<
   },
 };
 
-const cardStyle: React.CSSProperties = {
-  display: "grid",
-  gap: "0.75rem",
-  background: "var(--color-surface-glass)",
-  borderRadius: "18px",
-  padding: "1.6rem",
-  border: "1px solid var(--color-border)",
-};
-
 const selectStyle: React.CSSProperties = {
   padding: "0.5rem 1rem",
   borderRadius: "8px",
@@ -107,17 +98,6 @@ const selectStyle: React.CSSProperties = {
   fontSize: "0.9rem",
   cursor: "pointer",
 };
-
-const toggleButtonStyle = (active: boolean): React.CSSProperties => ({
-  padding: "0.5rem 1rem",
-  borderRadius: "8px",
-  border: `1px solid ${active ? "rgb(52, 211, 153)" : "var(--color-border)"}`,
-  background: active ? "rgba(52, 211, 153, 0.15)" : "rgba(15, 23, 42, 0.5)",
-  color: active ? "rgb(52, 211, 153)" : "var(--color-text-primary)",
-  fontSize: "0.9rem",
-  cursor: "pointer",
-  fontWeight: active ? 600 : 400,
-});
 
 const formatMetricValue = (value: string | number) =>
   typeof value === "number" ? value.toLocaleString() : value;
@@ -228,7 +208,12 @@ const Insights: React.FC = () => {
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
     } catch (error) {
-      logger.apiError("Export failed", error, "/api/v1/progress/export", "GET");
+      logger.apiError(
+        "Export failed",
+        error instanceof Error ? error : new Error(String(error)),
+        "/api/v1/progress/export",
+        "GET",
+      );
       toast.error(t("progress.exportError") || t("progress.exportFailed"));
     } finally {
       setIsExporting(false);
@@ -399,7 +384,7 @@ const Insights: React.FC = () => {
             ))}
           </div>
 
-          <div style={cardStyle}>
+          <div className="card">
             <header
               style={{
                 display: "flex",
@@ -437,7 +422,7 @@ const Insights: React.FC = () => {
             </ul>
           </div>
 
-          <div style={cardStyle}>
+          <div className="card">
             <header
               style={{
                 display: "flex",
@@ -536,14 +521,18 @@ const Insights: React.FC = () => {
             <div style={{ display: "flex", gap: "0.5rem" }}>
               <button
                 type="button"
-                style={toggleButtonStyle(rangeMode === "preset")}
+                className={
+                  rangeMode === "preset" ? "toggle-button toggle-button--active" : "toggle-button"
+                }
                 onClick={() => setRangeMode("preset")}
               >
                 {t("progress.presetRange") || t("progress.presetRange")}
               </button>
               <button
                 type="button"
-                style={toggleButtonStyle(rangeMode === "custom")}
+                className={
+                  rangeMode === "custom" ? "toggle-button toggle-button--active" : "toggle-button"
+                }
                 onClick={() => setRangeMode("custom")}
               >
                 {t("progress.customRange") || t("progress.customRange")}
@@ -607,7 +596,7 @@ const Insights: React.FC = () => {
           </div>
 
           {/* Volume Trend Chart */}
-          <section style={cardStyle}>
+          <section className="card">
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <strong style={{ fontSize: "1.05rem" }}>
                 {t("progress.volumeTrend") || t("progress.volumeTrend")}
@@ -668,7 +657,7 @@ const Insights: React.FC = () => {
           </section>
 
           {/* Sessions Trend Chart */}
-          <section style={cardStyle}>
+          <section className="card">
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <strong style={{ fontSize: "1.05rem" }}>
                 {t("progress.sessionsTrend") || t("progress.sessionsTrend")}
@@ -726,7 +715,7 @@ const Insights: React.FC = () => {
           </section>
 
           {/* Average Intensity Trend Chart */}
-          <section style={cardStyle}>
+          <section className="card">
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <strong style={{ fontSize: "1.05rem" }}>
                 {t("progress.intensityTrend") || t("progress.intensityTrend")}
@@ -784,7 +773,7 @@ const Insights: React.FC = () => {
           </section>
 
           {/* Exercise Breakdown */}
-          <section style={cardStyle}>
+          <section className="card">
             <strong style={{ fontSize: "1.05rem" }}>
               {t("progress.exerciseBreakdown") || t("progress.exerciseBreakdown")}
             </strong>

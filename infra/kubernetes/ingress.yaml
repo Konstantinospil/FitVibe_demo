@@ -36,47 +36,47 @@ metadata:
 spec:
   ingressClassName: nginx
   tls:
-  - hosts:
-    - fitvibe.com
-    - www.fitvibe.com
-    - api.fitvibe.com
-    secretName: fitvibe-tls
+    - hosts:
+        - fitvibe.com
+        - www.fitvibe.com
+        - api.fitvibe.com
+      secretName: fitvibe-tls
   rules:
-  # Main frontend
-  - host: fitvibe.com
-    http:
-      paths:
-      - path: /
-        pathType: Prefix
-        backend:
-          service:
-            name: frontend
-            port:
-              number: 80
+    # Main frontend
+    - host: fitvibe.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: frontend
+                port:
+                  number: 80
 
-  # WWW redirect
-  - host: www.fitvibe.com
-    http:
-      paths:
-      - path: /
-        pathType: Prefix
-        backend:
-          service:
-            name: frontend
-            port:
-              number: 80
+    # WWW redirect
+    - host: www.fitvibe.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: frontend
+                port:
+                  number: 80
 
-  # API backend
-  - host: api.fitvibe.com
-    http:
-      paths:
-      - path: /
-        pathType: Prefix
-        backend:
-          service:
-            name: backend
-            port:
-              number: 4000
+    # API backend
+    - host: api.fitvibe.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: backend
+                port:
+                  number: 4000
 
 ---
 # Cert-Manager ClusterIssuer for Let's Encrypt
@@ -87,10 +87,10 @@ metadata:
 spec:
   acme:
     server: https://acme-v02.api.letsencrypt.org/directory
-    email: admin@fitvibe.com  # REPLACE with actual admin email
+    email: admin@fitvibe.com # REPLACE with actual admin email
     privateKeySecretRef:
       name: letsencrypt-prod
     solvers:
-    - http01:
-        ingress:
-          class: nginx
+      - http01:
+          ingress:
+            class: nginx

@@ -1,4 +1,3 @@
-const STATIC_PUBLIC_ROUTES = new Set<string>(["/login"]);
 const PUBLIC_ROUTES = new Set<string>([
   "/login",
   "/register",
@@ -6,6 +5,9 @@ const PUBLIC_ROUTES = new Set<string>([
   "/reset-password",
   "/login/verify-2fa",
   "/verify",
+  "/terms",
+  "/privacy",
+  "/terms-reacceptance",
 ]);
 const AUTH_STORAGE_KEY = "fitvibe:auth";
 
@@ -32,11 +34,13 @@ const hasSessionFlag = (() => {
   return window.sessionStorage.getItem(AUTH_STORAGE_KEY) === "1";
 })();
 
+// Always load React app for all routes - let React Router handle routing
+// The static login shell in HTML is just a fallback for no-JS scenarios
 if (!hasSessionFlag && !PUBLIC_ROUTES.has(currentPath)) {
+  // Redirect to login if not authenticated and not on a public route
   window.location.replace("/login");
-} else if (STATIC_PUBLIC_ROUTES.has(currentPath) || !hasSessionFlag) {
-  void import("./public/login-shell");
 } else {
+  // Remove static login shell and load React app for all routes
   removeLoginShell();
   void import("./main");
 }

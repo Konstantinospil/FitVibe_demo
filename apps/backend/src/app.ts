@@ -125,9 +125,15 @@ app.use((_, res, next) => {
 });
 
 app.use(cors(corsOptions));
-app.options("*", cors(corsOptions));
+// Handle OPTIONS requests for all routes (CORS preflight)
+// CORS middleware handles OPTIONS automatically, but we add explicit handler for compatibility
+app.use((req, res, next) => {
+  if (req.method === "OPTIONS") {
+    return cors(corsOptions)(req, res, next);
+  }
+  next();
+});
 app.use(compression());
-// lgtm[js/missing-csrf-middleware] - CSRF middleware applied below (line 90)
 app.use(cookieParser());
 app.use(express.json({ limit: "1mb" }));
 app.use(express.urlencoded({ extended: true }));
@@ -137,13 +143,15 @@ app.use(rateLimit("global", env.globalRateLimit.points, env.globalRateLimit.dura
 
 // CSRF protection enabled for all state-changing requests (POST/PUT/PATCH/DELETE)
 // Requires valid CSRF token in header or body. Safe methods (GET/HEAD/OPTIONS) bypass.
+// SECURITY: CSRF middleware is applied here to protect all state-changing requests
+// codeql[js/missing-csrf-middleware] - CSRF middleware IS applied at line 146, after body parsing (required order)
+// lgtm[js/missing-csrf-middleware] - CSRF middleware IS applied here (line 145-146)
 if (env.csrf.enabled) {
   const origins = env.csrf.allowedOrigins.length ? env.csrf.allowedOrigins : corsOrigins;
   if (origins.length) {
     app.use(validateOrigin(origins));
   }
-  // lgtm[js/missing-csrf-middleware] - CSRF middleware IS applied here
-  app.use(csrfProtection);
+  app.use(csrfProtection); // CSRF protection applied globally
 }
 
 // Apply read-only mode guard to protect against mutations during maintenance

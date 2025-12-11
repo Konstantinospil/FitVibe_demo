@@ -5,8 +5,8 @@ global:
   scrape_interval: 15s
   evaluation_interval: 15s
   external_labels:
-    cluster: 'fitvibe-production'
-    environment: 'production'
+    cluster: "fitvibe-production"
+    environment: "production"
 
 # Alertmanager configuration (optional)
 # alerting:
@@ -17,51 +17,51 @@ global:
 
 # Load alert rules
 rule_files:
-  - '/etc/prometheus/alerts.yml'
+  - "/etc/prometheus/alerts.yml"
 
 # Scrape configurations
 scrape_configs:
   # Backend API Metrics
-  - job_name: 'fitvibe-backend'
-    metrics_path: '/metrics'
+  - job_name: "fitvibe-backend"
+    metrics_path: "/metrics"
     static_configs:
-      - targets: ['backend:4000']
+      - targets: ["backend:4000"]
         labels:
-          service: 'backend'
-          component: 'api'
+          service: "backend"
+          component: "api"
     # Only scrape if metrics are enabled
     relabel_configs:
       - source_labels: [__address__]
         target_label: instance
         regex: '([^:]+)(?::\d+)?'
-        replacement: '${1}'
+        replacement: "${1}"
 
   # PostgreSQL Exporter (if installed)
-  - job_name: 'postgres'
+  - job_name: "postgres"
     static_configs:
-      - targets: ['postgres-exporter:9187']
+      - targets: ["postgres-exporter:9187"]
         labels:
-          service: 'database'
-          component: 'postgres'
+          service: "database"
+          component: "postgres"
 
   # Redis Exporter (if installed)
-  - job_name: 'redis'
+  - job_name: "redis"
     static_configs:
-      - targets: ['redis-exporter:9121']
+      - targets: ["redis-exporter:9121"]
         labels:
-          service: 'cache'
-          component: 'redis'
+          service: "cache"
+          component: "redis"
 
   # Node Exporter for system metrics (if installed)
-  - job_name: 'node'
+  - job_name: "node"
     static_configs:
-      - targets: ['node-exporter:9100']
+      - targets: ["node-exporter:9100"]
         labels:
-          component: 'infrastructure'
+          component: "infrastructure"
 
   # Prometheus self-monitoring
-  - job_name: 'prometheus'
+  - job_name: "prometheus"
     static_configs:
-      - targets: ['localhost:9090']
+      - targets: ["localhost:9090"]
         labels:
-          component: 'monitoring'
+          component: "monitoring"

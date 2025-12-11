@@ -109,7 +109,7 @@ const ContentReports: React.FC = () => {
   };
 
   return (
-    <div style={{ display: "grid", gap: "1.5rem" }}>
+    <div className="grid grid--gap-15">
       <Card>
         <CardHeader>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
@@ -123,7 +123,7 @@ const ContentReports: React.FC = () => {
               </CardDescription>
             </div>
 
-            <div style={{ display: "flex", gap: "0.5rem" }}>
+            <div className="flex flex--gap-05">
               {(["all", "pending", "reviewed", "dismissed"] as const).map((status) => (
                 <button
                   key={status}
@@ -166,23 +166,23 @@ const ContentReports: React.FC = () => {
             </div>
           )}
           {loading ? (
-            <div
-              style={{ padding: "2rem", textAlign: "center", color: "var(--color-text-secondary)" }}
-            >
-              Loading reports...
-            </div>
+            <div className="empty-state text-secondary">Loading reports...</div>
           ) : reports.length === 0 ? (
-            <div style={{ padding: "3rem 2rem", textAlign: "center" }}>
-              <AlertTriangle size={48} style={{ margin: "0 auto 1rem", opacity: 0.3 }} />
-              <h3 style={{ fontSize: "1.25rem", marginBottom: "0.5rem" }}>No reports to review</h3>
-              <p style={{ color: "var(--color-text-secondary)" }}>
+            <div className="empty-state">
+              <AlertTriangle
+                size={48}
+                className="icon icon--muted"
+                style={{ margin: "0 auto 1rem" }}
+              />
+              <h3 className="text-125 mb-05">No reports to review</h3>
+              <p className="text-secondary">
                 {filterStatus === "all"
                   ? "There are currently no content reports."
                   : `No reports with status: ${filterStatus}`}
               </p>
             </div>
           ) : (
-            <div style={{ display: "grid", gap: "1rem" }}>
+            <div className="grid grid--gap-md">
               {reports.map((report) => (
                 <div
                   key={report.id}
@@ -222,13 +222,13 @@ const ContentReports: React.FC = () => {
                         >
                           {report.status}
                         </span>
-                        <span style={{ fontSize: "0.9rem", color: "var(--color-text-secondary)" }}>
+                        <span className="text-09 text-secondary">
                           Reported by @{report.reporterUsername}
                         </span>
                       </div>
 
-                      <div style={{ marginBottom: "0.75rem" }}>
-                        <strong style={{ fontSize: "1.05rem" }}>Reason: {report.reason}</strong>
+                      <div className="mb-075">
+                        <strong className="text-105">Reason: {report.reason}</strong>
                         {report.details && (
                           <p
                             style={{
@@ -259,7 +259,7 @@ const ContentReports: React.FC = () => {
                         >
                           Content by @{report.contentAuthor}:
                         </div>
-                        <div style={{ fontSize: "0.95rem", fontStyle: "italic" }}>
+                        <div className="text-095" style={{ fontStyle: "italic" }}>
                           "{report.contentPreview}"
                         </div>
                       </div>

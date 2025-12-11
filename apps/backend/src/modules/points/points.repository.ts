@@ -67,7 +67,7 @@ interface PointsEventRow {
   created_at: Date | string | number | null;
 }
 
-interface UserStaticRow {
+interface ProfileRow {
   user_id: string;
   date_of_birth: string | null;
   gender_code: string | null;
@@ -252,8 +252,8 @@ export async function getUserPointsProfile(
 ): Promise<UserPointsProfile> {
   const exec = executor(trx);
   const [staticRow, metricsRow] = await Promise.all([
-    exec<UserStaticRow>("user_static")
-      .select<UserStaticRow[]>(["date_of_birth", "gender_code"])
+    exec<ProfileRow>("profiles")
+      .select<ProfileRow[]>(["date_of_birth", "gender_code"])
       .where({ user_id: userId })
       .first(),
     exec<UserMetricsRow>("user_metrics")

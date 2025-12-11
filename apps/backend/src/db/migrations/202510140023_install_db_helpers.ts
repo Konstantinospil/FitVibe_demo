@@ -8,16 +8,37 @@ function readSql(relativePath: string): string {
 
 export async function up(knex: Knex): Promise<void> {
   await knex.raw(readSql("../types/exercise_difficulty_enum.sql"));
-  await knex.raw(readSql("../functions/ensure_partitions.sql"));
+
+  // Drop function first to avoid "tuple concurrently updated" errors
+  // This makes the CREATE OR REPLACE more reliable in concurrent scenarios
+  await knex.raw("DROP FUNCTION IF EXISTS public.ensure_monthly_partitions() CASCADE;");
+
+  // Create function with retry logic for concurrent updates
+  let retries = 3;
+  while (retries > 0) {
+    try {
+      await knex.raw(readSql("../functions/ensure_partitions.sql"));
+      break;
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      if (errorMessage.includes("tuple concurrently updated") && retries > 1) {
+        retries--;
+        // Wait a bit before retrying
+        await new Promise((resolve) => setTimeout(resolve, 100));
+        continue;
+      }
+      throw error;
+    }
+  }
+
   await knex.raw(readSql("../functions/refresh_session_summary.sql"));
   // Note: v_session_summary view and trigger are created in 202510140028_create_session_summary_view.ts
   // after the session_summary materialized view is created
 }
 
 export async function down(knex: Knex): Promise<void> {
-  await knex.raw("DROP TRIGGER IF EXISTS trg_session_summary_refresh ON sessions;");
-  await knex.raw("DROP FUNCTION IF EXISTS session_summary_refresh_trigger();");
-  await knex.raw("DROP VIEW IF EXISTS v_session_summary;");
+  // Only drop what this migration created in up()
+  // Note: trigger, trigger function, and view are created in 202510140028_create_session_summary_view.ts
   await knex.raw("DROP FUNCTION IF EXISTS refresh_session_summary(boolean);");
   await knex.raw("DROP FUNCTION IF EXISTS ensure_monthly_partitions();");
   await knex.raw("DROP TYPE IF EXISTS exercise_difficulty_enum;");

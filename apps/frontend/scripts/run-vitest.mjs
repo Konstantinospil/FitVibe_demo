@@ -21,7 +21,7 @@ const vitestPkg = require("vitest/package.json");
 const binEntry =
   typeof vitestPkg.bin === "string"
     ? vitestPkg.bin
-    : vitestPkg.bin?.vitest ?? vitestPkg.bin?.["vitest"];
+    : (vitestPkg.bin?.vitest ?? vitestPkg.bin?.["vitest"]);
 
 if (!binEntry) {
   console.error("[test] Unable to locate the Vitest binary entry point");
@@ -30,10 +30,31 @@ if (!binEntry) {
 
 const vitestBinPath = resolve(dirname(vitestPkgPath), binEntry);
 
+// Set Node.js memory limit to prevent OOM errors
+// Default is ~2GB on 64-bit systems, increase to 6GB for test runs
+// Check if NODE_OPTIONS already contains memory limit
+const existingNodeOptions = process.env.NODE_OPTIONS || "";
+const hasMemoryLimit = existingNodeOptions.includes("--max-old-space-size");
+
+// Build NODE_OPTIONS with memory limit
+const nodeOptions = hasMemoryLimit
+  ? existingNodeOptions
+  : existingNodeOptions
+    ? `${existingNodeOptions} --max-old-space-size=6144`.trim()
+    : "--max-old-space-size=6144";
+
+const env = {
+  ...process.env,
+  NODE_OPTIONS: nodeOptions,
+};
+
+// Also set it directly in the execPath args for better compatibility
+const nodeArgs = ["--max-old-space-size=6144"];
+
 const result = spawnSync(
   process.execPath,
-  [vitestBinPath, "run", "--passWithNoTests", ...passthroughArgs],
-  { stdio: "inherit" },
+  [...nodeArgs, vitestBinPath, "run", "--passWithNoTests", ...passthroughArgs],
+  { stdio: "inherit", env },
 );
 
 if (result.error) {

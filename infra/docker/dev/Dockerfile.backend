@@ -21,8 +21,35 @@ RUN pnpm deploy --filter @fitvibe/backend --prod /app/backend-deploy
 FROM node:20-alpine AS runtime
 WORKDIR /app
 
+# Copy deployed backend
 COPY --from=builder /app/backend-deploy/ ./
-COPY --from=builder /app/apps/backend/node_modules ./apps/backend/node_modules
+
+# Override package.json with backend's version (which has type: commonjs)
+COPY --from=builder /app/apps/backend/package.json ./package.json
+
+# Copy workspace files needed for pnpm to resolve the glob override
+COPY --from=builder /app/pnpm-workspace.yaml ./pnpm-workspace.yaml
+COPY --from=builder /app/pnpm-lock.yaml ./pnpm-lock.yaml
+COPY --from=builder /app/packages/patched-glob ./packages/patched-glob
+
+# Install production dependencies to ensure workspace overrides are resolved
+# This will install minimatch and other dependencies needed by patched-glob
+RUN corepack enable && corepack prepare pnpm@9.0.0 --activate && \
+    # Install minimatch first (required by patched-glob)
+    pnpm add minimatch@^9.0.4 --prod --frozen-lockfile || \
+    npm install minimatch@^9.0.4 --save-prod || true && \
+    # Install all production dependencies
+    pnpm install --prod --frozen-lockfile --offline --no-optional || \
+    pnpm install --prod --frozen-lockfile --no-optional || true && \
+    # Ensure glob resolves to patched-glob by creating symlink if needed
+    if [ ! -L node_modules/glob ] && [ -d packages/patched-glob ]; then \
+      ln -sf ../packages/patched-glob node_modules/glob; \
+    fi && \
+    # Verify minimatch is available (final check)
+    if [ ! -d node_modules/minimatch ]; then \
+      echo "Warning: minimatch not found, installing..." && \
+      npm install minimatch@^9.0.4 --save-prod || true; \
+    fi
 
 RUN addgroup -S nodeapp && adduser -S nodeapp -G nodeapp
 USER nodeapp

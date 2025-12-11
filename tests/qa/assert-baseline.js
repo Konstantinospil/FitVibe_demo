@@ -40,7 +40,15 @@ if (!Array.isArray(baseline.objectives) || baseline.objectives.length === 0) {
 }
 
 const allowedStatuses = new Set(Object.keys(baseline.statusLegend));
-const requiredObjectiveFields = ["id", "objective", "target", "gate", "status", "linkedTasks", "evidence"];
+const requiredObjectiveFields = [
+  "id",
+  "objective",
+  "target",
+  "gate",
+  "status",
+  "linkedTasks",
+  "evidence",
+];
 
 for (const objective of baseline.objectives) {
   for (const field of requiredObjectiveFields) {

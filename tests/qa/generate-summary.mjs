@@ -47,12 +47,7 @@ function extractK6Metric(metric) {
   }
   const values = metric.values ?? metric;
   return (
-    values["p(95)"] ??
-    values["p(99)"] ??
-    values["95"] ??
-    values["99"] ??
-    values["avg"] ??
-    null
+    values["p(95)"] ?? values["p(99)"] ?? values["95"] ?? values["99"] ?? values["avg"] ?? null
   );
 }
 
@@ -188,7 +183,9 @@ const html = `<!doctype html>
         <div class="metric">
           <h3>HTTP p95</h3>
           <p>${
-            summaryData.perf.httpP95 == null ? "–" : `${Number(summaryData.perf.httpP95).toFixed(2)} ms`
+            summaryData.perf.httpP95 == null
+              ? "–"
+              : `${Number(summaryData.perf.httpP95).toFixed(2)} ms`
           }</p>
         </div>
         <div class="metric">
@@ -220,8 +217,8 @@ const html = `<!doctype html>
                 objective.status === "green"
                   ? "status-green"
                   : objective.status === "amber"
-                  ? "status-amber"
-                  : "status-red";
+                    ? "status-amber"
+                    : "status-red";
               return `<tr>
                 <td>${objective.id}</td>
                 <td>${objective.objective}</td>
@@ -244,6 +241,9 @@ const html = `<!doctype html>
 `;
 
 await fs.promises.writeFile(path.join(summaryDir, "index.html"), html, "utf8");
-await fs.promises.writeFile(path.join(summaryDir, "summary.json"), JSON.stringify(summaryData, null, 2));
+await fs.promises.writeFile(
+  path.join(summaryDir, "summary.json"),
+  JSON.stringify(summaryData, null, 2),
+);
 
 console.log(`QA summary generated at ${path.relative(repoRoot, summaryDir)}`);

@@ -11,14 +11,14 @@ LEFT JOIN sessions s ON s.user_id = u.id
 LEFT JOIN progress p ON p.user_id = u.id
 GROUP BY u.id;
 
--- Feed summary view
+-- Feed summary view (UPDATED to use feed_items instead of feed_posts)
 CREATE OR REPLACE VIEW vw_feed_summary AS
 SELECT
-  p.id AS post_id,
-  p.author_id,
-  COUNT(DISTINCT c.id) AS comments,
-  COUNT(DISTINCT l.id) AS likes
-FROM feed_posts p
-LEFT JOIN feed_comments c ON c.post_id = p.id
-LEFT JOIN feed_likes l ON l.post_id = p.id
-GROUP BY p.id;
+  fi.id AS feed_item_id,
+  fi.owner_id,
+  COUNT(DISTINCT fc.id) AS comments,
+  COUNT(DISTINCT fl.user_id) AS likes
+FROM feed_items fi
+LEFT JOIN feed_comments fc ON fc.feed_item_id = fi.id
+LEFT JOIN feed_likes fl ON fl.feed_item_id = fi.id
+GROUP BY fi.id, fi.owner_id;

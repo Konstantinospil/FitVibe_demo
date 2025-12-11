@@ -59,12 +59,7 @@ async function main() {
     }
 
     console.log("Running k6 scenario…");
-    await runCommand("k6", [
-      "run",
-      "--summary-export",
-      summaryPath,
-      "tests/perf/k6-smoke.js",
-    ]);
+    await runCommand("k6", ["run", "--summary-export", summaryPath, "tests/perf/k6-smoke.js"]);
 
     console.log("Validating performance budgets…");
     await runCommand(process.execPath, ["tests/perf/assert-budgets.cjs", summaryPath]);

@@ -1,4 +1,4 @@
-import { Minimatch } from 'minimatch';
+import { Minimatch } from "minimatch";
 /**
  * Return true if the patterns provided contain any magic glob characters,
  * given the options provided.
@@ -11,13 +11,12 @@ import { Minimatch } from 'minimatch';
  * is in the options, brace expansion _is_ treated as a pattern having magic.
  */
 export const hasMagic = (pattern, options = {}) => {
-    if (!Array.isArray(pattern)) {
-        pattern = [pattern];
-    }
-    for (const p of pattern) {
-        if (new Minimatch(p, options).hasMagic())
-            return true;
-    }
-    return false;
+  if (!Array.isArray(pattern)) {
+    pattern = [pattern];
+  }
+  for (const p of pattern) {
+    if (new Minimatch(p, options).hasMagic()) return true;
+  }
+  return false;
 };
 //# sourceMappingURL=has-magic.js.map

@@ -1,20 +1,10 @@
-import crypto from "crypto";
-
 import { HttpError } from "../../utils/http.js";
 import { insertAudit } from "../common/audit.util.js";
 import type { FeedScope } from "./feed.repository.js";
 import {
-  findActiveShareLinkBySession,
   findFeedItemById,
-  findFeedItemBySessionId,
   findSessionById,
-  findShareLinkByToken,
-  insertFeedItem,
-  insertShareLink,
   listFeedSessions,
-  incrementShareLinkView,
-  revokeShareLinksForSession,
-  updateFeedItem,
   upsertFollower,
   deleteFollower,
   listFollowers,
@@ -40,8 +30,8 @@ import {
   type FeedItemStats,
   type SessionRow,
 } from "./feed.repository.js";
-import { updateSession } from "../sessions/sessions.repository.js";
 import { cloneOne } from "../sessions/sessions.service.js";
+import type { SessionWithExercises } from "../sessions/sessions.types.js";
 import { findUserByUsername } from "../users/users.repository.js";
 
 export interface FeedListResult {
@@ -196,173 +186,11 @@ function sanitizeDetails(details?: string | null) {
   return trimmed.slice(0, 500);
 }
 
-export interface ShareLinkOptions {
-  maxViews?: number | null;
-  expiresAt?: Date | null;
-}
-
-export async function createShareLink(
-  userId: string,
-  sessionId: string,
-  options: ShareLinkOptions = {},
-) {
-  const session = await findSessionById(sessionId);
-  if (!session) {
-    throw new HttpError(404, "E.FEED.SESSION_NOT_FOUND", "FEED_SESSION_NOT_FOUND");
-  }
-  if (session.owner_id !== userId) {
-    throw new HttpError(403, "E.FEED.NOT_OWNER", "FEED_NOT_OWNER");
-  }
-  if (session.status !== "completed") {
-    throw new HttpError(400, "E.FEED.INVALID_STATUS", "FEED_INVALID_STATUS");
-  }
-
-  let feedItem = await findFeedItemBySessionId(sessionId);
-  if (!feedItem) {
-    feedItem = await insertFeedItem({
-      ownerId: session.owner_id,
-      sessionId,
-      visibility: session.visibility === "public" ? "public" : "link",
-      publishedAt: session.completed_at ?? new Date(),
-    });
-  }
-
-  const existing = await findActiveShareLinkBySession(sessionId);
-  if (existing) {
-    return existing;
-  }
-
-  const token = crypto.randomBytes(24).toString("base64url");
-  const link = await insertShareLink({
-    sessionId,
-    feedItemId: feedItem.id,
-    token,
-    createdBy: userId,
-    maxViews: options.maxViews ?? null,
-    expiresAt: options.expiresAt ?? null,
-  });
-
-  const targetVisibility = session.visibility === "public" ? "public" : "link";
-  await updateFeedItem(feedItem.id, {
-    visibility: targetVisibility,
-    published_at: session.completed_at ?? new Date().toISOString(),
-  });
-
-  if (session.visibility === "private") {
-    await updateSession(sessionId, userId, { visibility: "link" });
-  }
-
-  await insertAudit({
-    actorUserId: userId,
-    entity: "sessions",
-    action: "share_link.create",
-    entityId: sessionId,
-    metadata: {
-      share_link_id: link.id,
-      max_views: link.max_views,
-      expires_at: link.expires_at,
-    },
-  });
-
-  return link;
-}
-
-function ensureShareLinkIsActive(link: {
-  revoked_at: string | null;
-  expires_at: string | null;
-  max_views: number | null;
-  view_count: number;
-}) {
-  if (link.revoked_at) {
-    throw new HttpError(404, "E.FEED.LINK_REVOKED", "FEED_LINK_REVOKED");
-  }
-  if (link.expires_at && new Date(link.expires_at) < new Date()) {
-    throw new HttpError(404, "E.FEED.LINK_EXPIRED", "FEED_LINK_EXPIRED");
-  }
-  if (link.max_views !== null && link.view_count >= link.max_views) {
-    throw new HttpError(404, "E.FEED.LINK_EXHAUSTED", "FEED_LINK_EXHAUSTED");
-  }
-}
-
-export async function getSharedSession(token: string) {
-  const link = await findShareLinkByToken(token);
-  if (!link) {
-    throw new HttpError(404, "E.FEED.LINK_NOT_FOUND", "FEED_LINK_NOT_FOUND");
-  }
-
-  ensureShareLinkIsActive(link);
-
-  let session = null;
-  let feedItem = null;
-
-  if (link.feed_item_id) {
-    feedItem = await findFeedItemById(link.feed_item_id);
-    if (feedItem?.session_id) {
-      session = await findSessionById(feedItem.session_id);
-    }
-  }
-
-  if (!session && link.session_id) {
-    session = await findSessionById(link.session_id);
-  }
-
-  if (!session || session.status !== "completed") {
-    throw new HttpError(404, "E.FEED.SESSION_NOT_FOUND", "FEED_SESSION_NOT_FOUND");
-  }
-
-  if (!feedItem) {
-    feedItem = await findFeedItemBySessionId(session.id);
-  }
-
-  await incrementShareLinkView(link.id);
-
-  return {
-    link: {
-      ...link,
-      view_count: link.view_count + 1,
-    },
-    feedItem,
-    session,
-  };
-}
-
-export async function revokeShareLink(userId: string, sessionId: string) {
-  const session = await findSessionById(sessionId);
-  if (!session) {
-    throw new HttpError(404, "E.FEED.SESSION_NOT_FOUND", "FEED_SESSION_NOT_FOUND");
-  }
-  if (session.owner_id !== userId) {
-    throw new HttpError(403, "E.FEED.NOT_OWNER", "FEED_NOT_OWNER");
-  }
-
-  const feedItem = await findFeedItemBySessionId(sessionId);
-  const revokedCount = await revokeShareLinksForSession(sessionId);
-
-  if (revokedCount > 0 && session.visibility === "link") {
-    await updateSession(sessionId, userId, { visibility: "private" });
-    if (feedItem) {
-      await updateFeedItem(feedItem.id, { visibility: "private" });
-    }
-  }
-
-  await insertAudit({
-    actorUserId: userId,
-    entity: "sessions",
-    action: "share_link.revoke",
-    entityId: sessionId,
-    metadata: {
-      revoked_count: revokedCount,
-    },
-  });
-
-  return revokedCount;
-}
-
 export async function cloneSessionFromFeed(
   userId: string,
   sourceSessionId: string,
   payload: Record<string, unknown> = {},
-) {
+): Promise<SessionWithExercises> {
   return cloneOne(userId, sourceSessionId, {
     ...payload,
   });
@@ -402,7 +230,14 @@ export async function unfollowUserByAlias(
   return { unfollowedId: targetUser.id };
 }
 
-export async function listUserFollowers(alias: string) {
+export async function listUserFollowers(alias: string): Promise<
+  Array<{
+    id: string;
+    username: string;
+    displayName: string;
+    followedAt: string;
+  }>
+> {
   const targetUser = await findUserByUsername(alias);
   if (!targetUser) {
     throw new HttpError(404, "E.FEED.USER_NOT_FOUND", "FEED_USER_NOT_FOUND");
@@ -416,7 +251,14 @@ export async function listUserFollowers(alias: string) {
   }));
 }
 
-export async function listUserFollowing(alias: string) {
+export async function listUserFollowing(alias: string): Promise<
+  Array<{
+    id: string;
+    username: string;
+    displayName: string;
+    followedAt: string;
+  }>
+> {
   const targetUser = await findUserByUsername(alias);
   if (!targetUser) {
     throw new HttpError(404, "E.FEED.USER_NOT_FOUND", "FEED_USER_NOT_FOUND");
@@ -522,7 +364,21 @@ export async function removeBookmark(
   return { bookmarked: false };
 }
 
-export async function listBookmarks(userId: string, options: { limit?: number; offset?: number }) {
+export async function listBookmarks(
+  userId: string,
+  options: { limit?: number; offset?: number },
+): Promise<
+  Array<{
+    sessionId: string;
+    feedItemId: string | null;
+    title: string | null;
+    completedAt: string | null;
+    visibility: string;
+    owner: { id: string; username: string; displayName: string };
+    points: number | null;
+    bookmarkedAt: string;
+  }>
+> {
   const rows = await listBookmarkedSessions(userId, options.limit, options.offset);
   return rows.map((row) => ({
     sessionId: row.session_id,
@@ -543,7 +399,16 @@ export async function listBookmarks(userId: string, options: { limit?: number; o
 export async function listComments(
   feedItemId: string,
   options: { limit?: number; offset?: number; viewerId?: string } = {},
-) {
+): Promise<
+  Array<{
+    id: string;
+    feedItemId: string;
+    author: { id: string; username: string; displayName: string };
+    body: string;
+    createdAt: string;
+    editedAt: string | null;
+  }>
+> {
   const feedItem = await loadFeedItemOrThrow(feedItemId);
   if (options.viewerId) {
     await ensureFeedInteractionAllowed(options.viewerId, feedItem.owner_id, feedItem.visibility);
@@ -567,7 +432,18 @@ export async function listComments(
   }));
 }
 
-export async function createComment(userId: string, feedItemId: string, body: string) {
+export async function createComment(
+  userId: string,
+  feedItemId: string,
+  body: string,
+): Promise<{
+  id: string;
+  feedItemId: string;
+  author: { id: string; username: string; displayName: string };
+  body: string;
+  createdAt: string;
+  editedAt: string | null;
+}> {
   const feedItem = await loadFeedItemOrThrow(feedItemId);
   await ensureFeedInteractionAllowed(userId, feedItem.owner_id, feedItem.visibility);
 
@@ -621,7 +497,10 @@ export async function createComment(userId: string, feedItemId: string, body: st
   };
 }
 
-export async function deleteComment(userId: string, commentId: string) {
+export async function deleteComment(
+  userId: string,
+  commentId: string,
+): Promise<{ deleted: boolean }> {
   const comment = await findCommentById(commentId);
   if (!comment || comment.deleted_at) {
     return { deleted: false };
@@ -646,7 +525,10 @@ export async function deleteComment(userId: string, commentId: string) {
   return { deleted: true };
 }
 
-export async function blockUserByAlias(blockerId: string, alias: string) {
+export async function blockUserByAlias(
+  blockerId: string,
+  alias: string,
+): Promise<{ blockedId: string }> {
   const target = await findUserByUsername(alias);
   if (!target) {
     throw new HttpError(404, "E.FEED.USER_NOT_FOUND", "FEED_USER_NOT_FOUND");
@@ -667,7 +549,10 @@ export async function blockUserByAlias(blockerId: string, alias: string) {
   return { blockedId: target.id };
 }
 
-export async function unblockUserByAlias(blockerId: string, alias: string) {
+export async function unblockUserByAlias(
+  blockerId: string,
+  alias: string,
+): Promise<{ unblockedId: string }> {
   const target = await findUserByUsername(alias);
   if (!target) {
     throw new HttpError(404, "E.FEED.USER_NOT_FOUND", "FEED_USER_NOT_FOUND");
@@ -693,7 +578,7 @@ export async function reportFeedItem(
   feedItemId: string,
   reason: string,
   details?: string,
-) {
+): Promise<{ reported: boolean }> {
   const feedItem = await loadFeedItemOrThrow(feedItemId);
   await ensureFeedInteractionAllowed(reporterId, feedItem.owner_id, feedItem.visibility);
 
@@ -725,7 +610,7 @@ export async function reportComment(
   commentId: string,
   reason: string,
   details?: string,
-) {
+): Promise<{ reported: boolean }> {
   const comment = await findCommentById(commentId);
   if (!comment || comment.deleted_at) {
     throw new HttpError(404, "E.FEED.COMMENT_NOT_FOUND", "FEED_COMMENT_NOT_FOUND");
@@ -761,7 +646,14 @@ export async function reportComment(
 export async function getLeaderboard(
   viewerId: string | null,
   options: { scope?: "global" | "friends"; period?: "week" | "month"; limit?: number } = {},
-) {
+): Promise<
+  Array<{
+    rank: number;
+    user: { id: string; username: string; displayName: string };
+    points: number;
+    badges: number;
+  }>
+> {
   const scope = options.scope ?? "global";
   const period = options.period ?? "week";
 

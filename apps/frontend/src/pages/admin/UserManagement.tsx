@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Users, Search, Ban, UserX, Trash2, Shield } from "lucide-react";
 import {
   Card,
@@ -21,6 +22,7 @@ import { useToast } from "../../contexts/ToastContext";
 import { ConfirmDialog } from "../../components/ConfirmDialog";
 
 const UserManagement: React.FC = () => {
+  const { t } = useTranslation();
   const toast = useToast();
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(false);
@@ -90,7 +92,7 @@ const UserManagement: React.FC = () => {
       }
 
       toast.success(
-        `User ${action}${action === "suspend" ? "ed" : action === "activate" ? "d" : "ned"} successfully`,
+        `User ${action}${action === "suspend" ? "ed" : action === "activate" ? "d" : action === "delete" ? "d" : "ned"} successfully`,
       );
 
       // Refresh search results after action
@@ -130,10 +132,10 @@ const UserManagement: React.FC = () => {
   };
 
   return (
-    <div style={{ display: "grid", gap: "1.5rem" }}>
+    <div className="grid grid--gap-15">
       <Card>
         <CardHeader>
-          <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+          <div className="flex flex--align-center flex--gap-075">
             <Users size={20} />
             <CardTitle>User Management</CardTitle>
           </div>
@@ -177,7 +179,7 @@ const UserManagement: React.FC = () => {
                       void handleSearch();
                     }
                   }}
-                  placeholder="Search by email, username, or ID..."
+                  placeholder={t("admin.userManagement.searchPlaceholder")}
                   style={{
                     width: "100%",
                     padding: "0.75rem 1rem 0.75rem 3rem",
@@ -202,14 +204,14 @@ const UserManagement: React.FC = () => {
 
           {/* User List */}
           {loading && users.length === 0 ? (
-            <div style={{ padding: "3rem 2rem", textAlign: "center" }}>
-              <p style={{ color: "var(--color-text-secondary)" }}>Searching...</p>
+            <div className="empty-state">
+              <p className="text-secondary">Searching...</p>
             </div>
           ) : users.length === 0 ? (
-            <div style={{ padding: "3rem 2rem", textAlign: "center" }}>
-              <Users size={48} style={{ margin: "0 auto 1rem", opacity: 0.3 }} />
-              <h3 style={{ fontSize: "1.25rem", marginBottom: "0.5rem" }}>No users found</h3>
-              <p style={{ color: "var(--color-text-secondary)" }}>
+            <div className="empty-state">
+              <Users size={48} className="icon icon--muted" style={{ margin: "0 auto 1rem" }} />
+              <h3 className="text-125 mb-05">No users found</h3>
+              <p className="text-secondary">
                 {searchQuery
                   ? "No users match your search criteria. Try a different query."
                   : "Use the search bar to find users by email, username, or ID."}
@@ -221,7 +223,7 @@ const UserManagement: React.FC = () => {
               </p>
             </div>
           ) : (
-            <div style={{ display: "grid", gap: "1rem" }}>
+            <div className="grid grid--gap-md">
               {users.map((user) => (
                 <div
                   key={user.id}
@@ -298,17 +300,11 @@ const UserManagement: React.FC = () => {
                         }}
                       >
                         <div>
-                          <div style={{ fontSize: "0.8rem", color: "var(--color-text-muted)" }}>
-                            Sessions
-                          </div>
-                          <div style={{ fontSize: "1.1rem", fontWeight: 600 }}>
-                            {user.sessionCount}
-                          </div>
+                          <div className="text-08 text-muted">Sessions</div>
+                          <div className="text-11 font-weight-600">{user.sessionCount}</div>
                         </div>
                         <div>
-                          <div style={{ fontSize: "0.8rem", color: "var(--color-text-muted)" }}>
-                            Reports
-                          </div>
+                          <div className="text-08 text-muted">Reports</div>
                           <div
                             style={{
                               fontSize: "1.1rem",
@@ -320,9 +316,7 @@ const UserManagement: React.FC = () => {
                           </div>
                         </div>
                         <div>
-                          <div style={{ fontSize: "0.8rem", color: "var(--color-text-muted)" }}>
-                            Last Login
-                          </div>
+                          <div className="text-08 text-muted">Last Login</div>
                           <div style={{ fontSize: "0.9rem" }}>
                             {user.lastLoginAt
                               ? new Date(user.lastLoginAt).toLocaleDateString()

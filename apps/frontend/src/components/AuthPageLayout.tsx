@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import ThemeToggle from "./ThemeToggle";
 import LanguageSwitcher from "./LanguageSwitcher";
 import PageIntro from "./PageIntro";
+import Footer from "./Footer";
 import { scheduleIdleTask } from "../utils/idleScheduler";
 
 const headerSkeletonStyle: React.CSSProperties = {
@@ -17,7 +18,7 @@ const HeaderUtilities: React.FC = () => {
   const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
-    const { cancel } = scheduleIdleTask(() => setIsReady(true), { timeout: 1600 });
+    const { cancel } = scheduleIdleTask(() => setIsReady(true), { timeout: 300 }); // Reduced from 1600ms for faster initial render
     return () => cancel();
   }, []);
 
@@ -52,7 +53,9 @@ const AuthPageLayout: React.FC<AuthPageLayoutProps> = ({
   children,
 }) => {
   return (
-    <div style={{ position: "relative", minHeight: "100vh" }}>
+    <div
+      style={{ position: "relative", minHeight: "100vh", display: "flex", flexDirection: "column" }}
+    >
       <div
         style={{
           position: "absolute",
@@ -66,9 +69,12 @@ const AuthPageLayout: React.FC<AuthPageLayoutProps> = ({
       >
         <HeaderUtilities />
       </div>
-      <PageIntro eyebrow={eyebrow} title={title} description={description}>
-        {children}
-      </PageIntro>
+      <div style={{ flex: 1 }}>
+        <PageIntro eyebrow={eyebrow} title={title} description={description}>
+          {children}
+        </PageIntro>
+      </div>
+      <Footer />
     </div>
   );
 };

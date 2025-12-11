@@ -3,8 +3,14 @@
 const fs = require("node:fs");
 const path = require("node:path");
 
-const EN_PATH = path.resolve("apps/frontend/src/i18n/locales/en/common.json");
-const DE_PATH = path.resolve("apps/frontend/src/i18n/locales/de/common.json");
+const LOCALES = ["en", "de", "es", "fr", "el"];
+const LOCALE_NAMES = {
+  en: "English",
+  de: "German",
+  es: "Spanish",
+  fr: "French",
+  el: "Greek",
+};
 
 function ensureFile(filePath) {
   if (!fs.existsSync(filePath)) {
@@ -13,11 +19,14 @@ function ensureFile(filePath) {
   }
 }
 
-ensureFile(EN_PATH);
-ensureFile(DE_PATH);
+const translations = {};
+for (const locale of LOCALES) {
+  const filePath = path.resolve(`apps/frontend/src/i18n/locales/${locale}/common.json`);
+  ensureFile(filePath);
+  translations[locale] = JSON.parse(fs.readFileSync(filePath, "utf8"));
+}
 
-const en = JSON.parse(fs.readFileSync(EN_PATH, "utf8"));
-const de = JSON.parse(fs.readFileSync(DE_PATH, "utf8"));
+const en = translations.en;
 
 function flatten(obj, prefix = "") {
   const result = new Map();
@@ -38,11 +47,18 @@ function flatten(obj, prefix = "") {
 }
 
 const enKeys = flatten(en);
-const deKeys = flatten(de);
+const localeKeys = {};
+for (const locale of LOCALES) {
+  localeKeys[locale] = flatten(translations[locale]);
+}
 
-function diff(source, target) {
+function diff(source, target, excludePrefix = null) {
   const missing = [];
   for (const key of source.keys()) {
+    // Skip keys that start with the exclude prefix (e.g., "greekCharacters" for Greek)
+    if (excludePrefix && key.startsWith(excludePrefix)) {
+      continue;
+    }
     if (!target.has(key)) {
       missing.push(key);
     }
@@ -50,34 +66,54 @@ function diff(source, target) {
   return missing;
 }
 
-const missingInDe = diff(enKeys, deKeys);
-const missingInEn = diff(deKeys, enKeys);
+let hasErrors = false;
 
-if (missingInDe.length || missingInEn.length) {
-  if (missingInDe.length) {
-    console.error("Missing German translations for keys:");
-    missingInDe.forEach((key) => console.error(` - ${key}`));
+// Check all locales against English
+for (const locale of LOCALES) {
+  if (locale === "en") continue;
+
+  const localeName = LOCALE_NAMES[locale];
+  const keys = localeKeys[locale];
+  // For Greek, exclude the greekCharacters section from comparison
+  const excludePrefix = locale === "el" ? "greekCharacters" : null;
+  const missingInLocale = diff(enKeys, keys, excludePrefix);
+  const extraInLocale = diff(keys, enKeys, excludePrefix);
+
+  if (missingInLocale.length || extraInLocale.length) {
+    hasErrors = true;
+    if (missingInLocale.length) {
+      console.error(`Missing ${localeName} translations for keys:`);
+      missingInLocale.forEach((key) => console.error(` - ${key}`));
+    }
+    if (extraInLocale.length) {
+      console.error(`Extra ${localeName} keys without English equivalents:`);
+      extraInLocale.forEach((key) => console.error(` - ${key}`));
+    }
   }
-  if (missingInEn.length) {
-    console.error("Extra German keys without English equivalents:");
-    missingInEn.forEach((key) => console.error(` - ${key}`));
-  }
-  process.exit(1);
 }
 
+// Check for empty keys in all locales
 const emptyKeys = [];
-for (const [key, value] of [...enKeys.entries(), ...deKeys.entries()]) {
-  if (typeof value === "string" && value.trim().length === 0) {
-    emptyKeys.push(key);
+for (const locale of LOCALES) {
+  const keys = localeKeys[locale];
+  for (const [key, value] of keys.entries()) {
+    if (typeof value === "string" && value.trim().length === 0) {
+      emptyKeys.push({ locale: LOCALE_NAMES[locale], key });
+    }
   }
 }
 
 if (emptyKeys.length) {
+  hasErrors = true;
   console.error("Translation keys must not be empty:");
-  emptyKeys.forEach((key) => console.error(` - ${key}`));
+  emptyKeys.forEach(({ locale, key }) => console.error(` - ${locale}: ${key}`));
+}
+
+if (hasErrors) {
   process.exit(1);
 }
 
-console.log(
-  `i18n coverage check passed (${enKeys.size} EN keys, ${deKeys.size} DE keys, 0 missing).`,
-);
+const keyCounts = LOCALES.map(
+  (locale) => `${localeKeys[locale].size} ${locale.toUpperCase()}`,
+).join(", ");
+console.log(`i18n coverage check passed (${enKeys.size} EN keys, ${keyCounts}, 0 missing).`);

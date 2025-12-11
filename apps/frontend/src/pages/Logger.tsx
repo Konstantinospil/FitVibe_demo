@@ -65,7 +65,7 @@ const Logger: React.FC = () => {
   // Load session
   useEffect(() => {
     if (!sessionId) {
-      navigate("/sessions");
+      void navigate("/sessions");
       return;
     }
 
@@ -117,7 +117,7 @@ const Logger: React.FC = () => {
       } catch (error) {
         logger.apiError("Failed to load session", error, `/api/v1/sessions/${sessionId}`, "GET");
         toast.error("Failed to load session");
-        navigate("/sessions");
+        void navigate("/sessions");
       } finally {
         setLoading(false);
       }
@@ -265,7 +265,7 @@ const Logger: React.FC = () => {
       });
 
       toast.success("Session completed successfully!");
-      navigate("/sessions");
+      void navigate("/sessions");
     } catch (error) {
       logger.apiError(
         "Failed to complete session",
@@ -299,7 +299,7 @@ const Logger: React.FC = () => {
       >
         <Card>
           <CardContent>
-            <div style={{ padding: "2rem", textAlign: "center" }}>{t("common.loading")}</div>
+            <div className="empty-state">{t("common.loading")}</div>
           </CardContent>
         </Card>
       </PageIntro>
@@ -322,52 +322,25 @@ const Logger: React.FC = () => {
       title={session.title || "Workout Session"}
       description={`${exerciseLogs.length} exercises • ${completedSetsCount}/${totalSetsCount} sets completed`}
     >
-      <div style={{ display: "grid", gap: "1.5rem" }}>
+      <div className="grid grid--gap-15">
         {/* Session Info Bar */}
         <Card>
           <CardContent>
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                gap: "1rem",
-              }}
-            >
-              <div style={{ display: "flex", alignItems: "center", gap: "1.5rem" }}>
+            <div className="flex flex--align-center flex--justify-between flex--gap-md">
+              <div className="flex flex--align-center flex--gap-15">
                 <div>
-                  <div
-                    style={{
-                      fontSize: "0.85rem",
-                      color: "var(--color-text-secondary)",
-                      marginBottom: "0.25rem",
-                    }}
-                  >
-                    Session Time
-                  </div>
-                  <div style={{ fontSize: "1.5rem", fontWeight: 700, fontFamily: "monospace" }}>
+                  <div className="text-085 text-secondary mb-025">Session Time</div>
+                  <div className="text-xl font-weight-600" style={{ fontFamily: "monospace" }}>
                     {formatTime(sessionElapsedSeconds)}
                   </div>
                 </div>
 
                 {restTimerActive && (
                   <div>
+                    <div className="text-085 text-secondary mb-025">Rest Timer</div>
                     <div
-                      style={{
-                        fontSize: "0.85rem",
-                        color: "var(--color-text-secondary)",
-                        marginBottom: "0.25rem",
-                      }}
-                    >
-                      Rest Timer
-                    </div>
-                    <div
-                      style={{
-                        fontSize: "1.5rem",
-                        fontWeight: 700,
-                        fontFamily: "monospace",
-                        color: "var(--color-accent)",
-                      }}
+                      className="text-xl font-weight-600 text-accent"
+                      style={{ fontFamily: "monospace" }}
                     >
                       {formatTime(restSecondsRemaining)}
                     </div>
@@ -375,7 +348,7 @@ const Logger: React.FC = () => {
                 )}
               </div>
 
-              <div style={{ display: "flex", gap: "0.75rem" }}>
+              <div className="flex flex--gap-075">
                 {restTimerActive ? (
                   <Button
                     variant="secondary"
@@ -411,19 +384,7 @@ const Logger: React.FC = () => {
           </CardContent>
         </Card>
 
-        {saveError && (
-          <div
-            style={{
-              padding: "1rem",
-              background: "rgba(239, 68, 68, 0.1)",
-              border: "1px solid rgba(239, 68, 68, 0.3)",
-              borderRadius: "12px",
-              color: "var(--color-danger)",
-            }}
-          >
-            {saveError}
-          </div>
-        )}
+        {saveError && <div className="alert alert--error p-md rounded-md">{saveError}</div>}
 
         {/* Exercise List */}
         {exerciseLogs.map((exerciseLog, exerciseIndex) => {
@@ -433,20 +394,12 @@ const Logger: React.FC = () => {
           return (
             <Card key={exerciseIndex}>
               <CardHeader>
-                <div
-                  style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}
-                >
-                  <div style={{ flex: 1 }}>
+                <div className="flex flex--align-center flex--justify-between">
+                  <div className="flex-1">
                     <CardTitle>
                       {exerciseIndex + 1}. {exerciseLog.exercise_id || "Custom Exercise"}
                     </CardTitle>
-                    <div
-                      style={{
-                        fontSize: "0.85rem",
-                        color: "var(--color-text-secondary)",
-                        marginTop: "0.25rem",
-                      }}
-                    >
+                    <div className="text-085 text-secondary mt-025">
                       {completedSets} / {totalSets} sets completed
                     </div>
                   </div>
@@ -454,9 +407,8 @@ const Logger: React.FC = () => {
                   <button
                     onClick={() => toggleExerciseCollapsed(exerciseIndex)}
                     aria-label={exerciseLog.collapsed ? "Expand" : "Collapse"}
+                    className="bg-transparent border-none"
                     style={{
-                      background: "transparent",
-                      border: "none",
                       color: "var(--color-text-secondary)",
                       cursor: "pointer",
                       padding: "0.5rem",
@@ -519,7 +471,7 @@ const Logger: React.FC = () => {
                               reps: parseInt(e.target.value) || null,
                             })
                           }
-                          placeholder="10"
+                          placeholder={t("logger.repsPlaceholder")}
                           disabled={set.completed}
                           style={{
                             padding: "0.6rem",
@@ -543,7 +495,7 @@ const Logger: React.FC = () => {
                               weight_kg: parseFloat(e.target.value) || null,
                             })
                           }
-                          placeholder="80"
+                          placeholder={t("logger.weightPlaceholder")}
                           disabled={set.completed}
                           style={{
                             padding: "0.6rem",
@@ -568,7 +520,7 @@ const Logger: React.FC = () => {
                               rpe: val >= 1 && val <= 10 ? val : null,
                             });
                           }}
-                          placeholder="7"
+                          placeholder={t("logger.rpePlaceholder")}
                           disabled={set.completed}
                           style={{
                             padding: "0.6rem",
@@ -614,12 +566,14 @@ const Logger: React.FC = () => {
         <Card>
           <CardContent>
             <div style={{ display: "flex", gap: "1rem", justifyContent: "space-between" }}>
-              <Button variant="secondary" onClick={() => navigate("/sessions")}>
+              <Button variant="secondary" onClick={() => void navigate("/sessions")}>
                 Save & Exit
               </Button>
               <Button
                 variant="primary"
-                onClick={() => void handleCompleteSession()}
+                onClick={() => {
+                  handleCompleteSession();
+                }}
                 isLoading={isSaving}
                 leftIcon={<Check size={18} />}
                 disabled={completedSetsCount === 0}

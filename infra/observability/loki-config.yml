@@ -29,8 +29,8 @@ schema_config:
 
 # Retention configuration (7 days for application logs, 30 days for audit)
 limits_config:
-  retention_period: 168h  # 7 days default
-  max_query_length: 721h  # 30 days max query range
+  retention_period: 168h # 7 days default
+  max_query_length: 721h # 30 days max query range
   max_streams_per_user: 10000
   max_entries_limit_per_query: 5000
   reject_old_samples: true

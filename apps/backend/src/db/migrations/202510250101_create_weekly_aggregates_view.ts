@@ -17,6 +17,11 @@ export async function up(knex: Knex): Promise<void> {
     WITH NO DATA;
   `);
 
+  // Create unique index on (owner_id, week_start) - required for concurrent refresh
+  await knex.raw(
+    `CREATE UNIQUE INDEX IF NOT EXISTS idx_${VIEW_NAME}_owner_week_unique ON ${VIEW_NAME} (owner_id, week_start);`,
+  );
+  // Create additional non-unique index for query performance
   await knex.raw(
     `CREATE INDEX IF NOT EXISTS idx_${VIEW_NAME}_owner_week ON ${VIEW_NAME} (owner_id, week_start DESC);`,
   );

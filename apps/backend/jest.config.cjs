@@ -4,8 +4,9 @@ module.exports = {
   ...baseConfig,
   displayName: "backend",
   rootDir: __dirname,
-  roots: ["<rootDir>/src", "<rootDir>/tests"],
-  testMatch: ["**/__tests__/**/*.(spec|test).ts", "**/?(*.)+(spec|test).ts"],
+  roots: ["<rootDir>/../../tests/backend"],
+  testMatch: ["**/*.(spec|test).ts", "**/?(*.)+(spec|test).ts"],
+  setupFiles: ["<rootDir>/jest.setup.mock.ts"],
   setupFilesAfterEnv: ["<rootDir>/jest.setup.ts"],
   transform: {
     "^.+\\.ts$": [
@@ -19,6 +20,8 @@ module.exports = {
   coverageProvider: "v8",
   moduleNameMapper: {
     ...baseConfig.moduleNameMapper,
+    // Map uuid to use CommonJS entry point if available
+    "^uuid$": require.resolve("uuid"),
   },
   collectCoverageFrom: [
     "<rootDir>/src/**/*.{ts,tsx}",
@@ -50,5 +53,8 @@ module.exports = {
     "login-enumeration\\.test\\.ts$",
   ],
   clearMocks: true,
-  forceExit: true,
+  // Enable forceExit in CI to prevent timeout issues
+  // In local development, we keep it disabled to detect open handles
+  // Use --detectOpenHandles locally to identify what's keeping the process alive
+  forceExit: process.env.CI === "true",
 };

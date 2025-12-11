@@ -29,6 +29,7 @@ export interface RegisterDTO {
   username: string;
   password: string;
   profile?: RegisterProfileInput;
+  terms_accepted: boolean;
 }
 
 export interface LoginDTO {

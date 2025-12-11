@@ -1,0 +1,42 @@
+# Cursor Ignore File
+# Excludes large generated files and cache directories from Cursor indexing
+# to improve performance.
+
+# Knowledge base vector embeddings (432 JSONL files, ~16MB)
+# These are generated files used by MCP server, don't need indexing
+.cursor/mcp/knowledge-base/data/**/*.jsonl
+.cursor/mcp/knowledge-base/data/*.jsonl
+
+# Generated routing and state data
+.cursor/data/**
+.cursor/.cursor/data/**
+
+# Log files
+.cursor/logs/**
+
+# Python cache files
+.cursor/**/__pycache__/
+.cursor/**/*.pyc
+.cursor/**/*.pyo
+.cursor/**/*.pyd
+
+# Test databases
+.cursor/test-database/**
+
+# Bug database (optional - uncomment if you don't need it indexed)
+# .cursor/bug-database/**
+
+# Inspiration/example files (optional - reduces noise)
+# .cursor/inspiration/**
+
+# Dead letter queue and quota state (generated data)
+.cursor/data/dead_letter_queue/**
+.cursor/data/quota_state/**
+.cursor/data/agent_states/backups/**
+.cursor/data/agent_states/versions/**
+
+# Agent current state files (runtime, frequently changing)
+.cursor/agents/current_state/*.md
+
+
+

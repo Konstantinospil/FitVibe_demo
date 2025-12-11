@@ -1,25 +1,38 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import AuthPageLayout from "../components/AuthPageLayout";
-import { NavLink } from "react-router-dom";
-import { register as registerAccount } from "../services/api";
+import { NavLink, useLocation } from "react-router-dom";
+import { register as registerAccount, resendVerificationEmail } from "../services/api";
 import { Button } from "../components/ui";
 import { useTranslation } from "react-i18next";
 import { Eye, EyeOff } from "lucide-react";
-
-const inputStyle: React.CSSProperties = {
-  width: "100%",
-  borderRadius: "12px",
-  border: "1px solid var(--color-border)",
-  background: "var(--color-surface-glass)",
-  color: "var(--color-text-primary)",
-  padding: "0.85rem 1rem",
-  fontSize: "1rem",
-};
+import { useRequiredFieldValidation } from "../hooks/useRequiredFieldValidation";
+import { useCountdown } from "../hooks/useCountdown";
 
 const Register: React.FC = () => {
   const { t } = useTranslation();
+  const location = useLocation();
+  const formRef = useRef<HTMLFormElement>(null);
+  useRequiredFieldValidation(formRef, t);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
+
+  // Pre-fill email from location state (e.g., from expired verification token)
+  useEffect(() => {
+    const state = location.state as { email?: string; resendVerification?: boolean } | null;
+    if (state?.email) {
+      setEmail(state.email);
+    }
+  }, [location.state]);
+
+  // Auto-generate username from email when email changes
+  useEffect(() => {
+    if (email && !username) {
+      const generated = email.split("@")[0].replace(/[^a-zA-Z0-9_.-]/g, "_");
+      setUsername(generated);
+    }
+  }, [email, username]);
+
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -27,10 +40,29 @@ const Register: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const [termsAccepted, setTermsAccepted] = useState(false);
+  const [privacyAccepted, setPrivacyAccepted] = useState(false);
+  const [isResending, setIsResending] = useState(false);
+  const [resendSuccess, setResendSuccess] = useState(false);
+  const [resendError, setResendError] = useState<string | null>(null);
+  const [retryAfter, setRetryAfter] = useState<number | null>(null);
+  const [countdown, , resetCountdown] = useCountdown(0);
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setError(null);
+
+    // Validate required fields
+    if (!name.trim() || !email.trim() || !password || !confirmPassword) {
+      setError(t("auth.register.fillAllFields"));
+      return;
+    }
+
+    // Check if terms and privacy are accepted
+    if (!termsAccepted || !privacyAccepted) {
+      setError(t("auth.register.termsRequired"));
+      return;
+    }
 
     // Check if passwords match
     if (password !== confirmPassword) {
@@ -38,16 +70,52 @@ const Register: React.FC = () => {
       return;
     }
 
+    // Validate password strength
+    const passwordErrors: string[] = [];
+    if (password.length < 12) {
+      passwordErrors.push(t("validation.passwordMinLength"));
+    }
+    if (!/[a-z]/.test(password)) {
+      passwordErrors.push(t("validation.passwordLowercase"));
+    }
+    if (!/[A-Z]/.test(password)) {
+      passwordErrors.push(t("validation.passwordUppercase"));
+    }
+    if (!/\d/.test(password)) {
+      passwordErrors.push(t("validation.passwordDigit"));
+    }
+    if (!/[^\w\s]/.test(password)) {
+      passwordErrors.push(t("validation.passwordSymbol"));
+    }
+
+    if (passwordErrors.length > 0) {
+      setError(t("errors.WEAK_PASSWORD") + ": " + passwordErrors.join(", "));
+      return;
+    }
+
+    // Validate username if provided
+    if (username) {
+      if (username.length < 3 || username.length > 50) {
+        setError(t("errors.USER_USERNAME_INVALID"));
+        return;
+      }
+      if (!/^[a-zA-Z0-9_.-]+$/.test(username)) {
+        setError(t("errors.USER_USERNAME_INVALID"));
+        return;
+      }
+    }
+
     setIsSubmitting(true);
 
     try {
-      // Generate username from email (use part before @, sanitized)
-      const username = email.split("@")[0].replace(/[^a-zA-Z0-9_.-]/g, "_");
+      // Use provided username or generate from email
+      const finalUsername = username.trim() || email.split("@")[0].replace(/[^a-zA-Z0-9_.-]/g, "_");
 
       await registerAccount({
         email,
         password,
-        username,
+        username: finalUsername,
+        terms_accepted: termsAccepted && privacyAccepted,
         profile: {
           display_name: name,
         },
@@ -78,17 +146,15 @@ const Register: React.FC = () => {
         title={t("auth.register.successTitle")}
         description={t("auth.register.successDescription")}
       >
-        <div style={{ textAlign: "center", padding: "2rem 0" }}>
+        <div className="text-center p-2rem">
           <div
+            className="flex flex--center mb-1"
             style={{
               width: "64px",
               height: "64px",
               margin: "0 auto 1rem",
               borderRadius: "50%",
               backgroundColor: "rgba(34, 197, 94, 0.1)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
             }}
           >
             <svg
@@ -104,14 +170,96 @@ const Register: React.FC = () => {
               <polyline points="20 6 9 17 4 12" />
             </svg>
           </div>
-          <p style={{ marginBottom: "1rem", color: "var(--color-text-secondary)" }}>
-            {t("auth.register.checkEmail", { email })}
-          </p>
+          <p className="mb-1 text-secondary">{t("auth.register.checkEmail", { email })}</p>
+          {resendSuccess ? (
+            <div className="mb-1">
+              <p style={{ color: "#22c55e", marginBottom: "1rem", fontSize: "0.875rem" }}>
+                {t("verifyEmail.resendSuccess")}
+              </p>
+            </div>
+          ) : (
+            <p className="mb-1 text-secondary" style={{ fontSize: "0.875rem" }}>
+              {t("auth.register.didntReceiveEmail")}{" "}
+              <button
+                type="button"
+                onClick={() => {
+                  void (async () => {
+                    setIsResending(true);
+                    setResendError(null);
+                    setResendSuccess(false);
+                    try {
+                      await resendVerificationEmail({ email });
+                      setResendSuccess(true);
+                    } catch (err: unknown) {
+                      setResendSuccess(false);
+                      if (err && typeof err === "object" && "response" in err) {
+                        const axiosError = err as {
+                          response?: {
+                            data?: {
+                              error?: { code?: string; message?: string; retryAfter?: number };
+                            };
+                            headers?: { "retry-after"?: string };
+                          };
+                        };
+                        const errorCode = axiosError.response?.data?.error?.code;
+                        const retryAfterValue =
+                          axiosError.response?.data?.error?.retryAfter ||
+                          (axiosError.response?.headers?.["retry-after"]
+                            ? parseInt(axiosError.response.headers["retry-after"], 10)
+                            : null);
+
+                        if (errorCode === "RATE_LIMITED" && retryAfterValue) {
+                          setRetryAfter(retryAfterValue);
+                          resetCountdown(retryAfterValue);
+                        }
+
+                        const errorMsg =
+                          (errorCode
+                            ? t(`errors.${errorCode}`) ||
+                              axiosError.response?.data?.error?.message ||
+                              t("verifyEmail.resendError")
+                            : t("verifyEmail.resendError")) ?? "";
+                        setResendError(errorMsg || null);
+                      } else {
+                        setResendError(t("verifyEmail.resendError"));
+                      }
+                    } finally {
+                      setIsResending(false);
+                    }
+                  })();
+                }}
+                disabled={isResending}
+                style={{
+                  background: "none",
+                  border: "none",
+                  color: "var(--color-accent)",
+                  textDecoration: "underline",
+                  cursor: isResending ? "not-allowed" : "pointer",
+                  padding: 0,
+                  fontSize: "inherit",
+                }}
+              >
+                {isResending ? t("verifyEmail.resending") : t("auth.register.resendEmail")}
+              </button>
+            </p>
+          )}
+          {resendError && (
+            <div role="alert" style={{ marginBottom: "1rem" }}>
+              <p style={{ color: "#ef4444", fontSize: "0.875rem", marginBottom: "0.25rem" }}>
+                {resendError}
+              </p>
+              {retryAfter !== null && countdown > 0 && (
+                <p style={{ color: "#666", fontSize: "0.75rem" }}>
+                  {t("verifyEmail.retryAfter", { seconds: countdown })}
+                </p>
+              )}
+            </div>
+          )}
           <NavLink
             to="/login"
+            className="rounded-xl"
             style={{
               padding: "0.9rem 1.4rem",
-              borderRadius: "999px",
               background: "var(--color-accent)",
               color: "#0f172a",
               fontWeight: 600,
@@ -133,16 +281,14 @@ const Register: React.FC = () => {
       description={t("auth.register.description")}
     >
       {/* eslint-disable-next-line @typescript-eslint/no-misused-promises */}
-      <form onSubmit={handleSubmit} style={{ display: "grid", gap: "1rem" }}>
-        <label style={{ display: "grid", gap: "0.35rem" }}>
-          <span style={{ fontSize: "0.95rem", color: "var(--color-text-secondary)" }}>
-            {t("auth.register.nameLabel")}
-          </span>
+      <form ref={formRef} onSubmit={handleSubmit} className="form">
+        <label className="form-label">
+          <span className="form-label-text">{t("auth.register.nameLabel")}</span>
           <input
             name="name"
             type="text"
             placeholder={t("auth.placeholders.name")}
-            style={inputStyle}
+            className="form-input"
             required
             value={name}
             onChange={(event) => setName(event.target.value)}
@@ -150,15 +296,13 @@ const Register: React.FC = () => {
             disabled={isSubmitting}
           />
         </label>
-        <label style={{ display: "grid", gap: "0.35rem" }}>
-          <span style={{ fontSize: "0.95rem", color: "var(--color-text-secondary)" }}>
-            {t("auth.register.emailLabel")}
-          </span>
+        <label className="form-label">
+          <span className="form-label-text">{t("auth.register.emailLabel")}</span>
           <input
             name="email"
             type="email"
             placeholder={t("auth.placeholders.email")}
-            style={inputStyle}
+            className="form-input"
             required
             value={email}
             onChange={(event) => setEmail(event.target.value)}
@@ -166,16 +310,36 @@ const Register: React.FC = () => {
             disabled={isSubmitting}
           />
         </label>
-        <label style={{ display: "grid", gap: "0.35rem" }}>
-          <span style={{ fontSize: "0.95rem", color: "var(--color-text-secondary)" }}>
-            {t("auth.register.passwordLabel")}
-          </span>
-          <div style={{ position: "relative" }}>
+        <label className="form-label">
+          <span className="form-label-text">{t("auth.register.usernameLabel")}</span>
+          <input
+            name="username"
+            type="text"
+            placeholder={t("auth.placeholders.username")}
+            className="form-input"
+            value={username}
+            onChange={(event) => setUsername(event.target.value)}
+            autoComplete="username"
+            disabled={isSubmitting}
+            minLength={3}
+            maxLength={50}
+            pattern="[a-zA-Z0-9_.-]+"
+          />
+          <small
+            className="text-secondary"
+            style={{ fontSize: "0.75rem", marginTop: "0.25rem", display: "block" }}
+          >
+            {t("auth.register.usernameHelp")}
+          </small>
+        </label>
+        <label className="form-label">
+          <span className="form-label-text">{t("auth.register.passwordLabel")}</span>
+          <div className="form-input-wrapper">
             <input
               name="password"
               type={showPassword ? "text" : "password"}
               placeholder={t("auth.placeholders.password")}
-              style={inputStyle}
+              className="form-input form-input--password"
               required
               value={password}
               onChange={(event) => setPassword(event.target.value)}
@@ -185,27 +349,7 @@ const Register: React.FC = () => {
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              style={{
-                position: "absolute",
-                right: "0.75rem",
-                top: "50%",
-                transform: "translateY(-50%)",
-                background: "transparent",
-                border: "none",
-                cursor: "pointer",
-                color: "var(--color-text-secondary)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                padding: "0.25rem",
-                transition: "color 150ms ease",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.color = "var(--color-text-primary)";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.color = "var(--color-text-secondary)";
-              }}
+              className="form-password-toggle"
               aria-label={showPassword ? t("auth.hidePassword") : t("auth.showPassword")}
               disabled={isSubmitting}
             >
@@ -213,16 +357,14 @@ const Register: React.FC = () => {
             </button>
           </div>
         </label>
-        <label style={{ display: "grid", gap: "0.35rem" }}>
-          <span style={{ fontSize: "0.95rem", color: "var(--color-text-secondary)" }}>
-            {t("auth.register.confirmPasswordLabel")}
-          </span>
-          <div style={{ position: "relative" }}>
+        <label className="form-label">
+          <span className="form-label-text">{t("auth.register.confirmPasswordLabel")}</span>
+          <div className="form-input-wrapper">
             <input
               name="confirmPassword"
               type={showConfirmPassword ? "text" : "password"}
               placeholder={t("auth.placeholders.confirmPassword")}
-              style={inputStyle}
+              className="form-input form-input--password"
               required
               value={confirmPassword}
               onChange={(event) => setConfirmPassword(event.target.value)}
@@ -232,27 +374,7 @@ const Register: React.FC = () => {
             <button
               type="button"
               onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-              style={{
-                position: "absolute",
-                right: "0.75rem",
-                top: "50%",
-                transform: "translateY(-50%)",
-                background: "transparent",
-                border: "none",
-                cursor: "pointer",
-                color: "var(--color-text-secondary)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                padding: "0.25rem",
-                transition: "color 150ms ease",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.color = "var(--color-text-primary)";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.color = "var(--color-text-secondary)";
-              }}
+              className="form-password-toggle"
               aria-label={showConfirmPassword ? t("auth.hidePassword") : t("auth.showPassword")}
               disabled={isSubmitting}
             >
@@ -260,33 +382,65 @@ const Register: React.FC = () => {
             </button>
           </div>
         </label>
+        <div className="password-requirements">
+          <label className="checkbox-wrapper">
+            <input
+              type="checkbox"
+              checked={termsAccepted}
+              onChange={(e) => setTermsAccepted(e.target.checked)}
+              disabled={isSubmitting}
+              style={{
+                marginTop: "0.2rem",
+                cursor: isSubmitting ? "not-allowed" : "pointer",
+              }}
+            />
+            <span className="checkbox-label">
+              {t("auth.register.acceptTerms")}{" "}
+              <NavLink
+                to="/terms"
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(e) => e.stopPropagation()}
+              >
+                {t("auth.register.termsLink")}
+              </NavLink>
+            </span>
+          </label>
+          <label className="checkbox-wrapper">
+            <input
+              type="checkbox"
+              checked={privacyAccepted}
+              onChange={(e) => setPrivacyAccepted(e.target.checked)}
+              disabled={isSubmitting}
+              style={{
+                marginTop: "0.2rem",
+                cursor: isSubmitting ? "not-allowed" : "pointer",
+              }}
+            />
+            <span className="checkbox-label">
+              {t("auth.register.acceptTerms")}{" "}
+              <NavLink
+                to="/privacy"
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(e) => e.stopPropagation()}
+              >
+                {t("auth.register.privacyLink")}
+              </NavLink>
+            </span>
+          </label>
+        </div>
         {error ? (
-          <div
-            role="alert"
-            style={{
-              background: "rgba(248, 113, 113, 0.16)",
-              color: "#FFFFFF",
-              borderRadius: "12px",
-              padding: "0.75rem 1rem",
-              fontSize: "0.95rem",
-            }}
-          >
+          <div role="alert" className="form-error">
             {error}
           </div>
         ) : null}
         <Button type="submit" fullWidth isLoading={isSubmitting} disabled={isSubmitting}>
           {isSubmitting ? t("auth.register.submitting") : t("auth.register.submit")}
         </Button>
-        <p
-          style={{
-            margin: 0,
-            fontSize: "0.9rem",
-            color: "var(--color-text-secondary)",
-            textAlign: "center",
-          }}
-        >
+        <p className="m-0 text-09 text-secondary text-center">
           {t("auth.register.loginPrompt")}{" "}
-          <NavLink to="/login" style={{ color: "var(--color-text-secondary)" }}>
+          <NavLink to="/login" className="text-secondary">
             {t("auth.register.loginLink")}
           </NavLink>
         </p>

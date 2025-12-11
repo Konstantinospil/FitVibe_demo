@@ -6,19 +6,15 @@ import {
   refresh,
   logout,
   verifyEmail,
+  resendVerificationEmail,
   forgotPassword,
   resetPassword,
   listSessions,
   revokeSessions,
+  acceptTerms,
   jwksHandler,
 } from "./auth.controller.js";
-import {
-  setup2FA,
-  verify2FA,
-  disable2FAHandler,
-  regenerateBackupCodes,
-  get2FAStatus,
-} from "./twofa.controller.js";
+// Removed twofa.controller imports - using two-factor.controller via two-factor.routes.ts instead
 import { rateLimit } from "../common/rateLimiter.js";
 import { validate } from "../../utils/validation.js";
 import {
@@ -28,6 +24,8 @@ import {
   ForgotPasswordSchema,
   ResetPasswordSchema,
   RevokeSessionsSchema,
+  AcceptTermsSchema,
+  ResendVerificationSchema,
 } from "./auth.schemas.js";
 import { requireAccessToken } from "./auth.middleware.js";
 import { asyncHandler } from "../../utils/async-handler.js";
@@ -42,6 +40,12 @@ authRouter.post(
   asyncHandler(register),
 );
 authRouter.get("/verify", rateLimit("auth_verify", 60, 60), asyncHandler(verifyEmail));
+authRouter.post(
+  "/verify/resend",
+  rateLimit("auth_verify_resend", 3, 3600), // 3 requests per hour
+  validate(ResendVerificationSchema),
+  asyncHandler(resendVerificationEmail),
+);
 authRouter.post(
   "/login",
   rateLimit("auth_login", 10, 60),
@@ -82,38 +86,17 @@ authRouter.post(
   validate(RevokeSessionsSchema),
   asyncHandler(revokeSessions),
 );
+authRouter.post(
+  "/terms/accept",
+  rateLimit("auth_terms_accept", 5, 60),
+  requireAccessToken,
+  validate(AcceptTermsSchema),
+  asyncHandler(acceptTerms),
+);
 
 authRouter.get("/jwks", asyncHandler(jwksHandler));
 
 // Two-Factor Authentication routes
+// All 2FA routes are handled by two-factor.routes.ts (mounted at /2fa)
+// Removed duplicate route definitions that were never reached (dead code)
 authRouter.use("/2fa", twoFactorRoutes);
-authRouter.get(
-  "/2fa/setup",
-  rateLimit("auth_2fa_setup", 5, 300),
-  requireAccessToken,
-  asyncHandler(setup2FA),
-);
-authRouter.post(
-  "/2fa/verify",
-  rateLimit("auth_2fa_verify", 10, 60),
-  requireAccessToken,
-  asyncHandler(verify2FA),
-);
-authRouter.post(
-  "/2fa/disable",
-  rateLimit("auth_2fa_disable", 5, 300),
-  requireAccessToken,
-  asyncHandler(disable2FAHandler),
-);
-authRouter.post(
-  "/2fa/backup-codes/regenerate",
-  rateLimit("auth_2fa_backup", 3, 3600),
-  requireAccessToken,
-  asyncHandler(regenerateBackupCodes),
-);
-authRouter.get(
-  "/2fa/status",
-  rateLimit("auth_2fa_status", 60, 60),
-  requireAccessToken,
-  asyncHandler(get2FAStatus),
-);

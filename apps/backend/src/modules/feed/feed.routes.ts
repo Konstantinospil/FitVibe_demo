@@ -8,12 +8,10 @@ import {
   bookmarkSessionHandler,
   cloneSessionFromFeedHandler,
   createCommentHandler,
-  createShareLinkHandler,
   deleteCommentHandler,
   followUserHandler,
   getFeedHandler,
   getLeaderboardHandler,
-  getSharedSessionHandler,
   likeFeedItemHandler,
   listBookmarksHandler,
   listCommentsHandler,
@@ -22,7 +20,6 @@ import {
   removeBookmarkHandler,
   reportCommentHandler,
   reportFeedItemHandler,
-  revokeShareLinkHandler,
   unlikeFeedItemHandler,
   unfollowUserHandler,
   unblockUserHandler,
@@ -30,34 +27,21 @@ import {
 
 export const feedRouter = Router();
 
-feedRouter.get("/", rateLimit("feed_public", 120, 60), asyncHandler(getFeedHandler));
+// All feed endpoints require authentication per FR-003 (privacy-by-default)
+feedRouter.get(
+  "/",
+  requireAuth,
+  rateLimitByUser("feed_user", 120, 60),
+  rateLimit("feed_public", 120, 60),
+  asyncHandler(getFeedHandler),
+);
 
 feedRouter.get(
   "/leaderboard",
+  requireAuth,
+  rateLimitByUser("feed_leaderboard_user", 60, 60),
   rateLimit("feed_leaderboard", 60, 60),
   asyncHandler(getLeaderboardHandler),
-);
-
-feedRouter.get(
-  "/link/:token",
-  rateLimit("feed_link_view", 240, 60),
-  asyncHandler(getSharedSessionHandler),
-);
-
-feedRouter.post(
-  "/session/:sessionId/link",
-  requireAuth,
-  rateLimitByUser("feed_link_create_user", 20, 60),
-  rateLimit("feed_link_create", 20, 60),
-  asyncHandler(createShareLinkHandler),
-);
-
-feedRouter.delete(
-  "/session/:sessionId/link",
-  requireAuth,
-  rateLimitByUser("feed_link_revoke_user", 20, 60),
-  rateLimit("feed_link_revoke", 20, 60),
-  asyncHandler(revokeShareLinkHandler),
 );
 
 feedRouter.post(
@@ -110,6 +94,8 @@ feedRouter.delete(
 
 feedRouter.get(
   "/item/:feedItemId/comments",
+  requireAuth,
+  rateLimitByUser("feed_comments_list_user", 120, 60),
   rateLimit("feed_comments_list", 120, 60),
   asyncHandler(listCommentsHandler),
 );
@@ -180,12 +166,16 @@ feedRouter.delete(
 
 feedRouter.get(
   "/users/:alias/followers",
+  requireAuth,
+  rateLimitByUser("feed_followers_list_user", 120, 60),
   rateLimit("feed_followers_list", 120, 60),
   asyncHandler(listFollowersHandler),
 );
 
 feedRouter.get(
   "/users/:alias/following",
+  requireAuth,
+  rateLimitByUser("feed_following_list_user", 120, 60),
   rateLimit("feed_following_list", 120, 60),
   asyncHandler(listFollowingHandler),
 );

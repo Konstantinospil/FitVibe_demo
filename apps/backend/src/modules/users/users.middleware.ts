@@ -1,8 +1,8 @@
-import type { NextFunction, Request, Response } from "express";
+import type { NextFunction, Request, Response, RequestHandler } from "express";
 
 import { verifyAccess } from "../../services/tokens.js";
 
-export function requireAuth(req: Request, res: Response, next: NextFunction) {
+export const requireAuth: RequestHandler = (req: Request, res: Response, next: NextFunction) => {
   const header = req.headers.authorization;
   if (!header || !header.startsWith("Bearer ")) {
     return res.status(401).json({ error: "Missing token" });
@@ -15,4 +15,4 @@ export function requireAuth(req: Request, res: Response, next: NextFunction) {
   } catch {
     return res.status(401).json({ error: "Invalid token" });
   }
-}
+};

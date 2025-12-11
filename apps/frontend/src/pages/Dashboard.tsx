@@ -79,15 +79,6 @@ const DEFAULT_AGGREGATES: Record<
   },
 };
 
-const cardStyle: React.CSSProperties = {
-  display: "grid",
-  gap: "0.75rem",
-  background: "var(--color-surface-glass)}",
-  borderRadius: "18px",
-  padding: "1.6rem",
-  border: "1px solid var(--color-border)}",
-};
-
 const formatMetricValue = (value: string | number) =>
   typeof value === "number" ? value.toLocaleString() : value;
 
@@ -124,27 +115,11 @@ const Dashboard: React.FC = () => {
       title={t("dashboard.title")}
       description={t("dashboard.description")}
     >
-      <section
-        style={{
-          display: "grid",
-          gap: "1.5rem",
-        }}
-      >
+      <section className="grid grid--gap-15">
         {error ? (
           <div
             role="alert"
-            style={{
-              padding: "0.85rem 1rem",
-              borderRadius: "12px",
-              border: "1px solid rgba(235, 87, 87, 0.35)}",
-              background: "rgba(235, 87, 87, 0.12)}",
-              color: "rgb(248, 113, 113)}",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              gap: "1rem",
-              flexWrap: "wrap",
-            }}
+            className="alert alert--error flex flex--align-center flex--justify-between flex--gap-md flex--wrap rounded-md p-sm"
           >
             <span>We could not refresh analytics right now. Showing the last loaded snapshot.</span>
             <Button size="sm" variant="ghost" type="button" onClick={() => void refetch()}>
@@ -152,37 +127,17 @@ const Dashboard: React.FC = () => {
             </Button>
           </div>
         ) : null}
-        <div
-          style={{
-            display: "flex",
-            flexWrap: "wrap",
-            gap: "1rem",
-          }}
-        >
+        <div className="flex flex--wrap flex--gap-md">
           {summaryMetrics.map((metric) => (
-            <div
-              key={metric.id}
-              style={{
-                flex: "1 1 200px",
-                minWidth: "200px",
-                background: "var(--color-surface-glass)}",
-                borderRadius: "18px",
-                padding: "1.4rem",
-                border: "1px solid var(--color-border)}",
-                display: "grid",
-                gap: "0.35rem",
-              }}
-            >
-              <span style={{ color: "var(--color-text-secondary)}", fontSize: "0.85rem" }}>
-                {metric.label}
-              </span>
+            <div key={metric.id} className="metric-card">
+              <span className="text-085 text-secondary">{metric.label}</span>
               {isLoading ? (
                 <Skeleton height="2rem" />
               ) : (
-                <strong style={{ fontSize: "2rem" }}>{formatMetricValue(metric.value)}</strong>
+                <strong className="text-2xl">{formatMetricValue(metric.value)}</strong>
               )}
               {metric.trend ? (
-                <span style={{ fontSize: "0.9rem", color: "var(--color-highlight)}" }}>
+                <span className="text-09" style={{ color: "var(--color-highlight)" }}>
                   {metric.trend}
                 </span>
               ) : null}
@@ -190,40 +145,28 @@ const Dashboard: React.FC = () => {
           ))}
         </div>
 
-        <div style={cardStyle}>
-          <header
-            style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}
-          >
-            <strong style={{ fontSize: "1.1rem" }}>Personal bests</strong>
+        <div className="card">
+          <header className="flex flex--justify-between flex--align-center">
+            <strong className="text-11">Personal bests</strong>
             <VisibilityBadge level="public" />
           </header>
-          <ul style={{ margin: 0, padding: 0, listStyle: "none", display: "grid", gap: "0.6rem" }}>
+          <ul className="list-unstyled grid grid--gap-06">
             {personalRecords.map((entry) => (
-              <li key={`${entry.lift}-${entry.value}`} style={{ display: "grid", gap: "0.2rem" }}>
-                <div
-                  style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}
-                >
+              <li key={`${entry.lift}-${entry.value}`} className="grid" style={{ gap: "0.2rem" }}>
+                <div className="flex flex--justify-between flex--align-center">
                   <span>{entry.lift}</span>
                   <strong>{entry.value}</strong>
                 </div>
-                <small style={{ color: "var(--color-text-muted)}" }}>{entry.achieved}</small>
+                <small className="text-muted">{entry.achieved}</small>
               </li>
             ))}
           </ul>
         </div>
 
-        <div style={cardStyle}>
-          <header
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              flexWrap: "wrap",
-              gap: "0.75rem",
-            }}
-          >
-            <strong style={{ fontSize: "1.1rem" }}>Volume aggregates</strong>
-            <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
+        <div className="card">
+          <header className="flex flex--justify-between flex--align-center flex--wrap flex--gap-075">
+            <strong className="text-11">Volume aggregates</strong>
+            <div className="flex flex--gap-05 flex--wrap">
               <select
                 aria-label={t("dashboard.selectRange")}
                 value={range}
@@ -259,35 +202,19 @@ const Dashboard: React.FC = () => {
               </div>
             </div>
           </header>
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              flexWrap: "wrap",
-              gap: "0.6rem",
-              color: "var(--color-text-muted)}",
-              fontSize: "0.85rem",
-            }}
-          >
+          <div className="flex flex--justify-between flex--align-center flex--wrap flex--gap-06 text-085 text-muted">
             <span aria-live="polite">
               Range: {rangeLabels[activeRange]} • Grain: {grainLabels[activeGrain]}
             </span>
             {isFetching && !isLoading ? <span>Refreshing…</span> : null}
           </div>
           <div style={{ overflowX: "auto" }}>
-            <table
-              style={{
-                width: "100%",
-                borderCollapse: "collapse",
-                fontSize: "0.9rem",
-              }}
-            >
+            <table className="w-full text-09" style={{ borderCollapse: "collapse" }}>
               <thead>
-                <tr style={{ textAlign: "left", color: "var(--color-text-secondary)}" }}>
-                  <th style={{ paddingBottom: "0.5rem" }}>Period</th>
-                  <th style={{ paddingBottom: "0.5rem" }}>Volume</th>
-                  <th style={{ paddingBottom: "0.5rem" }}>Sessions</th>
+                <tr className="text-left text-secondary">
+                  <th className="pb-05">Period</th>
+                  <th className="pb-05">Volume</th>
+                  <th className="pb-05">Sessions</th>
                 </tr>
               </thead>
               <tbody>
@@ -301,7 +228,7 @@ const Dashboard: React.FC = () => {
               </tbody>
             </table>
           </div>
-          <small style={{ color: "var(--color-text-muted)}" }}>
+          <small className="text-muted">
             Showing up to 5 periods to keep payloads light on shared dashboards.
           </small>
         </div>

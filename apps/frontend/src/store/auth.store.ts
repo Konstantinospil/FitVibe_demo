@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { logout as apiLogout } from "../services/api";
 
 /**
  * SECURITY FIX (CWE-922): Removed token storage from localStorage
@@ -34,7 +35,7 @@ interface AuthState {
   isAuthenticated: boolean;
   user: User | null;
   signIn: (user: User) => void;
-  signOut: () => void;
+  signOut: () => Promise<void>;
   updateUser: (user: User) => void;
 }
 
@@ -52,7 +53,15 @@ export const useAuthStore = create<AuthState>()((set) => ({
       user,
     });
   },
-  signOut: () => {
+  signOut: async () => {
+    // Call logout endpoint to invalidate server-side session and clear cookies
+    try {
+      await apiLogout();
+    } catch (error) {
+      // Even if logout fails, clear local state
+      // This ensures user is signed out locally even if network request fails
+      console.error("Logout error:", error);
+    }
     setAuthFlag(false);
     set({ ...initialState });
   },

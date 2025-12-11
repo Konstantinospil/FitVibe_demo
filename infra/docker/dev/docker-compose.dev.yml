@@ -2,6 +2,8 @@ services:
   db:
     image: postgres:16-alpine
     container_name: fitvibe_db
+    security_opt:
+      - no-new-privileges:true
     environment:
       POSTGRES_USER: fitvibe
       POSTGRES_PASSWORD: fitvibe
@@ -17,6 +19,8 @@ services:
       dockerfile: infra/docker/dev/Dockerfile.backend
     container_name: fitvibe_backend
     env_file: ../../.env.example
+    security_opt:
+      - no-new-privileges:true
     depends_on:
       - db
     ports:
@@ -35,6 +39,8 @@ services:
       context: ../../..
       dockerfile: infra/docker/dev/Dockerfile.frontend
     container_name: fitvibe_frontend
+    security_opt:
+      - no-new-privileges:true
     depends_on:
       - backend
     ports:
@@ -43,6 +49,9 @@ services:
   nginx:
     image: nginx:stable-alpine
     container_name: fitvibe_nginx
+    security_opt:
+      - no-new-privileges:true
+    user: "65534:65534" # nobody user
     ports:
       - "80:80"
     volumes:

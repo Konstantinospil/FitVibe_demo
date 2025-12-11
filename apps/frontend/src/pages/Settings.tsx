@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { Save, Trash2, Shield, User, Globe } from "lucide-react";
 import PageIntro from "../components/PageIntro";
 import { Button } from "../components/ui/Button";
@@ -16,9 +17,21 @@ import { apiClient, setup2FA, verify2FA, disable2FA, get2FAStatus } from "../ser
 import { logger } from "../utils/logger";
 import { useToast } from "../contexts/ToastContext";
 import { ConfirmDialog } from "../components/ConfirmDialog";
+import { SessionManagement } from "../components/SessionManagement";
 
 type SessionVisibility = "private" | "followers" | "link" | "public";
 type Units = "metric" | "imperial";
+type FitnessLevel = "beginner" | "intermediate" | "advanced" | "elite";
+type TrainingFrequency = "rarely" | "1_2_per_week" | "3_4_per_week" | "5_plus_per_week";
+
+interface UserProfile {
+  alias: string | null;
+  bio: string | null;
+  weight: number | null;
+  weightUnit: string | null;
+  fitnessLevel: string | null;
+  trainingFrequency: string | null;
+}
 
 interface UserData {
   id: string;
@@ -26,12 +39,14 @@ interface UserData {
   username: string;
   roleCode: string;
   status: string;
+  profile?: UserProfile;
 }
 
 const Settings: React.FC = () => {
   const navigate = useNavigate();
   const { signOut } = useAuthStore();
   const toast = useToast();
+  const { t } = useTranslation("common");
 
   // User data
   const [userData, setUserData] = useState<UserData | null>(null);
@@ -43,11 +58,18 @@ const Settings: React.FC = () => {
   const [units, setUnits] = useState<Units>("metric");
   const [locale, setLocale] = useState("en");
 
+  // Profile fields (FR-009)
+  const [alias, setAlias] = useState("");
+  const [weight, setWeight] = useState<string>("");
+  const [weightUnit, setWeightUnit] = useState<"kg" | "lb">("kg");
+  const [fitnessLevel, setFitnessLevel] = useState<FitnessLevel | "">("");
+  const [trainingFrequency, setTrainingFrequency] = useState<TrainingFrequency | "">("");
+
   // Load user data and 2FA status on mount
   useEffect(() => {
     void loadUserData();
     void load2FAStatus();
-  }, []);
+  }, []); // Intentionally empty - these functions are stable and should only run once on mount
 
   const loadUserData = async () => {
     setLoadingUser(true);
@@ -58,6 +80,7 @@ const Settings: React.FC = () => {
           preferredLang?: string;
           defaultVisibility?: SessionVisibility;
           units?: Units;
+          profile?: UserProfile;
         }
       >("/api/v1/users/me");
       setUserData(response.data);
@@ -70,6 +93,21 @@ const Settings: React.FC = () => {
       }
       if (response.data.locale) {
         setLocale(response.data.locale);
+      }
+      // Load profile data (FR-009)
+      if (response.data.profile) {
+        setAlias(response.data.profile.alias ?? "");
+        if (response.data.profile.weight !== null) {
+          // Convert kg to user's preferred unit for display
+          const displayWeight =
+            response.data.profile.weightUnit === "lb"
+              ? (response.data.profile.weight / 0.453592).toFixed(1)
+              : response.data.profile.weight.toFixed(1);
+          setWeight(displayWeight);
+          setWeightUnit((response.data.profile.weightUnit as "kg" | "lb") ?? "kg");
+        }
+        setFitnessLevel((response.data.profile.fitnessLevel as FitnessLevel) ?? "");
+        setTrainingFrequency((response.data.profile.trainingFrequency as TrainingFrequency) ?? "");
       }
     } catch (error) {
       logger.apiError("Failed to load user data", error, "/api/v1/users/me", "GET");
@@ -115,18 +153,43 @@ const Settings: React.FC = () => {
     setSaveError(null);
 
     try {
-      await apiClient.patch("/api/v1/users/me", {
+      const payload: Record<string, unknown> = {
         displayName,
         locale,
         defaultVisibility,
         units,
-      });
+      };
+
+      // Add profile fields (FR-009)
+      if (alias.trim()) {
+        payload.alias = alias.trim();
+      }
+      if (weight.trim()) {
+        const weightValue = parseFloat(weight);
+        if (!isNaN(weightValue) && weightValue > 0) {
+          payload.weight = weightValue;
+          payload.weightUnit = weightUnit;
+        }
+      }
+      if (fitnessLevel) {
+        payload.fitnessLevel = fitnessLevel;
+      }
+      if (trainingFrequency) {
+        payload.trainingFrequency = trainingFrequency;
+      }
+
+      await apiClient.patch("/api/v1/users/me", payload);
 
       setSaveSuccess(true);
       setTimeout(() => setSaveSuccess(false), 3000);
+      // Reload user data to get updated profile
+      await loadUserData();
     } catch (error) {
       logger.apiError("Failed to save preferences", error, "/api/v1/users/me", "PATCH");
-      setSaveError("Failed to save preferences. Please try again.");
+      const errorMessage =
+        (error as { response?: { data?: { error?: { message?: string } } } })?.response?.data?.error
+          ?.message ?? t("settings.preferences.saveError");
+      setSaveError(errorMessage);
     } finally {
       setIsSaving(false);
     }
@@ -215,8 +278,10 @@ const Settings: React.FC = () => {
 
       toast.success("Your account has been scheduled for deletion. You will be logged out now.");
       setTimeout(() => {
-        signOut();
-        navigate("/");
+        void (async () => {
+          await signOut();
+          void navigate("/");
+        })();
       }, 2000);
     } catch (error) {
       logger.apiError("Failed to delete account", error, "/api/v1/users/me", "DELETE");
@@ -230,27 +295,22 @@ const Settings: React.FC = () => {
       title="Your preferences and account settings"
       description="Manage your profile, privacy, security, and account settings."
     >
-      <div style={{ display: "grid", gap: "1.5rem", maxWidth: "900px" }}>
+      <div className="grid grid--gap-15" style={{ maxWidth: "900px" }}>
         {/* Profile Settings */}
         <Card>
           <CardHeader>
-            <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+            <div className="flex flex--align-center flex--gap-075">
               <User size={20} />
               <CardTitle>Profile Settings</CardTitle>
             </div>
             <CardDescription>Update your display name and basic information</CardDescription>
           </CardHeader>
           <CardContent>
-            <div style={{ display: "grid", gap: "1rem" }}>
+            <div className="grid grid--gap-md">
               <div>
                 <label
                   htmlFor="display-name"
-                  style={{
-                    display: "block",
-                    marginBottom: "0.5rem",
-                    fontSize: "0.9rem",
-                    fontWeight: 600,
-                  }}
+                  className="form-label-text block mb-05 font-weight-600"
                 >
                   Display Name
                 </label>
@@ -259,7 +319,125 @@ const Settings: React.FC = () => {
                   type="text"
                   value={displayName}
                   onChange={(e) => setDisplayName(e.target.value)}
-                  placeholder="Your display name"
+                  placeholder={t("settings.profile.displayNamePlaceholder")}
+                  className="form-input"
+                  style={{ background: "var(--color-surface)" }}
+                />
+              </div>
+
+              <div>
+                <label htmlFor="email" className="form-label-text block mb-05 font-weight-600">
+                  {t("settings.profile.email")}
+                </label>
+                <input
+                  id="email"
+                  type="email"
+                  value={loadingUser ? "Loading..." : (userData?.email ?? "Not available")}
+                  disabled
+                  className="form-input"
+                  style={{
+                    background: "rgba(0, 0, 0, 0.2)",
+                    color: "var(--color-text-secondary)",
+                  }}
+                />
+                <p className="mt-05 text-085 text-muted">
+                  {t("settings.profile.emailCannotChange")}
+                </p>
+              </div>
+
+              {/* Alias field (FR-009) */}
+              <div>
+                <label htmlFor="alias" className="form-label-text block mb-05 font-weight-600">
+                  {t("settings.profile.alias")}
+                </label>
+                <input
+                  id="alias"
+                  type="text"
+                  value={alias}
+                  onChange={(e) => setAlias(e.target.value)}
+                  placeholder={t("settings.profile.aliasPlaceholder")}
+                  className="form-input"
+                  style={{ background: "var(--color-surface)" }}
+                />
+                <p className="mt-05 text-085 text-muted">{t("settings.profile.aliasHelp")}</p>
+              </div>
+
+              {/* Weight field (FR-009) */}
+              <div className="grid" style={{ gridTemplateColumns: "2fr 1fr", gap: "0.75rem" }}>
+                <div>
+                  <label htmlFor="weight" className="form-label-text block mb-05 font-weight-600">
+                    {t("settings.profile.weight")}
+                  </label>
+                  <input
+                    id="weight"
+                    type="number"
+                    min="20"
+                    max="500"
+                    step="0.1"
+                    value={weight}
+                    onChange={(e) => setWeight(e.target.value)}
+                    placeholder={t("settings.profile.weightPlaceholder")}
+                    className="form-input"
+                    style={{
+                      width: "100%",
+                      padding: "0.75rem 1rem",
+                      borderRadius: "12px",
+                      border: "1px solid var(--color-border)",
+                      background: "var(--color-surface)",
+                      color: "var(--color-text-primary)",
+                      fontSize: "1rem",
+                    }}
+                  />
+                </div>
+                <div>
+                  <label
+                    htmlFor="weight-unit"
+                    style={{
+                      display: "block",
+                      marginBottom: "0.5rem",
+                      fontSize: "0.9rem",
+                      fontWeight: 600,
+                    }}
+                  >
+                    {t("settings.profile.weightUnit")}
+                  </label>
+                  <select
+                    id="weight-unit"
+                    value={weightUnit}
+                    onChange={(e) => setWeightUnit(e.target.value as "kg" | "lb")}
+                    style={{
+                      width: "100%",
+                      padding: "0.75rem 1rem",
+                      borderRadius: "12px",
+                      border: "1px solid var(--color-border)",
+                      background: "var(--color-surface)",
+                      color: "var(--color-text-primary)",
+                      fontSize: "1rem",
+                    }}
+                  >
+                    <option value="kg">{t("settings.profile.weightKg")}</option>
+                    <option value="lb">{t("settings.profile.weightLb")}</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Fitness Level field (FR-009) */}
+              <div>
+                <label
+                  htmlFor="fitness-level"
+                  style={{
+                    display: "block",
+                    marginBottom: "0.5rem",
+                    fontSize: "0.9rem",
+                    fontWeight: 600,
+                  }}
+                >
+                  {t("settings.profile.fitnessLevel")}
+                </label>
+                <select
+                  id="fitness-level"
+                  value={fitnessLevel}
+                  onChange={(e) => setFitnessLevel(e.target.value as FitnessLevel)}
                   style={{
                     width: "100%",
                     padding: "0.75rem 1rem",
@@ -269,12 +447,21 @@ const Settings: React.FC = () => {
                     color: "var(--color-text-primary)",
                     fontSize: "1rem",
                   }}
-                />
+                >
+                  <option value="">{t("common.loading")}</option>
+                  <option value="beginner">{t("settings.profile.fitnessLevelBeginner")}</option>
+                  <option value="intermediate">
+                    {t("settings.profile.fitnessLevelIntermediate")}
+                  </option>
+                  <option value="advanced">{t("settings.profile.fitnessLevelAdvanced")}</option>
+                  <option value="elite">{t("settings.profile.fitnessLevelElite")}</option>
+                </select>
               </div>
 
+              {/* Training Frequency field (FR-009) */}
               <div>
                 <label
-                  htmlFor="email"
+                  htmlFor="training-frequency"
                   style={{
                     display: "block",
                     marginBottom: "0.5rem",
@@ -282,32 +469,30 @@ const Settings: React.FC = () => {
                     fontWeight: 600,
                   }}
                 >
-                  Email
+                  {t("settings.profile.trainingFrequency")}
                 </label>
-                <input
-                  id="email"
-                  type="email"
-                  value={loadingUser ? "Loading..." : (userData?.email ?? "Not available")}
-                  disabled
+                <select
+                  id="training-frequency"
+                  value={trainingFrequency}
+                  onChange={(e) => setTrainingFrequency(e.target.value as TrainingFrequency)}
                   style={{
                     width: "100%",
                     padding: "0.75rem 1rem",
                     borderRadius: "12px",
                     border: "1px solid var(--color-border)",
-                    background: "rgba(0, 0, 0, 0.2)",
-                    color: "var(--color-text-secondary)",
+                    background: "var(--color-surface)",
+                    color: "var(--color-text-primary)",
                     fontSize: "1rem",
                   }}
-                />
-                <p
-                  style={{
-                    marginTop: "0.5rem",
-                    fontSize: "0.85rem",
-                    color: "var(--color-text-muted)",
-                  }}
                 >
-                  Email cannot be changed
-                </p>
+                  <option value="">{t("common.loading")}</option>
+                  <option value="rarely">{t("settings.profile.trainingFrequencyRarely")}</option>
+                  <option value="1_2_per_week">{t("settings.profile.trainingFrequency1_2")}</option>
+                  <option value="3_4_per_week">{t("settings.profile.trainingFrequency3_4")}</option>
+                  <option value="5_plus_per_week">
+                    {t("settings.profile.trainingFrequency5Plus")}
+                  </option>
+                </select>
               </div>
             </div>
           </CardContent>
@@ -434,7 +619,7 @@ const Settings: React.FC = () => {
                   marginRight: "1rem",
                 }}
               >
-                Preferences saved successfully!
+                {t("settings.preferences.saveSuccess")}
               </div>
             )}
             {saveError && (
@@ -457,7 +642,7 @@ const Settings: React.FC = () => {
               isLoading={isSaving}
               leftIcon={<Save size={18} />}
             >
-              {isSaving ? "Saving..." : "Save Preferences"}
+              {isSaving ? t("settings.preferences.saving") : t("settings.preferences.saveButton")}
             </Button>
           </CardFooter>
         </Card>
@@ -548,7 +733,7 @@ const Settings: React.FC = () => {
                     type="text"
                     value={twoFACode}
                     onChange={(e) => setTwoFACode(e.target.value.replace(/\D/g, "").slice(0, 6))}
-                    placeholder="000000"
+                    placeholder={t("settings.profile.twoFactorCodePlaceholder")}
                     maxLength={6}
                     style={{
                       flex: 1,
@@ -648,7 +833,7 @@ const Settings: React.FC = () => {
                     id="disable-2fa-password"
                     value={disable2FAPassword}
                     onChange={(e) => setDisable2FAPassword(e.target.value)}
-                    placeholder="Enter your password"
+                    placeholder={t("settings.profile.passwordPlaceholder")}
                     style={{
                       width: "100%",
                       padding: "0.75rem",
@@ -672,6 +857,9 @@ const Settings: React.FC = () => {
             )}
           </CardContent>
         </Card>
+
+        {/* Session Management */}
+        <SessionManagement />
 
         {/* Danger Zone */}
         <Card>
@@ -725,7 +913,7 @@ const Settings: React.FC = () => {
                     type="password"
                     value={deleteConfirmPassword}
                     onChange={(e) => setDeleteConfirmPassword(e.target.value)}
-                    placeholder="Enter your password"
+                    placeholder={t("settings.profile.passwordPlaceholder")}
                     style={{
                       width: "100%",
                       padding: "0.75rem 1rem",

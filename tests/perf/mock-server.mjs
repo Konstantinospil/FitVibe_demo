@@ -6,13 +6,14 @@ const indexHtml = `<!doctype html>
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <title>FitVibe Performance Harness</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>FitVibe Performance Harness</title>
+    <meta name="description" content="FitVibe performance test harness" />
     <style>
-      body { font-family: system-ui, sans-serif; margin: 2rem; line-height: 1.5; background: #0f172a; color: #f1f5f9; }
-      h1 { font-size: 2.5rem; margin-bottom: 1rem; }
-      .card { border-radius: 1rem; padding: 1.5rem; background: rgba(15, 23, 42, 0.7); box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.8); max-width: 42rem; }
-      .pill { display: inline-block; padding: 0.25rem 0.75rem; border-radius: 999px; background: rgba(96, 165, 250, 0.1); color: #cbd5f5; font-size: 0.75rem; letter-spacing: 0.08em; text-transform: uppercase; }
+      body { font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; margin: 0; padding: 2rem; line-height: 1.5; background: #0f172a; color: #f1f5f9; }
+      h1 { font-size: clamp(1.5rem, 4vw, 2.5rem); margin: 0 0 1rem 0; font-weight: 600; }
+      .card { border-radius: 1rem; padding: 1.5rem; background: rgba(15, 23, 42, 0.7); box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.8); max-width: 42rem; margin: 0 auto; }
+      .pill { display: inline-block; padding: 0.25rem 0.75rem; border-radius: 999px; background: rgba(96, 165, 250, 0.1); color: #cbd5f5; font-size: 0.75rem; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 1rem; }
       p { margin: 0.75rem 0; }
     </style>
   </head>
@@ -57,7 +58,10 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  // Performance-optimized headers
   res.setHeader("Content-Type", "text/html; charset=utf-8");
+  res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+  res.setHeader("X-Content-Type-Options", "nosniff");
   res.end(indexHtml);
 });
 

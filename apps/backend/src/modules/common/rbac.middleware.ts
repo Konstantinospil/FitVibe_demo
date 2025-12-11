@@ -1,10 +1,10 @@
-import type { Request, Response, NextFunction } from "express";
+import type { Request, Response, NextFunction, RequestHandler } from "express";
 
 /**
  * Role-based access control middleware.
  * Usage: router.get('/admin', requireRole('admin'), handler)
  */
-export function requireRole(roles: string[] | string) {
+export function requireRole(roles: string[] | string): RequestHandler {
   const allowed = Array.isArray(roles) ? roles : [roles];
   return (req: Request, res: Response, next: NextFunction) => {
     const user = req.user;

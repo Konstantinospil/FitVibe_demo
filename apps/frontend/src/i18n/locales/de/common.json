@@ -12,7 +12,10 @@
   "language": {
     "label": "Sprache",
     "english": "Englisch",
-    "german": "Deutsch"
+    "german": "Deutsch",
+    "spanish": "Spanisch",
+    "french": "Französisch",
+    "greek": "Griechisch"
   },
   "status": {
     "checking": "Backend wird geprüft...",
@@ -64,22 +67,6 @@
         "title": "Highlights",
         "description": "180 kg Kniebeuge - 115 kg Bankdrücken - 210 kg Kreuzheben - Boston-Marathon-Qualifikation."
       }
-    },
-    "share": {
-      "title": "Freigabelinks",
-      "description": "Erstelle persönliche Links für externe Coaches oder Kampfrichter. Du kannst jeden Link sofort deaktivieren, wenn Zugriff entzogen werden soll.",
-      "create": "Freigabelink erstellen",
-      "empty": "Noch keine aktiven Freigabelinks.",
-      "copy": "Link kopieren",
-      "copyAria": "Link kopieren",
-      "revoke": "Widerrufen",
-      "revoked": "Widerrufen",
-      "copied": "Link in die Zwischenablage kopiert",
-      "copiedAria": "Link in die Zwischenablage kopiert",
-      "guards": {
-        "active": "Teile diese URL nur mit vertrauenswürdigen Personen.",
-        "revoked": "Dieser Link ist nicht mehr erreichbar."
-      }
     }
   },
   "feed": {
@@ -110,9 +97,28 @@
     }
   },
   "footer": {
-    "note": "Für Athletinnen und Athleten, die datengetriebenen Fortschritt lieben — Fitvibe"
+    "brand": "FitVibe",
+    "terms": "Allgemeine Geschäftsbedingungen",
+    "privacy": "Datenschutzerklärung",
+    "navigationLabel": "Footer-Navigation",
+    "termsAriaLabel": "Allgemeine Geschäftsbedingungen anzeigen",
+    "privacyAriaLabel": "Datenschutzerklärung anzeigen"
+  },
+  "terms": {
+    "eyebrow": "Rechtliches",
+    "title": "Allgemeine Geschäftsbedingungen",
+    "description": "Bitte lesen Sie unsere Allgemeinen Geschäftsbedingungen sorgfältig, bevor Sie FitVibe verwenden.",
+    "effectiveDate": "Gültigkeitsdatum"
+  },
+  "privacy": {
+    "eyebrow": "Rechtliches",
+    "title": "Datenschutzerklärung",
+    "description": "Erfahren Sie, wie wir Ihre persönlichen Daten sammeln, verwenden und schützen.",
+    "effectiveDate": "Gültigkeitsdatum"
   },
   "errors": {
+    "TERMS_ACCEPTANCE_REQUIRED": "Sie müssen die Allgemeinen Geschäftsbedingungen und die Datenschutzerklärung akzeptieren, um ein Konto zu erstellen",
+    "TERMS_VERSION_OUTDATED": "Die Allgemeinen Geschäftsbedingungen wurden aktualisiert. Bitte akzeptieren Sie die neuen Bedingungen, um fortzufahren.",
     "WEAK_PASSWORD": "Passwort muss mindestens 12 Zeichen lang sein und Großbuchstaben, Kleinbuchstaben, Ziffern und Sonderzeichen enthalten",
     "PASSWORD_CONTAINS_USERNAME": "Passwort darf deinen Benutzernamen nicht enthalten",
     "PASSWORD_CONTAINS_EMAIL": "Passwort darf deine E-Mail-Adresse nicht enthalten",
@@ -170,10 +176,6 @@
     "FEED_REPORT_REASON_TOO_LONG": "Grund überschreitet 200 Zeichen",
     "FEED_NOT_OWNER": "Du bist nicht der Besitzer dieser Einheit",
     "FEED_INVALID_STATUS": "Nur abgeschlossene Einheiten können geteilt werden",
-    "FEED_LINK_REVOKED": "Freigabelink wurde widerrufen",
-    "FEED_LINK_EXPIRED": "Freigabelink ist abgelaufen",
-    "FEED_LINK_EXHAUSTED": "Freigabelink-Aufrufslimit erreicht",
-    "FEED_LINK_NOT_FOUND": "Freigabelink nicht gefunden",
     "FEED_USER_NOT_FOUND": "Benutzer nicht gefunden",
     "FEED_CANNOT_FOLLOW_SELF": "Du kannst dir nicht selbst folgen",
     "FEED_CANNOT_BLOCK_SELF": "Du kannst dich nicht selbst blockieren",
@@ -201,6 +203,7 @@
     "EMAIL_SERVICE_UNAVAILABLE": "E-Mail-Dienst nicht verfügbar"
   },
   "validation": {
+    "required": "Fülle dieses Feld aus",
     "passwordMinLength": "Passwort muss mindestens 12 Zeichen lang sein",
     "passwordLowercase": "Passwort muss einen Kleinbuchstaben enthalten",
     "passwordUppercase": "Passwort muss einen Großbuchstaben enthalten",
@@ -271,12 +274,22 @@
     "titleVerifying": "E-Mail wird verifiziert...",
     "titleSuccess": "E-Mail verifiziert!",
     "titleFailed": "Verifizierung fehlgeschlagen",
+    "titleExpired": "Verifizierungslink abgelaufen",
     "descVerifying": "Bitte warte, während wir deine E-Mail-Adresse verifizieren...",
     "descSuccess": "Deine E-Mail wurde erfolgreich verifiziert. Weiterleitung zum Login...",
     "descFailed": "Wir konnten deine E-Mail nicht verifizieren. Der Link ist möglicherweise abgelaufen oder ungültig.",
+    "descExpired": "Dein Verifizierungslink ist abgelaufen. Bitte fordere eine neue Verifizierungs-E-Mail an.",
     "noToken": "Kein Verifizierungstoken angegeben",
     "goToLogin": "Zum Login",
-    "backToRegister": "Zurück zur Registrierung"
+    "backToRegister": "Zurück zur Registrierung",
+    "resendVerification": "Verifizierungs-E-Mail erneut senden",
+    "resendEmailLabel": "E-Mail-Adresse",
+    "resendEmailPlaceholder": "deine@email.de",
+    "resendButton": "Verifizierungs-E-Mail senden",
+    "resending": "Wird gesendet...",
+    "resendSuccess": "Verifizierungs-E-Mail gesendet! Bitte überprüfe dein Postfach.",
+    "resendError": "Fehler beim Senden der Verifizierungs-E-Mail. Bitte versuche es erneut.",
+    "retryAfter": "Bitte versuche es erneut in {{seconds}} Sekunde(n)."
   },
   "forgotPassword": {
     "eyebrow": "Passwort zurücksetzen",
@@ -308,22 +321,29 @@
     "successText": "Du kannst dich jetzt mit deinem neuen Passwort anmelden.",
     "passwordMismatch": "Passwörter stimmen nicht überein",
     "invalidToken": "Ungültiger Reset-Token. Bitte fordere ein neues Passwort-Reset an.",
-    "errorReset": "Fehler beim Zurücksetzen des Passworts"
-  },
-  "logger": {
-    "eyebrow": "Logbuch",
-    "title": "Erfasse jede Wiederholung ohne den Flow zu verlieren.",
-    "description": "Ob im Fitnessstudio oder beim Synchronisieren von Wearables, der Logger verfolgt Sätze, RPE und Tempo, damit deine Daten Coach-bereit bleiben.",
-    "exercise": "Übung",
-    "sets": "Sätze",
-    "reps": "Wiederholungen",
-    "load": "Last"
+    "errorReset": "Fehler beim Zurücksetzen des Passworts",
+    "passwordRequirements": {
+      "title": "Passwort-Anforderungen:",
+      "minLength": "Mindestens 12 Zeichen",
+      "uppercase": "Mindestens ein Großbuchstabe (A-Z)",
+      "lowercase": "Mindestens ein Kleinbuchstabe (a-z)",
+      "digit": "Mindestens eine Ziffer (0-9)",
+      "special": "Mindestens ein Sonderzeichen (!@#$%^&*...)"
+    }
   },
   "planner": {
     "eyebrow": "Einheiten-Architektur",
     "title": "Gestalte Trainingsblöcke mit Absicht.",
     "description": "Ziehe, dupliziere und periodisiere Workouts. Der Planer hält Intensität, Volumen und Deload-Verhältnisse im Einklang mit deinem Makrozyklus.",
-    "editBlock": "Block bearbeiten"
+    "editBlock": "Block bearbeiten",
+    "sessionTitlePlaceholder": "z.B., Oberkörper-Kraft",
+    "notesPlaceholder": "Einheitsnotizen, Trainingsziele oder Kontext hinzufügen...",
+    "exerciseSearchPlaceholder": "Nach Übungen suchen (z.B., Kniebeuge, Bankdrücken)...",
+    "repsPlaceholder": "10",
+    "weightPlaceholder": "80",
+    "rpePlaceholder": "7",
+    "speedPlaceholder": "90",
+    "exerciseNotesPlaceholder": "z.B., Fokus auf Form, langsameres Tempo bei Exzentrik"
   },
   "sessions": {
     "eyebrow": "Training-Management",
@@ -362,6 +382,49 @@
     "mainLayout": {
       "logo": "FV",
       "brand": "FitVibe"
+    }
+  },
+  "settings": {
+    "title": "Einstellungen",
+    "description": "Deine Präferenzen und Kontoeinstellungen",
+    "profile": {
+      "title": "Profileinstellungen",
+      "description": "Aktualisiere deine Profilinformationen",
+      "displayName": "Anzeigename",
+      "displayNamePlaceholder": "Dein Anzeigename",
+      "alias": "Alias",
+      "aliasPlaceholder": "Dein öffentlicher Alias",
+      "aliasHelp": "Alias darf nur Buchstaben, Zahlen, Unterstriche, Punkte oder Bindestriche enthalten",
+      "email": "E-Mail",
+      "emailCannotChange": "E-Mail kann nicht geändert werden",
+      "weight": "Gewicht",
+      "weightUnit": "Gewichtseinheit",
+      "weightKg": "Kilogramm (kg)",
+      "weightLb": "Pfund (lb)",
+      "fitnessLevel": "Fitness-Level",
+      "fitnessLevelBeginner": "Anfänger",
+      "fitnessLevelIntermediate": "Fortgeschritten",
+      "fitnessLevelAdvanced": "Erfahren",
+      "fitnessLevelElite": "Elite",
+      "trainingFrequency": "Trainingshäufigkeit",
+      "trainingFrequencyRarely": "Selten",
+      "trainingFrequency1_2": "1-2 mal pro Woche",
+      "trainingFrequency3_4": "3-4 mal pro Woche",
+      "trainingFrequency5Plus": "5+ mal pro Woche",
+      "weightPlaceholder": "75.5",
+      "passwordPlaceholder": "Gib dein Passwort ein",
+      "twoFactorCodePlaceholder": "000000"
+    },
+    "preferences": {
+      "title": "Präferenzen",
+      "description": "Setze deine Standard-Session-Sichtbarkeit, Einheiten und Sprache",
+      "defaultVisibility": "Standard-Session-Sichtbarkeit",
+      "units": "Einheiten",
+      "language": "Sprache",
+      "saveSuccess": "Präferenzen erfolgreich gespeichert!",
+      "saveError": "Fehler beim Speichern der Präferenzen. Bitte versuche es erneut.",
+      "saveButton": "Präferenzen speichern",
+      "saving": "Wird gespeichert..."
     }
   },
   "common": {
@@ -458,5 +521,30 @@
       "vibe": "Vibe",
       "date": "Datum"
     }
+  },
+  "logger": {
+    "eyebrow": "Protokoll",
+    "title": "Erfasse jede Wiederholung ohne Unterbrechung.",
+    "description": "Verfolge Sätze, Last, Tempo und RPE. Synchronisiere mit Wearables oder protokolliere manuell—deine Daten bleiben trainerbereit.",
+    "exercise": "Übung",
+    "sets": "Sätze",
+    "reps": "Wiederholungen",
+    "load": "Last",
+    "repsPlaceholder": "10",
+    "weightPlaceholder": "80",
+    "rpePlaceholder": "7"
+  },
+  "admin": {
+    "userManagement": {
+      "searchPlaceholder": "Suche nach E-Mail, Benutzername oder ID..."
+    },
+    "systemControls": {
+      "maintenanceMessagePlaceholder": "z.B. Notfall-Datenbankwartung",
+      "durationPlaceholder": "z.B. 30 Minuten",
+      "completionMessagePlaceholder": "z.B. Wartung erfolgreich abgeschlossen"
+    }
+  },
+  "twoFactor": {
+    "codePlaceholder": "000000"
   }
 }

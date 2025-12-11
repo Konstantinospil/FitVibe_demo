@@ -38,13 +38,22 @@ CREATE TABLE users (
   deleted_at timestamptz
 );
 
-CREATE TABLE user_static (
+CREATE TABLE profiles (
   user_id uuid PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+  alias citext UNIQUE,
+  bio text CHECK (char_length(bio) <= 500),
+  avatar_asset_id uuid REFERENCES media(id) ON DELETE SET NULL,
   date_of_birth date,
-  gender_code text REFERENCES genders(code),
+  gender_code text REFERENCES genders(code) ON DELETE SET NULL,
+  visibility text NOT NULL DEFAULT 'private' CHECK (visibility IN ('private', 'link', 'public')),
+  timezone text,
+  unit_preferences jsonb NOT NULL DEFAULT '{}'::jsonb,
   created_at timestamptz NOT NULL,
   updated_at timestamptz NOT NULL
 );
+
+CREATE INDEX idx_profiles_alias ON profiles(alias) WHERE alias IS NOT NULL;
+CREATE INDEX idx_profiles_visibility ON profiles(visibility) WHERE visibility = 'public';
 
 CREATE TABLE user_contacts (
   id uuid PRIMARY KEY,

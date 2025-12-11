@@ -8,7 +8,7 @@ const TABLES = [
   "fitness_levels",
   "exercise_types",
   "users",
-  "user_static",
+  "profiles",
   "user_contacts",
   "auth_sessions",
   "user_state_history",
@@ -26,9 +26,25 @@ const TABLES = [
   "followers",
   "media",
   "translation_cache",
+  // Critical tables verified by migrateAll.ts
+  "feed_items",
+  "feed_comments",
+  "feed_likes",
+  "session_bookmarks",
+  "user_blocks",
+  "idempotency_keys",
+  "pending_2fa_sessions",
+  "user_preferences",
+  "personal_records",
 ];
 
-const VIEWS = ["session_summary", "v_session_summary"];
+const VIEWS = [
+  "session_summary",
+  "v_session_summary",
+  "vw_user_performance",
+  "vw_feed_summary",
+  "mv_leaderboard",
+];
 
 async function verify(): Promise<void> {
   try {

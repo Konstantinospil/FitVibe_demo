@@ -16,6 +16,7 @@ DECLARE
   bounds text[];
   bound_start date;
   bound_end date;
+  table_exists boolean;
   partition_targets CONSTANT text[] := ARRAY[
     'sessions:planned_at:24',
     'user_points:awarded_at:18',
@@ -26,6 +27,17 @@ BEGIN
     base_table := split_part(table_spec, ':', 1);
     partition_column := split_part(table_spec, ':', 2);
     retention_months := split_part(table_spec, ':', 3)::int;
+
+    -- Check if table exists before trying to create partitions
+    SELECT EXISTS (
+      SELECT 1 FROM pg_catalog.pg_tables
+      WHERE schemaname = 'public' AND tablename = base_table
+    ) INTO table_exists;
+
+    -- Skip if table doesn't exist yet
+    IF NOT table_exists THEN
+      CONTINUE;
+    END IF;
 
     EXECUTE format(
       'CREATE TABLE IF NOT EXISTS %I_default PARTITION OF %I DEFAULT;',

@@ -1,22 +1,7 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
 import PageIntro from "../components/PageIntro";
-import ShareLinkManager from "../components/ShareLinkManager";
 import { Button } from "../components/ui";
-
-const cardStyle: React.CSSProperties = {
-  display: "grid",
-  gap: "1rem",
-  background: "var(--color-surface-glass)",
-  borderRadius: "18px",
-  padding: "1.6rem",
-  border: "1px solid var(--color-border)",
-};
-
-const listStyle: React.CSSProperties = {
-  display: "grid",
-  gap: "0.75rem",
-};
 
 const Profile: React.FC = () => {
   const { t } = useTranslation();
@@ -29,14 +14,18 @@ const Profile: React.FC = () => {
       title={t("profile.title")}
       description={t("profile.description")}
     >
-      <div style={cardStyle}>
-        <div style={listStyle}>
+      <div
+        className="grid grid--gap-md rounded-lg p-lg"
+        style={{
+          background: "var(--color-surface-glass)",
+          border: "1px solid var(--color-border)",
+        }}
+      >
+        <div className="grid grid--gap-075">
           {sections.map((section) => (
-            <div key={section} style={{ display: "grid", gap: "0.3rem" }}>
+            <div key={section} className="grid" style={{ gap: "0.3rem" }}>
               <strong>{t(`profile.sections.${section}.title`)}</strong>
-              <span style={{ color: "var(--color-text-secondary)" }}>
-                {t(`profile.sections.${section}.description`)}
-              </span>
+              <span className="text-secondary">{t(`profile.sections.${section}.description`)}</span>
             </div>
           ))}
         </div>
@@ -44,8 +33,6 @@ const Profile: React.FC = () => {
           {t("profile.edit")}
         </Button>
       </div>
-
-      <ShareLinkManager />
     </PageIntro>
   );
 };

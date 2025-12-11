@@ -4,6 +4,8 @@
  * (verification is the backend's responsibility).
  */
 
+import { logger } from "./logger.js";
+
 export interface JwtPayload {
   sub: string; // User ID
   role: string; // User role (athlete, coach, support, admin)
@@ -37,7 +39,13 @@ export function decodeJwt(token: string | null): JwtPayload | null {
     const decoded = atob(payload.replace(/-/g, "+").replace(/_/g, "/"));
     return JSON.parse(decoded) as JwtPayload;
   } catch (error) {
-    console.error("Failed to decode JWT:", error);
+    logger.error(
+      "Failed to decode JWT",
+      error instanceof Error ? error : new Error(String(error)),
+      {
+        context: "jwt",
+      },
+    );
     return null;
   }
 }

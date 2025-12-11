@@ -38,7 +38,7 @@ import {
   revokeSessionById,
   revokeSessionsByUserId,
   markEmailVerified,
-} from "./auth.repository";
+} from "./auth.repository.js";
 import type {
   JwtPayload,
   LoginDTO,
@@ -53,16 +53,34 @@ import type {
 } from "./auth.types.js";
 import type { AuthUserRecord } from "./auth.repository.js";
 import { env, RSA_KEYS } from "../../config/env.js";
+import { getCurrentTermsVersion, isTermsVersionOutdated } from "../../config/terms.js";
 import { HttpError } from "../../utils/http.js";
 import { assertPasswordPolicy } from "./passwordPolicy.js";
 import { incrementRefreshReuse } from "../../observability/metrics.js";
 import { mailerService } from "../../services/mailer.service.js";
+import {
+  generateVerificationEmailHtml,
+  generateVerificationEmailText,
+  generateResendVerificationEmailHtml,
+  generateResendVerificationEmailText,
+  getEmailTranslations,
+} from "../../services/i18n.service.js";
 import {
   getFailedAttempt,
   recordFailedAttempt,
   resetFailedAttempts,
   isAccountLocked,
   getRemainingLockoutSeconds,
+  getRemainingAccountAttempts,
+  getMaxAccountAttempts,
+  getFailedAttemptByIP,
+  recordFailedAttemptByIP,
+  resetFailedAttemptsByIP,
+  isIPLocked,
+  getRemainingIPLockoutSeconds,
+  getRemainingIPAttempts,
+  getMaxIPAttempts,
+  getMaxIPDistinctEmails,
 } from "./bruteforce.repository.js";
 import { logger } from "../../config/logger.js";
 
@@ -99,15 +117,30 @@ function sanitizeUserAgent(userAgent?: string | null): string | null {
   return userAgent.length > 512 ? userAgent.slice(0, 512) : userAgent;
 }
 
+/**
+ * Validates if a string is a valid UUID format
+ */
+function isValidUUID(str: string | null): boolean {
+  if (!str) {
+    return false;
+  }
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  return uuidRegex.test(str);
+}
+
 async function recordAuditEvent(
   userId: string | null,
   action: string,
   metadata: Record<string, unknown> = {},
 ) {
   try {
+    // Validate userId is a valid UUID or null
+    // Test IDs like "user-123" are not valid UUIDs and will cause database errors
+    const validUserId = userId && isValidUUID(userId) ? userId : null;
+
     await db("audit_log").insert({
       id: uuidv4(),
-      actor_user_id: userId,
+      actor_user_id: validUserId,
       action,
       entity_type: "auth",
       metadata,
@@ -204,26 +237,15 @@ export async function register(
         // Resend verification email
         if (env.email.enabled) {
           const verificationUrl = `${env.frontendUrl}/verify?token=${token}`;
+          const expiresInMinutes = Math.floor(EMAIL_VERIFICATION_TTL / 60);
+          const locale = existingByEmail.locale;
+          const t = getEmailTranslations(locale);
+
           await mailerService.send({
             to: email,
-            subject: "Verify your FitVibe account",
-            html: `
-            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-              <h2>Welcome back to FitVibe!</h2>
-              <p>We noticed you tried to register again. Please verify your email address by clicking the link below:</p>
-              <p>
-                <a href="${verificationUrl}" style="display: inline-block; padding: 12px 24px; background-color: #4F46E5; color: white; text-decoration: none; border-radius: 6px;">
-                  Verify Email Address
-                </a>
-              </p>
-              <p>Or copy and paste this link into your browser:</p>
-              <p style="color: #666; word-break: break-all;">${verificationUrl}</p>
-              <p style="color: #999; font-size: 12px; margin-top: 32px;">
-                This link will expire in ${Math.floor(EMAIL_VERIFICATION_TTL / 60)} minutes.
-              </p>
-            </div>
-          `,
-            text: `Welcome back to FitVibe! Please verify your email address by visiting: ${verificationUrl}\n\nThis link will expire in ${Math.floor(EMAIL_VERIFICATION_TTL / 60)} minutes.`,
+            subject: t.resend.subject,
+            html: generateResendVerificationEmailHtml(verificationUrl, expiresInMinutes, locale),
+            text: generateResendVerificationEmailText(verificationUrl, expiresInMinutes, locale),
           });
         }
 
@@ -232,8 +254,15 @@ export async function register(
       throw new HttpError(409, "AUTH_CONFLICT", "AUTH_CONFLICT");
     }
 
+    // Validate terms acceptance
+    if (!dto.terms_accepted) {
+      throw new HttpError(400, "TERMS_ACCEPTANCE_REQUIRED", "TERMS_ACCEPTANCE_REQUIRED");
+    }
+
     const id = uuidv4();
     const password_hash = await bcrypt.hash(dto.password, 12);
+    const now = new Date().toISOString();
+    const termsVersion = getCurrentTermsVersion();
 
     await createUser({
       id,
@@ -243,6 +272,9 @@ export async function register(
       role_code: "athlete",
       password_hash,
       primaryEmail: email,
+      terms_accepted: true,
+      terms_accepted_at: now,
+      terms_version: termsVersion,
     });
 
     const verificationToken = await issueAuthToken(
@@ -254,31 +286,65 @@ export async function register(
     // Send verification email
     if (env.email.enabled) {
       const verificationUrl = `${env.frontendUrl}/verify?token=${verificationToken}`;
+      const expiresInMinutes = Math.floor(EMAIL_VERIFICATION_TTL / 60);
+
+      // Get user's locale if available (for new users, use default)
+      const user = await findUserById(id);
+      const locale = user?.locale;
+      const t = getEmailTranslations(locale);
+
       await mailerService.send({
         to: email,
-        subject: "Verify your FitVibe account",
-        html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <h2>Welcome to FitVibe!</h2>
-          <p>Thank you for registering. Please verify your email address by clicking the link below:</p>
-          <p>
-            <a href="${verificationUrl}" style="display: inline-block; padding: 12px 24px; background-color: #4F46E5; color: white; text-decoration: none; border-radius: 6px;">
-              Verify Email Address
-            </a>
-          </p>
-          <p>Or copy and paste this link into your browser:</p>
-          <p style="color: #666; word-break: break-all;">${verificationUrl}</p>
-          <p style="color: #999; font-size: 12px; margin-top: 32px;">
-            This link will expire in ${Math.floor(EMAIL_VERIFICATION_TTL / 60)} minutes.
-          </p>
-        </div>
-      `,
-        text: `Welcome to FitVibe! Please verify your email address by visiting: ${verificationUrl}\n\nThis link will expire in ${Math.floor(EMAIL_VERIFICATION_TTL / 60)} minutes.`,
+        subject: t.verification.subject,
+        html: generateVerificationEmailHtml(verificationUrl, expiresInMinutes, locale),
+        text: generateVerificationEmailText(verificationUrl, expiresInMinutes, locale),
       });
     }
 
     const user = await findUserById(id);
     return { verificationToken, user: user ? toSafeUser(user) : undefined };
+  } finally {
+    // Normalize timing to prevent user enumeration (AC-1.12)
+    await normalizeAuthTiming(startTime);
+  }
+}
+
+export async function resendVerificationEmail(email: string): Promise<void> {
+  // Start timing for enumeration protection (AC-1.12)
+  const startTime = Date.now();
+
+  try {
+    const normalizedEmail = email.toLowerCase();
+    const user = await findUserByEmail(normalizedEmail);
+
+    // Always return success to prevent user enumeration
+    // Only send email if user exists and is pending verification
+    if (user && user.status === "pending_verification") {
+      // Check rate limiting (3 per hour per user)
+      const token = await issueAuthToken(
+        user.id,
+        TOKEN_TYPES.EMAIL_VERIFICATION,
+        EMAIL_VERIFICATION_TTL,
+      );
+
+      // Send verification email
+      if (env.email.enabled) {
+        const verificationUrl = `${env.frontendUrl}/verify?token=${token}`;
+        const expiresInMinutes = Math.floor(EMAIL_VERIFICATION_TTL / 60);
+        const locale = user.locale;
+        const t = getEmailTranslations(locale);
+
+        await mailerService.send({
+          to: normalizedEmail,
+          subject: t.resend.subject,
+          html: generateResendVerificationEmailHtml(verificationUrl, expiresInMinutes, locale),
+          text: generateResendVerificationEmailText(verificationUrl, expiresInMinutes, locale),
+        });
+      }
+    }
+
+    // Always return success to prevent user enumeration
+    // The actual email sending happens asynchronously if conditions are met
   } finally {
     // Normalize timing to prevent user enumeration (AC-1.12)
     await normalizeAuthTiming(startTime);
@@ -344,7 +410,36 @@ export async function login(
   const userAgent = sanitizeUserAgent(context.userAgent);
 
   try {
-    // Check for brute force lockout
+    // Check for IP-based brute force lockout (prevents cross-email enumeration attacks)
+    const ipFailedAttempt = await getFailedAttemptByIP(ipAddress);
+    if (isIPLocked(ipFailedAttempt)) {
+      const remainingSeconds = getRemainingIPLockoutSeconds(ipFailedAttempt);
+      const remainingMinutes = Math.ceil(remainingSeconds / 60);
+
+      await recordAuditEvent(null, "auth.login_blocked_ip", {
+        ip: ipAddress,
+        remainingSeconds,
+        totalAttemptCount: ipFailedAttempt?.total_attempt_count ?? 0,
+        distinctEmailCount: ipFailedAttempt?.distinct_email_count ?? 0,
+        requestId: context.requestId ?? null,
+      });
+
+      throw new HttpError(
+        429,
+        "AUTH_IP_LOCKED",
+        `IP address temporarily locked due to multiple failed login attempts. Try again in ${remainingMinutes} minute${remainingMinutes === 1 ? "" : "s"}.`,
+        {
+          remainingSeconds,
+          lockoutType: "ip",
+          totalAttemptCount: ipFailedAttempt?.total_attempt_count ?? 0,
+          distinctEmailCount: ipFailedAttempt?.distinct_email_count ?? 0,
+          maxAttempts: getMaxIPAttempts(),
+          maxDistinctEmails: getMaxIPDistinctEmails(),
+        },
+      );
+    }
+
+    // Check for account-level brute force lockout
     const failedAttempt = await getFailedAttempt(identifier, ipAddress);
     if (isAccountLocked(failedAttempt)) {
       const remainingSeconds = getRemainingLockoutSeconds(failedAttempt);
@@ -362,6 +457,12 @@ export async function login(
         429,
         "AUTH_ACCOUNT_LOCKED",
         `Account temporarily locked due to multiple failed login attempts. Try again in ${remainingMinutes} minute${remainingMinutes === 1 ? "" : "s"}.`,
+        {
+          remainingSeconds,
+          lockoutType: "account",
+          attemptCount: failedAttempt?.attempt_count ?? 0,
+          maxAttempts: getMaxAccountAttempts(),
+        },
       );
     }
 
@@ -380,9 +481,37 @@ export async function login(
       signAccess({ sub: dummyUserId, role: "athlete", sid: dummySessionId });
 
       // Record failed attempt (even for non-existent users to prevent enumeration)
-      await recordFailedAttempt(identifier, ipAddress, userAgent);
+      const accountAttempt = await recordFailedAttempt(identifier, ipAddress, userAgent);
+      // Also record IP-based attempt
+      const ipAttempt = await recordFailedAttemptByIP(ipAddress, identifier);
 
-      throw new HttpError(401, "AUTH_INVALID_CREDENTIALS", "AUTH_INVALID_CREDENTIALS");
+      // Check if we should warn about approaching lockout
+      const remainingAccountAttempts = getRemainingAccountAttempts(accountAttempt);
+      const remainingIPAttempts = getRemainingIPAttempts(ipAttempt);
+      const minRemaining = Math.min(
+        remainingAccountAttempts,
+        remainingIPAttempts.remainingAttempts,
+        remainingIPAttempts.remainingDistinctEmails,
+      );
+
+      // Include warning in error details if within 3 attempts of lockout
+      const errorDetails: Record<string, unknown> = {};
+      if (minRemaining <= 3 && minRemaining > 0) {
+        errorDetails.warning = true;
+        errorDetails.remainingAccountAttempts = remainingAccountAttempts;
+        errorDetails.remainingIPAttempts = remainingIPAttempts.remainingAttempts;
+        errorDetails.remainingIPDistinctEmails = remainingIPAttempts.remainingDistinctEmails;
+        errorDetails.accountAttemptCount = accountAttempt.attempt_count;
+        errorDetails.ipTotalAttemptCount = ipAttempt.total_attempt_count;
+        errorDetails.ipDistinctEmailCount = ipAttempt.distinct_email_count;
+      }
+
+      throw new HttpError(
+        401,
+        "AUTH_INVALID_CREDENTIALS",
+        "AUTH_INVALID_CREDENTIALS",
+        Object.keys(errorDetails).length > 0 ? errorDetails : undefined,
+      );
     }
 
     const ok = await bcrypt.compare(dto.password, user.password_hash);
@@ -395,6 +524,8 @@ export async function login(
 
       // Record failed attempt
       const attempt = await recordFailedAttempt(identifier, ipAddress, userAgent);
+      // Also record IP-based attempt
+      const ipAttempt = await recordFailedAttemptByIP(ipAddress, identifier);
 
       await recordAuditEvent(user.id, "auth.login_failed", {
         ip: ipAddress,
@@ -403,11 +534,44 @@ export async function login(
         requestId: context.requestId ?? null,
       });
 
-      throw new HttpError(401, "AUTH_INVALID_CREDENTIALS", "AUTH_INVALID_CREDENTIALS");
+      // Check if we should warn about approaching lockout
+      const remainingAccountAttempts = getRemainingAccountAttempts(attempt);
+      const remainingIPAttempts = getRemainingIPAttempts(ipAttempt);
+      const minRemaining = Math.min(
+        remainingAccountAttempts,
+        remainingIPAttempts.remainingAttempts,
+        remainingIPAttempts.remainingDistinctEmails,
+      );
+
+      // Include warning in error details if within 3 attempts of lockout
+      const errorDetails: Record<string, unknown> = {};
+      if (minRemaining <= 3 && minRemaining > 0) {
+        errorDetails.warning = true;
+        errorDetails.remainingAccountAttempts = remainingAccountAttempts;
+        errorDetails.remainingIPAttempts = remainingIPAttempts.remainingAttempts;
+        errorDetails.remainingIPDistinctEmails = remainingIPAttempts.remainingDistinctEmails;
+        errorDetails.accountAttemptCount = attempt.attempt_count;
+        errorDetails.ipTotalAttemptCount = ipAttempt.total_attempt_count;
+        errorDetails.ipDistinctEmailCount = ipAttempt.distinct_email_count;
+      }
+
+      throw new HttpError(
+        401,
+        "AUTH_INVALID_CREDENTIALS",
+        "AUTH_INVALID_CREDENTIALS",
+        Object.keys(errorDetails).length > 0 ? errorDetails : undefined,
+      );
     }
 
     // Successful password authentication - reset failed attempts
     await resetFailedAttempts(identifier, ipAddress);
+    // Also reset IP-based attempts (legitimate user from this IP)
+    await resetFailedAttemptsByIP(ipAddress);
+
+    // Check if user has accepted current terms version
+    if (isTermsVersionOutdated(user.terms_version)) {
+      throw new HttpError(403, "TERMS_VERSION_OUTDATED", "TERMS_VERSION_OUTDATED");
+    }
 
     // Check if user has 2FA enabled
     const has2FA = await is2FAEnabled(user.id);
@@ -556,6 +720,11 @@ export async function verify2FALogin(
     throw new HttpError(401, "AUTH_INVALID_USER", "User not found or inactive");
   }
 
+  // Check if user has accepted current terms version
+  if (isTermsVersionOutdated(user.terms_version)) {
+    throw new HttpError(403, "TERMS_VERSION_OUTDATED", "TERMS_VERSION_OUTDATED");
+  }
+
   // Create full session and issue tokens
   const sessionId = uuidv4();
   const issuedAtIso = new Date().toISOString();
@@ -682,6 +851,11 @@ export async function refresh(
     const user = await findUserById(decoded.sub);
     if (!user || user.status !== "active") {
       throw new HttpError(401, "AUTH_USER_NOT_FOUND", "User not found");
+    }
+
+    // Check if user has accepted current terms version
+    if (isTermsVersionOutdated(user.terms_version)) {
+      throw new HttpError(403, "TERMS_VERSION_OUTDATED", "TERMS_VERSION_OUTDATED");
     }
 
     await revokeRefreshByHash(token_hash);
@@ -942,4 +1116,21 @@ export async function revokeSessions(
   }
 
   return { revoked: revokedCount };
+}
+
+export async function acceptTerms(userId: string): Promise<void> {
+  const now = new Date().toISOString();
+  const termsVersion = getCurrentTermsVersion();
+
+  await db("users").where({ id: userId }).update({
+    terms_accepted: true,
+    terms_accepted_at: now,
+    terms_version: termsVersion,
+    updated_at: now,
+  });
+
+  await recordAuditEvent(userId, "auth.terms_accepted", {
+    termsVersion,
+    acceptedAt: now,
+  });
 }

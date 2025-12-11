@@ -37,7 +37,7 @@ const AdminDashboard: React.FC = () => {
       title="FitVibe Administration"
       description="Manage users, moderate content, and control system settings"
     >
-      <div style={{ display: "grid", gap: "1.5rem" }}>
+      <div className="grid grid--gap-15">
         {/* Admin Navigation */}
         <Card>
           <CardContent>
@@ -51,7 +51,7 @@ const AdminDashboard: React.FC = () => {
               {navItems.map((item) => (
                 <button
                   key={item.path}
-                  onClick={() => navigate(item.path)}
+                  onClick={() => void navigate(item.path)}
                   style={{
                     padding: "1.5rem",
                     borderRadius: "12px",
@@ -92,7 +92,7 @@ const AdminDashboard: React.FC = () => {
                     >
                       {item.icon}
                     </div>
-                    <h3 style={{ fontSize: "1.1rem", fontWeight: 600, margin: 0 }}>{item.label}</h3>
+                    <h3 className="text-11 font-weight-600 m-0">{item.label}</h3>
                   </div>
                   <p
                     style={{ fontSize: "0.9rem", color: "var(--color-text-secondary)", margin: 0 }}

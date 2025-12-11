@@ -10,6 +10,11 @@ export async function up(knex: Knex): Promise<void> {
   // Create materialized view
   await knex.raw(readSql("../views/mv_session_summary.sql"));
 
+  // Create unique index on session_id (required for concurrent refresh)
+  await knex.raw(
+    "CREATE UNIQUE INDEX IF NOT EXISTS idx_session_summary_session_id ON session_summary (session_id);",
+  );
+
   // Create regular view that selects from materialized view
   await knex.raw(readSql("../views/v_session_summary.sql"));
 
@@ -18,8 +23,11 @@ export async function up(knex: Knex): Promise<void> {
 }
 
 export async function down(knex: Knex): Promise<void> {
-  await knex.raw("DROP TRIGGER IF EXISTS trg_session_summary_refresh ON sessions;");
-  await knex.raw("DROP FUNCTION IF EXISTS session_summary_refresh_trigger();");
+  // Drop trigger first to remove dependency on the function
+  await knex.raw("DROP TRIGGER IF EXISTS trg_session_summary_refresh ON sessions CASCADE;");
+  // Use CASCADE to handle case where later migrations (like 202510250102) may have left dependencies
+  // This is safe because we're rolling back to a state before this migration existed
+  await knex.raw("DROP FUNCTION IF EXISTS session_summary_refresh_trigger() CASCADE;");
   await knex.raw("DROP VIEW IF EXISTS v_session_summary;");
   await knex.raw("DROP MATERIALIZED VIEW IF EXISTS session_summary;");
 }

@@ -1,12 +1,17 @@
 import React, { Suspense, lazy } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
-import Login from "../pages/Login";
+import PublicPageLayout from "../components/PublicPageLayout";
+
+const Login = lazy(() => import("../pages/Login"));
 
 const TwoFactorVerificationLogin = lazy(() => import("../pages/TwoFactorVerificationLogin"));
 const Register = lazy(() => import("../pages/Register"));
 const VerifyEmail = lazy(() => import("../pages/VerifyEmail"));
 const ForgotPassword = lazy(() => import("../pages/ForgotPassword"));
 const ResetPassword = lazy(() => import("../pages/ResetPassword"));
+const Terms = lazy(() => import("../pages/Terms"));
+const Privacy = lazy(() => import("../pages/Privacy"));
+const TermsReacceptance = lazy(() => import("../pages/TermsReacceptance"));
 
 const fallback = (
   <div
@@ -27,6 +32,23 @@ const PublicRoutes: React.FC = () => (
       <Route path="/verify" element={<VerifyEmail />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/reset-password" element={<ResetPassword />} />
+      <Route
+        path="/terms"
+        element={
+          <PublicPageLayout>
+            <Terms />
+          </PublicPageLayout>
+        }
+      />
+      <Route
+        path="/privacy"
+        element={
+          <PublicPageLayout>
+            <Privacy />
+          </PublicPageLayout>
+        }
+      />
+      <Route path="/terms-reacceptance" element={<TermsReacceptance />} />
       <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>
   </Suspense>

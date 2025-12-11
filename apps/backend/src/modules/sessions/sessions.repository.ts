@@ -310,7 +310,7 @@ export async function getSessionWithDetails(
   };
 }
 
-export async function createSession(row: Session, trx?: Knex.Transaction) {
+export async function createSession(row: Session, trx?: Knex.Transaction): Promise<number> {
   return executor(trx)("sessions").insert(row);
 }
 
@@ -326,7 +326,11 @@ export async function updateSession(
     .update({ ...updates, updated_at: new Date().toISOString() });
 }
 
-export async function cancelSession(id: string, userId: string, trx?: Knex.Transaction) {
+export async function cancelSession(
+  id: string,
+  userId: string,
+  trx?: Knex.Transaction,
+): Promise<number> {
   const timestamp = new Date().toISOString();
   return executor(trx)("sessions").where({ id, owner_id: userId }).whereNull("deleted_at").update({
     status: "canceled",

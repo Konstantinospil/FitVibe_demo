@@ -9,6 +9,7 @@ acceptance criteria grouped together.
 
 import re
 import os
+import sys
 from pathlib import Path
 from typing import List, Dict, Any
 from datetime import datetime
@@ -842,6 +843,34 @@ def generate_requirement_file(req_id: str, acs: List[Dict[str, Any]], output_dir
 
 def main():
     """Main function to generate requirement files."""
+    import argparse
+    import subprocess
+
+    parser = argparse.ArgumentParser(description="Generate requirement files from AC_Master.md")
+    parser.add_argument(
+        "--auto-plan",
+        action="store_true",
+        help="Automatically trigger project-planning agent after generating requirements",
+    )
+    parser.add_argument(
+        "--git-token",
+        type=str,
+        help="GitHub token for project-planning agent (required if --auto-plan is used with issues mode)",
+    )
+    parser.add_argument(
+        "--plan-mode",
+        type=str,
+        choices=["epics", "stories", "ac", "issues"],
+        default="epics",
+        help="Project-planning agent mode (default: epics)",
+    )
+    parser.add_argument(
+        "--auto-upload",
+        action="store_true",
+        help="Auto-upload issues to GitHub (only for issues mode)",
+    )
+    args = parser.parse_args()
+
     # Determine paths
     script_dir = Path(__file__).parent
     repo_root = script_dir.parent
@@ -882,9 +911,34 @@ def main():
         generate_requirement_file(req_id, acs, output_dir)
 
     print(f"\nGenerated {len(requirements)} requirement files in {output_dir}")
+
+    # Auto-trigger project-planning agent if requested
+    if args.auto_plan:
+        print("\n" + "=" * 60)
+        print("AUTO-TRIGGERING PROJECT-PLANNING AGENT")
+        print("=" * 60)
+        planning_agent = script_dir / "project_planning_agent.py"
+        if not planning_agent.exists():
+            print(f"Warning: Project-planning agent not found at {planning_agent}")
+            return 0
+
+        cmd = [sys.executable, str(planning_agent), "--mode", args.plan_mode]
+        if args.git_token:
+            cmd.extend(["--git-token", args.git_token])
+        if args.auto_upload:
+            cmd.append("--auto-upload")
+
+        try:
+            result = subprocess.run(cmd, check=False, cwd=repo_root)
+            return result.returncode
+        except Exception as e:
+            print(f"Error running project-planning agent: {e}")
+            return 1
+
     return 0
 
 
 if __name__ == "__main__":
+    import sys
     exit(main())
 

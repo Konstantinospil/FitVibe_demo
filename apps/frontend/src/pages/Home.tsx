@@ -1,7 +1,9 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuthStore } from "../store/auth.store";
+import { useRequiredFieldValidation } from "../hooks/useRequiredFieldValidation";
 import {
   listExercises,
   createExercise,
@@ -10,15 +12,6 @@ import {
   type Exercise,
 } from "../services/api";
 import { logger } from "../utils/logger";
-import { scheduleIdleTask } from "../utils/idleScheduler";
-
-// Import SVG icons
-import earthStrengthIcon from "../assets/icons/earth-strength.svg";
-import airAgilityIcon from "../assets/icons/air-agility.svg";
-import waterEnduranceIcon from "../assets/icons/water-endurance.svg";
-import fireExplosivityIcon from "../assets/icons/fire-explosivity.svg";
-import shadowIntelligenceIcon from "../assets/icons/shadow-intelligence.svg";
-import aetherRegenerationIcon from "../assets/icons/aether-regeneration.svg";
 
 type VibeKey =
   | "strength"
@@ -45,50 +38,55 @@ type ExerciseHistoryItem = {
   date: string;
 };
 
-const VIBES: Vibe[] = [
+// Base VIBES configuration without icons (icons loaded dynamically)
+const VIBES_BASE: Omit<Vibe, "icon">[] = [
   {
     key: "strength",
     colorBg: "#FB951D",
     colorText: "#0B0C10",
     colorBorder: "#FB951D",
-    icon: earthStrengthIcon,
   },
   {
     key: "agility",
     colorBg: "#FAE919",
     colorText: "#0B0C10",
     colorBorder: "#FAE919",
-    icon: airAgilityIcon,
   },
   {
     key: "endurance",
     colorBg: "#002322",
     colorText: "#FFFFFF",
     colorBorder: "#5CB2F5",
-    icon: waterEnduranceIcon,
   },
   {
     key: "explosivity",
     colorBg: "#9F2406",
     colorText: "#FFFFFF",
     colorBorder: "#FDC54D",
-    icon: fireExplosivityIcon,
   },
   {
     key: "intelligence",
     colorBg: "#001817",
     colorText: "#FFFFFF",
     colorBorder: "#5CB2F5",
-    icon: shadowIntelligenceIcon,
   },
   {
     key: "regeneration",
     colorBg: "#15523A",
     colorText: "#FFFFFF",
     colorBorder: "#4D7C62",
-    icon: aetherRegenerationIcon,
   },
 ];
+
+// Icon import map for lazy loading
+const ICON_IMPORTS: Record<VibeKey, () => Promise<{ default: string }>> = {
+  strength: () => import("../assets/icons/earth-strength.svg"),
+  agility: () => import("../assets/icons/air-agility.svg"),
+  endurance: () => import("../assets/icons/water-endurance.svg"),
+  explosivity: () => import("../assets/icons/fire-explosivity.svg"),
+  intelligence: () => import("../assets/icons/shadow-intelligence.svg"),
+  regeneration: () => import("../assets/icons/aether-regeneration.svg"),
+};
 
 // Map vibe names to type_code used by backend
 const VIBE_TO_TYPE_CODE: Record<VibeKey, string> = {
@@ -104,6 +102,8 @@ const Home: React.FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const formRef = useRef<HTMLFormElement>(null);
+  useRequiredFieldValidation(formRef, t);
 
   // State declarations (must be before any early returns per React hooks rules)
   const [selectedVibe, setSelectedVibe] = useState<VibeKey | null>(null);
@@ -114,9 +114,26 @@ const Home: React.FC = () => {
   const [exerciseMode, setExerciseMode] = useState<"select" | "create">("select");
   const [exercises, setExercises] = useState<Exercise[]>([]);
   const [selectedExerciseId, setSelectedExerciseId] = useState<string>("");
-  const [exerciseHistory, setExerciseHistory] = useState<ExerciseHistoryItem[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [vibes, setVibes] = useState<Vibe[]>([]);
+  const queryClient = useQueryClient();
+
+  // Lazy load icons after component mount to reduce initial bundle size
+  useEffect(() => {
+    const loadIcons = async () => {
+      const loadedVibes: Vibe[] = await Promise.all(
+        VIBES_BASE.map(async (vibeBase) => {
+          const iconModule = await ICON_IMPORTS[vibeBase.key]();
+          return {
+            ...vibeBase,
+            icon: iconModule.default,
+          };
+        }),
+      );
+      setVibes(loadedVibes);
+    };
+    void loadIcons();
+  }, []);
 
   // Exercise detail form fields
   const [sets, setSets] = useState<string>("");
@@ -129,216 +146,131 @@ const Home: React.FC = () => {
   const [rpe, setRpe] = useState<string>("");
   const [notes, setNotes] = useState<string>("");
 
-  // Fetch exercises for the select dropdown
-  const fetchExercises = useCallback(async () => {
-    if (!selectedVibe) {
-      return;
+  // Calculate date range based on selected period (memoized)
+  const dateRange = useMemo(() => {
+    const now = new Date();
+    const fromDate = new Date(now);
+    const toDate = new Date(now.getTime() + 10000);
+
+    switch (period) {
+      case "day":
+        fromDate.setDate(now.getDate() - 1);
+        break;
+      case "week":
+        fromDate.setDate(now.getDate() - 7);
+        break;
+      case "month":
+        fromDate.setMonth(now.getMonth() - 1);
+        break;
+      case "quarter":
+        fromDate.setMonth(now.getMonth() - 3);
+        break;
+      case "semester":
+        fromDate.setMonth(now.getMonth() - 6);
+        break;
+      case "year":
+        fromDate.setFullYear(now.getFullYear() - 1);
+        break;
     }
-    try {
-      setIsLoading(true);
-      setError(null);
-      const result = await listExercises({
-        type_code: VIBE_TO_TYPE_CODE[selectedVibe],
-        limit: 100,
-      });
-      setExercises(result.data);
-    } catch (err) {
-      logger.apiError("Failed to fetch exercises", err, "/api/v1/exercises", "GET");
-      setError("Failed to load exercises");
-    } finally {
-      setIsLoading(false);
-    }
-  }, [selectedVibe]);
 
-  // Fetch exercise history from sessions
-  const fetchExerciseHistory = useCallback(async () => {
-    try {
-      setIsLoading(true);
-      setError(null);
-
-      // Calculate date range based on selected period
-      const now = new Date();
-      const fromDate = new Date(now);
-      // Add 10 seconds buffer to ensure we catch recently created sessions
-      const toDate = new Date(now.getTime() + 10000);
-
-      switch (period) {
-        case "day":
-          fromDate.setDate(now.getDate() - 1);
-          break;
-        case "week":
-          fromDate.setDate(now.getDate() - 7);
-          break;
-        case "month":
-          fromDate.setMonth(now.getMonth() - 1);
-          break;
-        case "quarter":
-          fromDate.setMonth(now.getMonth() - 3);
-          break;
-        case "semester":
-          fromDate.setMonth(now.getMonth() - 6);
-          break;
-        case "year":
-          fromDate.setFullYear(now.getFullYear() - 1);
-          break;
-      }
-
-      // Fetch all exercises once
-      const allExercisesResult = await listExercises({ limit: 1000 });
-      const exerciseCache = new Map<string, Exercise>();
-      allExercisesResult.data.forEach((ex) => exerciseCache.set(ex.id, ex));
-
-      // Fetch sessions
-      const sessions = await listSessions({
-        planned_from: fromDate.toISOString(),
-        planned_to: toDate.toISOString(),
-        limit: 100,
-      });
-
-      // Extract exercises from sessions and build history
-      const history: ExerciseHistoryItem[] = [];
-
-      for (const session of sessions.data) {
-        for (const sessionExercise of session.exercises) {
-          if (!sessionExercise.exercise_id) {
-            continue;
-          }
-
-          const exercise = exerciseCache.get(sessionExercise.exercise_id);
-          if (exercise && exercise.type_code) {
-            // Map type_code back to vibe
-            const vibeKey = Object.entries(VIBE_TO_TYPE_CODE).find(
-              ([, typeCode]) => typeCode === exercise.type_code,
-            )?.[0] as VibeKey | undefined;
-
-            if (vibeKey) {
-              history.push({
-                id: `${session.id}-${sessionExercise.id}`,
-                name: exercise.name,
-                vibe: vibeKey,
-                date: session.planned_at,
-              });
-            }
-          }
-        }
-      }
-
-      // Sort by date descending (newest first)
-      history.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-
-      setExerciseHistory(history);
-    } catch (err) {
-      logger.apiError("Failed to fetch exercise history", err, "/api/v1/sessions", "GET");
-      setError("Failed to load exercise history");
-    } finally {
-      setIsLoading(false);
-    }
+    return {
+      from: fromDate.toISOString(),
+      to: toDate.toISOString(),
+    };
   }, [period]);
 
-  // Fetch exercises when modal opens in select mode
-  useEffect(() => {
-    if (showModal && exerciseMode === "select" && selectedVibe) {
-      void fetchExercises();
+  // Fetch sessions for history - using React Query for caching
+  const {
+    data: sessionsData,
+    isLoading: sessionsLoading,
+    error: sessionsError,
+  } = useQuery({
+    queryKey: ["sessions", "history", dateRange],
+    queryFn: () =>
+      listSessions({
+        planned_from: dateRange.from,
+        planned_to: dateRange.to,
+        limit: 100,
+      }),
+    staleTime: 60 * 1000, // Cache for 1 minute
+    enabled: isAuthenticated,
+  });
+
+  // Fetch exercises list - cached and only when needed
+  const { data: allExercisesData, isLoading: exercisesLoading } = useQuery({
+    queryKey: ["exercises", "all"],
+    queryFn: () => listExercises({ limit: 1000 }),
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes - exercises don't change often
+    enabled: isAuthenticated && !!sessionsData, // Only fetch after sessions are loaded
+  });
+
+  // Fetch exercises for the select dropdown - only when modal opens
+  const { data: filteredExercises, isLoading: filteredExercisesLoading } = useQuery({
+    queryKey: ["exercises", "filtered", selectedVibe],
+    queryFn: () =>
+      listExercises({
+        type_code: selectedVibe ? VIBE_TO_TYPE_CODE[selectedVibe] : undefined,
+        limit: 100,
+      }),
+    enabled: showModal && exerciseMode === "select" && !!selectedVibe,
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+  });
+
+  // Process exercise history from cached data (memoized)
+  const exerciseHistory = useMemo(() => {
+    if (!sessionsData?.data || !allExercisesData?.data) {
+      return [];
     }
-  }, [showModal, exerciseMode, selectedVibe, fetchExercises]);
 
-  // Fetch exercise history when period changes
-  useEffect(() => {
-    let isCancelled = false;
+    // Build exercise cache once
+    const exerciseCache = new Map<string, Exercise>();
+    allExercisesData.data.forEach((ex) => exerciseCache.set(ex.id, ex));
 
-    setIsLoading(true);
-    const { cancel } = scheduleIdleTask(
-      () => {
-        if (!isCancelled) {
-          void fetchExerciseHistory();
+    // Extract exercises from sessions - optimized single pass
+    const history: ExerciseHistoryItem[] = [];
+
+    for (const session of sessionsData.data) {
+      for (const sessionExercise of session.exercises) {
+        if (!sessionExercise.exercise_id) {
+          continue;
         }
-      },
-      { timeout: 1800 },
-    );
 
-    return () => {
-      isCancelled = true;
-      cancel();
-    };
-  }, [period, fetchExerciseHistory]);
+        const exercise = exerciseCache.get(sessionExercise.exercise_id);
+        if (exercise?.type_code) {
+          // Direct lookup instead of Object.entries().find()
+          const vibeKey = Object.keys(VIBE_TO_TYPE_CODE).find(
+            (key) => VIBE_TO_TYPE_CODE[key as VibeKey] === exercise.type_code,
+          ) as VibeKey | undefined;
 
-  // Authentication guard - redirect to login if not authenticated
-  useEffect(() => {
-    if (!isAuthenticated) {
-      navigate("/login", { replace: true, state: { from: { pathname: "/" } } });
+          if (vibeKey) {
+            history.push({
+              id: `${session.id}-${sessionExercise.id}`,
+              name: exercise.name,
+              vibe: vibeKey,
+              date: session.planned_at,
+            });
+          }
+        }
+      }
     }
-  }, [isAuthenticated, navigate]);
 
-  // Don't render anything if not authenticated (prevents flash before redirect)
-  if (!isAuthenticated) {
-    return null;
-  }
+    // Sort by date descending (newest first)
+    return history.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  }, [sessionsData, allExercisesData]);
 
-  const handleVibeClick = (vibeKey: VibeKey) => {
+  // All hooks must be declared before any early returns
+  const handleVibeClick = useCallback((vibeKey: VibeKey) => {
     setSelectedVibe(vibeKey);
     setShowModal(true);
-  };
+  }, []);
 
-  const handleAddExercise = async () => {
-    if (!selectedVibe) {
-      return;
-    }
-
-    try {
-      setIsLoading(true);
-      setError(null);
-
-      let exerciseId = selectedExerciseId;
-
-      if (exerciseMode === "create") {
-        // Create new exercise
-        const newExercise = await createExercise({
-          name: exerciseName,
-          type_code: VIBE_TO_TYPE_CODE[selectedVibe],
-          is_public: false,
-        });
-        exerciseId = newExercise.id;
-      }
-
-      // Create a session with the exercise data
-      const createdSession = await createSession({
-        planned_at: new Date().toISOString(),
-        visibility: "private",
-        exercises: [
-          {
-            exercise_id: exerciseId,
-            order: 1,
-            notes: notes || null,
-            actual: {
-              sets: sets ? parseInt(sets, 10) : null,
-              reps: reps ? parseInt(reps, 10) : null,
-              load: weight ? parseFloat(weight) : null,
-              distance: distance ? parseFloat(distance) : null,
-              duration: duration ? `PT${duration}M` : null, // ISO 8601 duration format
-              rpe: rpe ? parseInt(rpe, 10) : null,
-              extras: {
-                resistance: resistance || null,
-                speed: speed || null,
-              },
-            },
-          },
-        ],
-      });
-
-      // Optimistically add the new exercise to history
-      const displayName =
-        exerciseMode === "create"
-          ? exerciseName
-          : exercises.find((ex) => ex.id === exerciseId)?.name || "Unknown";
-
-      const newHistoryItem: ExerciseHistoryItem = {
-        id: `${createdSession.id}-${createdSession.exercises[0]?.id || "new"}`,
-        name: displayName,
-        vibe: selectedVibe,
-        date: createdSession.planned_at,
-      };
-
-      setExerciseHistory((prev) => [newHistoryItem, ...prev]);
+  // Create session mutation with React Query
+  const createSessionMutation = useMutation({
+    mutationFn: createSession,
+    onSuccess: () => {
+      // Invalidate queries to refetch fresh data
+      void queryClient.invalidateQueries({ queryKey: ["sessions", "history"] });
+      void queryClient.invalidateQueries({ queryKey: ["exercises"] });
 
       // Close modal and reset
       setShowModal(false);
@@ -355,17 +287,101 @@ const Home: React.FC = () => {
       setSpeed("");
       setRpe("");
       setNotes("");
-
-      // Refresh exercise history in the background to sync with server
-      setTimeout(() => {
-        void fetchExerciseHistory();
-      }, 500);
-    } catch (err) {
+      setError(null);
+    },
+    onError: (err) => {
       logger.apiError("Failed to add exercise", err, "/api/v1/sessions", "POST");
       setError("Failed to add exercise");
-    } finally {
-      setIsLoading(false);
+    },
+  });
+
+  // Create exercise mutation
+  const createExerciseMutation = useMutation({
+    mutationFn: createExercise,
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["exercises"] });
+    },
+  });
+
+  const isLoading = sessionsLoading || exercisesLoading;
+  const isSubmitting = createSessionMutation.isPending || createExerciseMutation.isPending;
+
+  // Update local state when filtered exercises change
+  useEffect(() => {
+    if (filteredExercises?.data) {
+      setExercises(filteredExercises.data);
+    } else {
+      setExercises([]);
     }
+  }, [filteredExercises]);
+
+  // Handle errors
+  useEffect(() => {
+    if (sessionsError) {
+      logger.apiError("Failed to fetch exercise history", sessionsError, "/api/v1/sessions", "GET");
+      setError("Failed to load exercise history");
+    }
+  }, [sessionsError]);
+
+  // Authentication guard - redirect to login if not authenticated
+  useEffect(() => {
+    if (!isAuthenticated) {
+      void navigate("/login", { replace: true, state: { from: { pathname: "/" } } });
+    }
+  }, [isAuthenticated, navigate]);
+
+  // Don't render anything if not authenticated (prevents flash before redirect)
+  if (!isAuthenticated) {
+    return null;
+  }
+
+  const handleAddExercise = async (event?: React.FormEvent<HTMLFormElement>) => {
+    if (event) {
+      event.preventDefault();
+    }
+
+    if (!selectedVibe) {
+      return;
+    }
+
+    setError(null);
+
+    let exerciseId = selectedExerciseId;
+
+    if (exerciseMode === "create") {
+      // Create new exercise
+      const newExercise = await createExerciseMutation.mutateAsync({
+        name: exerciseName,
+        type_code: VIBE_TO_TYPE_CODE[selectedVibe],
+        is_public: false,
+      });
+      exerciseId = newExercise.id;
+    }
+
+    // Create a session with the exercise data
+    await createSessionMutation.mutateAsync({
+      planned_at: new Date().toISOString(),
+      visibility: "private",
+      exercises: [
+        {
+          exercise_id: exerciseId,
+          order: 1,
+          notes: notes || null,
+          actual: {
+            sets: sets ? parseInt(sets, 10) : null,
+            reps: reps ? parseInt(reps, 10) : null,
+            load: weight ? parseFloat(weight) : null,
+            distance: distance ? parseFloat(distance) : null,
+            duration: duration ? `PT${duration}M` : null, // ISO 8601 duration format
+            rpe: rpe ? parseInt(rpe, 10) : null,
+            extras: {
+              resistance: resistance || null,
+              speed: speed || null,
+            },
+          },
+        },
+      ],
+    });
   };
 
   const handleCloseModal = () => {
@@ -391,180 +407,113 @@ const Home: React.FC = () => {
 
   return (
     <main
-      style={{
-        flex: 1,
-        display: "flex",
-        flexDirection: "column",
-        background: "var(--color-bg)",
-        padding: "2rem",
-        gap: "2rem",
-      }}
+      className="flex flex--column p-xl flex--gap-xl"
+      style={{ flex: 1, background: "var(--color-bg)" }}
     >
       <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "1fr 400px",
-          gap: "2rem",
-          maxWidth: "1400px",
-          margin: "0 auto",
-          width: "100%",
-        }}
+        className="grid flex--gap-xl w-full"
+        style={{ gridTemplateColumns: "1fr 400px", maxWidth: "1400px", margin: "0 auto" }}
       >
         {/* Left Side - Vibe Buttons */}
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            gap: "2rem",
-          }}
-        >
+        <div className="flex flex--column flex--gap-xl">
           <div>
             <h1
-              style={{
-                fontSize: "var(--font-size-3xl)",
-                fontWeight: 600,
-                color: "var(--color-text-primary)",
-                marginBottom: "0.5rem",
-                fontFamily: "var(--font-family-heading)",
-              }}
+              className="text-3xl font-weight-600 text-primary mb-05"
+              style={{ fontFamily: "var(--font-family-heading)" }}
             >
               {t("vibesHome.title")}
             </h1>
-            <p
-              style={{
-                fontSize: "var(--font-size-lg)",
-                color: "var(--color-text-muted)",
-              }}
-            >
-              {t("vibesHome.subtitle")}
-            </p>
+            <p className="text-lg text-muted">{t("vibesHome.subtitle")}</p>
           </div>
 
           {/* Vibe Buttons Grid */}
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(3, 1fr)",
-              gap: "2rem",
-              padding: "2rem",
-            }}
-          >
-            {VIBES.map((vibe) => (
-              <div
-                key={vibe.key}
-                style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                  gap: "1rem",
-                }}
-              >
-                <button
-                  type="button"
-                  onClick={() => handleVibeClick(vibe.key)}
-                  onMouseEnter={() => setHoveredVibe(vibe.key)}
-                  onMouseLeave={() => setHoveredVibe(null)}
-                  style={{
-                    width: "140px",
-                    height: "140px",
-                    borderRadius: "50%",
-                    border: `4px solid ${vibe.colorBorder}`,
-                    background: vibe.colorBg,
-                    cursor: "pointer",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    transition: "all 0.3s ease",
-                    transform: hoveredVibe === vibe.key ? "scale(1.1)" : "scale(1)",
-                    boxShadow:
-                      hoveredVibe === vibe.key
-                        ? `0 0 30px ${vibe.colorBorder}88`
-                        : `0 0 15px ${vibe.colorBorder}44`,
-                    padding: "0",
-                    color: vibe.colorText,
-                  }}
-                  aria-label={t(`vibes.${vibe.key}.name`)}
-                >
-                  <img
-                    src={vibe.icon}
-                    alt=""
+          <div className="grid p-xl flex--gap-xl" style={{ gridTemplateColumns: "repeat(3, 1fr)" }}>
+            {vibes.length > 0 ? (
+              vibes.map((vibe) => (
+                <div key={vibe.key} className="flex flex--column flex--align-center flex--gap-md">
+                  <button
+                    type="button"
+                    onClick={() => handleVibeClick(vibe.key)}
+                    onMouseEnter={() => setHoveredVibe(vibe.key)}
+                    onMouseLeave={() => setHoveredVibe(null)}
                     style={{
-                      width: "64px",
-                      height: "64px",
-                      filter:
-                        vibe.colorText === "#FFFFFF" ? "brightness(0) invert(1)" : "brightness(0)",
+                      width: "140px",
+                      height: "140px",
+                      borderRadius: "50%",
+                      border: `4px solid ${vibe.colorBorder}`,
+                      background: vibe.colorBg,
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      transition: "all 0.3s ease",
+                      transform: hoveredVibe === vibe.key ? "scale(1.1)" : "scale(1)",
+                      boxShadow:
+                        hoveredVibe === vibe.key
+                          ? `0 0 30px ${vibe.colorBorder}88`
+                          : `0 0 15px ${vibe.colorBorder}44`,
+                      padding: "0",
+                      color: vibe.colorText,
                     }}
-                  />
-                </button>
-
-                {/* Hover Info */}
-                <div
-                  style={{
-                    textAlign: "center",
-                    opacity: hoveredVibe === vibe.key ? 1 : 0.6,
-                    transition: "opacity 0.3s ease",
-                    minHeight: "80px",
-                  }}
-                >
-                  <div
-                    style={{
-                      fontSize: "var(--font-size-lg)",
-                      fontWeight: 600,
-                      color: vibe.colorBg,
-                      marginBottom: "0.25rem",
-                    }}
+                    aria-label={t(`vibes.${vibe.key}.name`)}
                   >
-                    {t(`vibes.${vibe.key}.name`)}
-                  </div>
-                  <div
-                    style={{
-                      fontSize: "var(--font-size-xs)",
-                      color: "var(--color-text-secondary)",
-                      fontStyle: "italic",
-                      marginBottom: "0.5rem",
-                    }}
-                  >
-                    {t(`vibes.${vibe.key}.element`)}
-                  </div>
-                  {hoveredVibe === vibe.key && (
-                    <div
+                    <img
+                      src={vibe.icon}
+                      alt=""
+                      loading="lazy"
+                      width="64"
+                      height="64"
                       style={{
-                        fontSize: "var(--font-size-sm)",
-                        color: "var(--color-text-muted)",
-                        lineHeight: "1.4",
+                        width: "64px",
+                        height: "64px",
+                        filter:
+                          vibe.colorText === "#FFFFFF"
+                            ? "brightness(0) invert(1)"
+                            : "brightness(0)",
                       }}
-                    >
-                      {t(`vibes.${vibe.key}.activities`)}
+                    />
+                  </button>
+
+                  {/* Hover Info */}
+                  <div
+                    className="text-center"
+                    style={{
+                      opacity: hoveredVibe === vibe.key ? 1 : 0.6,
+                      transition: "opacity 0.3s ease",
+                      minHeight: "80px",
+                    }}
+                  >
+                    <div className="text-lg font-weight-600 mb-025" style={{ color: vibe.colorBg }}>
+                      {t(`vibes.${vibe.key}.name`)}
                     </div>
-                  )}
+                    <div className="text-xs text-secondary mb-05" style={{ fontStyle: "italic" }}>
+                      {t(`vibes.${vibe.key}.element`)}
+                    </div>
+                    {hoveredVibe === vibe.key && (
+                      <div className="text-sm text-muted" style={{ lineHeight: "1.4" }}>
+                        {t(`vibes.${vibe.key}.activities`)}
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))
+            ) : (
+              <div className="text-center text-muted">Loading vibes...</div>
+            )}
           </div>
         </div>
 
         {/* Right Side - Exercise History */}
         <div
+          className="card flex flex--column"
           style={{
-            background: "var(--color-surface)",
-            borderRadius: "18px",
-            border: "1px solid var(--color-border)",
-            padding: "1.5rem",
             height: "fit-content",
             maxHeight: "calc(100vh - 200px)",
             overflow: "hidden",
-            display: "flex",
-            flexDirection: "column",
+            padding: "1.5rem",
           }}
         >
-          <h2
-            style={{
-              fontSize: "var(--font-size-xl)",
-              fontWeight: 600,
-              color: "var(--color-text-primary)",
-              marginBottom: "1rem",
-            }}
-          >
+          <h2 className="text-xl font-weight-600 text-primary mb-1">
             {t("vibesHome.history.title")}
           </h2>
 
@@ -639,7 +588,7 @@ const Home: React.FC = () => {
               </div>
             ) : (
               exerciseHistory.map((exercise) => {
-                const vibeColor = VIBES.find((v) => v.key === exercise.vibe)?.colorBg || "#ccc";
+                const vibeColor = vibes.find((v) => v.key === exercise.vibe)?.colorBg || "#ccc";
                 return (
                   <div
                     key={exercise.id}
@@ -711,7 +660,7 @@ const Home: React.FC = () => {
             style={{
               background: "var(--color-surface)",
               borderRadius: "18px",
-              border: `2px solid ${VIBES.find((v) => v.key === selectedVibe)?.colorBorder}`,
+              border: `2px solid ${vibes.find((v) => v.key === selectedVibe)?.colorBorder}`,
               padding: "2rem",
               maxWidth: "700px",
               width: "100%",
@@ -720,448 +669,102 @@ const Home: React.FC = () => {
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            <h3
-              style={{
-                fontSize: "var(--font-size-2xl)",
-                fontWeight: 600,
-                color: "var(--color-text-primary)",
-                marginBottom: "1.5rem",
-              }}
+            <form
+              ref={formRef}
+              // eslint-disable-next-line @typescript-eslint/no-misused-promises
+              onSubmit={handleAddExercise}
+              className="form form--gap-lg"
             >
-              {t("vibesHome.addExercise.title")}
-            </h3>
-
-            {/* Error Message */}
-            {error && (
-              <div
+              <h3
                 style={{
-                  padding: "0.75rem",
-                  borderRadius: "12px",
-                  background: "var(--color-error-bg)",
-                  border: "1px solid var(--color-error-border)",
-                  color: "var(--color-error-text)",
-                  marginBottom: "1rem",
-                  fontSize: "var(--font-size-sm)",
-                }}
-              >
-                {error}
-              </div>
-            )}
-
-            {/* Mode Selector */}
-            <div
-              style={{
-                display: "flex",
-                gap: "1rem",
-                marginBottom: "1.5rem",
-              }}
-            >
-              <button
-                type="button"
-                onClick={() => {
-                  setExerciseMode("select");
-                  setExerciseName("");
-                  setError(null);
-                }}
-                style={{
-                  flex: 1,
-                  padding: "0.75rem",
-                  borderRadius: "12px",
-                  border: `2px solid ${exerciseMode === "select" ? VIBES.find((v) => v.key === selectedVibe)?.colorBorder : "var(--color-border)"}`,
-                  background:
-                    exerciseMode === "select"
-                      ? `${VIBES.find((v) => v.key === selectedVibe)?.colorBg}22`
-                      : "transparent",
-                  color: "var(--color-text-primary)",
-                  fontSize: "var(--font-size-md)",
-                  cursor: "pointer",
-                  fontWeight: exerciseMode === "select" ? 600 : 400,
-                }}
-              >
-                {t("vibesHome.addExercise.selectExisting")}
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setExerciseMode("create");
-                  setSelectedExerciseId("");
-                  setError(null);
-                }}
-                style={{
-                  flex: 1,
-                  padding: "0.75rem",
-                  borderRadius: "12px",
-                  border: `2px solid ${exerciseMode === "create" ? VIBES.find((v) => v.key === selectedVibe)?.colorBorder : "var(--color-border)"}`,
-                  background:
-                    exerciseMode === "create"
-                      ? `${VIBES.find((v) => v.key === selectedVibe)?.colorBg}22`
-                      : "transparent",
-                  color: "var(--color-text-primary)",
-                  fontSize: "var(--font-size-md)",
-                  cursor: "pointer",
-                  fontWeight: exerciseMode === "create" ? 600 : 400,
-                }}
-              >
-                {t("vibesHome.addExercise.createNew")}
-              </button>
-            </div>
-
-            {/* Exercise Input */}
-            <div style={{ marginBottom: "1.5rem" }}>
-              <label
-                htmlFor="exercise-name"
-                style={{
-                  fontSize: "var(--font-size-sm)",
-                  color: "var(--color-text-secondary)",
-                  marginBottom: "0.5rem",
-                  display: "block",
-                }}
-              >
-                {t("vibesHome.addExercise.exerciseName")}
-              </label>
-              {exerciseMode === "select" ? (
-                <select
-                  id="exercise-name"
-                  value={selectedExerciseId}
-                  onChange={(e) => setSelectedExerciseId(e.target.value)}
-                  disabled={isLoading}
-                  style={{
-                    width: "100%",
-                    padding: "0.75rem",
-                    borderRadius: "12px",
-                    border: "1px solid var(--color-border)",
-                    background: "var(--color-bg)",
-                    color: "var(--color-text-primary)",
-                    fontSize: "var(--font-size-md)",
-                    cursor: isLoading ? "wait" : "pointer",
-                  }}
-                >
-                  <option value="">{isLoading ? t("common.loading") : "Select exercise..."}</option>
-                  {exercises.map((ex) => (
-                    <option key={ex.id} value={ex.id}>
-                      {ex.name}
-                    </option>
-                  ))}
-                </select>
-              ) : (
-                <input
-                  id="exercise-name"
-                  type="text"
-                  value={exerciseName}
-                  onChange={(e) => setExerciseName(e.target.value)}
-                  placeholder={t("vibesHome.addExercise.exerciseNamePlaceholder")}
-                  disabled={isLoading}
-                  style={{
-                    width: "100%",
-                    padding: "0.75rem",
-                    borderRadius: "12px",
-                    border: "1px solid var(--color-border)",
-                    background: "var(--color-bg)",
-                    color: "var(--color-text-primary)",
-                    fontSize: "var(--font-size-md)",
-                  }}
-                />
-              )}
-            </div>
-
-            {/* Exercise Details Section */}
-            <div
-              style={{
-                marginBottom: "1.5rem",
-                padding: "1.5rem",
-                borderRadius: "12px",
-                background: "var(--color-bg)",
-                border: "1px solid var(--color-border)",
-              }}
-            >
-              <h4
-                style={{
-                  fontSize: "var(--font-size-md)",
+                  fontSize: "var(--font-size-2xl)",
                   fontWeight: 600,
                   color: "var(--color-text-primary)",
-                  marginBottom: "1rem",
+                  marginBottom: "1.5rem",
                 }}
               >
-                {t("vibesHome.addExercise.exerciseDetails")}
-              </h4>
+                {t("vibesHome.addExercise.title")}
+              </h3>
 
+              {/* Error Message */}
+              {error && (
+                <div
+                  style={{
+                    padding: "0.75rem",
+                    borderRadius: "12px",
+                    background: "var(--color-error-bg)",
+                    border: "1px solid var(--color-error-border)",
+                    color: "var(--color-error-text)",
+                    marginBottom: "1rem",
+                    fontSize: "var(--font-size-sm)",
+                  }}
+                >
+                  {error}
+                </div>
+              )}
+
+              {/* Mode Selector */}
               <div
                 style={{
-                  display: "grid",
-                  gridTemplateColumns: "1fr 1fr",
+                  display: "flex",
                   gap: "1rem",
+                  marginBottom: "1.5rem",
                 }}
               >
-                {/* Sets */}
-                <div>
-                  <label
-                    htmlFor="sets"
-                    style={{
-                      fontSize: "var(--font-size-sm)",
-                      color: "var(--color-text-secondary)",
-                      marginBottom: "0.5rem",
-                      display: "block",
-                    }}
-                  >
-                    {t("vibesHome.addExercise.sets")}
-                  </label>
-                  <input
-                    id="sets"
-                    type="number"
-                    min="0"
-                    value={sets}
-                    onChange={(e) => setSets(e.target.value)}
-                    placeholder={t("vibesHome.addExercise.setsPlaceholder")}
-                    disabled={isLoading}
-                    style={{
-                      width: "100%",
-                      padding: "0.75rem",
-                      borderRadius: "12px",
-                      border: "1px solid var(--color-border)",
-                      background: "var(--color-surface)",
-                      color: "var(--color-text-primary)",
-                      fontSize: "var(--font-size-md)",
-                    }}
-                  />
-                </div>
-
-                {/* Reps */}
-                <div>
-                  <label
-                    htmlFor="reps"
-                    style={{
-                      fontSize: "var(--font-size-sm)",
-                      color: "var(--color-text-secondary)",
-                      marginBottom: "0.5rem",
-                      display: "block",
-                    }}
-                  >
-                    {t("vibesHome.addExercise.reps")}
-                  </label>
-                  <input
-                    id="reps"
-                    type="number"
-                    min="0"
-                    value={reps}
-                    onChange={(e) => setReps(e.target.value)}
-                    placeholder={t("vibesHome.addExercise.repsPlaceholder")}
-                    disabled={isLoading}
-                    style={{
-                      width: "100%",
-                      padding: "0.75rem",
-                      borderRadius: "12px",
-                      border: "1px solid var(--color-border)",
-                      background: "var(--color-surface)",
-                      color: "var(--color-text-primary)",
-                      fontSize: "var(--font-size-md)",
-                    }}
-                  />
-                </div>
-
-                {/* Weight */}
-                <div>
-                  <label
-                    htmlFor="weight"
-                    style={{
-                      fontSize: "var(--font-size-sm)",
-                      color: "var(--color-text-secondary)",
-                      marginBottom: "0.5rem",
-                      display: "block",
-                    }}
-                  >
-                    {t("vibesHome.addExercise.weight")}
-                  </label>
-                  <input
-                    id="weight"
-                    type="number"
-                    min="0"
-                    step="0.5"
-                    value={weight}
-                    onChange={(e) => setWeight(e.target.value)}
-                    placeholder={t("vibesHome.addExercise.weightPlaceholder")}
-                    disabled={isLoading}
-                    style={{
-                      width: "100%",
-                      padding: "0.75rem",
-                      borderRadius: "12px",
-                      border: "1px solid var(--color-border)",
-                      background: "var(--color-surface)",
-                      color: "var(--color-text-primary)",
-                      fontSize: "var(--font-size-md)",
-                    }}
-                  />
-                </div>
-
-                {/* RPE */}
-                <div>
-                  <label
-                    htmlFor="rpe"
-                    style={{
-                      fontSize: "var(--font-size-sm)",
-                      color: "var(--color-text-secondary)",
-                      marginBottom: "0.5rem",
-                      display: "block",
-                    }}
-                  >
-                    {t("vibesHome.addExercise.rpe")}
-                  </label>
-                  <input
-                    id="rpe"
-                    type="number"
-                    min="1"
-                    max="10"
-                    value={rpe}
-                    onChange={(e) => setRpe(e.target.value)}
-                    placeholder={t("vibesHome.addExercise.rpePlaceholder")}
-                    disabled={isLoading}
-                    style={{
-                      width: "100%",
-                      padding: "0.75rem",
-                      borderRadius: "12px",
-                      border: "1px solid var(--color-border)",
-                      background: "var(--color-surface)",
-                      color: "var(--color-text-primary)",
-                      fontSize: "var(--font-size-md)",
-                    }}
-                  />
-                </div>
-
-                {/* Duration */}
-                <div>
-                  <label
-                    htmlFor="duration"
-                    style={{
-                      fontSize: "var(--font-size-sm)",
-                      color: "var(--color-text-secondary)",
-                      marginBottom: "0.5rem",
-                      display: "block",
-                    }}
-                  >
-                    {t("vibesHome.addExercise.duration")}
-                  </label>
-                  <input
-                    id="duration"
-                    type="number"
-                    min="0"
-                    value={duration}
-                    onChange={(e) => setDuration(e.target.value)}
-                    placeholder={t("vibesHome.addExercise.durationPlaceholder")}
-                    disabled={isLoading}
-                    style={{
-                      width: "100%",
-                      padding: "0.75rem",
-                      borderRadius: "12px",
-                      border: "1px solid var(--color-border)",
-                      background: "var(--color-surface)",
-                      color: "var(--color-text-primary)",
-                      fontSize: "var(--font-size-md)",
-                    }}
-                  />
-                </div>
-
-                {/* Distance */}
-                <div>
-                  <label
-                    htmlFor="distance"
-                    style={{
-                      fontSize: "var(--font-size-sm)",
-                      color: "var(--color-text-secondary)",
-                      marginBottom: "0.5rem",
-                      display: "block",
-                    }}
-                  >
-                    {t("vibesHome.addExercise.distance")}
-                  </label>
-                  <input
-                    id="distance"
-                    type="number"
-                    min="0"
-                    step="0.1"
-                    value={distance}
-                    onChange={(e) => setDistance(e.target.value)}
-                    placeholder={t("vibesHome.addExercise.distancePlaceholder")}
-                    disabled={isLoading}
-                    style={{
-                      width: "100%",
-                      padding: "0.75rem",
-                      borderRadius: "12px",
-                      border: "1px solid var(--color-border)",
-                      background: "var(--color-surface)",
-                      color: "var(--color-text-primary)",
-                      fontSize: "var(--font-size-md)",
-                    }}
-                  />
-                </div>
-
-                {/* Resistance */}
-                <div>
-                  <label
-                    htmlFor="resistance"
-                    style={{
-                      fontSize: "var(--font-size-sm)",
-                      color: "var(--color-text-secondary)",
-                      marginBottom: "0.5rem",
-                      display: "block",
-                    }}
-                  >
-                    {t("vibesHome.addExercise.resistance")}
-                  </label>
-                  <input
-                    id="resistance"
-                    type="text"
-                    value={resistance}
-                    onChange={(e) => setResistance(e.target.value)}
-                    placeholder={t("vibesHome.addExercise.resistancePlaceholder")}
-                    disabled={isLoading}
-                    style={{
-                      width: "100%",
-                      padding: "0.75rem",
-                      borderRadius: "12px",
-                      border: "1px solid var(--color-border)",
-                      background: "var(--color-surface)",
-                      color: "var(--color-text-primary)",
-                      fontSize: "var(--font-size-md)",
-                    }}
-                  />
-                </div>
-
-                {/* Speed */}
-                <div>
-                  <label
-                    htmlFor="speed"
-                    style={{
-                      fontSize: "var(--font-size-sm)",
-                      color: "var(--color-text-secondary)",
-                      marginBottom: "0.5rem",
-                      display: "block",
-                    }}
-                  >
-                    {t("vibesHome.addExercise.speed")}
-                  </label>
-                  <input
-                    id="speed"
-                    type="text"
-                    value={speed}
-                    onChange={(e) => setSpeed(e.target.value)}
-                    placeholder={t("vibesHome.addExercise.speedPlaceholder")}
-                    disabled={isLoading}
-                    style={{
-                      width: "100%",
-                      padding: "0.75rem",
-                      borderRadius: "12px",
-                      border: "1px solid var(--color-border)",
-                      background: "var(--color-surface)",
-                      color: "var(--color-text-primary)",
-                      fontSize: "var(--font-size-md)",
-                    }}
-                  />
-                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setExerciseMode("select");
+                    setExerciseName("");
+                    setError(null);
+                  }}
+                  style={{
+                    flex: 1,
+                    padding: "0.75rem",
+                    borderRadius: "12px",
+                    border: `2px solid ${exerciseMode === "select" ? vibes.find((v) => v.key === selectedVibe)?.colorBorder : "var(--color-border)"}`,
+                    background:
+                      exerciseMode === "select"
+                        ? `${vibes.find((v) => v.key === selectedVibe)?.colorBg}22`
+                        : "transparent",
+                    color: "var(--color-text-primary)",
+                    fontSize: "var(--font-size-md)",
+                    cursor: "pointer",
+                    fontWeight: exerciseMode === "select" ? 600 : 400,
+                  }}
+                >
+                  {t("vibesHome.addExercise.selectExisting")}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setExerciseMode("create");
+                    setSelectedExerciseId("");
+                    setError(null);
+                  }}
+                  style={{
+                    flex: 1,
+                    padding: "0.75rem",
+                    borderRadius: "12px",
+                    border: `2px solid ${exerciseMode === "create" ? vibes.find((v) => v.key === selectedVibe)?.colorBorder : "var(--color-border)"}`,
+                    background:
+                      exerciseMode === "create"
+                        ? `${vibes.find((v) => v.key === selectedVibe)?.colorBg}22`
+                        : "transparent",
+                    color: "var(--color-text-primary)",
+                    fontSize: "var(--font-size-md)",
+                    cursor: "pointer",
+                    fontWeight: exerciseMode === "create" ? 600 : 400,
+                  }}
+                >
+                  {t("vibesHome.addExercise.createNew")}
+                </button>
               </div>
 
-              {/* Notes - full width */}
-              <div style={{ marginTop: "1rem" }}>
+              {/* Exercise Input */}
+              <div style={{ marginBottom: "1.5rem" }}>
                 <label
-                  htmlFor="notes"
+                  htmlFor="exercise-name"
                   style={{
                     fontSize: "var(--font-size-sm)",
                     color: "var(--color-text-secondary)",
@@ -1169,111 +772,446 @@ const Home: React.FC = () => {
                     display: "block",
                   }}
                 >
-                  {t("vibesHome.addExercise.notes")}
+                  {t("vibesHome.addExercise.exerciseName")}
                 </label>
-                <textarea
-                  id="notes"
-                  value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
-                  placeholder={t("vibesHome.addExercise.notesPlaceholder")}
-                  disabled={isLoading}
-                  rows={3}
+                {exerciseMode === "select" ? (
+                  <select
+                    id="exercise-name"
+                    name="exercise-name"
+                    value={selectedExerciseId}
+                    onChange={(e) => setSelectedExerciseId(e.target.value)}
+                    disabled={isSubmitting || filteredExercisesLoading}
+                    required={exerciseMode === "select"}
+                    style={{
+                      width: "100%",
+                      padding: "0.75rem",
+                      borderRadius: "12px",
+                      border: "1px solid var(--color-border)",
+                      background: "var(--color-bg)",
+                      color: "var(--color-text-primary)",
+                      fontSize: "var(--font-size-md)",
+                      cursor: isLoading ? "wait" : "pointer",
+                    }}
+                  >
+                    <option value="">
+                      {isLoading ? t("common.loading") : "Select exercise..."}
+                    </option>
+                    {exercises.map((ex) => (
+                      <option key={ex.id} value={ex.id}>
+                        {ex.name}
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  <input
+                    id="exercise-name"
+                    name="exercise-name"
+                    type="text"
+                    value={exerciseName}
+                    onChange={(e) => setExerciseName(e.target.value)}
+                    placeholder={t("vibesHome.addExercise.exerciseNamePlaceholder")}
+                    disabled={isSubmitting || filteredExercisesLoading}
+                    required={exerciseMode === "create"}
+                    style={{
+                      width: "100%",
+                      padding: "0.75rem",
+                      borderRadius: "12px",
+                      border: "1px solid var(--color-border)",
+                      background: "var(--color-bg)",
+                      color: "var(--color-text-primary)",
+                      fontSize: "var(--font-size-md)",
+                    }}
+                  />
+                )}
+              </div>
+
+              {/* Exercise Details Section */}
+              <div
+                style={{
+                  marginBottom: "1.5rem",
+                  padding: "1.5rem",
+                  borderRadius: "12px",
+                  background: "var(--color-bg)",
+                  border: "1px solid var(--color-border)",
+                }}
+              >
+                <h4
                   style={{
-                    width: "100%",
+                    fontSize: "var(--font-size-md)",
+                    fontWeight: 600,
+                    color: "var(--color-text-primary)",
+                    marginBottom: "1rem",
+                  }}
+                >
+                  {t("vibesHome.addExercise.exerciseDetails")}
+                </h4>
+
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "1fr 1fr",
+                    gap: "1rem",
+                  }}
+                >
+                  {/* Sets */}
+                  <div>
+                    <label
+                      htmlFor="sets"
+                      style={{
+                        fontSize: "var(--font-size-sm)",
+                        color: "var(--color-text-secondary)",
+                        marginBottom: "0.5rem",
+                        display: "block",
+                      }}
+                    >
+                      {t("vibesHome.addExercise.sets")}
+                    </label>
+                    <input
+                      id="sets"
+                      type="number"
+                      min="0"
+                      value={sets}
+                      onChange={(e) => setSets(e.target.value)}
+                      placeholder={t("vibesHome.addExercise.setsPlaceholder")}
+                      disabled={isSubmitting || filteredExercisesLoading}
+                      style={{
+                        width: "100%",
+                        padding: "0.75rem",
+                        borderRadius: "12px",
+                        border: "1px solid var(--color-border)",
+                        background: "var(--color-surface)",
+                        color: "var(--color-text-primary)",
+                        fontSize: "var(--font-size-md)",
+                      }}
+                    />
+                  </div>
+
+                  {/* Reps */}
+                  <div>
+                    <label
+                      htmlFor="reps"
+                      style={{
+                        fontSize: "var(--font-size-sm)",
+                        color: "var(--color-text-secondary)",
+                        marginBottom: "0.5rem",
+                        display: "block",
+                      }}
+                    >
+                      {t("vibesHome.addExercise.reps")}
+                    </label>
+                    <input
+                      id="reps"
+                      type="number"
+                      min="0"
+                      value={reps}
+                      onChange={(e) => setReps(e.target.value)}
+                      placeholder={t("vibesHome.addExercise.repsPlaceholder")}
+                      disabled={isSubmitting || filteredExercisesLoading}
+                      style={{
+                        width: "100%",
+                        padding: "0.75rem",
+                        borderRadius: "12px",
+                        border: "1px solid var(--color-border)",
+                        background: "var(--color-surface)",
+                        color: "var(--color-text-primary)",
+                        fontSize: "var(--font-size-md)",
+                      }}
+                    />
+                  </div>
+
+                  {/* Weight */}
+                  <div>
+                    <label
+                      htmlFor="weight"
+                      style={{
+                        fontSize: "var(--font-size-sm)",
+                        color: "var(--color-text-secondary)",
+                        marginBottom: "0.5rem",
+                        display: "block",
+                      }}
+                    >
+                      {t("vibesHome.addExercise.weight")}
+                    </label>
+                    <input
+                      id="weight"
+                      type="number"
+                      min="0"
+                      step="0.5"
+                      value={weight}
+                      onChange={(e) => setWeight(e.target.value)}
+                      placeholder={t("vibesHome.addExercise.weightPlaceholder")}
+                      disabled={isSubmitting || filteredExercisesLoading}
+                      style={{
+                        width: "100%",
+                        padding: "0.75rem",
+                        borderRadius: "12px",
+                        border: "1px solid var(--color-border)",
+                        background: "var(--color-surface)",
+                        color: "var(--color-text-primary)",
+                        fontSize: "var(--font-size-md)",
+                      }}
+                    />
+                  </div>
+
+                  {/* RPE */}
+                  <div>
+                    <label
+                      htmlFor="rpe"
+                      style={{
+                        fontSize: "var(--font-size-sm)",
+                        color: "var(--color-text-secondary)",
+                        marginBottom: "0.5rem",
+                        display: "block",
+                      }}
+                    >
+                      {t("vibesHome.addExercise.rpe")}
+                    </label>
+                    <input
+                      id="rpe"
+                      type="number"
+                      min="1"
+                      max="10"
+                      value={rpe}
+                      onChange={(e) => setRpe(e.target.value)}
+                      placeholder={t("vibesHome.addExercise.rpePlaceholder")}
+                      disabled={isSubmitting || filteredExercisesLoading}
+                      style={{
+                        width: "100%",
+                        padding: "0.75rem",
+                        borderRadius: "12px",
+                        border: "1px solid var(--color-border)",
+                        background: "var(--color-surface)",
+                        color: "var(--color-text-primary)",
+                        fontSize: "var(--font-size-md)",
+                      }}
+                    />
+                  </div>
+
+                  {/* Duration */}
+                  <div>
+                    <label
+                      htmlFor="duration"
+                      style={{
+                        fontSize: "var(--font-size-sm)",
+                        color: "var(--color-text-secondary)",
+                        marginBottom: "0.5rem",
+                        display: "block",
+                      }}
+                    >
+                      {t("vibesHome.addExercise.duration")}
+                    </label>
+                    <input
+                      id="duration"
+                      type="number"
+                      min="0"
+                      value={duration}
+                      onChange={(e) => setDuration(e.target.value)}
+                      placeholder={t("vibesHome.addExercise.durationPlaceholder")}
+                      disabled={isSubmitting || filteredExercisesLoading}
+                      style={{
+                        width: "100%",
+                        padding: "0.75rem",
+                        borderRadius: "12px",
+                        border: "1px solid var(--color-border)",
+                        background: "var(--color-surface)",
+                        color: "var(--color-text-primary)",
+                        fontSize: "var(--font-size-md)",
+                      }}
+                    />
+                  </div>
+
+                  {/* Distance */}
+                  <div>
+                    <label
+                      htmlFor="distance"
+                      style={{
+                        fontSize: "var(--font-size-sm)",
+                        color: "var(--color-text-secondary)",
+                        marginBottom: "0.5rem",
+                        display: "block",
+                      }}
+                    >
+                      {t("vibesHome.addExercise.distance")}
+                    </label>
+                    <input
+                      id="distance"
+                      type="number"
+                      min="0"
+                      step="0.1"
+                      value={distance}
+                      onChange={(e) => setDistance(e.target.value)}
+                      placeholder={t("vibesHome.addExercise.distancePlaceholder")}
+                      disabled={isSubmitting || filteredExercisesLoading}
+                      style={{
+                        width: "100%",
+                        padding: "0.75rem",
+                        borderRadius: "12px",
+                        border: "1px solid var(--color-border)",
+                        background: "var(--color-surface)",
+                        color: "var(--color-text-primary)",
+                        fontSize: "var(--font-size-md)",
+                      }}
+                    />
+                  </div>
+
+                  {/* Resistance */}
+                  <div>
+                    <label
+                      htmlFor="resistance"
+                      style={{
+                        fontSize: "var(--font-size-sm)",
+                        color: "var(--color-text-secondary)",
+                        marginBottom: "0.5rem",
+                        display: "block",
+                      }}
+                    >
+                      {t("vibesHome.addExercise.resistance")}
+                    </label>
+                    <input
+                      id="resistance"
+                      type="text"
+                      value={resistance}
+                      onChange={(e) => setResistance(e.target.value)}
+                      placeholder={t("vibesHome.addExercise.resistancePlaceholder")}
+                      disabled={isSubmitting || filteredExercisesLoading}
+                      style={{
+                        width: "100%",
+                        padding: "0.75rem",
+                        borderRadius: "12px",
+                        border: "1px solid var(--color-border)",
+                        background: "var(--color-surface)",
+                        color: "var(--color-text-primary)",
+                        fontSize: "var(--font-size-md)",
+                      }}
+                    />
+                  </div>
+
+                  {/* Speed */}
+                  <div>
+                    <label htmlFor="speed" className="form-label-text block mb-05">
+                      {t("vibesHome.addExercise.speed")}
+                    </label>
+                    <input
+                      id="speed"
+                      type="text"
+                      value={speed}
+                      onChange={(e) => setSpeed(e.target.value)}
+                      placeholder={t("vibesHome.addExercise.speedPlaceholder")}
+                      disabled={isSubmitting || filteredExercisesLoading}
+                      className="form-input"
+                      style={{ background: "var(--color-surface)" }}
+                    />
+                  </div>
+                </div>
+
+                {/* Notes - full width */}
+                <div className="mt-1">
+                  <label htmlFor="notes" className="form-label-text block mb-05">
+                    {t("vibesHome.addExercise.notes")}
+                  </label>
+                  <textarea
+                    id="notes"
+                    value={notes}
+                    onChange={(e) => setNotes(e.target.value)}
+                    placeholder={t("vibesHome.addExercise.notesPlaceholder")}
+                    disabled={isSubmitting || filteredExercisesLoading}
+                    rows={3}
+                    style={{
+                      width: "100%",
+                      padding: "0.75rem",
+                      borderRadius: "12px",
+                      border: "1px solid var(--color-border)",
+                      background: "var(--color-surface)",
+                      color: "var(--color-text-primary)",
+                      fontSize: "var(--font-size-md)",
+                      fontFamily: "inherit",
+                      resize: "vertical",
+                    }}
+                  />
+                </div>
+              </div>
+
+              {/* Selected Vibe Display */}
+              <div
+                style={{
+                  padding: "1rem",
+                  borderRadius: "12px",
+                  background: `${vibes.find((v) => v.key === selectedVibe)?.colorBg}22`,
+                  border: `1px solid ${vibes.find((v) => v.key === selectedVibe)?.colorBorder}`,
+                  marginBottom: "1.5rem",
+                }}
+              >
+                <div
+                  style={{
+                    fontSize: "var(--font-size-sm)",
+                    color: "var(--color-text-secondary)",
+                    marginBottom: "0.25rem",
+                  }}
+                >
+                  {t("vibesHome.addExercise.selectVibe")}
+                </div>
+                <div
+                  style={{
+                    fontSize: "var(--font-size-lg)",
+                    fontWeight: 600,
+                    color: vibes.find((v) => v.key === selectedVibe)?.colorBg,
+                  }}
+                >
+                  {t(`vibes.${selectedVibe}.name`)} ({t(`vibes.${selectedVibe}.element`)})
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div
+                style={{
+                  display: "flex",
+                  gap: "1rem",
+                }}
+              >
+                <button
+                  type="button"
+                  onClick={handleCloseModal}
+                  disabled={isSubmitting}
+                  style={{
+                    flex: 1,
                     padding: "0.75rem",
                     borderRadius: "12px",
                     border: "1px solid var(--color-border)",
-                    background: "var(--color-surface)",
+                    background: "transparent",
                     color: "var(--color-text-primary)",
                     fontSize: "var(--font-size-md)",
-                    fontFamily: "inherit",
-                    resize: "vertical",
+                    cursor: isSubmitting ? "wait" : "pointer",
+                    fontWeight: 500,
+                    opacity: isSubmitting ? 0.5 : 1,
                   }}
-                />
+                >
+                  {t("vibesHome.addExercise.cancel")}
+                </button>
+                <button
+                  type="submit"
+                  disabled={!isFormValid || isSubmitting}
+                  style={{
+                    flex: 1,
+                    padding: "0.75rem",
+                    borderRadius: "12px",
+                    border: "none",
+                    background:
+                      isFormValid && !isSubmitting
+                        ? vibes.find((v) => v.key === selectedVibe)?.colorBg
+                        : "var(--color-border)",
+                    color:
+                      isFormValid && !isSubmitting
+                        ? vibes.find((v) => v.key === selectedVibe)?.colorText
+                        : "var(--color-text-muted)",
+                    fontSize: "var(--font-size-md)",
+                    cursor: isFormValid && !isSubmitting ? "pointer" : "not-allowed",
+                    fontWeight: 600,
+                  }}
+                >
+                  {isSubmitting ? t("common.loading") : t("vibesHome.addExercise.add")}
+                </button>
               </div>
-            </div>
-
-            {/* Selected Vibe Display */}
-            <div
-              style={{
-                padding: "1rem",
-                borderRadius: "12px",
-                background: `${VIBES.find((v) => v.key === selectedVibe)?.colorBg}22`,
-                border: `1px solid ${VIBES.find((v) => v.key === selectedVibe)?.colorBorder}`,
-                marginBottom: "1.5rem",
-              }}
-            >
-              <div
-                style={{
-                  fontSize: "var(--font-size-sm)",
-                  color: "var(--color-text-secondary)",
-                  marginBottom: "0.25rem",
-                }}
-              >
-                {t("vibesHome.addExercise.selectVibe")}
-              </div>
-              <div
-                style={{
-                  fontSize: "var(--font-size-lg)",
-                  fontWeight: 600,
-                  color: VIBES.find((v) => v.key === selectedVibe)?.colorBg,
-                }}
-              >
-                {t(`vibes.${selectedVibe}.name`)} ({t(`vibes.${selectedVibe}.element`)})
-              </div>
-            </div>
-
-            {/* Action Buttons */}
-            <div
-              style={{
-                display: "flex",
-                gap: "1rem",
-              }}
-            >
-              <button
-                type="button"
-                onClick={handleCloseModal}
-                disabled={isLoading}
-                style={{
-                  flex: 1,
-                  padding: "0.75rem",
-                  borderRadius: "12px",
-                  border: "1px solid var(--color-border)",
-                  background: "transparent",
-                  color: "var(--color-text-primary)",
-                  fontSize: "var(--font-size-md)",
-                  cursor: isLoading ? "wait" : "pointer",
-                  fontWeight: 500,
-                  opacity: isLoading ? 0.5 : 1,
-                }}
-              >
-                {t("vibesHome.addExercise.cancel")}
-              </button>
-              <button
-                type="button"
-                onClick={() => void handleAddExercise()}
-                disabled={!isFormValid || isLoading}
-                style={{
-                  flex: 1,
-                  padding: "0.75rem",
-                  borderRadius: "12px",
-                  border: "none",
-                  background:
-                    isFormValid && !isLoading
-                      ? VIBES.find((v) => v.key === selectedVibe)?.colorBg
-                      : "var(--color-border)",
-                  color:
-                    isFormValid && !isLoading
-                      ? VIBES.find((v) => v.key === selectedVibe)?.colorText
-                      : "var(--color-text-muted)",
-                  fontSize: "var(--font-size-md)",
-                  cursor: isFormValid && !isLoading ? "pointer" : "not-allowed",
-                  fontWeight: 600,
-                }}
-              >
-                {isLoading ? t("common.loading") : t("vibesHome.addExercise.add")}
-              </button>
-            </div>
+            </form>
           </div>
         </div>
       )}

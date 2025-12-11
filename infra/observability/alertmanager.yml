@@ -1,23 +1,23 @@
 global:
   resolve_timeout: 5m
   # SMTP configuration for email notifications
-  smtp_smarthost: 'smtp.example.com:587'
-  smtp_from: 'alerts@fitvibe.app'
-  smtp_auth_username: 'alerts@fitvibe.app'
-  smtp_auth_password: '${SMTP_PASSWORD}'
+  smtp_smarthost: "smtp.example.com:587"
+  smtp_from: "alerts@fitvibe.app"
+  smtp_auth_username: "alerts@fitvibe.app"
+  smtp_auth_password: "${SMTP_PASSWORD}"
   smtp_require_tls: true
 
 # Templates for alert notifications
 templates:
-  - '/etc/alertmanager/templates/*.tmpl'
+  - "/etc/alertmanager/templates/*.tmpl"
 
 # Route tree for alert distribution
 route:
   # Default receiver
-  receiver: 'ops-team'
+  receiver: "ops-team"
 
   # Group alerts by category to reduce noise
-  group_by: ['alertname', 'category', 'severity']
+  group_by: ["alertname", "category", "severity"]
 
   # Wait time before sending initial notification
   group_wait: 30s
@@ -31,28 +31,28 @@ route:
   # Sub-routes for specific alert types
   routes:
     # Critical alerts go to on-call immediately
-    - receiver: 'on-call-critical'
+    - receiver: "on-call-critical"
       match:
         severity: critical
       group_wait: 10s
       repeat_interval: 1h
-      continue: true  # Also send to ops-team
+      continue: true # Also send to ops-team
 
     # Security alerts go to security team
-    - receiver: 'security-team'
+    - receiver: "security-team"
       match:
         category: security
       group_wait: 10s
       repeat_interval: 2h
 
     # Database alerts go to database team
-    - receiver: 'database-team'
+    - receiver: "database-team"
       match:
         category: database
       repeat_interval: 2h
 
     # SLO violations go to product and engineering leads
-    - receiver: 'slo-alerts'
+    - receiver: "slo-alerts"
       match:
         category: slo
       repeat_interval: 6h
@@ -61,33 +61,33 @@ route:
 inhibit_rules:
   # Suppress warning if critical is firing
   - source_match:
-      severity: 'critical'
+      severity: "critical"
     target_match:
-      severity: 'warning'
-    equal: ['alertname', 'instance']
+      severity: "warning"
+    equal: ["alertname", "instance"]
 
   # Suppress high error rate if service is down
   - source_match:
-      alertname: 'ServiceDown'
+      alertname: "ServiceDown"
     target_match:
-      alertname: 'HighErrorRate'
-    equal: ['instance']
+      alertname: "HighErrorRate"
+    equal: ["instance"]
 
   # Suppress performance alerts if service is down
   - source_match:
-      alertname: 'ServiceDown'
+      alertname: "ServiceDown"
     target_match:
-      category: 'performance'
-    equal: ['instance']
+      category: "performance"
+    equal: ["instance"]
 
 # Receiver definitions
 receivers:
   # Default ops team receiver
-  - name: 'ops-team'
+  - name: "ops-team"
     email_configs:
-      - to: 'ops@fitvibe.app'
+      - to: "ops@fitvibe.app"
         headers:
-          Subject: '[FitVibe Alert] {{ .GroupLabels.alertname }}'
+          Subject: "[FitVibe Alert] {{ .GroupLabels.alertname }}"
         html: |
           {{ range .Alerts }}
             <b>Alert:</b> {{ .Labels.alertname }}<br>
@@ -98,9 +98,9 @@ receivers:
           {{ end }}
 
     slack_configs:
-      - api_url: '${SLACK_WEBHOOK_OPS}'
-        channel: '#ops-alerts'
-        title: '{{ .GroupLabels.alertname }}'
+      - api_url: "${SLACK_WEBHOOK_OPS}"
+        channel: "#ops-alerts"
+        title: "{{ .GroupLabels.alertname }}"
         text: |
           {{ range .Alerts }}
           *Alert:* {{ .Labels.alertname }}
@@ -110,20 +110,20 @@ receivers:
           {{ end }}
 
   # Critical on-call receiver (PagerDuty + Slack)
-  - name: 'on-call-critical'
+  - name: "on-call-critical"
     pagerduty_configs:
-      - service_key: '${PAGERDUTY_SERVICE_KEY}'
-        description: '{{ .GroupLabels.alertname }}: {{ .CommonAnnotations.summary }}'
+      - service_key: "${PAGERDUTY_SERVICE_KEY}"
+        description: "{{ .GroupLabels.alertname }}: {{ .CommonAnnotations.summary }}"
         details:
-          firing: '{{ .Alerts.Firing | len }}'
-          resolved: '{{ .Alerts.Resolved | len }}'
-          severity: '{{ .GroupLabels.severity }}'
+          firing: "{{ .Alerts.Firing | len }}"
+          resolved: "{{ .Alerts.Resolved | len }}"
+          severity: "{{ .GroupLabels.severity }}"
 
     slack_configs:
-      - api_url: '${SLACK_WEBHOOK_ONCALL}'
-        channel: '#oncall-critical'
-        color: 'danger'
-        title: '[CRITICAL] {{ .GroupLabels.alertname }}'
+      - api_url: "${SLACK_WEBHOOK_ONCALL}"
+        channel: "#oncall-critical"
+        color: "danger"
+        title: "[CRITICAL] {{ .GroupLabels.alertname }}"
         text: |
           <!channel> Critical alert firing
           {{ range .Alerts }}
@@ -132,17 +132,17 @@ receivers:
           {{ end }}
 
   # Security team receiver
-  - name: 'security-team'
+  - name: "security-team"
     email_configs:
-      - to: 'security@fitvibe.app'
+      - to: "security@fitvibe.app"
         headers:
-          Subject: '[FitVibe Security Alert] {{ .GroupLabels.alertname }}'
+          Subject: "[FitVibe Security Alert] {{ .GroupLabels.alertname }}"
 
     slack_configs:
-      - api_url: '${SLACK_WEBHOOK_SECURITY}'
-        channel: '#security-alerts'
-        color: 'warning'
-        title: '[Security] {{ .GroupLabels.alertname }}'
+      - api_url: "${SLACK_WEBHOOK_SECURITY}"
+        channel: "#security-alerts"
+        color: "warning"
+        title: "[Security] {{ .GroupLabels.alertname }}"
         text: |
           {{ range .Alerts }}
           *Description:* {{ .Annotations.description }}
@@ -150,23 +150,23 @@ receivers:
           {{ end }}
 
   # Database team receiver
-  - name: 'database-team'
+  - name: "database-team"
     email_configs:
-      - to: 'dba@fitvibe.app'
+      - to: "dba@fitvibe.app"
         headers:
-          Subject: '[FitVibe DB Alert] {{ .GroupLabels.alertname }}'
+          Subject: "[FitVibe DB Alert] {{ .GroupLabels.alertname }}"
 
     slack_configs:
-      - api_url: '${SLACK_WEBHOOK_DBA}'
-        channel: '#database-alerts'
-        title: '[Database] {{ .GroupLabels.alertname }}'
+      - api_url: "${SLACK_WEBHOOK_DBA}"
+        channel: "#database-alerts"
+        title: "[Database] {{ .GroupLabels.alertname }}"
 
   # SLO alerts receiver
-  - name: 'slo-alerts'
+  - name: "slo-alerts"
     email_configs:
-      - to: 'engineering-leads@fitvibe.app,product@fitvibe.app'
+      - to: "engineering-leads@fitvibe.app,product@fitvibe.app"
         headers:
-          Subject: '[FitVibe SLO] {{ .GroupLabels.alertname }}'
+          Subject: "[FitVibe SLO] {{ .GroupLabels.alertname }}"
         html: |
           <h2>SLO Violation Detected</h2>
           {{ range .Alerts }}
@@ -176,24 +176,24 @@ receivers:
           {{ end }}
 
     slack_configs:
-      - api_url: '${SLACK_WEBHOOK_SLO}'
-        channel: '#slo-violations'
-        color: 'danger'
-        title: '[SLO Violation] {{ .GroupLabels.alertname }}'
+      - api_url: "${SLACK_WEBHOOK_SLO}"
+        channel: "#slo-violations"
+        color: "danger"
+        title: "[SLO Violation] {{ .GroupLabels.alertname }}"
 
 # Time intervals for muting alerts (e.g., maintenance windows)
 time_intervals:
   - name: weekday-business-hours
     time_intervals:
       - times:
-          - start_time: '09:00'
-            end_time: '17:00'
-        weekdays: ['monday:friday']
-        location: 'Europe/Berlin'
+          - start_time: "09:00"
+            end_time: "17:00"
+        weekdays: ["monday:friday"]
+        location: "Europe/Berlin"
 
   - name: weekend
     time_intervals:
-      - weekdays: ['saturday', 'sunday']
+      - weekdays: ["saturday", "sunday"]
 
 # Mute time intervals (can be enabled via API)
 mute_time_intervals: []

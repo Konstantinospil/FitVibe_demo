@@ -12,7 +12,7 @@ import {
   refreshSessionSummary,
   sessionsExistAtDates,
   type SessionExerciseUpsertInput,
-} from "./sessions.repository";
+} from "./sessions.repository.js";
 import type {
   CreateSessionDTO,
   UpdateSessionDTO,
@@ -27,7 +27,7 @@ import type {
   SessionWithExercises,
   SessionExercise,
 } from "./sessions.types";
-import { recomputeProgress } from "../plans/plans.service";
+import { recomputeProgress } from "../plans/plans.service.js";
 import { awardPointsForSession } from "../points/points.service.js";
 import { insertAudit } from "../common/audit.util.js";
 import { HttpError } from "../../utils/http.js";

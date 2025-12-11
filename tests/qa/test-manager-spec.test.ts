@@ -23,15 +23,16 @@ describe("Test Manager Agent Specification", () => {
     // Extract frontmatter
     const frontmatterMatch = specContent.match(/^---\n([\s\S]*?)\n---/);
     if (frontmatterMatch) {
-      frontmatter = frontmatterMatch[1]
-        .split("\n")
-        .reduce((acc, line) => {
+      frontmatter = frontmatterMatch[1].split("\n").reduce(
+        (acc, line) => {
           const [key, ...valueParts] = line.split(":");
           if (key && valueParts.length > 0) {
             acc[key.trim()] = valueParts.join(":").trim();
           }
           return acc;
-        }, {} as Record<string, string>);
+        },
+        {} as Record<string, string>,
+      );
     }
   });
 
@@ -154,7 +155,9 @@ describe("Test Manager Agent Specification", () => {
     });
 
     it("should have valid handoff message format JSON", () => {
-      const handoffMatch = specContent.match(/### Handoff Message Format[\s\S]*?```json\n([\s\S]*?)```/);
+      const handoffMatch = specContent.match(
+        /### Handoff Message Format[\s\S]*?```json\n([\s\S]*?)```/,
+      );
       expect(handoffMatch).toBeTruthy();
 
       if (handoffMatch) {
@@ -398,9 +401,7 @@ describe("Test Manager Agent Specification", () => {
       ];
 
       majorSections.forEach((section) => {
-        const sectionMatch = specContent.match(
-          new RegExp(`## ${section}[\\s\\S]*?(?=## |$)`),
-        );
+        const sectionMatch = specContent.match(new RegExp(`## ${section}[\\s\\S]*?(?=## |$)`));
         expect(sectionMatch).toBeTruthy();
         if (sectionMatch) {
           expect(sectionMatch[0].length).toBeGreaterThan(200);
@@ -409,9 +410,7 @@ describe("Test Manager Agent Specification", () => {
     });
 
     it("should have example workflow that demonstrates all phases", () => {
-      const exampleSection = specContent.match(
-        /## Example: Complete Workflow[\s\S]*?(?=## |$)/,
-      );
+      const exampleSection = specContent.match(/## Example: Complete Workflow[\s\S]*?(?=## |$)/);
       expect(exampleSection).toBeTruthy();
       if (exampleSection) {
         const example = exampleSection[0];
@@ -422,4 +421,3 @@ describe("Test Manager Agent Specification", () => {
     });
   });
 });
-

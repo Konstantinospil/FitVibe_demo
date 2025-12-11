@@ -77,6 +77,7 @@ git diff | grep -iE "(password|secret|api_key|token)\s*="
 2. **Remove the secret** from the file
 3. **Rotate the secret** - The old value is compromised
 4. **Remove from git history** (if not yet pushed):
+
    ```bash
    # Remove file from last commit (if not pushed)
    git reset HEAD~1
@@ -173,4 +174,3 @@ If you're unsure whether something is safe to commit:
 - [Key Management Policy](../5.a.Ops/KEY_MANAGEMENT_POLICY.md)
 - [Security Policy](./SECURITY.md)
 - [Contributing Guide](../../../CONTRIBUTING.md)
-

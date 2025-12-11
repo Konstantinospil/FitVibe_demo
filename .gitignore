@@ -57,9 +57,13 @@ coverage/
 reports/
 playwright-report/
 test-results/
+.test-results/
 cypress/videos/
 cypress/screenshots/
 cypress/downloads/
+# Visual regression test screenshots (baselines should be committed, but generated diffs should not)
+tests/frontend/visual/__screenshots__/
+!tests/frontend/visual/__screenshots__/.gitkeep
 
 # --- Security scan reports ---
 security-reports/
@@ -68,6 +72,9 @@ security-reports/
 
 # --- Logs & pids ---
 logs/
+!apps/backend/src/modules/logs/
+!apps/backend/src/modules/logs/**/*.ts
+
 *.log
 *.log.*
 *.pid
@@ -97,6 +104,9 @@ Thumbs.db
 tmp/
 temp/
 .sass-cache/
+__pycache__/
+*.py[cod]
+*$py.class
 
 # --- Database & dumps (adjust if you commit seeds separately) ---
 *.sqlite
@@ -116,6 +126,13 @@ apps/backend/uploads/
 *.local.json
 *.local.yml
 docker-compose.override.yml
+
+# --- Documentation: Implementation folder (planning/reviews) ---
+docs/6.Implementation/
+
+# --- Cursor IDE configuration (user-specific, should not be committed) ---
+.cursor/
+.cursorrules
 
 # --- Misc ---
 # Keep Husky hooks committed; do NOT ignore .husky/

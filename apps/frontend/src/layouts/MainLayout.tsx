@@ -4,6 +4,7 @@ import { useAuth } from "../contexts/AuthContext";
 import { Avatar, Button } from "../components/ui";
 import LanguageSwitcher from "../components/LanguageSwitcher";
 import ThemeToggle from "../components/ThemeToggle";
+import Footer from "../components/Footer";
 import { useTranslation } from "react-i18next";
 import { LogOut, Home, User, type LucideIcon } from "lucide-react";
 import logoFull from "../assets/logo_full.ico";
@@ -27,9 +28,9 @@ const MainLayout: React.FC = () => {
   const navigate = useNavigate();
   const { t } = useTranslation();
 
-  const handleSignOut = () => {
-    signOut();
-    navigate("/login", { replace: true });
+  const handleSignOut = async () => {
+    await signOut();
+    void navigate("/login", { replace: true });
   };
 
   return (
@@ -79,6 +80,10 @@ const MainLayout: React.FC = () => {
             <img
               src={logoFull}
               alt="FitVibe Logo"
+              fetchPriority="high"
+              loading="eager"
+              width="36"
+              height="36"
               style={{
                 height: "36px",
                 width: "auto",
@@ -142,7 +147,12 @@ const MainLayout: React.FC = () => {
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={handleSignOut}
+                onClick={() => {
+                  void handleSignOut().catch(() => {
+                    // Sign out failed, navigate anyway
+                    void navigate("/login", { replace: true });
+                  });
+                }}
                 aria-label={t("navigation.signOut")}
                 title={t("navigation.signOut")}
               >
@@ -155,16 +165,7 @@ const MainLayout: React.FC = () => {
       <main id="main-content" style={{ flex: 1, display: "flex", flexDirection: "column" }}>
         <Outlet />
       </main>
-      <footer
-        style={{
-          padding: "2rem 0",
-          textAlign: "center",
-          fontSize: "var(--font-size-xs)",
-          color: "var(--color-text-muted)",
-        }}
-      >
-        {t("footer.note")}
-      </footer>
+      <Footer />
     </div>
   );
 };

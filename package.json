@@ -10,12 +10,15 @@
   "scripts": {
     "dev": "turbo run dev --parallel",
     "build": "turbo run build",
-    "lint": "turbo run lint --continue",
+    "lint": "turbo run lint --parallel",
     "lint:check": "turbo run lint --concurrency=1 -- --max-warnings=0",
     "test": "turbo run test --",
-    "test:backend": "turbo run test --filter=@fitvibe/backend -- --coverage --runInBand",
+    "test:backend": "turbo run test --filter=@fitvibe/backend -- --coverage",
     "test:frontend": "turbo run test --filter=@fitvibe/frontend -- --coverage",
     "test:a11y": "pnpm --filter @fitvibe/frontend run build && playwright test tests/frontend/e2e/accessibility.spec.cjs --config tests/frontend/e2e/playwright.config.cjs --reporter=line",
+    "test:contract": "pnpm -w openapi:build && pnpm --filter @fitvibe/backend exec jest tests/backend/contract/openapi.contract.test.ts --maxWorkers=1",
+    "test:visual": "pnpm --filter @fitvibe/frontend run build && playwright test --config tests/frontend/visual/config/playwright.config.ts",
+    "test:visual:update": "pnpm --filter @fitvibe/frontend run build && playwright test --config tests/frontend/visual/config/playwright.config.ts --update-snapshots",
     "test:coverage:gate": "node tests/qa/check-coverage.cjs",
     "perf:test": "node tests/perf/run-local-perf.mjs",
     "qa:summary": "node tests/qa/generate-summary.mjs",
@@ -62,7 +65,9 @@
       "tmp": "^0.2.4",
       "glob": "link:packages/patched-glob",
       "esbuild": "^0.25.0",
-      "js-yaml": "^4.1.1"
+      "js-yaml": "^4.1.1",
+      "jws": "^4.0.1",
+      "@smithy/core": "^3.18.7"
     }
   },
   "overrides": {
@@ -70,6 +75,8 @@
   },
   "dependencies": {
     "@anthropic-ai/claude-agent-sdk": "^0.1.30",
+    "@anthropic-ai/sdk": "^0.27.3",
+    "openai": "^4.67.3",
     "snyk": "^1.1300.2"
   }
 }

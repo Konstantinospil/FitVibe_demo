@@ -5,6 +5,7 @@ import { Search, Calendar, Save, Trash2 } from "lucide-react";
 import PageIntro from "../components/PageIntro";
 import { Button } from "../components/ui/Button";
 import { Card, CardHeader, CardTitle, CardContent } from "../components/ui/Card";
+import { useRequiredFieldValidation } from "../hooks/useRequiredFieldValidation";
 import {
   listExercises,
   createSession,
@@ -30,6 +31,8 @@ interface ExerciseInSession {
 const Planner: React.FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const formRef = useRef<HTMLFormElement>(null);
+  useRequiredFieldValidation(formRef, t);
 
   // Session metadata
   const [sessionTitle, setSessionTitle] = useState("");
@@ -147,7 +150,11 @@ const Planner: React.FC = () => {
     setExercises(newExercises);
   };
 
-  const handleSave = async () => {
+  const handleSave = async (event?: React.FormEvent<HTMLFormElement>) => {
+    if (event) {
+      event.preventDefault();
+    }
+
     if (exercises.length === 0) {
       setSaveError("Add at least one exercise to your session");
       return;
@@ -189,7 +196,7 @@ const Planner: React.FC = () => {
       await createSession(payload);
 
       // Navigate to sessions list or show success
-      navigate("/sessions");
+      void navigate("/sessions");
     } catch (error: unknown) {
       logger.apiError("Failed to create session", error, "/api/v1/sessions", "POST");
       setSaveError("Failed to save session. Please try again.");
@@ -204,23 +211,19 @@ const Planner: React.FC = () => {
       title={t("planner.title")}
       description={t("planner.description")}
     >
-      <div style={{ display: "grid", gap: "1.5rem" }}>
+      {/* eslint-disable-next-line @typescript-eslint/no-misused-promises */}
+      <form ref={formRef} onSubmit={handleSave} className="form form--gap-lg">
         {/* Session Metadata Card */}
         <Card>
           <CardHeader>
             <CardTitle>Session Details</CardTitle>
           </CardHeader>
           <CardContent>
-            <div style={{ display: "grid", gap: "1rem" }}>
+            <div className="grid grid--gap-md">
               <div>
                 <label
                   htmlFor="session-title"
-                  style={{
-                    display: "block",
-                    marginBottom: "0.5rem",
-                    fontSize: "0.9rem",
-                    fontWeight: 600,
-                  }}
+                  className="form-label-text block mb-05 font-weight-600"
                 >
                   Title (optional)
                 </label>
@@ -229,62 +232,41 @@ const Planner: React.FC = () => {
                   type="text"
                   value={sessionTitle}
                   onChange={(e) => setSessionTitle(e.target.value)}
-                  placeholder="e.g., Upper Body Strength"
-                  style={{
-                    width: "100%",
-                    padding: "0.75rem 1rem",
-                    borderRadius: "12px",
-                    border: "1px solid var(--color-border)",
-                    background: "var(--color-surface)",
-                    color: "var(--color-text-primary)",
-                    fontSize: "1rem",
-                  }}
+                  placeholder={t("planner.sessionTitlePlaceholder")}
+                  className="form-input"
+                  style={{ background: "var(--color-surface)" }}
                 />
               </div>
 
-              <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: "1rem" }}>
+              <div className="grid" style={{ gridTemplateColumns: "2fr 1fr", gap: "1rem" }}>
                 <div>
                   <label
                     htmlFor="planned-date"
-                    style={{
-                      display: "block",
-                      marginBottom: "0.5rem",
-                      fontSize: "0.9rem",
-                      fontWeight: 600,
-                    }}
+                    className="form-label-text block mb-05 font-weight-600"
                   >
                     <Calendar
                       size={16}
+                      className="icon"
                       style={{ marginRight: "0.5rem", verticalAlign: "middle" }}
                     />
                     Planned Date
                   </label>
                   <input
                     id="planned-date"
+                    name="planned-date"
                     type="date"
                     value={plannedDate}
                     onChange={(e) => setPlannedDate(e.target.value)}
-                    style={{
-                      width: "100%",
-                      padding: "0.75rem 1rem",
-                      borderRadius: "12px",
-                      border: "1px solid var(--color-border)",
-                      background: "var(--color-surface)",
-                      color: "var(--color-text-primary)",
-                      fontSize: "1rem",
-                    }}
+                    required
+                    className="form-input"
+                    style={{ background: "var(--color-surface)" }}
                   />
                 </div>
 
                 <div>
                   <label
                     htmlFor="planned-time"
-                    style={{
-                      display: "block",
-                      marginBottom: "0.5rem",
-                      fontSize: "0.9rem",
-                      fontWeight: 600,
-                    }}
+                    className="form-label-text block mb-05 font-weight-600"
                   >
                     Time
                   </label>
@@ -293,15 +275,8 @@ const Planner: React.FC = () => {
                     type="time"
                     value={plannedTime}
                     onChange={(e) => setPlannedTime(e.target.value)}
-                    style={{
-                      width: "100%",
-                      padding: "0.75rem 1rem",
-                      borderRadius: "12px",
-                      border: "1px solid var(--color-border)",
-                      background: "var(--color-surface)",
-                      color: "var(--color-text-primary)",
-                      fontSize: "1rem",
-                    }}
+                    className="form-input"
+                    style={{ background: "var(--color-surface)" }}
                   />
                 </div>
               </div>
@@ -309,12 +284,7 @@ const Planner: React.FC = () => {
               <div>
                 <label
                   htmlFor="session-notes"
-                  style={{
-                    display: "block",
-                    marginBottom: "0.5rem",
-                    fontSize: "0.9rem",
-                    fontWeight: 600,
-                  }}
+                  className="form-label-text block mb-05 font-weight-600"
                 >
                   Notes (optional)
                 </label>
@@ -322,16 +292,11 @@ const Planner: React.FC = () => {
                   id="session-notes"
                   value={sessionNotes}
                   onChange={(e) => setSessionNotes(e.target.value)}
-                  placeholder="Add session notes, training goals, or context..."
+                  placeholder={t("planner.notesPlaceholder")}
                   rows={3}
+                  className="form-input"
                   style={{
-                    width: "100%",
-                    padding: "0.75rem 1rem",
-                    borderRadius: "12px",
-                    border: "1px solid var(--color-border)",
                     background: "var(--color-surface)",
-                    color: "var(--color-text-primary)",
-                    fontSize: "1rem",
                     fontFamily: "inherit",
                     resize: "vertical",
                   }}
@@ -347,24 +312,15 @@ const Planner: React.FC = () => {
             <CardTitle>Add Exercises</CardTitle>
           </CardHeader>
           <CardContent>
-            <div style={{ position: "relative" }}>
-              <div style={{ position: "relative" }}>
-                <Search
-                  size={20}
-                  style={{
-                    position: "absolute",
-                    left: "1rem",
-                    top: "50%",
-                    transform: "translateY(-50%)",
-                    color: "var(--color-text-secondary)",
-                  }}
-                />
+            <div className="relative">
+              <div className="relative">
+                <Search size={20} className="search-icon" />
                 <input
                   type="text"
                   value={exerciseSearch}
                   onChange={(e) => setExerciseSearch(e.target.value)}
                   onFocus={() => exerciseResults.length > 0 && setShowSearchResults(true)}
-                  placeholder="Search for exercises (e.g., squat, bench press)..."
+                  placeholder={t("planner.exerciseSearchPlaceholder")}
                   aria-label="Search exercises"
                   style={{
                     width: "100%",
@@ -609,7 +565,7 @@ const Planner: React.FC = () => {
                           onChange={(e) =>
                             updateExercise(ex.tempId, { reps: parseInt(e.target.value) || null })
                           }
-                          placeholder="10"
+                          placeholder={t("planner.repsPlaceholder")}
                           style={{
                             width: "100%",
                             padding: "0.6rem",
@@ -644,7 +600,7 @@ const Planner: React.FC = () => {
                               weightKg: parseFloat(e.target.value) || null,
                             })
                           }
-                          placeholder="80"
+                          placeholder={t("planner.weightPlaceholder")}
                           style={{
                             width: "100%",
                             padding: "0.6rem",
@@ -678,7 +634,7 @@ const Planner: React.FC = () => {
                             const val = parseInt(e.target.value);
                             updateExercise(ex.tempId, { rpe: val >= 1 && val <= 10 ? val : null });
                           }}
-                          placeholder="7"
+                          placeholder={t("planner.rpePlaceholder")}
                           style={{
                             width: "100%",
                             padding: "0.6rem",
@@ -711,7 +667,7 @@ const Planner: React.FC = () => {
                           onChange={(e) =>
                             updateExercise(ex.tempId, { restSec: parseInt(e.target.value) || null })
                           }
-                          placeholder="90"
+                          placeholder={t("planner.speedPlaceholder")}
                           style={{
                             width: "100%",
                             padding: "0.6rem",
@@ -742,7 +698,7 @@ const Planner: React.FC = () => {
                         type="text"
                         value={ex.notes}
                         onChange={(e) => updateExercise(ex.tempId, { notes: e.target.value })}
-                        placeholder="e.g., Focus on form, slower tempo on eccentrics"
+                        placeholder={t("planner.exerciseNotesPlaceholder")}
                         style={{
                           width: "100%",
                           padding: "0.6rem",
@@ -779,12 +735,16 @@ const Planner: React.FC = () => {
             )}
 
             <div style={{ display: "flex", gap: "1rem", justifyContent: "flex-end" }}>
-              <Button variant="secondary" onClick={() => navigate("/sessions")} disabled={isSaving}>
+              <Button
+                variant="secondary"
+                onClick={() => void navigate("/sessions")}
+                disabled={isSaving}
+              >
                 Cancel
               </Button>
               <Button
+                type="submit"
                 variant="primary"
-                onClick={() => void handleSave()}
                 isLoading={isSaving}
                 leftIcon={<Save size={18} />}
                 disabled={exercises.length === 0}
@@ -794,7 +754,7 @@ const Planner: React.FC = () => {
             </div>
           </CardContent>
         </Card>
-      </div>
+      </form>
     </PageIntro>
   );
 };

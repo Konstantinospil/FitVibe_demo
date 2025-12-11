@@ -16,7 +16,7 @@ interface AuthContextValue {
   isAuthenticated: boolean;
   user: User | null;
   signIn: (user: User) => void;
-  signOut: () => void;
+  signOut: () => Promise<void>;
   updateUser: (user: User) => void;
 }
 

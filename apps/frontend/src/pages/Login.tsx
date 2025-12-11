@@ -1,7 +1,7 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
 import AuthPageLayout from "../components/AuthPageLayout";
-import LoginForm from "./LoginFormContent";
+import LoginFormContent from "./LoginFormContent";
 
 const Login: React.FC = () => {
   const { t } = useTranslation();
@@ -12,7 +12,7 @@ const Login: React.FC = () => {
       title={t("auth.login.title")}
       description={t("auth.login.description")}
     >
-      <LoginForm />
+      <LoginFormContent />
     </AuthPageLayout>
   );
 };

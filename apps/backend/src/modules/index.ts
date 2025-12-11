@@ -10,7 +10,7 @@ import logsRouter from "./logs/logs.routes.js";
 import { pointsRouter } from "./points/points.routes.js";
 import { progressRouter } from "./progress/progress.routes.js";
 import { feedRouter } from "./feed/feed.routes.js";
-import healthRouter from "./health/health.router.js";
+import { healthRouter } from "./health/health.router.js";
 
 export const apiRouter = Router();
 

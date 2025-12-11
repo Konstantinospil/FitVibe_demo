@@ -1,5 +1,6 @@
 import React, { Component, type ReactNode } from "react";
 import { withTranslation, type WithTranslation } from "react-i18next";
+import { logger } from "../utils/logger.js";
 
 interface Props extends WithTranslation {
   children: ReactNode;
@@ -23,7 +24,10 @@ class ErrorBoundaryComponent extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    console.error("ErrorBoundary caught an error:", error, errorInfo);
+    logger.error("ErrorBoundary caught an error", error, {
+      componentStack: errorInfo.componentStack,
+      context: "errorBoundary",
+    });
     this.props.onError?.(error, errorInfo);
   }
 

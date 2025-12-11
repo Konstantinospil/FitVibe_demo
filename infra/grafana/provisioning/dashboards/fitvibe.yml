@@ -4,9 +4,9 @@
 apiVersion: 1
 
 providers:
-  - name: 'FitVibe Dashboards'
+  - name: "FitVibe Dashboards"
     orgId: 1
-    folder: 'FitVibe'
+    folder: "FitVibe"
     type: file
     disableDeletion: false
     updateIntervalSeconds: 10

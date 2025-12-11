@@ -1,24 +1,19 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { useNavigate, useLocation, NavLink } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { Eye, EyeOff } from "lucide-react";
 import { Button } from "../components/ui";
 import { useAuth } from "../contexts/AuthContext";
-
-const inputStyle: React.CSSProperties = {
-  width: "100%",
-  borderRadius: "12px",
-  border: "1px solid var(--color-border)",
-  background: "var(--color-surface-glass)",
-  color: "var(--color-text-primary)",
-  padding: "0.85rem 1rem",
-  fontSize: "1rem",
-};
+import { login } from "../services/api";
+import { logger } from "../utils/logger.js";
+import { useRequiredFieldValidation } from "../hooks/useRequiredFieldValidation";
 
 const LoginFormContent: React.FC = () => {
   const { signIn } = useAuth();
   const navigate = useNavigate();
   const { t } = useTranslation();
+  const formRef = useRef<HTMLFormElement>(null);
+  useRequiredFieldValidation(formRef, t);
   const location = useLocation();
   const requestedPath = (location.state as { from?: { pathname?: string } })?.from?.pathname;
   const from =
@@ -43,27 +38,118 @@ const LoginFormContent: React.FC = () => {
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+
+    // Validate inputs
+    if (!email.trim() || !password) {
+      setError(t("auth.login.fillAllFields") || "Please fill in all fields");
+      return;
+    }
+
     setIsSubmitting(true);
     setError(null);
 
     try {
-      const { login } = await import("../services/api");
-      const response = await login({ email, password });
+      const response = await login({ email: email.trim(), password });
 
       if (response.requires2FA) {
-        navigate("/login/verify-2fa", {
+        // Navigate to 2FA verification page
+        void navigate("/login/verify-2fa", {
           state: {
             pendingSessionId: response.pendingSessionId,
             from,
           },
+          replace: false,
         });
         return;
       }
 
-      signIn(response.user);
-      navigate(from, { replace: true });
-    } catch {
-      setError(t("auth.login.error"));
+      // Login successful - sign in and navigate
+      if (response.user) {
+        signIn(response.user);
+        void navigate(from, { replace: true });
+      } else {
+        setError(t("auth.login.error") || "Login failed. Please try again.");
+      }
+    } catch (err: unknown) {
+      logger.error("Login error", err instanceof Error ? err : new Error(String(err)), {
+        context: "login",
+      });
+
+      // Handle terms version outdated error
+      if (err && typeof err === "object" && "response" in err) {
+        const axiosError = err as {
+          response?: {
+            data?: {
+              error?: {
+                code?: string;
+                message?: string;
+                details?: {
+                  remainingSeconds?: number;
+                  lockoutType?: "account" | "ip";
+                  attemptCount?: number;
+                  totalAttemptCount?: number;
+                  distinctEmailCount?: number;
+                  maxAttempts?: number;
+                  warning?: boolean;
+                  remainingAccountAttempts?: number;
+                  remainingIPAttempts?: number;
+                  remainingIPDistinctEmails?: number;
+                  accountAttemptCount?: number;
+                  ipTotalAttemptCount?: number;
+                  ipDistinctEmailCount?: number;
+                };
+              };
+            };
+          };
+        };
+        const errorCode = axiosError.response?.data?.error?.code;
+        const errorMessage = axiosError.response?.data?.error?.message;
+        const errorDetails = axiosError.response?.data?.error?.details;
+
+        if (errorCode === "TERMS_VERSION_OUTDATED") {
+          void navigate("/terms-reacceptance", { replace: true });
+          return;
+        }
+
+        // Handle lockout errors with timer
+        if (
+          (errorCode === "AUTH_ACCOUNT_LOCKED" || errorCode === "AUTH_IP_LOCKED") &&
+          errorDetails?.remainingSeconds !== undefined &&
+          errorDetails?.lockoutType
+        ) {
+          setError(errorMessage || t("auth.lockout.locked", { defaultValue: "Account locked" }));
+          return;
+        }
+
+        // Handle warning for approaching lockout
+        if (
+          errorCode === "AUTH_INVALID_CREDENTIALS" &&
+          errorDetails?.warning &&
+          errorDetails.remainingAccountAttempts !== undefined &&
+          errorDetails.remainingIPAttempts !== undefined &&
+          errorDetails.remainingIPDistinctEmails !== undefined
+        ) {
+          // Warning state is handled by error message
+        }
+
+        // Show specific error message if available
+        if (errorMessage) {
+          setError(errorMessage);
+        } else if (errorCode) {
+          const translatedError = t(`errors.${errorCode}`);
+          setError(
+            translatedError !== `errors.${errorCode}` ? translatedError : t("auth.login.error"),
+          );
+        } else {
+          setError(t("auth.login.error") || "Login failed. Please check your credentials.");
+        }
+      } else {
+        // Network error or other issues
+        setError(
+          t("auth.login.error") ||
+            "Unable to connect to server. Please check if the backend is running.",
+        );
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -71,16 +157,14 @@ const LoginFormContent: React.FC = () => {
 
   return (
     // eslint-disable-next-line @typescript-eslint/no-misused-promises
-    <form onSubmit={handleSubmit} style={{ display: "grid", gap: "1rem" }}>
-      <label style={{ display: "grid", gap: "0.35rem" }}>
-        <span style={{ fontSize: "0.95rem", color: "var(--color-text-secondary)" }}>
-          {t("auth.login.emailLabel")}
-        </span>
+    <form ref={formRef} onSubmit={handleSubmit} className="form">
+      <label className="form-label">
+        <span className="form-label-text">{t("auth.login.emailLabel")}</span>
         <input
           name="email"
           type="email"
           placeholder={t("auth.placeholders.email")}
-          style={inputStyle}
+          className="form-input"
           required
           value={email}
           onChange={(event) => setEmail(event.target.value)}
@@ -88,16 +172,14 @@ const LoginFormContent: React.FC = () => {
           disabled={isSubmitting}
         />
       </label>
-      <label style={{ display: "grid", gap: "0.35rem" }}>
-        <span style={{ fontSize: "0.95rem", color: "var(--color-text-secondary)" }}>
-          {t("auth.login.passwordLabel")}
-        </span>
-        <div style={{ position: "relative" }}>
+      <label className="form-label">
+        <span className="form-label-text">{t("auth.login.passwordLabel")}</span>
+        <div className="form-input-wrapper">
           <input
             name="password"
             type={showPassword ? "text" : "password"}
             placeholder={t("auth.placeholders.password")}
-            style={{ ...inputStyle, paddingRight: "3rem" }}
+            className="form-input form-input--password"
             required
             value={password}
             onChange={(event) => setPassword(event.target.value)}
@@ -107,27 +189,7 @@ const LoginFormContent: React.FC = () => {
           <button
             type="button"
             onClick={() => setShowPassword(!showPassword)}
-            style={{
-              position: "absolute",
-              right: "0.75rem",
-              top: "50%",
-              transform: "translateY(-50%)",
-              background: "transparent",
-              border: "none",
-              cursor: "pointer",
-              color: "var(--color-text-secondary)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              padding: "0.25rem",
-              transition: "color 150ms ease",
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.color = "var(--color-text-primary)";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.color = "var(--color-text-secondary)";
-            }}
+            className="form-password-toggle"
             aria-label={showPassword ? hidePasswordLabel : showPasswordLabel}
             disabled={isSubmitting}
           >
@@ -136,34 +198,18 @@ const LoginFormContent: React.FC = () => {
         </div>
       </label>
       {error ? (
-        <div
-          role="alert"
-          style={{
-            background: "rgba(248, 113, 113, 0.16)",
-            color: "#FFFFFF",
-            borderRadius: "12px",
-            padding: "0.75rem 1rem",
-            fontSize: "0.95rem",
-          }}
-        >
+        <div role="alert" className="form-error">
           {error}
         </div>
       ) : null}
       <Button type="submit" fullWidth isLoading={isSubmitting} disabled={isSubmitting}>
         {isSubmitting ? t("auth.login.submitting") : t("auth.login.submit")}
       </Button>
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          fontSize: "0.9rem",
-          color: "var(--color-text-secondary)",
-        }}
-      >
-        <NavLink to="/register" style={{ color: "var(--color-text-secondary)" }}>
+      <div className="form-links">
+        <NavLink to="/register" className="form-link">
           {t("auth.login.registerPrompt")}
         </NavLink>
-        <NavLink to="/forgot-password" style={{ color: "var(--color-text-secondary)" }}>
+        <NavLink to="/forgot-password" className="form-link">
           {t("auth.login.forgot")}
         </NavLink>
       </div>

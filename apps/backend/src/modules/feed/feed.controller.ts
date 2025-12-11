@@ -1,6 +1,5 @@
 import type { Request, Response } from "express";
 
-import { verifyAccess } from "../../services/tokens.js";
 import { HttpError } from "../../utils/http.js";
 import type { FeedScope } from "./feed.repository.js";
 import {
@@ -8,12 +7,10 @@ import {
   bookmarkSession,
   cloneSessionFromFeed,
   createComment,
-  createShareLink,
   deleteComment,
   followUserByAlias,
   getFeed,
   getLeaderboard,
-  getSharedSession,
   likeFeedItem,
   listBookmarks,
   listComments,
@@ -22,27 +19,19 @@ import {
   removeBookmark,
   reportComment,
   reportFeedItem,
-  revokeShareLink,
   unlikeFeedItem,
   unfollowUserByAlias,
   unblockUserByAlias,
 } from "./feed.service.js";
-import { getIdempotencyKey, getRouteTemplate } from "../common/idempotency.helpers.js";
+import {
+  handleIdempotentRequest,
+  getIdempotencyKey,
+  getRouteTemplate,
+} from "../common/idempotency.helpers.js";
 import { resolveIdempotency, persistIdempotencyResult } from "../common/idempotency.service.js";
 
-function resolveViewerId(req: Request): string | null {
-  const auth = req.headers.authorization;
-  if (!auth?.startsWith("Bearer ")) {
-    return null;
-  }
-  const token = auth.split(" ")[1];
-  try {
-    const payload = verifyAccess(token);
-    return payload.sub ?? null;
-  } catch {
-    return null;
-  }
-}
+// Removed resolveViewerId - all feed endpoints now require authentication per FR-003 (privacy-by-default)
+// Authentication is enforced via requireAuth middleware in routes
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -91,15 +80,22 @@ function parseOffset(input: unknown, fallback: number): number {
 }
 
 export async function getFeedHandler(req: Request, res: Response): Promise<void> {
-  const viewerId = resolveViewerId(req);
+  // Authentication is required per FR-003 (privacy-by-default)
+  const userId = req.user?.sub;
+  if (!userId) {
+    throw new HttpError(401, "E.UNAUTHENTICATED", "UNAUTHENTICATED");
+  }
+
   const requestedScope = getQueryValue(req.query.scope);
   const limit = parseLimit(req.query.limit, 20, 100);
   const offset = parseOffset(req.query.offset, 0);
-  const scope: FeedScope =
-    requestedScope === "me" || requestedScope === "following" ? requestedScope : "public";
+  let scope: FeedScope = "public";
+  if (requestedScope === "me" || requestedScope === "following") {
+    scope = requestedScope;
+  }
 
   const result = await getFeed({
-    viewerId,
+    viewerId: userId,
     scope,
     limit,
     offset,
@@ -114,34 +110,21 @@ export async function likeFeedItemHandler(req: Request, res: Response): Promise<
     throw new HttpError(401, "E.UNAUTHENTICATED", "UNAUTHENTICATED");
   }
 
-  // Idempotency support
-  const idempotencyKey = getIdempotencyKey(req);
-  if (idempotencyKey) {
-    const route = getRouteTemplate(req);
-    const resolution = await resolveIdempotency(
-      { userId, method: req.method, route, key: idempotencyKey },
-      { feedItemId: req.params.feedItemId },
-    );
+  const handled = await handleIdempotentRequest(
+    req,
+    res,
+    userId,
+    { feedItemId: req.params.feedItemId },
+    async () => {
+      const result = await likeFeedItem(userId, req.params.feedItemId);
+      return { status: 200, body: result };
+    },
+  );
 
-    if (resolution.type === "replay") {
-      res.set("Idempotency-Key", idempotencyKey);
-      res.set("Idempotent-Replayed", "true");
-      res.status(resolution.status).json(resolution.body);
-      return;
-    }
-
+  if (!handled) {
     const result = await likeFeedItem(userId, req.params.feedItemId);
-
-    if (resolution.recordId) {
-      await persistIdempotencyResult(resolution.recordId, 200, result);
-    }
-
-    res.set("Idempotency-Key", idempotencyKey);
     res.json(result);
   }
-
-  const result = await likeFeedItem(userId, req.params.feedItemId);
-  res.json(result);
 }
 
 export async function unlikeFeedItemHandler(req: Request, res: Response): Promise<void> {
@@ -150,34 +133,21 @@ export async function unlikeFeedItemHandler(req: Request, res: Response): Promis
     throw new HttpError(401, "E.UNAUTHENTICATED", "UNAUTHENTICATED");
   }
 
-  // Idempotency support
-  const idempotencyKey = getIdempotencyKey(req);
-  if (idempotencyKey) {
-    const route = getRouteTemplate(req);
-    const resolution = await resolveIdempotency(
-      { userId, method: req.method, route, key: idempotencyKey },
-      { feedItemId: req.params.feedItemId },
-    );
+  const handled = await handleIdempotentRequest(
+    req,
+    res,
+    userId,
+    { feedItemId: req.params.feedItemId },
+    async () => {
+      const result = await unlikeFeedItem(userId, req.params.feedItemId);
+      return { status: 200, body: result };
+    },
+  );
 
-    if (resolution.type === "replay") {
-      res.set("Idempotency-Key", idempotencyKey);
-      res.set("Idempotent-Replayed", "true");
-      res.status(resolution.status).json(resolution.body);
-      return;
-    }
-
+  if (!handled) {
     const result = await unlikeFeedItem(userId, req.params.feedItemId);
-
-    if (resolution.recordId) {
-      await persistIdempotencyResult(resolution.recordId, 200, result);
-    }
-
-    res.set("Idempotency-Key", idempotencyKey);
     res.json(result);
   }
-
-  const result = await unlikeFeedItem(userId, req.params.feedItemId);
-  res.json(result);
 }
 
 export async function bookmarkSessionHandler(req: Request, res: Response): Promise<void> {
@@ -266,13 +236,17 @@ export async function listBookmarksHandler(req: Request, res: Response): Promise
 }
 
 export async function listCommentsHandler(req: Request, res: Response): Promise<void> {
-  const viewerId = resolveViewerId(req);
+  // Authentication required per FR-003 (privacy-by-default)
+  const viewerId = req.user?.sub;
+  if (!viewerId) {
+    throw new HttpError(401, "E.UNAUTHENTICATED", "UNAUTHENTICATED");
+  }
   const limit = parseLimit(req.query.limit, 50, 200);
   const offset = parseOffset(req.query.offset, 0);
   const comments = await listComments(req.params.feedItemId, {
     limit,
     offset,
-    viewerId: viewerId ?? undefined,
+    viewerId,
   });
   res.json({ comments });
 }
@@ -296,35 +270,21 @@ export async function createCommentHandler(req: Request, res: Response): Promise
             ? commentValue.toISOString()
             : (JSON.stringify(commentValue) ?? "");
 
-  // Idempotency support
-  const idempotencyKey = getIdempotencyKey(req);
-  if (idempotencyKey) {
-    const route = getRouteTemplate(req);
-    const resolution = await resolveIdempotency(
-      { userId, method: req.method, route, key: idempotencyKey },
-      { feedItemId: req.params.feedItemId, body },
-    );
+  const handled = await handleIdempotentRequest(
+    req,
+    res,
+    userId,
+    { feedItemId: req.params.feedItemId, body },
+    async () => {
+      const comment = await createComment(userId, req.params.feedItemId, body);
+      return { status: 201, body: comment };
+    },
+  );
 
-    if (resolution.type === "replay") {
-      res.set("Idempotency-Key", idempotencyKey);
-      res.set("Idempotent-Replayed", "true");
-      res.status(resolution.status).json(resolution.body);
-      return;
-    }
-
+  if (!handled) {
     const comment = await createComment(userId, req.params.feedItemId, body);
-
-    if (resolution.recordId) {
-      await persistIdempotencyResult(resolution.recordId, 201, comment);
-    }
-
-    res.set("Idempotency-Key", idempotencyKey);
     res.status(201).json(comment);
-    return;
   }
-
-  const comment = await createComment(userId, req.params.feedItemId, body);
-  res.status(201).json(comment);
 }
 
 export async function deleteCommentHandler(req: Request, res: Response): Promise<void> {
@@ -525,147 +485,17 @@ export async function reportCommentHandler(req: Request, res: Response): Promise
 }
 
 export async function getLeaderboardHandler(req: Request, res: Response): Promise<void> {
-  const viewerId = resolveViewerId(req);
-  const scope = (req.query.scope as "global" | "friends" | undefined) ?? "global";
+  // Authentication required per FR-003 (privacy-by-default)
+  const viewerId = req.user?.sub;
+  if (!viewerId) {
+    throw new HttpError(401, "E.UNAUTHENTICATED", "UNAUTHENTICATED");
+  }
+  const requestedScope = req.query.scope as string | undefined;
+  const scope = requestedScope === "friends" ? "friends" : "global";
   const period = (req.query.period as "week" | "month" | undefined) ?? "week";
   const limit = parseLimit(req.query.limit, 25, 100);
   const leaderboard = await getLeaderboard(viewerId, { scope, period, limit });
   res.json({ leaderboard, scope, period });
-}
-export async function createShareLinkHandler(req: Request, res: Response): Promise<void> {
-  const userId = req.user?.sub;
-  if (!userId) {
-    throw new HttpError(401, "E.UNAUTHENTICATED", "UNAUTHENTICATED");
-  }
-  const rawBody: unknown = req.body;
-  const payload = isRecord(rawBody) ? rawBody : undefined;
-  const maxViewsRaw = payload?.maxViews;
-  const expiresAtRaw = payload?.expiresAt;
-
-  let parsedExpiresAt: Date | null = null;
-  if (expiresAtRaw !== undefined && expiresAtRaw !== null) {
-    const candidate =
-      expiresAtRaw instanceof Date
-        ? expiresAtRaw
-        : typeof expiresAtRaw === "string" || typeof expiresAtRaw === "number"
-          ? new Date(expiresAtRaw)
-          : null;
-    if (!candidate || Number.isNaN(candidate.getTime())) {
-      throw new HttpError(400, "E.FEED.INVALID_EXPIRES_AT", "FEED_INVALID_EXPIRES_AT");
-    }
-    parsedExpiresAt = candidate;
-  }
-
-  // Idempotency support
-  const idempotencyKey = getIdempotencyKey(req);
-  if (idempotencyKey) {
-    const route = getRouteTemplate(req);
-    const resolution = await resolveIdempotency(
-      { userId, method: req.method, route, key: idempotencyKey },
-      {
-        sessionId: req.params.sessionId,
-        maxViews: typeof maxViewsRaw === "number" ? maxViewsRaw : null,
-        expiresAt: parsedExpiresAt,
-      },
-    );
-
-    if (resolution.type === "replay") {
-      res.set("Idempotency-Key", idempotencyKey);
-      res.set("Idempotent-Replayed", "true");
-      res.status(resolution.status).json(resolution.body);
-      return;
-    }
-
-    const link = await createShareLink(userId, req.params.sessionId, {
-      maxViews: typeof maxViewsRaw === "number" ? maxViewsRaw : null,
-      expiresAt: parsedExpiresAt,
-    });
-
-    const response = {
-      id: link.id,
-      token: link.token,
-      maxViews: link.max_views,
-      expiresAt: link.expires_at,
-      viewCount: link.view_count,
-      createdAt: link.created_at,
-    };
-
-    if (resolution.recordId) {
-      await persistIdempotencyResult(resolution.recordId, 201, response);
-    }
-
-    res.set("Idempotency-Key", idempotencyKey);
-    res.status(201).json(response);
-    return;
-  }
-
-  const link = await createShareLink(userId, req.params.sessionId, {
-    maxViews: typeof maxViewsRaw === "number" ? maxViewsRaw : null,
-    expiresAt: parsedExpiresAt,
-  });
-
-  res.status(201).json({
-    id: link.id,
-    token: link.token,
-    maxViews: link.max_views,
-    expiresAt: link.expires_at,
-    viewCount: link.view_count,
-    createdAt: link.created_at,
-  });
-}
-
-export async function getSharedSessionHandler(req: Request, res: Response): Promise<void> {
-  const { link, session, feedItem } = await getSharedSession(req.params.token);
-
-  res.json({
-    link: {
-      id: link.id,
-      maxViews: link.max_views,
-      viewCount: link.view_count + 1, // optimistic increment
-      expiresAt: link.expires_at,
-    },
-    feedItem,
-    session,
-  });
-}
-
-export async function revokeShareLinkHandler(req: Request, res: Response): Promise<void> {
-  const userId = req.user?.sub;
-  if (!userId) {
-    throw new HttpError(401, "E.UNAUTHENTICATED", "UNAUTHENTICATED");
-  }
-
-  // Idempotency support
-  const idempotencyKey = getIdempotencyKey(req);
-  if (idempotencyKey) {
-    const route = getRouteTemplate(req);
-    const resolution = await resolveIdempotency(
-      { userId, method: req.method, route, key: idempotencyKey },
-      { sessionId: req.params.sessionId },
-    );
-
-    if (resolution.type === "replay") {
-      res.set("Idempotency-Key", idempotencyKey);
-      res.set("Idempotent-Replayed", "true");
-      res.status(resolution.status).json(resolution.body);
-      return;
-    }
-
-    const revoked = await revokeShareLink(userId, req.params.sessionId);
-
-    const response = { revoked };
-
-    if (resolution.recordId) {
-      await persistIdempotencyResult(resolution.recordId, 200, response);
-    }
-
-    res.set("Idempotency-Key", idempotencyKey);
-    res.json(response);
-    return;
-  }
-
-  const revoked = await revokeShareLink(userId, req.params.sessionId);
-  res.json({ revoked });
 }
 
 export async function cloneSessionFromFeedHandler(req: Request, res: Response): Promise<void> {

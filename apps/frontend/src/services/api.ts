@@ -2,7 +2,10 @@ import type { AxiosError, InternalAxiosRequestConfig } from "axios";
 import axios from "axios";
 import { useAuthStore } from "../store/auth.store";
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4000";
+// Use relative URLs in development (Vite proxy handles /api -> localhost:4000)
+// Use full URL in production or when VITE_API_URL is explicitly set
+const API_URL =
+  import.meta.env.VITE_API_URL || (import.meta.env.DEV ? "" : "http://localhost:4000");
 
 /**
  * SECURITY FIX (CWE-922): Cookie-based authentication
@@ -108,9 +111,33 @@ apiClient.interceptors.response.use(
       // Retry the original request with fresh cookies
       return apiClient(originalRequest);
     } catch (refreshError) {
+      // Check if error is due to outdated terms
+      if (refreshError && typeof refreshError === "object" && "response" in refreshError) {
+        const axiosError = refreshError as {
+          response?: { data?: { error?: { code?: string } } };
+        };
+        const errorCode = axiosError.response?.data?.error?.code;
+
+        if (errorCode === "TERMS_VERSION_OUTDATED") {
+          // Redirect to terms re-acceptance page
+          processQueue(refreshError);
+          window.location.href = "/terms-reacceptance";
+          const error =
+            refreshError instanceof Error
+              ? refreshError
+              : new Error(refreshError ? JSON.stringify(refreshError) : "Unknown error");
+          return Promise.reject(error);
+        }
+      }
+
       // Refresh failed - sign out and clear cookies
       processQueue(refreshError);
-      useAuthStore.getState().signOut();
+      useAuthStore
+        .getState()
+        .signOut()
+        .catch(() => {
+          // Ignore sign out errors during token refresh failure
+        });
 
       // Optionally call logout endpoint to clear server-side session
       try {
@@ -119,9 +146,8 @@ apiClient.interceptors.response.use(
         // Ignore logout errors during error handling
       }
 
-      return Promise.reject(
-        refreshError instanceof Error ? refreshError : new Error(String(refreshError)),
-      );
+      const error = refreshError instanceof Error ? refreshError : new Error(String(refreshError));
+      return Promise.reject(error);
     } finally {
       isRefreshing = false;
     }
@@ -142,6 +168,7 @@ export type RegisterRequest = {
   email: string;
   password: string;
   username: string;
+  terms_accepted: boolean;
   profile?: {
     display_name?: string;
   };
@@ -198,6 +225,37 @@ export async function register(payload: RegisterRequest): Promise<RegisterRespon
   return res.data;
 }
 
+export type AcceptTermsRequest = {
+  terms_accepted: boolean;
+};
+
+export type AcceptTermsResponse = {
+  message: string;
+};
+
+export async function acceptTerms(payload: AcceptTermsRequest): Promise<AcceptTermsResponse> {
+  const res = await apiClient.post<AcceptTermsResponse>("/api/v1/auth/terms/accept", payload);
+  return res.data;
+}
+
+export type ResendVerificationRequest = {
+  email: string;
+};
+
+export type ResendVerificationResponse = {
+  message: string;
+};
+
+export async function resendVerificationEmail(
+  payload: ResendVerificationRequest,
+): Promise<ResendVerificationResponse> {
+  const res = await rawHttpClient.post<ResendVerificationResponse>(
+    "/api/v1/auth/verify/resend",
+    payload,
+  );
+  return res.data;
+}
+
 export type ForgotPasswordRequest = {
   email: string;
 };
@@ -230,6 +288,57 @@ export async function resetPassword(payload: ResetPasswordRequest): Promise<Rese
     "/api/v1/auth/password/reset",
     payload,
   );
+  return res.data;
+}
+
+/**
+ * Logout function - calls backend to invalidate session and clear cookies
+ * Backend clears HttpOnly cookies automatically
+ */
+export async function logout(): Promise<void> {
+  await rawHttpClient.post("/api/v1/auth/logout");
+}
+
+// Session Management API
+export interface SessionInfo {
+  id: string;
+  userAgent: string | null;
+  ip: string | null;
+  createdAt: string;
+  expiresAt: string;
+  revokedAt: string | null;
+  isCurrent: boolean;
+}
+
+export interface SessionsListResponse {
+  sessions: SessionInfo[];
+}
+
+export interface RevokeSessionsRequest {
+  sessionId?: string | null;
+  revokeAll?: boolean;
+  revokeOthers?: boolean;
+}
+
+export interface RevokeSessionsResponse {
+  revoked: number;
+}
+
+/**
+ * List all active sessions for the current user
+ */
+export async function listAuthSessions(): Promise<SessionsListResponse> {
+  const res = await apiClient.get<SessionsListResponse>("/api/v1/auth/sessions");
+  return res.data;
+}
+
+/**
+ * Revoke one or more sessions
+ */
+export async function revokeAuthSessions(
+  payload: RevokeSessionsRequest,
+): Promise<RevokeSessionsResponse> {
+  const res = await apiClient.post<RevokeSessionsResponse>("/api/v1/auth/sessions/revoke", payload);
   return res.data;
 }
 
@@ -940,4 +1049,15 @@ export async function disable2FA(password: string): Promise<{ success: boolean; 
 export async function get2FAStatus(): Promise<TwoFactorStatusResponse> {
   const res = await apiClient.get<TwoFactorStatusResponse>("/api/v1/auth/2fa/status");
   return res.data;
+}
+
+// Session Management API
+export interface SessionInfo {
+  id: string;
+  userAgent: string | null;
+  ip: string | null;
+  createdAt: string;
+  expiresAt: string;
+  revokedAt: string | null;
+  isCurrent: boolean;
 }

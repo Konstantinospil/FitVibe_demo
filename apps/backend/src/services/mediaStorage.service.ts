@@ -76,5 +76,14 @@ export async function readStorageObject(storageKey: string): Promise<Buffer> {
 
 export async function deleteStorageObject(storageKey: string): Promise<void> {
   const fullPath = resolveStoragePath(storageKey);
-  await fs.rm(fullPath, { force: true });
+  try {
+    await fs.access(fullPath);
+    await fs.rm(fullPath, { force: true });
+  } catch (error) {
+    // If file doesn't exist, throw an error
+    if ((error as NodeJS.ErrnoException).code === "ENOENT") {
+      throw new Error(`Storage object not found: ${storageKey}`);
+    }
+    throw error;
+  }
 }

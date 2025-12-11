@@ -10,7 +10,7 @@ import {
 import { NodeSDK } from "@opentelemetry/sdk-node";
 import { getNodeAutoInstrumentations } from "@opentelemetry/auto-instrumentations-node";
 import { OTLPTraceExporter } from "@opentelemetry/exporter-trace-otlp-http";
-import { Resource } from "@opentelemetry/resources";
+import { resourceFromAttributes } from "@opentelemetry/resources";
 import {
   SEMRESATTRS_SERVICE_NAME,
   SEMRESATTRS_DEPLOYMENT_ENVIRONMENT,
@@ -53,9 +53,7 @@ export function initializeTracing(): void {
 
   try {
     // Configure resource attributes
-    // @ts-expect-error - Resource constructor is available at runtime despite type issue
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
-    const resource = new Resource({
+    const resource = resourceFromAttributes({
       [SEMRESATTRS_SERVICE_NAME]: process.env.SERVICE_NAME ?? "fitvibe-backend",
       [SEMRESATTRS_DEPLOYMENT_ENVIRONMENT]: process.env.NODE_ENV ?? "development",
     });
@@ -67,7 +65,6 @@ export function initializeTracing(): void {
 
     // Initialize NodeSDK with auto-instrumentations
     sdk = new NodeSDK({
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       resource,
       traceExporter,
       instrumentations: [

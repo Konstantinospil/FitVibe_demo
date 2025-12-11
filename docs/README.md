@@ -17,14 +17,14 @@ The documentation hub serves as the authoritative reference for:
 
 ### Core Documents
 
-| Document | Path | Purpose |
-| -------- | ---- | ------- |
-| **Glossary** | [`0.Glossary.md`](0.Glossary.md) | Terminology and acronyms used throughout the project |
-| **Product Requirements Document (PRD)** | [`1.Product_Requirements/`](1.Product_Requirements/) | Business goals, user journeys, and feature scope |
-| **Technical Design Document (TDD)** | [`2.Technical_Design_Document/`](2.Technical_Design_Document/) | System architecture, data flows, and integration plans |
-| **Design System** | [`3.Sensory_Design_System/`](3.Sensory_Design_System/) | Personas, visual design, and user flow documentation |
-| **Testing & QA Plan** | [`4.Testing_and_Quality_Assurance_Plan/`](4.Testing_and_Quality_Assurance_Plan/) | Test strategy, quality gates, and release criteria |
-| **Policies** | [`5.Policies/`](5.Policies/) | Security, privacy, legal, and operational policies |
+| Document                                | Path                                                                             | Purpose                                                |
+| --------------------------------------- | -------------------------------------------------------------------------------- | ------------------------------------------------------ |
+| **Glossary**                            | [`0.Glossary.md`](0.Glossary.md)                                                 | Terminology and acronyms used throughout the project   |
+| **Product Requirements Document (PRD)** | [`1.Product_Requirements/`](1.Product_Requirements/)                             | Business goals, user journeys, and feature scope       |
+| **Technical Design Document (TDD)**     | [`2.Technical_Design_Document/`](2.Technical_Design_Document/)                   | System architecture, data flows, and integration plans |
+| **Design System**                       | [`3.Sensory_Design_System/`](3.Sensory_Design_System/)                           | Personas, visual design, and user flow documentation   |
+| **Testing & QA Plan**                   | [`4.Testing_and_Quality_Assurance_Plan/`](4.Testing_and_Quality_Assurance_Plan/) | Test strategy, quality gates, and release criteria     |
+| **Policies**                            | [`5.Policies/`](5.Policies/)                                                     | Security, privacy, legal, and operational policies     |
 
 ### Key Subdirectories
 
@@ -44,6 +44,7 @@ The documentation hub serves as the authoritative reference for:
 - [`2c.Technical_Design_Document_Data.md`](2.Technical_Design_Document/2c.Technical_Design_Document_Data.md) - Data model and database design
 - [`2d.Technical_Design_Document_APIDesign.md`](2.Technical_Design_Document/2d.Technical_Design_Document_APIDesign.md) - API design and contracts
 - [`2e.Technical_Design_Document_misc.md`](2.Technical_Design_Document/2e.Technical_Design_Document_misc.md) - Miscellaneous technical details
+- [`CODING_STYLE_GUIDE.md`](2.Technical_Design_Document/CODING_STYLE_GUIDE.md) - **Coding style guide for React and Express**
 
 **Supporting Materials:**
 
@@ -92,6 +93,17 @@ Located in [`2.Technical_Design_Document/2.f.Architectural_Decision_Documentatio
 - [`5.a.Ops/`](5.Policies/5.a.Ops/) - Operational policies
 - [`5.b.Security/`](5.Policies/5.b.Security/) - Security policies and procedures
 
+#### Implementation (`Implementation/`)
+
+**Note**: This folder contains project planning, implementation reports, and review documents. These files are excluded from version control (see `.gitignore`).
+
+- `PROJECT_EPICS_AND_ACTIVITIES.md` - Epic definitions and activity breakdowns
+- `GITHUB_ISSUES_SETUP.md` - GitHub issues setup and tracking
+- `WCAG_2.2_IMPLEMENTATION_PLAN.md` - WCAG 2.2 compliance implementation plan
+- `WCAG_2.2_UPDATE_PLAN.md` - WCAG 2.2 update planning
+- `EPIC_13_GITHUB_ISSUE.md` - Epic 13 GitHub issue details
+- `Bug_Fixer_*.md` - Bug fixing agent reports and reviews
+
 ## Working With the Documentation
 
 ### Document Maintenance
@@ -139,7 +151,7 @@ Located in [`2.Technical_Design_Document/2.f.Architectural_Decision_Documentatio
 ## Quick Links
 
 - [Main README](../README.md) - Project overview and quick start
-- [Contributing Guide](../CONTRIBUTING.md) - How to contribute to the project
+- [Contributing Guide](CONTRIBUTING.md) - How to contribute to the project
 - [Glossary](0.Glossary.md) - Terminology reference
 - [ADR Index](2.Technical_Design_Document/2.f.Architectural_Decision_Documentation/ADR_INDEX.md) - All architecture decisions
 - [Diagrams Index](2.Technical_Design_Document/2.g.Diagramms/diagrams_index.md) - Visual documentation

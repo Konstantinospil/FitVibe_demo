@@ -17,12 +17,17 @@ export default tseslint.config(
     ignores: [
       "node_modules/**",
       "dist/**",
+      "**/dist/**",
       "build/**",
       "coverage/**",
       ".turbo/**",
       "**/*.js",
       "**/*.cjs",
       "**/*.mjs",
+      "tests/**/*.cjs", // E2E test configs
+      "tests/setup/test-helpers.ts", // Test helper file not in tsconfig
+      "tests/setup/jest.setup.ts", // Test setup file not in tsconfig
+      "tests/qa/test-manager-spec.test.ts", // Test spec file not in tsconfig
     ],
   },
   js.configs.recommended,
@@ -34,7 +39,13 @@ export default tseslint.config(
       ecmaVersion: 2023,
       sourceType: "module",
       parserOptions: {
-        projectService: true,
+        // Use projectService for monorepo support - it's more efficient than parsing multiple tsconfigs
+        // Optimize by limiting scope and using caching
+        projectService: {
+          allowDefaultProject: ["*.js", "*.cjs", "*.mjs"],
+          // Limit to specific tsconfig files for better performance
+          defaultProject: "./tsconfig.json",
+        },
         tsconfigRootDir: tsconfigRoot,
       },
       globals: {
@@ -103,13 +114,37 @@ export default tseslint.config(
     },
   },
   {
-    files: ["**/__tests__/**/*.ts", "**/*.test.ts", "**/*.spec.ts"],
+    files: [
+      "**/__tests__/**/*.ts",
+      "**/__tests__/**/*.tsx",
+      "**/*.test.ts",
+      "**/*.test.tsx",
+      "**/*.spec.ts",
+      "**/*.spec.tsx",
+      "tests/**/*.ts",
+      "tests/**/*.tsx",
+    ],
+    languageOptions: {
+      parserOptions: {
+        // Disable type-aware linting for test files
+        project: false,
+      },
+    },
     rules: {
       "@typescript-eslint/no-unsafe-assignment": "off",
       "@typescript-eslint/no-unsafe-call": "off",
       "@typescript-eslint/no-unsafe-member-access": "off",
       "@typescript-eslint/no-unsafe-return": "off",
+      "@typescript-eslint/no-unsafe-argument": "off",
       "@typescript-eslint/no-explicit-any": "off",
+      "@typescript-eslint/no-redundant-type-constituents": "off",
+      "@typescript-eslint/no-unused-vars": "off",
+      "@typescript-eslint/unbound-method": "off",
+      // Disable type-checking rules that require project references
+      "@typescript-eslint/no-floating-promises": "off",
+      "@typescript-eslint/await-thenable": "off",
+      "@typescript-eslint/no-misused-promises": "off",
+      "@typescript-eslint/no-unnecessary-type-assertion": "off",
     },
   },
 );

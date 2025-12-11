@@ -80,7 +80,9 @@ async function focusByTab(page, locator, maxTabs = 30) {
     // eslint-disable-next-line no-await-in-loop
     await page.keyboard.press("Tab");
   }
-  throw new Error(`Unable to focus locator ${await locator.evaluate((el) => el?.outerHTML)} via Tab.`);
+  throw new Error(
+    `Unable to focus locator ${await locator.evaluate((el) => el?.outerHTML)} via Tab.`,
+  );
 }
 
 test.describe("Q-18 keyboard-only accessibility flows", () => {

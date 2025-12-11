@@ -14,14 +14,13 @@ const minimatch_1 = require("minimatch");
  * is in the options, brace expansion _is_ treated as a pattern having magic.
  */
 const hasMagic = (pattern, options = {}) => {
-    if (!Array.isArray(pattern)) {
-        pattern = [pattern];
-    }
-    for (const p of pattern) {
-        if (new minimatch_1.Minimatch(p, options).hasMagic())
-            return true;
-    }
-    return false;
+  if (!Array.isArray(pattern)) {
+    pattern = [pattern];
+  }
+  for (const p of pattern) {
+    if (new minimatch_1.Minimatch(p, options).hasMagic()) return true;
+  }
+  return false;
 };
 exports.hasMagic = hasMagic;
 //# sourceMappingURL=has-magic.js.map

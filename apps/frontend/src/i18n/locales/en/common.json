@@ -12,7 +12,10 @@
   "language": {
     "label": "Language",
     "english": "English",
-    "german": "German"
+    "german": "German",
+    "spanish": "Spanish",
+    "french": "French",
+    "greek": "Greek"
   },
   "status": {
     "checking": "Checking server…",
@@ -64,22 +67,6 @@
         "title": "Signature achievements",
         "description": "Back squat 180 kg • Bench 115 kg • Deadlift 210 kg • Boston Marathon qualifier."
       }
-    },
-    "share": {
-      "title": "Share links",
-      "description": "Create personal share links for coaches or judges. Revoke access instantly at any time.",
-      "create": "Create share link",
-      "empty": "No active share links yet.",
-      "copy": "Copy link",
-      "copyAria": "Copy link",
-      "revoke": "Revoke",
-      "revoked": "Revoked",
-      "copied": "Link copied",
-      "copiedAria": "Link copied to clipboard",
-      "guards": {
-        "active": "Share this URL only with people you trust.",
-        "revoked": "This link is no longer accessible."
-      }
     }
   },
   "feed": {
@@ -110,9 +97,28 @@
     }
   },
   "footer": {
-    "note": "Built for athletes who love data‑driven progress — Fitvibe"
+    "brand": "FitVibe",
+    "terms": "Terms and Conditions",
+    "privacy": "Privacy Policy",
+    "navigationLabel": "Footer navigation",
+    "termsAriaLabel": "View Terms and Conditions",
+    "privacyAriaLabel": "View Privacy Policy"
+  },
+  "terms": {
+    "eyebrow": "Legal",
+    "title": "Terms and Conditions",
+    "description": "Please read our Terms and Conditions carefully before using FitVibe.",
+    "effectiveDate": "Effective Date"
+  },
+  "privacy": {
+    "eyebrow": "Legal",
+    "title": "Privacy Policy",
+    "description": "Learn how we collect, use, and protect your personal data.",
+    "effectiveDate": "Effective date"
   },
   "errors": {
+    "TERMS_ACCEPTANCE_REQUIRED": "You must accept the Terms and Conditions and Privacy Policy to create an account",
+    "TERMS_VERSION_OUTDATED": "Terms and Conditions have been updated. Please accept the new terms to continue.",
     "WEAK_PASSWORD": "Password must be at least 12 characters and include uppercase, lowercase, digit, and symbol",
     "PASSWORD_CONTAINS_USERNAME": "Password cannot contain your username",
     "PASSWORD_CONTAINS_EMAIL": "Password cannot contain your email address",
@@ -170,10 +176,6 @@
     "FEED_REPORT_REASON_TOO_LONG": "Reason exceeds 200 characters",
     "FEED_NOT_OWNER": "You do not own this session",
     "FEED_INVALID_STATUS": "Only completed sessions can be shared",
-    "FEED_LINK_REVOKED": "Share link has been revoked",
-    "FEED_LINK_EXPIRED": "Share link has expired",
-    "FEED_LINK_EXHAUSTED": "Share link view limit reached",
-    "FEED_LINK_NOT_FOUND": "Share link not found",
     "FEED_USER_NOT_FOUND": "User not found",
     "FEED_CANNOT_FOLLOW_SELF": "You cannot follow yourself",
     "FEED_CANNOT_BLOCK_SELF": "You cannot block yourself",
@@ -201,6 +203,7 @@
     "EMAIL_SERVICE_UNAVAILABLE": "Email service unavailable"
   },
   "validation": {
+    "required": "Fill in this field",
     "passwordMinLength": "Password must be at least 12 characters long",
     "passwordLowercase": "Password must include a lowercase letter",
     "passwordUppercase": "Password must include an uppercase letter",
@@ -271,12 +274,22 @@
     "titleVerifying": "Verifying your email…",
     "titleSuccess": "Email verified",
     "titleFailed": "Verification failed",
+    "titleExpired": "Verification link expired",
     "descVerifying": "Please wait while we verify your email address.",
     "descSuccess": "Your email has been verified. Redirecting to login…",
-    "descFailed": "We couldn’t verify your email. The link may have expired or is invalid.",
+    "descFailed": "We couldn't verify your email. The link may have expired or is invalid.",
+    "descExpired": "Your verification link has expired. Please request a new verification email.",
     "noToken": "No verification token provided",
     "goToLogin": "Go to login",
-    "backToRegister": "Back to register"
+    "backToRegister": "Back to register",
+    "resendVerification": "Resend verification email",
+    "resendEmailLabel": "Email address",
+    "resendEmailPlaceholder": "your@email.com",
+    "resendButton": "Send verification email",
+    "resending": "Sending…",
+    "resendSuccess": "Verification email sent! Please check your inbox.",
+    "resendError": "Failed to send verification email. Please try again.",
+    "retryAfter": "Please try again in {{seconds}} second(s)."
   },
   "forgotPassword": {
     "eyebrow": "Password reset",
@@ -308,7 +321,15 @@
     "successText": "You can now log in with your new password.",
     "passwordMismatch": "Passwords do not match",
     "invalidToken": "Invalid reset token. Please request a new one.",
-    "errorReset": "Failed to reset password"
+    "errorReset": "Failed to reset password",
+    "passwordRequirements": {
+      "title": "Password Requirements:",
+      "minLength": "At least 12 characters",
+      "uppercase": "At least one uppercase letter (A-Z)",
+      "lowercase": "At least one lowercase letter (a-z)",
+      "digit": "At least one digit (0-9)",
+      "special": "At least one special character (!@#$%^&*...)"
+    }
   },
   "logger": {
     "eyebrow": "Logbook",
@@ -317,13 +338,24 @@
     "exercise": "Exercise",
     "sets": "Sets",
     "reps": "Reps",
-    "load": "Load"
+    "load": "Load",
+    "repsPlaceholder": "10",
+    "weightPlaceholder": "80",
+    "rpePlaceholder": "7"
   },
   "planner": {
     "eyebrow": "Session architecture",
     "title": "Design training blocks with intent.",
     "description": "Drag, duplicate, and periodise workouts. Planner keeps intensity, volume, and deload ratios on target.",
-    "editBlock": "Edit block"
+    "editBlock": "Edit block",
+    "sessionTitlePlaceholder": "e.g., Upper Body Strength",
+    "notesPlaceholder": "Add session notes, training goals, or context...",
+    "exerciseSearchPlaceholder": "Search for exercises (e.g., squat, bench press)...",
+    "repsPlaceholder": "10",
+    "weightPlaceholder": "80",
+    "rpePlaceholder": "7",
+    "speedPlaceholder": "90",
+    "exerciseNotesPlaceholder": "e.g., Focus on form, slower tempo on eccentrics"
   },
   "sessions": {
     "eyebrow": "Training management",
@@ -362,6 +394,49 @@
     "mainLayout": {
       "logo": "FV",
       "brand": "FitVibe"
+    }
+  },
+  "settings": {
+    "title": "Settings",
+    "description": "Your preferences and account settings",
+    "profile": {
+      "title": "Profile Settings",
+      "description": "Update your profile information",
+      "displayName": "Display Name",
+      "displayNamePlaceholder": "Your display name",
+      "alias": "Alias",
+      "aliasPlaceholder": "Your public alias",
+      "aliasHelp": "Alias may only contain letters, numbers, underscores, dots, or dashes",
+      "email": "Email",
+      "emailCannotChange": "Email cannot be changed",
+      "weight": "Weight",
+      "weightUnit": "Weight Unit",
+      "weightKg": "Kilograms (kg)",
+      "weightLb": "Pounds (lb)",
+      "fitnessLevel": "Fitness Level",
+      "fitnessLevelBeginner": "Beginner",
+      "fitnessLevelIntermediate": "Intermediate",
+      "fitnessLevelAdvanced": "Advanced",
+      "fitnessLevelElite": "Elite",
+      "trainingFrequency": "Training Frequency",
+      "trainingFrequencyRarely": "Rarely",
+      "trainingFrequency1_2": "1-2 times per week",
+      "trainingFrequency3_4": "3-4 times per week",
+      "trainingFrequency5Plus": "5+ times per week",
+      "weightPlaceholder": "75.5",
+      "passwordPlaceholder": "Enter your password",
+      "twoFactorCodePlaceholder": "000000"
+    },
+    "preferences": {
+      "title": "Preferences",
+      "description": "Set your default session visibility, units, and language",
+      "defaultVisibility": "Default Session Visibility",
+      "units": "Units",
+      "language": "Language",
+      "saveSuccess": "Preferences saved successfully!",
+      "saveError": "Failed to save preferences. Please try again.",
+      "saveButton": "Save Preferences",
+      "saving": "Saving..."
     }
   },
   "common": {
@@ -458,5 +533,18 @@
       "vibe": "Vibe",
       "date": "Date"
     }
+  },
+  "admin": {
+    "userManagement": {
+      "searchPlaceholder": "Search by email, username, or ID..."
+    },
+    "systemControls": {
+      "maintenanceMessagePlaceholder": "e.g., Emergency database maintenance",
+      "durationPlaceholder": "e.g., 30 minutes",
+      "completionMessagePlaceholder": "e.g., Maintenance completed successfully"
+    }
+  },
+  "twoFactor": {
+    "codePlaceholder": "000000"
   }
 }
