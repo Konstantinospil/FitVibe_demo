@@ -1,0 +1,20 @@
+{
+  "request_id": "{AGENT_PREFIX}-YYYY-MM-DD-NNN",
+  "timestamp": "YYYY-MM-DDTHH:mm:ssZ",
+  "status": "complete|partial|failed",
+  "summary": "<2-3 sentence overview of results>",
+  "deliverables": [
+    "path/to/file1.ts",
+    "path/to/file2.md"
+  ],
+  "quality_metrics": {
+    "metric_name": "value"
+  },
+  "next_steps": "<what should happen next>",
+  "special_notes": [
+    "<important note 1>",
+    "<important note 2>"
+  ]
+}
+
+

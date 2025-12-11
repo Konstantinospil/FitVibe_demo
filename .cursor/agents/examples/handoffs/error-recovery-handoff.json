@@ -1,0 +1,26 @@
+{
+  "from_agent": "planner-agent",
+  "to_agent": "fullstack-agent",
+  "request_id": "PLAN-YYYY-MM-DD-NNN",
+  "handoff_id": "HANDOFF-YYYY-MM-DD-NNN",
+  "timestamp": "YYYY-MM-DDTHH:mm:ssZ",
+  "handoff_type": "error_recovery",
+  "status": "pending",
+  "priority": "high",
+  "summary": "Retrying work after previous failure. Issues resolved, ready to retry.",
+  "deliverables": [],
+  "acceptance_criteria": [],
+  "context": {
+    "epic": "E1",
+    "requirement": "FR-009"
+  },
+  "next_steps": "Retry implementation with resolved issues.",
+  "special_notes": [
+    "Previous error details and resolution"
+  ],
+  "retry_count": 1,
+  "error_details": "Previous attempt failed due to [reason]. Resolution: [solution]",
+  "blocking_issues": []
+}
+
+

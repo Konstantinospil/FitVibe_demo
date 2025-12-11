@@ -1,0 +1,17 @@
+{
+  "request_id": "{AGENT_PREFIX}-YYYY-MM-DD-NNN",
+  "task_type": "task_type_1|task_type_2|task_type_3",
+  "description": "<clear description of what needs to be done>",
+  "requirements": {
+    "functional": ["<requirement 1>", "<requirement 2>"],
+    "non_functional": ["<security>", "<performance>", "<validation>"]
+  },
+  "acceptance_criteria": ["Given [context] When [action] Then [expected result]"],
+  "context": {
+    "priority": "high|medium|low",
+    "deadline": "YYYY-MM-DD",
+    "related_modules": ["<module-ids>"]
+  }
+}
+
+

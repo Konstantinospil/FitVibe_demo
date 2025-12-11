@@ -1,0 +1,9 @@
+# Agent Current State Files Directory
+
+This directory contains runtime state files for each agent.
+
+**Note**: These files are excluded from Cursor indexing (see `.cursorignore`) as they change frequently during agent execution.
+
+See `.cursor/docs/AGENT_CURRENT_STATE_SPECIFICATION.md` for details.
+
+

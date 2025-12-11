@@ -1,0 +1,105 @@
+---
+description: "Project overview, repository structure, technology stack, domain concepts, and project status for FitVibe platform"
+globs: ["**"]
+alwaysApply: true
+ruleType: "always"
+tags: ["project-overview", "structure", "technology-stack", "domain-concepts"]
+---
+
+# Project Overview
+
+FitVibe is a holistic fitness platform where users can plan, log, share, and track training sessions across six elemental vibes (Strength/Earth, Agility/Air, Endurance/Water, Explosivity/Fire, Intelligence/Shadow, Regeneration/Aether). The platform is built as a monorepo using PNPM workspaces with Turborepo for task orchestration and a modular, scalable architecture.
+
+## Repository Structure
+
+- `apps/backend/` - Express/TypeScript REST API with modular domain architecture
+- `apps/frontend/` - React 18 SPA built with Vite
+- `docs/` - Product, design, and governance documentation
+- `infra/` - Infrastructure, Docker, Kubernetes configs
+- `packages/` - Shared tooling, lint rules, TypeScript config, i18n
+- `tests/` - E2E, integration, performance, and QA test suites
+- `scripts/` - Utility scripts for development and maintenance
+
+## Technology Stack
+
+### Backend (`apps/backend/`)
+
+- **Runtime**: Node.js 20 LTS (≥18.19 required)
+- **Framework**: Express.js
+- **Language**: TypeScript (strict mode, no `any` in public surfaces)
+- **Database**: PostgreSQL (≥14, target 16-18) with Knex.js query builder
+- **Validation**: Zod schemas for all input validation
+- **Auth**: jose (JWT), @otplib/preset-default (2FA/TOTP)
+- **Email**: nodemailer (adapterized for testing)
+- **Rate Limiting**: rate-limiter-flexible
+- **Caching**: ioredis (Redis), node-cache (in-memory)
+- **Queue**: BullMQ for background jobs
+- **Observability**: OpenTelemetry, Prometheus (prom-client), Pino (structured logging)
+- **File Processing**: Sharp (image processing), ClamAV (antivirus scanning)
+- **Testing**: Jest with Supertest, ts-jest, pg-mem
+
+### Frontend (`apps/frontend/`)
+
+- **Framework**: React 18
+- **Build Tool**: Vite
+- **Language**: TypeScript (strict mode)
+- **Routing**: React Router v6
+- **State Management**: Zustand (global state), React Query/TanStack Query (server state)
+- **i18n**: i18next with react-i18next
+- **UI Components**: Custom components in `components/ui/`, Lucide React icons
+- **Charts**: Recharts
+- **Testing**: Vitest, React Testing Library, @testing-library/user-event
+- **E2E**: Playwright (in `tests/frontend/e2e/`)
+
+### Infrastructure
+
+- **Package Manager**: PNPM 9.14.4 (enforced via `packageManager` field)
+- **Monorepo**: Turborepo for task orchestration and caching
+- **Containerization**: Docker & Docker Compose
+- **Orchestration**: Kubernetes
+- **Reverse Proxy**: NGINX
+- **Observability**: Prometheus, Grafana, Loki, Tempo
+- **CI/CD**: GitHub Actions (referenced in workflows)
+
+## Key Domain Concepts
+
+### Vibes & Elements
+
+- **Strength** (Earth): Lifting, strongman, body building
+- **Agility** (Air): Juggling, climbing, bouldering, gymnastics, parkour
+- **Endurance** (Water): Running, hiking, cycling, rowing, jump rope
+- **Explosivity** (Fire): Sprints, jumps, throws
+- **Intelligence** (Shadow): Chess, shooting, sailing
+- **Regeneration** (Aether): Yoga, stretching, fasting
+
+### Roles
+
+- `anonymous` - unauthenticated users
+- `user` - authenticated users
+- `admin` - administrative users
+
+### Key Terms
+
+- **Session**: A training session that can be planned, logged, and shared
+- **Exercise Library**: Global exercise library with comparable metrics
+- **Public Link**: Shareable link with private visibility model
+- **Idempotency**: Operations that can be applied multiple times without changing result beyond initial application
+- **Training Unit**: Coach-assigned training structure with exercises and repeat counts
+- **Plan**: Recurring training plan that generates scheduled sessions
+
+## Project Status & Epics
+
+Refer to `PROJECT_EPICS_AND_ACTIVITIES.md` for current project status:
+
+- **Epic 1**: Profile & Settings (FR-009) - Open
+- **Epic 2**: Exercise Library (FR-010) - Open
+- **Epic 3**: Sharing & Community (FR-011) - Open
+- **Epic 4**: Planner Completion (FR-004) - Progressing
+- **Epic 5**: Logging & Import (FR-005) - Progressing
+- **Epic 6**: Privacy & GDPR (NFR-002) - Progressing
+- **Epic 7**: Performance Optimization (NFR-003) - Progressing
+- **Epic 8**: Accessibility (NFR-004) - Progressing
+- **Epic 9**: Observability (NFR-007) - Open
+- **Epic 10**: Availability & Backups (NFR-005) - Progressing
+- **Epic 11**: Technical Debt & Code Quality - Open
+- **Epic 12**: Coach Training Unit Assignment (FR-012) - Open

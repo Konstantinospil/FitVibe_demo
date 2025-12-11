@@ -1,0 +1,27 @@
+{
+  "from_agent": "backend-agent",
+  "to_agent": "planner-agent",
+  "request_id": "PLAN-YYYY-MM-DD-NNN",
+  "handoff_id": "HANDOFF-YYYY-MM-DD-NNN",
+  "timestamp": "YYYY-MM-DDTHH:mm:ssZ",
+  "handoff_type": "escalation",
+  "status": "blocked",
+  "priority": "high",
+  "summary": "Blocked on [blocking issue]. Need assistance or resolution.",
+  "deliverables": [],
+  "acceptance_criteria": [],
+  "context": {
+    "epic": "E1",
+    "requirement": "FR-009",
+    "related_issues": ["ISSUE-002"]
+  },
+  "next_steps": "Resolve blocking issue or provide alternative approach.",
+  "special_notes": [
+    "Details about the blocking issue"
+  ],
+  "blocking_issues": [
+    "Description of blocking issue"
+  ]
+}
+
+

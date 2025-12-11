@@ -1,0 +1,104 @@
+{
+  "model_router": {
+    "routing_rules": {
+      "trivial": {
+        "model": "haiku",
+        "min_score": 0.0,
+        "max_score": 0.2
+      },
+      "simple": {
+        "model": "haiku",
+        "min_score": 0.2,
+        "max_score": 0.4
+      },
+      "moderate": {
+        "model": "sonnet",
+        "min_score": 0.4,
+        "max_score": 0.7
+      },
+      "complex": {
+        "model": "sonnet",
+        "min_score": 0.7,
+        "max_score": 0.9
+      },
+      "critical": {
+        "model": "opus",
+        "min_score": 0.9,
+        "max_score": 1.0
+      }
+    },
+    "cost_optimization": {
+      "enabled": true,
+      "prefer_cheaper": true,
+      "quality_threshold": 0.8
+    },
+    "quality_requirements": {
+      "always_opus": [
+        "security_review",
+        "architecture_design",
+        "critical_bug_fix"
+      ],
+      "always_sonnet": [
+        "code_review",
+        "test_generation",
+        "api_design"
+      ],
+      "can_use_haiku": [
+        "documentation",
+        "simple_refactor",
+        "formatting"
+      ]
+    }
+  },
+  "quota_limits": {
+    "tokens_per_day": 200000,
+    "tokens_per_hour": 50000,
+    "messages_per_day": 1000,
+    "messages_per_hour": 200,
+    "cost_per_day_usd": 5.0
+  },
+  "agent_executor": {
+    "max_concurrent_agents": 5,
+    "max_workflow_concurrency": 3,
+    "default_timeout_seconds": 300,
+    "retry_attempts": 3,
+    "retry_backoff_base": 2.0,
+    "retry_backoff_max": 60.0
+  },
+  "state_management": {
+    "max_versions": 10,
+    "backup_retention": 10,
+    "state_retention_days": 30
+  },
+  "audit_logging": {
+    "retention_days": 30,
+    "compress_old": true,
+    "log_level": "INFO"
+  },
+  "llm": {
+    "provider": "openai",
+    "api_key_env": "OPENAI_API_KEY",
+    "organization_env": "OPENAI_ORG_ID",
+    "default_model": "sonnet",
+    "timeout_seconds": 60.0,
+    "max_retries": 3,
+    "temperature": 0.7,
+    "max_tokens": null,
+    "model_mapping": {
+      "haiku": "gpt-3.5-turbo",
+      "sonnet": "gpt-4",
+      "opus": "gpt-4-turbo-preview"
+    }
+  },
+  "rag": {
+    "default_n_results": 5,
+    "relevance_threshold": 0.6,
+    "max_context_length": 4000,
+    "vector_db_path": ".cursor/mcp/chromadb",
+    "collection_name": "fitvibe_knowledge"
+  }
+}
+
+
+
+

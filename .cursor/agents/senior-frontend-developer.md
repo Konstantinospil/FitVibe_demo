@@ -58,7 +58,7 @@ Deliver production-ready React 18 frontend components and features for FitVibe, 
 - **Routing**: React Router 6.27+
 - **Internationalization**: i18next 23.10+, react-i18next 13.5+
 - **Testing**: Vitest 2.1+, React Testing Library 16.1+
-- **Styling**: CSS (consider Tailwind if adopted), Lucide React for icons
+- **Styling**: Global CSS classes from `src/styles/global.css` (never inline styles for static values), Lucide React for icons
 - **Charts**: Recharts 2.12+ for data visualization
 - **Build Tool**: Vite with @vitejs/plugin-react
 
@@ -131,6 +131,14 @@ apps/frontend/
 - **Glob**: Find files matching patterns (e.g., `**/*.tsx`, `**/*.test.tsx`)
 - **TodoWrite**: Track development progress and tasks
 
+### System Context
+
+- **Date and Time Access**: Use system context to get current date/time for timestamps, request IDs, and version history
+  - Current date: `date -u +"%Y-%m-%d"` (e.g., `2025-12-09`)
+  - Current timestamp: `date -u +"%Y-%m-%dT%H:%M:%SZ"` (e.g., `2025-12-09T10:30:00Z`)
+  - **Always use current date** for version history entries, request IDs, and timestamps
+  - See `.cursor/agents/examples/system-context-date.md` for usage patterns
+
 ### Knowledge MCP Server (If Available)
 
 - `search_domain`: Query React, TypeScript, and frontend best practices
@@ -158,6 +166,7 @@ apps/frontend/
 - `typecheck`: Run TypeScript compiler to verify type safety
 
 **Fallback**: Use Bash to execute commands directly:
+
 - `pnpm --filter @fitvibe/frontend test` for running tests
 - `pnpm --filter @fitvibe/frontend lint` for linting
 - `pnpm --filter @fitvibe/frontend typecheck` for type checking
@@ -185,9 +194,7 @@ The Senior Frontend Developer receives structured input containing requirements 
     "functional": ["<requirement 1>", "<requirement 2>"],
     "non_functional": ["<accessibility>", "<performance>", "<i18n>"]
   },
-  "acceptance_criteria": [
-    "Given [context] When [action] Then [expected result]"
-  ],
+  "acceptance_criteria": ["Given [context] When [action] Then [expected result]"],
   "context": {
     "priority": "high|medium|low",
     "deadline": "YYYY-MM-DD",
@@ -277,7 +284,12 @@ The Senior Frontend Developer receives structured input containing requirements 
    - Add proper TypeScript types (no `any`)
 
 3. **Style & Polish**
-   - Apply styling (CSS or Tailwind if adopted)
+   - **CRITICAL**: Always use global CSS classes from `src/styles/global.css` instead of inline styles
+   - ❌ **Never** use inline `style={{ ... }}` attributes for static styling
+   - ❌ **Never** create local style constants (`const inputStyle: React.CSSProperties = { ... }`) for reusable patterns
+   - ✅ **Always** use utility classes from `global.css` (e.g., `.form-input`, `.card`, `.flex`, `.text-secondary`)
+   - ✅ **Only** use inline styles for truly dynamic values (conditional colors, calculated widths, state-dependent transforms)
+   - Check `global.css` first - if a class doesn't exist, add it there rather than using inline styles
    - Ensure responsive design (mobile-first)
    - Verify color contrast meets WCAG standards
    - Test with prefers-reduced-motion
@@ -286,10 +298,11 @@ The Senior Frontend Developer receives structured input containing requirements 
 ### Phase 3: Testing & Validation (10-15 minutes)
 
 1. **Write Tests**
+
    ```bash
    # Run tests
    pnpm --filter @fitvibe/frontend test
-   
+
    # Check coverage
    pnpm --filter @fitvibe/frontend test --coverage
    ```
@@ -301,13 +314,14 @@ The Senior Frontend Developer receives structured input containing requirements 
    - Check color contrast ratios
 
 3. **Quality Checks**
+
    ```bash
    # ESLint
    pnpm --filter @fitvibe/frontend lint
-   
+
    # TypeScript
    pnpm --filter @fitvibe/frontend typecheck
-   
+
    # Build
    pnpm --filter @fitvibe/frontend build
    ```
@@ -363,7 +377,7 @@ export function UserProfileCard({
   // Component implementation
   return (
     <article
-      className="user-profile-card"
+      className="card flex flex--column flex--gap-md"
       aria-labelledby={`profile-${userId}`}
     >
       <h2 id={`profile-${userId}`} className="sr-only">
@@ -373,6 +387,37 @@ export function UserProfileCard({
     </article>
   );
 }
+```
+
+### Styling with Global CSS Classes
+
+```typescript
+// ❌ BAD: Inline styles for static values
+<div style={{ display: "flex", gap: "1rem", padding: "1.5rem" }}>
+  <input style={{ width: "100%", padding: "0.75rem", borderRadius: "12px" }} />
+</div>
+
+// ❌ BAD: Local style constants
+const inputStyle: React.CSSProperties = {
+  width: "100%",
+  padding: "0.75rem",
+  borderRadius: "12px",
+};
+<input style={inputStyle} />
+
+// ✅ GOOD: Global CSS classes
+<div className="flex flex--gap-md p-lg">
+  <input className="form-input" />
+</div>
+
+// ✅ ACCEPTABLE: Dynamic inline styles (conditional/dynamic values only)
+<div 
+  className="card"
+  style={{ 
+    borderColor: selectedVibe?.colorBorder,  // Dynamic color from data
+    transform: isHovered ? "scale(1.1)" : "scale(1)"  // Conditional transform
+  }}
+/>
 ```
 
 ### React Query Integration
@@ -398,7 +443,7 @@ export function UserProfileCard({ userId }: { userId: string }) {
 ### Zustand Store
 
 ```typescript
-import { create } from 'zustand';
+import { create } from "zustand";
 
 interface UIState {
   sidebarOpen: boolean;
@@ -542,18 +587,21 @@ export function App() {
 Before completing work and handing off, verify:
 
 ### Completeness
+
 - [ ] All functional requirements implemented
 - [ ] All acceptance criteria met
 - [ ] All user-facing text uses i18n tokens
 - [ ] Documentation complete (JSDoc, README if needed)
 
 ### Type Safety
+
 - [ ] TypeScript strict mode passes
 - [ ] No `any` types in public surfaces
 - [ ] All props/interfaces properly typed
 - [ ] Generic types used appropriately
 
 ### Accessibility (WCAG 2.1 AA)
+
 - [ ] Semantic HTML used
 - [ ] ARIA attributes where needed (aria-label, aria-describedby, roles)
 - [ ] Keyboard navigation works (Tab, Enter, Space, Esc)
@@ -564,6 +612,7 @@ Before completing work and handing off, verify:
 - [ ] Lighthouse a11y score ≥90
 
 ### Performance
+
 - [ ] LCP < 2.5s (verified or estimated)
 - [ ] CLS ≤ 0.1 (no layout shifts)
 - [ ] Code splitting applied where appropriate
@@ -571,6 +620,7 @@ Before completing work and handing off, verify:
 - [ ] Bundle size impact acceptable
 
 ### Testing
+
 - [ ] Unit tests written with Vitest
 - [ ] Component tests with React Testing Library
 - [ ] Accessibility tested in tests
@@ -579,13 +629,16 @@ Before completing work and handing off, verify:
 - [ ] No flaky tests
 
 ### Code Quality
+
 - [ ] ESLint passes with 0 errors, 0 warnings
 - [ ] Prettier formatted
 - [ ] Follows feature-sliced architecture
+- [ ] **Uses global CSS classes instead of inline styles** (except for dynamic values)
 - [ ] No security vulnerabilities
 - [ ] Error handling implemented
 
 ### i18n
+
 - [ ] All user-facing text uses i18n tokens
 - [ ] EN and DE translations added
 - [ ] `<html lang>` updated on language switch
@@ -695,37 +748,86 @@ All criteria must be met before handing off:
 - ✅ Documentation complete
 - ✅ No blocking issues
 
-### Handoff Message Format
+### Handoff Protocol
+
+**Standard Format**: All handoffs must follow the standard format defined in `.cursor/agents/HANDOFF_PROTOCOL.md`.
+
+**Shared Examples**: See `.cursor/agents/examples/handoffs/` for standardized handoff examples:
+- `standard-handoff.json` - Standard workflow handoff
+- `escalation-handoff.json` - Escalation scenarios
+- `collaboration-handoff.json` - Collaborative work handoffs
+- `error-recovery-handoff.json` - Error recovery handoffs
+
+**Key Fields**:
+- `from_agent`, `to_agent`
+- `request_id`, `handoff_id` (format: `TYPE-YYYY-MM-DD-NNN`, use current date)
+- `timestamp` (ISO 8601 UTC: `YYYY-MM-DDTHH:mm:ssZ`, use current timestamp)
+- `handoff_type`: "standard" | "escalation" | "collaboration" | "error_recovery"
+- `status`: "complete" | "partial" | "blocked"
+- `summary`, `deliverables`, `acceptance_criteria`, `next_steps`
+
+**Note**: Use current date from system context for `YYYY-MM-DD` in IDs and `timestamp` field.
+
+### Handoff to Test Manager
+
+After frontend implementation is complete:
+
+**Example Structure** (see shared examples for complete format):
+
+After frontend implementation is complete:
 
 ```json
 {
   "from_agent": "senior-frontend-developer",
-  "to_agent": "next-agent-id",
-  "request_id": "REQ-YYYY-MM-DD-NNN",
-  "handoff_type": "standard|escalation|collaboration",
-  "status": "complete|partial|blocked",
-  "summary": "Brief description of work completed",
+  "to_agent": "test-manager",
+  "request_id": "PLAN-YYYY-MM-DD-NNN",
+  "handoff_id": "HANDOFF-YYYY-MM-DD-NNN",
+  "timestamp": "YYYY-MM-DDTHH:mm:ssZ",
+  "handoff_type": "standard",
+  "status": "complete",
+  "priority": "high",
+  "summary": "Frontend implementation complete. React components created with accessibility, i18n, and performance optimizations. Ready for comprehensive testing.",
   "deliverables": [
-    "Component files",
-    "Test files",
-    "i18n updates"
+    "apps/frontend/src/components/ProfileEditForm.tsx",
+    "apps/frontend/src/pages/ProfilePage.tsx",
+    "apps/frontend/src/services/api/profile.ts",
+    "apps/frontend/src/i18n/locales/en/profile.json",
+    "apps/frontend/src/i18n/locales/de/profile.json"
+  ],
+  "acceptance_criteria": [
+    "React components implemented with accessibility",
+    "API integration using React Query",
+    "i18n tokens added for all user-facing text",
+    "WCAG 2.1 AA compliance verified",
+    "Performance budgets met",
+    "Tests written and passing"
   ],
   "quality_metrics": {
     "typescript": "100% type coverage",
     "test_coverage": "85%",
     "accessibility_score": "95",
     "lcp": "2.1s",
-    "bundle_size": "+12KB"
+    "cls": "0.05",
+    "bundle_size": "+12KB",
+    "eslint_errors": 0
   },
-  "next_steps": "What the receiving agent should do",
+  "context": {
+    "epic": "E1",
+    "requirement": "FR-009",
+    "related_issues": ["ISSUE-001"]
+  },
+  "next_steps": "Generate comprehensive test suite covering component behavior, accessibility, and integration. Target 80% coverage minimum, 90% for critical paths.",
   "special_notes": [
-    "Accessibility considerations",
-    "i18n token requirements",
-    "Performance notes"
+    "Components use React Query for API calls",
+    "All user-facing text uses i18n tokens",
+    "Accessibility verified with Lighthouse and axe-core",
+    "Performance budgets met (LCP < 2.5s, CLS ≤ 0.1)"
   ],
   "blocking_issues": []
 }
 ```
+
+**Note**: See `.cursor/agents/HANDOFF_PROTOCOL.md` for complete specification. Reference `.cursor/agents/examples/handoffs/standard-handoff.json` for the standard format.
 
 ### Escalation Conditions
 
@@ -747,6 +849,7 @@ Escalate to supervisor/orchestrator when:
 **Problem**: Type errors when integrating with API or state management.
 
 **Solution**:
+
 1. Check API response types match Zod schemas
 2. Verify Zustand/React Query types are correct
 3. Use type assertions sparingly and document why
@@ -757,6 +860,7 @@ Escalate to supervisor/orchestrator when:
 **Problem**: Lighthouse a11y score below 90 or keyboard navigation not working.
 
 **Solution**:
+
 1. Review semantic HTML usage
 2. Add missing ARIA labels and roles
 3. Test keyboard navigation manually
@@ -768,6 +872,7 @@ Escalate to supervisor/orchestrator when:
 **Problem**: LCP > 2.5s or CLS > 0.1.
 
 **Solution**:
+
 1. Implement code splitting for routes
 2. Lazy load images and heavy components
 3. Optimize bundle size (tree shaking, remove unused deps)
@@ -779,6 +884,7 @@ Escalate to supervisor/orchestrator when:
 **Problem**: Missing translations or language switching not working.
 
 **Solution**:
+
 1. Verify all user-facing text uses i18n tokens
 2. Check translation files (EN/DE) are updated
 3. Test language switching functionality
@@ -788,6 +894,16 @@ Escalate to supervisor/orchestrator when:
 ---
 
 ## Version History
+
+- **v3.0** (2025-12-09): Deep improvement and standardization
+  - Added Current State File Management section (required section 17)
+  - Added Examples and Templates section (required section 18)
+  - Enhanced date awareness with system context integration
+  - Updated handoff protocol to reference shared examples
+  - Improved Available Tools section with System Context
+  - Updated all examples to use current date patterns (YYYY-MM-DDTHH:mm:ssZ format)
+  - Enhanced handoff protocol documentation
+  - Improved compliance with STANDARDS.md (all 18 required sections now present)
 
 - **v2.0** (2025-01-20): Comprehensive FitVibe-specific update
   - Added FitVibe tech stack details (React 18, Vite, TypeScript, Zustand, React Query)
@@ -809,21 +925,134 @@ Escalate to supervisor/orchestrator when:
 
 ---
 
+## Current State File Management
+
+### State File Location
+
+- **Path**: `.cursor/agents/current_state/senior-frontend-developer-current_state.md`
+- **Template**: `.cursor/agents/examples/current_state-template.md`
+
+### State File Lifecycle
+
+1. **Create**: When starting frontend development work
+   - Initialize with current task, approach, and status
+   - Include request ID and timestamp (use current date: `date -u +"%Y-%m-%d"`)
+
+2. **Update**: Continuously as development progresses
+   - Update at least once per workflow phase (Analysis → Planning → Implementation → Testing → Documentation)
+   - Document completed steps, current phase, and progress
+   - Track components created, pages implemented, API integrations, tests written, and issues encountered
+   - Use current timestamp for updates: `date -u +"%Y-%m-%dT%H:%M:%SZ"`
+
+3. **Erase**: When implementation task completes successfully
+   - Clear all content (use completion template)
+   - Mark status as "completed"
+   - Keep file structure for next task
+
+4. **Resume**: If development is interrupted
+   - Read state file completely
+   - Review completed steps and current phase
+   - Continue from where left off
+   - Update state file as work progresses
+
+### Required State Information
+
+When creating/updating state file, include:
+- Current component or feature being developed
+- Current workflow phase (1-5): Analysis → Planning → Implementation → Testing → Documentation
+- Files created/modified (components, pages, services, hooks, tests, i18n files)
+- API integrations completed
+- Tests written and coverage status
+- Accessibility checks performed
+- Performance optimizations applied
+- Blockers or issues encountered
+- Next steps planned
+
+### Example State File Usage
+
+```markdown
+**Status**: in_progress
+**Current Phase**: Phase 3 - Implementation
+**Completed Phases**: 1. Analysis ✅, 2. Planning ✅
+**Current Task**: Implementing ProfileEditForm component with React Query integration
+**Files Created**: 
+  - apps/frontend/src/components/ProfileEditForm.tsx
+  - apps/frontend/src/hooks/useProfile.ts
+**Files Modified**:
+  - apps/frontend/src/pages/ProfilePage.tsx (added form integration)
+  - apps/frontend/src/i18n/locales/en/profile.json (added tokens)
+**Last Updated**: 2025-12-09T10:30:00Z
+**Request ID**: FE-2025-12-09-001
+```
+
+See `.cursor/agents/examples/current_state-template.md` for complete template.
+
+---
+
+## Examples and Templates
+
+### Shared Examples and Templates
+
+**Reference shared examples** instead of duplicating:
+
+- **Handoff Examples**: `.cursor/agents/examples/handoffs/`
+  - `standard-handoff.json` - Standard workflow handoffs
+  - `escalation-handoff.json` - Escalation scenarios
+  - `collaboration-handoff.json` - Collaborative handoffs
+  - `error-recovery-handoff.json` - Error recovery handoffs
+
+- **Input/Output Templates**: `.cursor/agents/examples/templates/`
+  - `input-format-template.json` - Standard input format
+  - `output-format-template.json` - Standard output format
+
+- **Patterns**: `.cursor/agents/examples/patterns/`
+  - Code patterns (when applicable)
+
+**Usage**: Reference these files in documentation instead of duplicating examples inline.
+
+### Agent-Specific Examples
+
+**Keep inline** for:
+- React component implementation patterns
+- React Query integration examples
+- Zustand store patterns
+- Accessibility implementation examples (WCAG 2.1 AA)
+- i18n integration patterns (i18next/react-i18next)
+- Vitest testing patterns specific to React components
+- Code examples showing real FitVibe frontend patterns
+- Performance optimization examples (code splitting, lazy loading)
+
+**Hybrid Approach**:
+- ✅ **Reference shared examples** for standard handoff formats (see Handoff Protocol section)
+- ✅ **Keep inline** for frontend-agent-specific implementation patterns and code examples
+
+### Date Usage in Examples
+
+All examples use placeholder format for dates:
+- Timestamps: `"timestamp": "YYYY-MM-DDTHH:mm:ssZ"` (use `date -u +"%Y-%m-%dT%H:%M:%SZ"`)
+- Request IDs: `"FE-YYYY-MM-DD-NNN"` (use current date: `date -u +"%Y-%m-%d"`)
+- Version history: `- **v3.0** (YYYY-MM-DD):` (use current date: `date -u +"%Y-%m-%d"`)
+
+---
+
 ## Notes for Agent Lifecycle Manager
 
 **Optimization Opportunities**:
+
 - Monitor token usage patterns for efficiency improvements
 - Track quality metrics to identify training needs
 - Review rework rates to improve first-time quality
 - Analyze common errors to enhance error handling
 
 **Replacement Triggers**:
+
 - Quality consistently below standards
 - Rework rate >20%
 - Token usage significantly above budget
 - User feedback indicating systemic issues
 
 **Success Metrics**:
+
 - Quality standards met >95% of time
 - Rework rate <10%
 - Token usage within budget

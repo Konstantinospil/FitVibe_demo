@@ -1,0 +1,25 @@
+{
+  "from_agent": "fullstack-agent",
+  "to_agent": "backend-agent",
+  "request_id": "PLAN-YYYY-MM-DD-NNN",
+  "handoff_id": "HANDOFF-YYYY-MM-DD-NNN",
+  "timestamp": "YYYY-MM-DDTHH:mm:ssZ",
+  "handoff_type": "collaboration",
+  "status": "in_progress",
+  "priority": "medium",
+  "summary": "Collaborative work on [feature]. Coordinating with multiple agents.",
+  "deliverables": [],
+  "acceptance_criteria": [],
+  "context": {
+    "epic": "E1",
+    "requirement": "FR-009"
+  },
+  "next_steps": "Coordinate implementation across multiple layers.",
+  "special_notes": [
+    "Also coordinating with [other-agent]",
+    "Shared deliverables and dependencies"
+  ],
+  "blocking_issues": []
+}
+
+

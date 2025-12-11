@@ -710,6 +710,63 @@ git rebase --continue
 
 ---
 
+## Handoff Protocol
+
+All handoffs must use the Standard Handoff Protocol defined in `.cursor/agents/HANDOFF_PROTOCOL.md`.
+
+### Handoff to Planner Agent
+
+After PR is created and ready:
+
+```json
+{
+  "from_agent": "version-controller",
+  "to_agent": "planner-agent",
+  "request_id": "PLAN-YYYY-MM-DD-NNN",
+  "handoff_id": "HANDOFF-YYYY-MM-DD-NNN",
+  "timestamp": "2025-11-29T16:00:00Z",
+  "handoff_type": "standard",
+  "status": "complete",
+  "priority": "high",
+  "summary": "PR created and ready for review. All security checks passed, conventional commits used, PR template completed.",
+  "deliverables": [
+    "PR #XXX: [Title]",
+    "Branch: feat/feature-name",
+    "Commits: [list of commits]"
+  ],
+  "acceptance_criteria": [
+    "PR created with proper title and description",
+    "All CI checks passing",
+    "Security scan passed",
+    "PR template completed",
+    "Conventional commits used"
+  ],
+  "quality_metrics": {
+    "security_scan": "passed",
+    "secret_detection": "0 secrets found",
+    "dependency_audit": "0 high/critical vulnerabilities",
+    "commit_compliance": "100%"
+  },
+  "context": {
+    "epic": "E1",
+    "requirement": "FR-009",
+    "related_issues": ["ISSUE-001"],
+    "github_issue": "#XXX"
+  },
+  "next_steps": "Planner should update issue tracking, mark issue as complete, and update GitHub issue status.",
+  "special_notes": [
+    "PR ready for review",
+    "All quality gates passed",
+    "Branch will be merged after review"
+  ],
+  "blocking_issues": []
+}
+```
+
+**Note**: See `.cursor/agents/HANDOFF_PROTOCOL.md` for complete specification and examples.
+
+---
+
 ## Related Documentation
 
 - [Development Workflow](../../docs/DEVELOPMENT.md) - Branch-based CI/CD workflow guide

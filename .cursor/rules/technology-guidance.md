@@ -1,0 +1,82 @@
+# Technology-Specific Guidance
+
+This document provides technology-specific guidance based on usage patterns in the FitVibe project.
+
+## React (37 mentions)
+
+- Use functional components with hooks
+- Implement React Query for server state management
+- Use Zustand for global client state
+- Follow feature-sliced architecture
+- Ensure WCAG 2.1 AA compliance
+- Use i18next for all user-facing text
+- Use React Testing Library for component testing
+- Implement proper error boundaries
+
+## Knex.js (34 mentions)
+
+- Use migrations for all schema changes
+- Always use transactions for multi-step operations
+- Use `snake_case` for database columns
+- Add indexes for foreign keys and frequently queried columns
+- Use parameterized queries (automatic with Knex)
+- Use `returning("*")` for INSERT operations
+- Use `knex.transaction()` for complex operations
+- Test migrations in both directions (up and down)
+
+## Express.js (28 mentions)
+
+- Use `asyncHandler` wrapper for all route handlers
+- Validate input with Zod schemas
+- Use `HttpError` utility for consistent error responses
+- Implement idempotency for state-changing operations
+- Use middleware for cross-cutting concerns
+- Follow REST conventions with `/api/v1/` prefix
+- Use proper HTTP status codes
+- Implement rate limiting on public endpoints
+
+## TypeScript (18 mentions)
+
+- Strict mode enabled - no `any` types in public surfaces
+- Use interfaces for object shapes, types for unions/intersections
+- Use `import type` for type-only imports
+- Use `.js` extensions in import statements (ESM compatibility)
+- Prefer type inference, but be explicit for public APIs
+- Use TypeScript project references for incremental builds
+- Enable strict null checks
+
+## Docker (17 mentions)
+
+- Use multi-stage builds for optimization
+- Follow `.dockerignore` patterns
+- Use health checks in Dockerfiles
+- Document required environment variables
+- Use Docker Compose for local development
+- Keep images small by using Alpine base images where possible
+- Use .dockerignore to exclude unnecessary files
+
+## Additional Technologies
+
+### PostgreSQL
+- Use connection pooling
+- Add appropriate indexes for query performance
+- Use JSONB for semi-structured data
+- Partition large tables for performance
+- Use materialized views for analytics
+
+### Redis
+- Use for caching and session storage
+- Set appropriate TTL values
+- Handle connection failures gracefully
+- Use ioredis for Node.js integration
+
+### BullMQ
+- Use for background job processing
+- Implement proper error handling and retries
+- Monitor queue health
+- Use job priorities for important tasks
+
+
+
+
+

@@ -1,0 +1,36 @@
+{
+  "from_agent": "requirements-analyst-agent",
+  "to_agent": "fullstack-agent",
+  "request_id": "PLAN-YYYY-MM-DD-NNN",
+  "handoff_id": "HANDOFF-YYYY-MM-DD-NNN",
+  "timestamp": "YYYY-MM-DDTHH:mm:ssZ",
+  "handoff_type": "standard",
+  "status": "complete",
+  "priority": "high",
+  "summary": "Requirements analysis complete. All acceptance criteria defined, dependencies identified, ready for implementation.",
+  "deliverables": [
+    "docs/requirements/REQ-YYYY-MM-DD-NNN.md"
+  ],
+  "acceptance_criteria": [
+    "All requirements documented",
+    "Acceptance criteria defined",
+    "Dependencies identified"
+  ],
+  "quality_metrics": {
+    "requirements_completeness": "100%",
+    "acceptance_criteria_count": 4
+  },
+  "context": {
+    "epic": "E1",
+    "requirement": "FR-009",
+    "related_issues": ["ISSUE-001"],
+    "dependencies": ["FR-001", "FR-002"]
+  },
+  "next_steps": "Implement feature following standard patterns and acceptance criteria.",
+  "special_notes": [
+    "Important constraint or consideration"
+  ],
+  "blocking_issues": []
+}
+
+

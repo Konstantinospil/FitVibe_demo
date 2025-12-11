@@ -1,0 +1,260 @@
+---
+description: "Common code patterns for backend (routes, services, repositories), frontend (components, API services), database migrations, and testing"
+globs: ["apps/**/*.ts", "apps/**/*.tsx"]
+alwaysApply: false
+ruleType: "auto_attached"
+tags: ["implementation-patterns", "backend", "frontend", "database", "testing", "code-examples"]
+---
+
+# Implementation Patterns
+
+## Backend Route Handler Pattern
+
+```typescript
+// modules/example/example.controller.ts
+import type { Request, Response } from "express";
+import { asyncHandler } from "../../utils/async-handler.js";
+import { HttpError } from "../../utils/http.js";
+import { createExampleSchema } from "./example.schemas.js";
+import { createExample } from "./example.service.js";
+import { getIdempotencyKey, getRouteTemplate } from "../common/idempotency.helpers.js";
+import { resolveIdempotency, persistIdempotencyResult } from "../common/idempotency.service.js";
+
+export async function createExampleHandler(req: Request, res: Response): Promise<void> {
+  const userId = req.user?.sub;
+  if (!userId) {
+    throw new HttpError(401, "E.UNAUTHENTICATED", "UNAUTHENTICATED");
+  }
+
+  // Validate input
+  const validated = createExampleSchema.parse(req.body);
+
+  // Idempotency support
+  const idempotencyKey = getIdempotencyKey(req);
+  if (idempotencyKey) {
+    const route = getRouteTemplate(req);
+    const resolution = await resolveIdempotency(
+      { userId, method: req.method, route, key: idempotencyKey },
+      validated,
+    );
+
+    if (resolution.type === "replay") {
+      res.set("Idempotency-Key", idempotencyKey);
+      res.set("Idempotent-Replayed", "true");
+      res.status(resolution.status).json(resolution.body);
+      return;
+    }
+
+    const result = await createExample(validated, userId);
+
+    if (resolution.recordId) {
+      await persistIdempotencyResult(resolution.recordId, 201, result);
+    }
+
+    res.set("Idempotency-Key", idempotencyKey);
+    res.status(201).json(result);
+    return;
+  }
+
+  const result = await createExample(validated, userId);
+  res.status(201).json(result);
+}
+```
+
+## Backend Service Pattern
+
+```typescript
+// modules/example/example.service.ts
+import { exampleRepository } from "./example.repository.js";
+import type { CreateExampleDTO } from "./example.types.js";
+import { HttpError } from "../../utils/http.js";
+
+export async function createExample(data: CreateExampleDTO, userId: string) {
+  // Business logic validation
+  if (data.name.length < 3) {
+    throw new HttpError(400, "E.INVALID_INPUT", "Name must be at least 3 characters");
+  }
+
+  // Call repository
+  return await exampleRepository.create({ ...data, user_id: userId });
+}
+```
+
+## Backend Repository Pattern
+
+```typescript
+// modules/example/example.repository.ts
+import db from "../../db/index.js";
+import type { ExampleRow, CreateExampleInput } from "./example.types.js";
+
+export async function createExample(input: CreateExampleInput): Promise<ExampleRow> {
+  const [row] = await db("examples")
+    .insert(input)
+    .returning("*");
+  return row;
+}
+
+export async function findExampleById(id: string): Promise<ExampleRow | undefined> {
+  return await db("examples").where({ id }).first();
+}
+```
+
+## Frontend Component Pattern
+
+```typescript
+// components/ExampleComponent.tsx
+import React from "react";
+import { useTranslation } from "react-i18next";
+import { useQuery } from "@tanstack/react-query";
+import { Button } from "./ui/Button";
+
+export const ExampleComponent: React.FC = () => {
+  const { t } = useTranslation("common");
+  const { data, isLoading } = useQuery({
+    queryKey: ["example"],
+    queryFn: () => fetchExample(),
+  });
+
+  if (isLoading) return <div>Loading...</div>;
+
+  return (
+    <div>
+      <h1>{t("example.title")}</h1>
+      <Button aria-label={t("example.submit")}>
+        {t("example.submit")}
+      </Button>
+    </div>
+  );
+};
+```
+
+## Frontend API Service Pattern
+
+```typescript
+// services/api.ts
+import axios from "axios";
+import { getAuthToken } from "../utils/jwt";
+
+const apiClient = axios.create({
+  baseURL: import.meta.env.VITE_API_URL,
+});
+
+apiClient.interceptors.request.use((config) => {
+  const token = getAuthToken();
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
+export const exampleApi = {
+  create: (data: CreateExampleDTO) => apiClient.post("/api/v1/examples", data),
+  list: () => apiClient.get("/api/v1/examples"),
+};
+```
+
+## Database Migration Pattern
+
+```typescript
+// apps/backend/src/db/migrations/YYYYMMDDHHMM_description.ts
+import type { Knex } from "knex";
+
+export async function up(knex: Knex): Promise<void> {
+  await knex.schema.createTable("table_name", (table) => {
+    table.uuid("id").primary().defaultTo(knex.raw("gen_random_uuid()"));
+    table.string("name").notNullable();
+    table.uuid("user_id").notNullable().references("id").inTable("users").onDelete("CASCADE");
+    table.timestamp("created_at").notNullable().defaultTo(knex.fn.now());
+    table.timestamp("updated_at").notNullable().defaultTo(knex.fn.now());
+
+    // Indexes
+    table.index("user_id");
+    table.index("created_at");
+
+    // Constraints
+    table.unique(["user_id", "name"]);
+  });
+}
+
+export async function down(knex: Knex): Promise<void> {
+  await knex.schema.dropTableIfExists("table_name");
+}
+```
+
+**Migration Best Practices:**
+
+- Use descriptive names: `YYYYMMDDHHMM_verb_noun.ts` (e.g., `202501201430_create_user_profiles.ts`)
+- Always implement both `up()` and `down()` functions
+- Use transactions for data migrations
+- Add indexes for foreign keys and frequently queried columns
+- Use `snake_case` for table and column names
+- Use UUIDs with `gen_random_uuid()` for primary keys
+- Add `created_at` and `updated_at` timestamps
+- Use foreign key constraints with appropriate `onDelete` actions
+- Test migrations in both directions (up and down)
+
+## Testing Patterns
+
+### Backend Test Pattern (Jest)
+
+```typescript
+// modules/example/__tests__/example.service.test.ts
+import { describe, it, expect, beforeEach, jest } from "@jest/globals";
+import { createExample } from "../example.service.js";
+import { exampleRepository } from "../example.repository.js";
+import { HttpError } from "../../utils/http.js";
+
+jest.mock("../example.repository.js");
+
+describe("createExample", () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it("should create example with valid data", async () => {
+    const mockData = { name: "Test", userId: "user-123" };
+    const mockResult = { id: "example-123", ...mockData };
+
+    jest.mocked(exampleRepository.create).mockResolvedValue(mockResult);
+
+    const result = await createExample(mockData, "user-123");
+
+    expect(result).toEqual(mockResult);
+    expect(exampleRepository.create).toHaveBeenCalledWith(
+      expect.objectContaining({ name: "Test", user_id: "user-123" })
+    );
+  });
+
+  it("should throw HttpError for invalid input", async () => {
+    await expect(createExample({ name: "ab" }, "user-123")).rejects.toThrow(HttpError);
+  });
+});
+```
+
+### Frontend Test Pattern (Vitest)
+
+```typescript
+// components/__tests__/ExampleComponent.test.tsx
+import { describe, it, expect, vi } from "vitest";
+import { render, screen, waitFor } from "@testing-library/react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { ExampleComponent } from "../ExampleComponent";
+
+describe("ExampleComponent", () => {
+  it("should render with data", async () => {
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+    });
+
+    render(
+      <QueryClientProvider client={queryClient}>
+        <ExampleComponent />
+      </QueryClientProvider>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText(/example/i)).toBeInTheDocument();
+    });
+  });
+});
+```

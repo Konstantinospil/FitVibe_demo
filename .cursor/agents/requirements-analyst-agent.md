@@ -13,7 +13,7 @@ color: cyan
 - **Agent ID**: requirements-analyst
 - **Type**: Specialist Agent
 - **Domain**: Requirements Analysis
-- **Model Tier**: Sonnet (Standard reasoning tasks)
+- **Model Tier**: sonnet (Complex tasks requiring high quality)
 - **Status**: Active
 
 ---
@@ -234,16 +234,19 @@ The Requirements Analyst receives user requests that may be informal, incomplete
 ## Functional Requirements
 
 ### FR-001: [Requirement Name]
+
 **Description**: [Clear description of what the system must do]
 **Priority**: [Must-have|Should-have|Nice-to-have]
 **Acceptance Criteria**:
+
 - [ ] Criterion 1: [Specific, testable condition]
 - [ ] Criterion 2: [Specific, testable condition]
-**Use Cases**:
+      **Use Cases**:
 - Primary: [Main use case]
 - Edge Cases: [Unusual scenarios to handle]
 
 ### FR-002: [Next Requirement]
+
 ...
 
 ---
@@ -251,9 +254,11 @@ The Requirements Analyst receives user requests that may be informal, incomplete
 ## Non-Functional Requirements
 
 ### NFR-001: [Requirement Name]
+
 **Description**: [Performance, security, usability, etc.]
 **Acceptance Criteria**: [Measurable criteria]
 **Examples**:
+
 - Response time < 500ms
 - Support 1000 concurrent users
 - WCAG 2.1 AA compliant
@@ -263,14 +268,17 @@ The Requirements Analyst receives user requests that may be informal, incomplete
 ## Dependencies
 
 ### Technical Dependencies
+
 - [Dependency 1]: [Description and impact]
 - [Dependency 2]: [Description and impact]
 
 ### Feature Dependencies
+
 - [Related Feature 1]: [How it relates]
 - [Related Feature 2]: [How it relates]
 
 ### External Dependencies
+
 - [External Service/API]: [Description and requirements]
 
 ---
@@ -278,10 +286,12 @@ The Requirements Analyst receives user requests that may be informal, incomplete
 ## Constraints
 
 ### Technical Constraints
+
 - [Constraint 1]: [Description]
 - [Constraint 2]: [Description]
 
 ### Business Constraints
+
 - [Constraint 1]: [Description]
 - [Constraint 2]: [Description]
 
@@ -333,30 +343,51 @@ All criteria must be met before handing off to next agent:
 
 ### Handoff Message Format
 
+All handoffs must use the Standard Handoff Protocol defined in `.cursor/agents/HANDOFF_PROTOCOL.md`.
+
 ```json
 {
-  "from_agent": "agent-id",
-  "to_agent": "next-agent-id",
-  "request_id": "REQ-YYYY-MM-DD-NNN",
-  "handoff_type": "standard|escalation|collaboration",
-  "status": "complete|partial|blocked",
-  "summary": "Brief description of work completed",
+  "from_agent": "requirements-analyst-agent",
+  "to_agent": "planner-agent",
+  "request_id": "PLAN-YYYY-MM-DD-NNN",
+  "handoff_id": "HANDOFF-YYYY-MM-DD-NNN",
+  "timestamp": "2025-11-29T10:30:00Z",
+  "handoff_type": "standard",
+  "status": "complete",
+  "priority": "high",
+  "summary": "Requirements analysis complete. All acceptance criteria defined, dependencies identified, ready for implementation.",
   "deliverables": [
-    "List of outputs and artifacts"
+    "docs/requirements/REQ-YYYY-MM-DD-NNN.md",
+    "docs/requirements/acceptance-criteria.md"
+  ],
+  "acceptance_criteria": [
+    "All functional requirements documented",
+    "All non-functional requirements identified",
+    "Acceptance criteria are specific and testable",
+    "Dependencies and constraints documented"
   ],
   "quality_metrics": {
-    "metric1": "value",
-    "metric2": "value"
+    "requirements_completeness": "100%",
+    "acceptance_criteria_count": 4,
+    "dependencies_identified": 2
   },
-  "next_steps": "What the receiving agent should do",
+  "context": {
+    "epic": "E1",
+    "requirement": "FR-009",
+    "related_issues": ["ISSUE-001"],
+    "dependencies": ["FR-001", "FR-002"]
+  },
+  "next_steps": "Hand off to planner-agent for workflow orchestration. Planner will assign to fullstack-agent or backend-agent + frontend-agent for implementation.",
   "special_notes": [
-    "Important context or considerations"
+    "Requirements are complete and unambiguous",
+    "All acceptance criteria are testable",
+    "No blocking issues identified"
   ],
-  "blocking_issues": [
-    "Any unresolved problems (if applicable)"
-  ]
+  "blocking_issues": []
 }
 ```
+
+**Note**: See `.cursor/agents/HANDOFF_PROTOCOL.md` for complete specification and examples.
 
 ### Escalation Conditions
 
@@ -469,39 +500,45 @@ fitness progress and efficiently navigate to key features.
 ## Functional Requirements
 
 ### FR-001: Display Workout Statistics
+
 **Description**: Dashboard must display key workout statistics including total workouts,
 total duration, calories burned, and current streak.
 **Priority**: Must-have
 **Acceptance Criteria**:
+
 - [ ] Statistics are calculated from user's workout history
 - [ ] Statistics update in real-time when new workouts are completed
 - [ ] Statistics display with appropriate units (hours, minutes, kcal)
 - [ ] Statistics are formatted for readability (e.g., "1,234" not "1234")
-**Use Cases**:
+      **Use Cases**:
 - Primary: User views dashboard to see overall progress
 - Edge Cases: New user with no workouts (show zeros or "No data yet")
 
 ### FR-002: Show Recent Activity
+
 **Description**: Display a list of recent workout activities with date, type, and duration.
 **Priority**: Must-have
 **Acceptance Criteria**:
+
 - [ ] Shows last 10 workout activities
 - [ ] Each activity shows: date, workout type, duration, and status (completed/incomplete)
 - [ ] Activities are sorted by date (most recent first)
 - [ ] Clicking an activity navigates to workout details
-**Use Cases**:
+      **Use Cases**:
 - Primary: User reviews recent workout history
 - Edge Cases: User with no activities (show "No activities yet" message)
 
 ### FR-003: Provide Quick Actions
+
 **Description**: Display quick action buttons for common tasks.
 **Priority**: Must-have
 **Acceptance Criteria**:
+
 - [ ] "Start Workout" button navigates to workout selection
 - [ ] "View Progress" button navigates to detailed progress page
 - [ ] Buttons are prominently displayed and easily accessible
 - [ ] Buttons have clear labels and icons
-**Use Cases**:
+      **Use Cases**:
 - Primary: User quickly starts a new workout from dashboard
 - Edge Cases: User is not logged in (redirect to login)
 
@@ -510,22 +547,28 @@ total duration, calories burned, and current streak.
 ## Non-Functional Requirements
 
 ### NFR-001: Performance
+
 **Description**: Dashboard must load quickly and display data efficiently.
 **Acceptance Criteria**:
+
 - Initial load time < 1 second
 - Statistics calculation < 200ms
 - Smooth scrolling with 60fps
 
 ### NFR-002: Responsive Design
+
 **Description**: Dashboard must work on mobile, tablet, and desktop.
 **Acceptance Criteria**:
+
 - Layout adapts to screen sizes
 - Touch targets are at least 44x44px on mobile
 - Content is readable without horizontal scrolling
 
 ### NFR-003: Accessibility
+
 **Description**: Dashboard must be accessible to users with disabilities.
 **Acceptance Criteria**:
+
 - WCAG 2.1 AA compliant
 - Screen reader compatible
 - Keyboard navigation supported
@@ -535,11 +578,13 @@ total duration, calories burned, and current streak.
 ## Dependencies
 
 ### Technical Dependencies
+
 - **User Workout History API**: Required to fetch statistics and activity data
 - **User Profile Service**: Required to get user information
 - **Navigation System**: Required for quick action navigation
 
 ### Feature Dependencies
+
 - **Workout Tracking**: Must exist before statistics can be calculated
 - **User Authentication**: User must be logged in to view dashboard
 
@@ -548,11 +593,13 @@ total duration, calories burned, and current streak.
 ## Constraints
 
 ### Technical Constraints
+
 - Must use existing design system components
 - Must work with current authentication system
 - Data must be fetched from existing APIs
 
 ### Business Constraints
+
 - Must be completed by 2025-11-15
 - Must not require new backend services
 

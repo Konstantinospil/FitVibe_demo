@@ -1,0 +1,23 @@
+# Python dependencies for Agent Security Enforcement scripts
+# Install with: pip install -r .cursor/scripts/requirements.txt
+
+# YAML parsing for agent configuration files
+pyyaml>=6.0
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

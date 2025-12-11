@@ -1,0 +1,110 @@
+# Coding Standards
+
+## TypeScript
+
+- **Strict mode enabled** - no `any` types in public surfaces (warn in tests)
+- Use TypeScript project references for incremental builds (`tsc -b`)
+- Prefer type inference where possible, but be explicit for public APIs
+- Use interfaces for object shapes, types for unions/intersections
+- Use `type` imports for type-only imports: `import type { ... }`
+- Enforce consistent type imports via ESLint rule
+- Use `.js` extensions in imports (ESM compatibility)
+
+## Code Organization
+
+### Backend Module Structure (`apps/backend/src/modules/`)
+
+Each module follows a **folder-by-module** pattern with co-located files:
+
+- `*.routes.ts` - Express route definitions
+- `*.controller.ts` - Request/response handlers (thin layer)
+- `*.service.ts` - Business logic (domain layer)
+- `*.repository.ts` - Data access layer (Knex queries)
+- `*.types.ts` - TypeScript type definitions
+- `*.schemas.ts` - Zod validation schemas
+- `*.middleware.ts` - Module-specific middleware
+- `__tests__/` - Unit and integration tests
+
+**Active Modules**:
+
+- `auth` - Authentication, registration, token management, 2FA
+- `users` - User profiles, admin operations, avatars, GDPR DSR
+- `exercise-types` - Global exercise type catalog (admin-only)
+- `exercises` - User exercise records (CRUD)
+- `sessions` - Workout session planning, logging, cloning, recurrence
+- `plans` - Training plan management
+- `points` - Gamification: points, badges, streaks, seasonal events
+- `progress` - Analytics, summaries, trends, exports, plan progress
+- `feed` - Social feed, bookmarks, reactions, shares, moderation
+- `logs` - Audit log streaming and querying (in progress)
+- `health` - Health check endpoints
+- `system` - System status, read-only mode, maintenance controls
+- `admin` - Admin-only operations
+- `common` - Shared middleware, utilities, cross-cutting concerns
+
+### Frontend Structure (`apps/frontend/src/`)
+
+- `components/` - Reusable UI components (with `ui/` subdirectory for base components)
+- `pages/` - Page-level components (route handlers)
+- `routes/` - Route definitions and protected route wrappers
+- `contexts/` - React contexts (AuthContext, ToastContext)
+- `hooks/` - Custom React hooks
+- `services/` - API client services
+- `store/` - Zustand stores
+- `utils/` - Utility functions
+- `i18n/` - Internationalization configuration and locales
+- `styles/` - Global styles
+
+## Formatting & Linting
+
+- **ESLint**: Flat config with TypeScript ESLint, React, React Hooks, JSX A11y, Prettier plugins
+- **Prettier**: Enforced via ESLint plugin
+  - Print width: 100
+  - Semicolons: required
+  - Single quotes: false (double quotes)
+  - Trailing commas: all
+  - Arrow parens: always
+- Run `pnpm lint` and `pnpm lint --fix` before committing
+- Max warnings: 0 (enforced in CI)
+
+## API Conventions
+
+- **REST over HTTPS**, JSON bodies
+- **camelCase** in JSON request/response bodies
+- **snake_case** in database columns
+- UTC timestamps, RFC 3339 format in APIs
+- State-changing endpoints (POST, PUT, PATCH, DELETE) accept `Idempotency-Key` header (store for 24h)
+- Use UUIDv7/ULID for identifiers (immutable)
+- API versioning: `/api/v1/` prefix
+- Error responses: `{ error: string, code: string }` format
+- Use `HttpError` utility for consistent error handling
+
+## Database
+
+- PostgreSQL with snake_case naming
+- Use Knex.js for migrations and queries
+- Migrations in `apps/backend/src/db/migrations/`
+- Seeds in `apps/backend/src/db/seeds/`
+- Partition large tables for performance
+- Use materialized views for analytics
+- GIN/JSONB indexing for semi-structured data
+- Use transactions for multi-step operations
+- Always use parameterized queries (Knex handles this)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
