@@ -40,6 +40,11 @@ export async function down(knex: Knex): Promise<void> {
   // Recreate the table in its ORIGINAL state (from migration 202510260104)
   // This matches the schema before migration 202510260105 enhanced it with feed_item_id support.
   // Migration 202510260105's down() will handle reverting the enhanced features if needed.
+
+  // Check if users table exists (it may have been dropped during rollback since this migration
+  // runs early in the rollback sequence)
+  const usersTableExists = await knex.schema.hasTable("users");
+
   await knex.schema.createTable(TABLE, (table) => {
     table.uuid("id").primary().defaultTo(knex.raw("gen_random_uuid()"));
     table
@@ -52,8 +57,16 @@ export async function down(knex: Knex): Promise<void> {
     table.timestamp("expires_at", { useTz: true }).nullable();
     table.timestamp("revoked_at", { useTz: true }).nullable();
     table.timestamp("created_at", { useTz: true }).notNullable().defaultTo(knex.fn.now());
-    table.uuid("created_by").notNullable().references("id").inTable("users").onDelete("CASCADE");
+    table.uuid("created_by").notNullable();
   });
+
+  // Add foreign key constraint only if users table exists
+  // During rollback, users table may have been dropped already since migrations run in reverse order
+  if (usersTableExists) {
+    await knex.raw(
+      `ALTER TABLE ${TABLE} ADD CONSTRAINT share_links_created_by_foreign FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE CASCADE`,
+    );
+  }
 
   // Recreate index
   await knex.schema.alterTable(TABLE, (table) => {

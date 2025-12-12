@@ -70,9 +70,8 @@ describe("Integration: Session → Points Flow", () => {
     }
 
     // Verify user can be found by email (same query login uses)
-    const { findUserByEmail } = await import(
-      "../../../apps/backend/src/modules/auth/auth.repository.js"
-    );
+    const { findUserByEmail } =
+      await import("../../../apps/backend/src/modules/auth/auth.repository.js");
     let foundUser = await findUserByEmail("points@example.com");
     let retries = 0;
     while (!foundUser && retries < 10) {

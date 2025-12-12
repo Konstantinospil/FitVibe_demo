@@ -76,13 +76,9 @@ export default tseslint.config(
       "react-hooks/exhaustive-deps": "warn",
       "prettier/prettier": [
         "error",
+        {},
         {
-          printWidth: 100,
-          semi: true,
-          singleQuote: false,
-          trailingComma: "all",
-          bracketSpacing: true,
-          arrowParens: "always",
+          usePrettierrc: true,
         },
       ],
     },
