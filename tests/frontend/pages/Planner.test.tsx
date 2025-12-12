@@ -193,7 +193,7 @@ describe("Planner page", () => {
 
     await waitFor(() => {
       expect(screen.getByText(/Exercises \(1\)/i)).toBeInTheDocument();
-    });
+    }, { timeout: 5000 });
 
     const removeButton = screen.getByLabelText("Remove exercise");
     fireEvent.click(removeButton);

@@ -54,7 +54,9 @@
     "/auth/register": {
       "post": {
         "summary": "Register a new account",
-        "tags": ["Auth"],
+        "tags": [
+          "Auth"
+        ],
         "requestBody": {
           "content": {
             "application/json": {
@@ -98,7 +100,9 @@
     "/auth/login": {
       "post": {
         "summary": "Login with credentials",
-        "tags": ["Auth"],
+        "tags": [
+          "Auth"
+        ],
         "requestBody": {
           "content": {
             "application/json": {
@@ -133,7 +137,9 @@
     "/auth/refresh": {
       "post": {
         "summary": "Refresh access token",
-        "tags": ["Auth"],
+        "tags": [
+          "Auth"
+        ],
         "security": [
           {
             "bearerAuth": []
@@ -173,7 +179,9 @@
     "/auth/logout": {
       "post": {
         "summary": "Logout current session",
-        "tags": ["Auth"],
+        "tags": [
+          "Auth"
+        ],
         "security": [
           {
             "bearerAuth": []
@@ -198,7 +206,9 @@
     "/users/me": {
       "get": {
         "summary": "Get current user profile",
-        "tags": ["Users"],
+        "tags": [
+          "Users"
+        ],
         "security": [
           {
             "bearerAuth": []
@@ -227,7 +237,9 @@
       },
       "put": {
         "summary": "Update profile",
-        "tags": ["Users"],
+        "tags": [
+          "Users"
+        ],
         "security": [
           {
             "bearerAuth": []
@@ -276,7 +288,9 @@
     "/users/me/preferences": {
       "patch": {
         "summary": "Update user preferences",
-        "tags": ["Users"],
+        "tags": [
+          "Users"
+        ],
         "security": [
           {
             "bearerAuth": []
@@ -325,7 +339,9 @@
     "/users/{alias}": {
       "get": {
         "summary": "Get public profile by alias",
-        "tags": ["Users"],
+        "tags": [
+          "Users"
+        ],
         "parameters": [
           {
             "name": "alias",
@@ -361,7 +377,9 @@
     "/exercises": {
       "get": {
         "summary": "List exercises",
-        "tags": ["Exercises"],
+        "tags": [
+          "Exercises"
+        ],
         "security": [
           {
             "bearerAuth": []
@@ -402,7 +420,9 @@
       },
       "post": {
         "summary": "Create exercise",
-        "tags": ["Exercises"],
+        "tags": [
+          "Exercises"
+        ],
         "security": [
           {
             "bearerAuth": []
@@ -442,7 +462,9 @@
     "/exercises/{id}": {
       "put": {
         "summary": "Update exercise",
-        "tags": ["Exercises"],
+        "tags": [
+          "Exercises"
+        ],
         "security": [
           {
             "bearerAuth": []
@@ -491,7 +513,9 @@
       },
       "delete": {
         "summary": "Archive exercise",
-        "tags": ["Exercises"],
+        "tags": [
+          "Exercises"
+        ],
         "security": [
           {
             "bearerAuth": []
@@ -527,7 +551,9 @@
     "/sessions": {
       "get": {
         "summary": "List sessions",
-        "tags": ["Sessions"],
+        "tags": [
+          "Sessions"
+        ],
         "security": [
           {
             "bearerAuth": []
@@ -556,7 +582,9 @@
       },
       "post": {
         "summary": "Create session",
-        "tags": ["Sessions"],
+        "tags": [
+          "Sessions"
+        ],
         "security": [
           {
             "bearerAuth": []
@@ -596,7 +624,9 @@
     "/sessions/{id}/complete": {
       "patch": {
         "summary": "Mark session complete",
-        "tags": ["Sessions"],
+        "tags": [
+          "Sessions"
+        ],
         "security": [
           {
             "bearerAuth": []
@@ -647,7 +677,9 @@
     "/health": {
       "get": {
         "summary": "Liveness probe",
-        "tags": ["System"],
+        "tags": [
+          "System"
+        ],
         "responses": {
           "200": {
             "description": "Service healthy",
@@ -671,7 +703,9 @@
     "/metrics": {
       "get": {
         "summary": "Prometheus metrics",
-        "tags": ["System"],
+        "tags": [
+          "System"
+        ],
         "responses": {
           "200": {
             "description": "Prometheus exposition format",
@@ -718,10 +752,15 @@
                 "format": "uuid"
               }
             },
-            "required": ["code", "message"]
+            "required": [
+              "code",
+              "message"
+            ]
           }
         },
-        "required": ["error"]
+        "required": [
+          "error"
+        ]
       },
       "AuthSuccessResponse": {
         "type": "object",
@@ -739,7 +778,11 @@
             "example": 900
           }
         },
-        "required": ["accessToken", "refreshToken", "expiresIn"]
+        "required": [
+          "accessToken",
+          "refreshToken",
+          "expiresIn"
+        ]
       },
       "RegisterRequest": {
         "type": "object",
@@ -783,7 +826,12 @@
               },
               "sex": {
                 "type": "string",
-                "enum": ["man", "woman", "diverse", "na"]
+                "enum": [
+                  "man",
+                  "woman",
+                  "diverse",
+                  "na"
+                ]
               },
               "weight_kg": {
                 "type": "number",
@@ -806,7 +854,12 @@
             "type": "boolean"
           }
         },
-        "required": ["email", "username", "password", "terms_accepted"],
+        "required": [
+          "email",
+          "username",
+          "password",
+          "terms_accepted"
+        ],
         "additionalProperties": false
       },
       "LoginRequest": {
@@ -821,7 +874,10 @@
             "minLength": 1
           }
         },
-        "required": ["email", "password"],
+        "required": [
+          "email",
+          "password"
+        ],
         "additionalProperties": false
       },
       "RefreshRequest": {
@@ -831,7 +887,9 @@
             "type": "string"
           }
         },
-        "required": ["refreshToken"]
+        "required": [
+          "refreshToken"
+        ]
       },
       "UserProfile": {
         "type": "object",
@@ -849,7 +907,11 @@
           },
           "status": {
             "type": "string",
-            "enum": ["pending", "active", "archived"]
+            "enum": [
+              "pending",
+              "active",
+              "archived"
+            ]
           },
           "createdAt": {
             "type": "string",
@@ -863,7 +925,13 @@
             "$ref": "#/components/schemas/UserPreferences"
           }
         },
-        "required": ["id", "email", "alias", "status", "createdAt"]
+        "required": [
+          "id",
+          "email",
+          "alias",
+          "status",
+          "createdAt"
+        ]
       },
       "PublicProfile": {
         "type": "object",
@@ -890,14 +958,20 @@
             }
           }
         },
-        "required": ["alias"]
+        "required": [
+          "alias"
+        ]
       },
       "UserPreferences": {
         "type": "object",
         "properties": {
           "measurementSystem": {
             "type": "string",
-            "enum": ["metric", "imperial", "mixed"]
+            "enum": [
+              "metric",
+              "imperial",
+              "mixed"
+            ]
           },
           "locale": {
             "type": "string"
@@ -907,7 +981,11 @@
           },
           "visibility": {
             "type": "string",
-            "enum": ["private", "followers", "public"]
+            "enum": [
+              "private",
+              "followers",
+              "public"
+            ]
           }
         }
       },
@@ -932,7 +1010,11 @@
         "properties": {
           "measurementSystem": {
             "type": "string",
-            "enum": ["metric", "imperial", "mixed"]
+            "enum": [
+              "metric",
+              "imperial",
+              "mixed"
+            ]
           },
           "locale": {
             "type": "string"
@@ -942,7 +1024,11 @@
           },
           "visibility": {
             "type": "string",
-            "enum": ["private", "followers", "public"]
+            "enum": [
+              "private",
+              "followers",
+              "public"
+            ]
           }
         }
       },
@@ -972,7 +1058,10 @@
           },
           "visibility": {
             "type": "string",
-            "enum": ["private", "public"]
+            "enum": [
+              "private",
+              "public"
+            ]
           },
           "createdAt": {
             "type": "string",
@@ -983,7 +1072,12 @@
             "format": "date-time"
           }
         },
-        "required": ["id", "name", "visibility", "createdAt"]
+        "required": [
+          "id",
+          "name",
+          "visibility",
+          "createdAt"
+        ]
       },
       "ExerciseUpsertRequest": {
         "type": "object",
@@ -996,7 +1090,10 @@
           },
           "visibility": {
             "type": "string",
-            "enum": ["private", "public"]
+            "enum": [
+              "private",
+              "public"
+            ]
           },
           "tags": {
             "type": "array",
@@ -1011,7 +1108,10 @@
             }
           }
         },
-        "required": ["name", "visibility"]
+        "required": [
+          "name",
+          "visibility"
+        ]
       },
       "ExerciseListResponse": {
         "type": "object",
@@ -1037,11 +1137,19 @@
             }
           }
         },
-        "required": ["data", "meta"]
+        "required": [
+          "data",
+          "meta"
+        ]
       },
       "SessionStatus": {
         "type": "string",
-        "enum": ["planned", "in_progress", "completed", "canceled"]
+        "enum": [
+          "planned",
+          "in_progress",
+          "completed",
+          "canceled"
+        ]
       },
       "Session": {
         "type": "object",
@@ -1072,10 +1180,18 @@
           },
           "visibility": {
             "type": "string",
-            "enum": ["private", "followers", "public"]
+            "enum": [
+              "private",
+              "followers",
+              "public"
+            ]
           }
         },
-        "required": ["id", "status", "scheduledAt"]
+        "required": [
+          "id",
+          "status",
+          "scheduledAt"
+        ]
       },
       "SessionCreateRequest": {
         "type": "object",
@@ -1091,7 +1207,11 @@
           },
           "visibility": {
             "type": "string",
-            "enum": ["private", "followers", "public"]
+            "enum": [
+              "private",
+              "followers",
+              "public"
+            ]
           },
           "exercises": {
             "type": "array",
@@ -1100,7 +1220,10 @@
             }
           }
         },
-        "required": ["scheduledAt", "visibility"]
+        "required": [
+          "scheduledAt",
+          "visibility"
+        ]
       },
       "SessionExerciseInput": {
         "type": "object",
@@ -1128,11 +1251,16 @@
                   "maximum": 10
                 }
               },
-              "required": ["reps"]
+              "required": [
+                "reps"
+              ]
             }
           }
         },
-        "required": ["exerciseId", "sets"]
+        "required": [
+          "exerciseId",
+          "sets"
+        ]
       },
       "SessionListResponse": {
         "type": "object",
@@ -1158,7 +1286,10 @@
             }
           }
         },
-        "required": ["data", "meta"]
+        "required": [
+          "data",
+          "meta"
+        ]
       },
       "SessionCompleteRequest": {
         "type": "object",

@@ -11,8 +11,7 @@
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon.ico" />
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon.ico" />
     <link rel="apple-touch-icon" sizes="180x180" href="/favicon.ico" />
-    <!-- Fonts use font-display: optional in CSS, so no preload needed -->
-    <!-- Critical CSS is inlined in the build, no preload needed -->
+    <!-- Fonts are loaded asynchronously after initial render to reduce initial resource size -->
     <style>
       /* Minimal inline styles for login fallback form (before CSS loads) - WCAG 2.2 AA compliant */
       .login-fallback {

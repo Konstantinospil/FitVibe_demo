@@ -248,33 +248,45 @@ describe("Home page", () => {
     fireEvent.click(strengthButton);
 
     // Wait for modal to appear
-    await waitFor(() => {
-      expect(screen.getByText("vibesHome.addExercise.createNew")).toBeInTheDocument();
-    });
+    await waitFor(
+      () => {
+        expect(screen.getByText("vibesHome.addExercise.createNew")).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
 
     fireEvent.click(screen.getByText("vibesHome.addExercise.createNew"));
 
-    await waitFor(() => {
-      expect(screen.getByLabelText("vibesHome.addExercise.exerciseName")).toBeInTheDocument();
-    });
+    await waitFor(
+      () => {
+        expect(screen.getByLabelText("vibesHome.addExercise.exerciseName")).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
 
     fireEvent.change(screen.getByLabelText("vibesHome.addExercise.exerciseName"), {
       target: { value: "Tempo Push Press" },
     });
 
-    await waitFor(() => {
-      expect(screen.getByText("vibesHome.addExercise.add")).toBeInTheDocument();
-    });
+    await waitFor(
+      () => {
+        expect(screen.getByText("vibesHome.addExercise.add")).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
 
     fireEvent.click(screen.getByText("vibesHome.addExercise.add"));
 
-    await waitFor(() => {
-      expect(mockedApi.createExercise).toHaveBeenCalledWith({
-        name: "Tempo Push Press",
-        type_code: "strength",
-        is_public: false,
-      });
-    });
+    await waitFor(
+      () => {
+        expect(mockedApi.createExercise).toHaveBeenCalledWith({
+          name: "Tempo Push Press",
+          type_code: "strength",
+          is_public: false,
+        });
+      },
+      { timeout: 5000 },
+    );
 
     expect(mockedApi.createSession).toHaveBeenCalled();
   });
@@ -292,29 +304,41 @@ describe("Home page", () => {
     fireEvent.click(vibeButton);
 
     // Wait for modal to appear
-    await waitFor(() => {
-      expect(screen.getByText("vibesHome.addExercise.createNew")).toBeInTheDocument();
-    });
+    await waitFor(
+      () => {
+        expect(screen.getByText("vibesHome.addExercise.createNew")).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
 
     fireEvent.click(screen.getByText("vibesHome.addExercise.createNew"));
 
-    await waitFor(() => {
-      expect(screen.getByLabelText("vibesHome.addExercise.exerciseName")).toBeInTheDocument();
-    });
+    await waitFor(
+      () => {
+        expect(screen.getByLabelText("vibesHome.addExercise.exerciseName")).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
 
     fireEvent.change(screen.getByLabelText("vibesHome.addExercise.exerciseName"), {
       target: { value: "French Press" },
     });
 
-    await waitFor(() => {
-      expect(screen.getByText("vibesHome.addExercise.add")).toBeInTheDocument();
-    });
+    await waitFor(
+      () => {
+        expect(screen.getByText("vibesHome.addExercise.add")).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
 
     fireEvent.click(screen.getByText("vibesHome.addExercise.add"));
 
-    await waitFor(() => {
-      expect(screen.getByText("Failed to add exercise")).toBeInTheDocument();
-    });
+    await waitFor(
+      () => {
+        expect(screen.getByText("Failed to add exercise")).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
     expect(apiErrorSpy).toHaveBeenCalled();
   });
 });

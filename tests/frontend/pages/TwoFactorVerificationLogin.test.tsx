@@ -142,7 +142,7 @@ describe("TwoFactorVerificationLogin", () => {
         pendingSessionId: "session123",
         code: "123456",
       });
-    });
+    }, { timeout: 5000 });
   });
 
   it("displays error for invalid 2FA code", async () => {
@@ -169,7 +169,7 @@ describe("TwoFactorVerificationLogin", () => {
 
     await waitFor(() => {
       expect(screen.getByRole("alert")).toHaveTextContent("Invalid 2FA code. Please try again.");
-    });
+    }, { timeout: 5000 });
   });
 
   it("displays generic error message", async () => {
@@ -188,7 +188,7 @@ describe("TwoFactorVerificationLogin", () => {
 
     await waitFor(() => {
       expect(screen.getByRole("alert")).toHaveTextContent("Verification failed. Please try again.");
-    });
+    }, { timeout: 5000 });
   });
 
   it("disables form during submission", async () => {

@@ -1,10 +1,11 @@
 import React from "react";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import Insights from "../../src/pages/Insights";
 import * as api from "../../src/services/api";
 import { useDashboardAnalytics } from "../../src/hooks/useDashboardAnalytics";
+import { cleanupQueryClient, createTestQueryClient } from "../helpers/testQueryClient";
 
 const mockNavigate = vi.fn();
 
@@ -101,22 +102,18 @@ vi.mock("react-i18next", async () => {
   };
 });
 
-const createQueryClient = () => {
-  return new QueryClient({
-    defaultOptions: {
-      queries: {
-        retry: false,
-      },
-    },
-  });
-};
+import { cleanupQueryClient, createTestQueryClient } from "../helpers/testQueryClient";
 
 describe("Insights page", () => {
   let queryClient: QueryClient;
 
   beforeEach(() => {
-    queryClient = createQueryClient();
+    queryClient = createTestQueryClient();
     vi.clearAllMocks();
+  });
+
+  afterEach(() => {
+    cleanupQueryClient(queryClient);
   });
 
   const renderInsights = () => {
@@ -264,17 +261,23 @@ describe("Insights page", () => {
     const progressTab = screen.getByText("Progress");
     fireEvent.click(progressTab);
 
-    await waitFor(() => {
-      // Button text is "Export" based on translation mock
-      expect(screen.getByText("Export")).toBeInTheDocument();
-    });
+    await waitFor(
+      () => {
+        // Button text is "Export" based on translation mock
+        expect(screen.getByText("Export")).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
 
     const exportButton = screen.getByText("Export");
     fireEvent.click(exportButton);
 
-    await waitFor(() => {
-      expect(api.exportProgress).toHaveBeenCalled();
-    });
+    await waitFor(
+      () => {
+        expect(api.exportProgress).toHaveBeenCalled();
+      },
+      { timeout: 5000 },
+    );
 
     createElementSpy.mockRestore();
     // Note: URL.createObjectURL mock will be cleaned up by vi.restoreAllMocks in beforeEach

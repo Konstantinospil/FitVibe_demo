@@ -1,6 +1,8 @@
 # FitVibe Frontend
 
-The frontend is a React 18 single-page application bundled with Vite. It consumes the FitVibe backend and provides session planning, workout logging, and dashboards for end users.
+The frontend is a React 18 application with Server-Side Rendering (SSR) bundled with Vite. It consumes the FitVibe backend and provides session planning, workout logging, and dashboards for end users.
+
+**Note**: SSR implementation is in progress (see [ADR-023](../../docs/2.Technical_Design_Document/2.f.Architectural_Decision_Documentation/ADR-023-server-side-rendering.md) and [Implementation Plan](../../docs/6.Implementation/SSR_IMPLEMENTATION_PLAN.md)).
 
 ## Prerequisites
 

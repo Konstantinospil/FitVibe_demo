@@ -144,7 +144,10 @@ export const SessionManagement: React.FC = () => {
   const formatDate = (dateString: string): string => {
     try {
       const date = new Date(dateString);
-      return new Intl.DateTimeFormat(navigator.language || "en", {
+      // SSR-safe: Use navigator.language only in browser, fallback to "en" on server
+      const locale =
+        typeof navigator !== "undefined" && navigator.language ? navigator.language : "en";
+      return new Intl.DateTimeFormat(locale, {
         year: "numeric",
         month: "short",
         day: "numeric",

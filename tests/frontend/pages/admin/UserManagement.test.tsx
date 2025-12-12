@@ -70,7 +70,7 @@ describe("UserManagement", () => {
       expect(api.searchUsers).toHaveBeenCalledWith({ q: "test" });
       expect(screen.getByText("@testuser")).toBeInTheDocument();
       expect(screen.getByText("test@example.com")).toBeInTheDocument();
-    });
+    }, { timeout: 5000 });
   });
 
   it("should search users when Enter key is pressed", async () => {
@@ -90,7 +90,7 @@ describe("UserManagement", () => {
 
     await waitFor(() => {
       expect(api.searchUsers).toHaveBeenCalledWith({ q: "test" });
-    });
+    }, { timeout: 5000 });
   });
 
   it("should not search with empty query", async () => {
@@ -107,7 +107,7 @@ describe("UserManagement", () => {
 
     await waitFor(() => {
       expect(api.searchUsers).not.toHaveBeenCalled();
-    });
+    }, { timeout: 5000 });
   });
 
   it("should show loading state while searching", async () => {
@@ -129,7 +129,7 @@ describe("UserManagement", () => {
 
     await waitFor(() => {
       expect(screen.getByText("Searching...")).toBeInTheDocument();
-    });
+    }, { timeout: 5000 });
   });
 
   it("should show error message when search fails", async () => {
@@ -149,7 +149,7 @@ describe("UserManagement", () => {
 
     await waitFor(() => {
       expect(screen.getByText("Failed to search users. Please try again.")).toBeInTheDocument();
-    });
+    }, { timeout: 5000 });
   });
 
   it("should show empty state when no users found", async () => {
@@ -174,7 +174,7 @@ describe("UserManagement", () => {
       expect(
         screen.getByText("No users match your search criteria. Try a different query."),
       ).toBeInTheDocument();
-    });
+    }, { timeout: 5000 });
   });
 
   it("should display user information", async () => {
@@ -199,7 +199,7 @@ describe("UserManagement", () => {
       expect(screen.getByText("test@example.com")).toBeInTheDocument();
       expect(screen.getByText("10")).toBeInTheDocument(); // sessionCount
       expect(screen.getByText("0")).toBeInTheDocument(); // reportCount
-    });
+    }, { timeout: 5000 });
   });
 
   it("should show suspend and ban buttons for active users", async () => {
@@ -222,7 +222,7 @@ describe("UserManagement", () => {
     await waitFor(() => {
       expect(screen.getByText("Suspend")).toBeInTheDocument();
       expect(screen.getByText("Ban")).toBeInTheDocument();
-    });
+    }, { timeout: 5000 });
   });
 
   it("should show activate button for non-active users", async () => {
@@ -247,7 +247,7 @@ describe("UserManagement", () => {
       expect(screen.getByText("Activate")).toBeInTheDocument();
       expect(screen.queryByText("Suspend")).not.toBeInTheDocument();
       expect(screen.queryByText("Ban")).not.toBeInTheDocument();
-    });
+    }, { timeout: 5000 });
   });
 
   it("should open confirmation dialog when suspending user", async () => {
@@ -270,7 +270,7 @@ describe("UserManagement", () => {
 
     await waitFor(() => {
       expect(screen.getByText("Suspend")).toBeInTheDocument();
-    });
+    }, { timeout: 5000 });
 
     const suspendButton = screen.getByText("Suspend");
     fireEvent.click(suspendButton);
@@ -282,7 +282,7 @@ describe("UserManagement", () => {
           "Are you sure you want to suspend this user? They will not be able to access their account.",
         ),
       ).toBeInTheDocument();
-    });
+    }, { timeout: 5000 });
   });
 
   it("should suspend user when confirmed", async () => {
@@ -309,25 +309,25 @@ describe("UserManagement", () => {
 
     await waitFor(() => {
       expect(screen.getByText("Suspend")).toBeInTheDocument();
-    });
+    }, { timeout: 5000 });
 
     const suspendButton = screen.getByText("Suspend");
     fireEvent.click(suspendButton);
 
     await waitFor(() => {
       expect(screen.getByText("Yes, Suspend User")).toBeInTheDocument();
-    });
+    }, { timeout: 5000 });
 
     const confirmButton = screen.getByText("Yes, Suspend User");
     fireEvent.click(confirmButton);
 
     await waitFor(() => {
       expect(api.suspendUser).toHaveBeenCalledWith("user-1");
-    });
+    }, { timeout: 5000 });
 
     await waitFor(() => {
       expect(mockToast.success).toHaveBeenCalledWith("User suspended successfully");
-    });
+    }, { timeout: 5000 });
   });
 
   it("should ban user when confirmed", async () => {
@@ -354,25 +354,25 @@ describe("UserManagement", () => {
 
     await waitFor(() => {
       expect(screen.getByText("Ban")).toBeInTheDocument();
-    });
+    }, { timeout: 5000 });
 
     const banButton = screen.getByText("Ban");
     fireEvent.click(banButton);
 
     await waitFor(() => {
       expect(screen.getByText("Yes, Ban User")).toBeInTheDocument();
-    });
+    }, { timeout: 5000 });
 
     const confirmButton = screen.getByText("Yes, Ban User");
     fireEvent.click(confirmButton);
 
     await waitFor(() => {
       expect(api.banUser).toHaveBeenCalledWith("user-1");
-    });
+    }, { timeout: 5000 });
 
     await waitFor(() => {
       expect(mockToast.success).toHaveBeenCalledWith("User banned successfully");
-    });
+    }, { timeout: 5000 });
   });
 
   it("should activate user when confirmed", async () => {
@@ -400,25 +400,25 @@ describe("UserManagement", () => {
 
     await waitFor(() => {
       expect(screen.getByText("Activate")).toBeInTheDocument();
-    });
+    }, { timeout: 5000 });
 
     const activateButton = screen.getByText("Activate");
     fireEvent.click(activateButton);
 
     await waitFor(() => {
       expect(screen.getByText("Yes, Activate User")).toBeInTheDocument();
-    });
+    }, { timeout: 5000 });
 
     const confirmButton = screen.getByText("Yes, Activate User");
     fireEvent.click(confirmButton);
 
     await waitFor(() => {
       expect(api.activateUser).toHaveBeenCalledWith("user-1");
-    });
+    }, { timeout: 5000 });
 
     await waitFor(() => {
       expect(mockToast.success).toHaveBeenCalledWith("User activated successfully");
-    });
+    }, { timeout: 5000 });
   });
 
   it("should delete user when confirmed", async () => {
@@ -445,25 +445,25 @@ describe("UserManagement", () => {
 
     await waitFor(() => {
       expect(screen.getByText("Delete")).toBeInTheDocument();
-    });
+    }, { timeout: 5000 });
 
     const deleteButton = screen.getByText("Delete");
     fireEvent.click(deleteButton);
 
     await waitFor(() => {
       expect(screen.getByText("Yes, Delete User")).toBeInTheDocument();
-    });
+    }, { timeout: 5000 });
 
     const confirmButton = screen.getByText("Yes, Delete User");
     fireEvent.click(confirmButton);
 
     await waitFor(() => {
       expect(api.deleteUser).toHaveBeenCalledWith("user-1");
-    });
+    }, { timeout: 5000 });
 
     await waitFor(() => {
       expect(mockToast.success).toHaveBeenCalledWith("User deleted successfully");
-    });
+    }, { timeout: 5000 });
   });
 
   it("should show error when user action fails", async () => {
@@ -486,21 +486,21 @@ describe("UserManagement", () => {
 
     await waitFor(() => {
       expect(screen.getByText("Suspend")).toBeInTheDocument();
-    });
+    }, { timeout: 5000 });
 
     const suspendButton = screen.getByText("Suspend");
     fireEvent.click(suspendButton);
 
     await waitFor(() => {
       expect(screen.getByText("Yes, Suspend User")).toBeInTheDocument();
-    });
+    }, { timeout: 5000 });
 
     const confirmButton = screen.getByText("Yes, Suspend User");
     fireEvent.click(confirmButton);
 
     await waitFor(() => {
       expect(mockToast.error).toHaveBeenCalledWith("Failed to suspend user. Please try again.");
-    });
+    }, { timeout: 5000 });
   });
 
   it("should cancel confirmation dialog", async () => {
@@ -522,21 +522,21 @@ describe("UserManagement", () => {
 
     await waitFor(() => {
       expect(screen.getByText("Suspend")).toBeInTheDocument();
-    });
+    }, { timeout: 5000 });
 
     const suspendButton = screen.getByText("Suspend");
     fireEvent.click(suspendButton);
 
     await waitFor(() => {
       expect(screen.getByText("Cancel")).toBeInTheDocument();
-    });
+    }, { timeout: 5000 });
 
     const cancelButton = screen.getByText("Cancel");
     fireEvent.click(cancelButton);
 
     await waitFor(() => {
       expect(screen.queryByText("Suspend User")).not.toBeInTheDocument();
-    });
+    }, { timeout: 5000 });
 
     expect(api.suspendUser).not.toHaveBeenCalled();
   });

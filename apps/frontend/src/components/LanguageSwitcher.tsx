@@ -194,24 +194,37 @@ const optionStyle: React.CSSProperties = {
 };
 
 function FlagIcon({ option, size = 20 }: { option: LanguageOption; size?: number }) {
-  if (supportsEmojiFlag()) {
-    return (
-      <span
-        role="img"
-        aria-hidden="true"
-        style={{
-          fontSize: size,
-          lineHeight: 1,
-          display: "inline-flex",
-          alignItems: "center",
-        }}
-      >
-        {option.emoji}
-      </span>
-    );
+  // SSR-safe: Use state to detect emoji support after mount
+  const [supportsEmoji, setSupportsEmoji] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    // Only check emoji support in browser after mount
+    if (typeof document !== "undefined") {
+      setSupportsEmoji(supportsEmojiFlag());
+    } else {
+      setSupportsEmoji(false);
+    }
+  }, []);
+
+  // During SSR or before detection, use SVG fallback
+  if (supportsEmoji === null || !supportsEmoji) {
+    return <option.Svg size={size} />;
   }
 
-  return <option.Svg size={size} />;
+  return (
+    <span
+      role="img"
+      aria-hidden="true"
+      style={{
+        fontSize: size,
+        lineHeight: 1,
+        display: "inline-flex",
+        alignItems: "center",
+      }}
+    >
+      {option.emoji}
+    </span>
+  );
 }
 
 const LanguageSwitcher: React.FC = () => {

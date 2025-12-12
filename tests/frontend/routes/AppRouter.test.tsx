@@ -140,7 +140,7 @@ describe("AppRouter", () => {
 
     await waitFor(() => {
       expect(screen.getByText("Public Routes")).toBeInTheDocument();
-    });
+    }, { timeout: 5000 });
   });
 
   it("renders ProtectedRoutes when user is authenticated", async () => {
@@ -152,7 +152,7 @@ describe("AppRouter", () => {
 
     await waitFor(() => {
       expect(screen.getByText("Protected Routes")).toBeInTheDocument();
-    });
+    }, { timeout: 5000 });
   });
 
   it("renders with authenticated state", async () => {
@@ -164,7 +164,7 @@ describe("AppRouter", () => {
 
     await waitFor(() => {
       expect(screen.getByText("Protected Routes")).toBeInTheDocument();
-    });
+    }, { timeout: 5000 });
   });
 
   it("shows loading fallback during lazy load", () => {

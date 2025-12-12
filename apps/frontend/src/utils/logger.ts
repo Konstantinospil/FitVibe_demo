@@ -18,7 +18,21 @@ class Logger {
   private isDevelopment: boolean;
 
   constructor() {
-    this.isDevelopment = import.meta.env.DEV;
+    // SSR-safe: Check if we're in browser and import.meta.env exists
+    if (typeof window === "undefined") {
+      // Server-side: default to false (production mode)
+      this.isDevelopment = false;
+    } else {
+      // Client-side: check Vite's import.meta.env
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+        const viteEnv = import.meta.env;
+        this.isDevelopment = viteEnv && typeof viteEnv === "object" && viteEnv.DEV === true;
+      } catch {
+        // Fallback if import.meta.env access fails
+        this.isDevelopment = false;
+      }
+    }
   }
 
   /**

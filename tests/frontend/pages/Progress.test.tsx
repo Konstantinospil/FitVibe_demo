@@ -1,10 +1,11 @@
 import React from "react";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import Progress from "../../src/pages/Progress";
 import * as api from "../../src/services/api";
 import type { TrendDataPoint } from "../../src/services/api";
+import { cleanupQueryClient, createTestQueryClient } from "../helpers/testQueryClient";
 
 vi.mock("../../src/services/api", () => ({
   getProgressTrends: vi.fn(),
@@ -80,22 +81,16 @@ vi.mock("react-i18next", async () => {
   };
 });
 
-const createQueryClient = () => {
-  return new QueryClient({
-    defaultOptions: {
-      queries: {
-        retry: false,
-      },
-    },
-  });
-};
-
 describe("Progress page", () => {
   let queryClient: QueryClient;
 
   beforeEach(() => {
-    queryClient = createQueryClient();
+    queryClient = createTestQueryClient();
     vi.clearAllMocks();
+  });
+
+  afterEach(() => {
+    cleanupQueryClient(queryClient);
   });
 
   const renderProgress = () => {
@@ -132,9 +127,12 @@ describe("Progress page", () => {
 
     renderProgress();
 
-    await waitFor(() => {
-      expect(screen.getByText("Volume Trend")).toBeInTheDocument();
-    });
+    await waitFor(
+      () => {
+        expect(screen.getByText("Volume Trend")).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
   });
 
   it("should handle export progress", async () => {
@@ -203,16 +201,22 @@ describe("Progress page", () => {
 
     renderProgress();
 
-    await waitFor(() => {
-      expect(screen.getByText("Export")).toBeInTheDocument();
-    });
+    await waitFor(
+      () => {
+        expect(screen.getByText("Export")).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
 
     const exportButton = screen.getByText("Export");
     fireEvent.click(exportButton);
 
-    await waitFor(() => {
-      expect(api.exportProgress).toHaveBeenCalled();
-    });
+    await waitFor(
+      () => {
+        expect(api.exportProgress).toHaveBeenCalled();
+      },
+      { timeout: 5000 },
+    );
 
     createElementSpy.mockRestore();
     // Note: URL.createObjectURL mock will be cleaned up by vi.restoreAllMocks in beforeEach
@@ -261,10 +265,13 @@ describe("Progress page", () => {
 
     renderProgress();
 
-    await waitFor(() => {
-      expect(screen.getByText("Exercise Breakdown")).toBeInTheDocument();
-      expect(screen.getByText("Bench Press")).toBeInTheDocument();
-    });
+    await waitFor(
+      () => {
+        expect(screen.getByText("Exercise Breakdown")).toBeInTheDocument();
+        expect(screen.getByText("Bench Press")).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
   });
 
   it("should show error message when trends fail to load", async () => {

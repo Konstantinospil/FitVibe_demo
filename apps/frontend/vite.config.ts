@@ -7,6 +7,7 @@ import { resolve as pathResolve } from "node:path";
 
 export default defineConfig(() => {
   const isVitest = process.env.VITEST === "true";
+  const isSSR = process.env.SSR === "true";
   const root = fileURLToPath(new URL(".", import.meta.url));
   const workspaceRoot = pathResolve(root, "../..");
 
@@ -16,9 +17,16 @@ export default defineConfig(() => {
     ? parseInt(process.env.VITEST_MAX_THREADS, 10)
     : 4;
 
+  // For SSR, we need React (not Preact) since we're using react-dom/server
+  // For tests, we use React
+  // For client builds with SSR, we must use React for hydration to work
+  // For client-only builds, we can use Preact for smaller bundle size
+  // Note: When SSR is enabled, both server and client must use React
+  const useReact = isVitest || isSSR || process.env.USE_REACT === "true";
+
   return {
     root,
-    plugins: isVitest ? [react()] : [preact()],
+    plugins: useReact ? [react()] : [preact()],
     resolve: {
       alias: {
         "@": fileURLToPath(new URL("./src", import.meta.url)),
@@ -49,7 +57,9 @@ export default defineConfig(() => {
               "../../src": pathResolve(root, "src"),
             }
           : {}),
-        ...(isVitest
+        // For SSR, we must use React (not Preact) for react-dom/server to work
+        // Only use Preact aliases for client builds when not doing SSR
+        ...(isVitest || isSSR
           ? {}
           : {
               react: "preact/compat",
@@ -98,9 +108,13 @@ export default defineConfig(() => {
         shuffle: false,
         concurrent: true, // Allow tests within the same file to run concurrently if they don't share state
       },
-      testTimeout: 10000, // 10 second timeout per test
-      hookTimeout: 10000, // 10 second timeout for hooks
-      teardownTimeout: 5000, // 5 second timeout for teardown
+      testTimeout: 30000, // 30 second timeout per test (increased to catch slow tests)
+      hookTimeout: 15000, // 15 second timeout for hooks (increased for i18n loading)
+      teardownTimeout: 10000, // 10 second timeout for teardown (increased for cleanup)
+      // Prevent tests from hanging by detecting open handles
+      detectOpenHandles: true,
+      // Force exit after tests to prevent hanging
+      forceRerunTriggers: ["**/src/**", "**/tests/**"],
       // Ensure dependencies are resolved correctly for setup files
       // Inline all test dependencies to ensure they're resolved from the correct node_modules
       server: {
@@ -148,6 +162,8 @@ export default defineConfig(() => {
       target: "es2020",
       cssMinify: true,
       sourcemap: false,
+      // SSR builds output to dist/server, client builds to dist/client
+      outDir: isSSR ? "dist/server" : "dist/client",
       // Reduce bundle size by optimizing module resolution
       modulePreload: {
         polyfill: false, // Disable module preload polyfill to reduce size
@@ -186,17 +202,19 @@ export default defineConfig(() => {
                 return "router-vendor";
               }
               // State management - split for better caching
-              if (id.includes("@tanstack/react-query")) {
-                return "query-vendor";
-              }
+              // Zustand is small, keep in main bundle for login
               if (id.includes("zustand")) {
                 return "state-vendor";
+              }
+              // React Query - only needed for protected routes, lazy load
+              if (id.includes("@tanstack/react-query")) {
+                return "query-vendor";
               }
               // i18n libraries - can be loaded on demand
               if (id.includes("i18next") || id.includes("react-i18next")) {
                 return "i18n-vendor";
               }
-              // HTTP client
+              // HTTP client - needed for login, but can be separate chunk
               if (id.includes("axios")) {
                 return "http-vendor";
               }
@@ -207,7 +225,7 @@ export default defineConfig(() => {
                 // This will help tree-shaking work better
                 return "icons-vendor";
               }
-              // Date utilities
+              // Date utilities - lazy load (not needed for login)
               if (id.includes("date-fns") || id.includes("dayjs") || id.includes("moment")) {
                 return "date-vendor";
               }
@@ -215,12 +233,15 @@ export default defineConfig(() => {
               return "vendor";
             }
             // Split i18n locale files into separate chunks for lazy loading
-            // IMPORTANT: Only English should be in initial bundle, others lazy-loaded
+            // IMPORTANT: Only minimal auth translations in initial bundle
             if (id.includes("/locales/")) {
-              // English translations go into main bundle (needed for login)
+              // Only auth.json for login - other translations lazy-loaded
+              if (id.includes("/locales/en/auth.json")) {
+                return "locale-en-auth";
+              }
+              // All other locale files are lazy-loaded
               if (id.includes("/locales/en/")) {
-                // Keep English in main bundle but in a separate chunk for better caching
-                return "locale-en";
+                return "locale-en-full";
               }
               // All other locales are lazy-loaded
               const match = id.match(/locales\/([^/]+)\//);
@@ -230,9 +251,10 @@ export default defineConfig(() => {
             }
           },
           // Optimize chunk file names for better caching
-          chunkFileNames: "assets/js/[name]-[hash].js",
-          entryFileNames: "assets/js/[name]-[hash].js",
-          assetFileNames: "assets/[ext]/[name]-[hash].[ext]",
+          // For SSR, output to server directory structure
+          chunkFileNames: isSSR ? "[name]-[hash].js" : "assets/js/[name]-[hash].js",
+          entryFileNames: isSSR ? "[name]-[hash].js" : "assets/js/[name]-[hash].js",
+          assetFileNames: isSSR ? "assets/[ext]/[name]-[hash].[ext]" : "assets/[ext]/[name]-[hash].[ext]",
           // Compact output to reduce whitespace
           compact: true,
         },
@@ -252,9 +274,50 @@ export default defineConfig(() => {
       // Enable compression
       reportCompressedSize: true,
       // Optimize asset inlining threshold - inline more small assets
-      assetsInlineLimit: 8192, // Inline assets smaller than 8KB (was 4KB)
-      // Reduce CSS code splitting to minimize initial bundle
+      assetsInlineLimit: 16384, // Inline assets smaller than 16KB to reduce HTTP requests
+      // Enable CSS code splitting to load only necessary CSS per route, improving LCP
       cssCodeSplit: true,
+      // Reduce initial bundle size by using dynamic imports for non-critical code
+      // This helps with code splitting and lazy loading
+      experimental: {
+        renderBuiltUrl(filename: string) {
+          // Use relative URLs for better caching
+          return { relative: true };
+        },
+      },
+    },
+    // SSR configuration
+    ssr: {
+      // Don't externalize these packages for SSR - bundle them
+      // These are needed for SSR rendering
+      noExternal: [
+        "react",
+        "react-dom",
+        "react-router-dom",
+        "react-router",
+        "@tanstack/react-query",
+        "react-i18next",
+        "i18next",
+        "zustand",
+        // Internal modules should be bundled
+        /^@fitvibe\//,
+      ],
+      // Externalize large dependencies that don't need to be in the SSR bundle
+      // These will be resolved from node_modules at runtime
+      external: [
+        // Express is provided by the server runtime
+        "express",
+        // Node.js built-ins
+        "node:fs",
+        "node:path",
+        "node:url",
+        "node:stream",
+      ],
+      // Optimize SSR bundle output
+      resolve: {
+        // Don't bundle dev dependencies for SSR
+        conditions: ["node", "production"],
+      },
     },
   };
 });

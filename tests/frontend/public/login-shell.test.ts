@@ -128,7 +128,7 @@ describe("login fallback shell", () => {
 
     await waitFor(() => {
       expect(assignSpy).toHaveBeenCalledWith("/login/verify-2fa?pendingSessionId=pending-123");
-    });
+    }, { timeout: 5000 });
   });
 
   it("stores a session flag and navigates home after successful login", async () => {
@@ -150,7 +150,7 @@ describe("login fallback shell", () => {
       const flag = window.sessionStorage.getItem("fitvibe:auth");
       expect(flag).toBe("1");
       expect(assignSpy).toHaveBeenCalledWith("/");
-    });
+    }, { timeout: 5000 });
   });
 
   it("shows an error message when authentication fails", async () => {
@@ -170,6 +170,6 @@ describe("login fallback shell", () => {
       const errorRegion = document.querySelector(".login-fallback__error") as HTMLDivElement;
       expect(errorRegion.hidden).toBe(false);
       expect(errorRegion.textContent).toContain("We couldn't verify your credentials");
-    });
+    }, { timeout: 5000 });
   });
 });

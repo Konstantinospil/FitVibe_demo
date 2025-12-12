@@ -21,28 +21,44 @@ COPY . .
 # 4) Link node_modules (dev deps included for build tooling)
 RUN pnpm install --frozen-lockfile --prod=false --offline
 
-# 5) Build the frontend workspace package
-RUN pnpm --filter @fitvibe/frontend run build
+# 5) Build the frontend workspace package (SSR build)
+RUN pnpm --filter @fitvibe/frontend run build:ssr
 
 # ---------- Runtime Stage ----------
-FROM nginx:alpine
+FROM node:20-alpine AS runtime
 
-# Copy static assets produced during the build stage
-COPY --from=builder /app/apps/frontend/dist /usr/share/nginx/html
+WORKDIR /app
 
-# Basic hardening and nginx defaults
-# Set nginx to run as nobody user and disable server tokens
-RUN sed -i 's/user  nginx;/user nobody;/' /etc/nginx/nginx.conf && \
-    sed -i 's/# server_tokens off;/server_tokens off;/' /etc/nginx/nginx.conf && \
-    chown -R nobody:nobody /usr/share/nginx/html /var/cache/nginx /var/run /var/log/nginx
+# Copy package files
+COPY --from=builder /app/package.json ./
+COPY --from=builder /app/pnpm-lock.yaml ./
+COPY --from=builder /app/pnpm-workspace.yaml ./
+COPY --from=builder /app/apps/frontend/package.json ./apps/frontend/
 
-# Ensure proper permissions for nginx directories
-RUN mkdir -p /var/cache/nginx/client_temp /var/cache/nginx/proxy_temp /var/cache/nginx/fastcgi_temp /var/cache/nginx/uwsgi_temp /var/cache/nginx/scgi_temp && \
-    chown -R nobody:nobody /var/cache/nginx
+# Install production dependencies + tsx (needed to run server.ts)
+RUN corepack enable && corepack prepare pnpm@9.0.0 --activate && \
+    pnpm install --frozen-lockfile --prod --no-offline && \
+    pnpm add -D tsx --no-offline
 
-# Run as non-root user (nobody)
-USER nobody
+# Copy built application
+COPY --from=builder /app/apps/frontend/dist ./apps/frontend/dist
+COPY --from=builder /app/apps/frontend/index.html ./apps/frontend/
+# Copy server.ts (will use tsx to run it in production)
+COPY --from=builder /app/apps/frontend/server.ts ./apps/frontend/
 
-EXPOSE 80
-CMD ["nginx", "-g", "daemon off;"]
+# Create non-root user
+RUN addgroup -g 1000 nodejs && \
+    adduser -D -u 1000 -G nodejs nodejs && \
+    chown -R nodejs:nodejs /app
+
+USER nodejs
+
+WORKDIR /app/apps/frontend
+
+EXPOSE 4173
+
+ENV NODE_ENV=production
+ENV PORT=4173
+
+CMD ["pnpm", "exec", "tsx", "server.ts"]
 ## ===============================================================

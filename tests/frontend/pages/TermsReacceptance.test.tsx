@@ -286,6 +286,6 @@ describe("TermsReacceptance page", () => {
       const privacyLink = screen.getByText("Privacy Policy");
       expect(termsLink.closest("a")).toHaveAttribute("href", "/terms");
       expect(privacyLink.closest("a")).toHaveAttribute("href", "/privacy");
-    });
+    }, { timeout: 5000 });
   });
 });

@@ -408,7 +408,7 @@ describe("LanguageSwitcher Accessibility", () => {
 
       await waitFor(() => {
         expect(screen.queryByRole("menu")).not.toBeInTheDocument();
-      });
+      }, { timeout: 5000 });
     });
 
     it("should not close dropdown when clicking inside", () => {

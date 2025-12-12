@@ -9,12 +9,16 @@ interface ThemeState {
   toggleTheme: () => void;
 }
 
-// Detect system preference
+// Detect system preference (SSR-safe)
 const getSystemTheme = (): Theme => {
-  if (typeof window === "undefined") {
-    return "dark";
+  if (typeof window === "undefined" || typeof window.matchMedia === "undefined") {
+    return "dark"; // Default to dark theme on server
   }
-  return window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
+  try {
+    return window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
+  } catch {
+    return "dark"; // Fallback if matchMedia fails
+  }
 };
 
 // Apply theme to document

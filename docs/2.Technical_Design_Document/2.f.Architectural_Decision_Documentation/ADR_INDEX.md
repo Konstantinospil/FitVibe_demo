@@ -31,6 +31,7 @@ Legend — Status: ✅ Accepted · 📝 Proposed · ⏳ Deferred · ✖️ Super
 | ADR-020 | Accessibility Compliance (WCAG 2.1 AA) & Inclusive UX                                    | ✅ Accepted | Semantics-first components, keyboard flows, contrast, alt text; Lighthouse/axe in CI with ≥90 score.                                                 | 2025-10-14    | [ADR-020](./ADR-020-accessibility-compliance.md)              |
 | ADR-021 | Standardize Backend Test Runner on Jest 30 + @swc/jest                                   | ✅ Accepted | Adopt _Jest 30_ with _@swc/jest_ for the backend test runner (unit + integration with Supertest), replacing ts-jest.                                 | 2025-10-14    | [ADR-021](./ADR-021-test-runner-backend-jest30-sw.md)         |
 | ADR-022 | Comprehensive Lighthouse Testing Across All Categories                                   | ✅ Accepted | Expand Lighthouse CI to validate all four categories (Performance, Accessibility, Best Practices, SEO) with ≥90 score threshold for each.            | 2025-01-21    | [ADR-022](./ADR-022-lighthouse-comprehensive-testing.md)      |
+| ADR-023 | Server-Side Rendering (SSR) Implementation                                                | ✅ Accepted | Implement SSR for all routes using React 18 streaming SSR via Node.js/Express to achieve LCP < 2.5s and Performance ≥ 90.                             | 2025-12-12    | [ADR-023](./ADR-023-server-side-rendering.md)                 |
 
 ---
 

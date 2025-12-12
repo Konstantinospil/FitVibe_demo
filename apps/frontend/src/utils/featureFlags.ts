@@ -47,6 +47,15 @@ let lastFetchTime = 0;
 const CACHE_TTL = 60_000; // 1 minute
 
 /**
+ * Reset the cache (for testing purposes)
+ * @internal
+ */
+export function resetConfigCache(): void {
+  cachedConfig = DEFAULT_CONFIG;
+  lastFetchTime = 0;
+}
+
+/**
  * Fetch system configuration from backend
  *
  * @returns System configuration with feature flags and read-only status

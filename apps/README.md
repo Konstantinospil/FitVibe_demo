@@ -7,7 +7,7 @@ The `apps` workspace hosts the runnable surfaces of FitVibe V2. Each application
 | Directory   | Description                                    | README                                |
 | ----------- | ---------------------------------------------- | ------------------------------------- |
 | `backend/`  | FitVibe REST API (Express + Knex + PostgreSQL) | [Backend README](backend/README.md)   |
-| `frontend/` | React single-page application built with Vite  | [Frontend README](frontend/README.md) |
+| `frontend/` | React application with SSR built with Vite     | [Frontend README](frontend/README.md) |
 
 Refer to the individual READMEs inside each app for setup and workflow details. Turbo tasks are configured so that running `pnpm dev` at the root will start both the backend and frontend in watch mode.
 

@@ -527,23 +527,26 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile --no-offline
 
-      - name: Build frontend
-        run: pnpm --filter @fitvibe/frontend run build
+      - name: Build frontend (SSR)
+        run: pnpm --filter @fitvibe/frontend run build:ssr
 
-      - name: Start frontend preview server
+      - name: Start SSR server
         timeout-minutes: 10
+        env:
+          NODE_ENV: production
+          PORT: 4173
         run: |
           cd apps/frontend
-          pnpm preview --port 4173 --host 127.0.0.1 &
-          echo $! > ../preview-server.pid
+          pnpm start:ssr &
+          echo $! > ../ssr-server.pid
           for i in {1..30}; do
             if curl -fsS http://127.0.0.1:4173 >/dev/null 2>&1; then
-              echo "Frontend preview server started"
+              echo "SSR server started"
               exit 0
             fi
             sleep 2
           done
-          echo "Frontend preview server did not start in time" >&2
+          echo "SSR server did not start in time" >&2
           exit 1
 
       - name: Run Lighthouse CI
@@ -561,14 +564,14 @@ jobs:
           retention-days: 30
           if-no-files-found: ignore
 
-      - name: Stop preview server
+      - name: Stop SSR server
         if: always()
         timeout-minutes: 1
         run: |
-          pkill -f "vite preview" || true
-          if [ -f apps/frontend/preview-server.pid ]; then
-            kill "$(cat apps/frontend/preview-server.pid)" 2>/dev/null || true
-            rm -f apps/frontend/preview-server.pid
+          pkill -f "tsx server.ts" || pkill -f "start:ssr" || true
+          if [ -f apps/frontend/ssr-server.pid ]; then
+            kill "$(cat apps/frontend/ssr-server.pid)" 2>/dev/null || true
+            rm -f apps/frontend/ssr-server.pid
           fi
 
       - name: Job summary
@@ -1917,33 +1920,53 @@ jobs:
         run: |
           docker run -d \
             --name test-frontend \
-            -p 8080:80 \
+            -p 8080:4173 \
+            -e NODE_ENV=production \
+            -e PORT=4173 \
             ${{ env.FRONTEND_IMAGE }}:sha-${{ github.sha }}
           echo "Frontend container started"
 
-      - name: Wait for frontend to serve
+      - name: Wait for frontend SSR server
         timeout-minutes: 10
         run: |
-          echo "Waiting for frontend to serve..."
+          echo "Waiting for frontend SSR server..."
           for i in {1..30}; do
-            if curl -f http://127.0.0.1:8080 >/dev/null 2>&1; then
-              echo "Frontend is serving"
+            if curl -f http://127.0.0.1:8080/health >/dev/null 2>&1; then
+              echo "Frontend SSR server is ready"
               exit 0
             fi
             if [ $i -eq 30 ]; then
-              echo "Frontend failed to serve after 30 attempts" >&2
+              echo "Frontend SSR server failed to start after 30 attempts" >&2
               docker logs test-frontend
               exit 1
             fi
             sleep 2
           done
 
-      - name: Verify frontend serves HTML
+      - name: Verify frontend health endpoint
         timeout-minutes: 2
         run: |
-          RESPONSE=$(curl -s http://127.0.0.1:8080 | head -20)
+          RESPONSE=$(curl -s http://127.0.0.1:8080/health)
+          echo "Health endpoint response: $RESPONSE"
+          if echo "$RESPONSE" | grep -qi "ok\|status"; then
+            echo "✅ Frontend health endpoint working"
+          else
+            echo "❌ Frontend health endpoint returned unexpected response"
+            exit 1
+          fi
+
+      - name: Verify frontend serves SSR HTML
+        timeout-minutes: 2
+        run: |
+          RESPONSE=$(curl -s http://127.0.0.1:8080/ | head -20)
           if echo "$RESPONSE" | grep -qi "<!doctype html\|<html"; then
-            echo "✅ Frontend serves HTML"
+            echo "✅ Frontend serves SSR HTML"
+            # Verify SSR content is present
+            if echo "$RESPONSE" | grep -qi "<div id=\"root\">"; then
+              echo "✅ SSR content detected in HTML"
+            else
+              echo "⚠️ SSR content may not be present"
+            fi
           else
             echo "❌ Frontend does not serve HTML"
             echo "Response: $RESPONSE"

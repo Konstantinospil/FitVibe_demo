@@ -5,7 +5,12 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -p tsconfig.build.json && vite build",
+    "build:client": "USE_REACT=true tsc -p tsconfig.build.json && USE_REACT=true vite build",
+    "build:server": "SSR=true vite build --ssr src/ssr/render.tsx",
+    "build:static": "tsx scripts/generate-static.ts",
+    "build:ssr": "pnpm build:client && pnpm build:server && pnpm build:static",
     "preview": "vite preview",
+    "start:ssr": "tsx server.ts",
     "lint": "eslint \"src\" \"../../tests/frontend\" --max-warnings=0",
     "lint:check": "turbo run lint -- --max-warnings=0",
     "typecheck": "tsc --noEmit && node -e \"const fs=require('fs');const path=require('path');const testsDir=path.join(__dirname,'tests');if(fs.existsSync(testsDir)){const files=fs.readdirSync(testsDir,{recursive:true});if(files.some(f=>/\\\\.(ts|tsx)$/.test(f))){require('child_process').execSync('tsc --noEmit -p tsconfig.test.json',{stdio:'inherit'});}}\"",
@@ -15,6 +20,7 @@
   "dependencies": {
     "@tanstack/react-query": "^5.59.7",
     "axios": "^1.7.2",
+    "express": "^4.18.2",
     "i18next": "^23.10.1",
     "lucide-react": "^0.548.0",
     "preact": "^10.23.2",
@@ -31,6 +37,7 @@
     "@testing-library/jest-dom": "^6.5.0",
     "@testing-library/react": "^16.1.0",
     "@testing-library/user-event": "^14.6.1",
+    "@types/express": "^4.17.21",
     "@types/node": "^20.19.19",
     "@types/react": "^18.3.26",
     "@types/react-dom": "^18.3.7",
@@ -43,6 +50,7 @@
     "eslint-plugin-react-hooks": "^5.2.0",
     "jsdom": "^25.0.1",
     "prettier": "^3.6.2",
+    "tsx": "^4.20.6",
     "typescript": "^5.9.3",
     "vite": "^5.4.21",
     "vitest": "^2.1.4"

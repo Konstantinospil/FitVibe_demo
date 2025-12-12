@@ -14,7 +14,13 @@
  * @see apps/docs/2*.Technical_Design_Document*.md Section 10.6 & 13.7
  */
 
-import { SecretsManagerClient, GetSecretValueCommand } from "@aws-sdk/client-secrets-manager";
+import {
+  SecretsManagerClient,
+  GetSecretValueCommand,
+  CreateSecretCommand,
+  UpdateSecretCommand,
+  DescribeSecretCommand,
+} from "@aws-sdk/client-secrets-manager";
 import { logger } from "../config/logger.js";
 import { createVaultClient, type VaultClient } from "./vault.client.js";
 
@@ -198,10 +204,48 @@ export async function writeSecret(
 
   // Write to AWS Secrets Manager
   if (config.aws?.enabled && awsClient) {
-    // AWS Secrets Manager write requires CreateSecretCommand or UpdateSecretCommand
-    // This is intentionally simplified - production code should handle updates vs creates
-    logger.warn("[secrets] AWS Secrets Manager write not yet implemented");
-    return false;
+    try {
+      const secretString = typeof value === "string" ? value : JSON.stringify(value);
+
+      // Check if secret already exists
+      try {
+        const describeCommand = new DescribeSecretCommand({ SecretId: key });
+        await awsClient.send(describeCommand);
+
+        // Secret exists - update it
+        const updateCommand = new UpdateSecretCommand({
+          SecretId: key,
+          SecretString: secretString,
+        });
+        await awsClient.send(updateCommand);
+
+        logger.info({ key }, "[secrets] Secret updated in AWS Secrets Manager");
+        return true;
+      } catch (describeError: unknown) {
+        // Secret doesn't exist or describe failed - try to create it
+        if (
+          describeError instanceof Error &&
+          (describeError.name === "ResourceNotFoundException" ||
+            describeError.message.includes("not found"))
+        ) {
+          // Create new secret
+          const createCommand = new CreateSecretCommand({
+            Name: key,
+            SecretString: secretString,
+          });
+          await awsClient.send(createCommand);
+
+          logger.info({ key }, "[secrets] Secret created in AWS Secrets Manager");
+          return true;
+        }
+
+        // Re-throw if it's a different error
+        throw describeError;
+      }
+    } catch (error) {
+      logger.error({ err: error, key }, "[secrets] AWS Secrets Manager write failed");
+      return false;
+    }
   }
 
   logger.error("[secrets] No secrets provider available for write");

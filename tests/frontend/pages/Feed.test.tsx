@@ -1,9 +1,10 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { describe, expect, it, vi, beforeEach } from "vitest";
+import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
 import Feed from "../../src/pages/Feed";
 import * as api from "../../src/services/api";
 import { ToastProvider } from "../../src/contexts/ToastContext";
+import { cleanupQueryClient, createTestQueryClient } from "../helpers/testQueryClient";
 
 // Mock the API module
 vi.mock("../../src/services/api", async () => {
@@ -71,15 +72,12 @@ describe("Feed visibility guards", () => {
   let queryClient: QueryClient;
 
   beforeEach(() => {
-    queryClient = new QueryClient({
-      defaultOptions: {
-        queries: {
-          retry: false,
-          gcTime: 0,
-        },
-      },
-    });
+    queryClient = createTestQueryClient();
     vi.mocked(api.getFeed).mockResolvedValue(mockFeedData);
+  });
+
+  afterEach(() => {
+    cleanupQueryClient(queryClient);
   });
 
   const renderWithProvider = (ui: React.ReactElement) => {
@@ -94,9 +92,12 @@ describe("Feed visibility guards", () => {
     renderWithProvider(<Feed />);
 
     // Wait for feed items to load
-    await waitFor(() => {
-      expect(screen.getByText(/Morning Workout/i)).toBeInTheDocument();
-    });
+    await waitFor(
+      () => {
+        expect(screen.getByText(/Morning Workout/i)).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
 
     // Get all clone/open session buttons (button text varies based on translations)
     const cloneButtons = screen.getAllByRole("button", { name: /clone|open session/i });

@@ -53,8 +53,8 @@ The backend groups domain logic into modular verticals. The table below lists ea
 | Exercise Types | Provides CRUD endpoints for managing the catalog of exercise types with admin-only mutations.           | `src/modules/exercise-types/exerciseTypes.routes.ts` |
 | Exercises      | Offers authenticated CRUD APIs for individual exercise records.                                         | `src/modules/exercises/exercise.routes.ts`           |
 | Sessions       | Supplies workout session CRUD plus clone and recurrence helpers.                                        | `src/modules/sessions/sessions.routes.ts`            |
-| Plans          | Placeholder router that currently returns HTTP 501 while the feature is under construction.             | `src/modules/plans/plans.routes.ts`                  |
-| Logs           | Placeholder router that will surface audit log streaming once implemented.                              | `src/modules/logs/logs.routes.ts`                    |
+| Plans          | Provides CRUD endpoints for training plan management, including creation, updates, archiving, and statistics. | `src/modules/plans/plans.routes.ts`                  |
+| Logs           | Provides audit log querying and recent activity endpoints for administrative monitoring.                | `src/modules/logs/logs.routes.ts`                    |
 | Points         | Returns loyalty points summaries and history for authenticated users.                                   | `src/modules/points/points.routes.ts`                |
 | Progress       | Serves workout summaries, trends, exports, and plan progress analytics.                                 | `src/modules/progress/progress.routes.ts`            |
 | Feed           | Powers the social feed, bookmarks, reactions, shares, and moderation endpoints.                         | `src/modules/feed/feed.routes.ts`                    |

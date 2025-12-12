@@ -17,6 +17,7 @@ import {
   type SystemReadOnlyStatus,
   type HealthStatusResponse,
 } from "../../services/api";
+import { getRecentActivity, type AuditLogEntry } from "../../services/adminApi";
 import { logger } from "../../utils/logger";
 import { useToast } from "../../contexts/ToastContext";
 import { ConfirmDialog } from "../../components/ConfirmDialog";
@@ -26,6 +27,8 @@ const SystemControls: React.FC = () => {
   const toast = useToast();
   const [readOnlyStatus, setReadOnlyStatus] = useState<SystemReadOnlyStatus | null>(null);
   const [healthStatus, setHealthStatus] = useState<HealthStatusResponse | null>(null);
+  const [recentActivity, setRecentActivity] = useState<AuditLogEntry[]>([]);
+  const [activityLoading, setActivityLoading] = useState(false);
   const [loading, setLoading] = useState(true);
 
   // Read-only mode controls
@@ -42,9 +45,11 @@ const SystemControls: React.FC = () => {
 
   useEffect(() => {
     void loadSystemStatus();
+    void loadRecentActivity();
     // Poll every 30 seconds
     const interval = setInterval(() => {
       void loadSystemStatus();
+      void loadRecentActivity();
     }, 30000);
     return () => clearInterval(interval);
   }, []);
@@ -58,6 +63,23 @@ const SystemControls: React.FC = () => {
       logger.apiError("Failed to load system status", error, "/api/v1/admin/system/status", "GET");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadRecentActivity = async () => {
+    setActivityLoading(true);
+    try {
+      const activity = await getRecentActivity(10);
+      setRecentActivity(activity);
+    } catch (error) {
+      logger.apiError(
+        "Failed to load recent activity",
+        error,
+        "/api/v1/logs/recent-activity",
+        "GET",
+      );
+    } finally {
+      setActivityLoading(false);
     }
   };
 
@@ -131,6 +153,43 @@ const SystemControls: React.FC = () => {
       return `${hours}h ${mins}m`;
     }
     return `${mins}m`;
+  };
+
+  const formatActivityTime = (dateString: string): string => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+
+    if (diffMins < 1) {
+      return "Just now";
+    }
+    if (diffMins < 60) {
+      return `${diffMins}m ago`;
+    }
+    if (diffHours < 24) {
+      return `${diffHours}h ago`;
+    }
+    if (diffDays < 7) {
+      return `${diffDays}d ago`;
+    }
+    return date.toLocaleDateString(undefined, {
+      month: "short",
+      day: "numeric",
+      year: date.getFullYear() !== now.getFullYear() ? "numeric" : undefined,
+    });
+  };
+
+  const formatAction = (action: string, entityType: string): string => {
+    // Format action strings like "auth.login" -> "Login"
+    const parts = action.split(".");
+    const actionName = parts[parts.length - 1];
+    return actionName
+      .split("_")
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(" ");
   };
 
   if (loading) {
@@ -463,7 +522,7 @@ const SystemControls: React.FC = () => {
         </CardContent>
       </Card>
 
-      {/* Recent Activity Placeholder */}
+      {/* Recent Activity */}
       <Card>
         <CardHeader>
           <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
@@ -473,11 +532,105 @@ const SystemControls: React.FC = () => {
           <CardDescription>Last 10 administrative actions</CardDescription>
         </CardHeader>
         <CardContent>
-          <div
-            style={{ padding: "2rem", textAlign: "center", color: "var(--color-text-secondary)" }}
-          >
-            Audit log integration pending
-          </div>
+          {activityLoading ? (
+            <div
+              style={{ padding: "2rem", textAlign: "center", color: "var(--color-text-secondary)" }}
+            >
+              Loading activity...
+            </div>
+          ) : recentActivity.length === 0 ? (
+            <div
+              style={{ padding: "2rem", textAlign: "center", color: "var(--color-text-secondary)" }}
+            >
+              No recent activity
+            </div>
+          ) : (
+            <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+              {recentActivity.map((entry) => (
+                <div
+                  key={entry.id}
+                  style={{
+                    padding: "0.875rem 1rem",
+                    borderRadius: "8px",
+                    border: "1px solid var(--color-border)",
+                    background: "var(--color-bg-card)",
+                  }}
+                >
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "flex-start",
+                      gap: "1rem",
+                    }}
+                  >
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "0.5rem",
+                          marginBottom: "0.25rem",
+                        }}
+                      >
+                        <span
+                          style={{
+                            fontSize: "0.9rem",
+                            fontWeight: 600,
+                            color: "var(--color-text-primary)",
+                          }}
+                        >
+                          {formatAction(entry.action, entry.entityType)}
+                        </span>
+                        {entry.outcome && (
+                          <span
+                            style={{
+                              fontSize: "0.75rem",
+                              padding: "0.125rem 0.5rem",
+                              borderRadius: "4px",
+                              background:
+                                entry.outcome === "success"
+                                  ? "rgba(34, 197, 94, 0.1)"
+                                  : entry.outcome === "failure"
+                                    ? "rgba(239, 68, 68, 0.1)"
+                                    : "rgba(148, 163, 184, 0.1)",
+                              color:
+                                entry.outcome === "success"
+                                  ? "rgb(34, 197, 94)"
+                                  : entry.outcome === "failure"
+                                    ? "rgb(239, 68, 68)"
+                                    : "var(--color-text-secondary)",
+                            }}
+                          >
+                            {entry.outcome}
+                          </span>
+                        )}
+                      </div>
+                      <div
+                        style={{
+                          fontSize: "0.85rem",
+                          color: "var(--color-text-secondary)",
+                          marginTop: "0.25rem",
+                        }}
+                      >
+                        {entry.actorUsername || entry.actorUserId || "System"}
+                        {entry.entityType && ` • ${entry.entityType}`}
+                      </div>
+                    </div>
+                    <div
+                      style={{
+                        fontSize: "0.8rem",
+                        color: "var(--color-text-secondary)",
+                        whiteSpace: "nowrap",
+                      }}
+                    >
+                      {formatActivityTime(entry.createdAt)}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </CardContent>
       </Card>
 

@@ -1,6 +1,6 @@
 import React from "react";
-import { render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { render, screen, cleanup } from "@testing-library/react";
+import { describe, expect, it, afterEach } from "vitest";
 import PageIntro from "../../src/components/PageIntro";
 
 describe("PageIntro Accessibility", () => {
@@ -9,6 +9,10 @@ describe("PageIntro Accessibility", () => {
     title: "Getting Started with FitVibe",
     description: "Track your workouts, monitor your progress, and achieve your fitness goals.",
   };
+
+  afterEach(() => {
+    cleanup();
+  });
 
   describe("Semantic HTML structure", () => {
     it("should use semantic section element", () => {
@@ -19,22 +23,30 @@ describe("PageIntro Accessibility", () => {
     });
 
     it("should use article element for content", () => {
-      render(<PageIntro {...defaultProps} />);
+      const { container } = render(<PageIntro {...defaultProps} />);
 
-      const article = screen.getByRole("article");
-      expect(article).toBeInTheDocument();
+      const articles = container.querySelectorAll("article");
+      expect(articles.length).toBe(1);
+      expect(articles[0]).toBeInTheDocument();
     });
 
     it("should render eyebrow text", () => {
-      render(<PageIntro {...defaultProps} />);
+      const { container } = render(<PageIntro {...defaultProps} />);
 
-      expect(screen.getByText("Welcome")).toBeInTheDocument();
+      const welcomeTexts = container.querySelectorAll('text="Welcome"');
+      const welcomeElements = Array.from(container.querySelectorAll("*")).filter(
+        (el) => el.textContent === "Welcome",
+      );
+      expect(welcomeElements.length).toBeGreaterThan(0);
     });
 
     it("should render title text", () => {
-      render(<PageIntro {...defaultProps} />);
+      const { container } = render(<PageIntro {...defaultProps} />);
 
-      expect(screen.getByText("Getting Started with FitVibe")).toBeInTheDocument();
+      const titleElements = Array.from(container.querySelectorAll("*")).filter(
+        (el) => el.textContent === "Getting Started with FitVibe",
+      );
+      expect(titleElements.length).toBeGreaterThan(0);
     });
 
     it("should render description text", () => {

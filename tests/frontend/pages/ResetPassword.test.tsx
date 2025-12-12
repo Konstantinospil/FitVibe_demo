@@ -196,7 +196,7 @@ describe("ResetPassword", () => {
       expect(screen.getByText("Password Reset Successfully")).toBeInTheDocument();
       expect(screen.getByText("Your password has been reset")).toBeInTheDocument();
       expect(screen.getByText("You can now log in with your new password")).toBeInTheDocument();
-    });
+    }, { timeout: 5000 });
   });
 
   it("displays error message on failure", async () => {

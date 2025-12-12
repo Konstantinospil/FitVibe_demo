@@ -1,7 +1,7 @@
 import React, { Suspense, lazy, useEffect } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
-import { QueryClientProvider } from "@tanstack/react-query";
-import { queryClient } from "../lib/queryClient";
+import { QueryClientProvider, HydrationBoundary, type QueryClient, type DehydratedState } from "@tanstack/react-query";
+import { queryClient as defaultQueryClient } from "../lib/queryClient";
 import { ensurePrivateTranslationsLoaded } from "../i18n/config";
 
 const ProtectedRoute = lazy(() => import("../components/ProtectedRoute"));
@@ -33,40 +33,76 @@ const fallback = (
   </div>
 );
 
-const ProtectedRoutes: React.FC = () => {
+type ProtectedRoutesProps = {
+  queryClient?: QueryClient;
+  dehydratedState?: DehydratedState;
+};
+
+/**
+ * Gets the dehydrated state from the window object (injected by SSR)
+ * Returns undefined if not available (client-only rendering)
+ */
+function getDehydratedState(): DehydratedState | undefined {
+  if (typeof window !== "undefined") {
+    const windowWithState = window as unknown as { __REACT_QUERY_STATE__?: DehydratedState };
+    if (windowWithState.__REACT_QUERY_STATE__) {
+      const state = windowWithState.__REACT_QUERY_STATE__;
+      // Clear it from window to prevent memory leaks
+      delete windowWithState.__REACT_QUERY_STATE__;
+      return state;
+    }
+  }
+  return undefined;
+}
+
+const ProtectedRoutes: React.FC<ProtectedRoutesProps> = ({ 
+  queryClient = defaultQueryClient,
+  dehydratedState: propDehydratedState,
+}) => {
   useEffect(() => {
     void ensurePrivateTranslationsLoaded();
   }, []);
 
+  // Use prop state if provided (from SSR), otherwise try to get from window
+  const dehydratedState = propDehydratedState ?? getDehydratedState();
+
+  const routesContent = (
+    <Suspense fallback={fallback}>
+      <Routes>
+        <Route element={<ProtectedRoute />}>
+          <Route element={<MainLayout />}>
+            <Route index element={<Home />} />
+            <Route path="sessions" element={<Sessions />} />
+            <Route path="planner" element={<Planner />} />
+            <Route path="logger/:sessionId" element={<Logger />} />
+            <Route path="insights" element={<Insights />} />
+            <Route path="profile" element={<Profile />} />
+            <Route path="settings" element={<Settings />} />
+            <Route path="terms" element={<Terms />} />
+            <Route path="privacy" element={<Privacy />} />
+            <Route path="terms-reacceptance" element={<TermsReacceptance />} />
+            <Route path="admin" element={<AdminRoute />}>
+              <Route index element={<AdminDashboard />} />
+              <Route path="reports" element={<ContentReports />} />
+              <Route path="users" element={<UserManagement />} />
+              <Route path="system" element={<SystemControls />} />
+            </Route>
+            <Route path="*" element={<NotFound />} />
+          </Route>
+        </Route>
+        <Route path="/login" element={<Navigate to="/" replace />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </Suspense>
+  );
+
   return (
     <QueryClientProvider client={queryClient}>
-      <Suspense fallback={fallback}>
-        <Routes>
-          <Route element={<ProtectedRoute />}>
-            <Route element={<MainLayout />}>
-              <Route index element={<Home />} />
-              <Route path="sessions" element={<Sessions />} />
-              <Route path="planner" element={<Planner />} />
-              <Route path="logger/:sessionId" element={<Logger />} />
-              <Route path="insights" element={<Insights />} />
-              <Route path="profile" element={<Profile />} />
-              <Route path="settings" element={<Settings />} />
-              <Route path="terms" element={<Terms />} />
-              <Route path="privacy" element={<Privacy />} />
-              <Route path="terms-reacceptance" element={<TermsReacceptance />} />
-              <Route path="admin" element={<AdminRoute />}>
-                <Route index element={<AdminDashboard />} />
-                <Route path="reports" element={<ContentReports />} />
-                <Route path="users" element={<UserManagement />} />
-                <Route path="system" element={<SystemControls />} />
-              </Route>
-              <Route path="*" element={<NotFound />} />
-            </Route>
-          </Route>
-          <Route path="/login" element={<Navigate to="/" replace />} />
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </Suspense>
+      {dehydratedState ? (
+        <HydrationBoundary state={dehydratedState}>{routesContent}</HydrationBoundary>
+      ) : (
+        routesContent
+      )}
     </QueryClientProvider>
   );
 };

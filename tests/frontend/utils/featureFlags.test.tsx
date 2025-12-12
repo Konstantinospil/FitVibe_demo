@@ -14,6 +14,7 @@ import {
   useSystemConfig,
   useFeatureFlag,
   useReadOnlyMode,
+  resetConfigCache,
   type SystemConfig,
 } from "../../src/utils/featureFlags";
 
@@ -40,10 +41,12 @@ const createConfig = (overrides: ConfigOverrides = {}): SystemConfig => ({
 describe("feature flag utilities", () => {
   beforeEach(() => {
     mockApiClient.get.mockReset();
+    resetConfigCache();
   });
 
   afterEach(() => {
     vi.restoreAllMocks();
+    resetConfigCache();
   });
 
   it("fetchSystemConfig stores the latest feature configuration", async () => {
@@ -125,15 +128,19 @@ describe("feature flag utilities", () => {
       );
     };
 
-    render(<ConfigConsumer />);
-    await waitFor(() => expect(screen.getByTestId("mode").textContent).toBe("rw"));
+    render(
+      <QueryClientProvider client={queryClient}>
+        <ConfigConsumer />
+      </QueryClientProvider>
+    );
+    await waitFor(() => expect(screen.getByTestId("mode").textContent).toBe("rw"), { timeout: 3000 });
     expect(screen.queryByTestId("loading")).toBeNull();
 
     await act(async () => {
       await stateRef.current?.refresh();
     });
 
-    await waitFor(() => expect(screen.getByTestId("mode").textContent).toBe("ro"));
+    await waitFor(() => expect(screen.getByTestId("mode").textContent).toBe("ro"), { timeout: 3000 });
     expect(screen.queryByTestId("loading")).toBeNull();
     expect(stateRef.current?.config).toEqual(refreshed);
   });
@@ -162,12 +169,16 @@ describe("feature flag utilities", () => {
       );
     };
 
-    render(<Consumer />);
+    render(
+      <QueryClientProvider client={queryClient}>
+        <Consumer />
+      </QueryClientProvider>
+    );
 
     await waitFor(() => {
       expect(screen.getByTestId("flag").textContent).toBe("enabled");
       expect(screen.getByTestId("readonly").textContent).toBe("active");
       expect(screen.getByTestId("message").textContent).toBe("Maintenance in progress");
-    });
+    }, { timeout: 3000 });
   });
 });

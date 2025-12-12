@@ -11,6 +11,6 @@ describe("Skeleton", () => {
 
     await waitFor(() => {
       expect(skeleton).toHaveStyle({ width: "150px", height: "20px" });
-    });
+    }, { timeout: 5000 });
   });
 });

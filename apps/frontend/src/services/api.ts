@@ -4,8 +4,30 @@ import { useAuthStore } from "../store/auth.store";
 
 // Use relative URLs in development (Vite proxy handles /api -> localhost:4000)
 // Use full URL in production or when VITE_API_URL is explicitly set
-const API_URL =
-  import.meta.env.VITE_API_URL || (import.meta.env.DEV ? "" : "http://localhost:4000");
+// SSR-safe: Check if we're on the server (Node.js) - use process.env, otherwise use import.meta.env
+const getApiUrl = () => {
+  // Server-side (Node.js): use process.env
+  if (typeof window === "undefined") {
+    return process.env.VITE_API_URL || process.env.API_URL || "http://localhost:4000";
+  }
+  
+  // Client-side: use Vite's import.meta.env (replaced at build time)
+  // Use try-catch as a safety net in case import.meta.env is not available
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+    const viteEnv = import.meta.env;
+    if (viteEnv && typeof viteEnv === "object" && "VITE_API_URL" in viteEnv) {
+      return viteEnv.VITE_API_URL || (viteEnv.DEV ? "" : "http://localhost:4000");
+    }
+  } catch {
+    // Fallback if import.meta.env access fails (shouldn't happen in browser)
+  }
+  
+  // Fallback for client-side
+  return "http://localhost:4000";
+};
+
+const API_URL = getApiUrl();
 
 /**
  * SECURITY FIX (CWE-922): Cookie-based authentication

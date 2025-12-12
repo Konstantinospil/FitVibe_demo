@@ -1,18 +1,44 @@
 import i18n from "i18next";
 import { initReactI18next } from "react-i18next";
-// Load English translations eagerly (needed for login page)
-// Use dynamic imports to allow Vite to code-split properly
-const loadEnglishTranslations = async () => {
-  const [enCommon, enAuth, enTerms, enPrivacy] = await Promise.all([
-    import("./locales/en/common.json") as Promise<{ default: Record<string, unknown> }>,
-    import("./locales/en/auth.json") as Promise<{ default: Record<string, unknown> }>,
-    import("./locales/en/terms.json") as Promise<{ default: Record<string, unknown> }>,
-    import("./locales/en/privacy.json") as Promise<{ default: Record<string, unknown> }>,
+// Load minimal English translations for login page only
+// This reduces initial bundle size significantly
+export const loadMinimalLoginTranslations = async () => {
+  // Only load auth.json for login page - other translations loaded on-demand
+  const enAuthModule = await import("./locales/en/auth.json");
+  const enAuth = enAuthModule.default as Record<string, unknown>;
+  
+  // Create minimal common translations object with only what's needed for login
+  const minimalCommon = {
+    language: {
+      label: "Language",
+      english: "English",
+      german: "German",
+      spanish: "Spanish",
+      french: "French",
+      greek: "Greek",
+    },
+  };
+
+  return mergeTranslations(minimalCommon, enAuth);
+};
+
+// Load full English translations (for other pages)
+const loadFullEnglishTranslations = async () => {
+  const [enCommonModule, enAuthModule, enTermsModule, enPrivacyModule] = await Promise.all([
+    import("./locales/en/common.json"),
+    import("./locales/en/auth.json"),
+    import("./locales/en/terms.json"),
+    import("./locales/en/privacy.json"),
   ]);
 
+  const enCommon = enCommonModule.default as Record<string, unknown>;
+  const enAuth = enAuthModule.default as Record<string, unknown>;
+  const enTerms = enTermsModule.default as Record<string, unknown>;
+  const enPrivacy = enPrivacyModule.default as Record<string, unknown>;
+
   return mergeTranslations(
-    mergeTranslations(mergeTranslations(enCommon.default, enAuth.default), enTerms.default),
-    enPrivacy.default,
+    mergeTranslations(mergeTranslations(enCommon, enAuth), enTerms),
+    enPrivacy,
   );
 };
 
@@ -57,16 +83,21 @@ const loadLanguage = async (lng: SupportedLanguage): Promise<void> => {
   try {
     // Dynamically import translation files only when needed
     // This includes English to allow proper code-splitting
-    const [common, auth, terms, privacy] = await Promise.all([
-      import(`./locales/${lng}/common.json`) as Promise<{ default: Record<string, unknown> }>,
-      import(`./locales/${lng}/auth.json`) as Promise<{ default: Record<string, unknown> }>,
-      import(`./locales/${lng}/terms.json`) as Promise<{ default: Record<string, unknown> }>,
-      import(`./locales/${lng}/privacy.json`) as Promise<{ default: Record<string, unknown> }>,
+    const [commonModule, authModule, termsModule, privacyModule] = await Promise.all([
+      import(`./locales/${lng}/common.json`),
+      import(`./locales/${lng}/auth.json`),
+      import(`./locales/${lng}/terms.json`),
+      import(`./locales/${lng}/privacy.json`),
     ]);
 
+    const common = commonModule.default as Record<string, unknown>;
+    const auth = authModule.default as Record<string, unknown>;
+    const terms = termsModule.default as Record<string, unknown>;
+    const privacy = privacyModule.default as Record<string, unknown>;
+
     const translations = mergeTranslations(
-      mergeTranslations(mergeTranslations(common.default, auth.default), terms.default),
-      privacy.default,
+      mergeTranslations(mergeTranslations(common, auth), terms),
+      privacy,
     );
 
     i18n.addResourceBundle(lng, "translation", translations, true, true);
@@ -81,7 +112,9 @@ const loadLanguage = async (lng: SupportedLanguage): Promise<void> => {
   }
 };
 
-// Initialize i18n with empty resources, then load English immediately
+// Initialize i18n - use initReactI18next for both client and server
+// Components use useTranslation hook which requires the React plugin
+// I18nextProvider will provide the context during SSR
 void i18n.use(initReactI18next).init({
   resources: {},
   lng: FALLBACK_LANGUAGE,
@@ -89,13 +122,17 @@ void i18n.use(initReactI18next).init({
   interpolation: {
     escapeValue: false,
   },
+  // SSR-safe: disable React suspense for server-side rendering
+  react: {
+    useSuspense: false,
+  },
 });
 
-// Load English translations immediately (needed for login page)
-// This is done asynchronously but eagerly to allow code-splitting
-void loadEnglishTranslations().then((enTranslations) => {
-  i18n.addResourceBundle("en", "translation", enTranslations, true, true);
-  resources.en = { translation: enTranslations };
+// Load minimal translations immediately for login page
+// Full translations loaded on-demand when user navigates to other pages
+void loadMinimalLoginTranslations().then((minimalTranslations) => {
+  i18n.addResourceBundle("en", "translation", minimalTranslations, true, true);
+  resources.en = { translation: minimalTranslations };
 
   // If initial language is not English, load it too
   if (initialLanguage !== "en") {
@@ -108,13 +145,23 @@ void loadEnglishTranslations().then((enTranslations) => {
   }
 });
 
+// Export function to load full translations when needed (e.g., after login)
+export const loadFullTranslations = async (): Promise<void> => {
+  if (resources.en && Object.keys(resources.en.translation).length > 50) {
+    return; // Already loaded full translations
+  }
+  
+  const fullTranslations = await loadFullEnglishTranslations();
+  i18n.addResourceBundle("en", "translation", fullTranslations, true, true);
+  resources.en = { translation: fullTranslations };
+};
+
 // Export function to load languages on-demand
 export const loadLanguageTranslations = loadLanguage;
 
 export const ensurePrivateTranslationsLoaded = async () => {
-  // All known bundles are eagerly loaded, but keep the API asynchronous-friendly
-  // so routes that call this function do not need to change once new bundles appear.
-  return Promise.resolve();
+  // Load full translations when user accesses protected routes (after login)
+  await loadFullTranslations();
 };
 
 if (typeof window !== "undefined") {

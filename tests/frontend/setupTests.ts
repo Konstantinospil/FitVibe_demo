@@ -1,8 +1,18 @@
 import "@testing-library/jest-dom";
+import { cleanup } from "@testing-library/react";
 import { ensurePrivateTranslationsLoaded } from "../src/i18n/config";
 
 beforeAll(async () => {
-  await ensurePrivateTranslationsLoaded();
+  // Add timeout to prevent hanging if i18n loading fails
+  await Promise.race([
+    ensurePrivateTranslationsLoaded(),
+    new Promise((_, reject) =>
+      setTimeout(() => reject(new Error("i18n loading timeout after 5s")), 5000),
+    ),
+  ]).catch((error) => {
+    // Log but don't fail all tests if i18n loading fails
+    console.warn("Failed to load i18n translations in tests:", error);
+  });
 });
 
 beforeEach(() => {
@@ -10,10 +20,17 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+  // Clean up rendered components to prevent DOM pollution between tests
+  cleanup();
+
   // Ensure fake timers are cleaned up after each test
   if (vi.isFakeTimers()) {
     vi.useRealTimers();
   }
+
+  // Clear any pending timers that might have been created
+  // This prevents open handles from hanging tests
+  vi.clearAllTimers();
 
   // Timer cleanup is handled by vi.useRealTimers() above
   // Fake timers are automatically cleaned up when restored

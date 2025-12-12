@@ -8,6 +8,7 @@ Key references for data/ops tasks:
 - [ADR-004 – Media Upload Safety & AV Scanning](ADR-004-media-upload-safety-and-av-scanning.md)
 - [ADR-005 – Partitioning Sessions & Audit Log](ADR-005-partitioning-sessions-and-audit-log.md)
 - [ADR-007 – Idempotency Policy for Writes](ADR-007-idempotency-policy-for-writes.md)
+- [ADR-023 – Server-Side Rendering (SSR) Implementation](ADR-023-server-side-rendering.md)
 
 All ADRs follow the template in `ADR_TEMPLATE.md` and are indexed in
 `ADR_INDEX.md`. When implementation diverges, update the relevant ADR and link

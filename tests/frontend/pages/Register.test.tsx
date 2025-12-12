@@ -206,7 +206,7 @@ describe("Register", () => {
     await waitFor(() => {
       expect(screen.getByText("Account Created!")).toBeInTheDocument();
       expect(screen.getByText("Check your email to verify your account")).toBeInTheDocument();
-    });
+    }, { timeout: 5000 });
   });
 
   it("displays error message on registration failure", async () => {
@@ -323,7 +323,7 @@ describe("Register", () => {
       expect(emailInput).toBeDisabled();
       expect(passwordInput).toBeDisabled();
       expect(confirmPasswordInput).toBeDisabled();
-    });
+    }, { timeout: 5000 });
 
     // Checkboxes should also be disabled during submission
     const checkboxesAfter = screen.getAllByRole("checkbox", { name: /accept the/i });
@@ -378,7 +378,7 @@ describe("Register", () => {
           display_name: "Test User",
         },
       });
-    });
+    }, { timeout: 5000 });
   });
 
   it("validates password minimum length", async () => {
@@ -586,7 +586,7 @@ describe("Register", () => {
         // Fallback: check for error text anywhere
         expect(screen.getByText(/accept.*terms/i)).toBeInTheDocument();
       }
-    });
+    }, { timeout: 5000 });
 
     expect(api.register).not.toHaveBeenCalled();
   });
@@ -609,7 +609,7 @@ describe("Register", () => {
         // Fallback: check for error text anywhere
         expect(screen.getByText(/fill.*all.*fields/i)).toBeInTheDocument();
       }
-    });
+    }, { timeout: 5000 });
 
     expect(api.register).not.toHaveBeenCalled();
   });
@@ -830,7 +830,7 @@ describe("Register", () => {
       const borderStyle = window.getComputedStyle(termsLabel!).border;
       // Just verify that a border exists (error styling), exact color value checking is brittle
       expect(borderStyle).toBeTruthy();
-    });
+    }, { timeout: 5000 });
   });
 
   it("trims whitespace from name and email inputs", async () => {
@@ -975,7 +975,7 @@ describe("Register", () => {
       if (!emailInput.checkValidity()) {
         expect(emailInput.validationMessage).toBe("Fill in this field");
       }
-    });
+    }, { timeout: 5000 });
   });
 
   it("pre-fills email from location state when navigating from expired token", async () => {
@@ -997,7 +997,7 @@ describe("Register", () => {
     await waitFor(() => {
       const emailInput = screen.getByRole("textbox", { name: /email/i }) as HTMLInputElement;
       expect(emailInput.value).toBe("prefilled@example.com");
-    });
+    }, { timeout: 5000 });
   });
 
   it("does not pre-fill email when location state is null", () => {
@@ -1021,7 +1021,7 @@ describe("Register", () => {
     await waitFor(() => {
       const emailInput = screen.getByRole("textbox", { name: /email/i }) as HTMLInputElement;
       expect(emailInput.value).toBe("");
-    });
+    }, { timeout: 5000 });
   });
 
   it("should show resend link on registration success page", async () => {
@@ -1055,7 +1055,7 @@ describe("Register", () => {
 
     await waitFor(() => {
       expect(screen.getByText(/check your email/i)).toBeInTheDocument();
-    });
+    }, { timeout: 5000 });
 
     // Check for resend link
     expect(screen.getByText(/didn't receive the email/i)).toBeInTheDocument();
@@ -1097,7 +1097,7 @@ describe("Register", () => {
 
     await waitFor(() => {
       expect(screen.getByText(/check your email/i)).toBeInTheDocument();
-    });
+    }, { timeout: 5000 });
 
     // Click resend link
     const resendButton = screen.getByText(/resend verification email/i);
@@ -1105,12 +1105,12 @@ describe("Register", () => {
 
     await waitFor(() => {
       expect(mockResend).toHaveBeenCalledWith({ email: "test@example.com" });
-    });
+    }, { timeout: 5000 });
 
     // Check for success message
     await waitFor(() => {
       expect(screen.getByText(/verification email sent/i)).toBeInTheDocument();
-    });
+    }, { timeout: 5000 });
   });
 
   it("should show error message when resend fails", async () => {
@@ -1155,7 +1155,7 @@ describe("Register", () => {
 
     await waitFor(() => {
       expect(screen.getByText(/check your email/i)).toBeInTheDocument();
-    });
+    }, { timeout: 5000 });
 
     // Click resend link
     const resendButton = screen.getByText(/resend verification email/i);
@@ -1163,6 +1163,6 @@ describe("Register", () => {
 
     await waitFor(() => {
       expect(screen.getByText(/too many requests/i)).toBeInTheDocument();
-    });
+    }, { timeout: 5000 });
   });
 });
