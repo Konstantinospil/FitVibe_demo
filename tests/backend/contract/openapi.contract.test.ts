@@ -1,5 +1,6 @@
 import { zodToJsonSchema } from "zod-to-json-schema";
 import type { ZodTypeAny } from "zod";
+import { ZodEffects } from "zod";
 import {
   RegisterSchema,
   LoginSchema,
@@ -22,7 +23,21 @@ type JsonSchemaObject = {
 };
 
 function extractSchemaFromZod(entry: SchemaMapEntry): JsonSchemaObject {
-  const result = zodToJsonSchema(entry.schema, entry.name, { target: "openApi3" });
+  // Unwrap ZodEffects (from .refine(), .superRefine(), etc.) to get the inner schema
+  // zodToJsonSchema should handle this, but we'll unwrap manually to ensure properties are extracted
+  let schemaToConvert = entry.schema;
+  // Check if this is a ZodEffects wrapper by looking at _def.typeName
+  if (
+    (schemaToConvert as any)._def?.typeName === "ZodEffects" &&
+    (schemaToConvert as any)._def?.schema
+  ) {
+    schemaToConvert = (schemaToConvert as any)._def.schema;
+  }
+
+  const result = zodToJsonSchema(schemaToConvert, entry.name, {
+    target: "openApi3",
+    effectStrategy: "input", // Use input strategy to focus on the base schema structure
+  });
   // zodToJsonSchema can return the schema directly or wrapped in definitions/components
   let definition: JsonSchemaObject;
   if ((result as any).definitions?.[entry.name]) {
