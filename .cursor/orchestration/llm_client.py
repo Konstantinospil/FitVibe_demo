@@ -1,11 +1,11 @@
 """
-OpenAI LLM Client - Integration with ChatGPT/OpenAI API.
+LLM Client - Multi-provider LLM integration (OpenAI, Cursor, etc.).
 
-This module provides a client for interacting with OpenAI's API, including
-GPT-4, GPT-3.5-turbo, and other models. It handles prompt assembly, API calls,
+This module provides a client for interacting with LLM APIs, including
+OpenAI (GPT-4, GPT-3.5-turbo) and Cursor AI. It handles prompt assembly, API calls,
 streaming, token tracking, and error handling.
 
-Version: 1.0
+Version: 2.0
 Last Updated: 2025-01-21
 """
 
@@ -29,11 +29,32 @@ from .config_loader import config_loader
 from .error_handling import error_classifier, ErrorCategory
 from .audit_logger_fallback import _audit_logger_fallback as audit_logger
 
+# Load .env file if it exists (when module is imported)
+try:
+    from dotenv import load_dotenv
+    from pathlib import Path
+    env_path = Path(__file__).parent.parent.parent / ".env"
+    if env_path.exists():
+        load_dotenv(env_path, override=False)
+except ImportError:
+    # python-dotenv not installed, will use manual loading in __init__.py
+    pass
+except Exception:
+    # Silently fail if .env loading fails
+    pass
+
 logger = logging.getLogger(__name__)
 
 
+class LLMProvider(Enum):
+    """Supported LLM providers."""
+    OPENAI = "openai"
+    CURSOR = "cursor"
+    OLLAMA = "ollama"  # Local LLM, no API key needed
+
+
 class ModelTier(Enum):
-    """OpenAI model tiers mapped from our internal model names."""
+    """Model tiers mapped from our internal model names."""
     HAIKU = "gpt-3.5-turbo"  # Fast, cost-effective
     SONNET = "gpt-4"  # Balanced quality and cost
     OPUS = "gpt-4-turbo-preview"  # Highest quality
@@ -70,22 +91,26 @@ class LLMResponse:
     metadata: Dict[str, Any] = field(default_factory=dict)
 
 
-class OpenAIClient:
-    """Client for OpenAI API interactions."""
+class LLMClient:
+    """Multi-provider LLM client supporting OpenAI and Cursor."""
 
     def __init__(
         self,
+        provider: Optional[str] = None,
         api_key: Optional[str] = None,
+        base_url: Optional[str] = None,
         organization: Optional[str] = None,
         timeout: float = 60.0,
         max_retries: int = 3
     ):
         """
-        Initialize OpenAI client.
+        Initialize LLM client.
 
         Args:
-            api_key: OpenAI API key (defaults to OPENAI_API_KEY env var)
-            organization: OpenAI organization ID (optional)
+            provider: Provider name ("openai", "cursor") - defaults to LLM_PROVIDER env var or "openai"
+            api_key: API key (defaults to OPENAI_API_KEY or CURSOR_API_KEY env var based on provider)
+            base_url: Custom API base URL (optional, provider-specific defaults used if not provided)
+            organization: Organization ID (OpenAI only, optional)
             timeout: Request timeout in seconds
             max_retries: Maximum number of retries
         """
@@ -94,30 +119,82 @@ class OpenAIClient:
                 "OpenAI package not installed. Install with: pip install openai"
             )
 
-        self.api_key = api_key or os.environ.get("OPENAI_API_KEY")
-        if not self.api_key:
-            raise ValueError(
-                "OpenAI API key not provided. Set OPENAI_API_KEY environment variable "
-                "or pass api_key parameter."
-            )
+        # Determine provider
+        provider_str = provider or os.environ.get("LLM_PROVIDER", "openai").lower()
+        try:
+            self.provider = LLMProvider(provider_str)
+        except ValueError:
+            logger.warning(f"Unknown provider '{provider_str}', defaulting to 'openai'")
+            self.provider = LLMProvider.OPENAI
+
+        # Get API key based on provider (Ollama doesn't need one)
+        if api_key:
+            self.api_key = api_key
+        elif self.provider == LLMProvider.OLLAMA:
+            # Ollama doesn't require an API key
+            self.api_key = "ollama"  # Placeholder, not actually used
+        elif self.provider == LLMProvider.CURSOR:
+            self.api_key = os.environ.get("CURSOR_API_KEY") or os.environ.get("OPENAI_API_KEY")
+        else:
+            self.api_key = os.environ.get("OPENAI_API_KEY")
+
+        if not self.api_key and self.provider != LLMProvider.OLLAMA:
+            if self.provider == LLMProvider.CURSOR:
+                raise ValueError(
+                    "CURSOR API key not provided. Set CURSOR_API_KEY environment variable "
+                    "or pass api_key parameter."
+                )
+            else:
+                raise ValueError(
+                    "OpenAI API key not provided. Set OPENAI_API_KEY environment variable "
+                    "or pass api_key parameter."
+                )
+
+        # Set base URL based on provider
+        if base_url:
+            self.base_url = base_url
+        elif self.provider == LLMProvider.OLLAMA:
+            # Ollama runs locally on port 11434
+            self.base_url = os.environ.get("OLLAMA_BASE_URL", "http://localhost:11434/v1")
+            logger.info(f"Using Ollama local LLM at {self.base_url}")
+        elif self.provider == LLMProvider.CURSOR:
+            # Cursor uses OpenAI-compatible API
+            # Note: Cursor IDE may use OpenAI's API with a proxy, or a local server
+            # Default to OpenAI's endpoint as Cursor typically proxies through OpenAI
+            # Users can override with CURSOR_API_BASE_URL if Cursor has a custom endpoint
+            cursor_base = os.environ.get("CURSOR_API_BASE_URL")
+            if cursor_base:
+                self.base_url = cursor_base
+            else:
+                # Cursor typically uses OpenAI's API, so use OpenAI endpoint
+                # If you have a Cursor-specific endpoint, set CURSOR_API_BASE_URL
+                self.base_url = os.environ.get("OPENAI_BASE_URL", "https://api.openai.com/v1")
+                logger.info(
+                    "Using OpenAI-compatible endpoint for Cursor. "
+                    "If Cursor has a custom endpoint, set CURSOR_API_BASE_URL environment variable."
+                )
+        else:
+            # OpenAI default
+            self.base_url = os.environ.get("OPENAI_BASE_URL", "https://api.openai.com/v1")
 
         self.organization = organization or os.environ.get("OPENAI_ORG_ID")
         self.timeout = timeout
         self.max_retries = max_retries
 
-        # Initialize clients
+        # Initialize clients (OpenAI SDK works with Cursor's OpenAI-compatible API)
         client_kwargs = {
             "api_key": self.api_key,
+            "base_url": self.base_url,
             "timeout": timeout,
             "max_retries": max_retries
         }
-        if self.organization:
+        if self.organization and self.provider == LLMProvider.OPENAI:
             client_kwargs["organization"] = self.organization
 
         self.client = OpenAI(**client_kwargs)
         self.async_client = AsyncOpenAI(**client_kwargs) if OPENAI_AVAILABLE else None
 
-        # Model mapping
+        # Model mapping (works for both OpenAI and Cursor)
         self.model_mapping = {
             "haiku": ModelTier.HAIKU.value,
             "sonnet": ModelTier.SONNET.value,
@@ -128,7 +205,8 @@ class OpenAIClient:
         }
 
     def _map_model(self, model_name: str) -> str:
-        """Map internal model name to OpenAI model name."""
+        """Map internal model name to provider model name."""
+        # For Cursor, use the same model names (OpenAI-compatible)
         return self.model_mapping.get(model_name.lower(), ModelTier.SONNET.value)
 
     def _assemble_messages(
@@ -139,7 +217,7 @@ class OpenAIClient:
         previous_messages: Optional[List[Dict[str, str]]] = None
     ) -> List[Dict[str, str]]:
         """
-        Assemble messages for OpenAI API.
+        Assemble messages for LLM API (OpenAI-compatible format).
 
         Args:
             system_prompt: System/instruction prompt
@@ -212,12 +290,12 @@ class OpenAIClient:
         stream: bool = False
     ) -> LLMResponse:
         """
-        Complete a prompt using OpenAI API.
+        Complete a prompt using LLM API (OpenAI or Cursor).
 
         Args:
             system_prompt: System/instruction prompt
             user_prompt: User query/task
-            model: Model to use (haiku, sonnet, opus, or OpenAI model name)
+            model: Model to use (haiku, sonnet, opus, or provider model name)
             temperature: Sampling temperature (0-2)
             max_tokens: Maximum tokens to generate
             context: Additional context
@@ -281,13 +359,15 @@ class OpenAIClient:
                 )
 
             # Log usage
+            provider_name = f"{self.provider.value.capitalize()}Client"
             audit_logger.log_tool_call(
-                agent_id="OpenAIClient",
+                agent_id=provider_name,
                 tool_name="complete",
                 params={
                     "model": mapped_model,
                     "temperature": temperature,
-                    "max_tokens": max_tokens
+                    "max_tokens": max_tokens,
+                    "provider": self.provider.value
                 },
                 output_summary=f"Generated {len(response.content)} characters",
                 duration_ms=response.response_time_ms,
@@ -301,12 +381,49 @@ class OpenAIClient:
             classified = error_classifier.classify(e)
 
             # Log error
+            provider_name = f"{self.provider.value.capitalize()}Client"
             audit_logger.log_error(
-                error_message=f"OpenAI API call failed: {error_msg}",
-                agent_id="OpenAIClient",
+                error_message=f"{self.provider.value.upper()} API call failed: {error_msg}",
+                agent_id=provider_name,
                 tool_name="complete",
-                context={"model": mapped_model, "error": error_msg}
+                context={
+                    "model": mapped_model,
+                    "provider": self.provider.value,
+                    "base_url": self.base_url,
+                    "error": error_msg
+                }
             )
+
+            # Provide helpful error messages for API key errors (401)
+            if "invalid_api_key" in error_msg.lower() or "401" in error_msg or "Incorrect API key" in error_msg:
+                if self.provider == LLMProvider.CURSOR:
+                    helpful_msg = (
+                        f"❌ Cursor API key rejected by {self.base_url}\n\n"
+                        f"⚠️  Issue: Cursor IDE may not have a public API compatible with OpenAI's endpoint.\n"
+                        f"   The Cursor API key format (key_...) is different from OpenAI's format (sk-...).\n\n"
+                        f"💡 Solutions:\n"
+                        f"   1. Use OpenAI's API directly:\n"
+                        f"      - Set LLM_PROVIDER=openai in .cursor/.env\n"
+                        f"      - Set OPENAI_API_KEY=sk-your-openai-key in .cursor/.env\n"
+                        f"   2. If Cursor has a custom endpoint, set CURSOR_API_BASE_URL\n"
+                        f"   3. Check Cursor documentation for the correct API endpoint\n\n"
+                        f"📝 Note: Cursor IDE's API key may only work within Cursor IDE itself, "
+                        f"not for external API calls."
+                    )
+                    raise Exception(helpful_msg) from e
+
+            # Provide helpful error messages for connection errors
+            if "Connection" in error_msg or "connection" in error_msg.lower() or "Failed to establish" in error_msg:
+                if self.provider == LLMProvider.CURSOR:
+                    helpful_msg = (
+                        f"Cursor API connection failed to {self.base_url}.\n"
+                        f"Note: Cursor IDE may not expose a public API endpoint.\n"
+                        f"Please verify:\n"
+                        f"  1. Your CURSOR_API_KEY is valid\n"
+                        f"  2. Cursor has a public API endpoint (check Cursor documentation)\n"
+                        f"  3. If Cursor doesn't have a public API, use LLM_PROVIDER=openai with OPENAI_API_KEY instead"
+                    )
+                    raise Exception(helpful_msg) from e
 
             # Re-raise with classification
             if classified.category == ErrorCategory.RATE_LIMIT:
@@ -314,7 +431,7 @@ class OpenAIClient:
             elif classified.category == ErrorCategory.TIMEOUT:
                 raise Exception(f"Request timeout: {error_msg}") from e
             else:
-                raise Exception(f"OpenAI API error: {error_msg}") from e
+                raise Exception(f"{self.provider.value.upper()} API error: {error_msg}") from e
 
     def _complete_stream(self, api_kwargs: Dict[str, Any]) -> LLMResponse:
         """Handle streaming response."""
@@ -362,23 +479,29 @@ class OpenAIClient:
 
 
 # Global instance (lazy initialization)
-_llm_client: Optional[OpenAIClient] = None
+_llm_client: Optional[LLMClient] = None
 
 
-def get_llm_client() -> OpenAIClient:
+def get_llm_client() -> LLMClient:
     """Get or create global LLM client instance."""
     global _llm_client
 
     if _llm_client is None:
         try:
-            _llm_client = OpenAIClient(
+            provider = config_loader.get("llm.provider") or os.environ.get("LLM_PROVIDER", "openai")
+            _llm_client = LLMClient(
+                provider=provider,
                 timeout=config_loader.get("agent_executor.default_timeout_seconds", 300),
                 max_retries=config_loader.get("agent_executor.retry_attempts", 3)
             )
         except Exception as e:
-            logger.error(f"Failed to initialize OpenAI client: {e}")
+            logger.error(f"Failed to initialize LLM client: {e}")
             raise
 
     return _llm_client
+
+
+# Backward compatibility alias
+OpenAIClient = LLMClient
 
 
