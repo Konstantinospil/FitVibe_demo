@@ -55,7 +55,12 @@ type RouterProps = {
  * - On server: uses StaticRouter with location prop
  * - On client: uses BrowserRouter
  */
-export const Router: React.FC<RouterProps> = ({ location, basename, queryClient, dehydratedState }) => {
+export const Router: React.FC<RouterProps> = ({
+  location,
+  basename,
+  queryClient,
+  dehydratedState,
+}) => {
   const routerContent = (
     <ErrorBoundary>
       <AuthContext.AuthProvider>

@@ -1,6 +1,11 @@
 import React, { Suspense, lazy, useEffect } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
-import { QueryClientProvider, HydrationBoundary, type QueryClient, type DehydratedState } from "@tanstack/react-query";
+import {
+  QueryClientProvider,
+  HydrationBoundary,
+  type QueryClient,
+  type DehydratedState,
+} from "@tanstack/react-query";
 import { queryClient as defaultQueryClient } from "../lib/queryClient";
 import { ensurePrivateTranslationsLoaded } from "../i18n/config";
 
@@ -55,7 +60,7 @@ function getDehydratedState(): DehydratedState | undefined {
   return undefined;
 }
 
-const ProtectedRoutes: React.FC<ProtectedRoutesProps> = ({ 
+const ProtectedRoutes: React.FC<ProtectedRoutesProps> = ({
   queryClient = defaultQueryClient,
   dehydratedState: propDehydratedState,
 }) => {

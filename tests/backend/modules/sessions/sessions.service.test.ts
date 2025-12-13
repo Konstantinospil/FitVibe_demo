@@ -594,6 +594,9 @@ describe("Sessions Service", () => {
         status: "canceled",
       };
 
+      // Clear any previous mock implementations
+      mockSessionsRepo.getSessionWithDetails.mockReset();
+      // Mock should return canceled session for the source check
       mockSessionsRepo.getSessionWithDetails.mockResolvedValue(canceledSession);
 
       await expect(
@@ -601,7 +604,12 @@ describe("Sessions Service", () => {
           occurrences: 3,
           offset_days: 7,
         }),
-      ).rejects.toThrow(HttpError);
+      ).rejects.toThrow("SESSION_INVALID_SOURCE");
+
+      // Reset mocks for second call
+      mockSessionsRepo.getSessionWithDetails.mockReset();
+      mockSessionsRepo.getSessionWithDetails.mockResolvedValue(canceledSession);
+
       await expect(
         sessionsService.applyRecurrence(userId, "source-123", {
           occurrences: 3,

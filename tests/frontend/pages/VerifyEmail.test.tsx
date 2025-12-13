@@ -83,10 +83,13 @@ describe("VerifyEmail", () => {
 
     renderWithProviders();
 
-    await waitFor(() => {
-      expect(screen.getByText("Email Verified!")).toBeInTheDocument();
-      expect(screen.getByText("Your email has been successfully verified")).toBeInTheDocument();
-    }, { timeout: 5000 });
+    await waitFor(
+      () => {
+        expect(screen.getByText("Email Verified!")).toBeInTheDocument();
+        expect(screen.getByText("Your email has been successfully verified")).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
 
     // Should have "Go to Login" button
     const loginButton = screen.getByRole("button", { name: /go to login/i });
@@ -106,10 +109,13 @@ describe("VerifyEmail", () => {
 
     renderWithProviders();
 
-    await waitFor(() => {
-      expect(screen.getByText("Verification Failed")).toBeInTheDocument();
-      expect(screen.getByText("Invalid token")).toBeInTheDocument();
-    }, { timeout: 5000 });
+    await waitFor(
+      () => {
+        expect(screen.getByText("Verification Failed")).toBeInTheDocument();
+        expect(screen.getByText("Invalid token")).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
 
     // Should have "Back to Register" button
     const registerButton = screen.getByRole("button", { name: /back to register/i });
@@ -119,10 +125,13 @@ describe("VerifyEmail", () => {
   it("shows error when no token is provided", async () => {
     renderWithProviders("");
 
-    await waitFor(() => {
-      expect(screen.getByText("Verification Failed")).toBeInTheDocument();
-      expect(screen.getByText("No verification token provided")).toBeInTheDocument();
-    }, { timeout: 5000 });
+    await waitFor(
+      () => {
+        expect(screen.getByText("Verification Failed")).toBeInTheDocument();
+        expect(screen.getByText("No verification token provided")).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
   });
 
   it("shows generic error message on unknown error", async () => {
@@ -130,10 +139,13 @@ describe("VerifyEmail", () => {
 
     renderWithProviders();
 
-    await waitFor(() => {
-      expect(screen.getByText("Verification Failed")).toBeInTheDocument();
-      expect(screen.getByText("Verification failed")).toBeInTheDocument();
-    }, { timeout: 5000 });
+    await waitFor(
+      () => {
+        expect(screen.getByText("Verification Failed")).toBeInTheDocument();
+        expect(screen.getByText("Verification failed")).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
   });
 
   it("calls API with correct token parameter", async () => {
@@ -141,9 +153,12 @@ describe("VerifyEmail", () => {
 
     renderWithProviders("abc123");
 
-    await waitFor(() => {
-      expect(rawHttpClient.get).toHaveBeenCalledWith("/api/v1/auth/verify?token=abc123");
-    }, { timeout: 5000 });
+    await waitFor(
+      () => {
+        expect(rawHttpClient.get).toHaveBeenCalledWith("/api/v1/auth/verify?token=abc123");
+      },
+      { timeout: 5000 },
+    );
   });
 
   it("shows verifying state initially", () => {
@@ -162,10 +177,13 @@ describe("VerifyEmail", () => {
 
     renderWithProviders();
 
-    await waitFor(() => {
-      expect(screen.getByText("Email Verified!")).toBeInTheDocument();
-      expect(screen.getByRole("button", { name: /go to login/i })).toBeInTheDocument();
-    }, { timeout: 5000 });
+    await waitFor(
+      () => {
+        expect(screen.getByText("Email Verified!")).toBeInTheDocument();
+        expect(screen.getByRole("button", { name: /go to login/i })).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
   });
 
   it("handles button clicks for navigation", async () => {
@@ -173,9 +191,12 @@ describe("VerifyEmail", () => {
 
     const { getByRole } = renderWithProviders();
 
-    await waitFor(() => {
-      expect(screen.getByText("Email Verified!")).toBeInTheDocument();
-    }, { timeout: 5000 });
+    await waitFor(
+      () => {
+        expect(screen.getByText("Email Verified!")).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
 
     // Wait for button to be present before clicking
     const loginButton = await screen.findByRole("button", { name: /go to login/i });
@@ -195,10 +216,13 @@ describe("VerifyEmail", () => {
 
     renderWithProviders();
 
-    await waitFor(() => {
-      expect(screen.getByText("Verification Failed")).toBeInTheDocument();
-      expect(screen.getByText("Verification failed")).toBeInTheDocument();
-    }, { timeout: 5000 });
+    await waitFor(
+      () => {
+        expect(screen.getByText("Verification Failed")).toBeInTheDocument();
+        expect(screen.getByText("Verification failed")).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
   });
 
   it("handles error with response but no error message", async () => {
@@ -210,10 +234,13 @@ describe("VerifyEmail", () => {
 
     renderWithProviders();
 
-    await waitFor(() => {
-      expect(screen.getByText("Verification Failed")).toBeInTheDocument();
-      expect(screen.getByText("Verification failed")).toBeInTheDocument();
-    }, { timeout: 5000 });
+    await waitFor(
+      () => {
+        expect(screen.getByText("Verification Failed")).toBeInTheDocument();
+        expect(screen.getByText("Verification failed")).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
   });
 
   it("uses errorMessage in description when error occurs", async () => {
@@ -229,9 +256,12 @@ describe("VerifyEmail", () => {
 
     renderWithProviders();
 
-    await waitFor(() => {
-      expect(screen.getByText("Token expired")).toBeInTheDocument();
-    }, { timeout: 5000 });
+    await waitFor(
+      () => {
+        expect(screen.getByText("Token expired")).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
   });
 
   it("shows expired state when token expires (410 status)", async () => {
@@ -249,14 +279,17 @@ describe("VerifyEmail", () => {
 
     renderWithProviders();
 
-    await waitFor(() => {
-      expect(screen.getByText("Verification link expired")).toBeInTheDocument();
-      expect(
-        screen.getByText(
-          "Your verification link has expired. Please request a new verification email.",
-        ),
-      ).toBeInTheDocument();
-    }, { timeout: 5000 });
+    await waitFor(
+      () => {
+        expect(screen.getByText("Verification link expired")).toBeInTheDocument();
+        expect(
+          screen.getByText(
+            "Your verification link has expired. Please request a new verification email.",
+          ),
+        ).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
   });
 
   it("shows expired state when AUTH_TOKEN_EXPIRED error code is returned", async () => {
@@ -274,9 +307,12 @@ describe("VerifyEmail", () => {
 
     renderWithProviders();
 
-    await waitFor(() => {
-      expect(screen.getByText("Verification link expired")).toBeInTheDocument();
-    }, { timeout: 5000 });
+    await waitFor(
+      () => {
+        expect(screen.getByText("Verification link expired")).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
   });
 
   it("displays resend form when token is expired", async () => {
@@ -294,12 +330,17 @@ describe("VerifyEmail", () => {
 
     renderWithProviders();
 
-    await waitFor(() => {
-      expect(screen.getByLabelText(/email address/i)).toBeInTheDocument();
-      expect(screen.getByPlaceholderText(/your@email.com/i)).toBeInTheDocument();
-      expect(screen.getByRole("button", { name: /send verification email/i })).toBeInTheDocument();
-      expect(screen.getByRole("button", { name: /back to register/i })).toBeInTheDocument();
-    }, { timeout: 5000 });
+    await waitFor(
+      () => {
+        expect(screen.getByLabelText(/email address/i)).toBeInTheDocument();
+        expect(screen.getByPlaceholderText(/your@email.com/i)).toBeInTheDocument();
+        expect(
+          screen.getByRole("button", { name: /send verification email/i }),
+        ).toBeInTheDocument();
+        expect(screen.getByRole("button", { name: /back to register/i })).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
   });
 
   it("validates email input in resend form", async () => {
@@ -317,18 +358,24 @@ describe("VerifyEmail", () => {
 
     renderWithProviders();
 
-    await waitFor(() => {
-      expect(screen.getByLabelText(/email address/i)).toBeInTheDocument();
-    }, { timeout: 5000 });
+    await waitFor(
+      () => {
+        expect(screen.getByLabelText(/email address/i)).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
 
     const submitButton = screen.getByRole("button", { name: /send verification email/i });
     fireEvent.click(submitButton);
 
     // Form validation should prevent submission
-    await waitFor(() => {
-      const emailInput = screen.getByLabelText(/email address/i) as HTMLInputElement;
-      expect(emailInput.validity.valid).toBe(false);
-    }, { timeout: 5000 });
+    await waitFor(
+      () => {
+        const emailInput = screen.getByLabelText(/email address/i) as HTMLInputElement;
+        expect(emailInput.validity.valid).toBe(false);
+      },
+      { timeout: 5000 },
+    );
   });
 
   it("navigates to register page with email when resend form is submitted", async () => {
@@ -346,9 +393,12 @@ describe("VerifyEmail", () => {
 
     renderWithProviders();
 
-    await waitFor(() => {
-      expect(screen.getByLabelText(/email address/i)).toBeInTheDocument();
-    }, { timeout: 5000 });
+    await waitFor(
+      () => {
+        expect(screen.getByLabelText(/email address/i)).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
 
     const emailInput = screen.getByLabelText(/email address/i);
     const submitButton = screen.getByRole("button", { name: /send verification email/i });
@@ -356,11 +406,14 @@ describe("VerifyEmail", () => {
     fireEvent.change(emailInput, { target: { value: "test@example.com" } });
     fireEvent.click(submitButton);
 
-    await waitFor(() => {
-      expect(mockNavigate).toHaveBeenCalledWith("/register", {
-        state: { email: "test@example.com", resendVerification: true },
-      });
-    }, { timeout: 5000 });
+    await waitFor(
+      () => {
+        expect(mockNavigate).toHaveBeenCalledWith("/register", {
+          state: { email: "test@example.com", resendVerification: true },
+        });
+      },
+      { timeout: 5000 },
+    );
   });
 
   it("navigates to register page when back to register button is clicked in expired state", async () => {
@@ -378,9 +431,12 @@ describe("VerifyEmail", () => {
 
     renderWithProviders();
 
-    await waitFor(() => {
-      expect(screen.getByRole("button", { name: /back to register/i })).toBeInTheDocument();
-    }, { timeout: 5000 });
+    await waitFor(
+      () => {
+        expect(screen.getByRole("button", { name: /back to register/i })).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
 
     const backButton = screen.getByRole("button", { name: /back to register/i });
     fireEvent.click(backButton);
@@ -403,16 +459,24 @@ describe("VerifyEmail", () => {
 
     renderWithProviders();
 
-    await waitFor(() => {
-      expect(screen.getByRole("button", { name: /send verification email/i })).toBeInTheDocument();
-    }, { timeout: 5000 });
+    await waitFor(
+      () => {
+        expect(
+          screen.getByRole("button", { name: /send verification email/i }),
+        ).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
 
     const submitButton = screen.getByRole("button", { name: /send verification email/i });
     fireEvent.click(submitButton);
 
-    await waitFor(() => {
-      expect(screen.getByText("Please fill in all fields")).toBeInTheDocument();
-    }, { timeout: 5000 });
+    await waitFor(
+      () => {
+        expect(screen.getByText("Please fill in all fields")).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
 
     // Should not navigate when email is empty
     expect(mockNavigate).not.toHaveBeenCalled();
@@ -433,9 +497,12 @@ describe("VerifyEmail", () => {
 
     renderWithProviders();
 
-    await waitFor(() => {
-      expect(screen.getByLabelText(/email address/i)).toBeInTheDocument();
-    }, { timeout: 5000 });
+    await waitFor(
+      () => {
+        expect(screen.getByLabelText(/email address/i)).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
 
     const emailInput = screen.getByLabelText(/email address/i) as HTMLInputElement;
     fireEvent.change(emailInput, { target: { value: "newemail@example.com" } });
@@ -461,9 +528,12 @@ describe("VerifyEmail", () => {
 
     renderWithProviders();
 
-    await waitFor(() => {
-      expect(screen.getByLabelText(/email address/i)).toBeInTheDocument();
-    }, { timeout: 5000 });
+    await waitFor(
+      () => {
+        expect(screen.getByLabelText(/email address/i)).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
 
     const emailInput = screen.getByLabelText(/email address/i);
     const submitButton = screen.getByRole("button", { name: /send verification email/i });
@@ -471,11 +541,14 @@ describe("VerifyEmail", () => {
     fireEvent.change(emailInput, { target: { value: "  test@example.com  " } });
     fireEvent.click(submitButton);
 
-    await waitFor(() => {
-      expect(mockNavigate).toHaveBeenCalledWith("/register", {
-        state: { email: "test@example.com", resendVerification: true },
-      });
-    }, { timeout: 5000 });
+    await waitFor(
+      () => {
+        expect(mockNavigate).toHaveBeenCalledWith("/register", {
+          state: { email: "test@example.com", resendVerification: true },
+        });
+      },
+      { timeout: 5000 },
+    );
   });
 
   it("displays correct title and description for expired state", async () => {
@@ -493,14 +566,17 @@ describe("VerifyEmail", () => {
 
     renderWithProviders();
 
-    await waitFor(() => {
-      expect(screen.getByText("Verification link expired")).toBeInTheDocument();
-      expect(
-        screen.getByText(
-          "Your verification link has expired. Please request a new verification email.",
-        ),
-      ).toBeInTheDocument();
-    }, { timeout: 5000 });
+    await waitFor(
+      () => {
+        expect(screen.getByText("Verification link expired")).toBeInTheDocument();
+        expect(
+          screen.getByText(
+            "Your verification link has expired. Please request a new verification email.",
+          ),
+        ).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
   });
 
   it("uses translated error message when AUTH_TOKEN_EXPIRED code is present", async () => {
@@ -518,8 +594,11 @@ describe("VerifyEmail", () => {
 
     renderWithProviders();
 
-    await waitFor(() => {
-      expect(screen.getByText("Verification link expired")).toBeInTheDocument();
-    }, { timeout: 5000 });
+    await waitFor(
+      () => {
+        expect(screen.getByText("Verification link expired")).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
   });
 });

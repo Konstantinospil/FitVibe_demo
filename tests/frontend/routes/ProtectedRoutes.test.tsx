@@ -133,9 +133,12 @@ describe("ProtectedRoutes", () => {
       </MemoryRouter>,
     );
 
-    await waitFor(() => {
-      expect(ensurePrivateTranslationsLoaded).toHaveBeenCalled();
-    }, { timeout: 5000 });
+    await waitFor(
+      () => {
+        expect(ensurePrivateTranslationsLoaded).toHaveBeenCalled();
+      },
+      { timeout: 5000 },
+    );
   });
 
   it("should render Home page at root path", async () => {
@@ -145,9 +148,12 @@ describe("ProtectedRoutes", () => {
       </MemoryRouter>,
     );
 
-    await waitFor(() => {
-      expect(screen.getByText("Home Page")).toBeInTheDocument();
-    }, { timeout: 5000 });
+    await waitFor(
+      () => {
+        expect(screen.getByText("Home Page")).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
   });
 
   it("should render Sessions page at /sessions", async () => {
@@ -157,9 +163,12 @@ describe("ProtectedRoutes", () => {
       </MemoryRouter>,
     );
 
-    await waitFor(() => {
-      expect(screen.getByText("Sessions Page")).toBeInTheDocument();
-    }, { timeout: 5000 });
+    await waitFor(
+      () => {
+        expect(screen.getByText("Sessions Page")).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
   });
 
   it("should render Planner page at /planner", async () => {
@@ -169,9 +178,12 @@ describe("ProtectedRoutes", () => {
       </MemoryRouter>,
     );
 
-    await waitFor(() => {
-      expect(screen.getByText("Planner Page")).toBeInTheDocument();
-    }, { timeout: 5000 });
+    await waitFor(
+      () => {
+        expect(screen.getByText("Planner Page")).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
   });
 
   it("should render Logger page at /logger/:sessionId", async () => {
@@ -181,9 +193,12 @@ describe("ProtectedRoutes", () => {
       </MemoryRouter>,
     );
 
-    await waitFor(() => {
-      expect(screen.getByText("Logger Page")).toBeInTheDocument();
-    }, { timeout: 5000 });
+    await waitFor(
+      () => {
+        expect(screen.getByText("Logger Page")).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
   });
 
   it("should render Insights page at /insights", async () => {
@@ -193,9 +208,12 @@ describe("ProtectedRoutes", () => {
       </MemoryRouter>,
     );
 
-    await waitFor(() => {
-      expect(screen.getByText("Insights Page")).toBeInTheDocument();
-    }, { timeout: 5000 });
+    await waitFor(
+      () => {
+        expect(screen.getByText("Insights Page")).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
   });
 
   it("should render Profile page at /profile", async () => {
@@ -205,9 +223,12 @@ describe("ProtectedRoutes", () => {
       </MemoryRouter>,
     );
 
-    await waitFor(() => {
-      expect(screen.getByText("Profile Page")).toBeInTheDocument();
-    }, { timeout: 5000 });
+    await waitFor(
+      () => {
+        expect(screen.getByText("Profile Page")).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
   });
 
   it("should render Settings page at /settings", async () => {
@@ -217,9 +238,12 @@ describe("ProtectedRoutes", () => {
       </MemoryRouter>,
     );
 
-    await waitFor(() => {
-      expect(screen.getByText("Settings Page")).toBeInTheDocument();
-    }, { timeout: 5000 });
+    await waitFor(
+      () => {
+        expect(screen.getByText("Settings Page")).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
   });
 
   it("should render Terms page at /terms", async () => {
@@ -229,9 +253,12 @@ describe("ProtectedRoutes", () => {
       </MemoryRouter>,
     );
 
-    await waitFor(() => {
-      expect(screen.getByText("Terms Page")).toBeInTheDocument();
-    }, { timeout: 5000 });
+    await waitFor(
+      () => {
+        expect(screen.getByText("Terms Page")).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
   });
 
   it("should render Privacy page at /privacy", async () => {
@@ -241,9 +268,12 @@ describe("ProtectedRoutes", () => {
       </MemoryRouter>,
     );
 
-    await waitFor(() => {
-      expect(screen.getByText("Privacy Page")).toBeInTheDocument();
-    }, { timeout: 5000 });
+    await waitFor(
+      () => {
+        expect(screen.getByText("Privacy Page")).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
   });
 
   it("should render TermsReacceptance page at /terms-reacceptance", async () => {
@@ -253,9 +283,12 @@ describe("ProtectedRoutes", () => {
       </MemoryRouter>,
     );
 
-    await waitFor(() => {
-      expect(screen.getByText("Terms Reacceptance Page")).toBeInTheDocument();
-    }, { timeout: 5000 });
+    await waitFor(
+      () => {
+        expect(screen.getByText("Terms Reacceptance Page")).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
   });
 
   it("should render AdminDashboard at /admin", async () => {
@@ -280,9 +313,12 @@ describe("ProtectedRoutes", () => {
       </MemoryRouter>,
     );
 
-    await waitFor(() => {
-      expect(screen.getByText("Content Reports")).toBeInTheDocument();
-    }, { timeout: 5000 });
+    await waitFor(
+      () => {
+        expect(screen.getByText("Content Reports")).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
   });
 
   it("should render UserManagement at /admin/users", async () => {
@@ -292,9 +328,12 @@ describe("ProtectedRoutes", () => {
       </MemoryRouter>,
     );
 
-    await waitFor(() => {
-      expect(screen.getByText("User Management")).toBeInTheDocument();
-    }, { timeout: 5000 });
+    await waitFor(
+      () => {
+        expect(screen.getByText("User Management")).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
   });
 
   it("should render SystemControls at /admin/system", async () => {
@@ -304,9 +343,12 @@ describe("ProtectedRoutes", () => {
       </MemoryRouter>,
     );
 
-    await waitFor(() => {
-      expect(screen.getByText("System Controls")).toBeInTheDocument();
-    }, { timeout: 5000 });
+    await waitFor(
+      () => {
+        expect(screen.getByText("System Controls")).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
   });
 
   it("should render NotFound page for unknown routes", async () => {
@@ -316,9 +358,12 @@ describe("ProtectedRoutes", () => {
       </MemoryRouter>,
     );
 
-    await waitFor(() => {
-      expect(screen.getByText("Not Found")).toBeInTheDocument();
-    }, { timeout: 5000 });
+    await waitFor(
+      () => {
+        expect(screen.getByText("Not Found")).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
   });
 
   it("should redirect /login to root", async () => {
@@ -328,9 +373,12 @@ describe("ProtectedRoutes", () => {
       </MemoryRouter>,
     );
 
-    await waitFor(() => {
-      expect(screen.getByText("Home Page")).toBeInTheDocument();
-    }, { timeout: 5000 });
+    await waitFor(
+      () => {
+        expect(screen.getByText("Home Page")).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
   });
 
   it("should redirect unmatched paths to root", async () => {
@@ -342,9 +390,12 @@ describe("ProtectedRoutes", () => {
 
     // Unmatched paths within protected routes show NotFound, not redirect
     // The outer * route only catches paths that don't go through ProtectedRoute
-    await waitFor(() => {
-      expect(screen.getByText("Not Found")).toBeInTheDocument();
-    }, { timeout: 5000 });
+    await waitFor(
+      () => {
+        expect(screen.getByText("Not Found")).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
   });
 
   it("should render fallback loading state", () => {

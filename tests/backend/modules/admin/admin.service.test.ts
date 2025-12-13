@@ -117,7 +117,10 @@ describe("Admin Service", () => {
       ).rejects.toThrow(HttpError);
       await expect(
         adminService.moderateReport({ reportId, action: "dismiss", adminId }),
-      ).rejects.toThrow("REPORT_ALREADY_RESOLVED");
+      ).rejects.toThrow(HttpError);
+      await expect(
+        adminService.moderateReport({ reportId, action: "dismiss", adminId }),
+      ).rejects.toThrow("Report has already been resolved");
     });
   });
 
@@ -156,6 +159,14 @@ describe("Admin Service", () => {
         adminId,
       };
 
+      mockAdminRepo.getUserForAdmin.mockResolvedValue({
+        id: "user-123",
+        username: "testuser",
+        displayName: "Test User",
+        email: "test@example.com",
+        status: "active",
+        role: "athlete",
+      });
       mockAdminRepo.updateUserStatus.mockResolvedValue(undefined);
 
       await adminService.performUserAction(input);

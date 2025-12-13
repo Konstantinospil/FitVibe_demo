@@ -18,6 +18,15 @@ function normalizeError(err: unknown): HttpError {
     return new HttpError(400, "VALIDATION_ERROR", "VALIDATION_ERROR", err.flatten());
   }
 
+  if (
+    err instanceof Error &&
+    "flatten" in err &&
+    typeof (err as { flatten: () => unknown }).flatten === "function"
+  ) {
+    const flattenResult = (err as { flatten: () => unknown }).flatten();
+    return new HttpError(400, "VALIDATION_ERROR", "VALIDATION_ERROR", flattenResult);
+  }
+
   if (err instanceof Error) {
     const status = (err as GenericError).status ?? 500;
     const code =

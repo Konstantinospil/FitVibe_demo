@@ -1,69 +1,391 @@
 import { CacheService } from "../../../apps/backend/src/services/cache.service.js";
+import type Redis from "ioredis";
 
-describe("CacheService", () => {
-  let cache: CacheService;
-  let originalRedisEnabled: string | undefined;
+// Mock Redis
+const mockRedisInstance = {
+  get: jest.fn().mockResolvedValue(null),
+  set: jest.fn().mockResolvedValue("OK"),
+  setex: jest.fn().mockResolvedValue("OK"),
+  del: jest.fn().mockResolvedValue(1),
+  flushdb: jest.fn().mockResolvedValue("OK"),
+  connect: jest.fn().mockResolvedValue(undefined),
+  quit: jest.fn().mockResolvedValue("OK"),
+  on: jest.fn(),
+  status: "ready" as const,
+};
+
+jest.mock("ioredis", () => {
+  return jest.fn().mockImplementation(() => mockRedisInstance);
+});
+
+// Mock logger
+jest.mock("../../../apps/backend/src/config/logger.js", () => ({
+  logger: {
+    info: jest.fn(),
+    warn: jest.fn(),
+    error: jest.fn(),
+  },
+}));
+
+import { logger } from "../../../apps/backend/src/config/logger.js";
+
+const mockLogger = jest.mocked(logger);
+
+describe("Cache Service", () => {
+  let cacheService: CacheService;
+  const originalEnv = process.env;
 
   beforeEach(() => {
-    // Ensure Redis is disabled for tests to use in-memory cache
-    originalRedisEnabled = process.env.REDIS_ENABLED;
-    process.env.REDIS_ENABLED = "false";
-    cache = new CacheService();
+    jest.clearAllMocks();
+    process.env = { ...originalEnv };
+    // Reset Redis mock
+    mockRedisInstance.get.mockResolvedValue(null);
+    mockRedisInstance.set.mockResolvedValue("OK");
+    mockRedisInstance.setex.mockResolvedValue("OK");
+    mockRedisInstance.del.mockResolvedValue(1);
+    mockRedisInstance.flushdb.mockResolvedValue("OK");
+    mockRedisInstance.connect.mockResolvedValue(undefined);
+    mockRedisInstance.quit.mockResolvedValue("OK");
+    mockRedisInstance.on.mockImplementation((event: string, handler: () => void) => {
+      if (event === "connect") {
+        // Simulate connect event
+        setTimeout(() => handler(), 0);
+      }
+    });
+    mockRedisInstance.status = "ready";
   });
 
-  afterEach(async () => {
-    await cache.clear();
-    await cache.close();
-    // Restore original env var for test isolation
-    if (originalRedisEnabled === undefined) {
-      delete process.env.REDIS_ENABLED;
-    } else {
-      process.env.REDIS_ENABLED = originalRedisEnabled;
+  afterEach(() => {
+    process.env = originalEnv;
+    if (cacheService) {
+      cacheService.close().catch(() => {
+        // Ignore errors during cleanup
+      });
     }
   });
 
-  it("stores and retrieves typed values", async () => {
-    interface SessionToken {
-      token: string;
-      expiresInSeconds: number;
-    }
+  describe("In-Memory Cache (Redis disabled)", () => {
+    beforeEach(() => {
+      process.env.REDIS_ENABLED = "false";
+      cacheService = new CacheService();
+    });
 
-    const session: SessionToken = {
-      token: "session-token",
-      expiresInSeconds: 3600,
-    };
+    describe("get", () => {
+      it("should get value from in-memory cache", async () => {
+        const key = "test-key";
+        const value = { data: "test" };
 
-    await cache.set<SessionToken>("session", session);
+        await cacheService.set(key, value);
+        const result = await cacheService.get(key);
 
-    const result = await cache.get<SessionToken>("session");
-    expect(result).toEqual(session);
+        expect(result).toEqual(value);
+      });
+
+      it("should return undefined for non-existent key", async () => {
+        const result = await cacheService.get("non-existent");
+
+        expect(result).toBeUndefined();
+      });
+
+      it("should return undefined for expired TTL entry", async () => {
+        const key = "expired-key";
+        const value = { data: "test" };
+
+        await cacheService.set(key, value, 0.001); // 1ms TTL
+        await new Promise((resolve) => setTimeout(resolve, 10)); // Wait for expiration
+        const result = await cacheService.get(key);
+
+        expect(result).toBeUndefined();
+      });
+    });
+
+    describe("set", () => {
+      it("should set value in cache", async () => {
+        const key = "test-key";
+        const value = { data: "test" };
+
+        await cacheService.set(key, value);
+        const result = await cacheService.get(key);
+
+        expect(result).toEqual(value);
+      });
+
+      it("should set value with TTL", async () => {
+        const key = "test-key-ttl";
+        const value = { data: "test" };
+
+        await cacheService.set(key, value, 60);
+        const result = await cacheService.get(key);
+
+        expect(result).toEqual(value);
+      });
+
+      it("should set value without TTL", async () => {
+        const key = "test-key-no-ttl";
+        const value = { data: "test" };
+
+        await cacheService.set(key, value);
+        const result = await cacheService.get(key);
+
+        expect(result).toEqual(value);
+      });
+    });
+
+    describe("delete", () => {
+      it("should delete value from cache", async () => {
+        const key = "test-key";
+        const value = { data: "test" };
+
+        await cacheService.set(key, value);
+        await cacheService.delete(key);
+        const result = await cacheService.get(key);
+
+        expect(result).toBeUndefined();
+      });
+    });
+
+    describe("clear", () => {
+      it("should clear all cache", async () => {
+        await cacheService.set("key1", "value1");
+        await cacheService.set("key2", "value2");
+
+        await cacheService.clear();
+
+        expect(await cacheService.get("key1")).toBeUndefined();
+        expect(await cacheService.get("key2")).toBeUndefined();
+      });
+    });
+
+    describe("isRedisAvailable", () => {
+      it("should return false when Redis is disabled", () => {
+        expect(cacheService.isRedisAvailable()).toBe(false);
+      });
+    });
+
+    describe("close", () => {
+      it("should not throw when closing without Redis", async () => {
+        await expect(cacheService.close()).resolves.toBeUndefined();
+      });
+    });
   });
 
-  it("returns undefined for missing keys", async () => {
-    const result = await cache.get("missing");
-    expect(result).toBeUndefined();
+  describe("Redis Cache (Redis enabled)", () => {
+    beforeEach(() => {
+      process.env.REDIS_ENABLED = "true";
+      process.env.REDIS_HOST = "localhost";
+      process.env.REDIS_PORT = "6379";
+      cacheService = new CacheService();
+    });
+
+    describe("get", () => {
+      it("should get value from Redis", async () => {
+        const key = "test-key";
+        const value = { data: "test" };
+        mockRedisInstance.get.mockResolvedValue(JSON.stringify(value));
+
+        const result = await cacheService.get(key);
+
+        expect(result).toEqual(value);
+        expect(mockRedisInstance.get).toHaveBeenCalledWith(key);
+      });
+
+      it("should return undefined when Redis returns null", async () => {
+        mockRedisInstance.get.mockResolvedValue(null);
+
+        const result = await cacheService.get("non-existent");
+
+        expect(result).toBeUndefined();
+      });
+
+      it("should fallback to in-memory when Redis get fails", async () => {
+        const key = "test-key";
+        const value = { data: "test" };
+        // Set will fail, so it stores in memory
+        mockRedisInstance.set.mockRejectedValueOnce(new Error("Redis error"));
+        // Get will also fail, so it falls back to memory
+        mockRedisInstance.get.mockRejectedValueOnce(new Error("Redis error"));
+
+        await cacheService.set(key, value);
+
+        const result = await cacheService.get(key);
+
+        expect(result).toEqual(value);
+        expect(mockLogger.warn).toHaveBeenCalled();
+      });
+    });
+
+    describe("set", () => {
+      it("should set value in Redis", async () => {
+        const key = "test-key";
+        const value = { data: "test" };
+
+        await cacheService.set(key, value);
+
+        expect(mockRedisInstance.set).toHaveBeenCalledWith(key, JSON.stringify(value));
+      });
+
+      it("should set value in Redis with TTL", async () => {
+        const key = "test-key-ttl";
+        const value = { data: "test" };
+
+        await cacheService.set(key, value, 60);
+
+        expect(mockRedisInstance.setex).toHaveBeenCalledWith(key, 60, JSON.stringify(value));
+      });
+
+      it("should fallback to in-memory when Redis set fails", async () => {
+        const key = "test-key";
+        const value = { data: "test" };
+        mockRedisInstance.set.mockRejectedValueOnce(new Error("Redis error"));
+        // Get will also fail to trigger fallback
+        mockRedisInstance.get.mockRejectedValueOnce(new Error("Redis error"));
+
+        await cacheService.set(key, value);
+
+        const result = await cacheService.get(key);
+        expect(result).toEqual(value);
+        expect(mockLogger.warn).toHaveBeenCalled();
+      });
+
+      it("should fallback to in-memory when Redis setex fails", async () => {
+        const key = "test-key-ttl";
+        const value = { data: "test" };
+        mockRedisInstance.setex.mockRejectedValueOnce(new Error("Redis error"));
+        // Get will also fail to trigger fallback
+        mockRedisInstance.get.mockRejectedValueOnce(new Error("Redis error"));
+
+        await cacheService.set(key, value, 60);
+
+        const result = await cacheService.get(key);
+        expect(result).toEqual(value);
+        expect(mockLogger.warn).toHaveBeenCalled();
+      });
+    });
+
+    describe("delete", () => {
+      it("should delete value from Redis", async () => {
+        const key = "test-key";
+
+        await cacheService.delete(key);
+
+        expect(mockRedisInstance.del).toHaveBeenCalledWith(key);
+      });
+
+      it("should fallback to in-memory when Redis delete fails", async () => {
+        const key = "test-key";
+        mockRedisInstance.del.mockRejectedValue(new Error("Redis error"));
+
+        await cacheService.delete(key);
+
+        expect(mockLogger.warn).toHaveBeenCalled();
+      });
+    });
+
+    describe("clear", () => {
+      it("should clear Redis cache", async () => {
+        await cacheService.clear();
+
+        expect(mockRedisInstance.flushdb).toHaveBeenCalled();
+      });
+
+      it("should fallback to in-memory when Redis clear fails", async () => {
+        mockRedisInstance.flushdb.mockRejectedValue(new Error("Redis error"));
+
+        await cacheService.clear();
+
+        expect(mockLogger.warn).toHaveBeenCalled();
+      });
+    });
+
+    describe("isRedisAvailable", () => {
+      it("should return true when Redis is ready", () => {
+        mockRedisInstance.status = "ready";
+        expect(cacheService.isRedisAvailable()).toBe(true);
+      });
+
+      it("should return false when Redis is not ready", () => {
+        mockRedisInstance.status = "end" as const;
+        expect(cacheService.isRedisAvailable()).toBe(false);
+      });
+    });
+
+    describe("close", () => {
+      it("should close Redis connection", async () => {
+        await cacheService.close();
+
+        expect(mockRedisInstance.quit).toHaveBeenCalled();
+      });
+    });
   });
 
-  it("overwrites existing entries and deletes individual keys", async () => {
-    await cache.set("key", "initial");
-    await cache.set("key", "updated");
-    await cache.set("other", 42);
+  describe("Redis connection events", () => {
+    it("should handle Redis error event and fallback to in-memory", () => {
+      process.env.REDIS_ENABLED = "true";
+      const errorHandler = jest.fn();
+      mockRedisInstance.on.mockImplementation((event: string, handler: () => void) => {
+        if (event === "error") {
+          errorHandler(handler);
+        }
+      });
 
-    expect(await cache.get("key")).toBe("updated");
+      cacheService = new CacheService();
 
-    await cache.delete("key");
+      // Simulate error event
+      const errorCallbacks = mockRedisInstance.on.mock.calls
+        .filter((call) => call[0] === "error")
+        .map((call) => call[1]);
+      if (errorCallbacks.length > 0) {
+        errorCallbacks[0](new Error("Connection error"));
+      }
 
-    expect(await cache.get("key")).toBeUndefined();
-    expect(await cache.get("other")).toBe(42);
+      expect(mockLogger.warn).toHaveBeenCalled();
+    });
+
+    it("should handle Redis connect event", () => {
+      process.env.REDIS_ENABLED = "true";
+      const connectHandler = jest.fn();
+      mockRedisInstance.on.mockImplementation((event: string, handler: () => void) => {
+        if (event === "connect") {
+          connectHandler(handler);
+        }
+      });
+
+      cacheService = new CacheService();
+
+      // Simulate connect event
+      const connectCallbacks = mockRedisInstance.on.mock.calls
+        .filter((call) => call[0] === "connect")
+        .map((call) => call[1]);
+      if (connectCallbacks.length > 0) {
+        connectCallbacks[0]();
+      }
+
+      expect(mockLogger.info).toHaveBeenCalled();
+    });
   });
 
-  it("clears the entire cache at once", async () => {
-    await cache.set("alpha", 1);
-    await cache.set("beta", { ready: true });
+  describe("Redis initialization errors", () => {
+    it("should fallback to in-memory when Redis constructor throws", () => {
+      process.env.REDIS_ENABLED = "true";
+      const RedisMock = jest.requireMock("ioredis");
+      RedisMock.mockImplementationOnce(() => {
+        throw new Error("Redis init error");
+      });
 
-    await cache.clear();
+      cacheService = new CacheService();
 
-    expect(await cache.get("alpha")).toBeUndefined();
-    expect(await cache.get("beta")).toBeUndefined();
+      expect(mockLogger.warn).toHaveBeenCalled();
+    });
+
+    it("should fallback to in-memory when Redis connect fails", async () => {
+      process.env.REDIS_ENABLED = "true";
+      mockRedisInstance.connect.mockRejectedValue(new Error("Connection failed"));
+
+      cacheService = new CacheService();
+      // Wait for async connect
+      await new Promise((resolve) => setTimeout(resolve, 10));
+
+      expect(mockLogger.warn).toHaveBeenCalled();
+    });
   });
 });

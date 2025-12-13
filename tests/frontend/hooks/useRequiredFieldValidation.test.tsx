@@ -61,9 +61,12 @@ describe("useRequiredFieldValidation", () => {
     const emailInput = screen.getByTestId("email-input") as HTMLInputElement;
 
     // Wait for hook to initialize
-    await waitFor(() => {
-      expect(emailInput).toBeInTheDocument();
-    }, { timeout: 5000 });
+    await waitFor(
+      () => {
+        expect(emailInput).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
 
     // Trigger validation check
     const isValid = emailInput.checkValidity();
@@ -85,9 +88,12 @@ describe("useRequiredFieldValidation", () => {
     const emailInput = screen.getByTestId("email-input") as HTMLInputElement;
 
     // Wait for initial setup
-    await waitFor(() => {
-      expect(emailInput).toBeInTheDocument();
-    }, { timeout: 5000 });
+    await waitFor(
+      () => {
+        expect(emailInput).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
 
     // Fill in the field
     await act(async () => {
@@ -95,10 +101,13 @@ describe("useRequiredFieldValidation", () => {
     });
 
     // Field should now be valid
-    await waitFor(() => {
-      emailInput.setCustomValidity("");
-      expect(emailInput.checkValidity()).toBe(true);
-    }, { timeout: 5000 });
+    await waitFor(
+      () => {
+        emailInput.setCustomValidity("");
+        expect(emailInput.checkValidity()).toBe(true);
+      },
+      { timeout: 5000 },
+    );
   });
 
   it("should show custom message on form submit with empty required fields", async () => {
@@ -114,9 +123,12 @@ describe("useRequiredFieldValidation", () => {
     const submitButton = screen.getByTestId("submit-button");
 
     // Wait for initial setup
-    await waitFor(() => {
-      expect(emailInput).toBeInTheDocument();
-    }, { timeout: 5000 });
+    await waitFor(
+      () => {
+        expect(emailInput).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
 
     // Try to submit empty form
     await act(async () => {
@@ -128,11 +140,14 @@ describe("useRequiredFieldValidation", () => {
     expect(formIsValid).toBe(false);
 
     // Check that custom message is shown
-    await waitFor(() => {
-      if (!emailInput.checkValidity()) {
-        expect(emailInput.validationMessage).toBe(requiredMessage);
-      }
-    }, { timeout: 5000 });
+    await waitFor(
+      () => {
+        if (!emailInput.checkValidity()) {
+          expect(emailInput.validationMessage).toBe(requiredMessage);
+        }
+      },
+      { timeout: 5000 },
+    );
   });
 
   it("should work with textarea elements", async () => {
@@ -145,9 +160,12 @@ describe("useRequiredFieldValidation", () => {
 
     const textarea = screen.getByTestId("description-textarea") as HTMLTextAreaElement;
 
-    await waitFor(() => {
-      expect(textarea).toBeInTheDocument();
-    }, { timeout: 5000 });
+    await waitFor(
+      () => {
+        expect(textarea).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
 
     // Empty textarea should trigger validation
     const isValid = textarea.checkValidity();
@@ -160,10 +178,13 @@ describe("useRequiredFieldValidation", () => {
       fireEvent.input(textarea, { target: { value: "Some description" } });
     });
 
-    await waitFor(() => {
-      textarea.setCustomValidity("");
-      expect(textarea.checkValidity()).toBe(true);
-    }, { timeout: 5000 });
+    await waitFor(
+      () => {
+        textarea.setCustomValidity("");
+        expect(textarea.checkValidity()).toBe(true);
+      },
+      { timeout: 5000 },
+    );
   });
 
   it("should work with select elements", async () => {
@@ -176,9 +197,12 @@ describe("useRequiredFieldValidation", () => {
 
     const select = screen.getByTestId("country-select") as HTMLSelectElement;
 
-    await waitFor(() => {
-      expect(select).toBeInTheDocument();
-    }, { timeout: 5000 });
+    await waitFor(
+      () => {
+        expect(select).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
 
     // Empty select should trigger validation
     const isValid = select.checkValidity();
@@ -191,10 +215,13 @@ describe("useRequiredFieldValidation", () => {
       fireEvent.change(select, { target: { value: "us" } });
     });
 
-    await waitFor(() => {
-      select.setCustomValidity("");
-      expect(select.checkValidity()).toBe(true);
-    }, { timeout: 5000 });
+    await waitFor(
+      () => {
+        select.setCustomValidity("");
+        expect(select.checkValidity()).toBe(true);
+      },
+      { timeout: 5000 },
+    );
   });
 
   it("should not set custom validity for optional fields", async () => {
@@ -207,9 +234,12 @@ describe("useRequiredFieldValidation", () => {
 
     const optionalInput = screen.getByTestId("optional-input") as HTMLInputElement;
 
-    await waitFor(() => {
-      expect(optionalInput).toBeInTheDocument();
-    }, { timeout: 5000 });
+    await waitFor(
+      () => {
+        expect(optionalInput).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
 
     // Optional field should not have validation message
     expect(optionalInput.validationMessage).toBe("");
@@ -227,25 +257,31 @@ describe("useRequiredFieldValidation", () => {
     const emailInput = screen.getByTestId("email-input") as HTMLInputElement;
     const passwordInput = screen.getByTestId("password-input") as HTMLInputElement;
 
-    await waitFor(() => {
-      expect(emailInput).toBeInTheDocument();
-      expect(passwordInput).toBeInTheDocument();
-    }, { timeout: 5000 });
+    await waitFor(
+      () => {
+        expect(emailInput).toBeInTheDocument();
+        expect(passwordInput).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
 
     // Fill in email only
     await act(async () => {
       fireEvent.input(emailInput, { target: { value: "test@example.com" } });
     });
 
-    await waitFor(() => {
-      emailInput.setCustomValidity("");
-      expect(emailInput.checkValidity()).toBe(true);
+    await waitFor(
+      () => {
+        emailInput.setCustomValidity("");
+        expect(emailInput.checkValidity()).toBe(true);
 
-      // Password should still be invalid if empty
-      if (!passwordInput.checkValidity()) {
-        expect(passwordInput.validationMessage).toBe(requiredMessage);
-      }
-    }, { timeout: 5000 });
+        // Password should still be invalid if empty
+        if (!passwordInput.checkValidity()) {
+          expect(passwordInput.validationMessage).toBe(requiredMessage);
+        }
+      },
+      { timeout: 5000 },
+    );
   });
 
   it("should handle whitespace-only values as empty", async () => {
@@ -258,9 +294,12 @@ describe("useRequiredFieldValidation", () => {
 
     const emailInput = screen.getByTestId("email-input") as HTMLInputElement;
 
-    await waitFor(() => {
-      expect(emailInput).toBeInTheDocument();
-    }, { timeout: 5000 });
+    await waitFor(
+      () => {
+        expect(emailInput).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
 
     // Fill with whitespace
     await act(async () => {
@@ -268,10 +307,13 @@ describe("useRequiredFieldValidation", () => {
     });
 
     // Should still be invalid (trimmed value is empty)
-    await waitFor(() => {
-      if (!emailInput.checkValidity()) {
-        expect(emailInput.validationMessage).toBe(requiredMessage);
-      }
-    }, { timeout: 5000 });
+    await waitFor(
+      () => {
+        if (!emailInput.checkValidity()) {
+          expect(emailInput.validationMessage).toBe(requiredMessage);
+        }
+      },
+      { timeout: 5000 },
+    );
   });
 });

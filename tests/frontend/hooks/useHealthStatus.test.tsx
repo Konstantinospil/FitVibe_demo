@@ -1,6 +1,7 @@
 import React, { type ReactNode } from "react";
 import { renderHook, waitFor } from "@testing-library/react";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import type { QueryClient } from "@tanstack/react-query";
+import { QueryClientProvider } from "@tanstack/react-query";
 import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
 import { useHealthStatus, HEALTH_STATUS_QUERY_KEY } from "../../src/hooks/useHealthStatus";
 import * as api from "../../src/services/api";

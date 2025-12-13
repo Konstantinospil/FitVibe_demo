@@ -13,6 +13,29 @@ jest.mock("../../../../apps/backend/src/config/env.js", () => ({
   },
 }));
 
+const mockCache = new Map<string, unknown>();
+const mockNodeCache = {
+  get: jest.fn((key: string) => mockCache.get(key)),
+  set: jest.fn((key: string, value: unknown) => {
+    mockCache.set(key, value);
+  }),
+  del: jest.fn((key: string) => mockCache.delete(key)),
+  keys: jest.fn(() => Array.from(mockCache.keys())),
+  flushAll: jest.fn(() => mockCache.clear()),
+};
+
+jest.mock("node-cache", () => {
+  return jest.fn(() => ({
+    get: jest.fn((key: string) => mockCache.get(key)),
+    set: jest.fn((key: string, value: unknown) => {
+      mockCache.set(key, value);
+    }),
+    del: jest.fn((key: string) => mockCache.delete(key)),
+    keys: jest.fn(() => Array.from(mockCache.keys())),
+    flushAll: jest.fn(() => mockCache.clear()),
+  }));
+});
+
 const mockExerciseTypesRepo = jest.mocked(exerciseTypesRepository);
 
 describe("Exercise Types Service", () => {
@@ -20,6 +43,7 @@ describe("Exercise Types Service", () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    mockCache.clear();
   });
 
   describe("getAllTypes", () => {

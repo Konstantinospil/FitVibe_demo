@@ -10,11 +10,10 @@ const getApiUrl = () => {
   if (typeof window === "undefined") {
     return process.env.VITE_API_URL || process.env.API_URL || "http://localhost:4000";
   }
-  
+
   // Client-side: use Vite's import.meta.env (replaced at build time)
   // Use try-catch as a safety net in case import.meta.env is not available
   try {
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     const viteEnv = import.meta.env;
     if (viteEnv && typeof viteEnv === "object" && "VITE_API_URL" in viteEnv) {
       return viteEnv.VITE_API_URL || (viteEnv.DEV ? "" : "http://localhost:4000");
@@ -22,7 +21,7 @@ const getApiUrl = () => {
   } catch {
     // Fallback if import.meta.env access fails (shouldn't happen in browser)
   }
-  
+
   // Fallback for client-side
   return "http://localhost:4000";
 };

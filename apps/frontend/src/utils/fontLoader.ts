@@ -72,4 +72,3 @@ export const loadFontsAsync = (): void => {
     setTimeout(injectFontFaces, 2000);
   }
 };
-

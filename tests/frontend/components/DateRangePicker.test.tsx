@@ -16,8 +16,9 @@ describe("DateRangePicker", () => {
 
     const fromInputs = screen.getAllByLabelText(/from:/i);
     const toInputs = screen.getAllByLabelText(/to:/i);
-    const fromInput = Array.from(fromInputs).find(input => container.contains(input)) || fromInputs[0];
-    const toInput = Array.from(toInputs).find(input => container.contains(input)) || toInputs[0];
+    const fromInput =
+      Array.from(fromInputs).find((input) => container.contains(input)) || fromInputs[0];
+    const toInput = Array.from(toInputs).find((input) => container.contains(input)) || toInputs[0];
 
     expect(fromInput).toBeInTheDocument();
     expect(toInput).toBeInTheDocument();
@@ -25,14 +26,15 @@ describe("DateRangePicker", () => {
     expect(toInput).toHaveValue("2025-01-31");
   });
 
-  it("should call onChange when from date changes", async () => {
+  it("should call onChange when from date changes", () => {
     const onChange = vi.fn();
     const { container } = render(<DateRangePicker value={defaultRange} onChange={onChange} />);
 
     // Get the input within our container
     const fromInputs = screen.getAllByLabelText(/from:/i);
-    const fromInput = Array.from(fromInputs).find(input => container.contains(input)) || fromInputs[0];
-    
+    const fromInput =
+      Array.from(fromInputs).find((input) => container.contains(input)) || fromInputs[0];
+
     // Use fireEvent for date inputs as userEvent can be unreliable with date inputs
     fireEvent.change(fromInput, { target: { value: "2025-01-15" } });
 
@@ -42,12 +44,13 @@ describe("DateRangePicker", () => {
     });
   });
 
-  it("should call onChange when to date changes", async () => {
+  it("should call onChange when to date changes", () => {
     const onChange = vi.fn();
     const { container } = render(<DateRangePicker value={defaultRange} onChange={onChange} />);
 
     const toInputs = screen.getAllByLabelText(/to:/i);
-    const toInput = (Array.from(toInputs).find(input => container.contains(input)) || toInputs[0]) as HTMLInputElement;
+    const toInput = (Array.from(toInputs).find((input) => container.contains(input)) ||
+      toInputs[0]) as HTMLInputElement;
 
     // Use fireEvent for date inputs
     fireEvent.change(toInput, { target: { value: "2025-01-20" } });
@@ -59,13 +62,14 @@ describe("DateRangePicker", () => {
     });
   });
 
-  it("should adjust to date when from date is after to date", async () => {
+  it("should adjust to date when from date is after to date", () => {
     const onChange = vi.fn();
     const { container } = render(<DateRangePicker value={defaultRange} onChange={onChange} />);
 
     const fromInputs = screen.getAllByLabelText(/from:/i);
-    const fromInput = Array.from(fromInputs).find(input => container.contains(input)) || fromInputs[0];
-    
+    const fromInput =
+      Array.from(fromInputs).find((input) => container.contains(input)) || fromInputs[0];
+
     fireEvent.change(fromInput, { target: { value: "2025-02-01" } });
 
     expect(onChange).toHaveBeenCalledWith({
@@ -74,7 +78,7 @@ describe("DateRangePicker", () => {
     });
   });
 
-  it("should adjust from date when to date is before from date", async () => {
+  it("should adjust from date when to date is before from date", () => {
     const onChange = vi.fn();
     const range = {
       from: "2025-01-15",
@@ -83,8 +87,9 @@ describe("DateRangePicker", () => {
     const { container } = render(<DateRangePicker value={range} onChange={onChange} />);
 
     const toInputs = screen.getAllByLabelText(/to:/i);
-    const toInput = (Array.from(toInputs).find(input => container.contains(input)) || toInputs[0]) as HTMLInputElement;
-    
+    const toInput = (Array.from(toInputs).find((input) => container.contains(input)) ||
+      toInputs[0]) as HTMLInputElement;
+
     fireEvent.change(toInput, { target: { value: "2025-01-10" } });
 
     // Check that onChange was called with adjusted dates
@@ -97,12 +102,15 @@ describe("DateRangePicker", () => {
   it("should apply maxDate to both inputs", () => {
     const onChange = vi.fn();
     const maxDate = "2025-12-31";
-    const { container } = render(<DateRangePicker value={defaultRange} onChange={onChange} maxDate={maxDate} />);
+    const { container } = render(
+      <DateRangePicker value={defaultRange} onChange={onChange} maxDate={maxDate} />,
+    );
 
     const fromInputs = screen.getAllByLabelText(/from:/i);
     const toInputs = screen.getAllByLabelText(/to:/i);
-    const fromInput = Array.from(fromInputs).find(input => container.contains(input)) || fromInputs[0];
-    const toInput = Array.from(toInputs).find(input => container.contains(input)) || toInputs[0];
+    const fromInput =
+      Array.from(fromInputs).find((input) => container.contains(input)) || fromInputs[0];
+    const toInput = Array.from(toInputs).find((input) => container.contains(input)) || toInputs[0];
 
     expect(fromInput).toHaveAttribute("max", maxDate);
     expect(toInput).toHaveAttribute("max", maxDate);
@@ -111,12 +119,15 @@ describe("DateRangePicker", () => {
   it("should apply minDate to both inputs", () => {
     const onChange = vi.fn();
     const minDate = "2025-01-01";
-    const { container } = render(<DateRangePicker value={defaultRange} onChange={onChange} minDate={minDate} />);
+    const { container } = render(
+      <DateRangePicker value={defaultRange} onChange={onChange} minDate={minDate} />,
+    );
 
     const fromInputs = screen.getAllByLabelText(/from:/i);
     const toInputs = screen.getAllByLabelText(/to:/i);
-    const fromInput = Array.from(fromInputs).find(input => container.contains(input)) || fromInputs[0];
-    const toInput = Array.from(toInputs).find(input => container.contains(input)) || toInputs[0];
+    const fromInput =
+      Array.from(fromInputs).find((input) => container.contains(input)) || fromInputs[0];
+    const toInput = Array.from(toInputs).find((input) => container.contains(input)) || toInputs[0];
 
     expect(fromInput).toHaveAttribute("min", minDate);
     expect(toInput).toHaveAttribute("min", minDate);
@@ -129,8 +140,9 @@ describe("DateRangePicker", () => {
 
     const fromInputs = screen.getAllByLabelText(/from:/i);
     const toInputs = screen.getAllByLabelText(/to:/i);
-    const fromInput = Array.from(fromInputs).find(input => container.contains(input)) || fromInputs[0];
-    const toInput = Array.from(toInputs).find(input => container.contains(input)) || toInputs[0];
+    const fromInput =
+      Array.from(fromInputs).find((input) => container.contains(input)) || fromInputs[0];
+    const toInput = Array.from(toInputs).find((input) => container.contains(input)) || toInputs[0];
 
     expect(fromInput).toBeInTheDocument();
     expect(toInput).toBeInTheDocument();

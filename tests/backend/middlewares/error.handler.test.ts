@@ -1,6 +1,5 @@
 import type { NextFunction, Request, Response } from "express";
-import type { ZodError } from "zod";
-import { z } from "zod";
+import { z, ZodError } from "zod";
 import { errorHandler } from "../../../apps/backend/src/middlewares/error.handler.js";
 import { HttpError } from "../../../apps/backend/src/utils/http.js";
 import { logger } from "../../../apps/backend/src/config/logger.js";
@@ -107,21 +106,27 @@ describe("errorHandler middleware", () => {
         age: z.number().min(18),
       });
 
-      let zodError: ZodError;
+      let zodError: ZodError | undefined;
       try {
         schema.parse({ email: "invalid", age: 10 });
       } catch (err) {
-        zodError = err as ZodError;
+        if (err instanceof ZodError) {
+          zodError = err;
+        }
       }
 
-      errorHandler(zodError!, mockRequest as Request, mockResponse as Response, mockNext);
+      if (!zodError) {
+        throw new Error("Expected ZodError to be thrown");
+      }
+
+      errorHandler(zodError, mockRequest as Request, mockResponse as Response, mockNext);
 
       expect(mockResponse.status).toHaveBeenCalledWith(400);
       expect(mockResponse.json).toHaveBeenCalledWith({
         error: {
           code: "VALIDATION_ERROR",
           message: "VALIDATION_ERROR",
-          details: zodError!.flatten(),
+          details: zodError.flatten(),
           requestId: mockRequestId,
         },
       });
@@ -144,7 +149,7 @@ describe("errorHandler middleware", () => {
 
       expect(logger.error).toHaveBeenCalledWith(
         expect.objectContaining({
-          err: zodError!,
+          err: zodError,
           status: 400,
           code: "VALIDATION_ERROR",
         }),

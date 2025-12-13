@@ -275,6 +275,8 @@ describe("Exercise Service", () => {
       };
 
       // Configure mocks: type exists, name is unique
+      mockDb("exercise_types");
+      mockDb("exercises");
       if (queryBuilders["exercise_types"]) {
         queryBuilders["exercise_types"].first.mockResolvedValue({ code: typeCode });
       }
@@ -306,19 +308,15 @@ describe("Exercise Service", () => {
         archived_at: null,
       };
 
-      const mockQueryBuilder = {
-        where: jest.fn().mockReturnThis(),
-        first: jest.fn().mockResolvedValue({ code: typeCode }),
-      };
-      mockDb.mockReturnValue(mockQueryBuilder as never);
-
-      const nameQueryBuilder = {
-        whereRaw: jest.fn().mockReturnThis(),
-        andWhere: jest.fn().mockReturnThis(),
-        whereNull: jest.fn().mockReturnThis(),
-        first: jest.fn().mockResolvedValue(null),
-      };
-      mockDb.mockReturnValueOnce(nameQueryBuilder as never);
+      // Configure mocks: type exists, name is unique
+      mockDb("exercise_types");
+      mockDb("exercises");
+      if (queryBuilders["exercise_types"]) {
+        queryBuilders["exercise_types"].first.mockResolvedValue({ code: typeCode });
+      }
+      if (queryBuilders["exercises"]) {
+        queryBuilders["exercises"].first.mockResolvedValue(null);
+      }
 
       mockExerciseRepo.createExercise.mockResolvedValue(undefined);
       mockExerciseRepo.getExerciseRaw.mockResolvedValue(mockCreated);

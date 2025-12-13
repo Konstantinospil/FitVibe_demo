@@ -2,7 +2,7 @@ import crypto from "crypto";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 import { v4 as uuidv4 } from "uuid";
-import db from "../../db/index.js";
+import { db } from "../../db/index.js";
 import { is2FAEnabled, verify2FACode } from "./twofa.service.js";
 import { normalizeAuthTiming } from "./timing.utils.js";
 import {

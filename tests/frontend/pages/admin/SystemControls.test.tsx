@@ -51,10 +51,13 @@ describe("SystemControls", () => {
       </MemoryRouter>,
     );
 
-    await waitFor(() => {
-      expect(screen.getByText("System Health")).toBeInTheDocument();
-      expect(screen.getByText("Read-Only Mode")).toBeInTheDocument();
-    }, { timeout: 5000 });
+    await waitFor(
+      () => {
+        expect(screen.getByText("System Health")).toBeInTheDocument();
+        expect(screen.getByText("Read-Only Mode")).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
   });
 
   it("should show loading state", () => {
@@ -84,11 +87,14 @@ describe("SystemControls", () => {
       </MemoryRouter>,
     );
 
-    await waitFor(() => {
-      expect(screen.getByText("Healthy")).toBeInTheDocument();
-      expect(screen.getByText("1d 0h")).toBeInTheDocument();
-      expect(screen.getByText("Normal")).toBeInTheDocument();
-    }, { timeout: 5000 });
+    await waitFor(
+      () => {
+        expect(screen.getByText("Healthy")).toBeInTheDocument();
+        expect(screen.getByText("1d 0h")).toBeInTheDocument();
+        expect(screen.getByText("Normal")).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
   });
 
   it("should display degraded health status", async () => {
@@ -104,9 +110,12 @@ describe("SystemControls", () => {
       </MemoryRouter>,
     );
 
-    await waitFor(() => {
-      expect(screen.getByText("Degraded")).toBeInTheDocument();
-    }, { timeout: 5000 });
+    await waitFor(
+      () => {
+        expect(screen.getByText("Degraded")).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
   });
 
   it("should format uptime correctly", async () => {
@@ -122,9 +131,12 @@ describe("SystemControls", () => {
       </MemoryRouter>,
     );
 
-    await waitFor(() => {
-      expect(screen.getByText("1h 0m")).toBeInTheDocument();
-    }, { timeout: 5000 });
+    await waitFor(
+      () => {
+        expect(screen.getByText("1h 0m")).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
   });
 
   it("should show enable read-only mode button when not in read-only mode", async () => {
@@ -137,9 +149,12 @@ describe("SystemControls", () => {
       </MemoryRouter>,
     );
 
-    await waitFor(() => {
-      expect(screen.getByText("Enable Read-Only Mode")).toBeInTheDocument();
-    }, { timeout: 5000 });
+    await waitFor(
+      () => {
+        expect(screen.getByText("Enable Read-Only Mode")).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
   });
 
   it("should show enable form when enable button is clicked", async () => {
@@ -152,18 +167,24 @@ describe("SystemControls", () => {
       </MemoryRouter>,
     );
 
-    await waitFor(() => {
-      expect(screen.getByText("Enable Read-Only Mode")).toBeInTheDocument();
-    }, { timeout: 5000 });
+    await waitFor(
+      () => {
+        expect(screen.getByText("Enable Read-Only Mode")).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
 
     const enableButton = screen.getByText("Enable Read-Only Mode");
     fireEvent.click(enableButton);
 
-    await waitFor(() => {
-      expect(screen.getByText("Warning")).toBeInTheDocument();
-      expect(screen.getByLabelText("Reason (optional)")).toBeInTheDocument();
-      expect(screen.getByLabelText("Estimated Duration (optional)")).toBeInTheDocument();
-    }, { timeout: 5000 });
+    await waitFor(
+      () => {
+        expect(screen.getByText("Warning")).toBeInTheDocument();
+        expect(screen.getByLabelText("Reason (optional)")).toBeInTheDocument();
+        expect(screen.getByLabelText("Estimated Duration (optional)")).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
   });
 
   it("should enable read-only mode when confirmed", async () => {
@@ -183,16 +204,22 @@ describe("SystemControls", () => {
       </MemoryRouter>,
     );
 
-    await waitFor(() => {
-      expect(screen.getByText("Enable Read-Only Mode")).toBeInTheDocument();
-    }, { timeout: 5000 });
+    await waitFor(
+      () => {
+        expect(screen.getByText("Enable Read-Only Mode")).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
 
     const enableButton = screen.getByText("Enable Read-Only Mode");
     fireEvent.click(enableButton);
 
-    await waitFor(() => {
-      expect(screen.getByLabelText("Reason (optional)")).toBeInTheDocument();
-    }, { timeout: 5000 });
+    await waitFor(
+      () => {
+        expect(screen.getByLabelText("Reason (optional)")).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
 
     const reasonInput = screen.getByLabelText("Reason (optional)");
     fireEvent.change(reasonInput, { target: { value: "Emergency maintenance" } });
@@ -200,13 +227,16 @@ describe("SystemControls", () => {
     const confirmButton = screen.getByText("Confirm Enable");
     fireEvent.click(confirmButton);
 
-    await waitFor(() => {
-      expect(api.enableReadOnlyMode).toHaveBeenCalledWith({
-        reason: "Emergency maintenance",
-        estimatedDuration: undefined,
-      });
-      expect(mockToast.success).toHaveBeenCalledWith("Read-only mode enabled successfully");
-    }, { timeout: 5000 });
+    await waitFor(
+      () => {
+        expect(api.enableReadOnlyMode).toHaveBeenCalledWith({
+          reason: "Emergency maintenance",
+          estimatedDuration: undefined,
+        });
+        expect(mockToast.success).toHaveBeenCalledWith("Read-only mode enabled successfully");
+      },
+      { timeout: 5000 },
+    );
   });
 
   it("should show error when enabling read-only mode fails", async () => {
@@ -220,25 +250,34 @@ describe("SystemControls", () => {
       </MemoryRouter>,
     );
 
-    await waitFor(() => {
-      expect(screen.getByText("Enable Read-Only Mode")).toBeInTheDocument();
-    }, { timeout: 5000 });
+    await waitFor(
+      () => {
+        expect(screen.getByText("Enable Read-Only Mode")).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
 
     const enableButton = screen.getByText("Enable Read-Only Mode");
     fireEvent.click(enableButton);
 
-    await waitFor(() => {
-      expect(screen.getByText("Confirm Enable")).toBeInTheDocument();
-    }, { timeout: 5000 });
+    await waitFor(
+      () => {
+        expect(screen.getByText("Confirm Enable")).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
 
     const confirmButton = screen.getByText("Confirm Enable");
     fireEvent.click(confirmButton);
 
-    await waitFor(() => {
-      expect(
-        screen.getByText("Failed to enable read-only mode. Please try again."),
-      ).toBeInTheDocument();
-    }, { timeout: 5000 });
+    await waitFor(
+      () => {
+        expect(
+          screen.getByText("Failed to enable read-only mode. Please try again."),
+        ).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
   });
 
   it("should show disable button when in read-only mode", async () => {
@@ -255,10 +294,13 @@ describe("SystemControls", () => {
       </MemoryRouter>,
     );
 
-    await waitFor(() => {
-      expect(screen.getByText("Read-Only Mode Active")).toBeInTheDocument();
-      expect(screen.getByText("Disable Read-Only Mode")).toBeInTheDocument();
-    }, { timeout: 5000 });
+    await waitFor(
+      () => {
+        expect(screen.getByText("Read-Only Mode Active")).toBeInTheDocument();
+        expect(screen.getByText("Disable Read-Only Mode")).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
   });
 
   it("should disable read-only mode when confirmed", async () => {
@@ -278,34 +320,43 @@ describe("SystemControls", () => {
       </MemoryRouter>,
     );
 
-    await waitFor(() => {
-      const buttons = screen.getAllByText("Disable Read-Only Mode");
-      expect(buttons.length).toBeGreaterThan(0);
-    }, { timeout: 5000 });
+    await waitFor(
+      () => {
+        const buttons = screen.getAllByText("Disable Read-Only Mode");
+        expect(buttons.length).toBeGreaterThan(0);
+      },
+      { timeout: 5000 },
+    );
 
     const disableButtons = screen.getAllByText("Disable Read-Only Mode");
     // Click the button (first one should be the actual button)
     fireEvent.click(disableButtons[0]);
 
-    await waitFor(() => {
-      // Look for the dialog title specifically
-      expect(screen.getByText("Disable Read-Only Mode", { selector: "h3" })).toBeInTheDocument();
-      expect(
-        screen.getByText(
-          "Are you sure you want to disable read-only mode and restore normal operations?",
-        ),
-      ).toBeInTheDocument();
-    }, { timeout: 5000 });
+    await waitFor(
+      () => {
+        // Look for the dialog title specifically
+        expect(screen.getByText("Disable Read-Only Mode", { selector: "h3" })).toBeInTheDocument();
+        expect(
+          screen.getByText(
+            "Are you sure you want to disable read-only mode and restore normal operations?",
+          ),
+        ).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
 
     const confirmButton = screen.getByText("Yes, Disable");
     fireEvent.click(confirmButton);
 
-    await waitFor(() => {
-      expect(api.disableReadOnlyMode).toHaveBeenCalledWith({
-        notes: undefined,
-      });
-      expect(mockToast.success).toHaveBeenCalledWith("Read-only mode disabled successfully");
-    }, { timeout: 5000 });
+    await waitFor(
+      () => {
+        expect(api.disableReadOnlyMode).toHaveBeenCalledWith({
+          notes: undefined,
+        });
+        expect(mockToast.success).toHaveBeenCalledWith("Read-only mode disabled successfully");
+      },
+      { timeout: 5000 },
+    );
   });
 
   it("should set up polling interval on mount", async () => {
@@ -355,23 +406,32 @@ describe("SystemControls", () => {
       </MemoryRouter>,
     );
 
-    await waitFor(() => {
-      expect(screen.getByText("Enable Read-Only Mode")).toBeInTheDocument();
-    }, { timeout: 5000 });
+    await waitFor(
+      () => {
+        expect(screen.getByText("Enable Read-Only Mode")).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
 
     const enableButton = screen.getByText("Enable Read-Only Mode");
     fireEvent.click(enableButton);
 
-    await waitFor(() => {
-      expect(screen.getByText("Cancel")).toBeInTheDocument();
-    }, { timeout: 5000 });
+    await waitFor(
+      () => {
+        expect(screen.getByText("Cancel")).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
 
     const cancelButton = screen.getByText("Cancel");
     fireEvent.click(cancelButton);
 
-    await waitFor(() => {
-      expect(screen.queryByText("Warning")).not.toBeInTheDocument();
-    }, { timeout: 5000 });
+    await waitFor(
+      () => {
+        expect(screen.queryByText("Warning")).not.toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
 
     expect(api.enableReadOnlyMode).not.toHaveBeenCalled();
   });

@@ -253,7 +253,11 @@ describe("Feed Service", () => {
 
       expect(result).toBeDefined();
       expect(Array.isArray(result)).toBe(true);
-      expect(mockFeedRepo.listBookmarkedSessions).toHaveBeenCalledWith(userId);
+      expect(mockFeedRepo.listBookmarkedSessions).toHaveBeenCalledWith(
+        userId,
+        undefined,
+        undefined,
+      );
     });
   });
 
@@ -369,16 +373,19 @@ describe("Feed Service", () => {
       expect(mockFeedRepo.insertBlock).toHaveBeenCalledWith(userId, targetUser.id);
     });
 
-    it("should throw 400 when user is already blocked", async () => {
+    it("should allow blocking already blocked user (idempotent)", async () => {
       const targetUser = {
         id: "target-user",
         username: "targetuser",
       };
 
       mockUsersRepo.findUserByUsername.mockResolvedValue(targetUser);
-      mockFeedRepo.hasBlockRelation.mockResolvedValue(true);
+      mockFeedRepo.insertBlock.mockResolvedValue(undefined);
 
-      await expect(feedService.blockUserByAlias(userId, "targetuser")).rejects.toThrow(HttpError);
+      const result = await feedService.blockUserByAlias(userId, "targetuser");
+
+      expect(result.blockedId).toBe("target-user");
+      expect(mockFeedRepo.insertBlock).toHaveBeenCalledWith(userId, targetUser.id);
     });
   });
 
@@ -403,14 +410,15 @@ describe("Feed Service", () => {
       mockFeedRepo.findFeedItemById.mockResolvedValue({
         feed_item_id: feedItemId,
         session_id: sessionId,
-        owner_id: userId,
+        owner_id: "other-user", // Different owner to avoid self-reporting issues
+        visibility: "public",
       });
+      mockFeedRepo.hasBlockRelation.mockResolvedValue(false);
       mockFeedRepo.insertFeedReport.mockResolvedValue(undefined);
-      const statsMap = new Map();
-      statsMap.set(feedItemId, { likes: 0, comments: 0 });
-      mockFeedRepo.getFeedItemStats.mockResolvedValue(statsMap);
 
-      await feedService.reportFeedItem(userId, feedItemId, "spam");
+      const result = await feedService.reportFeedItem(userId, feedItemId, "spam");
+
+      expect(result.reported).toBe(true);
 
       expect(mockFeedRepo.insertFeedReport).toHaveBeenCalled();
     });
@@ -430,10 +438,10 @@ describe("Feed Service", () => {
 
       mockFeedRepo.getLeaderboardRows.mockResolvedValue(mockRows);
 
-      const result = await feedService.getLeaderboard({ limit: 10 });
+      const result = await feedService.getLeaderboard(null, { limit: 10 });
 
-      expect(result.items).toHaveLength(1);
-      expect(result.items[0].username).toBe("testuser");
+      expect(result).toHaveLength(1);
+      expect(result[0].user.username).toBe("testuser");
     });
   });
 });

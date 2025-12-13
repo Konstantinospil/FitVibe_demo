@@ -137,12 +137,15 @@ describe("TwoFactorVerificationLogin", () => {
     }
 
     // Check that the API was called with correct parameters
-    await waitFor(() => {
-      expect(api.verify2FALogin).toHaveBeenCalledWith({
-        pendingSessionId: "session123",
-        code: "123456",
-      });
-    }, { timeout: 5000 });
+    await waitFor(
+      () => {
+        expect(api.verify2FALogin).toHaveBeenCalledWith({
+          pendingSessionId: "session123",
+          code: "123456",
+        });
+      },
+      { timeout: 5000 },
+    );
   });
 
   it("displays error for invalid 2FA code", async () => {
@@ -167,9 +170,12 @@ describe("TwoFactorVerificationLogin", () => {
       fireEvent.submit(form);
     }
 
-    await waitFor(() => {
-      expect(screen.getByRole("alert")).toHaveTextContent("Invalid 2FA code. Please try again.");
-    }, { timeout: 5000 });
+    await waitFor(
+      () => {
+        expect(screen.getByRole("alert")).toHaveTextContent("Invalid 2FA code. Please try again.");
+      },
+      { timeout: 5000 },
+    );
   });
 
   it("displays generic error message", async () => {
@@ -186,9 +192,14 @@ describe("TwoFactorVerificationLogin", () => {
       fireEvent.submit(form);
     }
 
-    await waitFor(() => {
-      expect(screen.getByRole("alert")).toHaveTextContent("Verification failed. Please try again.");
-    }, { timeout: 5000 });
+    await waitFor(
+      () => {
+        expect(screen.getByRole("alert")).toHaveTextContent(
+          "Verification failed. Please try again.",
+        );
+      },
+      { timeout: 5000 },
+    );
   });
 
   it("disables form during submission", async () => {

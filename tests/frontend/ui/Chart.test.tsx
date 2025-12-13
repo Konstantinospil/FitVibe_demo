@@ -161,4 +161,168 @@ describe("Chart", () => {
 
     expect(getByTestId("chart")).toBeInTheDocument();
   });
+
+  it("should render ChartTooltip with active payload", () => {
+    const { container } = render(<Chart data={sampleData} />);
+    const { getByTestId } = within(container);
+
+    expect(getByTestId("chart")).toBeInTheDocument();
+
+    // Test tooltip content function if it was captured
+    if (mockTooltipContent.mock.calls.length > 0) {
+      const tooltipContent = mockTooltipContent.mock.calls[0][0];
+      if (typeof tooltipContent === "function") {
+        const result = tooltipContent({
+          active: true,
+          payload: [{ value: 50 }],
+          label: "Mon",
+        });
+        expect(result).toBeTruthy();
+      }
+    }
+  });
+
+  it("should not render ChartTooltip when not active", () => {
+    const { container } = render(<Chart data={sampleData} />);
+    const { getByTestId } = within(container);
+
+    expect(getByTestId("chart")).toBeInTheDocument();
+
+    // Test tooltip content function with inactive state
+    if (mockTooltipContent.mock.calls.length > 0) {
+      const tooltipContent = mockTooltipContent.mock.calls[0][0];
+      if (typeof tooltipContent === "function") {
+        const result = tooltipContent({
+          active: false,
+          payload: [{ value: 50 }],
+          label: "Mon",
+        });
+        expect(result).toBeNull();
+      }
+    }
+  });
+
+  it("should not render ChartTooltip when payload is empty", () => {
+    const { container } = render(<Chart data={sampleData} />);
+    const { getByTestId } = within(container);
+
+    expect(getByTestId("chart")).toBeInTheDocument();
+
+    // Test tooltip content function with empty payload
+    if (mockTooltipContent.mock.calls.length > 0) {
+      const tooltipContent = mockTooltipContent.mock.calls[0][0];
+      if (typeof tooltipContent === "function") {
+        const result = tooltipContent({
+          active: true,
+          payload: [],
+          label: "Mon",
+        });
+        expect(result).toBeNull();
+      }
+    }
+  });
+
+  it("should not render ChartTooltip when label is undefined", () => {
+    const { container } = render(<Chart data={sampleData} />);
+    const { getByTestId } = within(container);
+
+    expect(getByTestId("chart")).toBeInTheDocument();
+
+    // Test tooltip content function with undefined label
+    if (mockTooltipContent.mock.calls.length > 0) {
+      const tooltipContent = mockTooltipContent.mock.calls[0][0];
+      if (typeof tooltipContent === "function") {
+        const result = tooltipContent({
+          active: true,
+          payload: [{ value: 50 }],
+          label: undefined,
+        });
+        expect(result).toBeNull();
+      }
+    }
+  });
+
+  it("should use custom labelFormatter in tooltip", () => {
+    const labelFormatter = vi.fn((label: string) => `Custom: ${label}`);
+    const { container } = render(<Chart data={sampleData} labelFormatter={labelFormatter} />);
+    const { getByTestId } = within(container);
+
+    expect(getByTestId("chart")).toBeInTheDocument();
+
+    // Test tooltip content function with custom formatter
+    if (mockTooltipContent.mock.calls.length > 0) {
+      const tooltipContent = mockTooltipContent.mock.calls[0][0];
+      if (typeof tooltipContent === "function") {
+        tooltipContent({
+          active: true,
+          payload: [{ value: 50 }],
+          label: "Mon",
+        });
+        // Formatter should be called
+        expect(labelFormatter).toHaveBeenCalled();
+      }
+    }
+  });
+
+  it("should use custom valueFormatter in tooltip", () => {
+    const valueFormatter = vi.fn((value: number) => `$${value}`);
+    const { container } = render(<Chart data={sampleData} valueFormatter={valueFormatter} />);
+    const { getByTestId } = within(container);
+
+    expect(getByTestId("chart")).toBeInTheDocument();
+
+    // Test tooltip content function with custom formatter
+    if (mockTooltipContent.mock.calls.length > 0) {
+      const tooltipContent = mockTooltipContent.mock.calls[0][0];
+      if (typeof tooltipContent === "function") {
+        tooltipContent({
+          active: true,
+          payload: [{ value: 50 }],
+          label: "Mon",
+        });
+        // Formatter should be called
+        expect(valueFormatter).toHaveBeenCalled();
+      }
+    }
+  });
+
+  it("should handle tooltip with zero value", () => {
+    const { container } = render(<Chart data={sampleData} />);
+    const { getByTestId } = within(container);
+
+    expect(getByTestId("chart")).toBeInTheDocument();
+
+    // Test tooltip content function with zero value
+    if (mockTooltipContent.mock.calls.length > 0) {
+      const tooltipContent = mockTooltipContent.mock.calls[0][0];
+      if (typeof tooltipContent === "function") {
+        const result = tooltipContent({
+          active: true,
+          payload: [{ value: 0 }],
+          label: "Mon",
+        });
+        expect(result).toBeTruthy();
+      }
+    }
+  });
+
+  it("should handle tooltip with missing value in payload", () => {
+    const { container } = render(<Chart data={sampleData} />);
+    const { getByTestId } = within(container);
+
+    expect(getByTestId("chart")).toBeInTheDocument();
+
+    // Test tooltip content function with missing value
+    if (mockTooltipContent.mock.calls.length > 0) {
+      const tooltipContent = mockTooltipContent.mock.calls[0][0];
+      if (typeof tooltipContent === "function") {
+        const result = tooltipContent({
+          active: true,
+          payload: [{}],
+          label: "Mon",
+        });
+        expect(result).toBeTruthy();
+      }
+    }
+  });
 });

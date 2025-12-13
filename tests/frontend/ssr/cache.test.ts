@@ -4,18 +4,23 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { isCacheableRoute, getCachedHtml, setCachedHtml, clearCache } from "../cache.js";
+import type * as NodeFs from "node:fs";
+import { isCacheableRoute, getCachedHtml, setCachedHtml, clearCache } from "../../src/ssr/cache.js";
 
 // Mock node:fs
-vi.mock("node:fs", () => ({
-  existsSync: vi.fn(() => false),
-  readFileSync: vi.fn(),
-  writeFileSync: vi.fn(),
-  mkdirSync: vi.fn(),
-  statSync: vi.fn(() => ({
-    mtimeMs: Date.now(),
-  })),
-}));
+vi.mock("node:fs", async (importOriginal) => {
+  const actual = (await importOriginal()) as typeof NodeFs;
+  return {
+    ...actual,
+    existsSync: vi.fn(() => false),
+    readFileSync: vi.fn(),
+    writeFileSync: vi.fn(),
+    mkdirSync: vi.fn(),
+    statSync: vi.fn(() => ({
+      mtimeMs: Date.now(),
+    })),
+  };
+});
 
 describe("SSR cache", () => {
   beforeEach(() => {

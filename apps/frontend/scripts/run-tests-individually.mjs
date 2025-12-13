@@ -38,7 +38,9 @@ const testFiles = process.argv.slice(2);
 
 if (testFiles.length === 0) {
   console.error("Usage: node run-tests-individually.mjs <test-file1> [test-file2] ...");
-  console.error("Or: find ../../tests/frontend -name '*.test.ts' -o -name '*.test.tsx' | xargs node run-tests-individually.mjs");
+  console.error(
+    "Or: find ../../tests/frontend -name '*.test.ts' -o -name '*.test.tsx' | xargs node run-tests-individually.mjs",
+  );
   process.exit(1);
 }
 
@@ -48,11 +50,11 @@ const stuckTests = [];
 
 function analyzeTimingIssues(testFile, duration) {
   const issues = [];
-  
+
   // Check if test file exists and read it
   let testContent = "";
   try {
-    const fullPath = testFile.startsWith("tests/") 
+    const fullPath = testFile.startsWith("tests/")
       ? resolve(frontendDir, "..", "..", testFile)
       : resolve(frontendDir, testFile);
     testContent = readFileSync(fullPath, "utf-8");
@@ -66,53 +68,53 @@ function analyzeTimingIssues(testFile, duration) {
     {
       pattern: /waitFor|waitForElementToBeRemoved|waitForElement|findBy/i,
       issue: "Uses waitFor/findBy without explicit timeout - may wait too long",
-      fix: "Add explicit timeout: waitFor(..., { timeout: 5000 })"
+      fix: "Add explicit timeout: waitFor(..., { timeout: 5000 })",
     },
     {
       pattern: /setTimeout|setInterval/i,
       issue: "Uses setTimeout/setInterval - may cause timing issues",
-      fix: "Use fake timers: vi.useFakeTimers() and vi.advanceTimersByTime()"
+      fix: "Use fake timers: vi.useFakeTimers() and vi.advanceTimersByTime()",
     },
     {
       pattern: /sleep|delay|pause/i,
       issue: "Uses sleep/delay/pause - may cause slow tests",
-      fix: "Use fake timers or waitFor with proper conditions"
+      fix: "Use fake timers or waitFor with proper conditions",
     },
     {
       pattern: /vi\.useRealTimers\(\)/i,
       issue: "Uses real timers - may cause slow tests",
-      fix: "Consider using fake timers for faster execution"
+      fix: "Consider using fake timers for faster execution",
     },
     {
       pattern: /beforeAll|beforeEach.*async/i,
       issue: "Has async setup hooks - may cause delays",
-      fix: "Ensure setup hooks complete quickly or have timeouts"
+      fix: "Ensure setup hooks complete quickly or have timeouts",
     },
     {
       pattern: /afterAll|afterEach.*async/i,
       issue: "Has async teardown hooks - may cause delays",
-      fix: "Ensure teardown hooks complete quickly or have timeouts"
+      fix: "Ensure teardown hooks complete quickly or have timeouts",
     },
     {
       pattern: /testTimeout|hookTimeout/i,
       issue: "Custom timeout settings found",
-      fix: "Check if timeout is too high or causing issues"
+      fix: "Check if timeout is too high or causing issues",
     },
     {
       pattern: /fetch|axios|http/i,
       issue: "Makes HTTP requests - may hang if not mocked",
-      fix: "Ensure all HTTP requests are properly mocked"
+      fix: "Ensure all HTTP requests are properly mocked",
     },
     {
       pattern: /\.then\(|await.*then/i,
       issue: "Uses promises - may hang if not resolved",
-      fix: "Ensure all promises resolve/reject with timeouts"
+      fix: "Ensure all promises resolve/reject with timeouts",
     },
     {
       pattern: /while.*true|for.*;;/i,
       issue: "Potential infinite loop",
-      fix: "Add loop termination conditions"
-    }
+      fix: "Add loop termination conditions",
+    },
   ];
 
   for (const check of checks) {
@@ -120,7 +122,7 @@ function analyzeTimingIssues(testFile, duration) {
       issues.push({
         type: check.issue,
         fix: check.fix,
-        pattern: check.pattern.toString()
+        pattern: check.pattern.toString(),
       });
     }
   }
@@ -132,7 +134,7 @@ function analyzeTimingIssues(testFile, duration) {
       issues.push({
         type: "waitFor without explicit timeout",
         fix: "Add timeout option: waitFor(..., { timeout: 5000 })",
-        pattern: match[0]
+        pattern: match[0],
       });
     }
   }
@@ -142,7 +144,7 @@ function analyzeTimingIssues(testFile, duration) {
 
 async function runTest(testFile) {
   const startTime = Date.now();
-  
+
   // Convert to relative path
   let relativePath = testFile;
   if (testFile.startsWith(frontendDir)) {
@@ -171,12 +173,20 @@ async function runTest(testFile) {
 
     const testProcess = spawn(
       process.execPath,
-      [...nodeArgs, vitestBinPath, "run", "--reporter=verbose", "--no-coverage", "--run", relativePath],
+      [
+        ...nodeArgs,
+        vitestBinPath,
+        "run",
+        "--reporter=verbose",
+        "--no-coverage",
+        "--run",
+        relativePath,
+      ],
       {
         stdio: "inherit",
         env,
         cwd: frontendDir,
-      }
+      },
     );
 
     testProcess.on("exit", (code, signal) => {
@@ -197,7 +207,7 @@ async function runTest(testFile) {
         stuckTests.push(result);
         console.log(`\n🔴 STUCK TEST: ${relativePath}`);
         console.log(`Duration: ${duration}ms (exceeded ${TIMEOUT_MS}ms timeout)`);
-        
+
         // Analyze timing issues
         const issues = analyzeTimingIssues(relativePath, duration);
         if (issues.length > 0) {
@@ -219,7 +229,7 @@ async function runTest(testFile) {
         slowTests.push(result);
         console.log(`\n🟡 SLOW TEST: ${relativePath}`);
         console.log(`Duration: ${duration}ms (exceeded ${TIMEOUT_MS}ms but completed)`);
-        
+
         const issues = analyzeTimingIssues(relativePath, duration);
         if (issues.length > 0) {
           console.log(`\n📋 POTENTIAL TIMING ISSUES:`);
@@ -243,7 +253,7 @@ async function runTest(testFile) {
       clearTimeout(timeoutId);
       const endTime = Date.now();
       const duration = endTime - startTime;
-      
+
       console.error(`\n❌ ERROR running test: ${error.message}`);
       results.push({
         file: relativePath,
@@ -318,9 +328,7 @@ async function runAllTests() {
     .forEach((r) => {
       const status = r.timedOut ? "🔴 STUCK" : r.passed ? "✓" : "×";
       const timeStr = r.timedOut ? "TIMEOUT" : `${r.duration}ms`;
-      console.log(
-        `${status} ${r.file.padEnd(60)} ${timeStr.padStart(10)}`,
-      );
+      console.log(`${status} ${r.file.padEnd(60)} ${timeStr.padStart(10)}`);
     });
 
   process.exit(stuckTests.length > 0 || results.some((r) => !r.passed && !r.timedOut) ? 1 : 0);
@@ -330,4 +338,3 @@ runAllTests().catch((error) => {
   console.error("Fatal error:", error);
   process.exit(1);
 });
-

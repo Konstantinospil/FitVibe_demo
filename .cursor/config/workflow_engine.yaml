@@ -23,3 +23,15 @@ workflow_engine:
   # Error handling
   circuit_breaker_threshold: 5
   circuit_breaker_timeout_seconds: 60
+  
+  # Dead-letter queue
+  dead_letter_queue:
+    queue_dir: ".cursor/data/dead_letter_queue"
+    max_tasks: 1000  # Maximum number of failed tasks to retain
+    retention_days: 30  # Auto-cleanup tasks older than retention period
+  
+  # Default retry configuration (can be overridden per-step/phase in workflow configs)
+  retry:
+    default_max_attempts: 3
+    default_backoff_multiplier: 2.0
+    default_initial_delay_seconds: 5.0

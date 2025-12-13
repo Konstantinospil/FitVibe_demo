@@ -182,7 +182,7 @@ const SystemControls: React.FC = () => {
     });
   };
 
-  const formatAction = (action: string, entityType: string): string => {
+  const formatAction = (action: string, _entityType: string): string => {
     // Format action strings like "auth.login" -> "Login"
     const parts = action.split(".");
     const actionName = parts[parts.length - 1];

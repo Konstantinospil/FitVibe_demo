@@ -165,18 +165,23 @@ describe("Idempotency Service", () => {
         response_body: null,
       };
 
+      // First call: insert (returns empty array due to conflict)
+      // The returning() method should resolve to empty array
+      const mockReturning1 = jest.fn().mockResolvedValue([]);
       const mockInsertBuilder = {
         insert: jest.fn().mockReturnThis(),
         onConflict: jest.fn().mockReturnThis(),
         ignore: jest.fn().mockReturnThis(),
-        returning: jest.fn().mockResolvedValue([]),
+        returning: mockReturning1,
       };
 
+      // Second call: query existing record
       const mockQueryBuilder = {
         where: jest.fn().mockReturnThis(),
         first: jest.fn().mockResolvedValue(existingRecord),
       };
 
+      // Set up mocks for first call (checking HttpError)
       mockDb
         .mockReturnValueOnce(mockInsertBuilder as never)
         .mockReturnValueOnce(mockQueryBuilder as never);
@@ -184,6 +189,24 @@ describe("Idempotency Service", () => {
       await expect(idempotencyService.resolveIdempotency(context, payload2)).rejects.toThrow(
         HttpError,
       );
+
+      // Set up mocks for second call (checking message)
+      const mockReturning2 = jest.fn().mockResolvedValue([]);
+      const mockInsertBuilder2 = {
+        insert: jest.fn().mockReturnThis(),
+        onConflict: jest.fn().mockReturnThis(),
+        ignore: jest.fn().mockReturnThis(),
+        returning: mockReturning2,
+      };
+      const mockQueryBuilder2 = {
+        where: jest.fn().mockReturnThis(),
+        first: jest.fn().mockResolvedValue(existingRecord),
+      };
+
+      mockDb
+        .mockReturnValueOnce(mockInsertBuilder2 as never)
+        .mockReturnValueOnce(mockQueryBuilder2 as never);
+
       await expect(idempotencyService.resolveIdempotency(context, payload2)).rejects.toThrow(
         "IDEMPOTENCY_MISMATCH",
       );

@@ -25,7 +25,6 @@ class Logger {
     } else {
       // Client-side: check Vite's import.meta.env
       try {
-        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
         const viteEnv = import.meta.env;
         this.isDevelopment = viteEnv && typeof viteEnv === "object" && viteEnv.DEV === true;
       } catch {

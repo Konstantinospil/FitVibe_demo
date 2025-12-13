@@ -36,13 +36,6 @@ class CircuitState(Enum):
     HALF_OPEN = "half_open"  # Testing if service recovered
 
 
-class CircuitState(Enum):
-    """Circuit breaker states."""
-    CLOSED = "closed"  # Normal operation, requests pass through
-    OPEN = "open"  # Circuit is open, requests fail immediately
-    HALF_OPEN = "half_open"  # Testing if service recovered
-
-
 class ErrorCategory(Enum):
     """Error categories for classification."""
     TRANSIENT = "transient"  # Temporary errors, should retry
@@ -186,7 +179,29 @@ class RetryHandler:
     """Handles retry logic with exponential backoff."""
     
     def __init__(self, config: Optional[RetryConfig] = None):
-        self.config = config or RetryConfig()
+        """
+        Initialize retry handler.
+        
+        Args:
+            config: Retry configuration (default: from config or RetryConfig defaults)
+        """
+        if config is None:
+            # Try to load defaults from config
+            try:
+                from .config_loader import config_loader
+                workflow_config = config_loader.get_section("workflow_engine") or {}
+                retry_config = workflow_config.get("retry", {})
+                
+                config = RetryConfig(
+                    max_attempts=retry_config.get("default_max_attempts", 3),
+                    backoff_base=retry_config.get("default_backoff_multiplier", 2.0),
+                    initial_delay=retry_config.get("default_initial_delay_seconds", 5.0)
+                )
+            except ImportError:
+                # Fallback to defaults if config_loader not available
+                config = RetryConfig()
+        
+        self.config = config
         self.classifier = ErrorClassifier()
     
     def execute_with_retry(
@@ -299,10 +314,49 @@ class RetryHandler:
 class DeadLetterQueue:
     """Manages failed tasks in a dead-letter queue."""
     
-    def __init__(self, queue_dir: str = ".cursor/data/dead_letter_queue"):
-        self.queue_dir = Path(queue_dir)
+    def __init__(
+        self,
+        queue_dir: Optional[str] = None,
+        max_tasks: Optional[int] = None,
+        retention_days: Optional[int] = None
+    ):
+        """
+        Initialize dead-letter queue.
+        
+        Args:
+            queue_dir: Directory for storing failed tasks (default: from config or ".cursor/data/dead_letter_queue")
+            max_tasks: Maximum number of tasks to retain (default: from config or None for unlimited)
+            retention_days: Auto-cleanup tasks older than this (default: from config or None for no cleanup)
+        """
+        # Load config if available
+        try:
+            from .config_loader import config_loader
+            workflow_config = config_loader.get_section("workflow_engine") or {}
+            dlq_config = workflow_config.get("dead_letter_queue", {})
+            
+            # Use provided values or fall back to config, then to defaults
+            self.queue_dir = Path(
+                queue_dir or 
+                dlq_config.get("queue_dir", ".cursor/data/dead_letter_queue")
+            )
+            self.max_tasks = max_tasks if max_tasks is not None else dlq_config.get("max_tasks")
+            self.retention_days = retention_days if retention_days is not None else dlq_config.get("retention_days")
+        except ImportError:
+            # Fallback if config_loader not available
+            self.queue_dir = Path(queue_dir or ".cursor/data/dead_letter_queue")
+            self.max_tasks = max_tasks
+            self.retention_days = retention_days
+        
         self.queue_dir.mkdir(parents=True, exist_ok=True)
         self.classifier = ErrorClassifier()
+        
+        # Cleanup old tasks on initialization if retention_days is set
+        if self.retention_days:
+            self._cleanup_old_tasks()
+        
+        # Enforce max_tasks limit if set
+        if self.max_tasks:
+            self._enforce_max_tasks()
     
     def add_failed_task(
         self,
@@ -358,6 +412,10 @@ class DeadLetterQueue:
         
         with open(task_file, 'w') as f:
             json.dump(task_dict, f, indent=2, default=str)
+        
+        # Enforce max_tasks limit if set
+        if self.max_tasks:
+            self._enforce_max_tasks()
         
         audit_logger.log_error(
             error_message=f"Task {task_id} added to dead-letter queue: {classified.message}",
@@ -471,6 +529,68 @@ class DeadLetterQueue:
             task_file.unlink()
             return True
         return False
+    
+    def _cleanup_old_tasks(self) -> None:
+        """Remove tasks older than retention_days."""
+        if not self.retention_days:
+            return
+        
+        cutoff_date = datetime.utcnow() - timedelta(days=self.retention_days)
+        removed_count = 0
+        
+        for task_file in self.queue_dir.glob("*.json"):
+            try:
+                with open(task_file, 'r') as f:
+                    data = json.load(f)
+                
+                failed_at_str = data.get("failed_at", "")
+                if failed_at_str:
+                    failed_at = datetime.fromisoformat(failed_at_str.replace('Z', '+00:00'))
+                    if failed_at.replace(tzinfo=None) < cutoff_date:
+                        task_file.unlink()
+                        removed_count += 1
+            except Exception as e:
+                logging.warning(f"Error checking task file {task_file} for cleanup: {e}")
+                continue
+        
+        if removed_count > 0:
+            logging.info(f"Cleaned up {removed_count} old tasks from dead-letter queue (older than {self.retention_days} days)")
+    
+    def _enforce_max_tasks(self) -> None:
+        """Remove oldest tasks if we exceed max_tasks limit."""
+        if not self.max_tasks:
+            return
+        
+        # Get all task files with their timestamps
+        task_files = []
+        for task_file in self.queue_dir.glob("*.json"):
+            try:
+                with open(task_file, 'r') as f:
+                    data = json.load(f)
+                failed_at_str = data.get("failed_at", "")
+                if failed_at_str:
+                    failed_at = datetime.fromisoformat(failed_at_str.replace('Z', '+00:00'))
+                    task_files.append((task_file, failed_at))
+            except Exception as e:
+                logging.warning(f"Error reading task file {task_file} for max_tasks enforcement: {e}")
+                continue
+        
+        # Sort by failed_at (oldest first)
+        task_files.sort(key=lambda x: x[1])
+        
+        # Remove oldest tasks if we exceed the limit
+        if len(task_files) > self.max_tasks:
+            to_remove = len(task_files) - self.max_tasks
+            removed_count = 0
+            for task_file, _ in task_files[:to_remove]:
+                try:
+                    task_file.unlink()
+                    removed_count += 1
+                except Exception as e:
+                    logging.warning(f"Error removing task file {task_file}: {e}")
+            
+            if removed_count > 0:
+                logging.info(f"Removed {removed_count} oldest tasks from dead-letter queue to enforce max_tasks limit ({self.max_tasks})")
 
 
 class CircuitBreaker:
@@ -609,8 +729,8 @@ class CircuitBreakerOpenError(Exception):
 
 # Global instances
 error_classifier = ErrorClassifier()
-retry_handler = RetryHandler()
-dead_letter_queue = DeadLetterQueue()
+retry_handler = RetryHandler()  # Will load defaults from config
+dead_letter_queue = DeadLetterQueue()  # Will load config from workflow_engine.yaml
 
 # Circuit breaker registry
 _circuit_breakers: Dict[str, CircuitBreaker] = {}

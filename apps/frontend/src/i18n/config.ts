@@ -6,7 +6,7 @@ export const loadMinimalLoginTranslations = async () => {
   // Only load auth.json for login page - other translations loaded on-demand
   const enAuthModule = await import("./locales/en/auth.json");
   const enAuth = enAuthModule.default as Record<string, unknown>;
-  
+
   // Create minimal common translations object with only what's needed for login
   const minimalCommon = {
     language: {
@@ -83,17 +83,22 @@ const loadLanguage = async (lng: SupportedLanguage): Promise<void> => {
   try {
     // Dynamically import translation files only when needed
     // This includes English to allow proper code-splitting
-    const [commonModule, authModule, termsModule, privacyModule] = await Promise.all([
+    const modules = await Promise.all([
       import(`./locales/${lng}/common.json`),
       import(`./locales/${lng}/auth.json`),
       import(`./locales/${lng}/terms.json`),
       import(`./locales/${lng}/privacy.json`),
     ]);
 
-    const common = commonModule.default as Record<string, unknown>;
-    const auth = authModule.default as Record<string, unknown>;
-    const terms = termsModule.default as Record<string, unknown>;
-    const privacy = privacyModule.default as Record<string, unknown>;
+    const commonModule = modules[0] as { default: Record<string, unknown> };
+    const authModule = modules[1] as { default: Record<string, unknown> };
+    const termsModule = modules[2] as { default: Record<string, unknown> };
+    const privacyModule = modules[3] as { default: Record<string, unknown> };
+
+    const common = commonModule.default;
+    const auth = authModule.default;
+    const terms = termsModule.default;
+    const privacy = privacyModule.default;
 
     const translations = mergeTranslations(
       mergeTranslations(mergeTranslations(common, auth), terms),
@@ -150,7 +155,7 @@ export const loadFullTranslations = async (): Promise<void> => {
   if (resources.en && Object.keys(resources.en.translation).length > 50) {
     return; // Already loaded full translations
   }
-  
+
   const fullTranslations = await loadFullEnglishTranslations();
   i18n.addResourceBundle("en", "translation", fullTranslations, true, true);
   resources.en = { translation: fullTranslations };

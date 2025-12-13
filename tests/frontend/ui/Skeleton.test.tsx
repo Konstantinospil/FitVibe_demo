@@ -9,8 +9,11 @@ describe("Skeleton", () => {
     const skeleton = screen.getByTestId("skeleton");
     expect(skeleton).toHaveAttribute("aria-hidden", "true");
 
-    await waitFor(() => {
-      expect(skeleton).toHaveStyle({ width: "150px", height: "20px" });
-    }, { timeout: 5000 });
+    await waitFor(
+      () => {
+        expect(skeleton).toHaveStyle({ width: "150px", height: "20px" });
+      },
+      { timeout: 5000 },
+    );
   });
 });

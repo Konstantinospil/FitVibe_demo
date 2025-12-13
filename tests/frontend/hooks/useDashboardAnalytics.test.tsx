@@ -63,9 +63,12 @@ describe("useDashboardAnalytics", () => {
       { wrapper },
     );
 
-    await waitFor(() => {
-      expect(result.current.isSuccess).toBe(true);
-    }, { timeout: 5000 });
+    await waitFor(
+      () => {
+        expect(result.current.isSuccess).toBe(true);
+      },
+      { timeout: 5000 },
+    );
 
     expect(result.current.data).toEqual(mockData);
     expect(api.getDashboardAnalytics).toHaveBeenCalledWith({
@@ -115,9 +118,12 @@ describe("useDashboardAnalytics", () => {
       },
     );
 
-    await waitFor(() => {
-      expect(result.current.isSuccess).toBe(true);
-    }, { timeout: 5000 });
+    await waitFor(
+      () => {
+        expect(result.current.isSuccess).toBe(true);
+      },
+      { timeout: 5000 },
+    );
 
     expect(result.current.data).toEqual(mockData1);
 
@@ -131,9 +137,12 @@ describe("useDashboardAnalytics", () => {
     // Should show placeholder data during loading
     expect(result.current.data).toEqual(mockData1);
 
-    await waitFor(() => {
-      expect(result.current.data).toEqual(mockData2);
-    }, { timeout: 5000 });
+    await waitFor(
+      () => {
+        expect(result.current.data).toEqual(mockData2);
+      },
+      { timeout: 5000 },
+    );
   });
 
   it("should handle error state", async () => {
@@ -148,9 +157,12 @@ describe("useDashboardAnalytics", () => {
       { wrapper },
     );
 
-    await waitFor(() => {
-      expect(result.current.isError).toBe(true);
-    }, { timeout: 5000 });
+    await waitFor(
+      () => {
+        expect(result.current.isError).toBe(true);
+      },
+      { timeout: 5000 },
+    );
 
     expect(result.current.error).toBeInstanceOf(Error);
   });

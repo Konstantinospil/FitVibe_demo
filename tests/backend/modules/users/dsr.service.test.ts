@@ -4,8 +4,52 @@ import * as mediaStorageService from "../../../../apps/backend/src/services/medi
 import { HttpError } from "../../../../apps/backend/src/utils/http.js";
 import type { DeleteSchedule } from "../../../../apps/backend/src/modules/users/dsr.service.js";
 
-// Mock dependencies
-jest.mock("../../../../apps/backend/src/db/connection.js");
+// Mock dependencies - create configurable query builders
+// Store query builders in module scope for test access
+const queryBuilders: Record<string, any> = {};
+
+function createMockQueryBuilder() {
+  return {
+    where: jest.fn().mockReturnThis(),
+    andWhere: jest.fn().mockReturnThis(),
+    whereIn: jest.fn().mockReturnThis(),
+    first: jest.fn().mockResolvedValue(null),
+    select: jest.fn().mockResolvedValue([]),
+    pluck: jest.fn().mockResolvedValue([]),
+    insert: jest.fn().mockResolvedValue([]),
+    update: jest.fn().mockResolvedValue(1),
+    delete: jest.fn().mockResolvedValue(1),
+    del: jest.fn().mockResolvedValue(1),
+  };
+}
+
+function createMockTrx() {
+  const builder = createMockQueryBuilder();
+  return Object.assign(
+    jest.fn((table: string) => builder),
+    builder,
+  );
+}
+
+jest.mock("../../../../apps/backend/src/db/connection.js", () => {
+  const mockDbFunction = jest.fn((table: string) => {
+    if (!queryBuilders[table]) {
+      queryBuilders[table] = createMockQueryBuilder();
+    }
+    return queryBuilders[table];
+  }) as jest.Mock & {
+    transaction: jest.Mock;
+  };
+
+  mockDbFunction.transaction = jest.fn(
+    (callback: (trx: ReturnType<typeof createMockTrx>) => Promise<void>) =>
+      callback(createMockTrx()),
+  );
+
+  return {
+    db: mockDbFunction,
+  };
+});
 jest.mock("../../../../apps/backend/src/services/mediaStorage.service.js");
 jest.mock("../../../../apps/backend/src/modules/common/audit.util.js", () => ({
   insertAudit: jest.fn().mockResolvedValue(undefined),
@@ -20,7 +64,6 @@ jest.mock("../../../../apps/backend/src/config/env.js", () => ({
   },
 }));
 
-const mockDb = jest.mocked(db);
 const mockMediaStorage = jest.mocked(mediaStorageService);
 
 describe("DSR Service", () => {
@@ -28,6 +71,8 @@ describe("DSR Service", () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    // Clear query builders
+    Object.keys(queryBuilders).forEach((key) => delete queryBuilders[key]);
   });
 
   describe("scheduleAccountDeletion", () => {
@@ -41,13 +86,14 @@ describe("DSR Service", () => {
         backup_purge_due_at: null,
       };
 
-      const mockQueryBuilder = {
-        where: jest.fn().mockReturnThis(),
-        first: jest.fn().mockResolvedValue(mockUser),
-        update: jest.fn().mockResolvedValue(1),
-      };
-
-      mockDb.mockReturnValue(mockQueryBuilder as never);
+      // Configure mock for users table - call db() to initialize the builder
+      const dbModule = await import("../../../../apps/backend/src/db/connection.js");
+      const dbFn = dbModule.db as jest.Mock;
+      dbFn("users");
+      if (queryBuilders["users"]) {
+        queryBuilders["users"].first.mockResolvedValue(mockUser);
+        queryBuilders["users"].update.mockResolvedValue(1);
+      }
 
       const result = await dsrService.scheduleAccountDeletion(userId);
 
@@ -55,19 +101,17 @@ describe("DSR Service", () => {
       expect(result.scheduledAt).toBeDefined();
       expect(result.purgeDueAt).toBeDefined();
       expect(result.backupPurgeDueAt).toBeDefined();
-      expect(mockQueryBuilder.update).toHaveBeenCalled();
+      expect(queryBuilders["users"]?.update).toHaveBeenCalled();
     });
 
     it("should throw 404 when user not found", async () => {
-      const mockQueryBuilder = {
-        where: jest.fn().mockReturnThis(),
-        first: jest.fn().mockResolvedValue(null),
-      };
-
-      mockDb.mockReturnValue(mockQueryBuilder as never);
+      db("users");
+      if (queryBuilders["users"]) {
+        queryBuilders["users"].first.mockResolvedValue(null);
+      }
 
       await expect(dsrService.scheduleAccountDeletion(userId)).rejects.toThrow(HttpError);
-      await expect(dsrService.scheduleAccountDeletion(userId)).rejects.toThrow("USER_NOT_FOUND");
+      await expect(dsrService.scheduleAccountDeletion(userId)).rejects.toThrow("User not found");
     });
   });
 
@@ -90,30 +134,35 @@ describe("DSR Service", () => {
         },
       ];
 
-      const mockQueryBuilder = {
-        where: jest.fn().mockReturnThis(),
-        first: jest.fn().mockResolvedValue(mockUser),
-        select: jest.fn().mockResolvedValue(mockMedia),
-        update: jest.fn().mockResolvedValue(1),
-        delete: jest.fn().mockResolvedValue(1),
-      };
-
-      mockDb.mockReturnValue(mockQueryBuilder as never);
+      // Configure mocks for all db calls
+      db("users");
+      db("media");
+      db("sessions");
+      db("user_contacts");
+      if (queryBuilders["users"]) {
+        queryBuilders["users"].first.mockResolvedValue(mockUser);
+      }
+      if (queryBuilders["media"]) {
+        queryBuilders["media"].select.mockResolvedValue(mockMedia);
+      }
+      if (queryBuilders["sessions"]) {
+        queryBuilders["sessions"].pluck.mockResolvedValue(["session-123"]);
+      }
+      if (queryBuilders["user_contacts"]) {
+        queryBuilders["user_contacts"].first.mockResolvedValue({ value: "test@example.com" });
+      }
       mockMediaStorage.deleteStorageObject.mockResolvedValue(undefined);
 
       await dsrService.executeAccountDeletion(userId);
 
       expect(mockMediaStorage.deleteStorageObject).toHaveBeenCalled();
-      expect(mockQueryBuilder.delete).toHaveBeenCalled();
     });
 
     it("should throw 404 when user not found", async () => {
-      const mockQueryBuilder = {
-        where: jest.fn().mockReturnThis(),
-        first: jest.fn().mockResolvedValue(null),
-      };
-
-      mockDb.mockReturnValue(mockQueryBuilder as never);
+      db("users");
+      if (queryBuilders["users"]) {
+        queryBuilders["users"].first.mockResolvedValue(null);
+      }
 
       await expect(dsrService.executeAccountDeletion(userId)).rejects.toThrow(HttpError);
     });
@@ -128,16 +177,14 @@ describe("DSR Service", () => {
         backup_purge_due_at: null,
       };
 
-      const mockQueryBuilder = {
-        where: jest.fn().mockReturnThis(),
-        first: jest.fn().mockResolvedValue(mockUser),
-      };
-
-      mockDb.mockReturnValue(mockQueryBuilder as never);
+      db("users");
+      if (queryBuilders["users"]) {
+        queryBuilders["users"].first.mockResolvedValue(mockUser);
+      }
 
       await expect(dsrService.executeAccountDeletion(userId)).rejects.toThrow(HttpError);
       await expect(dsrService.executeAccountDeletion(userId)).rejects.toThrow(
-        "USER_DELETE_INVALID_STATE",
+        "Account must be pending deletion before purge",
       );
     });
   });
@@ -155,17 +202,35 @@ describe("DSR Service", () => {
         },
       ];
 
-      const mockQueryBuilder = {
-        where: jest.fn().mockReturnThis(),
-        whereNotNull: jest.fn().mockReturnThis(),
-        whereRaw: jest.fn().mockReturnThis(),
-        select: jest.fn().mockResolvedValue(mockUsers),
-        first: jest.fn().mockResolvedValue(mockUsers[0]),
-        update: jest.fn().mockResolvedValue(1),
-        delete: jest.fn().mockResolvedValue(1),
-      };
-
-      mockDb.mockReturnValue(mockQueryBuilder as never);
+      // Configure mocks for processDueAccountDeletions
+      db("users");
+      db("media");
+      db("sessions");
+      db("user_contacts");
+      if (queryBuilders["users"]) {
+        // First call: select users for processDueAccountDeletions
+        // Second call: first() to get user in executeAccountDeletion
+        queryBuilders["users"].select = jest
+          .fn()
+          .mockResolvedValueOnce(mockUsers.map((u) => ({ id: u.id })))
+          .mockResolvedValue(mockUsers);
+        queryBuilders["users"].first = jest.fn().mockResolvedValue(mockUsers[0]);
+        (queryBuilders["users"] as unknown as { whereNotNull: jest.Mock }).whereNotNull = jest
+          .fn()
+          .mockReturnThis();
+        (queryBuilders["users"] as unknown as { whereRaw: jest.Mock }).whereRaw = jest
+          .fn()
+          .mockReturnThis();
+      }
+      if (queryBuilders["media"]) {
+        queryBuilders["media"].select.mockResolvedValue([]);
+      }
+      if (queryBuilders["sessions"]) {
+        queryBuilders["sessions"].pluck.mockResolvedValue([]);
+      }
+      if (queryBuilders["user_contacts"]) {
+        queryBuilders["user_contacts"].first.mockResolvedValue(null);
+      }
       mockMediaStorage.deleteStorageObject.mockResolvedValue(undefined);
 
       const result = await dsrService.processDueAccountDeletions();

@@ -15,6 +15,18 @@ jest.mock("../../../../apps/backend/src/modules/progress/progress.repository.js"
 jest.mock("../../../../apps/backend/src/modules/common/audit.util.js", () => ({
   insertAudit: jest.fn().mockResolvedValue(undefined),
 }));
+const mockCache = new Map<string, unknown>();
+
+jest.mock("node-cache", () => {
+  return jest.fn(() => ({
+    get: jest.fn((key: string) => mockCache.get(key)),
+    set: jest.fn((key: string, value: unknown) => {
+      mockCache.set(key, value);
+    }),
+    del: jest.fn((key: string) => mockCache.delete(key)),
+    flushAll: jest.fn(() => mockCache.clear()),
+  }));
+});
 
 const mockProgressRepo = jest.mocked(progressRepository);
 
@@ -23,6 +35,7 @@ describe("Progress Service", () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    mockCache.clear();
   });
 
   describe("getSummary", () => {

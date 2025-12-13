@@ -18,6 +18,7 @@ The FitVibe frontend is currently a **client-side SPA** (Single Page Application
 While optimizations (i18n code-splitting, font deferral, improved chunking) reduced initial bundle size by ~95% for translations, the fundamental issue remains: **JavaScript execution blocks initial render**, causing poor LCP metrics and user experience.
 
 The QA Plan (4a.Testing_and_Quality_Assurance_Plan.md) mandates:
+
 - **LCP P75 < 2.5s** (ADR-019)
 - **Lighthouse Performance ≥ 90** (ADR-022)
 - **Progressive enhancement** for accessibility (ADR-020)
@@ -38,11 +39,13 @@ Implement **Server-Side Rendering (SSR)** for all routes using **React 18's stre
 ### Architecture Changes
 
 #### 1. Rendering Strategy
+
 - **All routes**: Server-rendered HTML with client-side hydration
 - **Streaming SSR**: Use React 18's `renderToPipeableStream` for progressive HTML delivery
 - **Isomorphic routing**: React Router configured for both server and client rendering
 
 #### 2. Server Infrastructure
+
 - **Node.js server**: Express.js server to handle SSR (extends existing backend or separate service)
 - **Build output**: Dual build - client bundle (for hydration) + server bundle (for rendering)
 - **Deployment**: Replace static NGINX serving with Node.js server + NGINX reverse proxy
@@ -55,27 +58,28 @@ Use Vite's built-in SSR support with Express.js server:
 
 ```typescript
 // apps/frontend/server.ts (new file)
-import express from 'express';
-import { renderPage } from './ssr/render.js';
+import express from "express";
+import { renderPage } from "./ssr/render.js";
 
 const app = express();
 
-app.use('/assets', express.static('dist/client/assets'));
+app.use("/assets", express.static("dist/client/assets"));
 
-app.get('*', async (req, res) => {
+app.get("*", async (req, res) => {
   try {
     const html = await renderPage(req.url);
     res.send(html);
   } catch (error) {
-    res.status(500).send('Internal Server Error');
+    res.status(500).send("Internal Server Error");
   }
 });
 ```
 
 **Build Configuration**:
+
 - **Client build**: `vite build --ssr false` → `dist/client/`
 - **Server build**: `vite build --ssr` → `dist/server/`
-- **Entry points**: 
+- **Entry points**:
   - Client: `src/main.tsx` (hydration)
   - Server: `src/server.tsx` (SSR renderer)
 
@@ -126,15 +130,15 @@ app.get('*', async (req, res) => {
 
 ## Alternatives Considered
 
-| Option | Description | Reason Rejected |
-|--------|-------------|-----------------|
-| **Static Site Generation (SSG)** | Pre-render all pages at build time | Doesn't solve authenticated routes; requires rebuild for dynamic content |
-| **Hybrid SSR (public only)** | SSR for public routes, SPA for authenticated | Incomplete solution; authenticated routes also need performance improvement |
-| **Adjust Lighthouse thresholds** | Lower performance requirements | Violates ADR-019 and QA Plan requirements; doesn't fix real UX problem |
-| **Progressive Web App (PWA) only** | Service worker + caching | Doesn't address initial load performance; LCP still blocked by JavaScript |
-| **Next.js migration** | Use Next.js framework | Too large a migration; would require rewriting entire frontend |
-| **Remix framework** | Use Remix for SSR | Similar to Next.js; prefer staying with Vite for consistency |
-| **Streaming SSR only** | Implement streaming without full SSR | Incomplete; need server rendering for initial HTML |
+| Option                             | Description                                  | Reason Rejected                                                             |
+| ---------------------------------- | -------------------------------------------- | --------------------------------------------------------------------------- |
+| **Static Site Generation (SSG)**   | Pre-render all pages at build time           | Doesn't solve authenticated routes; requires rebuild for dynamic content    |
+| **Hybrid SSR (public only)**       | SSR for public routes, SPA for authenticated | Incomplete solution; authenticated routes also need performance improvement |
+| **Adjust Lighthouse thresholds**   | Lower performance requirements               | Violates ADR-019 and QA Plan requirements; doesn't fix real UX problem      |
+| **Progressive Web App (PWA) only** | Service worker + caching                     | Doesn't address initial load performance; LCP still blocked by JavaScript   |
+| **Next.js migration**              | Use Next.js framework                        | Too large a migration; would require rewriting entire frontend              |
+| **Remix framework**                | Use Remix for SSR                            | Similar to Next.js; prefer staying with Vite for consistency                |
+| **Streaming SSR only**             | Implement streaming without full SSR         | Incomplete; need server rendering for initial HTML                          |
 
 ---
 
@@ -148,17 +152,17 @@ export default defineConfig({
   build: {
     rollupOptions: {
       input: {
-        client: resolve(__dirname, 'src/main.tsx'),
-        server: resolve(__dirname, 'src/server.tsx'),
+        client: resolve(__dirname, "src/main.tsx"),
+        server: resolve(__dirname, "src/server.tsx"),
       },
       output: {
-        format: 'esm',
+        format: "esm",
       },
     },
     ssr: true, // Enable SSR build
   },
   ssr: {
-    noExternal: ['react', 'react-dom', 'react-router-dom'],
+    noExternal: ["react", "react-dom", "react-router-dom"],
   },
 });
 ```
@@ -223,6 +227,6 @@ CMD ["node", "dist/server/server.js"]
 
 ## Status Log
 
-| Version | Date       | Change                                           | Author       |
-| ------- | ---------- | ------------------------------------------------ | ------------ |
-| v1.0    | 2025-12-12 | Initial ADR for SSR implementation              | AI Assistant |
+| Version | Date       | Change                             | Author       |
+| ------- | ---------- | ---------------------------------- | ------------ |
+| v1.0    | 2025-12-12 | Initial ADR for SSR implementation | AI Assistant |

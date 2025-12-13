@@ -1,18 +1,21 @@
 import { v4 as uuidv4 } from "uuid";
 import type { Knex } from "knex";
-import { getActiveEvents, evaluateSeasonalEvents } from "../seasonal-events.service.js";
-import { insertPointsEvent } from "../points.repository.js";
-import { db } from "../../../db/connection.js";
+import {
+  getActiveEvents,
+  evaluateSeasonalEvents,
+} from "../../../../apps/backend/src/modules/points/seasonal-events.service.js";
+import { insertPointsEvent } from "../../../../apps/backend/src/modules/points/points.repository.js";
+import { db } from "../../../../apps/backend/src/db/connection.js";
 
 jest.mock("uuid", () => ({
   v4: jest.fn(() => "00000000-0000-0000-0000-000000000001"),
 }));
 
-jest.mock("../points.repository.js", () => ({
+jest.mock("../../../../apps/backend/src/modules/points/points.repository.js", () => ({
   insertPointsEvent: jest.fn(),
 }));
 
-jest.mock("../../../db/connection.js", () => ({
+jest.mock("../../../../apps/backend/src/db/connection.js", () => ({
   db: Object.assign(jest.fn(), {
     transaction: jest.fn(),
   }),
@@ -271,7 +274,7 @@ describe("seasonal-events.service", () => {
             sessions_required: 12,
           }),
         }),
-        expect.any(Object),
+        expect.anything(),
       );
     });
 
@@ -316,18 +319,15 @@ describe("seasonal-events.service", () => {
     it("should execute within a transaction", async () => {
       jest.setSystemTime(new Date("2025-01-15T12:00:00Z"));
 
-      const transactionHandler = jest.fn();
+      // Create a mock transaction that behaves like db (callable function)
+      const mockTrx = ((_table: string) => mockQueryBuilder) as unknown as Knex.Transaction;
       mockedTransaction.mockImplementation((handler: TransactionHandler) => {
-        transactionHandler(handler);
-        return Promise.resolve(handler({} as unknown as Knex.Transaction));
+        return Promise.resolve(handler(mockTrx));
       });
 
-      mockQueryBuilder.first.mockResolvedValue(undefined);
-      mockQueryBuilder.count.mockResolvedValue([
-        {
-          count: "12",
-        },
-      ]);
+      mockQueryBuilder.first.mockResolvedValueOnce(undefined).mockResolvedValueOnce({
+        count: "12",
+      });
 
       await evaluateSeasonalEvents("user-123", "session-123", new Date("2025-01-15T12:00:00Z"));
 
@@ -337,12 +337,9 @@ describe("seasonal-events.service", () => {
     it("should check for existing bonus using correct query", async () => {
       jest.setSystemTime(new Date("2025-01-15T12:00:00Z"));
 
-      mockQueryBuilder.first.mockResolvedValue(undefined);
-      mockQueryBuilder.count.mockResolvedValue([
-        {
-          count: "12",
-        },
-      ]);
+      mockQueryBuilder.first.mockResolvedValueOnce(undefined).mockResolvedValueOnce({
+        count: "12",
+      });
 
       await evaluateSeasonalEvents("user-123", "session-123", new Date("2025-01-15T12:00:00Z"));
 
@@ -357,12 +354,9 @@ describe("seasonal-events.service", () => {
     it("should count sessions within event date range", async () => {
       jest.setSystemTime(new Date("2025-01-15T12:00:00Z"));
 
-      mockQueryBuilder.first.mockResolvedValue(undefined);
-      mockQueryBuilder.count.mockResolvedValue([
-        {
-          count: "12",
-        },
-      ]);
+      mockQueryBuilder.first.mockResolvedValueOnce(undefined).mockResolvedValueOnce({
+        count: "12",
+      });
 
       await evaluateSeasonalEvents("user-123", "session-123", new Date("2025-01-15T12:00:00Z"));
 
@@ -379,12 +373,9 @@ describe("seasonal-events.service", () => {
 
       mockedUuid.mockReturnValue("test-uuid-456" as unknown as ReturnType<typeof uuidv4>);
 
-      mockQueryBuilder.first.mockResolvedValue(undefined);
-      mockQueryBuilder.count.mockResolvedValue([
-        {
-          count: "12",
-        },
-      ]);
+      mockQueryBuilder.first.mockResolvedValueOnce(undefined).mockResolvedValueOnce({
+        count: "12",
+      });
 
       await evaluateSeasonalEvents("user-123", "session-123", new Date("2025-01-15T12:00:00Z"));
 
@@ -392,7 +383,7 @@ describe("seasonal-events.service", () => {
         expect.objectContaining({
           id: "test-uuid-456",
         }),
-        expect.any(Object),
+        expect.anything(),
       );
     });
 

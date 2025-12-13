@@ -106,7 +106,7 @@ export default defineConfig(() => {
       // Enable test-level parallelization within files (use with caution if tests share state)
       sequence: {
         shuffle: false,
-        concurrent: true, // Allow tests within the same file to run concurrently if they don't share state
+        concurrent: false, // Disabled to prevent DOM pollution from concurrent tests
       },
       testTimeout: 30000, // 30 second timeout per test (increased to catch slow tests)
       hookTimeout: 15000, // 15 second timeout for hooks (increased for i18n loading)
@@ -254,7 +254,9 @@ export default defineConfig(() => {
           // For SSR, output to server directory structure
           chunkFileNames: isSSR ? "[name]-[hash].js" : "assets/js/[name]-[hash].js",
           entryFileNames: isSSR ? "[name]-[hash].js" : "assets/js/[name]-[hash].js",
-          assetFileNames: isSSR ? "assets/[ext]/[name]-[hash].[ext]" : "assets/[ext]/[name]-[hash].[ext]",
+          assetFileNames: isSSR
+            ? "assets/[ext]/[name]-[hash].[ext]"
+            : "assets/[ext]/[name]-[hash].[ext]",
           // Compact output to reduce whitespace
           compact: true,
         },
