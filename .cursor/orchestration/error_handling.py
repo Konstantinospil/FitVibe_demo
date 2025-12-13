@@ -250,10 +250,10 @@ class RetryHandler:
                 # Don't retry if error is not retryable
                 if not classified.retryable:
                     audit_logger.log_error(
+                        error_message=f"Task {task_id} failed with non-retryable error",
                         agent_id=agent_id,
-                        message=f"Task {task_id} failed with non-retryable error",
-                        error_type=classified.category.value,
-                        details={
+                        context={
+                            "error_type": classified.category.value,
                             "task_id": task_id,
                             "error": classified.message,
                             "category": classified.category.value,
@@ -265,10 +265,10 @@ class RetryHandler:
                 # Don't retry if max attempts reached
                 if attempt >= self.config.max_attempts:
                     audit_logger.log_error(
+                        error_message=f"Task {task_id} failed after {attempt} attempts",
                         agent_id=agent_id,
-                        message=f"Task {task_id} failed after {attempt} attempts",
-                        error_type=classified.category.value,
-                        details={
+                        context={
+                            "error_type": classified.category.value,
                             "task_id": task_id,
                             "error": classified.message,
                             "attempts": attempt,
@@ -281,9 +281,9 @@ class RetryHandler:
                 delay = self._calculate_backoff(attempt, classified.retry_delay_seconds)
                 
                 audit_logger.log_warning(
+                    warning_message=f"Task {task_id} failed, retrying in {delay:.2f}s (attempt {attempt}/{self.config.max_attempts})",
                     agent_id=agent_id,
-                    message=f"Task {task_id} failed, retrying in {delay:.2f}s (attempt {attempt}/{self.config.max_attempts})",
-                    details={
+                    context={
                         "task_id": task_id,
                         "error": classified.message,
                         "attempt": attempt,

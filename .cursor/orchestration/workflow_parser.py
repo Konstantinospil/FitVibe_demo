@@ -23,6 +23,7 @@ from .workflow_models import (
     StepType,
     HandoffType,
 )
+from .agent_discovery import AgentDiscovery, resolve_workflows_dir
 
 logger = logging.getLogger(__name__)
 
@@ -30,14 +31,20 @@ logger = logging.getLogger(__name__)
 class WorkflowParser:
     """Parses workflow definitions from markdown files."""
     
-    def __init__(self, workflows_dir: str = ".cursor/workflows"):
+    def __init__(self, workflows_dir: Optional[Path] = None):
         """
         Initialize workflow parser.
         
         Args:
-            workflows_dir: Directory containing workflow definition files
+            workflows_dir: Optional directory containing workflow definition files
+                          (default: auto-discovered from .cursor/workflows)
         """
-        self.workflows_dir = Path(workflows_dir)
+        if workflows_dir is None:
+            workflows_dir = resolve_workflows_dir()
+        else:
+            workflows_dir = Path(workflows_dir)
+        
+        self.workflows_dir = workflows_dir
         if not self.workflows_dir.exists():
             logger.warning(f"Workflows directory not found: {self.workflows_dir}")
     
@@ -160,7 +167,9 @@ class WorkflowParser:
         phases = []
         
         # Find all phase sections (### Phase X: Name (duration))
-        phase_pattern = r'### Phase (\d+):\s*(.+?)\s*\(([^)]+)\)\s*\n\n(.*?)(?=\n### Phase|\n##|\Z)'
+        # Use negative lookbehind to ensure it's exactly 3 hashes (not 4 or more)
+        # This prevents matching subsections like "#### Phase 1: Requirements & Design"
+        phase_pattern = r'(?<!#)### Phase (\d+):\s*(.+?)\s*\(([^)]+)\)\s*\n\n(.*?)(?=\n### Phase|\n##|\Z)'
         phase_matches = re.finditer(phase_pattern, content, re.DOTALL)
         
         phase_number = 1
@@ -170,11 +179,23 @@ class WorkflowParser:
             duration_str = match.group(3).strip()
             phase_content = match.group(4).strip()
             
+            # Skip if this looks like a subsection (has nested phase references)
+            # Check if content contains "#### Phase" which indicates it's a subsection
+            if "#### Phase" in phase_content:
+                logger.debug(f"Skipping phase {phase_num} - appears to be a subsection")
+                continue
+            
             # Parse duration
             duration_minutes = self._parse_duration(duration_str)
             
             # Parse steps in this phase
             steps = self._parse_steps(phase_content, phase_number)
+            
+            # Only create phase if it has steps or is explicitly defined
+            # Skip phases that are just documentation subsections
+            if not steps and "####" in phase_content:
+                logger.debug(f"Skipping phase {phase_num} - no steps and contains subsections")
+                continue
             
             phase = WorkflowPhase(
                 phase_id=f"phase_{phase_number}",
@@ -240,22 +261,42 @@ class WorkflowParser:
     
     def _parse_agent_reference(self, agent_text: str) -> tuple[StepType, Optional[str]]:
         """Parse agent reference from step text."""
-        # Normalize agent names
+        # Normalize agent names to match registry IDs (without -agent suffix)
         agent_mapping = {
-            "planner agent": "planner-agent",
-            "requirements analyst agent": "requirements-analyst-agent",
-            "requirements analyst": "requirements-analyst-agent",
-            "system architect agent": "system-architect-agent",
-            "system architect": "system-architect-agent",
-            "backend agent": "backend-agent",
-            "frontend agent": "frontend-agent",
-            "fullstack agent": "fullstack-agent",
-            "api contract agent": "api-contract-agent",
+            "planner agent": "planner",
+            "planner": "planner",
+            "requirements analyst agent": "requirements-analyst",
+            "requirements analyst": "requirements-analyst",
+            "system architect agent": "system-architect",
+            "system architect": "system-architect",
+            "backend agent": "backend",
+            "backend": "backend",
+            "frontend agent": "frontend",
+            "frontend": "frontend",
+            "senior frontend developer": "senior-frontend-developer",
+            "fullstack agent": "fullstack",
+            "fullstack": "fullstack",
+            "api contract agent": "api-contract",
+            "api contract": "api-contract",
             "test manager": "test-manager",
-            "code review agent": "code-review-agent",
-            "security review agent": "security-review-agent",
-            "documentation agent": "documentation-agent",
+            "code review agent": "code-review",
+            "code review": "code-review",
+            "security review agent": "security-review",
+            "security review": "security-review",
+            "documentation agent": "documentation",
+            "documentation": "documentation",
+            "garbage collection agent": "garbage-collection",
+            "garbage collection": "garbage-collection",
             "version controller": "version-controller",
+            "prompt engineer agent": "prompt-engineer",
+            "prompt engineer": "prompt-engineer",
+            "knowledge specialist agent": "knowledge-specialist",
+            "knowledge specialist": "knowledge-specialist",
+            "researcher agent": "researcher",
+            "researcher": "researcher",
+            "agent quality agent": "agent-quality",
+            "agent quality": "agent-quality",
+            # Legacy/alternative names
             "bug collector": "bug-collector",
             "bug collector script": "bug-collector",
             "single agent fixer": "bug-fixer-agent",
@@ -275,12 +316,13 @@ class WorkflowParser:
         if "manual" in agent_text_lower or "user" in agent_text_lower:
             return StepType.MANUAL, None
         
-        # Map agent names
-        for key, agent_id in agent_mapping.items():
+        # Map agent names (check longer matches first to avoid partial matches)
+        sorted_keys = sorted(agent_mapping.keys(), key=len, reverse=True)
+        for key in sorted_keys:
             if key in agent_text_lower:
-                return StepType.AGENT, agent_id
+                return StepType.AGENT, agent_mapping[key]
         
-        # Default to agent type with extracted name
+        # Default to agent type with extracted name (remove "agent" suffix if present)
         agent_id = agent_text_lower.replace(" agent", "").replace(" ", "-")
         return StepType.AGENT, agent_id
     
@@ -294,7 +336,16 @@ class WorkflowParser:
         handoff_pattern = r'hands?\s+off\s+to\s+([^\n,\.]+)'
         handoff_match = re.search(handoff_pattern, description, re.IGNORECASE)
         if handoff_match:
-            handoff_to = handoff_match.group(1).strip().lower().replace(" ", "-")
+            handoff_text = handoff_match.group(1).strip()
+            # Clean up: remove markdown formatting, parentheses, arrows, and other artifacts
+            handoff_text = re.sub(r'\*\*|\([^)]*\)|→|\(never[^)]*\)', '', handoff_text, flags=re.IGNORECASE)
+            handoff_text = handoff_text.strip()
+            # Convert to agent ID format
+            handoff_to = handoff_text.lower().replace(" ", "-").replace("_", "-")
+            # Remove any remaining non-alphanumeric/dash characters except hyphens
+            handoff_to = re.sub(r'[^a-z0-9-]', '', handoff_to)
+            # Remove multiple consecutive hyphens
+            handoff_to = re.sub(r'-+', '-', handoff_to).strip('-')
         
         # Look for conditional handoffs
         if "if" in description.lower() or "when" in description.lower():

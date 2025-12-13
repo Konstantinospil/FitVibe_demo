@@ -23,7 +23,8 @@ try:
 except ImportError:
     VECTOR_DB_AVAILABLE = False
     VectorDB = None  # Type placeholder
-    logging.warning("VectorDB not available. RAG retrieval will be limited.")
+    # VectorDB is optional, only log at debug level
+    logging.debug("VectorDB not available (optional). RAG retrieval will be limited.")
 
 if TYPE_CHECKING:
     # For type checking only

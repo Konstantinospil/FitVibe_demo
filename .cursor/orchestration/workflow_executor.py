@@ -11,7 +11,7 @@ Last Updated: 2025-01-21
 import logging
 import time
 import uuid
-from typing import Dict, Any, Optional, List
+from typing import Dict, Any, Optional, List, Union
 from datetime import datetime
 from pathlib import Path
 
@@ -35,6 +35,7 @@ from .step_executor import step_executor, ExecutionContext
 from .state_repository import AgentStateRepository
 from .handoff_generator import get_handoff_generator, HandoffGenerator
 from .handoff_registry import get_handoff_registry, HandoffRegistry
+from .agent_discovery import resolve_agents_dir, resolve_workflows_dir
 
 logger = logging.getLogger(__name__)
 
@@ -44,8 +45,8 @@ class WorkflowExecutor:
     
     def __init__(
         self,
-        workflows_dir: str = ".cursor/workflows",
-        agents_dir: str = ".cursor/agents",
+        workflows_dir: Optional[str] = None,
+        agents_dir: Optional[str] = None,
         event_log_instance=None,
         step_executor_instance=None,
         state_repository=None,
@@ -57,8 +58,10 @@ class WorkflowExecutor:
         Initialize workflow executor.
         
         Args:
-            workflows_dir: Directory containing workflow definitions
-            agents_dir: Directory containing agent definitions
+            workflows_dir: Optional directory containing workflow definitions
+                          (default: auto-discovered from .cursor/workflows)
+            agents_dir: Optional directory containing agent definitions
+                       (default: auto-discovered from .cursor/agents)
             event_log_instance: EventLog instance (default: global event_log)
             step_executor_instance: StepExecutor instance (default: global step_executor)
             state_repository: AgentStateRepository instance (default: new instance)
@@ -66,10 +69,23 @@ class WorkflowExecutor:
             handoff_registry_instance: HandoffRegistry instance (default: global instance)
             dead_letter_queue_instance: DeadLetterQueue instance (default: global dead_letter_queue)
         """
+        if workflows_dir is None:
+            workflows_dir = resolve_workflows_dir()
+        else:
+            workflows_dir = Path(workflows_dir)
+        
+        if agents_dir is None:
+            agents_dir = resolve_agents_dir()
+        else:
+            agents_dir = Path(agents_dir)
+        
         self.workflows_dir = Path(workflows_dir)
         self.agents_dir = Path(agents_dir)
-        self.parser = get_workflow_parser()
-        self.validator = get_workflow_validator()
+        # Initialize parser and validator with provided paths (not global instances)
+        from .workflow_parser import WorkflowParser
+        from .workflow_validator import WorkflowValidator
+        self.parser = WorkflowParser(workflows_dir=self.workflows_dir)
+        self.validator = WorkflowValidator(agents_dir=self.agents_dir)
         self.active_executions: Dict[str, WorkflowExecutionModel] = {}
         
         # Phase 1 components

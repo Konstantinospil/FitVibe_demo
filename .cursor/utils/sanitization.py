@@ -292,14 +292,14 @@ def sanitize_tool_output(
     """
     if isinstance(output, str):
         tainted = sanitize_text(output, config, taint_level)
-        return str(tained)  # Returns with taint marker
+        return str(tainted)  # Returns with taint marker
 
     elif isinstance(output, dict):
         sanitized = {}
         for key, value in output.items():
             if isinstance(value, str):
                 tainted = sanitize_text(value, config, taint_level)
-                sanitized[key] = str(tained)
+                sanitized[key] = str(tainted)
             elif isinstance(value, (dict, list)):
                 sanitized[key] = sanitize_tool_output(value, source, config, taint_level)
             else:

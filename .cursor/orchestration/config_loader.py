@@ -31,7 +31,8 @@ class ConfigLoader:
             with open(default_file, 'r') as f:
                 self.config = json.load(f)
         else:
-            logging.warning(f"Default config file not found: {default_file}")
+            # Default config is optional, only log at debug level
+            logging.debug(f"Default config file not found (optional): {default_file}")
             self.config = {}
         
         # Load environment-specific config

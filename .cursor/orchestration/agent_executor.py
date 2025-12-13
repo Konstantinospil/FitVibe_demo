@@ -32,6 +32,7 @@ from .error_handling import retry_handler, dead_letter_queue, ErrorCategory
 from .llm_client import get_llm_client, OpenAIClient, LLMResponse
 from .prompt_assembler import PromptAssembler
 from .rag_service import get_rag_service, RAGService
+from .agent_discovery import resolve_agents_dir, resolve_workflows_dir
 # Imports with fallback for testing
 try:
     from ..observability.audit_logger import audit_logger, EventType
@@ -99,11 +100,22 @@ class AgentExecutor:
     
     def __init__(
         self,
-        agents_dir: str = ".cursor/agents",
-        workflows_dir: str = ".cursor/workflows",
+        agents_dir: Optional[str] = None,
+        workflows_dir: Optional[str] = None,
         llm_client: Optional[OpenAIClient] = None,
         mcp_servers_config: str = ".cursor/mcp/servers.json"
     ):
+        # Use path resolution utilities if paths not provided
+        if agents_dir is None:
+            agents_dir = resolve_agents_dir()
+        else:
+            agents_dir = Path(agents_dir)
+        
+        if workflows_dir is None:
+            workflows_dir = resolve_workflows_dir()
+        else:
+            workflows_dir = Path(workflows_dir)
+        
         self.agents_dir = Path(agents_dir)
         self.workflows_dir = Path(workflows_dir)
         self.mcp_servers_config = Path(mcp_servers_config)
@@ -176,8 +188,26 @@ class AgentExecutor:
                 key, value = line.split(':', 1)
                 frontmatter_dict[key.strip()] = value.strip().strip('"')
         
-        # Extract agent ID from filename
-        agent_id = agent_file.stem.replace('-agent', '').replace('_', '-')
+        # Extract agent ID - use same logic as agent_discovery for consistency
+        # Try to extract from metadata section first
+        agent_id_pattern = r'(?:\*\*Agent ID\*\*|Agent ID)[:\s]+([a-z0-9-]+)'
+        agent_id_match = re.search(agent_id_pattern, content, re.IGNORECASE)
+        if agent_id_match:
+            agent_id = agent_id_match.group(1).lower()
+        else:
+            # Fallback: derive from filename (same as agent_discovery)
+            stem = agent_file.stem
+            agent_id = stem.replace("-agent", "").replace("_", "-").lower()
+        
+        # Normalize agent ID: Remove -agent suffix if present (registry uses IDs without -agent)
+        # This ensures consistency with REGISTRY.md and agent_discovery
+        agent_id = agent_id.replace("-agent", "").strip('-')
+        # Clean up any double hyphens
+        agent_id = re.sub(r'-+', '-', agent_id).strip('-')
+        
+        # Special mapping for senior-frontend-developer -> frontend
+        if agent_id == "senior-frontend-developer":
+            agent_id = "frontend"
         
         # Parse markdown content
         mission_match = re.search(r'## Mission Statement\s*\n\n(.*?)(?=\n##|\Z)', content, re.DOTALL)
@@ -208,7 +238,8 @@ class AgentExecutor:
     def _load_mcp_tools(self):
         """Loads available MCP tools from servers configuration."""
         if not self.mcp_servers_config.exists():
-            logging.warning(f"MCP servers config not found: {self.mcp_servers_config}")
+            # MCP servers config is optional, only log at debug level
+            logging.debug(f"MCP servers config not found (optional): {self.mcp_servers_config}")
             return
         
         try:
@@ -520,10 +551,9 @@ class AgentExecutor:
             )
             
             audit_logger.log_error(
+                error_message=f"Agent execution failed: {error_msg}",
                 agent_id="AgentExecutor",
-                message=f"Agent execution failed: {error_msg}",
-                error_type="ExecutionError",
-                details={"agent_id": agent_id, "request_id": request_id, "task_id": task_id}
+                context={"agent_id": agent_id, "request_id": request_id, "task_id": task_id, "error_type": "ExecutionError"}
             )
             
             return result

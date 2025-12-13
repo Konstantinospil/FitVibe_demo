@@ -21,6 +21,7 @@ from .workflow_models import (
     WorkflowStep,
     StepType,
 )
+from .agent_discovery import AgentDiscovery, resolve_agents_dir
 
 logger = logging.getLogger(__name__)
 
@@ -33,34 +34,26 @@ class ValidationError(Exception):
 class WorkflowValidator:
     """Validates workflow definitions."""
     
-    def __init__(self, agents_dir: str = ".cursor/agents"):
+    def __init__(self, agents_dir: Optional[Path] = None):
         """
         Initialize validator.
         
         Args:
-            agents_dir: Directory containing agent definitions
+            agents_dir: Optional directory containing agent definitions
+                       (default: auto-discovered from .cursor/agents)
         """
-        self.agents_dir = Path(agents_dir)
+        if agents_dir is None:
+            agents_dir = resolve_agents_dir()
+        else:
+            agents_dir = Path(agents_dir)
+        
+        self.agents_dir = agents_dir
+        self.agent_discovery = AgentDiscovery(agents_dir)
         self.available_agents: Set[str] = self._load_agent_list()
     
     def _load_agent_list(self) -> Set[str]:
-        """Load list of available agent IDs."""
-        agents = set()
-        
-        if not self.agents_dir.exists():
-            logger.warning(f"Agents directory not found: {self.agents_dir}")
-            return agents
-        
-        # Load agent IDs from markdown files
-        for agent_file in self.agents_dir.glob("*.md"):
-            if agent_file.name in ["README.md", "REGISTRY.md", "STANDARDS.md", "HANDOFF_PROTOCOL.md", "SECURITY_STANDARDS.md"]:
-                continue
-            
-            # Extract agent ID from filename
-            agent_id = agent_file.stem.replace("-agent", "").replace("_", "-")
-            agents.add(agent_id)
-        
-        return agents
+        """Load list of available agent IDs using agent discovery."""
+        return self.agent_discovery.get_agent_ids()
     
     def validate(self, workflow: WorkflowDefinition) -> List[str]:
         """

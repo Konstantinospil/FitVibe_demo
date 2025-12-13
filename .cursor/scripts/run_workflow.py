@@ -15,8 +15,28 @@ Usage:
 import sys
 import json
 import argparse
+import os
 from pathlib import Path
 from typing import Dict, Any, Optional
+
+# Load .env file if it exists
+try:
+    from dotenv import load_dotenv
+    # Load .env from .cursor directory
+    env_path = Path(__file__).parent.parent / ".env"
+    if env_path.exists():
+        load_dotenv(env_path)
+        print(f"Loaded environment variables from {env_path}")
+except ImportError:
+    # python-dotenv not installed, try manual loading
+    env_path = Path(__file__).parent.parent / ".env"
+    if env_path.exists():
+        with open(env_path, 'r') as f:
+            for line in f:
+                line = line.strip()
+                if line and not line.startswith('#') and '=' in line:
+                    key, value = line.split('=', 1)
+                    os.environ[key.strip()] = value.strip()
 
 # Add .cursor to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -36,6 +56,7 @@ from orchestration.workflow_debug import (
     trace_execution as debug_trace,
     validate_state as debug_validate
 )
+from orchestration.agent_discovery import resolve_agents_dir, resolve_workflows_dir
 
 
 def format_status(status: str) -> str:
@@ -55,7 +76,9 @@ def format_status(status: str) -> str:
 
 def list_workflows():
     """List all available workflows."""
-    parser = WorkflowParser(workflows_dir="workflows")
+    # Use path resolution utility
+    workflows_dir = resolve_workflows_dir()
+    parser = WorkflowParser(workflows_dir=workflows_dir)
     workflows = parser.list_workflows()
     
     if not workflows:
@@ -82,8 +105,14 @@ def list_workflows():
 
 def run_workflow(workflow_id: str, input_data: Optional[Dict[str, Any]] = None):
     """Run a workflow."""
-    executor = WorkflowExecutor(workflows_dir="workflows", agents_dir="agents")
-    validator = WorkflowValidator(agents_dir="agents")
+    # Use path resolution utilities
+    workflows_dir = resolve_workflows_dir()
+    agents_dir = resolve_agents_dir()
+    executor = WorkflowExecutor(
+        workflows_dir=str(workflows_dir),
+        agents_dir=str(agents_dir)
+    )
+    validator = WorkflowValidator(agents_dir=agents_dir)
     
     print(f"\nStarting workflow: {workflow_id}")
     print("=" * 70)
@@ -186,7 +215,13 @@ def run_workflow(workflow_id: str, input_data: Optional[Dict[str, Any]] = None):
 
 def show_status(execution_id: str):
     """Show execution status."""
-    executor = WorkflowExecutor(workflows_dir="workflows", agents_dir="agents")
+    # Use path resolution utilities
+    workflows_dir = resolve_workflows_dir()
+    agents_dir = resolve_agents_dir()
+    executor = WorkflowExecutor(
+        workflows_dir=str(workflows_dir),
+        agents_dir=str(agents_dir)
+    )
     
     execution = executor.get_execution(execution_id)
     
@@ -264,7 +299,13 @@ def show_status(execution_id: str):
 
 def list_executions(workflow_id: Optional[str] = None):
     """List all executions."""
-    executor = WorkflowExecutor(workflows_dir="workflows", agents_dir="agents")
+    # Use path resolution utilities
+    workflows_dir = resolve_workflows_dir()
+    agents_dir = resolve_agents_dir()
+    executor = WorkflowExecutor(
+        workflows_dir=str(workflows_dir),
+        agents_dir=str(agents_dir)
+    )
     
     # Get active executions
     active_executions = executor.list_executions(workflow_id)
@@ -364,7 +405,13 @@ def list_executions(workflow_id: Optional[str] = None):
 
 def resume_workflow(execution_id: str):
     """Resume a failed workflow."""
-    executor = WorkflowExecutor(workflows_dir="workflows", agents_dir="agents")
+    # Use path resolution utilities
+    workflows_dir = resolve_workflows_dir()
+    agents_dir = resolve_agents_dir()
+    executor = WorkflowExecutor(
+        workflows_dir=str(workflows_dir),
+        agents_dir=str(agents_dir)
+    )
     
     print(f"\nResuming workflow execution: {execution_id}")
     print("=" * 70)
