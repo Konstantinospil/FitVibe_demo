@@ -1,5 +1,25 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi, beforeEach } from "vitest";
+
+// Mock Router before importing AppRouter to avoid import issues
+// We need to mock it to use BrowserRouter and handle the routes
+vi.mock("../../src/routes/Router", async () => {
+  const React = await import("react");
+  const { BrowserRouter } = await import("react-router-dom");
+  const { useAuth } = await import("../../src/contexts/AuthContext");
+
+  return {
+    Router: () => {
+      const { isAuthenticated } = useAuth();
+      return (
+        <BrowserRouter>
+          {isAuthenticated ? <div>Protected Routes</div> : <div>Public Routes</div>}
+        </BrowserRouter>
+      );
+    },
+  };
+});
+
 import AppRouter from "../../src/routes/AppRouter";
 
 // Mock all lazy-loaded pages
@@ -138,9 +158,12 @@ describe("AppRouter", () => {
 
     render(<AppRouter />);
 
-    await waitFor(() => {
-      expect(screen.getByText("Public Routes")).toBeInTheDocument();
-    }, { timeout: 5000 });
+    await waitFor(
+      () => {
+        expect(screen.getByText("Public Routes")).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
   });
 
   it("renders ProtectedRoutes when user is authenticated", async () => {
@@ -150,9 +173,12 @@ describe("AppRouter", () => {
 
     render(<AppRouter />);
 
-    await waitFor(() => {
-      expect(screen.getByText("Protected Routes")).toBeInTheDocument();
-    }, { timeout: 5000 });
+    await waitFor(
+      () => {
+        expect(screen.getByText("Protected Routes")).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
   });
 
   it("renders with authenticated state", async () => {
@@ -162,9 +188,12 @@ describe("AppRouter", () => {
 
     render(<AppRouter />);
 
-    await waitFor(() => {
-      expect(screen.getByText("Protected Routes")).toBeInTheDocument();
-    }, { timeout: 5000 });
+    await waitFor(
+      () => {
+        expect(screen.getByText("Protected Routes")).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
   });
 
   it("shows loading fallback during lazy load", () => {

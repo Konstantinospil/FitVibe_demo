@@ -1,42 +1,52 @@
 import React from "react";
-import { render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { render, screen, cleanup } from "@testing-library/react";
+import { describe, expect, it, vi, afterEach } from "vitest";
 import { StatusPill } from "../../src/components/StatusPill";
 
-// Mock i18next
-vi.mock("react-i18next", () => ({
-  useTranslation: () => ({
-    t: (key: string, options?: { defaultValue?: string }) => {
-      const translations: Record<string, string> = {
-        "status.checking": "Checking",
-        "status.online": "Server online",
-        "status.offline": "Server offline",
-      };
-      return translations[key] || options?.defaultValue || key;
-    },
-  }),
-}));
-
 describe("StatusPill", () => {
-  it("should render checking status with default label", () => {
-    render(<StatusPill status="checking" />);
+  afterEach(() => {
+    cleanup();
+  });
 
-    const statusElement = screen.getByRole("status");
+  // Mock i18next
+  vi.mock("react-i18next", () => ({
+    useTranslation: () => ({
+      t: (key: string, options?: { defaultValue?: string }) => {
+        const translations: Record<string, string> = {
+          "status.checking": "Checking",
+          "status.online": "Server online",
+          "status.offline": "Server offline",
+        };
+        return translations[key] || options?.defaultValue || key;
+      },
+    }),
+  }));
+
+  it("should render checking status with default label", () => {
+    const { container } = render(<StatusPill status="checking" />);
+
+    const statusElements = screen.getAllByRole("status");
+    const statusElement =
+      Array.from(statusElements).find((el) => container.contains(el)) || statusElements[0];
     expect(statusElement).toBeInTheDocument();
     expect(statusElement).toHaveTextContent("Checking");
   });
 
   it("should render online status with default label", () => {
-    render(<StatusPill status="online" />);
+    const { container } = render(<StatusPill status="online" />);
 
-    const statusElement = screen.getByRole("status");
+    const statusElements = screen.getAllByRole("status");
+    const statusElement =
+      Array.from(statusElements).find((el) => container.contains(el)) || statusElements[0];
     expect(statusElement).toHaveTextContent("Server online");
   });
 
   it("should render offline status with default label", () => {
-    render(<StatusPill status="offline" />);
+    const { container } = render(<StatusPill status="offline" />);
 
-    const statusElement = screen.getByRole("status");
+    const statusElements = screen.getAllByRole("status");
+    const statusElement =
+      Array.from(statusElements).find((el) => container.contains(el)) || statusElements[0];
     expect(statusElement).toHaveTextContent("Server offline");
   });
 
@@ -47,39 +57,49 @@ describe("StatusPill", () => {
   });
 
   it("should use translation key when children is empty", () => {
-    render(<StatusPill status="online">{""}</StatusPill>);
+    const { container } = render(<StatusPill status="online">{""}</StatusPill>);
 
-    expect(screen.getByText("Server online")).toBeInTheDocument();
+    const texts = screen.getAllByText("Server online");
+    const text = Array.from(texts).find((el) => container.contains(el)) || texts[0];
+    expect(text).toBeInTheDocument();
   });
 
   it("should use translation key when children contains only whitespace", () => {
-    render(<StatusPill status="online">{"   "}</StatusPill>);
+    const { container } = render(<StatusPill status="online">{"   "}</StatusPill>);
 
-    expect(screen.getByText("Server online")).toBeInTheDocument();
+    const texts = screen.getAllByText("Server online");
+    const text = Array.from(texts).find((el) => container.contains(el)) || texts[0];
+    expect(text).toBeInTheDocument();
   });
 
   it("should have aria-live polite attribute", () => {
-    render(<StatusPill status="online" />);
+    const { container } = render(<StatusPill status="online" />);
 
-    const statusElement = screen.getByRole("status");
+    const statusElements = screen.getAllByRole("status");
+    const statusElement =
+      Array.from(statusElements).find((el) => container.contains(el)) || statusElements[0];
     expect(statusElement).toHaveAttribute("aria-live", "polite");
   });
 
   it("should have aria-label when label is string", () => {
-    render(<StatusPill status="online">Connected</StatusPill>);
+    const { container } = render(<StatusPill status="online">Connected</StatusPill>);
 
-    const statusElement = screen.getByRole("status");
+    const statusElements = screen.getAllByRole("status");
+    const statusElement =
+      Array.from(statusElements).find((el) => container.contains(el)) || statusElements[0];
     expect(statusElement).toHaveAttribute("aria-label", "Connected");
   });
 
   it("should use translated status as aria-label when children is not string", () => {
-    render(
+    const { container } = render(
       <StatusPill status="online">
         <span>Complex Label</span>
       </StatusPill>,
     );
 
-    const statusElement = screen.getByRole("status");
+    const statusElements = screen.getAllByRole("status");
+    const statusElement =
+      Array.from(statusElements).find((el) => container.contains(el)) || statusElements[0];
     // When children is not a simple string, the component falls back to translating the status
     expect(statusElement).toHaveAttribute("aria-label", "Server online");
   });
@@ -130,7 +150,7 @@ describe("StatusPill", () => {
   });
 
   it("should render complex children content while using translated status for aria-label", () => {
-    render(
+    const { container } = render(
       <StatusPill status="online">
         <span>Status:</span> <strong>Active</strong>
       </StatusPill>,
@@ -140,7 +160,9 @@ describe("StatusPill", () => {
     expect(screen.getByText("Status:")).toBeInTheDocument();
     expect(screen.getByText("Active")).toBeInTheDocument();
     // But uses translated status for aria-label (accessibility)
-    const statusElement = screen.getByRole("status");
+    const statusElements = screen.getAllByRole("status");
+    const statusElement =
+      Array.from(statusElements).find((el) => container.contains(el)) || statusElements[0];
     expect(statusElement).toHaveAttribute("aria-label", "Server online");
   });
 

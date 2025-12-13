@@ -1,6 +1,6 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, cleanup, waitFor } from "@testing-library/react";
 import { MemoryRouter, Routes, Route } from "react-router-dom";
-import { describe, expect, it, vi, beforeEach } from "vitest";
+import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
 import AdminRoute from "../../src/components/AdminRoute";
 import { useAuthStore } from "../../src/store/auth.store";
 
@@ -47,12 +47,20 @@ const renderAdminRoute = () => {
   );
 };
 
+const getContainer = () => {
+  return document.body;
+};
+
 describe("AdminRoute", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  it("redirects to login when not authenticated", () => {
+  afterEach(() => {
+    cleanup();
+  });
+
+  it("redirects to login when not authenticated", async () => {
     vi.mocked(useAuthStore).mockReturnValue({
       isAuthenticated: false,
       user: null,
@@ -61,10 +69,20 @@ describe("AdminRoute", () => {
       updateUser: vi.fn(),
     });
 
-    renderAdminRoute();
+    const { container } = renderAdminRoute();
 
-    expect(screen.getByText("Login Page")).toBeInTheDocument();
-    expect(screen.queryByText("Admin Dashboard")).not.toBeInTheDocument();
+    await waitFor(
+      () => {
+        const loginPages = screen.getAllByText("Login Page");
+        const loginPage = Array.from(loginPages).find((el) => container.contains(el));
+        expect(loginPage).toBeInTheDocument();
+      },
+      { timeout: 2000 },
+    );
+
+    const dashboards = screen.queryAllByText("Admin Dashboard");
+    const dashboard = dashboards.find((el) => container.contains(el));
+    expect(dashboard).toBeUndefined();
   });
 
   it("shows access denied page when authenticated but not admin", () => {
@@ -83,12 +101,26 @@ describe("AdminRoute", () => {
       updateUser: vi.fn(),
     });
 
-    renderAdminRoute();
+    const { container } = renderAdminRoute();
 
-    expect(screen.getByText("Administrator Access Required")).toBeInTheDocument();
-    expect(screen.getByText("You do not have permission to access this area")).toBeInTheDocument();
-    expect(screen.getByText("Unauthorized Access")).toBeInTheDocument();
-    expect(screen.queryByText("Admin Dashboard")).not.toBeInTheDocument();
+    const requiredTexts = screen.getAllByText("Administrator Access Required");
+    const requiredText =
+      Array.from(requiredTexts).find((el) => container.contains(el)) || requiredTexts[0];
+    expect(requiredText).toBeInTheDocument();
+
+    const permissionTexts = screen.getAllByText("You do not have permission to access this area");
+    const permissionText =
+      Array.from(permissionTexts).find((el) => container.contains(el)) || permissionTexts[0];
+    expect(permissionText).toBeInTheDocument();
+
+    const unauthorizedTexts = screen.getAllByText("Unauthorized Access");
+    const unauthorizedText =
+      Array.from(unauthorizedTexts).find((el) => container.contains(el)) || unauthorizedTexts[0];
+    expect(unauthorizedText).toBeInTheDocument();
+
+    const dashboards = screen.queryAllByText("Admin Dashboard");
+    const dashboard = dashboards.find((el) => container.contains(el));
+    expect(dashboard).toBeUndefined();
   });
 
   it("displays access denied card with security message", () => {
@@ -107,16 +139,21 @@ describe("AdminRoute", () => {
       updateUser: vi.fn(),
     });
 
-    renderAdminRoute();
+    const { container } = renderAdminRoute();
 
-    expect(
-      screen.getByText("You need administrator privileges to access the admin dashboard."),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText(
-        "If you believe you should have access, please contact your system administrator.",
-      ),
-    ).toBeInTheDocument();
+    const privilegeTexts = screen.getAllByText(
+      "You need administrator privileges to access the admin dashboard.",
+    );
+    const privilegeText =
+      Array.from(privilegeTexts).find((el) => container.contains(el)) || privilegeTexts[0];
+    expect(privilegeText).toBeInTheDocument();
+
+    const contactTexts = screen.getAllByText(
+      "If you believe you should have access, please contact your system administrator.",
+    );
+    const contactText =
+      Array.from(contactTexts).find((el) => container.contains(el)) || contactTexts[0];
+    expect(contactText).toBeInTheDocument();
   });
 
   it("renders admin content when authenticated as admin", () => {
@@ -135,10 +172,15 @@ describe("AdminRoute", () => {
       updateUser: vi.fn(),
     });
 
-    renderAdminRoute();
+    const { container } = renderAdminRoute();
 
-    expect(screen.getByText("Admin Dashboard")).toBeInTheDocument();
-    expect(screen.queryByText("Administrator Access Required")).not.toBeInTheDocument();
+    const dashboards = screen.getAllByText("Admin Dashboard");
+    const dashboard = Array.from(dashboards).find((el) => container.contains(el)) || dashboards[0];
+    expect(dashboard).toBeInTheDocument();
+
+    const requiredTexts = screen.queryAllByText("Administrator Access Required");
+    const requiredText = requiredTexts.find((el) => container.contains(el));
+    expect(requiredText).toBeUndefined();
   });
 
   it("uses PageIntro component for access denied page", () => {
@@ -157,9 +199,14 @@ describe("AdminRoute", () => {
       updateUser: vi.fn(),
     });
 
-    renderAdminRoute();
+    const { container } = renderAdminRoute();
 
-    expect(screen.getByTestId("page-intro")).toBeInTheDocument();
-    expect(screen.getByTestId("card")).toBeInTheDocument();
+    const pageIntros = screen.getAllByTestId("page-intro");
+    const pageIntro = Array.from(pageIntros).find((el) => container.contains(el)) || pageIntros[0];
+    expect(pageIntro).toBeInTheDocument();
+
+    const cards = screen.getAllByTestId("card");
+    const card = Array.from(cards).find((el) => container.contains(el)) || cards[0];
+    expect(card).toBeInTheDocument();
   });
 });

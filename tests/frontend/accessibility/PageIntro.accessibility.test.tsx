@@ -33,7 +33,6 @@ describe("PageIntro Accessibility", () => {
     it("should render eyebrow text", () => {
       const { container } = render(<PageIntro {...defaultProps} />);
 
-      const welcomeTexts = container.querySelectorAll('text="Welcome"');
       const welcomeElements = Array.from(container.querySelectorAll("*")).filter(
         (el) => el.textContent === "Welcome",
       );
@@ -50,9 +49,13 @@ describe("PageIntro Accessibility", () => {
     });
 
     it("should render description text", () => {
-      render(<PageIntro {...defaultProps} />);
+      const { container } = render(<PageIntro {...defaultProps} />);
 
-      expect(screen.getByText(/track your workouts/i)).toBeInTheDocument();
+      // Use container-scoped query to avoid multiple element issues
+      const descriptionElements = Array.from(container.querySelectorAll("*")).filter((el) =>
+        el.textContent?.includes("Track your workouts"),
+      );
+      expect(descriptionElements.length).toBeGreaterThan(0);
     });
 
     it("should render children when provided", () => {
@@ -115,38 +118,55 @@ describe("PageIntro Accessibility", () => {
 
   describe("Screen reader support", () => {
     it("should announce eyebrow text", () => {
-      render(<PageIntro {...defaultProps} />);
+      const { container } = render(<PageIntro {...defaultProps} />);
 
-      const eyebrow = screen.getByText("Welcome");
+      // Find the eyebrow text span (has text styles, not the container)
+      const eyebrow = Array.from(container.querySelectorAll("span")).find(
+        (el) =>
+          el.textContent === "Welcome" &&
+          el.getAttribute("style")?.includes("text-transform: uppercase"),
+      );
+      expect(eyebrow).toBeDefined();
       expect(eyebrow).toBeVisible();
     });
 
     it("should announce title prominently", () => {
-      render(<PageIntro {...defaultProps} />);
+      const { container } = render(<PageIntro {...defaultProps} />);
 
-      const title = screen.getByText("Getting Started with FitVibe");
+      // Use container-scoped query to avoid multiple element issues
+      const title = Array.from(container.querySelectorAll("h1, h2, h3, h4, h5, h6")).find(
+        (el) => el.textContent === "Getting Started with FitVibe",
+      );
+      expect(title).toBeDefined();
       expect(title).toBeVisible();
     });
 
     it("should announce description text", () => {
-      render(<PageIntro {...defaultProps} />);
+      const { container } = render(<PageIntro {...defaultProps} />);
 
-      const description = screen.getByText(/track your workouts/i);
+      // Use container-scoped query to avoid multiple element issues
+      const description = Array.from(container.querySelectorAll("p")).find((el) =>
+        el.textContent?.includes("Track your workouts"),
+      );
+      expect(description).toBeDefined();
       expect(description).toBeVisible();
     });
 
     it("should use article role for semantic grouping", () => {
-      render(<PageIntro {...defaultProps} />);
+      const { container } = render(<PageIntro {...defaultProps} />);
 
-      const article = screen.getByRole("article");
+      // Use container-scoped query to avoid multiple element issues
+      const article = container.querySelector("article");
       expect(article).toBeInTheDocument();
     });
 
     it("should maintain text content in natural reading flow", () => {
-      render(<PageIntro {...defaultProps} />);
+      const { container } = render(<PageIntro {...defaultProps} />);
 
-      const article = screen.getByRole("article");
-      const textContent = article.textContent;
+      // Use container-scoped query to avoid multiple element issues
+      const article = container.querySelector("article");
+      expect(article).toBeInTheDocument();
+      const textContent = article?.textContent;
 
       // Text should flow naturally for screen readers
       expect(textContent).toContain("Welcome");
@@ -167,19 +187,30 @@ describe("PageIntro Accessibility", () => {
 
   describe("Visual accessibility", () => {
     it("should use semantic color variables for eyebrow", () => {
-      render(<PageIntro {...defaultProps} />);
+      const { container } = render(<PageIntro {...defaultProps} />);
 
-      const eyebrowText = screen.getByText("Welcome");
-      const styles = eyebrowText.getAttribute("style");
+      // Find the eyebrow text span (has color style, not the container)
+      const eyebrowText = Array.from(container.querySelectorAll("span")).find(
+        (el) =>
+          el.textContent === "Welcome" &&
+          el.getAttribute("style")?.includes("--color-text-secondary"),
+      );
+      expect(eyebrowText).toBeDefined();
+      const styles = eyebrowText?.getAttribute("style");
 
       expect(styles).toContain("--color-text-secondary");
     });
 
     it("should use semantic color variable for accent line", () => {
-      render(<PageIntro {...defaultProps} />);
+      const { container } = render(<PageIntro {...defaultProps} />);
 
-      const eyebrowText = screen.getByText("Welcome");
-      const eyebrowContainer = eyebrowText.parentElement;
+      // Find the eyebrow container span, then find the accent line within it
+      const eyebrowContainer = Array.from(container.querySelectorAll("span")).find(
+        (el) =>
+          el.getAttribute("style")?.includes("display: inline-flex") &&
+          el.textContent?.includes("Welcome"),
+      );
+      expect(eyebrowContainer).toBeDefined();
       const accentLine = eyebrowContainer?.querySelector('[aria-hidden="true"]');
       const styles = accentLine?.getAttribute("style");
 
@@ -187,22 +218,32 @@ describe("PageIntro Accessibility", () => {
     });
 
     it("should have sufficient color contrast for text", () => {
-      render(<PageIntro {...defaultProps} />);
+      const { container } = render(<PageIntro {...defaultProps} />);
 
-      // Eyebrow uses secondary text color
-      const eyebrowText = screen.getByText("Welcome");
-      expect(eyebrowText.getAttribute("style")).toContain("--color-text-secondary");
+      // Eyebrow uses secondary text color - find the text span, not the container
+      const eyebrowText = Array.from(container.querySelectorAll("span")).find(
+        (el) =>
+          el.textContent === "Welcome" &&
+          el.getAttribute("style")?.includes("--color-text-secondary"),
+      );
+      expect(eyebrowText).toBeDefined();
+      expect(eyebrowText?.getAttribute("style")).toContain("--color-text-secondary");
 
       // Title and description inherit color variables from Card components
-      const title = screen.getByText("Getting Started with FitVibe");
+      const title = container.querySelector("h1, h2, h3, h4, h5, h6");
       expect(title).toBeVisible();
     });
 
     it("should have proper visual hierarchy through font sizes", () => {
       const { container } = render(<PageIntro {...defaultProps} />);
 
-      const eyebrowText = screen.getByText("Welcome");
-      const eyebrowStyles = eyebrowText.getAttribute("style");
+      // Find the eyebrow text span (has font-size style, not the container)
+      const eyebrowText = Array.from(container.querySelectorAll("span")).find(
+        (el) =>
+          el.textContent === "Welcome" && el.getAttribute("style")?.includes("font-size: 0.9rem"),
+      );
+      expect(eyebrowText).toBeDefined();
+      const eyebrowStyles = eyebrowText?.getAttribute("style");
 
       const title = container.querySelector("h1, h2, h3, h4, h5, h6");
       const titleStyles = title?.getAttribute("style");
@@ -236,8 +277,14 @@ describe("PageIntro Accessibility", () => {
     it("should use proper letter spacing for readability", () => {
       const { container } = render(<PageIntro {...defaultProps} />);
 
-      const eyebrowText = screen.getByText("Welcome");
-      const eyebrowStyles = eyebrowText.getAttribute("style");
+      // Find the eyebrow text span (has letter-spacing style, not the container)
+      const eyebrowText = Array.from(container.querySelectorAll("span")).find(
+        (el) =>
+          el.textContent === "Welcome" &&
+          el.getAttribute("style")?.includes("letter-spacing: 0.08em"),
+      );
+      expect(eyebrowText).toBeDefined();
+      const eyebrowStyles = eyebrowText?.getAttribute("style");
 
       const title = container.querySelector("h1, h2, h3, h4, h5, h6");
       const titleStyles = title?.getAttribute("style");
@@ -250,10 +297,15 @@ describe("PageIntro Accessibility", () => {
     });
 
     it("should have visual accent indicator", () => {
-      render(<PageIntro {...defaultProps} />);
+      const { container } = render(<PageIntro {...defaultProps} />);
 
-      const eyebrowText = screen.getByText("Welcome");
-      const eyebrowContainer = eyebrowText.parentElement;
+      // Find the eyebrow container span, then find the accent line within it
+      const eyebrowContainer = Array.from(container.querySelectorAll("span")).find(
+        (el) =>
+          el.getAttribute("style")?.includes("display: inline-flex") &&
+          el.textContent?.includes("Welcome"),
+      );
+      expect(eyebrowContainer).toBeDefined();
       const accentLine = eyebrowContainer?.querySelector('[aria-hidden="true"]');
 
       expect(accentLine).toBeInTheDocument();
@@ -276,15 +328,20 @@ describe("PageIntro Accessibility", () => {
     it("should use responsive padding with clamp", () => {
       const { container } = render(<PageIntro {...defaultProps} />);
 
-      const cardHeader = container.querySelector('[style*="clamp(1.5rem, 5vw, 3.5rem)"]');
+      // Query for header element and check its style attribute
+      const cardHeader = container.querySelector("header");
       expect(cardHeader).toBeInTheDocument();
+      const headerStyles = cardHeader?.getAttribute("style");
+      expect(headerStyles).toContain("clamp(1.5rem, 5vw, 3.5rem)");
     });
 
     it("should have maximum width constraint for readability", () => {
-      render(<PageIntro {...defaultProps} />);
+      const { container } = render(<PageIntro {...defaultProps} />);
 
-      const article = screen.getByRole("article");
-      const styles = article.getAttribute("style");
+      // Use container-scoped query to avoid multiple element issues
+      const article = container.querySelector("article");
+      expect(article).toBeInTheDocument();
+      const styles = article?.getAttribute("style");
 
       expect(styles).toContain("max-width: 900px");
       expect(styles).toContain("width: 100%");
@@ -383,11 +440,23 @@ describe("PageIntro Accessibility", () => {
         title: "Welcome",
         description: "Start here.",
       };
-      render(<PageIntro {...shortProps} />);
+      const { container } = render(<PageIntro {...shortProps} />);
 
-      expect(screen.getByText("Hi")).toBeInTheDocument();
-      expect(screen.getByText("Welcome")).toBeInTheDocument();
-      expect(screen.getByText("Start here.")).toBeInTheDocument();
+      // Use container-scoped queries to avoid multiple element issues
+      const eyebrowElements = Array.from(container.querySelectorAll("*")).filter(
+        (el) => el.textContent === "Hi",
+      );
+      expect(eyebrowElements.length).toBeGreaterThan(0);
+
+      const titleElements = Array.from(container.querySelectorAll("h1, h2, h3, h4, h5, h6")).filter(
+        (el) => el.textContent === "Welcome",
+      );
+      expect(titleElements.length).toBeGreaterThan(0);
+
+      const descriptionElements = Array.from(container.querySelectorAll("p")).filter(
+        (el) => el.textContent === "Start here.",
+      );
+      expect(descriptionElements.length).toBeGreaterThan(0);
     });
 
     it("should handle special characters in content", () => {
@@ -396,11 +465,23 @@ describe("PageIntro Accessibility", () => {
         title: "Getting Started & Setting Up",
         description: 'Track "PRs" & monitor progress—it\'s that simple!',
       };
-      render(<PageIntro {...specialProps} />);
+      const { container } = render(<PageIntro {...specialProps} />);
 
-      expect(screen.getByText("Step #1")).toBeInTheDocument();
-      expect(screen.getByText("Getting Started & Setting Up")).toBeInTheDocument();
-      expect(screen.getByText(/track "prs"/i)).toBeInTheDocument();
+      // Use container-scoped queries to avoid multiple element issues
+      const eyebrowElements = Array.from(container.querySelectorAll("*")).filter(
+        (el) => el.textContent === "Step #1",
+      );
+      expect(eyebrowElements.length).toBeGreaterThan(0);
+
+      const titleElements = Array.from(container.querySelectorAll("h1, h2, h3, h4, h5, h6")).filter(
+        (el) => el.textContent === "Getting Started & Setting Up",
+      );
+      expect(titleElements.length).toBeGreaterThan(0);
+
+      const descriptionElements = Array.from(container.querySelectorAll("p")).filter((el) =>
+        el.textContent?.includes('Track "PRs"'),
+      );
+      expect(descriptionElements.length).toBeGreaterThan(0);
     });
   });
 
@@ -426,10 +507,16 @@ describe("PageIntro Accessibility", () => {
     });
 
     it("should have eyebrow visual alignment", () => {
-      render(<PageIntro {...defaultProps} />);
+      const { container } = render(<PageIntro {...defaultProps} />);
 
-      const eyebrowText = screen.getByText("Welcome");
-      const eyebrowContainer = eyebrowText.parentElement;
+      // Find the eyebrow container span (parent of the text span)
+      // The container has display: inline-flex, the text span is its child
+      const eyebrowContainer = Array.from(container.querySelectorAll("span")).find(
+        (el) =>
+          el.getAttribute("style")?.includes("display: inline-flex") &&
+          el.textContent?.includes("Welcome"),
+      );
+      expect(eyebrowContainer).toBeDefined();
       const eyebrowContainerStyles = eyebrowContainer?.getAttribute("style");
 
       expect(eyebrowContainerStyles).toContain("display: inline-flex");
@@ -440,10 +527,15 @@ describe("PageIntro Accessibility", () => {
 
   describe("Decorative elements", () => {
     it("should include visual accent line for eyebrow", () => {
-      render(<PageIntro {...defaultProps} />);
+      const { container } = render(<PageIntro {...defaultProps} />);
 
-      const eyebrowText = screen.getByText("Welcome");
-      const eyebrowContainer = eyebrowText.parentElement;
+      // Find the eyebrow container span, then find the accent line within it
+      const eyebrowContainer = Array.from(container.querySelectorAll("span")).find(
+        (el) =>
+          el.getAttribute("style")?.includes("display: inline-flex") &&
+          el.textContent?.includes("Welcome"),
+      );
+      expect(eyebrowContainer).toBeDefined();
       const accentLine = eyebrowContainer?.querySelector('[aria-hidden="true"]');
 
       expect(accentLine).toBeInTheDocument();
@@ -451,10 +543,14 @@ describe("PageIntro Accessibility", () => {
     });
 
     it("should use accent color for visual line", () => {
-      render(<PageIntro {...defaultProps} />);
+      const { container } = render(<PageIntro {...defaultProps} />);
 
-      const eyebrowText = screen.getByText("Welcome");
-      const eyebrowContainer = eyebrowText.parentElement;
+      // Use container-scoped query to avoid multiple element issues
+      const eyebrowText = Array.from(container.querySelectorAll("*")).find(
+        (el) => el.textContent === "Welcome",
+      );
+      expect(eyebrowText).toBeDefined();
+      const eyebrowContainer = eyebrowText?.parentElement;
       const accentLine = eyebrowContainer?.querySelector('[aria-hidden="true"]');
       const styles = accentLine?.getAttribute("style");
 
@@ -464,28 +560,45 @@ describe("PageIntro Accessibility", () => {
 
   describe("Typography", () => {
     it("should use uppercase for eyebrow text", () => {
-      render(<PageIntro {...defaultProps} />);
+      const { container } = render(<PageIntro {...defaultProps} />);
 
-      const eyebrowText = screen.getByText("Welcome");
-      const styles = eyebrowText.getAttribute("style");
+      // Find the eyebrow text span (has text-transform style, not the container)
+      const eyebrowText = Array.from(container.querySelectorAll("span")).find(
+        (el) =>
+          el.textContent === "Welcome" &&
+          el.getAttribute("style")?.includes("text-transform: uppercase"),
+      );
+      expect(eyebrowText).toBeDefined();
+      const styles = eyebrowText?.getAttribute("style");
 
       expect(styles).toContain("text-transform: uppercase");
     });
 
     it("should use appropriate font weights", () => {
-      render(<PageIntro {...defaultProps} />);
+      const { container } = render(<PageIntro {...defaultProps} />);
 
-      const eyebrowText = screen.getByText("Welcome");
-      const eyebrowStyles = eyebrowText.getAttribute("style");
+      // Find the eyebrow text span (has font-weight style, not the container)
+      const eyebrowText = Array.from(container.querySelectorAll("span")).find(
+        (el) =>
+          el.textContent === "Welcome" && el.getAttribute("style")?.includes("font-weight: 600"),
+      );
+      expect(eyebrowText).toBeDefined();
+      const eyebrowStyles = eyebrowText?.getAttribute("style");
 
       expect(eyebrowStyles).toContain("font-weight: 600");
     });
 
     it("should use semantic color for secondary text", () => {
-      render(<PageIntro {...defaultProps} />);
+      const { container } = render(<PageIntro {...defaultProps} />);
 
-      const eyebrowText = screen.getByText("Welcome");
-      const styles = eyebrowText.getAttribute("style");
+      // Find the eyebrow text span (has color style, not the container)
+      const eyebrowText = Array.from(container.querySelectorAll("span")).find(
+        (el) =>
+          el.textContent === "Welcome" &&
+          el.getAttribute("style")?.includes("color: var(--color-text-secondary)"),
+      );
+      expect(eyebrowText).toBeDefined();
+      const styles = eyebrowText?.getAttribute("style");
 
       expect(styles).toContain("color: var(--color-text-secondary)");
     });

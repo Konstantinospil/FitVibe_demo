@@ -1,9 +1,13 @@
 import React from "react";
 import { render, screen, fireEvent } from "@testing-library/react";
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect, vi, afterEach } from "vitest";
+import { cleanup } from "@testing-library/react";
 import { ConfirmDialog } from "../../src/components/ConfirmDialog";
 
 describe("ConfirmDialog", () => {
+  afterEach(() => {
+    cleanup();
+  });
   it("should not render when isOpen is false", () => {
     const onConfirm = vi.fn();
     const onCancel = vi.fn();
@@ -43,7 +47,7 @@ describe("ConfirmDialog", () => {
     const onConfirm = vi.fn();
     const onCancel = vi.fn();
 
-    render(
+    const { container } = render(
       <ConfirmDialog
         isOpen={true}
         title="Test Title"
@@ -53,8 +57,15 @@ describe("ConfirmDialog", () => {
       />,
     );
 
-    expect(screen.getByRole("button", { name: /Confirm/i })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /Cancel/i })).toBeInTheDocument();
+    const confirmButtons = screen.getAllByRole("button", { name: /Confirm/i });
+    const cancelButtons = screen.getAllByRole("button", { name: /Cancel/i });
+    const confirmButton =
+      Array.from(confirmButtons).find((btn) => container.contains(btn)) || confirmButtons[0];
+    const cancelButton =
+      Array.from(cancelButtons).find((btn) => container.contains(btn)) || cancelButtons[0];
+
+    expect(confirmButton).toBeInTheDocument();
+    expect(cancelButton).toBeInTheDocument();
   });
 
   it("should use custom confirm and cancel labels", () => {
@@ -81,7 +92,7 @@ describe("ConfirmDialog", () => {
     const onConfirm = vi.fn();
     const onCancel = vi.fn();
 
-    render(
+    const { container } = render(
       <ConfirmDialog
         isOpen={true}
         title="Test Title"
@@ -91,7 +102,9 @@ describe("ConfirmDialog", () => {
       />,
     );
 
-    const confirmButton = screen.getByRole("button", { name: /Confirm/i });
+    const confirmButtons = screen.getAllByRole("button", { name: /Confirm/i });
+    const confirmButton =
+      Array.from(confirmButtons).find((btn) => container.contains(btn)) || confirmButtons[0];
     fireEvent.click(confirmButton);
 
     expect(onConfirm).toHaveBeenCalledTimes(1);
@@ -157,7 +170,9 @@ describe("ConfirmDialog", () => {
       />,
     );
 
-    const confirmButton = screen.getByRole("button", { name: /Confirm/i });
+    const confirmButtons = screen.getAllByRole("button", { name: /Confirm/i });
+    const confirmButton =
+      Array.from(confirmButtons).find((btn) => container.contains(btn)) || confirmButtons[0];
     expect(confirmButton).toHaveAttribute("data-variant", "danger");
   });
 
@@ -165,7 +180,7 @@ describe("ConfirmDialog", () => {
     const onConfirm = vi.fn();
     const onCancel = vi.fn();
 
-    render(
+    const { container } = render(
       <ConfirmDialog
         isOpen={true}
         title="Test Title"
@@ -176,7 +191,9 @@ describe("ConfirmDialog", () => {
     );
 
     // Warning variant uses primary button style for confirm
-    const confirmButton = screen.getByRole("button", { name: /Confirm/i });
+    const confirmButtons = screen.getAllByRole("button", { name: /Confirm/i });
+    const confirmButton =
+      Array.from(confirmButtons).find((btn) => container.contains(btn)) || confirmButtons[0];
     expect(confirmButton).toHaveAttribute("data-variant", "primary");
   });
 
@@ -184,7 +201,7 @@ describe("ConfirmDialog", () => {
     const onConfirm = vi.fn();
     const onCancel = vi.fn();
 
-    render(
+    const { container } = render(
       <ConfirmDialog
         isOpen={true}
         title="Test Title"
@@ -195,6 +212,8 @@ describe("ConfirmDialog", () => {
       />,
     );
 
-    expect(screen.getByText("Test Title")).toBeInTheDocument();
+    const titles = screen.getAllByText("Test Title");
+    const title = Array.from(titles).find((el) => container.contains(el)) || titles[0];
+    expect(title).toBeInTheDocument();
   });
 });

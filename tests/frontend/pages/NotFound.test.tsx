@@ -1,6 +1,7 @@
-import { render, screen } from "@testing-library/react";
+import React from "react";
+import { render, screen, cleanup } from "@testing-library/react";
 import { BrowserRouter } from "react-router-dom";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, afterEach } from "vitest";
 import NotFound from "../../src/pages/NotFound";
 import { I18nextProvider } from "react-i18next";
 import i18n from "i18next";

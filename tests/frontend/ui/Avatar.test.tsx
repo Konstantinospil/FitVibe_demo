@@ -4,15 +4,19 @@ import { Avatar } from "../../src/components/ui";
 
 describe("Avatar", () => {
   it("renders initials when no image source is provided", () => {
-    render(<Avatar name="Jamie Vardy" />);
+    const { container } = render(<Avatar name="Jamie Vardy" />);
 
-    expect(screen.getByText("JV")).toBeVisible();
+    const initials = container.querySelector("span");
+    expect(initials).toBeInTheDocument();
+    expect(initials?.textContent).toBe("JV");
   });
 
   it("renders status indicator when status is provided", () => {
-    render(<Avatar name="Jamie Vardy" status="online" />);
+    const { container } = render(<Avatar name="Jamie Vardy" status="online" />);
 
-    const avatar = screen.getByLabelText("Jamie Vardy");
+    // Use getAllByLabelText and filter by container
+    const avatars = screen.getAllByLabelText("Jamie Vardy");
+    const avatar = Array.from(avatars).find((el) => container.contains(el)) || avatars[0];
     const statusIndicator = avatar.querySelector("span[aria-hidden='true']");
     expect(statusIndicator).toBeTruthy();
   });

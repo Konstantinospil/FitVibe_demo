@@ -121,12 +121,15 @@ describe("ResetPassword", () => {
 
     const passwordInput = screen.getByPlaceholderText(/enter new password/i);
     const confirmPasswordInput = screen.getByPlaceholderText(/confirm your password/i);
+    const form = passwordInput.closest("form");
     const submitButton = screen.getByRole("button", { name: /reset password/i });
 
-    act(() => {
+    await act(() => {
       fireEvent.change(passwordInput, { target: { value: "NewPassword123!" } });
       fireEvent.change(confirmPasswordInput, { target: { value: "DifferentPassword123!" } });
-      fireEvent.click(submitButton);
+      if (form) {
+        fireEvent.submit(form);
+      }
     });
 
     await waitFor(
@@ -146,12 +149,14 @@ describe("ResetPassword", () => {
 
     const passwordInput = screen.getByPlaceholderText(/enter new password/i);
     const confirmPasswordInput = screen.getByPlaceholderText(/confirm your password/i);
-    const submitButton = screen.getByRole("button", { name: /reset password/i });
+    const form = passwordInput.closest("form");
 
-    act(() => {
+    await act(() => {
       fireEvent.change(passwordInput, { target: { value: "NewPassword123!" } });
       fireEvent.change(confirmPasswordInput, { target: { value: "NewPassword123!" } });
-      fireEvent.click(submitButton);
+      if (form) {
+        fireEvent.submit(form);
+      }
     });
 
     await waitFor(
@@ -173,11 +178,15 @@ describe("ResetPassword", () => {
 
     const passwordInput = screen.getByPlaceholderText(/enter new password/i);
     const confirmPasswordInput = screen.getByPlaceholderText(/confirm your password/i);
-    const submitButton = screen.getByRole("button", { name: /reset password/i });
+    const form = passwordInput.closest("form");
 
-    fireEvent.change(passwordInput, { target: { value: "NewPassword123!" } });
-    fireEvent.change(confirmPasswordInput, { target: { value: "NewPassword123!" } });
-    fireEvent.click(submitButton);
+    await act(() => {
+      fireEvent.change(passwordInput, { target: { value: "NewPassword123!" } });
+      fireEvent.change(confirmPasswordInput, { target: { value: "NewPassword123!" } });
+      if (form) {
+        fireEvent.submit(form);
+      }
+    });
 
     await waitFor(
       () => {
@@ -192,11 +201,14 @@ describe("ResetPassword", () => {
     );
 
     // Should show success screen
-    await waitFor(() => {
-      expect(screen.getByText("Password Reset Successfully")).toBeInTheDocument();
-      expect(screen.getByText("Your password has been reset")).toBeInTheDocument();
-      expect(screen.getByText("You can now log in with your new password")).toBeInTheDocument();
-    }, { timeout: 5000 });
+    await waitFor(
+      () => {
+        expect(screen.getByText("Password Reset Successfully")).toBeInTheDocument();
+        expect(screen.getByText("Your password has been reset")).toBeInTheDocument();
+        expect(screen.getByText("You can now log in with your new password")).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
   });
 
   it("displays error message on failure", async () => {
@@ -206,11 +218,14 @@ describe("ResetPassword", () => {
 
     const passwordInput = screen.getByPlaceholderText(/enter new password/i);
     const confirmPasswordInput = screen.getByPlaceholderText(/confirm your password/i);
+    const form = passwordInput.closest("form");
 
-    act(() => {
+    await act(() => {
       fireEvent.change(passwordInput, { target: { value: "NewPassword123!" } });
       fireEvent.change(confirmPasswordInput, { target: { value: "NewPassword123!" } });
-      fireEvent.click(screen.getByRole("button", { name: /reset password/i }));
+      if (form) {
+        fireEvent.submit(form);
+      }
     });
 
     await waitFor(
@@ -238,11 +253,14 @@ describe("ResetPassword", () => {
 
     const passwordInput = screen.getByPlaceholderText(/enter new password/i);
     const confirmPasswordInput = screen.getByPlaceholderText(/confirm your password/i);
+    const form = passwordInput.closest("form");
 
-    act(() => {
+    await act(() => {
       fireEvent.change(passwordInput, { target: { value: "NewPassword123!" } });
       fireEvent.change(confirmPasswordInput, { target: { value: "NewPassword123!" } });
-      fireEvent.click(screen.getByRole("button", { name: /reset password/i }));
+      if (form) {
+        fireEvent.submit(form);
+      }
     });
 
     await waitFor(
@@ -264,12 +282,15 @@ describe("ResetPassword", () => {
 
     const passwordInput = screen.getByPlaceholderText(/enter new password/i);
     const confirmPasswordInput = screen.getByPlaceholderText(/confirm your password/i);
+    const form = passwordInput.closest("form");
     const submitButton = screen.getByRole("button", { name: /reset password/i });
 
-    act(() => {
+    await act(() => {
       fireEvent.change(passwordInput, { target: { value: "NewPassword123!" } });
       fireEvent.change(confirmPasswordInput, { target: { value: "NewPassword123!" } });
-      fireEvent.click(submitButton);
+      if (form) {
+        fireEvent.submit(form);
+      }
     });
 
     await waitFor(

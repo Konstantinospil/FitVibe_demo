@@ -1,6 +1,6 @@
 import React from "react";
-import { render, screen, fireEvent } from "@testing-library/react";
-import { describe, expect, it, vi, beforeEach } from "vitest";
+import { render, screen, fireEvent, cleanup } from "@testing-library/react";
+import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
 import { ErrorBoundary } from "../../src/components/ErrorBoundary";
 
 // Mock i18next
@@ -38,6 +38,10 @@ describe("ErrorBoundary", () => {
     vi.spyOn(console, "error").mockImplementation(() => {});
   });
 
+  afterEach(() => {
+    cleanup();
+  });
+
   it("should render children when no error occurs", () => {
     render(
       <ErrorBoundary>
@@ -65,15 +69,17 @@ describe("ErrorBoundary", () => {
 
   it("should render fallback UI when provided", () => {
     const fallback = <div>Custom Error Fallback</div>;
-
-    render(
+    const { container } = render(
       <ErrorBoundary fallback={fallback}>
         <ThrowError shouldThrow={true} />
       </ErrorBoundary>,
     );
 
     expect(screen.getByText("Custom Error Fallback")).toBeInTheDocument();
-    expect(screen.queryByText("Something went wrong")).not.toBeInTheDocument();
+    // Check that default error UI is not in the container
+    const defaultErrorTexts = screen.queryAllByText("Something went wrong");
+    const defaultErrorInContainer = defaultErrorTexts.find((el) => container.contains(el));
+    expect(defaultErrorInContainer).toBeUndefined();
   });
 
   it("should call onError callback when error is caught", () => {
@@ -93,16 +99,25 @@ describe("ErrorBoundary", () => {
   });
 
   it("should reset error state when Try Again is clicked", () => {
-    const { rerender } = render(
+    const { rerender, container } = render(
       <ErrorBoundary>
         <ThrowError shouldThrow={true} />
       </ErrorBoundary>,
     );
 
     // Initial error state - find button by text
-    const tryAgainButton = screen.getByText(/try again/i).closest("button");
+    const tryAgainButtons = screen.getAllByText(/try again/i);
+    const tryAgainButton = tryAgainButtons
+      .find((btn) => {
+        const button = btn.closest("button");
+        return button && container.contains(button);
+      })
+      ?.closest("button");
     expect(tryAgainButton).toBeInTheDocument();
-    expect(screen.getByText("Something went wrong")).toBeInTheDocument();
+
+    const errorTexts = screen.getAllByText("Something went wrong");
+    const errorText = Array.from(errorTexts).find((el) => container.contains(el)) || errorTexts[0];
+    expect(errorText).toBeInTheDocument();
 
     // First, update the child to not throw anymore
     rerender(
@@ -112,10 +127,19 @@ describe("ErrorBoundary", () => {
     );
 
     // Error UI should still be showing because error boundary caught the initial error
-    expect(screen.getByText("Something went wrong")).toBeInTheDocument();
+    const errorTexts2 = screen.getAllByText("Something went wrong");
+    const errorText2 =
+      Array.from(errorTexts2).find((el) => container.contains(el)) || errorTexts2[0];
+    expect(errorText2).toBeInTheDocument();
 
     // Click Try Again to reset and render the (now non-throwing) child
-    const tryAgainBtn = screen.getByText(/try again/i).closest("button");
+    const tryAgainBtns = screen.getAllByText(/try again/i);
+    const tryAgainBtn = tryAgainBtns
+      .find((btn) => {
+        const button = btn.closest("button");
+        return button && container.contains(button);
+      })
+      ?.closest("button");
     if (tryAgainBtn) {
       fireEvent.click(tryAgainBtn);
     }

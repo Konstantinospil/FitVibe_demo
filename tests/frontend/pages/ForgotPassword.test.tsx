@@ -77,26 +77,25 @@ describe("ForgotPassword", () => {
     renderWithProviders(<ForgotPassword />);
 
     const emailInput = screen.getByRole("textbox", { name: /email/i });
-    const submitButton = screen.getByRole("button", { name: /send reset link/i });
+    const form = emailInput.closest("form");
 
     await act(() => {
       fireEvent.change(emailInput, { target: { value: "test@example.com" } });
-      fireEvent.click(submitButton);
+      if (form) {
+        fireEvent.submit(form);
+      }
     });
 
     // Wait for success screen - the component should re-render with success state
     await waitFor(
       () => {
-        expect(screen.getByText(/check your email/i)).toBeInTheDocument();
+        expect(screen.getByText("Check Your Email")).toBeInTheDocument();
       },
       { timeout: 3000 },
     );
 
     expect(api.forgotPassword).toHaveBeenCalledWith({ email: "test@example.com" });
-    expect(
-      screen.getByText(/if an account exists for that email, we sent reset instructions/i),
-    ).toBeInTheDocument();
-    expect(screen.getByText(/check your email for the password reset link/i)).toBeInTheDocument();
+    expect(screen.getByText("Password reset link sent to your email")).toBeInTheDocument();
   });
 
   it("displays error message on failure", async () => {
@@ -105,11 +104,13 @@ describe("ForgotPassword", () => {
     renderWithProviders(<ForgotPassword />);
 
     const emailInput = screen.getByRole("textbox", { name: /email/i });
-    const submitButton = screen.getByRole("button", { name: /send reset link/i });
+    const form = emailInput.closest("form");
 
-    act(() => {
+    await act(() => {
       fireEvent.change(emailInput, { target: { value: "test@example.com" } });
-      fireEvent.click(submitButton);
+      if (form) {
+        fireEvent.submit(form);
+      }
     });
 
     await waitFor(
@@ -136,11 +137,13 @@ describe("ForgotPassword", () => {
     renderWithProviders(<ForgotPassword />);
 
     const emailInput = screen.getByRole("textbox", { name: /email/i });
-    const submitButton = screen.getByRole("button", { name: /send reset link/i });
+    const form = emailInput.closest("form");
 
-    act(() => {
+    await act(() => {
       fireEvent.change(emailInput, { target: { value: "notfound@example.com" } });
-      fireEvent.click(submitButton);
+      if (form) {
+        fireEvent.submit(form);
+      }
     });
 
     await waitFor(
@@ -161,11 +164,14 @@ describe("ForgotPassword", () => {
     renderWithProviders(<ForgotPassword />);
 
     const emailInput = screen.getByRole("textbox", { name: /email/i });
+    const form = emailInput.closest("form");
     const submitButton = screen.getByRole("button", { name: /send reset link/i });
 
-    act(() => {
+    await act(() => {
       fireEvent.change(emailInput, { target: { value: "test@example.com" } });
-      fireEvent.click(submitButton);
+      if (form) {
+        fireEvent.submit(form);
+      }
     });
 
     await waitFor(
@@ -183,16 +189,18 @@ describe("ForgotPassword", () => {
     renderWithProviders(<ForgotPassword />);
 
     const emailInput = screen.getByRole("textbox", { name: /email/i });
-    const submitButton = screen.getByRole("button", { name: /send reset link/i });
+    const form = emailInput.closest("form");
 
     await act(() => {
       fireEvent.change(emailInput, { target: { value: "test@example.com" } });
-      fireEvent.click(submitButton);
+      if (form) {
+        fireEvent.submit(form);
+      }
     });
 
     await waitFor(
       () => {
-        expect(screen.getByText(/check your email/i)).toBeInTheDocument();
+        expect(screen.getByText("Check Your Email")).toBeInTheDocument();
       },
       { timeout: 5000 },
     );

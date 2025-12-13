@@ -2,6 +2,7 @@ import React from "react";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { MemoryRouter } from "react-router-dom";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import Home from "../../src/pages/Home";
 import * as api from "../../src/services/api";
 import { useAuthStore } from "../../src/store/auth.store";
@@ -154,10 +155,24 @@ const mockSessionResponse: SessionsListResponse = {
   offset: 0,
 };
 
+// Create a test query client
+const createTestQueryClient = () => {
+  return new QueryClient({
+    defaultOptions: {
+      queries: {
+        retry: false,
+        gcTime: 0,
+      },
+    },
+  });
+};
+
 describe("Home page", () => {
   const originalState = useAuthStore.getState();
+  let queryClient: QueryClient;
 
   beforeEach(() => {
+    queryClient = createTestQueryClient();
     useAuthStore.setState({
       ...originalState,
       ...authenticatedState,
@@ -217,15 +232,18 @@ describe("Home page", () => {
   afterEach(() => {
     useAuthStore.setState(originalState);
     vi.clearAllMocks();
+    queryClient.clear();
   });
 
   it("redirects unauthenticated users to the login screen", () => {
     useAuthStore.setState({ ...originalState, isAuthenticated: false });
 
     render(
-      <MemoryRouter>
-        <Home />
-      </MemoryRouter>,
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter>
+          <Home />
+        </MemoryRouter>
+      </QueryClientProvider>,
     );
 
     expect(mockNavigate).toHaveBeenCalledWith("/login", {
@@ -237,9 +255,11 @@ describe("Home page", () => {
 
   it("allows creating a custom exercise session", async () => {
     render(
-      <MemoryRouter>
-        <Home />
-      </MemoryRouter>,
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter>
+          <Home />
+        </MemoryRouter>
+      </QueryClientProvider>,
     );
 
     const strengthButton = await screen.findByRole("button", {
@@ -279,7 +299,9 @@ describe("Home page", () => {
 
     await waitFor(
       () => {
-        expect(mockedApi.createExercise).toHaveBeenCalledWith({
+        expect(mockedApi.createExercise).toHaveBeenCalled();
+        const callArgs = mockedApi.createExercise.mock.calls[0];
+        expect(callArgs[0]).toEqual({
           name: "Tempo Push Press",
           type_code: "strength",
           is_public: false,
@@ -295,9 +317,11 @@ describe("Home page", () => {
     mockedApi.createSession.mockRejectedValueOnce(new Error("network"));
 
     render(
-      <MemoryRouter>
-        <Home />
-      </MemoryRouter>,
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter>
+          <Home />
+        </MemoryRouter>
+      </QueryClientProvider>,
     );
 
     const vibeButton = await screen.findByRole("button", { name: "vibes.strength.name" });

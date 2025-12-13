@@ -346,42 +346,47 @@ const Home: React.FC = () => {
 
     setError(null);
 
-    let exerciseId = selectedExerciseId;
+    try {
+      let exerciseId = selectedExerciseId;
 
-    if (exerciseMode === "create") {
-      // Create new exercise
-      const newExercise = await createExerciseMutation.mutateAsync({
-        name: exerciseName,
-        type_code: VIBE_TO_TYPE_CODE[selectedVibe],
-        is_public: false,
-      });
-      exerciseId = newExercise.id;
-    }
+      if (exerciseMode === "create") {
+        // Create new exercise
+        const newExercise = await createExerciseMutation.mutateAsync({
+          name: exerciseName,
+          type_code: VIBE_TO_TYPE_CODE[selectedVibe],
+          is_public: false,
+        });
+        exerciseId = newExercise.id;
+      }
 
-    // Create a session with the exercise data
-    await createSessionMutation.mutateAsync({
-      planned_at: new Date().toISOString(),
-      visibility: "private",
-      exercises: [
-        {
-          exercise_id: exerciseId,
-          order: 1,
-          notes: notes || null,
-          actual: {
-            sets: sets ? parseInt(sets, 10) : null,
-            reps: reps ? parseInt(reps, 10) : null,
-            load: weight ? parseFloat(weight) : null,
-            distance: distance ? parseFloat(distance) : null,
-            duration: duration ? `PT${duration}M` : null, // ISO 8601 duration format
-            rpe: rpe ? parseInt(rpe, 10) : null,
-            extras: {
-              resistance: resistance || null,
-              speed: speed || null,
+      // Create a session with the exercise data
+      await createSessionMutation.mutateAsync({
+        planned_at: new Date().toISOString(),
+        visibility: "private",
+        exercises: [
+          {
+            exercise_id: exerciseId,
+            order: 1,
+            notes: notes || null,
+            actual: {
+              sets: sets ? parseInt(sets, 10) : null,
+              reps: reps ? parseInt(reps, 10) : null,
+              load: weight ? parseFloat(weight) : null,
+              distance: distance ? parseFloat(distance) : null,
+              duration: duration ? `PT${duration}M` : null, // ISO 8601 duration format
+              rpe: rpe ? parseInt(rpe, 10) : null,
+              extras: {
+                resistance: resistance || null,
+                speed: speed || null,
+              },
             },
           },
-        },
-      ],
-    });
+        ],
+      });
+    } catch {
+      // Error is handled by mutation's onError callback
+      // This catch prevents unhandled promise rejections
+    }
   };
 
   const handleCloseModal = () => {

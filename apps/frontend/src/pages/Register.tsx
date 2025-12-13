@@ -112,12 +112,12 @@ const Register: React.FC = () => {
       const finalUsername = username.trim() || email.split("@")[0].replace(/[^a-zA-Z0-9_.-]/g, "_");
 
       await registerAccount({
-        email,
+        email: email.trim(),
         password,
         username: finalUsername,
         terms_accepted: termsAccepted && privacyAccepted,
         profile: {
-          display_name: name,
+          display_name: name.trim(),
         },
       });
 
@@ -130,7 +130,9 @@ const Register: React.FC = () => {
           response?: { data?: { error?: { code?: string; message?: string } } };
         };
         const errorCode = axiosError.response?.data?.error?.code;
-        setError(errorCode ? t(`errors.${errorCode}`) : t("auth.register.error"));
+        const errorMessage = axiosError.response?.data?.error?.message;
+        // Use error code translation if available, otherwise use error message, otherwise fallback
+        setError(errorCode ? t(`errors.${errorCode}`) : errorMessage || t("auth.register.error"));
       } else {
         setError(t("auth.register.error"));
       }
@@ -383,7 +385,18 @@ const Register: React.FC = () => {
           </div>
         </label>
         <div className="password-requirements">
-          <label className="checkbox-wrapper">
+          <label
+            className="checkbox-wrapper"
+            style={{
+              border:
+                error && !termsAccepted
+                  ? "1px solid rgba(248, 113, 113, 0.5)"
+                  : "1px solid var(--color-border)",
+              borderRadius: "8px",
+              padding: "0.75rem",
+              transition: "border-color 150ms ease",
+            }}
+          >
             <input
               type="checkbox"
               checked={termsAccepted}
@@ -393,6 +406,7 @@ const Register: React.FC = () => {
                 marginTop: "0.2rem",
                 cursor: isSubmitting ? "not-allowed" : "pointer",
               }}
+              aria-invalid={error && !termsAccepted ? "true" : "false"}
             />
             <span className="checkbox-label">
               {t("auth.register.acceptTerms")}{" "}
