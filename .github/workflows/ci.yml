@@ -1147,8 +1147,9 @@ jobs:
         timeout-minutes: 5
         uses: trufflesecurity/trufflehog@v3.90.13
         with:
-          scan_secrets: true
-          only_verified: true
+          path: "./"
+          base: ${{ github.event.repository.default_branch || 'main' }}
+          extra_args: "--results=verified"
 
       - name: Static secret scan
         timeout-minutes: 5
@@ -1195,17 +1196,17 @@ jobs:
           fetch-depth: 0
 
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@v3
+        uses: github/codeql-action/init@v4
         with:
           languages: javascript
           queries: security-and-quality
           config-file: ./.github/codeql/codeql-config.yml
 
       - name: Autobuild
-        uses: github/codeql-action/autobuild@v3
+        uses: github/codeql-action/autobuild@v4
 
       - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v3
+        uses: github/codeql-action/analyze@v4
         with:
           category: "/language:javascript"
 
