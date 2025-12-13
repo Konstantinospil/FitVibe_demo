@@ -108,6 +108,120 @@ describe("Sessions Repository", () => {
 
       expect(queryBuilders["sessions"]?.andWhere).toHaveBeenCalledWith({ status: "completed" });
     });
+
+    it("should filter by plan_id", async () => {
+      const query: SessionQuery = { plan_id: "plan-123" };
+
+      const dbModule = await import("../../../../apps/backend/src/db/connection.js");
+      const dbFn = dbModule.db as jest.Mock;
+      dbFn("sessions");
+      if (queryBuilders["sessions"]) {
+        queryBuilders["sessions"].count.mockResolvedValue([{ count: "1" }]);
+        queryBuilders["sessions"].orderBy.mockReturnThis();
+        queryBuilders["sessions"].limit.mockReturnThis();
+        queryBuilders["sessions"].offset.mockResolvedValue([]);
+        queryBuilders["sessions"].clone.mockImplementation(function (this: any) {
+          return this;
+        });
+      }
+
+      await sessionsRepository.listSessions(userId, query);
+
+      expect(queryBuilders["sessions"]?.andWhere).toHaveBeenCalledWith({ plan_id: "plan-123" });
+    });
+
+    it("should filter by planned_from", async () => {
+      const query: SessionQuery = { planned_from: "2024-01-01T00:00:00Z" };
+
+      const dbModule = await import("../../../../apps/backend/src/db/connection.js");
+      const dbFn = dbModule.db as jest.Mock;
+      dbFn("sessions");
+      if (queryBuilders["sessions"]) {
+        queryBuilders["sessions"].count.mockResolvedValue([{ count: "1" }]);
+        queryBuilders["sessions"].orderBy.mockReturnThis();
+        queryBuilders["sessions"].limit.mockReturnThis();
+        queryBuilders["sessions"].offset.mockResolvedValue([]);
+        queryBuilders["sessions"].clone.mockImplementation(function (this: any) {
+          return this;
+        });
+      }
+
+      await sessionsRepository.listSessions(userId, query);
+
+      expect(queryBuilders["sessions"]?.andWhere).toHaveBeenCalledWith(
+        "planned_at",
+        ">=",
+        "2024-01-01T00:00:00Z",
+      );
+    });
+
+    it("should filter by planned_to", async () => {
+      const query: SessionQuery = { planned_to: "2024-12-31T23:59:59Z" };
+
+      const dbModule = await import("../../../../apps/backend/src/db/connection.js");
+      const dbFn = dbModule.db as jest.Mock;
+      dbFn("sessions");
+      if (queryBuilders["sessions"]) {
+        queryBuilders["sessions"].count.mockResolvedValue([{ count: "1" }]);
+        queryBuilders["sessions"].orderBy.mockReturnThis();
+        queryBuilders["sessions"].limit.mockReturnThis();
+        queryBuilders["sessions"].offset.mockResolvedValue([]);
+        queryBuilders["sessions"].clone.mockImplementation(function (this: any) {
+          return this;
+        });
+      }
+
+      await sessionsRepository.listSessions(userId, query);
+
+      expect(queryBuilders["sessions"]?.andWhere).toHaveBeenCalledWith(
+        "planned_at",
+        "<=",
+        "2024-12-31T23:59:59Z",
+      );
+    });
+
+    it("should filter by search", async () => {
+      const query: SessionQuery = { search: "test" };
+
+      const dbModule = await import("../../../../apps/backend/src/db/connection.js");
+      const dbFn = dbModule.db as jest.Mock;
+      dbFn("sessions");
+      if (queryBuilders["sessions"]) {
+        queryBuilders["sessions"].count.mockResolvedValue([{ count: "1" }]);
+        queryBuilders["sessions"].orderBy.mockReturnThis();
+        queryBuilders["sessions"].limit.mockReturnThis();
+        queryBuilders["sessions"].offset.mockResolvedValue([]);
+        queryBuilders["sessions"].clone.mockImplementation(function (this: any) {
+          return this;
+        });
+      }
+
+      await sessionsRepository.listSessions(userId, query);
+
+      expect(queryBuilders["sessions"]?.andWhereILike).toHaveBeenCalledWith("title", "%test%");
+    });
+
+    it("should handle custom limit and offset", async () => {
+      const query: SessionQuery = { limit: 20, offset: 10 };
+
+      const dbModule = await import("../../../../apps/backend/src/db/connection.js");
+      const dbFn = dbModule.db as jest.Mock;
+      dbFn("sessions");
+      if (queryBuilders["sessions"]) {
+        queryBuilders["sessions"].count.mockResolvedValue([{ count: "5" }]);
+        queryBuilders["sessions"].orderBy.mockReturnThis();
+        queryBuilders["sessions"].limit.mockReturnThis();
+        queryBuilders["sessions"].offset.mockResolvedValue([]);
+        queryBuilders["sessions"].clone.mockImplementation(function (this: any) {
+          return this;
+        });
+      }
+
+      const result = await sessionsRepository.listSessions(userId, query);
+
+      expect(result.limit).toBe(20);
+      expect(result.offset).toBe(10);
+    });
   });
 
   describe("getSessionById", () => {
@@ -190,6 +304,134 @@ describe("Sessions Repository", () => {
       const result = await sessionsRepository.getSessionWithDetails(sessionId, userId);
 
       expect(result).toBeUndefined();
+    });
+
+    it("should handle empty exerciseIds case", async () => {
+      const mockSession: Session = {
+        id: sessionId,
+        owner_id: userId,
+        title: "Test Session",
+        planned_at: new Date().toISOString(),
+        status: "planned",
+        visibility: "private",
+      };
+
+      const newBuilder = createMockQueryBuilder();
+      queryBuilders["sessions"] = newBuilder;
+      queryBuilders["session_exercises as se"] = newBuilder;
+      newBuilder.first.mockResolvedValue(mockSession);
+      newBuilder.select.mockResolvedValueOnce([]); // Empty exercise rows
+
+      const result = await sessionsRepository.getSessionWithDetails(sessionId, userId);
+
+      expect(result).toBeDefined();
+      expect(result?.exercises).toEqual([]);
+      // Should not call exercise_sets query when exerciseIds is empty
+      expect(newBuilder.whereIn).not.toHaveBeenCalled();
+    });
+
+    it("should handle exercises with Date objects for created_at and updated_at", async () => {
+      const mockSession: Session = {
+        id: sessionId,
+        owner_id: userId,
+        title: "Test Session",
+        planned_at: new Date().toISOString(),
+        status: "planned",
+        visibility: "private",
+      };
+
+      const mockExerciseRow = {
+        id: "exercise-1",
+        session_id: sessionId,
+        exercise_id: "ex-1",
+        order_index: 0,
+        notes: "Test notes",
+        created_at: new Date("2024-01-01"),
+        updated_at: new Date("2024-01-02"),
+        planned_sets: 3,
+        planned_reps: 10,
+        planned_load: 100,
+        planned_distance: null,
+        planned_duration: null,
+        planned_rpe: null,
+        planned_rest: null,
+        planned_extras: {},
+        actual_sets: null,
+        actual_reps: null,
+        actual_load: null,
+        actual_distance: null,
+        actual_duration: null,
+        actual_rpe: null,
+        actual_rest: null,
+        actual_extras: null,
+        actual_recorded_at: null,
+      };
+
+      const newBuilder = createMockQueryBuilder();
+      queryBuilders["sessions"] = newBuilder;
+      queryBuilders["session_exercises as se"] = newBuilder;
+      queryBuilders["exercise_sets"] = newBuilder;
+      newBuilder.first.mockResolvedValue(mockSession);
+      newBuilder.select.mockResolvedValueOnce([mockExerciseRow]).mockResolvedValueOnce([]); // Empty sets
+
+      const result = await sessionsRepository.getSessionWithDetails(sessionId, userId);
+
+      expect(result).toBeDefined();
+      expect(result?.exercises).toHaveLength(1);
+      expect(result?.exercises[0].created_at).toBeDefined();
+      expect(result?.exercises[0].updated_at).toBeDefined();
+    });
+
+    it("should handle exercises with string dates for created_at and updated_at", async () => {
+      const mockSession: Session = {
+        id: sessionId,
+        owner_id: userId,
+        title: "Test Session",
+        planned_at: new Date().toISOString(),
+        status: "planned",
+        visibility: "private",
+      };
+
+      const mockExerciseRow = {
+        id: "exercise-1",
+        session_id: sessionId,
+        exercise_id: "ex-1",
+        order_index: 0,
+        notes: "Test notes",
+        created_at: "2024-01-01T00:00:00Z",
+        updated_at: "2024-01-02T00:00:00Z",
+        planned_sets: null,
+        planned_reps: null,
+        planned_load: null,
+        planned_distance: null,
+        planned_duration: null,
+        planned_rpe: null,
+        planned_rest: null,
+        planned_extras: null,
+        actual_sets: null,
+        actual_reps: null,
+        actual_load: null,
+        actual_distance: null,
+        actual_duration: null,
+        actual_rpe: null,
+        actual_rest: null,
+        actual_extras: null,
+        actual_recorded_at: null,
+      };
+
+      const newBuilder = createMockQueryBuilder();
+      queryBuilders["sessions"] = newBuilder;
+      queryBuilders["session_exercises as se"] = newBuilder;
+      queryBuilders["exercise_sets"] = newBuilder;
+      newBuilder.first.mockResolvedValue(mockSession);
+      newBuilder.select.mockResolvedValueOnce([mockExerciseRow]).mockResolvedValueOnce([]); // Empty sets
+
+      const result = await sessionsRepository.getSessionWithDetails(sessionId, userId);
+
+      expect(result).toBeDefined();
+      expect(result?.exercises).toHaveLength(1);
+      expect(result?.exercises[0].created_at).toBe("2024-01-01T00:00:00Z");
+      expect(result?.exercises[0].updated_at).toBe("2024-01-02T00:00:00Z");
     });
   });
 
@@ -554,6 +796,207 @@ describe("Sessions Repository", () => {
       await sessionsRepository.replaceSessionExercises(mockTrx, sessionId, exercises);
 
       expect(mockTrxQueryBuilder.insert).toHaveBeenCalledTimes(2); // session_exercises + exercise_sets
+    });
+
+    it("should not insert planned attributes when they are null", async () => {
+      const exercises = [
+        {
+          id: "exercise-1",
+          exercise_id: "ex-1",
+          order_index: 1,
+          notes: null,
+          planned: null,
+          actual: null,
+          sets: [],
+        },
+      ];
+
+      const mockTrxQueryBuilder = createMockQueryBuilder();
+      const mockTrx = ((_table: string) => mockTrxQueryBuilder) as any;
+
+      mockTrxQueryBuilder.del.mockResolvedValue(1);
+      mockTrxQueryBuilder.insert.mockResolvedValue([]);
+
+      await sessionsRepository.replaceSessionExercises(mockTrx, sessionId, exercises);
+
+      // Should only insert session_exercises, not planned_attributes
+      expect(mockTrxQueryBuilder.insert).toHaveBeenCalledTimes(1);
+    });
+
+    it("should not insert planned attributes when they are empty", async () => {
+      const exercises = [
+        {
+          id: "exercise-1",
+          exercise_id: "ex-1",
+          order_index: 1,
+          notes: null,
+          planned: {
+            sets: null,
+            reps: null,
+            load: null,
+            distance: null,
+            duration: null,
+            rpe: null,
+            rest: null,
+            extras: {},
+          },
+          actual: null,
+          sets: [],
+        },
+      ];
+
+      const mockTrxQueryBuilder = createMockQueryBuilder();
+      const mockTrx = ((_table: string) => mockTrxQueryBuilder) as any;
+
+      mockTrxQueryBuilder.del.mockResolvedValue(1);
+      mockTrxQueryBuilder.insert.mockResolvedValue([]);
+
+      await sessionsRepository.replaceSessionExercises(mockTrx, sessionId, exercises);
+
+      // Should only insert session_exercises, not planned_attributes (because it's empty)
+      expect(mockTrxQueryBuilder.insert).toHaveBeenCalledTimes(1);
+    });
+
+    it("should not insert actual attributes when they are null", async () => {
+      const exercises = [
+        {
+          id: "exercise-1",
+          exercise_id: "ex-1",
+          order_index: 1,
+          notes: null,
+          planned: {
+            sets: 3,
+            reps: 10,
+            load: 100,
+            distance: null,
+            duration: null,
+            rpe: null,
+            rest: null,
+            extras: {},
+          },
+          actual: null,
+          sets: [],
+        },
+      ];
+
+      const mockTrxQueryBuilder = createMockQueryBuilder();
+      const mockTrx = ((_table: string) => mockTrxQueryBuilder) as any;
+
+      mockTrxQueryBuilder.del.mockResolvedValue(1);
+      mockTrxQueryBuilder.insert.mockResolvedValue([]);
+
+      await sessionsRepository.replaceSessionExercises(mockTrx, sessionId, exercises);
+
+      // Should insert session_exercises + planned_attributes, but not actual_attributes
+      expect(mockTrxQueryBuilder.insert).toHaveBeenCalledTimes(2);
+    });
+
+    it("should not insert actual attributes when they are empty", async () => {
+      const exercises = [
+        {
+          id: "exercise-1",
+          exercise_id: "ex-1",
+          order_index: 1,
+          notes: null,
+          planned: null,
+          actual: {
+            sets: null,
+            reps: null,
+            load: null,
+            distance: null,
+            duration: null,
+            rpe: null,
+            rest: null,
+            extras: {},
+            recorded_at: null,
+          },
+          sets: [],
+        },
+      ];
+
+      const mockTrxQueryBuilder = createMockQueryBuilder();
+      const mockTrx = ((_table: string) => mockTrxQueryBuilder) as any;
+
+      mockTrxQueryBuilder.del.mockResolvedValue(1);
+      mockTrxQueryBuilder.insert.mockResolvedValue([]);
+
+      await sessionsRepository.replaceSessionExercises(mockTrx, sessionId, exercises);
+
+      // Should only insert session_exercises, not actual_attributes (because it's empty)
+      expect(mockTrxQueryBuilder.insert).toHaveBeenCalledTimes(1);
+    });
+
+    it("should not insert sets when sets array is empty", async () => {
+      const exercises = [
+        {
+          id: "exercise-1",
+          exercise_id: "ex-1",
+          order_index: 1,
+          notes: null,
+          planned: {
+            sets: 3,
+            reps: 10,
+            load: 100,
+            distance: null,
+            duration: null,
+            rpe: null,
+            rest: null,
+            extras: {},
+          },
+          actual: null,
+          sets: [],
+        },
+      ];
+
+      const mockTrxQueryBuilder = createMockQueryBuilder();
+      const mockTrx = ((_table: string) => mockTrxQueryBuilder) as any;
+
+      mockTrxQueryBuilder.del.mockResolvedValue(1);
+      mockTrxQueryBuilder.insert.mockResolvedValue([]);
+
+      await sessionsRepository.replaceSessionExercises(mockTrx, sessionId, exercises);
+
+      // Should insert session_exercises + planned_attributes, but not exercise_sets
+      expect(mockTrxQueryBuilder.insert).toHaveBeenCalledTimes(2);
+    });
+
+    it("should handle actual attributes with recorded_at", async () => {
+      const exercises = [
+        {
+          id: "exercise-1",
+          exercise_id: "ex-1",
+          order_index: 1,
+          notes: null,
+          planned: null,
+          actual: {
+            sets: 3,
+            reps: 10,
+            load: 100,
+            distance: null,
+            duration: null,
+            rpe: null,
+            rest: null,
+            extras: {},
+            recorded_at: "2024-01-01T00:00:00Z",
+          },
+          sets: [],
+        },
+      ];
+
+      const mockTrxQueryBuilder = createMockQueryBuilder();
+      const mockTrx = ((_table: string) => mockTrxQueryBuilder) as any;
+
+      mockTrxQueryBuilder.del.mockResolvedValue(1);
+      mockTrxQueryBuilder.insert.mockResolvedValue([]);
+
+      await sessionsRepository.replaceSessionExercises(mockTrx, sessionId, exercises);
+
+      expect(mockTrxQueryBuilder.insert).toHaveBeenCalledTimes(2); // session_exercises + actual_attributes
+      const actualInsertCall = mockTrxQueryBuilder.insert.mock.calls.find((call) =>
+        call[0].some((row: any) => row.recorded_at),
+      );
+      expect(actualInsertCall).toBeDefined();
+      expect(actualInsertCall[0][0].recorded_at).toBe("2024-01-01T00:00:00Z");
     });
   });
 });

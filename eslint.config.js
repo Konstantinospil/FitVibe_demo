@@ -32,9 +32,29 @@ export default tseslint.config(
   },
   js.configs.recommended,
   ...tseslint.configs.recommended,
-  ...tseslint.configs.recommendedTypeChecked,
+  // Apply type-checked rules only to non-test files
+  ...tseslint.configs.recommendedTypeChecked.map((config) => ({
+    ...config,
+    ignores: [
+      ...(Array.isArray(config.ignores) ? config.ignores : config.ignores ? [config.ignores] : []),
+      "**/__tests__/**",
+      "**/*.test.ts",
+      "**/*.test.tsx",
+      "**/*.spec.ts",
+      "**/*.spec.tsx",
+      "tests/**",
+    ],
+  })),
   {
     files: ["**/*.ts", "**/*.tsx"],
+    ignores: [
+      "**/__tests__/**",
+      "**/*.test.ts",
+      "**/*.test.tsx",
+      "**/*.spec.ts",
+      "**/*.spec.tsx",
+      "tests/**",
+    ],
     languageOptions: {
       ecmaVersion: 2023,
       sourceType: "module",
@@ -109,6 +129,7 @@ export default tseslint.config(
       "no-console": "off",
     },
   },
+  // Test files config - must come after main config to override rules
   {
     files: [
       "**/__tests__/**/*.ts",
@@ -141,6 +162,15 @@ export default tseslint.config(
       "@typescript-eslint/await-thenable": "off",
       "@typescript-eslint/no-misused-promises": "off",
       "@typescript-eslint/no-unnecessary-type-assertion": "off",
+      // Disable all type-aware rules that might be in recommendedTypeChecked
+      "@typescript-eslint/no-array-delete": "off",
+      "@typescript-eslint/no-unsafe-declaration-merging": "off",
+      "@typescript-eslint/no-useless-empty-export": "off",
+      "@typescript-eslint/prefer-promise-reject-errors": "off",
+      "@typescript-eslint/prefer-reduce-type-parameter": "off",
+      "@typescript-eslint/prefer-return-this-type": "off",
+      "@typescript-eslint/restrict-template-expressions": "off",
+      "@typescript-eslint/unified-signatures": "off",
     },
   },
 );

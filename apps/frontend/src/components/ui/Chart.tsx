@@ -48,7 +48,7 @@ type TooltipProps = {
   valueFormatter: (value: number) => string;
 };
 
-const ChartTooltip: React.FC<TooltipProps> = ({
+export const ChartTooltip: React.FC<TooltipProps> = ({
   active,
   payload,
   label,

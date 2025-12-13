@@ -92,12 +92,19 @@ const metricsHandler: RequestHandler = async (_req: Request, res: Response) => {
 };
 app.get("/metrics", metricsHandler);
 
-// Serve static assets
+// Serve static assets with performance headers
+const staticOptions = {
+  maxAge: isProduction ? 31536000000 : 0, // 1 year in production, no cache in dev
+  etag: true,
+  lastModified: true,
+  immutable: isProduction,
+};
+
 if (isProduction) {
   // In production, serve from dist/client
-  app.use("/assets", express.static(resolve(root, "dist/client/assets")));
-  app.use("/fonts", express.static(resolve(root, "dist/client/fonts")));
-  app.use("/favicon.ico", express.static(resolve(root, "dist/client/favicon.ico")));
+  app.use("/assets", express.static(resolve(root, "dist/client/assets"), staticOptions));
+  app.use("/fonts", express.static(resolve(root, "dist/client/fonts"), staticOptions));
+  app.use("/favicon.ico", express.static(resolve(root, "dist/client/favicon.ico"), staticOptions));
 } else {
   // In development, serve from public
   app.use("/assets", express.static(resolve(root, "public")));
@@ -123,9 +130,11 @@ const ssrHandler: RequestHandler = async (req: Request, res: Response, next: Nex
           timestamp: Date.now(),
           cacheHit: true,
         });
-        res.setHeader("Content-Type", "text/html");
+        // Performance headers
+        res.setHeader("Content-Type", "text/html; charset=utf-8");
         res.setHeader("X-Cache", "HIT");
         res.setHeader("X-SSR-Time", `${renderTime}ms`);
+        res.setHeader("Cache-Control", "public, max-age=300, s-maxage=600"); // 5 min browser, 10 min CDN
         return res.send(cachedHtml);
       }
     }
@@ -148,8 +157,15 @@ const ssrHandler: RequestHandler = async (req: Request, res: Response, next: Nex
       cacheHit: false,
     });
 
-    res.setHeader("Content-Type", "text/html");
+    // Performance headers
+    res.setHeader("Content-Type", "text/html; charset=utf-8");
     res.setHeader("X-SSR-Time", `${renderTime}ms`);
+    // Add cache control for public routes
+    if (isCacheableRoute(req.url)) {
+      res.setHeader("Cache-Control", "public, max-age=300, s-maxage=600"); // 5 min browser, 10 min CDN
+    } else {
+      res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");
+    }
     res.send(html);
   } catch (err) {
     const renderTime = Date.now() - startTime;

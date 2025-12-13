@@ -1,18 +1,43 @@
 import "@testing-library/jest-dom";
 import { cleanup } from "@testing-library/react";
+import { mkdirSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { ensurePrivateTranslationsLoaded } from "../src/i18n/config";
+
+// Ensure coverage temp directory exists to prevent ENOENT errors
+// This is needed because Vitest workers may try to write coverage files
+// before the directory is created, especially in parallel test execution
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+const frontendDir = join(__dirname, "../../apps/frontend");
+const coverageTmpDir = join(frontendDir, "coverage", ".tmp");
+
+try {
+  mkdirSync(coverageTmpDir, { recursive: true });
+} catch {
+  // Ignore errors if directory already exists or creation fails
+  // The run-vitest.mjs script should have created it already
+}
 
 beforeAll(async () => {
   // Add timeout to prevent hanging if i18n loading fails
-  await Promise.race([
-    ensurePrivateTranslationsLoaded(),
-    new Promise((_, reject) =>
-      setTimeout(() => reject(new Error("i18n loading timeout after 5s")), 5000),
-    ),
-  ]).catch((error) => {
+  let timeoutId: NodeJS.Timeout | undefined;
+  const timeoutPromise = new Promise<never>((_, reject) => {
+    timeoutId = setTimeout(() => reject(new Error("i18n loading timeout after 5s")), 5000);
+  });
+
+  try {
+    await Promise.race([ensurePrivateTranslationsLoaded(), timeoutPromise]);
+  } catch (error) {
     // Log but don't fail all tests if i18n loading fails
     console.warn("Failed to load i18n translations in tests:", error);
-  });
+  } finally {
+    // Always clear the timeout to prevent hanging
+    if (timeoutId) {
+      clearTimeout(timeoutId);
+    }
+  }
 });
 
 beforeEach(() => {
@@ -25,15 +50,29 @@ afterEach(() => {
 
   // Ensure fake timers are cleaned up after each test
   if (vi.isFakeTimers()) {
+    // Clear all timers before restoring real timers
+    vi.clearAllTimers();
     vi.useRealTimers();
+  } else {
+    // Even with real timers, clear any pending timers that might leak
+    vi.clearAllTimers();
   }
 
-  // Clear any pending timers that might have been created
+  // Clear any pending async operations
   // This prevents open handles from hanging tests
-  vi.clearAllTimers();
+  vi.clearAllMocks();
+});
 
-  // Timer cleanup is handled by vi.useRealTimers() above
-  // Fake timers are automatically cleaned up when restored
+// Global cleanup after all tests complete
+// This ensures any remaining timers or handles are cleaned up
+afterAll(() => {
+  // Clear all timers to prevent hanging
+  vi.clearAllTimers();
+  vi.useRealTimers();
+  // Clear all mocks
+  vi.clearAllMocks();
+  // Restore all mocks
+  vi.restoreAllMocks();
 });
 
 class ResizeObserverMock {

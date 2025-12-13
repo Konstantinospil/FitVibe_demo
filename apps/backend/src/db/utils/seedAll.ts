@@ -2,7 +2,14 @@ import db from "../index.js";
 import { logger } from "../../config/logger.js";
 import { toErrorPayload } from "../../utils/error.utils.js";
 
-async function main(): Promise<void> {
+/**
+ * Runs all database seed files and verifies critical seed data was inserted correctly.
+ * Validates that required lookup tables (roles, genders, fitness_levels, exercise_types)
+ * have the minimum expected row counts.
+ *
+ * @throws {Error} If seed execution fails or verification reveals insufficient data
+ */
+export async function seedAll(): Promise<void> {
   try {
     logger.info("[db] Running database seeds...");
 
@@ -58,7 +65,11 @@ async function main(): Promise<void> {
   }
 }
 
-main().catch((error: unknown) => {
-  logger.error(toErrorPayload(error), "Failed to run database seeds.");
-  process.exit(1);
-});
+// Execute when run as script (still works with tsx)
+// Skip immediate execution in test environment to allow testing
+if (process.env.NODE_ENV !== "test" && !process.env.JEST_WORKER_ID) {
+  seedAll().catch((error: unknown) => {
+    logger.error(toErrorPayload(error), "Failed to run database seeds.");
+    process.exit(1);
+  });
+}

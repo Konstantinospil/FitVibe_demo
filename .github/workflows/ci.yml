@@ -808,7 +808,7 @@ jobs:
         timeout-minutes: 10
         env:
           CI: "true"
-        run: pnpm --filter @fitvibe/backend exec jest src/db/utils/__tests__/scripts.test.ts --maxWorkers=1 --forceExit
+        run: pnpm --filter @fitvibe/backend exec jest tests/backend/db/utils/scripts.test.ts --maxWorkers=1 --forceExit
 
       - name: Run integration tests
         timeout-minutes: 20

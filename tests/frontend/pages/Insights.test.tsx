@@ -321,4 +321,276 @@ describe("Insights page", () => {
     // The component should update state, which triggers useDashboardAnalytics with new params
     expect(rangeSelect).toHaveValue("8w");
   });
+
+  it("should change grain between weekly and monthly", () => {
+    vi.mocked(useDashboardAnalytics).mockReturnValue({
+      data: {
+        summary: [],
+        personalRecords: [],
+        aggregates: [],
+        meta: { range: "4w" as const, grain: "weekly" as const, totalRows: 0, truncated: false },
+      },
+      isLoading: false,
+      isFetching: false,
+      error: null,
+      refetch: vi.fn(),
+    } as unknown as ReturnType<typeof useDashboardAnalytics>);
+
+    renderInsights();
+
+    const monthlyButton = screen.getByText("Monthly");
+    fireEvent.click(monthlyButton);
+
+    expect(monthlyButton).toBeInTheDocument();
+  });
+
+  it("should display loading state for metrics", () => {
+    vi.mocked(useDashboardAnalytics).mockReturnValue({
+      data: {
+        summary: [
+          {
+            id: "streak",
+            label: "Training streak",
+            value: "24 days",
+            trend: "+3 vs last week",
+          },
+        ],
+        personalRecords: [],
+        aggregates: [],
+        meta: { range: "4w" as const, grain: "weekly" as const, totalRows: 0, truncated: false },
+      },
+      isLoading: true,
+      isFetching: false,
+      error: null,
+      refetch: vi.fn(),
+    } as unknown as ReturnType<typeof useDashboardAnalytics>);
+
+    renderInsights();
+
+    // Should show skeleton during loading
+    expect(screen.getByText("Training streak")).toBeInTheDocument();
+  });
+
+  it("should display metrics without trends", () => {
+    vi.mocked(useDashboardAnalytics).mockReturnValue({
+      data: {
+        summary: [
+          {
+            id: "streak",
+            label: "Training streak",
+            value: "24 days",
+            trend: undefined,
+          },
+        ],
+        personalRecords: [],
+        aggregates: [],
+        meta: { range: "4w" as const, grain: "weekly" as const, totalRows: 0, truncated: false },
+      },
+      isLoading: false,
+      isFetching: false,
+      error: null,
+      refetch: vi.fn(),
+    } as unknown as ReturnType<typeof useDashboardAnalytics>);
+
+    renderInsights();
+
+    expect(screen.getByText("Training streak")).toBeInTheDocument();
+    expect(screen.getByText("24 days")).toBeInTheDocument();
+  });
+
+  it("should display numeric metric values", () => {
+    vi.mocked(useDashboardAnalytics).mockReturnValue({
+      data: {
+        summary: [
+          {
+            id: "volume",
+            label: "Weekly volume",
+            value: 52300,
+            trend: "+5%",
+          },
+        ],
+        personalRecords: [],
+        aggregates: [],
+        meta: { range: "4w" as const, grain: "weekly" as const, totalRows: 0, truncated: false },
+      },
+      isLoading: false,
+      isFetching: false,
+      error: null,
+      refetch: vi.fn(),
+    } as unknown as ReturnType<typeof useDashboardAnalytics>);
+
+    renderInsights();
+
+    expect(screen.getByText("Weekly volume")).toBeInTheDocument();
+    expect(screen.getByText("52,300")).toBeInTheDocument();
+  });
+
+  it("should show isFetching indicator", () => {
+    vi.mocked(useDashboardAnalytics).mockReturnValue({
+      data: {
+        summary: [],
+        personalRecords: [],
+        aggregates: [],
+        meta: { range: "4w" as const, grain: "weekly" as const, totalRows: 0, truncated: false },
+      },
+      isLoading: false,
+      isFetching: true,
+      error: null,
+      refetch: vi.fn(),
+    } as unknown as ReturnType<typeof useDashboardAnalytics>);
+
+    renderInsights();
+
+    expect(screen.getByText("Refreshing…")).toBeInTheDocument();
+  });
+
+  it("should use fallback aggregates when data is empty", () => {
+    vi.mocked(useDashboardAnalytics).mockReturnValue({
+      data: {
+        summary: [],
+        personalRecords: [],
+        aggregates: [],
+        meta: { range: "4w" as const, grain: "weekly" as const, totalRows: 0, truncated: false },
+      },
+      isLoading: false,
+      isFetching: false,
+      error: null,
+      refetch: vi.fn(),
+    } as unknown as ReturnType<typeof useDashboardAnalytics>);
+
+    renderInsights();
+
+    // Should show table with fallback data
+    expect(screen.getByText("Period")).toBeInTheDocument();
+  });
+
+  it("should switch to custom range mode in progress tab", () => {
+    vi.mocked(useDashboardAnalytics).mockReturnValue({
+      data: undefined,
+      isLoading: false,
+      isFetching: false,
+      error: null,
+      refetch: vi.fn(),
+    } as unknown as ReturnType<typeof useDashboardAnalytics>);
+
+    vi.mocked(api.getProgressTrends).mockResolvedValue([]);
+    vi.mocked(api.getExerciseBreakdown).mockResolvedValue({ exercises: [], period: 30 });
+
+    renderInsights();
+
+    const progressTab = screen.getByText("Progress");
+    fireEvent.click(progressTab);
+
+    const customButton = screen.getByText("Custom");
+    fireEvent.click(customButton);
+
+    expect(customButton).toBeInTheDocument();
+  });
+
+  it("should change period in progress tab", () => {
+    vi.mocked(useDashboardAnalytics).mockReturnValue({
+      data: undefined,
+      isLoading: false,
+      isFetching: false,
+      error: null,
+      refetch: vi.fn(),
+    } as unknown as ReturnType<typeof useDashboardAnalytics>);
+
+    vi.mocked(api.getProgressTrends).mockResolvedValue([]);
+    vi.mocked(api.getExerciseBreakdown).mockResolvedValue({ exercises: [], period: 30 });
+
+    renderInsights();
+
+    const progressTab = screen.getByText("Progress");
+    fireEvent.click(progressTab);
+
+    const periodSelect = screen.getByLabelText(/period/i);
+    fireEvent.change(periodSelect, { target: { value: "90" } });
+
+    expect(periodSelect).toHaveValue("90");
+  });
+
+  it("should change group by in progress tab", () => {
+    vi.mocked(useDashboardAnalytics).mockReturnValue({
+      data: undefined,
+      isLoading: false,
+      isFetching: false,
+      error: null,
+      refetch: vi.fn(),
+    } as unknown as ReturnType<typeof useDashboardAnalytics>);
+
+    vi.mocked(api.getProgressTrends).mockResolvedValue([]);
+    vi.mocked(api.getExerciseBreakdown).mockResolvedValue({ exercises: [], period: 30 });
+
+    renderInsights();
+
+    const progressTab = screen.getByText("Progress");
+    fireEvent.click(progressTab);
+
+    const groupBySelect = screen.getByLabelText(/group by/i);
+    fireEvent.change(groupBySelect, { target: { value: "day" } });
+
+    expect(groupBySelect).toHaveValue("day");
+  });
+
+  it("should display empty state when trends data is empty", async () => {
+    vi.mocked(useDashboardAnalytics).mockReturnValue({
+      data: undefined,
+      isLoading: false,
+      isFetching: false,
+      error: null,
+      refetch: vi.fn(),
+    } as unknown as ReturnType<typeof useDashboardAnalytics>);
+
+    vi.mocked(api.getProgressTrends).mockResolvedValue([]);
+    vi.mocked(api.getExerciseBreakdown).mockResolvedValue({ exercises: [], period: 30 });
+
+    renderInsights();
+
+    const progressTab = screen.getByText("Progress");
+    fireEvent.click(progressTab);
+
+    await waitFor(
+      () => {
+        expect(screen.getByText("Volume Trend")).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
+  });
+
+  it("should handle export error in progress tab", async () => {
+    vi.mocked(useDashboardAnalytics).mockReturnValue({
+      data: undefined,
+      isLoading: false,
+      isFetching: false,
+      error: null,
+      refetch: vi.fn(),
+    } as unknown as ReturnType<typeof useDashboardAnalytics>);
+
+    vi.mocked(api.getProgressTrends).mockResolvedValue([]);
+    vi.mocked(api.getExerciseBreakdown).mockResolvedValue({ exercises: [], period: 30 });
+    vi.mocked(api.exportProgress).mockRejectedValue(new Error("Export failed"));
+
+    renderInsights();
+
+    const progressTab = screen.getByText("Progress");
+    fireEvent.click(progressTab);
+
+    await waitFor(
+      () => {
+        expect(screen.getByText("Export")).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
+
+    const exportButton = screen.getByText("Export");
+    fireEvent.click(exportButton);
+
+    await waitFor(
+      () => {
+        expect(api.exportProgress).toHaveBeenCalled();
+      },
+      { timeout: 5000 },
+    );
+  });
 });

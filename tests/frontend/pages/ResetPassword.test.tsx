@@ -1,11 +1,21 @@
 import { render, screen, fireEvent, waitFor, act } from "@testing-library/react";
-import { MemoryRouter } from "react-router-dom";
+import { MemoryRouter, useNavigate } from "react-router-dom";
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import ResetPassword from "../../src/pages/ResetPassword";
 import { I18nextProvider } from "react-i18next";
 import i18n from "i18next";
 import { initReactI18next } from "react-i18next";
 import * as api from "../../src/services/api";
+
+const mockNavigate = vi.fn();
+
+vi.mock("react-router-dom", async () => {
+  const actual = await vi.importActual("react-router-dom");
+  return {
+    ...actual,
+    useNavigate: () => mockNavigate,
+  };
+});
 
 // Mock API
 vi.mock("../../src/services/api", async () => {
@@ -308,5 +318,98 @@ describe("ResetPassword", () => {
 
     const loginLink = screen.getByRole("link", { name: /back to login/i });
     expect(loginLink).toHaveAttribute("href", "/login");
+  });
+
+  it("handles password visibility toggle with mouse leave", () => {
+    renderWithProviders();
+
+    const passwordInput = screen.getByPlaceholderText(/enter new password/i);
+    const toggleButton = screen.getAllByLabelText(/show password/i)[0];
+
+    expect(passwordInput).toHaveAttribute("type", "password");
+
+    fireEvent.mouseDown(toggleButton);
+    expect(passwordInput).toHaveAttribute("type", "text");
+
+    fireEvent.mouseLeave(toggleButton);
+    expect(passwordInput).toHaveAttribute("type", "password");
+  });
+
+  it("handles password visibility toggle with touch events", () => {
+    renderWithProviders();
+
+    const passwordInput = screen.getByPlaceholderText(/enter new password/i);
+    const toggleButton = screen.getAllByLabelText(/show password/i)[0];
+
+    expect(passwordInput).toHaveAttribute("type", "password");
+
+    fireEvent.touchStart(toggleButton);
+    expect(passwordInput).toHaveAttribute("type", "text");
+
+    fireEvent.touchEnd(toggleButton);
+    expect(passwordInput).toHaveAttribute("type", "password");
+  });
+
+  it("handles confirm password visibility toggle with mouse leave", () => {
+    renderWithProviders();
+
+    const confirmPasswordInput = screen.getByPlaceholderText(/confirm your password/i);
+    const toggleButton = screen.getAllByLabelText(/show password/i)[1];
+
+    expect(confirmPasswordInput).toHaveAttribute("type", "password");
+
+    fireEvent.mouseDown(toggleButton);
+    expect(confirmPasswordInput).toHaveAttribute("type", "text");
+
+    fireEvent.mouseLeave(toggleButton);
+    expect(confirmPasswordInput).toHaveAttribute("type", "password");
+  });
+
+  it("handles confirm password visibility toggle with touch events", () => {
+    renderWithProviders();
+
+    const confirmPasswordInput = screen.getByPlaceholderText(/confirm your password/i);
+    const toggleButton = screen.getAllByLabelText(/show password/i)[1];
+
+    expect(confirmPasswordInput).toHaveAttribute("type", "password");
+
+    fireEvent.touchStart(toggleButton);
+    expect(confirmPasswordInput).toHaveAttribute("type", "text");
+
+    fireEvent.touchEnd(toggleButton);
+    expect(confirmPasswordInput).toHaveAttribute("type", "password");
+  });
+
+  it("redirects to login after successful reset", async () => {
+    vi.mocked(api.resetPassword).mockResolvedValue({} as any);
+
+    renderWithProviders("valid-token");
+
+    const passwordInput = screen.getByPlaceholderText(/enter new password/i);
+    const confirmPasswordInput = screen.getByPlaceholderText(/confirm your password/i);
+    const form = passwordInput.closest("form");
+
+    act(() => {
+      fireEvent.change(passwordInput, { target: { value: "NewPassword123!" } });
+      fireEvent.change(confirmPasswordInput, { target: { value: "NewPassword123!" } });
+      if (form) {
+        fireEvent.submit(form);
+      }
+    });
+
+    await waitFor(
+      () => {
+        expect(screen.getByText("Password Reset Successfully")).toBeInTheDocument();
+      },
+      { timeout: 3000 },
+    );
+
+    // Wait for redirect timeout (2 seconds)
+    await waitFor(
+      () => {
+        expect(mockNavigate).toHaveBeenCalledWith("/login");
+      },
+      { timeout: 3000 },
+    );
   });
 });

@@ -2,7 +2,13 @@ import db from "../index.js";
 import { logger } from "../../config/logger.js";
 import { toErrorPayload } from "../../utils/error.utils.js";
 
-async function main(): Promise<void> {
+/**
+ * Applies all pending database migrations and verifies critical tables exist.
+ * Includes connection timeout verification and critical table validation.
+ *
+ * @throws {Error} If connection timeout occurs, migrations fail, or critical tables are missing
+ */
+export async function migrateAll(): Promise<void> {
   try {
     logger.info("[db] Applying migrations (all environments)...");
 
@@ -64,7 +70,11 @@ async function main(): Promise<void> {
   }
 }
 
-main().catch((error: unknown) => {
-  logger.error(toErrorPayload(error), "Failed to apply migrations.");
-  process.exit(1);
-});
+// Execute when run as script (still works with tsx)
+// Skip immediate execution in test environment to allow testing
+if (process.env.NODE_ENV !== "test" && !process.env.JEST_WORKER_ID) {
+  migrateAll().catch((error: unknown) => {
+    logger.error(toErrorPayload(error), "Failed to apply migrations.");
+    process.exit(1);
+  });
+}

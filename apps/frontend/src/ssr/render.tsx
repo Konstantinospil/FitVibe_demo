@@ -223,13 +223,19 @@ export async function renderPage(url: string): Promise<string> {
   // Get hydration script path from manifest.json (Phase 3)
   const isProduction = process.env.NODE_ENV === "production";
   const manifestPaths = getManifestPaths();
-  const hydrationScript = isProduction
-    ? manifestPaths.main
-      ? `<script type="module" src="${manifestPaths.main}"></script>`
-      : `<script type="module" src="/assets/js/main.js"></script>` // Fallback
-    : `<script type="module" src="/src/main.tsx"></script>`;
+  const mainScriptPath = isProduction
+    ? manifestPaths.main || "/assets/js/main.js"
+    : "/src/main.tsx";
+  const hydrationScript = `<script type="module" src="${mainScriptPath}"></script>`;
 
-  // Inject scripts before closing body tag
+  // Add resource hints for performance optimization
+  // Preload critical resources to improve LCP and FCP
+  const resourceHints = isProduction
+    ? `<link rel="preload" href="${mainScriptPath}" as="script" crossorigin="anonymous" />`
+    : "";
+
+  // Inject resource hints in head and scripts before closing body tag
+  html = html.replace("</head>", `${resourceHints}</head>`);
   html = html.replace("</body>", `${dehydratedStateScript}${hydrationScript}</body>`);
 
   return html;

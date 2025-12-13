@@ -1,15 +1,29 @@
 # FitVibe Project Epics and Activities
 
-**Version**: 1.0
-**Created**: 2025-01-21
-**Status**: Planning
+**Version**: 1.1
+**Created**: 2025-11-21
+**Last Updated**: 2025-12-13
+**Status**: Active
 **Owner**: Development Team
 
 ---
 
 ## Overview
 
-This document defines the epics and activities for the FitVibe V2 project based on the Product Requirements Document (PRD), Technical Design Document (TDD), and current implementation status.
+This document defines the epics and activities for the FitVibe V2 project based on the Product Requirements Document (PRD), Technical Design Document (TDD), and current implementation status. Activity status is determined by verifying implementation against user stories and their acceptance criteria.
+
+### Verification Methodology
+
+Activity status is determined through:
+1. **User Story Mapping**: Each activity maps to one or more user stories (US-*)
+2. **Acceptance Criteria Verification**: Implementation verified against acceptance criteria (AC-*)
+3. **Code Review**: Actual codebase checked for required functionality
+4. **Test Coverage**: Test existence and coverage considered
+
+**Status Definitions**:
+- **✅ Complete**: All related user story acceptance criteria are met, code is implemented, and functionality verified
+- **🚧 In Progress**: Partial implementation exists, some acceptance criteria met, work ongoing
+- **⏳ Pending**: No implementation found, or user stories not yet started
 
 ### Difficulty Scale
 
@@ -19,27 +33,35 @@ This document defines the epics and activities for the FitVibe V2 project based 
 - **4 - Hard**: Complex feature, multiple integrations, architectural considerations
 - **5 - Very Hard**: Major architectural changes, high risk, extensive refactoring
 
+### Activity Status Symbols
+
+- **✅ Complete**: Activity is fully implemented and tested
+- **🚧 In Progress**: Activity is currently being worked on
+- **⏳ Pending**: Activity is planned but not yet started
+
 ---
 
 ## Epic 1: Profile & Settings (FR-009)
 
-**Status**: Open
+**Status**: Progressing
 **Priority**: Medium
 **Gate**: SILVER
 **Estimated Total Effort**: 8-12 story points
 
+**Related User Stories**: US-1.1 (Profile Editing), US-1.2 (Avatar Upload), US-1.3 (Profile Testing)
+
 ### Activities
 
-| ID    | Activity                    | Description                                                                                         | Difficulty | Dependencies   |
-| ----- | --------------------------- | --------------------------------------------------------------------------------------------------- | ---------- | -------------- |
-| E1-A1 | Profile Edit API            | Implement backend API for editing profile fields (alias, weight, fitness level, training frequency) | 2          | FR-001, FR-002 |
-| E1-A2 | Profile Validation          | Add Zod schemas and validation for profile fields (weight range, alias uniqueness)                  | 2          | E1-A1          |
-| E1-A3 | Immutable Fields Protection | Enforce immutability for date_of_birth and gender at API and database level                         | 2          | E1-A1          |
-| E1-A4 | Avatar Upload Backend       | Implement avatar upload endpoint with file validation (size, MIME type) and AV scanning             | 3          | E1-A1, NFR-001 |
-| E1-A5 | Avatar Preview Generation   | Generate 128×128 preview images from uploaded avatars                                               | 3          | E1-A4          |
-| E1-A6 | Profile Edit Frontend       | Create profile edit UI with form validation and error handling                                      | 3          | E1-A1, E1-A2   |
-| E1-A7 | Avatar Upload Frontend      | Implement avatar upload UI with preview and progress indicator                                      | 2          | E1-A4, E1-A5   |
-| E1-A8 | Profile Tests               | Write integration and E2E tests for profile editing and avatar upload                               | 2          | E1-A1, E1-A6   |
+| ID    | Activity                    | Description                                                                                         | Difficulty | Dependencies   | Status      | Verification Notes                                                      |
+| ----- | --------------------------- | --------------------------------------------------------------------------------------------------- | ---------- | -------------- | ----------- | ------------------------------------------------------------------------- |
+| E1-A1 | Profile Edit API            | Implement backend API for editing profile fields (alias, weight, fitness level, training frequency) | 2          | FR-001, FR-002 | ✅ Complete | US-1.1-AC01: PATCH /api/v1/users/me implemented with validation         |
+| E1-A2 | Profile Validation          | Add Zod schemas and validation for profile fields (weight range, alias uniqueness)                  | 2          | E1-A1          | ✅ Complete | US-1.1-AC02: Zod validation schemas implemented (alias max 50, weight 20-500kg) |
+| E1-A3 | Immutable Fields Protection | Enforce immutability for date_of_birth and gender at API and database level                         | 2          | E1-A1          | ✅ Complete | US-1.1-AC03: Immutable field protection implemented                     |
+| E1-A4 | Avatar Upload Backend       | Implement avatar upload endpoint with file validation (size, MIME type) and AV scanning             | 3          | E1-A1, NFR-001 | ✅ Complete | US-1.2-AC01, AC02: POST /api/v1/users/avatar with validation and AV scanning |
+| E1-A5 | Avatar Preview Generation   | Generate 128×128 preview images from uploaded avatars                                               | 3          | E1-A4          | ✅ Complete | US-1.2-AC03: 128×128 preview generation implemented                      |
+| E1-A6 | Profile Edit Frontend       | Create profile edit UI with form validation and error handling                                      | 3          | E1-A1, E1-A2   | 🚧 In Progress |
+| E1-A7 | Avatar Upload Frontend      | Implement avatar upload UI with preview and progress indicator                                      | 2          | E1-A4, E1-A5   | 🚧 In Progress |
+| E1-A8 | Profile Tests               | Write integration and E2E tests for profile editing and avatar upload                               | 2          | E1-A1, E1-A6   | ⏳ Pending   |
 
 ---
 
@@ -68,27 +90,29 @@ This document defines the epics and activities for the FitVibe V2 project based 
 
 ## Epic 3: Sharing & Community (FR-011)
 
-**Status**: Open
+**Status**: Progressing
 **Priority**: Medium
 **Gate**: SILVER
 **Estimated Total Effort**: 15-20 story points
 
+**Related User Stories**: US-3.1 (Public Feed), US-3.2 (Session Visibility), US-3.3 (Likes & Bookmarks), US-3.4 (Comments), US-3.5 (User Following), US-3.6 (Session Cloning), US-3.7 (Content Reporting), US-3.8 (Social Testing)
+
 ### Activities
 
-| ID     | Activity                     | Description                                                                  | Difficulty | Dependencies               |
-| ------ | ---------------------------- | ---------------------------------------------------------------------------- | ---------- | -------------------------- |
-| E3-A1  | Public Feed API              | Implement authenticated public feed API with pagination, search, and sorting | 3          | FR-001, FR-002, FR-004     |
-| E3-A2  | Session Visibility Toggle    | Implement session visibility toggle (private/public) with privacy safeguards | 2          | FR-004, NFR-002            |
-| E3-A3  | Like/Unlike API              | Implement like/unlike functionality for public sessions                      | 2          | E3-A1                      |
-| E3-A4  | Bookmark API                 | Implement bookmark/unbookmark functionality for sessions                     | 2          | E3-A1                      |
-| E3-A5  | Comments API                 | Implement comment CRUD for public sessions (plain text, 500 char max)        | 3          | E3-A1                      |
-| E3-A6  | Follow/Unfollow API          | Implement follow/unfollow functionality with follower counts                 | 2          | FR-009                     |
-| E3-A7  | Session Cloning              | Implement session cloning with attribution preservation                      | 3          | FR-004, E3-A1              |
-| E3-A8  | Content Reporting            | Implement content reporting system with admin queue                          | 3          | E3-A1, FR-008              |
-| E3-A9  | Feed Frontend                | Create public feed UI with pagination, search, and sorting                   | 4          | E3-A1                      |
-| E3-A10 | Social Interactions Frontend | Implement like, bookmark, comment, and follow UI components                  | 3          | E3-A3, E3-A4, E3-A5, E3-A6 |
-| E3-A11 | Session Cloning Frontend     | Add clone button and flow to session detail pages                            | 2          | E3-A7, FR-004              |
-| E3-A12 | Social Features Tests        | Write integration and E2E tests for all social features                      | 3          | E3-A9, E3-A10              |
+| ID     | Activity                     | Description                                                                  | Difficulty | Dependencies               | Status      | Verification Notes                                                      |
+| ------ | ---------------------------- | ---------------------------------------------------------------------------- | ---------- | -------------------------- | ----------- | ------------------------------------------------------------------------- |
+| E3-A1  | Public Feed API              | Implement authenticated public feed API with pagination, search, and sorting | 3          | FR-001, FR-002, FR-004     | ✅ Complete | US-3.1-AC01: GET /api/v1/feed with pagination (default 20, max 100)      |
+| E3-A2  | Session Visibility Toggle    | Implement session visibility toggle (private/public) with privacy safeguards | 2          | FR-004, NFR-002            | ✅ Complete | US-3.2: Session visibility toggle implemented                            |
+| E3-A3  | Like/Unlike API              | Implement like/unlike functionality for public sessions                      | 2          | E3-A1                      | ✅ Complete | US-3.3-AC01: POST/DELETE /api/v1/feed/item/:id/like with idempotency     |
+| E3-A4  | Bookmark API                 | Implement bookmark/unbookmark functionality for sessions                     | 2          | E3-A1                      | ✅ Complete | US-3.3-AC03: POST/DELETE /api/v1/sessions/:id/bookmark implemented       |
+| E3-A5  | Comments API                 | Implement comment CRUD for public sessions (plain text, 500 char max)        | 3          | E3-A1                      | ✅ Complete | US-3.4-AC01: Comment CRUD with 500 char limit implemented                |
+| E3-A6  | Follow/Unfollow API          | Implement follow/unfollow functionality with follower counts                 | 2          | FR-009                     | ✅ Complete | US-3.5-AC01: POST/DELETE /api/v1/users/:alias/follow implemented         |
+| E3-A7  | Session Cloning              | Implement session cloning with attribution preservation                      | 3          | FR-004, E3-A1              | ✅ Complete | US-3.6: Session cloning with attribution implemented                     |
+| E3-A8  | Content Reporting            | Implement content reporting system with admin queue                          | 3          | E3-A1, FR-008              | ✅ Complete | US-3.7: Content reporting system implemented                             |
+| E3-A9  | Feed Frontend                | Create public feed UI with pagination, search, and sorting                   | 4          | E3-A1                      | ✅ Complete |
+| E3-A10 | Social Interactions Frontend | Implement like, bookmark, comment, and follow UI components                  | 3          | E3-A3, E3-A4, E3-A5, E3-A6 | 🚧 In Progress |
+| E3-A11 | Session Cloning Frontend     | Add clone button and flow to session detail pages                            | 2          | E3-A7, FR-004              | 🚧 In Progress |
+| E3-A12 | Social Features Tests        | Write integration and E2E tests for all social features                      | 3          | E3-A9, E3-A10              | ⏳ Pending   |
 
 ---
 
@@ -143,16 +167,18 @@ This document defines the epics and activities for the FitVibe V2 project based 
 **Gate**: GOLD
 **Estimated Total Effort**: 8-12 story points
 
+**Related User Stories**: US-6.1 (Data Export), US-6.2 (Account Deletion), US-6.3 (Consent Management), US-6.4 (Privacy Settings), US-6.5 (Audit Logging), US-6.6 (GDPR Testing)
+
 ### Activities
 
-| ID    | Activity            | Description                                                   | Difficulty | Dependencies  |
-| ----- | ------------------- | ------------------------------------------------------------- | ---------- | ------------- |
-| E6-A1 | Data Export API     | Implement GDPR data export endpoint (JSON bundle)             | 2          | FR-001        |
-| E6-A1 | Data Deletion API   | Complete GDPR data deletion flow with 14-day propagation      | 3          | FR-001, E6-A1 |
-| E6-A3 | Consent Management  | Implement consent management UI and backend tracking          | 3          | FR-001        |
-| E6-A4 | Privacy Settings UI | Create privacy settings UI for profile and content visibility | 2          | FR-009, E3-A2 |
-| E6-A5 | Audit Logging       | Enhance audit logging for GDPR events (export, deletion)      | 2          | FR-008        |
-| E6-A6 | Privacy Tests       | Write integration tests for GDPR flows                        | 2          | E6-A1, E6-A2  |
+| ID    | Activity            | Description                                                   | Difficulty | Dependencies  | Status      | Verification Notes                                                      |
+| ----- | ------------------- | ------------------------------------------------------------- | ---------- | ------------- | ----------- | ------------------------------------------------------------------------- |
+| E6-A1 | Data Export API     | Implement GDPR data export endpoint (JSON bundle)             | 2          | FR-001        | ✅ Complete | US-6.1-AC01: GET /api/v1/users/me/export with JSON bundle implemented   |
+| E6-A2 | Data Deletion API   | Complete GDPR data deletion flow with 14-day propagation      | 3          | FR-001, E6-A1 | ✅ Complete | US-6.2-AC01, AC02: DELETE /api/v1/users/me with 14-day backup purge     |
+| E6-A3 | Consent Management  | Implement consent management UI and backend tracking          | 3          | FR-001        | ⏳ Pending   | US-6.3: Not yet implemented                                               |
+| E6-A4 | Privacy Settings UI | Create privacy settings UI for profile and content visibility | 2          | FR-009, E3-A2 | 🚧 In Progress | US-6.4: Partial implementation in Settings page                          |
+| E6-A5 | Audit Logging       | Enhance audit logging for GDPR events (export, deletion)      | 2          | FR-008        | ✅ Complete | US-6.5: Audit logging for GDPR events implemented                        |
+| E6-A6 | Privacy Tests       | Write integration tests for GDPR flows                        | 2          | E6-A1, E6-A2  | ⏳ Pending   |
 
 ---
 
@@ -201,21 +227,23 @@ This document defines the epics and activities for the FitVibe V2 project based 
 
 ## Epic 9: Observability (NFR-007)
 
-**Status**: Open
+**Status**: Progressing
 **Priority**: Medium
 **Gate**: SILVER
 **Estimated Total Effort**: 6-10 story points
 
+**Related User Stories**: US-9.1 (Structured Logging), US-9.2 (Prometheus Metrics), US-9.3 (OpenTelemetry Tracing), US-9.4 (Grafana Dashboards), US-9.5 (Alerting Rules), US-9.6 (Log Aggregation)
+
 ### Activities
 
-| ID    | Activity              | Description                                                               | Difficulty | Dependencies |
-| ----- | --------------------- | ------------------------------------------------------------------------- | ---------- | ------------ |
-| E9-A1 | Structured Logging    | Implement structured JSON logging with correlation IDs                    | 2          | All modules  |
-| E9-A2 | Prometheus Metrics    | Add Prometheus metrics for all endpoints and key operations               | 3          | All modules  |
-| E9-A3 | OpenTelemetry Tracing | Implement OpenTelemetry tracing with proper sampling                      | 3          | All modules  |
-| E9-A4 | Grafana Dashboards    | Create Grafana dashboards for API latency, error rates, DB health         | 2          | E9-A2        |
-| E9-A5 | Alerting Rules        | Set up alerting rules for critical metrics (5xx spikes, latency breaches) | 2          | E9-A2, E9-A4 |
-| E9-A6 | Log Aggregation       | Set up log aggregation pipeline (Loki or similar)                         | 3          | E9-A1        |
+| ID    | Activity              | Description                                                               | Difficulty | Dependencies | Status      | Verification Notes                                                      |
+| ----- | --------------------- | ------------------------------------------------------------------------- | ---------- | ------------ | ----------- | ------------------------------------------------------------------------- |
+| E9-A1 | Structured Logging    | Implement structured JSON logging with correlation IDs                    | 2          | All modules  | ✅ Complete | US-9.1-AC01: Pino structured JSON logging with correlation IDs           |
+| E9-A2 | Prometheus Metrics    | Add Prometheus metrics for all endpoints and key operations               | 3          | All modules  | ✅ Complete | US-9.2-AC01: http_request_duration_seconds and http_requests_total implemented |
+| E9-A3 | OpenTelemetry Tracing | Implement OpenTelemetry tracing with proper sampling                      | 3          | All modules  | 🚧 In Progress | US-9.3: Tracing SDK exists but not fully integrated                      |
+| E9-A4 | Grafana Dashboards    | Create Grafana dashboards for API latency, error rates, DB health         | 2          | E9-A2        | ✅ Complete | US-9.4: Grafana dashboards configured                                    |
+| E9-A5 | Alerting Rules        | Set up alerting rules for critical metrics (5xx spikes, latency breaches) | 2          | E9-A2, E9-A4 | ⏳ Pending   | US-9.5: Alerting rules not yet configured                                 |
+| E9-A6 | Log Aggregation       | Set up log aggregation pipeline (Loki or similar)                         | 3          | E9-A1        | ✅ Complete | US-9.6: Loki log aggregation configured                                   |
 
 ---
 
@@ -398,8 +426,8 @@ Update FitVibe's accessibility compliance from WCAG 2.1 AA to WCAG 2.2 AA by imp
 
 ### By Epic Status
 
-- **Open**: 7 epics (E1, E2, E3, E9, E11, E12, E13)
-- **Progressing**: 5 epics (E4, E5, E6, E7, E8, E10)
+- **Open**: 4 epics (E2, E11, E12, E13)
+- **Progressing**: 9 epics (E1, E3, E4, E5, E6, E7, E8, E9, E10)
 
 ### By Priority
 
@@ -432,5 +460,22 @@ Update FitVibe's accessibility compliance from WCAG 2.1 AA to WCAG 2.2 AA by imp
 
 ---
 
-**Last Updated**: 2025-11-23
-**Next Review**: 2025-12-01
+**Last Updated**: 2025-12-13
+**Next Review**: 2026-01-13
+
+---
+
+## Notes on Status Determination
+
+This document's activity status is based on verification against:
+- **User Stories** (US-*): Defined in `docs/1.Product_Requirements/d.User_stories/`
+- **Acceptance Criteria** (AC-*): Defined in `docs/1.Product_Requirements/e.Acceptance_Criteria/`
+- **Code Implementation**: Verified against actual codebase in `apps/backend/` and `apps/frontend/`
+
+**Key Findings**:
+- Most backend APIs are fully implemented and meet acceptance criteria
+- Frontend implementations are partially complete for many features
+- Test coverage varies by module and needs improvement
+- Some features (GPX/FIT import, consent management) are not yet implemented
+
+**Recommendation**: Update user story status fields in `docs/1.Product_Requirements/d.User_stories/` to reflect actual implementation status for better traceability.

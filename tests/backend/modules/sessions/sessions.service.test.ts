@@ -318,6 +318,71 @@ describe("Sessions Service", () => {
         HttpError,
       );
     });
+
+    it("should handle empty title and notes", async () => {
+      const dtoWithEmptyStrings: CreateSessionDTO = {
+        title: "   ", // Whitespace only
+        notes: "", // Empty string
+        planned_at: new Date().toISOString(),
+        visibility: "private",
+      };
+
+      const mockCreated: SessionWithExercises = {
+        id: sessionId,
+        owner_id: userId,
+        title: null,
+        planned_at: dtoWithEmptyStrings.planned_at,
+        status: "planned",
+        visibility: "private",
+        exercises: [],
+      } as SessionWithExercises;
+
+      mockSessionsRepo.createSession.mockResolvedValue(undefined);
+      mockSessionsRepo.getSessionWithDetails.mockResolvedValue(mockCreated);
+
+      const result = await sessionsService.createOne(userId, dtoWithEmptyStrings);
+
+      expect(result).toEqual(mockCreated);
+    });
+
+    it("should refresh summary when session is created with completed status", async () => {
+      const mockCreated: SessionWithExercises = {
+        id: sessionId,
+        owner_id: userId,
+        title: "Test Session",
+        planned_at: validDto.planned_at,
+        status: "completed", // Completed status
+        visibility: "private",
+        exercises: [],
+      } as SessionWithExercises;
+
+      mockSessionsRepo.createSession.mockResolvedValue(undefined);
+      mockSessionsRepo.getSessionWithDetails.mockResolvedValue(mockCreated);
+      mockSessionsRepo.refreshSessionSummary.mockResolvedValue(undefined);
+
+      await sessionsService.createOne(userId, validDto);
+
+      expect(mockSessionsRepo.refreshSessionSummary).toHaveBeenCalled();
+    });
+
+    it("should not refresh summary when no exercises and status is not completed", async () => {
+      const mockCreated: SessionWithExercises = {
+        id: sessionId,
+        owner_id: userId,
+        title: "Test Session",
+        planned_at: validDto.planned_at,
+        status: "planned", // Not completed
+        visibility: "private",
+        exercises: [],
+      } as SessionWithExercises;
+
+      mockSessionsRepo.createSession.mockResolvedValue(undefined);
+      mockSessionsRepo.getSessionWithDetails.mockResolvedValue(mockCreated);
+
+      await sessionsService.createOne(userId, validDto);
+
+      expect(mockSessionsRepo.refreshSessionSummary).not.toHaveBeenCalled();
+    });
   });
 
   describe("updateOne", () => {
@@ -432,6 +497,178 @@ describe("Sessions Service", () => {
       await expect(sessionsService.updateOne(userId, sessionId, { calories: -1 })).rejects.toThrow(
         HttpError,
       );
+    });
+
+    it("should handle status transition to canceled", async () => {
+      const mockUpdated: SessionWithExercises = {
+        ...existingSession,
+        status: "canceled",
+        deleted_at: new Date().toISOString(),
+        exercises: [],
+      } as SessionWithExercises;
+
+      mockSessionsRepo.getSessionById.mockResolvedValue(existingSession);
+      mockSessionsRepo.updateSession.mockResolvedValue(1);
+      mockSessionsRepo.getSessionWithDetails.mockResolvedValue(mockUpdated);
+
+      const result = await sessionsService.updateOne(userId, sessionId, { status: "canceled" });
+
+      expect(result.status).toBe("canceled");
+      expect(mockSessionsRepo.getSessionWithDetails).toHaveBeenCalledWith(sessionId, userId, {
+        includeDeleted: true,
+      });
+    });
+
+    it("should handle status transition to completed with existing completed_at", async () => {
+      const mockUpdated: SessionWithExercises = {
+        ...existingSession,
+        status: "completed",
+        completed_at: "2024-01-01T00:00:00Z", // Already set
+        exercises: [],
+      } as SessionWithExercises;
+
+      mockSessionsRepo.getSessionById.mockResolvedValue(existingSession);
+      mockSessionsRepo.updateSession.mockResolvedValue(1);
+      mockSessionsRepo.getSessionWithDetails.mockResolvedValue(mockUpdated);
+      mockPointsService.awardPointsForSession.mockResolvedValue({
+        pointsAwarded: 100,
+      });
+
+      await sessionsService.updateOne(userId, sessionId, {
+        status: "completed",
+        completed_at: "2024-01-01T00:00:00Z",
+      });
+
+      expect(mockPointsService.awardPointsForSession).toHaveBeenCalled();
+    });
+
+    it("should handle status transition to in_progress with existing started_at", async () => {
+      const mockUpdated: SessionWithExercises = {
+        ...existingSession,
+        status: "in_progress",
+        started_at: "2024-01-01T00:00:00Z", // Already set
+        exercises: [],
+      } as SessionWithExercises;
+
+      mockSessionsRepo.getSessionById.mockResolvedValue(existingSession);
+      mockSessionsRepo.updateSession.mockResolvedValue(1);
+      mockSessionsRepo.getSessionWithDetails.mockResolvedValue(mockUpdated);
+
+      const result = await sessionsService.updateOne(userId, sessionId, {
+        status: "in_progress",
+        started_at: "2024-01-01T00:00:00Z",
+      });
+
+      expect(result.status).toBe("in_progress");
+    });
+
+    it("should handle empty title and notes in update", async () => {
+      const updateDto: UpdateSessionDTO = {
+        title: "   ", // Whitespace only
+        notes: "", // Empty string
+      };
+
+      const mockUpdated: SessionWithExercises = {
+        ...existingSession,
+        title: null,
+        notes: null,
+        exercises: [],
+      } as SessionWithExercises;
+
+      mockSessionsRepo.getSessionById.mockResolvedValue(existingSession);
+      mockSessionsRepo.updateSession.mockResolvedValue(1);
+      mockSessionsRepo.getSessionWithDetails.mockResolvedValue(mockUpdated);
+
+      const result = await sessionsService.updateOne(userId, sessionId, updateDto);
+
+      expect(result.title).toBeNull();
+      expect(result.notes).toBeNull();
+    });
+
+    it("should handle plan_id changes", async () => {
+      const sessionWithPlan: Session = {
+        ...existingSession,
+        plan_id: "plan-1",
+      };
+
+      const mockUpdated: SessionWithExercises = {
+        ...sessionWithPlan,
+        plan_id: "plan-2",
+        exercises: [],
+      } as SessionWithExercises;
+
+      mockSessionsRepo.getSessionById.mockResolvedValue(sessionWithPlan);
+      mockSessionsRepo.updateSession.mockResolvedValue(1);
+      mockSessionsRepo.getSessionWithDetails.mockResolvedValue(mockUpdated);
+      mockPlansService.recomputeProgress.mockResolvedValue(undefined);
+
+      await sessionsService.updateOne(userId, sessionId, { plan_id: "plan-2" });
+
+      // Should recompute progress for both old and new plan
+      expect(mockPlansService.recomputeProgress).toHaveBeenCalledWith(userId, "plan-1");
+      expect(mockPlansService.recomputeProgress).toHaveBeenCalledWith(userId, "plan-2");
+    });
+
+    it("should refresh summary when exercises are touched", async () => {
+      const updateDto: UpdateSessionDTO = {
+        exercises: [
+          {
+            order: 1,
+            exercise_id: "exercise-1",
+          },
+        ],
+      };
+
+      const mockUpdated: SessionWithExercises = {
+        ...existingSession,
+        exercises: [],
+      } as SessionWithExercises;
+
+      mockSessionsRepo.getSessionById.mockResolvedValue(existingSession);
+      mockSessionsRepo.updateSession.mockResolvedValue(1);
+      mockSessionsRepo.replaceSessionExercises.mockResolvedValue(undefined);
+      mockSessionsRepo.getSessionWithDetails.mockResolvedValue(mockUpdated);
+      mockSessionsRepo.refreshSessionSummary.mockResolvedValue(undefined);
+
+      await sessionsService.updateOne(userId, sessionId, updateDto);
+
+      expect(mockSessionsRepo.refreshSessionSummary).toHaveBeenCalled();
+    });
+
+    it("should award points when status is already completed but points are null", async () => {
+      const completedSession: Session = {
+        ...existingSession,
+        status: "completed",
+        points: null, // Points are null
+      };
+
+      const mockUpdated: SessionWithExercises = {
+        ...completedSession,
+        exercises: [],
+      } as SessionWithExercises;
+
+      mockSessionsRepo.getSessionById.mockResolvedValue(completedSession);
+      mockSessionsRepo.updateSession.mockResolvedValue(1);
+      mockSessionsRepo.getSessionWithDetails.mockResolvedValue(mockUpdated);
+      mockPointsService.awardPointsForSession.mockResolvedValue({
+        pointsAwarded: 100,
+      });
+
+      await sessionsService.updateOne(userId, sessionId, { title: "Updated" });
+
+      expect(mockPointsService.awardPointsForSession).toHaveBeenCalled();
+    });
+
+    it("should handle update when affected rows is 0", async () => {
+      mockSessionsRepo.getSessionById.mockResolvedValue(existingSession);
+      mockSessionsRepo.updateSession.mockResolvedValue(0); // No rows affected
+
+      await expect(
+        sessionsService.updateOne(userId, sessionId, { title: "Updated" }),
+      ).rejects.toThrow(HttpError);
+      await expect(
+        sessionsService.updateOne(userId, sessionId, { title: "Updated" }),
+      ).rejects.toThrow("SESSION_NOT_FOUND");
     });
   });
 

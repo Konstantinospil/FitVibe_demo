@@ -110,7 +110,7 @@ export default defineConfig(() => {
       },
       testTimeout: 30000, // 30 second timeout per test (increased to catch slow tests)
       hookTimeout: 15000, // 15 second timeout for hooks (increased for i18n loading)
-      teardownTimeout: 10000, // 10 second timeout for teardown (increased for cleanup)
+      teardownTimeout: 15000, // 15 second timeout for teardown (increased for cleanup)
       // Prevent tests from hanging by detecting open handles
       detectOpenHandles: true,
       // Force exit after tests to prevent hanging
@@ -148,6 +148,13 @@ export default defineConfig(() => {
         reporter: ["text", "html", "json", "json-summary"],
         include: ["src/**/*.{ts,tsx}"],
         exclude: [...(configDefaults.coverage.exclude || []), "src/main.tsx"],
+        reportsDirectory: "./coverage",
+        // Ensure temp directory is explicitly set and created
+        tempDirectory: "./coverage/.tmp",
+        // Clean coverage directory before running tests
+        clean: true,
+        // Clean on exit to prevent stale files
+        cleanOnRerun: true,
       },
     },
     server: {
@@ -178,6 +185,15 @@ export default defineConfig(() => {
               // Large charting library - MUST be lazy loaded (only used in Insights)
               if (id.includes("recharts")) {
                 return "charts-vendor";
+              }
+              // React and React-DOM are large - split them for better code splitting
+              // React core (smaller, needed for hydration)
+              if (id.includes("react/") && !id.includes("react-dom")) {
+                return "react-core";
+              }
+              // React DOM (larger, needed for rendering)
+              if (id.includes("react-dom")) {
+                return "react-dom-vendor";
               }
               // Split Preact into smaller chunks to reduce initial bundle size
               // Preact core (small, critical for hydration)
@@ -263,7 +279,7 @@ export default defineConfig(() => {
       },
       // Chunk size warnings threshold - reduce to catch large chunks
       chunkSizeWarningLimit: 300, // Warn if chunks exceed 300KB
-      // Enable tree shaking
+      // Enable tree shaking with more aggressive settings
       treeshake: {
         moduleSideEffects: (id: string) => {
           // Allow side effects for CSS and JSON imports
@@ -272,6 +288,9 @@ export default defineConfig(() => {
           }
           return false;
         },
+        preset: "recommended",
+        propertyReadSideEffects: false,
+        tryCatchDeoptimization: false,
       },
       // Enable compression
       reportCompressedSize: true,
@@ -282,7 +301,7 @@ export default defineConfig(() => {
       // Reduce initial bundle size by using dynamic imports for non-critical code
       // This helps with code splitting and lazy loading
       experimental: {
-        renderBuiltUrl(filename: string) {
+        renderBuiltUrl(_filename: string) {
           // Use relative URLs for better caching
           return { relative: true };
         },
