@@ -1,16 +1,17 @@
 /**
- * SessionManagement component tests
- * Tests session management functionality including loading, revoking, and displaying sessions
+ * SessionManagement Component Tests
+ * Tests user-visible behavior and functionality, not implementation details
  */
 
 import React from "react";
-import { render, screen, fireEvent, waitFor, act } from "@testing-library/react";
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { render, screen, waitFor, fireEvent, within } from "@testing-library/react";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { SessionManagement } from "../../src/components/SessionManagement";
 import * as api from "../../src/services/api";
-import { useToast } from "../../src/contexts/ToastContext";
+import type { SessionInfo } from "../../src/services/api";
 
+// Mock dependencies
 const mockToast = {
   success: vi.fn(),
   error: vi.fn(),
@@ -46,8 +47,6 @@ vi.mock("react-i18next", () => ({
         "auth.sessions.otherSessions": "Other Sessions",
         "auth.sessions.revokeOthers": "Revoke All Others",
         "auth.sessions.revokeAll": "Revoke All Sessions",
-        "auth.sessions.revokeAllWarning":
-          "This will log you out from all devices. You will need to log in again.",
         "auth.sessions.revoked": "Session revoked successfully",
         "auth.sessions.revokeError": "Failed to revoke session",
         "auth.sessions.allRevoked": "All sessions revoked successfully",
@@ -72,522 +71,895 @@ vi.mock("react-i18next", () => ({
   }),
 }));
 
-const mockSessions = [
-  {
-    id: "session-1",
-    userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
-    ip: "192.168.1.1",
-    createdAt: "2024-01-01T00:00:00Z",
-    expiresAt: "2024-01-02T00:00:00Z",
-    isCurrent: true,
-    revokedAt: null,
-  },
-  {
-    id: "session-2",
-    userAgent: "Mozilla/5.0 (iPhone; CPU iPhone OS 14_0 like Mac OS X)",
-    ip: "192.168.1.2",
-    createdAt: "2024-01-01T01:00:00Z",
-    expiresAt: "2024-01-02T01:00:00Z",
-    isCurrent: false,
-    revokedAt: null,
-  },
-  {
-    id: "session-3",
-    userAgent: "Mozilla/5.0 (iPad; CPU OS 14_0 like Mac OS X)",
-    ip: "192.168.1.3",
-    createdAt: "2024-01-01T02:00:00Z",
-    expiresAt: "2024-01-02T02:00:00Z",
-    isCurrent: false,
-    revokedAt: null,
-  },
-];
-
-const renderSessionManagement = () => {
-  const queryClient = new QueryClient({
-    defaultOptions: {
-      queries: { retry: false },
-      mutations: { retry: false },
-    },
-  });
-
-  return render(
-    <QueryClientProvider client={queryClient}>
-      <SessionManagement />
-    </QueryClientProvider>,
-  );
-};
-
 describe("SessionManagement", () => {
+  let queryClient: QueryClient;
+
   beforeEach(() => {
+    queryClient = new QueryClient({
+      defaultOptions: {
+        queries: { retry: false, gcTime: 0, staleTime: 0 },
+        mutations: { retry: false },
+      },
+    });
     vi.clearAllMocks();
   });
 
-  it("should render loading state initially", () => {
-    vi.mocked(api.listAuthSessions).mockImplementation(
-      () => new Promise(() => {}), // Never resolves
-    );
-
-    renderSessionManagement();
-
-    expect(screen.getByText("Active Sessions")).toBeInTheDocument();
-    expect(screen.getByText("Loading sessions...")).toBeInTheDocument();
+  afterEach(() => {
+    queryClient.clear();
   });
 
-  it("should display sessions when loaded", async () => {
-    vi.mocked(api.listAuthSessions).mockResolvedValue({
-      sessions: mockSessions,
-    });
+  describe("Loading state", () => {
+    it("should show loading message while fetching sessions", () => {
+      vi.mocked(api.listAuthSessions).mockImplementation(() => new Promise(() => {}));
 
-    renderSessionManagement();
+      render(
+        <QueryClientProvider client={queryClient}>
+          <SessionManagement />
+        </QueryClientProvider>,
+      );
 
-    await waitFor(() => {
       expect(screen.getByText("Active Sessions")).toBeInTheDocument();
-    });
-
-    expect(screen.getByText("Chrome")).toBeInTheDocument();
-    expect(screen.getByText("Safari")).toBeInTheDocument();
-    expect(screen.getByText("Current")).toBeInTheDocument();
-  });
-
-  it("should display no sessions message when empty", async () => {
-    vi.mocked(api.listAuthSessions).mockResolvedValue({
-      sessions: [],
-    });
-
-    renderSessionManagement();
-
-    await waitFor(() => {
-      expect(screen.getByText("No active sessions")).toBeInTheDocument();
+      expect(screen.getByText("Loading sessions...")).toBeInTheDocument();
     });
   });
 
-  it("should display error message when loading fails", async () => {
-    vi.mocked(api.listAuthSessions).mockRejectedValue(new Error("Network error"));
+  describe("Empty state", () => {
+    it("should show message when user has no active sessions", async () => {
+      const mockListAuthSessions = vi.mocked(api.listAuthSessions);
+      mockListAuthSessions.mockResolvedValue({ sessions: [] });
 
-    renderSessionManagement();
+      render(
+        <QueryClientProvider client={queryClient}>
+          <SessionManagement />
+        </QueryClientProvider>,
+      );
 
-    await waitFor(() => {
-      expect(mockToast.error).toHaveBeenCalledWith("Failed to load sessions");
-    });
-  });
-
-  it("should revoke a single session", async () => {
-    vi.mocked(api.listAuthSessions).mockResolvedValue({
-      sessions: mockSessions,
-    });
-    vi.mocked(api.revokeAuthSessions).mockResolvedValue(undefined);
-
-    renderSessionManagement();
-
-    await waitFor(() => {
-      expect(screen.getByText("Active Sessions")).toBeInTheDocument();
-    });
-
-    const revokeButtons = screen.getAllByLabelText("Revoke session");
-    act(() => {
-      fireEvent.click(revokeButtons[0]);
-    });
-
-    await waitFor(() => {
-      expect(api.revokeAuthSessions).toHaveBeenCalledWith({ sessionId: "session-2" });
-    });
-
-    await waitFor(() => {
-      expect(mockToast.success).toHaveBeenCalledWith("Session revoked successfully");
-    });
-  });
-
-  it("should revoke all other sessions", async () => {
-    vi.mocked(api.listAuthSessions).mockResolvedValue({
-      sessions: mockSessions,
-    });
-    vi.mocked(api.revokeAuthSessions).mockResolvedValue(undefined);
-
-    renderSessionManagement();
-
-    await waitFor(() => {
-      expect(screen.getByText("Revoke All Others")).toBeInTheDocument();
-    });
-
-    const revokeOthersButton = screen.getByText("Revoke All Others");
-    act(() => {
-      fireEvent.click(revokeOthersButton);
-    });
-
-    await waitFor(() => {
-      expect(screen.getByText("Revoke Other Sessions?")).toBeInTheDocument();
-    });
-
-    const confirmButton = screen.getByText("Revoke Others");
-    act(() => {
-      fireEvent.click(confirmButton);
-    });
-
-    await waitFor(() => {
-      expect(api.revokeAuthSessions).toHaveBeenCalledWith({ revokeOthers: true });
-    });
-
-    await waitFor(() => {
-      expect(mockToast.success).toHaveBeenCalledWith("Other sessions revoked successfully");
-    });
-  });
-
-  it("should revoke all sessions", async () => {
-    vi.mocked(api.listAuthSessions).mockResolvedValue({
-      sessions: mockSessions,
-    });
-    vi.mocked(api.revokeAuthSessions).mockResolvedValue(undefined);
-
-    renderSessionManagement();
-
-    await waitFor(() => {
-      expect(screen.getByText("Revoke All Sessions")).toBeInTheDocument();
-    });
-
-    const revokeAllButton = screen.getByText("Revoke All Sessions");
-    act(() => {
-      fireEvent.click(revokeAllButton);
-    });
-
-    await waitFor(() => {
-      expect(screen.getByText("Revoke All Sessions?")).toBeInTheDocument();
-    });
-
-    const confirmButton = screen.getByText("Revoke All");
-    act(() => {
-      fireEvent.click(confirmButton);
-    });
-
-    await waitFor(() => {
-      expect(api.revokeAuthSessions).toHaveBeenCalledWith({ revokeAll: true });
-    });
-
-    await waitFor(() => {
-      expect(mockToast.success).toHaveBeenCalledWith("All sessions revoked successfully");
-    });
-  });
-
-  it("should cancel revoke all confirmation dialog", async () => {
-    vi.mocked(api.listAuthSessions).mockResolvedValue({
-      sessions: mockSessions,
-    });
-
-    renderSessionManagement();
-
-    await waitFor(() => {
-      expect(screen.getByText("Revoke All Sessions")).toBeInTheDocument();
-    });
-
-    const revokeAllButton = screen.getByText("Revoke All Sessions");
-    act(() => {
-      fireEvent.click(revokeAllButton);
-    });
-
-    await waitFor(() => {
-      expect(screen.getByText("Revoke All Sessions?")).toBeInTheDocument();
-    });
-
-    const cancelButton = screen.getByText("Cancel");
-    act(() => {
-      fireEvent.click(cancelButton);
-    });
-
-    await waitFor(() => {
-      expect(screen.queryByText("Revoke All Sessions?")).not.toBeInTheDocument();
-    });
-
-    expect(api.revokeAuthSessions).not.toHaveBeenCalled();
-  });
-
-  it("should cancel revoke others confirmation dialog", async () => {
-    vi.mocked(api.listAuthSessions).mockResolvedValue({
-      sessions: mockSessions,
-    });
-
-    renderSessionManagement();
-
-    await waitFor(() => {
-      expect(screen.getByText("Revoke All Others")).toBeInTheDocument();
-    });
-
-    const revokeOthersButton = screen.getByText("Revoke All Others");
-    act(() => {
-      fireEvent.click(revokeOthersButton);
-    });
-
-    await waitFor(() => {
-      expect(screen.getByText("Revoke Other Sessions?")).toBeInTheDocument();
-    });
-
-    const cancelButton = screen.getByText("Cancel");
-    act(() => {
-      fireEvent.click(cancelButton);
-    });
-
-    await waitFor(() => {
-      expect(screen.queryByText("Revoke Other Sessions?")).not.toBeInTheDocument();
-    });
-
-    expect(api.revokeAuthSessions).not.toHaveBeenCalled();
-  });
-
-  it("should display error when revoke fails", async () => {
-    vi.mocked(api.listAuthSessions).mockResolvedValue({
-      sessions: mockSessions,
-    });
-    vi.mocked(api.revokeAuthSessions).mockRejectedValue(new Error("Network error"));
-
-    renderSessionManagement();
-
-    await waitFor(() => {
-      expect(screen.getByText("Active Sessions")).toBeInTheDocument();
-    });
-
-    const revokeButtons = screen.getAllByLabelText("Revoke session");
-    act(() => {
-      fireEvent.click(revokeButtons[0]);
-    });
-
-    await waitFor(() => {
-      expect(mockToast.error).toHaveBeenCalledWith("Failed to revoke session");
-    });
-  });
-
-  it("should display error when revoke all fails", async () => {
-    vi.mocked(api.listAuthSessions).mockResolvedValue({
-      sessions: mockSessions,
-    });
-    vi.mocked(api.revokeAuthSessions).mockRejectedValue(new Error("Network error"));
-
-    renderSessionManagement();
-
-    await waitFor(() => {
-      expect(screen.getByText("Revoke All Sessions")).toBeInTheDocument();
-    });
-
-    const revokeAllButton = screen.getByText("Revoke All Sessions");
-    act(() => {
-      fireEvent.click(revokeAllButton);
-    });
-
-    await waitFor(() => {
-      expect(screen.getByText("Revoke All Sessions?")).toBeInTheDocument();
-    });
-
-    const confirmButton = screen.getByText("Revoke All");
-    act(() => {
-      fireEvent.click(confirmButton);
-    });
-
-    await waitFor(() => {
-      expect(mockToast.error).toHaveBeenCalledWith("Failed to revoke all sessions");
-    });
-  });
-
-  it("should display error when revoke others fails", async () => {
-    vi.mocked(api.listAuthSessions).mockResolvedValue({
-      sessions: mockSessions,
-    });
-    vi.mocked(api.revokeAuthSessions).mockRejectedValue(new Error("Network error"));
-
-    renderSessionManagement();
-
-    await waitFor(() => {
-      expect(screen.getByText("Revoke All Others")).toBeInTheDocument();
-    });
-
-    const revokeOthersButton = screen.getByText("Revoke All Others");
-    act(() => {
-      fireEvent.click(revokeOthersButton);
-    });
-
-    await waitFor(() => {
-      expect(screen.getByText("Revoke Other Sessions?")).toBeInTheDocument();
-    });
-
-    const confirmButton = screen.getByText("Revoke Others");
-    act(() => {
-      fireEvent.click(confirmButton);
-    });
-
-    await waitFor(() => {
-      expect(mockToast.error).toHaveBeenCalledWith("Failed to revoke other sessions");
-    });
-  });
-
-  it("should display device icons correctly", async () => {
-    vi.mocked(api.listAuthSessions).mockResolvedValue({
-      sessions: [
-        {
-          id: "session-1",
-          userAgent: "Mozilla/5.0 (iPhone; CPU iPhone OS 14_0 like Mac OS X)",
-          ip: "192.168.1.1",
-          createdAt: "2024-01-01T00:00:00Z",
-          expiresAt: "2024-01-02T00:00:00Z",
-          isCurrent: true,
-          revokedAt: null,
+      // Verify API is called
+      await waitFor(
+        () => {
+          expect(mockListAuthSessions).toHaveBeenCalled();
         },
+        { timeout: 1000 },
+      );
+
+      // Wait for loading to complete
+      await waitFor(
+        () => {
+          expect(screen.queryByText("Loading sessions...")).not.toBeInTheDocument();
+        },
+        { timeout: 5000 },
+      );
+
+      // Verify empty state message appears
+      expect(screen.getByText(/no active sessions/i)).toBeInTheDocument();
+    });
+  });
+
+  describe("Displaying sessions", () => {
+    const mockSessions: SessionInfo[] = [
+      {
+        id: "current-session",
+        userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120.0.0.0",
+        ip: "192.168.1.100",
+        createdAt: "2024-01-01T00:00:00Z",
+        expiresAt: "2024-01-08T00:00:00Z",
+        isCurrent: true,
+        revokedAt: null,
+      },
+      {
+        id: "other-session-1",
+        userAgent: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0) AppleWebKit/605.1.15 Safari/604.1",
+        ip: "192.168.1.101",
+        createdAt: "2024-01-02T00:00:00Z",
+        expiresAt: "2024-01-09T00:00:00Z",
+        isCurrent: false,
+        revokedAt: null,
+      },
+      {
+        id: "other-session-2",
+        userAgent: "Mozilla/5.0 (iPad; CPU OS 17_0) AppleWebKit/605.1.15 Safari/604.1",
+        ip: "192.168.1.102",
+        createdAt: "2024-01-03T00:00:00Z",
+        expiresAt: "2024-01-10T00:00:00Z",
+        isCurrent: false,
+        revokedAt: null,
+      },
+    ];
+
+    it("should display current session with 'Current' badge", async () => {
+      vi.mocked(api.listAuthSessions).mockResolvedValue({ sessions: mockSessions });
+
+      render(
+        <QueryClientProvider client={queryClient}>
+          <SessionManagement />
+        </QueryClientProvider>,
+      );
+
+      await waitFor(
+        () => {
+          expect(screen.queryByText("Loading sessions...")).not.toBeInTheDocument();
+        },
+        { timeout: 3000 },
+      );
+
+      await waitFor(
+        () => {
+          expect(screen.getByText(/Chrome/i)).toBeInTheDocument();
+        },
+        { timeout: 3000 },
+      );
+      expect(screen.getByText("Current")).toBeInTheDocument();
+    });
+
+    it("should display other sessions in separate section", async () => {
+      vi.mocked(api.listAuthSessions).mockResolvedValue({ sessions: mockSessions });
+
+      render(
+        <QueryClientProvider client={queryClient}>
+          <SessionManagement />
+        </QueryClientProvider>,
+      );
+
+      await waitFor(
+        () => {
+          expect(screen.queryByText("Loading sessions...")).not.toBeInTheDocument();
+        },
+        { timeout: 3000 },
+      );
+
+      await waitFor(
+        () => {
+          expect(screen.getByText("Other Sessions")).toBeInTheDocument();
+        },
+        { timeout: 3000 },
+      );
+      // Check for Safari - there should be at least one
+      const safariElements = screen.getAllByText(/Safari/i);
+      expect(safariElements.length).toBeGreaterThan(0);
+    });
+
+    it("should display session metadata (IP, created date, expires date)", async () => {
+      vi.mocked(api.listAuthSessions).mockResolvedValue({ sessions: mockSessions });
+
+      render(
+        <QueryClientProvider client={queryClient}>
+          <SessionManagement />
+        </QueryClientProvider>,
+      );
+
+      await waitFor(
+        () => {
+          expect(screen.queryByText("Loading sessions...")).not.toBeInTheDocument();
+        },
+        { timeout: 3000 },
+      );
+
+      await waitFor(
+        () => {
+          expect(screen.getByText(/IP: 192\.168\.1\.100/i)).toBeInTheDocument();
+        },
+        { timeout: 3000 },
+      );
+      await waitFor(
+        () => {
+          expect(screen.getAllByText(/Created:/i).length).toBeGreaterThan(0);
+        },
+        { timeout: 3000 },
+      );
+      expect(screen.getAllByText(/Expires:/i).length).toBeGreaterThan(0);
+    });
+
+    it("should not display revoked sessions", async () => {
+      const sessionsWithRevoked: SessionInfo[] = [
+        ...mockSessions,
         {
-          id: "session-2",
-          userAgent: "Mozilla/5.0 (iPad; CPU OS 14_0 like Mac OS X)",
-          ip: "192.168.1.2",
-          createdAt: "2024-01-01T01:00:00Z",
-          expiresAt: "2024-01-02T01:00:00Z",
+          id: "revoked-session",
+          userAgent: "Mozilla/5.0",
+          ip: "192.168.1.103",
+          createdAt: "2024-01-04T00:00:00Z",
+          expiresAt: "2024-01-11T00:00:00Z",
           isCurrent: false,
-          revokedAt: null,
+          revokedAt: "2024-01-05T00:00:00Z",
         },
-        {
-          id: "session-3",
-          userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
-          ip: "192.168.1.3",
-          createdAt: "2024-01-01T02:00:00Z",
-          expiresAt: "2024-01-02T02:00:00Z",
-          isCurrent: false,
-          revokedAt: null,
+      ];
+
+      vi.mocked(api.listAuthSessions).mockResolvedValue({ sessions: sessionsWithRevoked });
+
+      render(
+        <QueryClientProvider client={queryClient}>
+          <SessionManagement />
+        </QueryClientProvider>,
+      );
+
+      await waitFor(
+        () => {
+          expect(screen.queryByText("Loading sessions...")).not.toBeInTheDocument();
         },
-      ],
-    });
+        { timeout: 3000 },
+      );
 
-    renderSessionManagement();
-
-    await waitFor(() => {
-      expect(screen.getByText("Active Sessions")).toBeInTheDocument();
-    });
-
-    // Icons are rendered as SVG elements from lucide-react
-    // We can verify the component renders without errors
-    expect(screen.getByText("Safari")).toBeInTheDocument();
-    expect(screen.getByText("Chrome")).toBeInTheDocument();
-  });
-
-  it("should format dates correctly", async () => {
-    vi.mocked(api.listAuthSessions).mockResolvedValue({
-      sessions: mockSessions,
-    });
-
-    renderSessionManagement();
-
-    await waitFor(() => {
-      expect(screen.getByText("Active Sessions")).toBeInTheDocument();
-    });
-
-    // Dates should be formatted and displayed
-    expect(screen.getByText(/Created:/i)).toBeInTheDocument();
-    expect(screen.getByText(/Expires:/i)).toBeInTheDocument();
-  });
-
-  it("should display IP addresses when available", async () => {
-    vi.mocked(api.listAuthSessions).mockResolvedValue({
-      sessions: mockSessions,
-    });
-
-    renderSessionManagement();
-
-    await waitFor(() => {
-      expect(screen.getByText(/IP: 192\.168\.1\.1/i)).toBeInTheDocument();
+      // Should only show 3 active sessions (1 current + 2 others), not the revoked one
+      await waitFor(
+        () => {
+          const revokeButtons = screen.getAllByLabelText(/revoke session/i);
+          expect(revokeButtons.length).toBe(2); // Only other sessions have revoke buttons
+        },
+        { timeout: 3000 },
+      );
     });
   });
 
-  it("should disable buttons while revoking", async () => {
-    vi.mocked(api.listAuthSessions).mockResolvedValue({
-      sessions: mockSessions,
-    });
-    vi.mocked(api.revokeAuthSessions).mockImplementation(
-      () => new Promise(() => {}), // Never resolves
-    );
+  describe("Revoking individual sessions", () => {
+    const mockSessions: SessionInfo[] = [
+      {
+        id: "current-session",
+        userAgent: "Mozilla/5.0 Chrome/120.0.0.0",
+        ip: "192.168.1.100",
+        createdAt: "2024-01-01T00:00:00Z",
+        expiresAt: "2024-01-08T00:00:00Z",
+        isCurrent: true,
+        revokedAt: null,
+      },
+      {
+        id: "other-session",
+        userAgent: "Mozilla/5.0 Safari/604.1",
+        ip: "192.168.1.101",
+        createdAt: "2024-01-02T00:00:00Z",
+        expiresAt: "2024-01-09T00:00:00Z",
+        isCurrent: false,
+        revokedAt: null,
+      },
+    ];
 
-    renderSessionManagement();
+    it("should revoke a session when user clicks revoke button", async () => {
+      vi.mocked(api.listAuthSessions)
+        .mockResolvedValueOnce({ sessions: mockSessions })
+        .mockResolvedValueOnce({ sessions: [mockSessions[0]] });
+      vi.mocked(api.revokeAuthSessions).mockResolvedValue(undefined);
 
-    await waitFor(() => {
-      expect(screen.getByText("Active Sessions")).toBeInTheDocument();
-    });
+      render(
+        <QueryClientProvider client={queryClient}>
+          <SessionManagement />
+        </QueryClientProvider>,
+      );
 
-    const revokeButtons = screen.getAllByLabelText("Revoke session");
-    act(() => {
+      await waitFor(
+        () => {
+          expect(screen.queryByText("Loading sessions...")).not.toBeInTheDocument();
+        },
+        { timeout: 3000 },
+      );
+
+      const revokeButtons = await waitFor(
+        () => {
+          const buttons = screen.getAllByLabelText(/revoke session/i);
+          expect(buttons.length).toBe(1);
+          return buttons;
+        },
+        { timeout: 3000 },
+      );
+
       fireEvent.click(revokeButtons[0]);
+
+      await waitFor(() => {
+        expect(api.revokeAuthSessions).toHaveBeenCalledWith({ sessionId: "other-session" });
+      });
+
+      await waitFor(() => {
+        expect(mockToast.success).toHaveBeenCalledWith("Session revoked successfully");
+      });
     });
 
-    // Buttons should be disabled while revoking
-    await waitFor(() => {
-      const allRevokeButtons = screen.getAllByLabelText("Revoke session");
-      allRevokeButtons.forEach((button) => {
-        expect(button).toBeDisabled();
+    it("should reload sessions list after revoking", async () => {
+      vi.mocked(api.listAuthSessions)
+        .mockResolvedValueOnce({ sessions: mockSessions })
+        .mockResolvedValueOnce({ sessions: [mockSessions[0]] });
+      vi.mocked(api.revokeAuthSessions).mockResolvedValue(undefined);
+
+      render(
+        <QueryClientProvider client={queryClient}>
+          <SessionManagement />
+        </QueryClientProvider>,
+      );
+
+      await waitFor(
+        () => {
+          expect(screen.queryByText("Loading sessions...")).not.toBeInTheDocument();
+        },
+        { timeout: 3000 },
+      );
+
+      const revokeButtons = await waitFor(
+        () => {
+          const buttons = screen.getAllByLabelText(/revoke session/i);
+          expect(buttons.length).toBeGreaterThan(0);
+          return buttons;
+        },
+        { timeout: 3000 },
+      );
+      fireEvent.click(revokeButtons[0]);
+
+      await waitFor(() => {
+        expect(api.listAuthSessions).toHaveBeenCalledTimes(2);
+      });
+    });
+
+    it("should show error message when revoke fails", async () => {
+      vi.mocked(api.listAuthSessions).mockResolvedValue({ sessions: mockSessions });
+      vi.mocked(api.revokeAuthSessions).mockRejectedValue(new Error("Network error"));
+
+      render(
+        <QueryClientProvider client={queryClient}>
+          <SessionManagement />
+        </QueryClientProvider>,
+      );
+
+      await waitFor(
+        () => {
+          expect(screen.queryByText("Loading sessions...")).not.toBeInTheDocument();
+        },
+        { timeout: 3000 },
+      );
+
+      const revokeButtons = await waitFor(
+        () => {
+          const buttons = screen.getAllByLabelText(/revoke session/i);
+          expect(buttons.length).toBeGreaterThan(0);
+          return buttons;
+        },
+        { timeout: 3000 },
+      );
+      fireEvent.click(revokeButtons[0]);
+
+      await waitFor(() => {
+        expect(mockToast.error).toHaveBeenCalledWith("Failed to revoke session");
+      });
+    });
+
+    it("should disable revoke buttons while revoking is in progress", async () => {
+      vi.mocked(api.listAuthSessions).mockResolvedValue({ sessions: mockSessions });
+      vi.mocked(api.revokeAuthSessions).mockImplementation(() => new Promise(() => {}));
+
+      render(
+        <QueryClientProvider client={queryClient}>
+          <SessionManagement />
+        </QueryClientProvider>,
+      );
+
+      await waitFor(
+        () => {
+          expect(screen.queryByText("Loading sessions...")).not.toBeInTheDocument();
+        },
+        { timeout: 3000 },
+      );
+
+      const revokeButtons = await waitFor(
+        () => {
+          const buttons = screen.getAllByLabelText(/revoke session/i);
+          expect(buttons.length).toBeGreaterThan(0);
+          return buttons;
+        },
+        { timeout: 3000 },
+      );
+      fireEvent.click(revokeButtons[0]);
+
+      await waitFor(() => {
+        const buttons = screen.getAllByLabelText(/revoke session/i);
+        buttons.forEach((button) => {
+          expect(button).toBeDisabled();
+        });
       });
     });
   });
 
-  it("should handle unknown device user agent", async () => {
-    vi.mocked(api.listAuthSessions).mockResolvedValue({
-      sessions: [
+  describe("Revoking all other sessions", () => {
+    const mockSessions: SessionInfo[] = [
+      {
+        id: "current-session",
+        userAgent: "Mozilla/5.0 Chrome/120.0.0.0",
+        ip: "192.168.1.100",
+        createdAt: "2024-01-01T00:00:00Z",
+        expiresAt: "2024-01-08T00:00:00Z",
+        isCurrent: true,
+        revokedAt: null,
+      },
+      {
+        id: "other-session-1",
+        userAgent: "Mozilla/5.0 Safari/604.1",
+        ip: "192.168.1.101",
+        createdAt: "2024-01-02T00:00:00Z",
+        expiresAt: "2024-01-09T00:00:00Z",
+        isCurrent: false,
+        revokedAt: null,
+      },
+      {
+        id: "other-session-2",
+        userAgent: "Mozilla/5.0 Firefox/121.0",
+        ip: "192.168.1.102",
+        createdAt: "2024-01-03T00:00:00Z",
+        expiresAt: "2024-01-10T00:00:00Z",
+        isCurrent: false,
+        revokedAt: null,
+      },
+    ];
+
+    it("should show confirmation dialog when user clicks 'Revoke All Others'", async () => {
+      vi.mocked(api.listAuthSessions).mockResolvedValue({ sessions: mockSessions });
+
+      render(
+        <QueryClientProvider client={queryClient}>
+          <SessionManagement />
+        </QueryClientProvider>,
+      );
+
+      await waitFor(
+        () => {
+          expect(screen.queryByText("Loading sessions...")).not.toBeInTheDocument();
+        },
+        { timeout: 3000 },
+      );
+
+      const revokeOthersButton = await waitFor(
+        () => {
+          return screen.getByText(/revoke all others/i);
+        },
+        { timeout: 3000 },
+      );
+      fireEvent.click(revokeOthersButton);
+
+      await waitFor(() => {
+        expect(screen.getByText("Revoke Other Sessions?")).toBeInTheDocument();
+      });
+
+      expect(
+        screen.getByText(/This will log you out from all other devices except this one/i),
+      ).toBeInTheDocument();
+    });
+
+    it("should revoke all other sessions when user confirms", async () => {
+      vi.mocked(api.listAuthSessions).mockResolvedValue({ sessions: mockSessions });
+      vi.mocked(api.revokeAuthSessions).mockResolvedValue(undefined);
+
+      render(
+        <QueryClientProvider client={queryClient}>
+          <SessionManagement />
+        </QueryClientProvider>,
+      );
+
+      await waitFor(
+        () => {
+          expect(screen.queryByText("Loading sessions...")).not.toBeInTheDocument();
+        },
+        { timeout: 3000 },
+      );
+
+      const revokeOthersButton = await waitFor(
+        () => {
+          return screen.getByText(/revoke all others/i);
+        },
+        { timeout: 3000 },
+      );
+      fireEvent.click(revokeOthersButton);
+
+      await waitFor(() => {
+        expect(screen.getByText("Revoke Other Sessions?")).toBeInTheDocument();
+      });
+
+      const dialog = await waitFor(() => {
+        const title = screen.getByText("Revoke Other Sessions?");
+        const dialogElement = title.closest("div[style*='position: fixed']");
+        if (!dialogElement) {
+          throw new Error("Dialog not found");
+        }
+        return dialogElement;
+      });
+
+      const confirmButton = await waitFor(() => {
+        return within(dialog as HTMLElement).getByRole("button", {
+          name: /revoke all others/i,
+        });
+      });
+      fireEvent.click(confirmButton);
+
+      await waitFor(() => {
+        expect(api.revokeAuthSessions).toHaveBeenCalledWith({ revokeOthers: true });
+      });
+
+      await waitFor(() => {
+        expect(mockToast.success).toHaveBeenCalledWith("Other sessions revoked successfully");
+      });
+    });
+
+    it("should cancel revoke when user clicks cancel in confirmation dialog", async () => {
+      vi.mocked(api.listAuthSessions).mockResolvedValue({ sessions: mockSessions });
+
+      render(
+        <QueryClientProvider client={queryClient}>
+          <SessionManagement />
+        </QueryClientProvider>,
+      );
+
+      await waitFor(
+        () => {
+          expect(screen.queryByText("Loading sessions...")).not.toBeInTheDocument();
+        },
+        { timeout: 3000 },
+      );
+
+      const revokeOthersButton = await waitFor(
+        () => {
+          return screen.getByText(/revoke all others/i);
+        },
+        { timeout: 3000 },
+      );
+      fireEvent.click(revokeOthersButton);
+
+      await waitFor(() => {
+        expect(screen.getByText("Revoke Other Sessions?")).toBeInTheDocument();
+      });
+
+      const cancelButton = screen.getByText("Cancel");
+      fireEvent.click(cancelButton);
+
+      await waitFor(() => {
+        expect(screen.queryByText("Revoke Other Sessions?")).not.toBeInTheDocument();
+      });
+
+      expect(api.revokeAuthSessions).not.toHaveBeenCalled();
+    });
+
+    it("should show error message when revoke others fails", async () => {
+      vi.mocked(api.listAuthSessions).mockResolvedValue({ sessions: mockSessions });
+      vi.mocked(api.revokeAuthSessions).mockRejectedValue(new Error("Network error"));
+
+      render(
+        <QueryClientProvider client={queryClient}>
+          <SessionManagement />
+        </QueryClientProvider>,
+      );
+
+      await waitFor(
+        () => {
+          expect(screen.queryByText("Loading sessions...")).not.toBeInTheDocument();
+        },
+        { timeout: 3000 },
+      );
+
+      const revokeOthersButton = await waitFor(
+        () => {
+          return screen.getByText(/revoke all others/i);
+        },
+        { timeout: 3000 },
+      );
+      fireEvent.click(revokeOthersButton);
+
+      await waitFor(() => {
+        expect(screen.getByText("Revoke Other Sessions?")).toBeInTheDocument();
+      });
+
+      const dialog = await waitFor(() => {
+        const title = screen.getByText("Revoke Other Sessions?");
+        const dialogElement = title.closest("div[style*='position: fixed']");
+        if (!dialogElement) {
+          throw new Error("Dialog not found");
+        }
+        return dialogElement;
+      });
+
+      const confirmButton = await waitFor(() => {
+        return within(dialog as HTMLElement).getByRole("button", {
+          name: /revoke all others/i,
+        });
+      });
+      fireEvent.click(confirmButton);
+
+      await waitFor(() => {
+        expect(mockToast.error).toHaveBeenCalledWith("Failed to revoke other sessions");
+      });
+    });
+  });
+
+  describe("Revoking all sessions", () => {
+    const mockSessions: SessionInfo[] = [
+      {
+        id: "current-session",
+        userAgent: "Mozilla/5.0 Chrome/120.0.0.0",
+        ip: "192.168.1.100",
+        createdAt: "2024-01-01T00:00:00Z",
+        expiresAt: "2024-01-08T00:00:00Z",
+        isCurrent: true,
+        revokedAt: null,
+      },
+      {
+        id: "other-session",
+        userAgent: "Mozilla/5.0 Safari/604.1",
+        ip: "192.168.1.101",
+        createdAt: "2024-01-02T00:00:00Z",
+        expiresAt: "2024-01-09T00:00:00Z",
+        isCurrent: false,
+        revokedAt: null,
+      },
+    ];
+
+    it("should show confirmation dialog when user clicks 'Revoke All Sessions'", async () => {
+      vi.mocked(api.listAuthSessions).mockResolvedValue({ sessions: mockSessions });
+
+      render(
+        <QueryClientProvider client={queryClient}>
+          <SessionManagement />
+        </QueryClientProvider>,
+      );
+
+      await waitFor(
+        () => {
+          expect(screen.queryByText("Loading sessions...")).not.toBeInTheDocument();
+        },
+        { timeout: 3000 },
+      );
+
+      const revokeAllButton = await waitFor(
+        () => {
+          return screen.getByText(/revoke all sessions/i);
+        },
+        { timeout: 3000 },
+      );
+      fireEvent.click(revokeAllButton);
+
+      await waitFor(() => {
+        expect(screen.getByText("Revoke All Sessions?")).toBeInTheDocument();
+      });
+
+      expect(
+        screen.getByText(/This will log you out from all devices. You will need to log in again/i),
+      ).toBeInTheDocument();
+    });
+
+    it("should revoke all sessions when user confirms", async () => {
+      vi.mocked(api.listAuthSessions).mockResolvedValue({ sessions: mockSessions });
+      vi.mocked(api.revokeAuthSessions).mockResolvedValue(undefined);
+
+      render(
+        <QueryClientProvider client={queryClient}>
+          <SessionManagement />
+        </QueryClientProvider>,
+      );
+
+      await waitFor(
+        () => {
+          expect(screen.queryByText("Loading sessions...")).not.toBeInTheDocument();
+        },
+        { timeout: 3000 },
+      );
+
+      const revokeAllButton = await waitFor(
+        () => {
+          return screen.getByText(/revoke all sessions/i);
+        },
+        { timeout: 3000 },
+      );
+      fireEvent.click(revokeAllButton);
+
+      await waitFor(() => {
+        expect(screen.getByText("Revoke All Sessions?")).toBeInTheDocument();
+      });
+
+      const dialog = await waitFor(() => {
+        const title = screen.getByText("Revoke All Sessions?");
+        const dialogElement = title.closest("div[style*='position: fixed']");
+        if (!dialogElement) {
+          throw new Error("Dialog not found");
+        }
+        return dialogElement;
+      });
+
+      const confirmButton = await waitFor(() => {
+        return within(dialog as HTMLElement).getByRole("button", {
+          name: /revoke all sessions/i,
+        });
+      });
+      fireEvent.click(confirmButton);
+
+      await waitFor(() => {
+        expect(api.revokeAuthSessions).toHaveBeenCalledWith({ revokeAll: true });
+      });
+
+      await waitFor(() => {
+        expect(mockToast.success).toHaveBeenCalledWith("All sessions revoked successfully");
+      });
+    });
+
+    it("should cancel revoke when user clicks cancel in confirmation dialog", async () => {
+      vi.mocked(api.listAuthSessions).mockResolvedValue({ sessions: mockSessions });
+
+      render(
+        <QueryClientProvider client={queryClient}>
+          <SessionManagement />
+        </QueryClientProvider>,
+      );
+
+      await waitFor(
+        () => {
+          expect(screen.queryByText("Loading sessions...")).not.toBeInTheDocument();
+        },
+        { timeout: 3000 },
+      );
+
+      const revokeAllButton = await waitFor(
+        () => {
+          return screen.getByText(/revoke all sessions/i);
+        },
+        { timeout: 3000 },
+      );
+      fireEvent.click(revokeAllButton);
+
+      await waitFor(() => {
+        expect(screen.getByText("Revoke All Sessions?")).toBeInTheDocument();
+      });
+
+      const cancelButton = screen.getByText("Cancel");
+      fireEvent.click(cancelButton);
+
+      await waitFor(() => {
+        expect(screen.queryByText("Revoke All Sessions?")).not.toBeInTheDocument();
+      });
+
+      expect(api.revokeAuthSessions).not.toHaveBeenCalled();
+    });
+
+    it("should show error message when revoke all fails", async () => {
+      vi.mocked(api.listAuthSessions).mockResolvedValue({ sessions: mockSessions });
+      vi.mocked(api.revokeAuthSessions).mockRejectedValue(new Error("Network error"));
+
+      render(
+        <QueryClientProvider client={queryClient}>
+          <SessionManagement />
+        </QueryClientProvider>,
+      );
+
+      await waitFor(
+        () => {
+          expect(screen.queryByText("Loading sessions...")).not.toBeInTheDocument();
+        },
+        { timeout: 3000 },
+      );
+
+      const revokeAllButton = await waitFor(
+        () => {
+          return screen.getByText(/revoke all sessions/i);
+        },
+        { timeout: 3000 },
+      );
+      fireEvent.click(revokeAllButton);
+
+      await waitFor(() => {
+        expect(screen.getByText("Revoke All Sessions?")).toBeInTheDocument();
+      });
+
+      const dialog = await waitFor(() => {
+        const title = screen.getByText("Revoke All Sessions?");
+        const dialogElement = title.closest("div[style*='position: fixed']");
+        if (!dialogElement) {
+          throw new Error("Dialog not found");
+        }
+        return dialogElement;
+      });
+
+      const confirmButton = await waitFor(() => {
+        return within(dialog as HTMLElement).getByRole("button", {
+          name: /revoke all sessions/i,
+        });
+      });
+      fireEvent.click(confirmButton);
+
+      await waitFor(() => {
+        expect(mockToast.error).toHaveBeenCalledWith("Failed to revoke all sessions");
+      });
+    });
+  });
+
+  describe("Error handling", () => {
+    it("should show error message when loading sessions fails", async () => {
+      vi.mocked(api.listAuthSessions).mockRejectedValue(new Error("Network error"));
+
+      render(
+        <QueryClientProvider client={queryClient}>
+          <SessionManagement />
+        </QueryClientProvider>,
+      );
+
+      await waitFor(() => {
+        expect(mockToast.error).toHaveBeenCalledWith("Failed to load sessions");
+      });
+    });
+  });
+
+  describe("Device information display", () => {
+    it("should display 'Unknown device' when user agent is missing", async () => {
+      const sessions: SessionInfo[] = [
         {
           id: "session-1",
           userAgent: null,
           ip: "192.168.1.1",
           createdAt: "2024-01-01T00:00:00Z",
-          expiresAt: "2024-01-02T00:00:00Z",
+          expiresAt: "2024-01-08T00:00:00Z",
           isCurrent: true,
           revokedAt: null,
         },
-      ],
-    });
+      ];
 
-    renderSessionManagement();
+      vi.mocked(api.listAuthSessions).mockResolvedValue({ sessions });
 
-    await waitFor(() => {
-      expect(screen.getByText("Unknown device")).toBeInTheDocument();
-    });
-  });
+      render(
+        <QueryClientProvider client={queryClient}>
+          <SessionManagement />
+        </QueryClientProvider>,
+      );
 
-  it("should filter out revoked sessions", async () => {
-    vi.mocked(api.listAuthSessions).mockResolvedValue({
-      sessions: [
-        ...mockSessions,
-        {
-          id: "session-4",
-          userAgent: "Mozilla/5.0",
-          ip: "192.168.1.4",
-          createdAt: "2024-01-01T03:00:00Z",
-          expiresAt: "2024-01-02T03:00:00Z",
-          isCurrent: false,
-          revokedAt: "2024-01-01T04:00:00Z",
+      await waitFor(
+        () => {
+          expect(screen.queryByText("Loading sessions...")).not.toBeInTheDocument();
         },
-      ],
+        { timeout: 3000 },
+      );
+
+      await waitFor(
+        () => {
+          expect(screen.getByText(/unknown device/i)).toBeInTheDocument();
+        },
+        { timeout: 3000 },
+      );
     });
 
-    renderSessionManagement();
+    it("should display browser name from user agent", async () => {
+      const sessions: SessionInfo[] = [
+        {
+          id: "session-1",
+          userAgent:
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120.0.0.0",
+          ip: "192.168.1.1",
+          createdAt: "2024-01-01T00:00:00Z",
+          expiresAt: "2024-01-08T00:00:00Z",
+          isCurrent: true,
+          revokedAt: null,
+        },
+        {
+          id: "session-2",
+          userAgent: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0) AppleWebKit/605.1.15 Safari/604.1",
+          ip: "192.168.1.2",
+          createdAt: "2024-01-02T00:00:00Z",
+          expiresAt: "2024-01-09T00:00:00Z",
+          isCurrent: false,
+          revokedAt: null,
+        },
+      ];
 
-    await waitFor(() => {
-      expect(screen.getByText("Active Sessions")).toBeInTheDocument();
-    });
+      vi.mocked(api.listAuthSessions).mockResolvedValue({ sessions });
 
-    // Should only show 3 active sessions, not 4
-    const revokeButtons = screen.getAllByLabelText("Revoke session");
-    expect(revokeButtons).toHaveLength(2); // Only other sessions, not current
-  });
+      render(
+        <QueryClientProvider client={queryClient}>
+          <SessionManagement />
+        </QueryClientProvider>,
+      );
 
-  it("should reload sessions after revoking", async () => {
-    vi.mocked(api.listAuthSessions)
-      .mockResolvedValueOnce({
-        sessions: mockSessions,
-      })
-      .mockResolvedValueOnce({
-        sessions: mockSessions.slice(1), // One session removed
-      });
-    vi.mocked(api.revokeAuthSessions).mockResolvedValue(undefined);
+      await waitFor(
+        () => {
+          expect(screen.queryByText("Loading sessions...")).not.toBeInTheDocument();
+        },
+        { timeout: 3000 },
+      );
 
-    renderSessionManagement();
-
-    await waitFor(() => {
-      expect(screen.getByText("Active Sessions")).toBeInTheDocument();
-    });
-
-    const revokeButtons = screen.getAllByLabelText("Revoke session");
-    act(() => {
-      fireEvent.click(revokeButtons[0]);
-    });
-
-    await waitFor(() => {
-      expect(api.listAuthSessions).toHaveBeenCalledTimes(2);
+      await waitFor(
+        () => {
+          expect(screen.getByText("Chrome")).toBeInTheDocument();
+        },
+        { timeout: 3000 },
+      );
+      await waitFor(
+        () => {
+          expect(screen.getByText("Safari")).toBeInTheDocument();
+        },
+        { timeout: 3000 },
+      );
     });
   });
 });

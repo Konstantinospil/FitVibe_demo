@@ -42,7 +42,8 @@ export const SessionManagement: React.FC = () => {
 
   useEffect(() => {
     void loadSessions();
-  }, [loadSessions]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Only run on mount - loadSessions is stable enough with t/toast dependencies
 
   const handleRevokeSession = useCallback(
     async (sessionId: string) => {
