@@ -43,6 +43,7 @@ See `docs/6.Implementation/implementation_principles.md` for detailed examples a
 16. **Always** use i18n for all user-facing text (never hardcode strings)
 17. **Always** use configuration from `env.ts` or config files (never hardcode values)
 18. **Always** implement complete functionality (never use placeholders or simplified versions)
+19. **Always** use current date dynamically - Never hardcode dates. Always execute `date -u +"%Y-%m-%d"` to get current date before using it in reports, IDs, timestamps, or documentation. See `.cursor/agents/examples/system-context-date.md` for guidelines.
 
 ## Quick Reference: Most Common Tasks
 

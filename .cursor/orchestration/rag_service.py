@@ -9,7 +9,7 @@ Last Updated: 2025-01-21
 """
 
 import logging
-from typing import Dict, Any, Optional, List
+from typing import Dict, Any, Optional, List, TYPE_CHECKING
 from pathlib import Path
 
 # Import vector DB
@@ -22,7 +22,13 @@ try:
     VECTOR_DB_AVAILABLE = True
 except ImportError:
     VECTOR_DB_AVAILABLE = False
+    VectorDB = None  # Type placeholder
     logging.warning("VectorDB not available. RAG retrieval will be limited.")
+
+if TYPE_CHECKING:
+    # For type checking only
+    if VectorDB is None:
+        from typing import Any as VectorDB
 
 from .llm_client import get_llm_client, OpenAIClient
 from .config_loader import config_loader
@@ -41,7 +47,7 @@ class RAGService:
     
     def __init__(
         self,
-        vector_db: Optional[VectorDB] = None,
+        vector_db: Optional[Any] = None,  # VectorDB type when available
         llm_client: Optional[OpenAIClient] = None,
         persist_directory: str = ".cursor/mcp/chromadb",
         collection_name: str = "fitvibe_knowledge"

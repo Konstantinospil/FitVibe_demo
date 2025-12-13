@@ -28,6 +28,11 @@ except ImportError:
     EventType = Enum("EventType", ["TOOL_CALL", "INFO", "ERROR", "WARNING"])
 
 
+class StateVersionConflict(Exception):
+    """Raised when state version conflict is detected during optimistic locking."""
+    pass
+
+
 class AgentStatus(Enum):
     """Agent execution status."""
     PENDING = "pending"
@@ -136,7 +141,22 @@ class AgentState:
                 data["agent_execution"]["status"] = AgentStatus(data["agent_execution"]["status"])
         if "workflow_execution" in data and data["workflow_execution"]:
             if "status" in data["workflow_execution"]:
-                data["workflow_execution"]["status"] = WorkflowStatus(data["workflow_execution"]["status"])
+                status_value = data["workflow_execution"]["status"]
+                # Handle both enum values and string values
+                if isinstance(status_value, str):
+                    # Map string values to enum (case-insensitive)
+                    status_map = {
+                        "not_started": WorkflowStatus.NOT_STARTED,
+                        "in_progress": WorkflowStatus.IN_PROGRESS,
+                        "running": WorkflowStatus.IN_PROGRESS,  # Alias
+                        "complete": WorkflowStatus.COMPLETE,
+                        "completed": WorkflowStatus.COMPLETE,  # Alias
+                        "failed": WorkflowStatus.FAILED,
+                        "cancelled": WorkflowStatus.CANCELLED
+                    }
+                    data["workflow_execution"]["status"] = status_map.get(status_value.lower(), WorkflowStatus.NOT_STARTED)
+                else:
+                    data["workflow_execution"]["status"] = WorkflowStatus(status_value)
         
         # Reconstruct nested objects
         if data.get("agent_execution"):
@@ -153,7 +173,21 @@ class AgentState:
                 ae_data["handoffs"] = handoffs
                 agent_executions.append(AgentExecution(**ae_data))
             workflow_data["agent_executions"] = agent_executions
-            data["workflow_execution"] = WorkflowExecution(**workflow_data)
+            
+            # Filter to only include fields that exist in WorkflowExecution
+            valid_fields = {
+                "workflow_id", "workflow_name", "status", "started_at", "request_id",
+                "completed_at", "agent_executions", "current_agent", "context", "metadata"
+            }
+            filtered_data = {k: v for k, v in workflow_data.items() if k in valid_fields}
+            
+            # Ensure required fields have defaults
+            if "workflow_name" not in filtered_data:
+                filtered_data["workflow_name"] = filtered_data.get("workflow_id", "unknown")
+            if "request_id" not in filtered_data:
+                filtered_data["request_id"] = ""
+            
+            data["workflow_execution"] = WorkflowExecution(**filtered_data)
         
         return cls(**data)
 

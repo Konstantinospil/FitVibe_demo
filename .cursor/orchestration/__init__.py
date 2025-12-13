@@ -65,6 +65,18 @@ from .workflow_parser import get_workflow_parser, WorkflowParser
 from .workflow_validator import get_workflow_validator, WorkflowValidator
 from .workflow_executor import get_workflow_executor, WorkflowExecutor
 from .rag_service import get_rag_service, RAGService
+from .event_log import event_log, EventLog, WorkflowEvent
+from .state_repository import AgentStateRepository, StateVersionConflict
+from .step_executor import step_executor, StepExecutor, StepExecution as StepExecutionResult, ExecutionContext
+from .handoff_generator import get_handoff_generator, HandoffGenerator
+from .handoff_registry import get_handoff_registry, HandoffRegistry
+from .error_handling import (
+    dead_letter_queue, DeadLetterQueue, FailedTask, ErrorClassifier,
+    CircuitBreaker, CircuitBreakerOpenError, CircuitState, get_circuit_breaker
+)
+from .workflow_metrics import get_metrics_collector, WorkflowMetricsCollector, WorkflowMetrics, SystemMetrics
+from .workflow_dashboard import show_dashboard
+from .workflow_debug import inspect_execution, replay_execution, compare_executions, trace_execution, validate_state
 
 __all__ = [
     "config_loader",
@@ -124,5 +136,38 @@ __all__ = [
     "WorkflowExecutor",
     "get_rag_service",
     "RAGService",
+    "event_log",
+    "EventLog",
+    "WorkflowEvent",
+    "AgentStateRepository",
+    "StateVersionConflict",
+    "step_executor",
+    "StepExecutor",
+    "StepExecutionResult",
+    "ExecutionContext",
+    "get_handoff_generator",
+    "HandoffGenerator",
+    "get_handoff_registry",
+    "HandoffRegistry",
+    "dead_letter_queue",
+    "DeadLetterQueue",
+    "FailedTask",
+    "ErrorClassifier",
+    # Circuit Breaker
+    "CircuitBreaker",
+    "CircuitBreakerOpenError",
+    "CircuitState",
+    "get_circuit_breaker",
+    # Phase 6: Observability
+    "get_metrics_collector",
+    "WorkflowMetricsCollector",
+    "WorkflowMetrics",
+    "SystemMetrics",
+    "show_dashboard",
+    "inspect_execution",
+    "replay_execution",
+    "compare_executions",
+    "trace_execution",
+    "validate_state",
 ]
 

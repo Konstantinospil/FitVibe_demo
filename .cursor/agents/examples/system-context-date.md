@@ -48,10 +48,12 @@ Agents have access to the current date and time via system commands:
 - **Timezone**: UTC (Coordinated Universal Time)
 
 **Date Usage Guidelines**:
-- Always use current date/time for generating timestamps and IDs
-- Never hardcode dates in output or reports
+- **CRITICAL**: Always use current date/time for generating timestamps and IDs
+- **NEVER hardcode dates** in output, reports, or documentation
+- **ALWAYS execute** `date -u +"%Y-%m-%d"` command to get current date before using it
 - Use ISO 8601 format for all timestamps
 - Use YYYY-MM-DD format for dates in IDs and filenames
+- Examples in documentation are for illustration only - always use actual current date
 ```
 
 ### In Processing Workflow

@@ -1,0 +1,25 @@
+# Workflow Engine Configuration
+# This file configures the workflow engine for the FitVibe multi-agent system.
+
+workflow_engine:
+  # Execution settings
+  default_timeout_seconds: 3600
+  max_concurrent_workflows: 10
+  max_retry_attempts: 3
+  
+  # State management
+  state_db_path: ".cursor/data/workflow_state.db"
+  backup_dir: ".cursor/data/backups"
+  max_state_versions: 10
+  
+  # Event log
+  event_log_db_path: ".cursor/data/workflow_events.db"
+  event_log_retention_days: 30
+  
+  # Handoffs
+  handoff_dir: ".cursor/agents/examples/handoffs"
+  handoff_validation_strict: true
+  
+  # Error handling
+  circuit_breaker_threshold: 5
+  circuit_breaker_timeout_seconds: 60

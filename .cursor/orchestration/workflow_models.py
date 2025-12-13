@@ -156,6 +156,7 @@ class WorkflowExecution:
     """Execution state of a complete workflow."""
     execution_id: str
     workflow_id: str
+    workflow_version: str  # Pinned workflow version
     status: WorkflowStatus
     started_at: str
     completed_at: Optional[str] = None

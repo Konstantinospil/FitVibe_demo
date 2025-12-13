@@ -29,6 +29,20 @@ except ImportError:
 T = TypeVar('T')
 
 
+class CircuitState(Enum):
+    """Circuit breaker states."""
+    CLOSED = "closed"  # Normal operation, requests pass through
+    OPEN = "open"  # Circuit is open, requests fail immediately
+    HALF_OPEN = "half_open"  # Testing if service recovered
+
+
+class CircuitState(Enum):
+    """Circuit breaker states."""
+    CLOSED = "closed"  # Normal operation, requests pass through
+    OPEN = "open"  # Circuit is open, requests fail immediately
+    HALF_OPEN = "half_open"  # Testing if service recovered
+
+
 class ErrorCategory(Enum):
     """Error categories for classification."""
     TRANSIENT = "transient"  # Temporary errors, should retry
@@ -318,19 +332,43 @@ class DeadLetterQueue:
         )
         
         task_file = self.queue_dir / f"{task_id}.json"
+        
+        # Convert to dict with proper enum serialization
+        task_dict = asdict(failed_task)
+        # Convert enum values to their string values for JSON serialization
+        if "error" in task_dict and task_dict["error"]:
+            error_dict = task_dict["error"]
+            if "category" in error_dict:
+                cat = error_dict["category"]
+                # Handle both enum and string
+                if isinstance(cat, ErrorCategory):
+                    error_dict["category"] = cat.value
+                elif isinstance(cat, str) and not cat.startswith("ErrorCategory"):
+                    error_dict["category"] = cat  # Already a value string
+                else:
+                    error_dict["category"] = "system_error"  # Fallback
+            if "severity" in error_dict:
+                sev = error_dict["severity"]
+                if isinstance(sev, ErrorSeverity):
+                    error_dict["severity"] = sev.value
+                elif isinstance(sev, str) and not sev.startswith("ErrorSeverity"):
+                    error_dict["severity"] = sev
+                else:
+                    error_dict["severity"] = "medium"  # Fallback
+        
         with open(task_file, 'w') as f:
-            json.dump(asdict(failed_task), f, indent=2, default=str)
+            json.dump(task_dict, f, indent=2, default=str)
         
         audit_logger.log_error(
+            error_message=f"Task {task_id} added to dead-letter queue: {classified.message}",
             agent_id=agent_id,
-            message=f"Task {task_id} added to dead-letter queue",
-            error_type=classified.category.value,
-            details={
+            context={
                 "task_id": task_id,
                 "error": classified.message,
                 "attempts": attempts,
                 "category": classified.category.value,
-                "can_retry": classified.retryable
+                "can_retry": classified.retryable,
+                "workflow_id": workflow_id
             }
         )
     
@@ -351,10 +389,46 @@ class DeadLetterQueue:
                 # Reconstruct ClassifiedError
                 error_data = data["error"]
                 error = Exception(error_data["message"])
+                
+                # Handle category - could be enum value, string value, or enum name
+                category_value = error_data["category"]
+                if isinstance(category_value, str):
+                    # Remove "ErrorCategory." prefix if present
+                    if category_value.startswith("ErrorCategory."):
+                        category_value = category_value.replace("ErrorCategory.", "")
+                    # Try to get enum by value first
+                    try:
+                        category = ErrorCategory(category_value)
+                    except ValueError:
+                        # Try by name
+                        try:
+                            category = getattr(ErrorCategory, category_value)
+                        except (AttributeError, TypeError):
+                            # Fallback to SYSTEM_ERROR if invalid
+                            category = ErrorCategory.SYSTEM_ERROR
+                else:
+                    category = ErrorCategory(category_value) if isinstance(category_value, ErrorCategory) else ErrorCategory.SYSTEM_ERROR
+                
+                # Handle severity - could be enum value, string value, or enum name
+                severity_value = error_data["severity"]
+                if isinstance(severity_value, str):
+                    # Remove "ErrorSeverity." prefix if present
+                    if severity_value.startswith("ErrorSeverity."):
+                        severity_value = severity_value.replace("ErrorSeverity.", "")
+                    try:
+                        severity = ErrorSeverity(severity_value)
+                    except ValueError:
+                        try:
+                            severity = getattr(ErrorSeverity, severity_value)
+                        except (AttributeError, TypeError):
+                            severity = ErrorSeverity.MEDIUM
+                else:
+                    severity = ErrorSeverity(severity_value) if isinstance(severity_value, ErrorSeverity) else ErrorSeverity.MEDIUM
+                
                 classified = ClassifiedError(
                     error=error,
-                    category=ErrorCategory(error_data["category"]),
-                    severity=ErrorSeverity(error_data["severity"]),
+                    category=category,
+                    severity=severity,
                     message=error_data["message"],
                     retryable=error_data["retryable"],
                     retry_delay_seconds=error_data.get("retry_delay_seconds", 0.0),
@@ -399,8 +473,182 @@ class DeadLetterQueue:
         return False
 
 
+class CircuitBreaker:
+    """
+    Circuit breaker pattern for preventing cascading failures.
+    
+    The circuit breaker monitors failures and opens the circuit when
+    the failure threshold is exceeded, preventing further requests
+    until the service recovers.
+    """
+    
+    def __init__(
+        self,
+        failure_threshold: int = 5,
+        timeout_seconds: float = 60.0,
+        name: str = "default"
+    ):
+        """
+        Initialize circuit breaker.
+        
+        Args:
+            failure_threshold: Number of failures before opening circuit
+            timeout_seconds: Time to wait before attempting half-open
+            name: Circuit breaker name for identification
+        """
+        self.failure_threshold = failure_threshold
+        self.timeout_seconds = timeout_seconds
+        self.name = name
+        
+        self.state = CircuitState.CLOSED
+        self.failure_count = 0
+        self.last_failure_time: Optional[datetime] = None
+        self.success_count = 0
+        self.half_open_attempts = 0
+    
+    def call(self, func: Callable[[], T], *args, **kwargs) -> T:
+        """
+        Execute function with circuit breaker protection.
+        
+        Args:
+            func: Function to execute
+            *args: Function arguments
+            **kwargs: Function keyword arguments
+        
+        Returns:
+            Function result
+        
+        Raises:
+            CircuitBreakerOpenError: If circuit is open
+            Exception: If function execution fails
+        """
+        # Check circuit state
+        if self.state == CircuitState.OPEN:
+            # Check if timeout has passed
+            if self.last_failure_time:
+                elapsed = (datetime.utcnow() - self.last_failure_time).total_seconds()
+                if elapsed >= self.timeout_seconds:
+                    # Transition to half-open
+                    self.state = CircuitState.HALF_OPEN
+                    self.half_open_attempts = 0
+                    logger.info(f"Circuit breaker '{self.name}' transitioning to HALF_OPEN")
+                else:
+                    # Circuit still open
+                    raise CircuitBreakerOpenError(
+                        f"Circuit breaker '{self.name}' is OPEN. "
+                        f"Retry after {self.timeout_seconds - elapsed:.1f} seconds"
+                    )
+        
+        # Execute function
+        try:
+            result = func(*args, **kwargs)
+            
+            # Success - reset failure count
+            if self.state == CircuitState.HALF_OPEN:
+                self.success_count += 1
+                # If we get a few successes, close the circuit
+                if self.success_count >= 2:
+                    self.state = CircuitState.CLOSED
+                    self.failure_count = 0
+                    self.success_count = 0
+                    self.half_open_attempts = 0
+                    logger.info(f"Circuit breaker '{self.name}' transitioning to CLOSED")
+            elif self.state == CircuitState.CLOSED:
+                # Reset failure count on success
+                self.failure_count = 0
+            
+            return result
+        
+        except Exception as e:
+            # Failure - increment failure count
+            self.failure_count += 1
+            self.last_failure_time = datetime.utcnow()
+            
+            if self.state == CircuitState.HALF_OPEN:
+                # Failure in half-open state - open circuit again
+                self.state = CircuitState.OPEN
+                self.half_open_attempts = 0
+                logger.warning(f"Circuit breaker '{self.name}' transitioning to OPEN (half-open failure)")
+            elif self.state == CircuitState.CLOSED:
+                # Check if threshold exceeded
+                if self.failure_count >= self.failure_threshold:
+                    self.state = CircuitState.OPEN
+                    logger.warning(
+                        f"Circuit breaker '{self.name}' transitioning to OPEN "
+                        f"(failure count: {self.failure_count})"
+                    )
+            
+            # Re-raise the exception
+            raise
+    
+    def reset(self):
+        """Manually reset circuit breaker to closed state."""
+        self.state = CircuitState.CLOSED
+        self.failure_count = 0
+        self.success_count = 0
+        self.half_open_attempts = 0
+        self.last_failure_time = None
+        logger.info(f"Circuit breaker '{self.name}' manually reset to CLOSED")
+    
+    def get_state(self) -> Dict[str, Any]:
+        """Get current circuit breaker state."""
+        return {
+            "name": self.name,
+            "state": self.state.value,
+            "failure_count": self.failure_count,
+            "failure_threshold": self.failure_threshold,
+            "last_failure_time": self.last_failure_time.isoformat() if self.last_failure_time else None,
+            "timeout_seconds": self.timeout_seconds
+        }
+
+
+class CircuitBreakerOpenError(Exception):
+    """Raised when circuit breaker is open and request is rejected."""
+    pass
+
+
 # Global instances
 error_classifier = ErrorClassifier()
 retry_handler = RetryHandler()
 dead_letter_queue = DeadLetterQueue()
+
+# Circuit breaker registry
+_circuit_breakers: Dict[str, CircuitBreaker] = {}
+
+
+def get_circuit_breaker(name: str = "default", **kwargs) -> CircuitBreaker:
+    """
+    Get or create a circuit breaker instance.
+    
+    Args:
+        name: Circuit breaker name
+        **kwargs: Circuit breaker configuration (failure_threshold, timeout_seconds)
+    
+    Returns:
+        CircuitBreaker instance
+    """
+    if name not in _circuit_breakers:
+        # Load config if available
+        try:
+            from .config_loader import config_loader
+            workflow_config = config_loader.get_section("workflow_engine") or {}
+            failure_threshold = kwargs.get(
+                "failure_threshold",
+                workflow_config.get("circuit_breaker_threshold", 5)
+            )
+            timeout_seconds = kwargs.get(
+                "timeout_seconds",
+                workflow_config.get("circuit_breaker_timeout_seconds", 60)
+            )
+        except ImportError:
+            failure_threshold = kwargs.get("failure_threshold", 5)
+            timeout_seconds = kwargs.get("timeout_seconds", 60.0)
+        
+        _circuit_breakers[name] = CircuitBreaker(
+            failure_threshold=failure_threshold,
+            timeout_seconds=timeout_seconds,
+            name=name
+        )
+    
+    return _circuit_breakers[name]
 
