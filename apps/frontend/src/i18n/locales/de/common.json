@@ -546,5 +546,50 @@
   },
   "twoFactor": {
     "codePlaceholder": "000000"
+  },
+  "exercises": {
+    "selectExercise": "Übung auswählen",
+    "clearSelection": "Auswahl löschen",
+    "searchPlaceholder": "Übungen suchen...",
+    "searchLabel": "Übungen suchen",
+    "noResults": "Keine Übungen gefunden",
+    "noExercises": "Keine Übungen verfügbar",
+    "global": "Global",
+    "public": "Öffentlich",
+    "private": "Privat",
+    "loading": "Lädt...",
+    "page": {
+      "eyebrow": "Übungsbibliothek",
+      "title": "Verwalte deine Übungen",
+      "description": "Erstelle, bearbeite und verwalte deine persönliche Übungsbibliothek. Globale Übungen stehen allen Benutzern zur Verfügung."
+    },
+    "create": "Übung erstellen",
+    "edit": "Übung bearbeiten",
+    "name": "Name",
+    "type": "Typ",
+    "muscleGroup": "Muskelgruppe",
+    "equipment": "Ausrüstung",
+    "description": "Beschreibung",
+    "makePublic": "Diese Übung öffentlich machen",
+    "created": "Übung erfolgreich erstellt",
+    "updated": "Übung erfolgreich aktualisiert",
+    "deleted": "Übung erfolgreich archiviert",
+    "createError": "Fehler beim Erstellen der Übung",
+    "updateError": "Fehler beim Aktualisieren der Übung",
+    "deleteError": "Fehler beim Archivieren der Übung",
+    "loadError": "Fehler beim Laden der Übungen",
+    "requiredFields": "Name und Typ sind erforderlich",
+    "cannotEdit": "Du kannst nur deine eigenen Übungen bearbeiten",
+    "cannotArchive": "Du kannst nur deine eigenen Übungen archivieren",
+    "archiveConfirm": "Übung archivieren",
+    "archiveMessage": "Bist du sicher, dass du diese Übung archivieren möchtest? Sie wird in Selektoren ausgeblendet, aber für historische Aufzeichnungen beibehalten.",
+    "allTypes": "Alle Typen",
+    "showArchived": "Archivierte anzeigen",
+    "filterType": "Nach Typ filtern",
+    "type": {
+      "strength": "Kraft",
+      "cardio": "Cardio",
+      "powerEndurance": "Kraft-Ausdauer"
+    }
   }
 }

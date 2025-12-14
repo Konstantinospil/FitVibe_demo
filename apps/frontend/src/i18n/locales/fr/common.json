@@ -546,5 +546,50 @@
   },
   "twoFactor": {
     "codePlaceholder": "000000"
+  },
+  "exercises": {
+    "selectExercise": "Sélectionner un exercice",
+    "clearSelection": "Effacer la sélection",
+    "searchPlaceholder": "Rechercher des exercices...",
+    "searchLabel": "Rechercher des exercices",
+    "noResults": "Aucun exercice trouvé",
+    "noExercises": "Aucun exercice disponible",
+    "global": "Global",
+    "public": "Public",
+    "private": "Privé",
+    "loading": "Chargement...",
+    "page": {
+      "eyebrow": "Bibliothèque d'exercices",
+      "title": "Gérez vos exercices",
+      "description": "Créez, modifiez et gérez votre bibliothèque d'exercices personnelle. Les exercices globaux sont disponibles pour tous les utilisateurs."
+    },
+    "create": "Créer un exercice",
+    "edit": "Modifier l'exercice",
+    "name": "Nom",
+    "type": "Type",
+    "muscleGroup": "Groupe musculaire",
+    "equipment": "Équipement",
+    "description": "Description",
+    "makePublic": "Rendre cet exercice public",
+    "created": "Exercice créé avec succès",
+    "updated": "Exercice mis à jour avec succès",
+    "deleted": "Exercice archivé avec succès",
+    "createError": "Échec de la création de l'exercice",
+    "updateError": "Échec de la mise à jour de l'exercice",
+    "deleteError": "Échec de l'archivage de l'exercice",
+    "loadError": "Échec du chargement des exercices",
+    "requiredFields": "Le nom et le type sont requis",
+    "cannotEdit": "Vous ne pouvez modifier que vos propres exercices",
+    "cannotArchive": "Vous ne pouvez archiver que vos propres exercices",
+    "archiveConfirm": "Archiver l'exercice",
+    "archiveMessage": "Êtes-vous sûr de vouloir archiver cet exercice ? Il sera masqué dans les sélecteurs mais conservé pour les enregistrements historiques.",
+    "allTypes": "Tous les types",
+    "showArchived": "Afficher les archivés",
+    "filterType": "Filtrer par type",
+    "type": {
+      "strength": "Force",
+      "cardio": "Cardio",
+      "powerEndurance": "Force-Endurance"
+    }
   }
 }
