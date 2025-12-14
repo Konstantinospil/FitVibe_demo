@@ -434,7 +434,7 @@ const Exercises: React.FC = () => {
                 </label>
                 <input
                   type="text"
-                  value={formData.muscle_group}
+                  value={formData.muscle_group ?? ""}
                   onChange={(e) => setFormData({ ...formData, muscle_group: e.target.value })}
                   className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
                 />
@@ -446,7 +446,7 @@ const Exercises: React.FC = () => {
                 </label>
                 <input
                   type="text"
-                  value={formData.equipment}
+                  value={formData.equipment ?? ""}
                   onChange={(e) => setFormData({ ...formData, equipment: e.target.value })}
                   className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
                 />
@@ -457,7 +457,7 @@ const Exercises: React.FC = () => {
                   {t("exercises.description", "Description")}
                 </label>
                 <textarea
-                  value={formData.description_en}
+                  value={formData.description_en ?? ""}
                   onChange={(e) => setFormData({ ...formData, description_en: e.target.value })}
                   rows={4}
                   className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
@@ -498,7 +498,7 @@ const Exercises: React.FC = () => {
       {/* Delete Confirmation Dialog */}
       <ConfirmDialog
         isOpen={showDeleteDialog}
-        onClose={() => {
+        onCancel={() => {
           setShowDeleteDialog(false);
           setExerciseToDelete(null);
         }}
@@ -510,8 +510,8 @@ const Exercises: React.FC = () => {
           "exercises.archiveMessage",
           "Are you sure you want to archive this exercise? It will be hidden from selectors but retained for historical records.",
         )}
-        confirmText={t("common.archive", "Archive")}
-        cancelText={t("common.cancel", "Cancel")}
+        confirmLabel={t("common.archive", "Archive")}
+        cancelLabel={t("common.cancel", "Cancel")}
       />
     </div>
   );

@@ -514,7 +514,6 @@ export async function updateProfileAlias(
   }
 
   // Create profile if it doesn't exist
-  const now = new Date().toISOString();
   return exec(PROFILES_TABLE).insert({
     user_id: userId,
     alias,

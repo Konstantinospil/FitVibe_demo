@@ -61,8 +61,7 @@ const ForgotPassword: React.FC = () => {
       <form
         ref={formRef}
         onSubmit={(e) => {
-          e.preventDefault();
-          void handleSubmit();
+          void handleSubmit(e);
         }}
         className="form"
       >
