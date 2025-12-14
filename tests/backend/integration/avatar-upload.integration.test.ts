@@ -41,16 +41,15 @@ describe("Integration: Avatar Upload", () => {
     height = 500,
     format: "png" | "jpeg" | "webp" = "png",
   ): Promise<Buffer> {
-    return await sharp({
+    const image = sharp({
       create: {
         width,
         height,
         channels: 4,
         background: { r: 255, g: 0, b: 0, alpha: 1 },
       },
-    })
-      [format]({ quality: 90 })
-      .toBuffer();
+    });
+    return await image[format]({ quality: 90 }).toBuffer();
   }
 
   beforeAll(async () => {
