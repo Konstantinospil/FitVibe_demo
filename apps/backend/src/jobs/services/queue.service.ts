@@ -2,6 +2,7 @@ import { logger } from "../../config/logger.js";
 import { runRetentionSweep } from "../../services/retention.service.js";
 import { evaluateStreakBonus } from "../../modules/points/streaks.service.js";
 import { evaluateSeasonalEvents } from "../../modules/points/seasonal-events.service.js";
+import { applyVibeLevelDecay } from "./vibe-level-decay.service.js";
 import db from "../../db/index.js";
 
 export interface QueueJob {
@@ -111,6 +112,18 @@ export class QueueService {
         );
       } catch (error) {
         logger.error({ error, job }, "[queue] Seasonal events evaluation failed");
+        throw error;
+      }
+    });
+
+    // Vibe level decay job
+    this.registerHandler("vibe-level.decay", async (job) => {
+      logger.info({ job }, "[queue] Processing vibe level decay");
+      try {
+        await applyVibeLevelDecay();
+        logger.info("[queue] Vibe level decay completed successfully");
+      } catch (error) {
+        logger.error({ error, job }, "[queue] Vibe level decay failed");
         throw error;
       }
     });

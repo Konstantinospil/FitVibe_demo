@@ -14,6 +14,7 @@ import {
   getRecentPointsEvents,
   getUserPointsProfile,
   insertPointsEvent,
+  getAllDomainVibeLevels,
   type HistoryCursor,
   type PointsHistoryOptions,
 } from "./points.repository.js";
@@ -30,8 +31,14 @@ import type {
 import type { SessionWithExercises } from "../sessions/sessions.types.js";
 import { updateSession } from "../sessions/sessions.repository.js";
 import { evaluateBadgesForSession } from "./badges.service.js";
+import {
+  detectSessionDomains,
+  updateDomainVibeLevelForSession,
+  calculateGeneralFitnessScore,
+} from "./vibe-level.service.js";
 
-const ALGORITHM_VERSION = "v1";
+const ALGORITHM_VERSION = "v2_vibe_lvl";
+const LEGACY_ALGORITHM_VERSION = "v1";
 const DEFAULT_RECENT_LIMIT = 10;
 const MAX_HISTORY_LIMIT = 100;
 
@@ -330,27 +337,58 @@ export async function awardPointsForSession(
       };
     }
 
-    const [profile, exerciseMetadata] = await Promise.all([
-      getUserPointsProfile(session.owner_id, trx),
-      getExercisesMetadata(
-        session.exercises
-          ?.map((exercise) => exercise.exercise_id)
-          .filter((id): id is string => Boolean(id)) ?? [],
-        trx,
-      ),
-    ]);
+    // Get exercise metadata
+    const exerciseMetadata = await getExercisesMetadata(
+      session.exercises
+        ?.map((exercise) => exercise.exercise_id)
+        .filter((id): id is string => Boolean(id)) ?? [],
+      trx,
+    );
 
+    // Detect domains trained in this session
+    const domainImpacts = detectSessionDomains(session, exerciseMetadata);
+
+    // Get current vibe levels for all domains
+    const domainVibeLevels = await getAllDomainVibeLevels(session.owner_id, trx);
+
+    // Update vibe levels and calculate points for each domain
+    let totalPoints = 0;
+    const vibeLevelUpdates: Array<{
+      domain: string;
+      oldLevel: number;
+      newLevel: number;
+      points: number;
+    }> = [];
+
+    for (const domainImpact of domainImpacts) {
+      const updateResult = await updateDomainVibeLevelForSession(
+        session.owner_id,
+        domainImpact.domain,
+        session,
+        domainImpact,
+        exerciseMetadata,
+        trx,
+      );
+
+      totalPoints += updateResult.pointsAwarded;
+      vibeLevelUpdates.push({
+        domain: domainImpact.domain,
+        oldLevel: updateResult.oldVibeLevel,
+        newLevel: updateResult.newVibeLevel,
+        points: updateResult.pointsAwarded,
+      });
+    }
+
+    // Clamp total points to reasonable bounds
+    totalPoints = Math.min(Math.max(totalPoints, 5), 500);
+
+    // Calculate metrics for badges
     const metrics = computeSessionMetrics(session, exerciseMetadata);
-    const calculation = calculatePoints({
-      sessionCalories: session.calories ?? null,
-      averageRpe: metrics.averageRpe,
-      distanceMeters: metrics.distanceMeters,
-      profile,
-    });
 
     const awardedAt = new Date(session.completed_at!);
     const createdAt = new Date();
 
+    // Store points event
     const event = await insertPointsEvent(
       {
         id: uuidv4(),
@@ -358,13 +396,18 @@ export async function awardPointsForSession(
         source_type: "session_completed",
         source_id: session.id,
         algorithm_version: ALGORITHM_VERSION,
-        points: calculation.points,
-        calories: session.calories ?? calculation.inputs.calories ?? null,
+        points: totalPoints,
+        calories: session.calories ?? null,
         metadata: {
           session_id: session.id,
           session_title: session.title ?? null,
           algorithm: ALGORITHM_VERSION,
-          inputs: calculation.inputs,
+          domain_impacts: domainImpacts.map((di) => ({
+            domain: di.domain,
+            impact: di.impact,
+            reason: di.reason,
+          })),
+          vibe_level_updates: vibeLevelUpdates,
           activity_breakdown: {
             distance_m: metrics.distanceMeters,
             run_distance_m: metrics.runDistanceMeters,
@@ -377,7 +420,7 @@ export async function awardPointsForSession(
       trx,
     );
 
-    await updateSession(session.id, session.owner_id, { points: calculation.points }, trx);
+    await updateSession(session.id, session.owner_id, { points: totalPoints }, trx);
 
     const badgeResults = await evaluateBadgesForSession({
       session,
@@ -398,14 +441,15 @@ export async function awardPointsForSession(
       }
     }
 
-    incrementPointsAwarded("session_completed", calculation.points);
+    incrementPointsAwarded("session_completed", totalPoints);
     logger.info(
       {
         userId: session.owner_id,
         sessionId: session.id,
-        points: calculation.points,
+        points: totalPoints,
+        domains: domainImpacts.map((di) => di.domain),
       },
-      "[points] Awarded points for session completion",
+      "[points] Awarded points for session completion (v2_vibe_lvl)",
     );
 
     const completedIso = awardedAt.toISOString();
@@ -414,7 +458,7 @@ export async function awardPointsForSession(
 
     return {
       awarded: true,
-      pointsAwarded: calculation.points,
+      pointsAwarded: totalPoints,
       eventId: event.id,
       badgesAwarded: badgeResults.map((badge) => badge.badgeCode),
     };

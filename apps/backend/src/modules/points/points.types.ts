@@ -124,3 +124,96 @@ export interface BadgeEvaluationResult {
   badgeCode: string;
   metadata: Record<string, unknown>;
 }
+
+// Vibe Level System Types (v2_vibe_lvl algorithm)
+
+export type DomainCode =
+  | "strength"
+  | "agility"
+  | "endurance"
+  | "explosivity"
+  | "intelligence"
+  | "regeneration";
+
+export interface DomainVibeLevel {
+  user_id: string;
+  domain_code: DomainCode;
+  vibe_level: number;
+  rating_deviation: number;
+  volatility: number;
+  last_updated_at: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface DomainImpact {
+  domain: DomainCode;
+  impact: number; // 0.0 to 1.0
+  reason: string; // Human-readable explanation
+}
+
+export interface VibeLevelUpdateResult {
+  domain: DomainCode;
+  oldVibeLevel: number;
+  newVibeLevel: number;
+  oldRd: number;
+  newRd: number;
+  oldVolatility: number;
+  newVolatility: number;
+  performanceScore: number;
+  domainImpact: number;
+  pointsAwarded: number;
+}
+
+export interface InsertVibeLevelChange {
+  user_id: string;
+  domain_code: DomainCode;
+  session_id: string | null;
+  old_vibe_level: number;
+  new_vibe_level: number;
+  old_rd: number;
+  new_rd: number;
+  change_amount: number;
+  performance_score: number | null;
+  domain_impact: number | null;
+  points_awarded: number | null;
+  change_reason: "session_completed" | "decay" | "manual_adjustment";
+  metadata: Record<string, unknown>;
+}
+
+export interface VibeLevelChangeRecord {
+  id: string;
+  user_id: string;
+  domain_code: DomainCode;
+  session_id: string | null;
+  old_vibe_level: number;
+  new_vibe_level: number;
+  old_rd: number;
+  new_rd: number;
+  change_amount: number;
+  performance_score: number | null;
+  domain_impact: number | null;
+  points_awarded: number | null;
+  change_reason: "session_completed" | "decay" | "manual_adjustment";
+  metadata: Record<string, unknown>;
+  created_at: string;
+}
+
+export interface PointsCalculationContextV2 {
+  session: SessionWithExercises;
+  exerciseMetadata: Map<string, ExerciseMetadata>;
+  domainVibeLevels: Map<DomainCode, DomainVibeLevel>;
+}
+
+export interface FitnessSummary {
+  generalFitnessScore: number;
+  domainVibeLevels: Array<{
+    domain: DomainCode;
+    vibeLevel: number;
+    ratingDeviation: number;
+    lastUpdated: string;
+  }>;
+}
+
+// Re-export SessionWithExercises for convenience
+import type { SessionWithExercises } from "../sessions/sessions.types.js";
