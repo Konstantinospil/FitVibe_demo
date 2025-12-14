@@ -61,6 +61,8 @@ describe("Feed Controller", () => {
         scope: "public",
         limit: 20,
         offset: 0,
+        searchQuery: null,
+        sort: "date",
       });
       expect(mockResponse.json).toHaveBeenCalledWith(mockFeed);
     });
@@ -83,6 +85,8 @@ describe("Feed Controller", () => {
         scope: "me",
         limit: 20,
         offset: 0,
+        searchQuery: null,
+        sort: "date",
       });
     });
 
@@ -104,6 +108,8 @@ describe("Feed Controller", () => {
         scope: "following",
         limit: 20,
         offset: 0,
+        searchQuery: null,
+        sort: "date",
       });
     });
 
@@ -125,6 +131,8 @@ describe("Feed Controller", () => {
         scope: "public",
         limit: 50,
         offset: 10,
+        searchQuery: null,
+        sort: "date",
       });
     });
 
@@ -146,6 +154,8 @@ describe("Feed Controller", () => {
         scope: "public",
         limit: 100,
         offset: 0,
+        searchQuery: null,
+        sort: "date",
       });
     });
 

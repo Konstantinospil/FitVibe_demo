@@ -15,6 +15,7 @@ function createMockQueryBuilder(defaultValue: unknown = []) {
     join: jest.fn().mockReturnThis(),
     select: jest.fn().mockReturnThis(),
     orderBy: jest.fn().mockReturnThis(),
+    orderByRaw: jest.fn().mockReturnThis(),
     limit: jest.fn().mockReturnThis(),
     offset: jest.fn().mockReturnThis(),
     groupBy: jest.fn().mockReturnThis(),

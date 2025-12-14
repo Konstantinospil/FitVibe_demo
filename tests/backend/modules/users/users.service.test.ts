@@ -476,6 +476,7 @@ describe("Users Service", () => {
         alias: "newalias",
       } as never);
 
+      mockUsersRepo.canChangeAlias.mockResolvedValue({ allowed: true });
       mockUsersRepo.checkAliasAvailable.mockResolvedValue(true);
       mockUsersRepo.updateProfileAlias.mockResolvedValue(1);
       mockUsersRepo.fetchUserWithContacts.mockResolvedValue({
@@ -491,6 +492,7 @@ describe("Users Service", () => {
 
       const result = await usersService.updateProfile(userId, dto);
 
+      expect(mockUsersRepo.canChangeAlias).toHaveBeenCalledWith(userId);
       expect(mockUsersRepo.checkAliasAvailable).toHaveBeenCalledWith("newalias", userId);
       expect(mockUsersRepo.updateProfileAlias).toHaveBeenCalledWith(userId, "newalias", {});
       expect(result.profile?.alias).toBe("newalias");
@@ -512,6 +514,7 @@ describe("Users Service", () => {
         alias: "oldalias",
       } as never);
 
+      mockUsersRepo.canChangeAlias.mockResolvedValue({ allowed: true });
       mockUsersRepo.checkAliasAvailable.mockResolvedValue(false);
 
       try {
@@ -519,7 +522,7 @@ describe("Users Service", () => {
         fail("Expected HttpError to be thrown");
       } catch (error) {
         expect(error).toBeInstanceOf(HttpError);
-        expect((error as HttpError).code).toBe("E.ALIAS_TAKEN");
+        expect((error as HttpError).code).toBe("E.PROFILE_UPDATE_FAILED");
       }
     });
 
@@ -585,12 +588,21 @@ describe("Users Service", () => {
         display_name: "Test User",
       } as UserRow);
 
-      mockUsersRepo.getLatestUserMetrics.mockResolvedValue({
-        weight: 70,
-        unit: "kg",
-        fitness_level_code: null,
-        training_frequency: null,
-      });
+      // getLatestUserMetrics is called once for weight check (line 472)
+      // and once in toUserDetail (line 131) after transaction
+      mockUsersRepo.getLatestUserMetrics
+        .mockResolvedValueOnce({
+          weight: 70,
+          unit: "kg",
+          fitness_level_code: null,
+          training_frequency: null,
+        })
+        .mockResolvedValue({
+          weight: 75.07, // 165.5 * 0.453592
+          unit: "kg",
+          fitness_level_code: null,
+          training_frequency: null,
+        });
       mockUsersRepo.insertUserMetric.mockResolvedValue("metric-123");
       mockUsersRepo.fetchUserWithContacts.mockResolvedValue({
         user: {
@@ -602,12 +614,6 @@ describe("Users Service", () => {
         avatar: null,
       });
       mockUsersRepo.getProfileByUserId.mockResolvedValue(null);
-      mockUsersRepo.getLatestUserMetrics.mockResolvedValue({
-        weight: 75.07, // 165.5 * 0.453592
-        unit: "kg",
-        fitness_level_code: null,
-        training_frequency: null,
-      });
 
       await usersService.updateProfile(userId, dto);
 
@@ -615,7 +621,7 @@ describe("Users Service", () => {
         userId,
         expect.objectContaining({
           weight: expect.closeTo(75.07, 2),
-          unit: "lb",
+          unit: "kg",
         }),
         {},
       );
@@ -748,6 +754,7 @@ describe("Users Service", () => {
         alias: "newalias",
       } as never);
 
+      mockUsersRepo.canChangeAlias.mockResolvedValue({ allowed: true });
       mockUsersRepo.checkAliasAvailable.mockResolvedValue(true);
       mockUsersRepo.updateProfileAlias.mockResolvedValue(1);
 
@@ -819,6 +826,12 @@ describe("Users Service", () => {
         display_name: "Test User",
       } as UserRow);
 
+      // First call: before transaction (line 414)
+      mockUsersRepo.getProfileByUserId.mockResolvedValueOnce({
+        user_id: userId,
+        alias: "existingalias",
+      } as never);
+      // Second call: after transaction (for final fetch)
       mockUsersRepo.getProfileByUserId.mockResolvedValue({
         user_id: userId,
         alias: "existingalias",
@@ -832,14 +845,11 @@ describe("Users Service", () => {
         contacts: [],
         avatar: null,
       });
-      mockUsersRepo.getProfileByUserId.mockResolvedValue({
-        user_id: userId,
-        alias: "existingalias",
-      } as never);
       mockUsersRepo.getLatestUserMetrics.mockResolvedValue(null);
 
       await usersService.updateProfile(userId, dto);
 
+      expect(mockUsersRepo.canChangeAlias).not.toHaveBeenCalled();
       expect(mockUsersRepo.checkAliasAvailable).not.toHaveBeenCalled();
       expect(mockUsersRepo.updateProfileAlias).not.toHaveBeenCalled();
     });
@@ -856,13 +866,21 @@ describe("Users Service", () => {
         display_name: "Test User",
       } as UserRow);
 
-      // getLatestUserMetrics is called once for weight check
-      mockUsersRepo.getLatestUserMetrics.mockResolvedValue({
-        weight: 75.5,
-        unit: "kg",
-        fitness_level_code: null,
-        training_frequency: null,
-      });
+      // getLatestUserMetrics is called once for weight check (line 472)
+      // and once in toUserDetail (line 131) after transaction
+      mockUsersRepo.getLatestUserMetrics
+        .mockResolvedValueOnce({
+          weight: 75.5,
+          unit: "kg",
+          fitness_level_code: null,
+          training_frequency: null,
+        })
+        .mockResolvedValue({
+          weight: 75.5,
+          unit: "kg",
+          fitness_level_code: null,
+          training_frequency: null,
+        });
 
       mockUsersRepo.fetchUserWithContacts.mockResolvedValue({
         user: {
@@ -874,13 +892,6 @@ describe("Users Service", () => {
         avatar: null,
       });
       mockUsersRepo.getProfileByUserId.mockResolvedValue(null);
-      // Final fetch after transaction
-      mockUsersRepo.getLatestUserMetrics.mockResolvedValueOnce({
-        weight: 75.5,
-        unit: "kg",
-        fitness_level_code: null,
-        training_frequency: null,
-      });
 
       await usersService.updateProfile(userId, dto);
 

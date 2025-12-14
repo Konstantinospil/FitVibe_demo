@@ -473,7 +473,8 @@ export async function updateProfile(userId: string, dto: UpdateProfileDTO): Prom
     const currentWeight = latestMetrics?.weight ?? null;
     if (weightInKg !== undefined && weightInKg !== currentWeight) {
       metricUpdates.weight = weightInKg;
-      metricUpdates.unit = dto.weightUnit ?? "kg";
+      // If weight was converted from lb to kg, store unit as kg
+      metricUpdates.unit = dto.weightUnit === "lb" ? "kg" : (dto.weightUnit ?? "kg");
       changes.weight = { old: currentWeight, next: weightInKg };
     }
   }
