@@ -492,7 +492,12 @@ describe("PageIntro Accessibility", () => {
       const section = container.querySelector("section");
       const sectionStyles = section?.getAttribute("style");
 
-      expect(sectionStyles).toContain("padding: 5rem 1.5rem");
+      // Check for responsive padding using clamp values
+      // Vertical: clamp(2rem, 8vw, 5rem) - min 2rem, max 5rem
+      // Horizontal: clamp(1rem, 4vw, 1.5rem) - min 1rem, max 1.5rem
+      expect(sectionStyles).toContain("padding:");
+      expect(sectionStyles).toContain("clamp(2rem, 8vw, 5rem)");
+      expect(sectionStyles).toContain("clamp(1rem, 4vw, 1.5rem)");
     });
 
     it("should align content vertically and horizontally", () => {
