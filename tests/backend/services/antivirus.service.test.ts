@@ -1,63 +1,79 @@
-import {
-  scanBuffer,
-  checkHealth,
-  getVersion,
-} from "../../../apps/backend/src/services/antivirus.service.js";
-import { env } from "../../../apps/backend/src/config/env.js";
-import { logger } from "../../../apps/backend/src/config/logger.js";
 import NodeClam from "clamscan";
+
+// Create mutable mock objects that persist across module resets
+const mockEnv = {
+  clamav: {
+    enabled: true,
+    host: "localhost",
+    port: 3310,
+    timeout: 5000,
+  },
+  isProduction: false,
+  NODE_ENV: "test" as const,
+};
+
+const mockLoggerImpl = {
+  info: jest.fn(),
+  warn: jest.fn(),
+  error: jest.fn(),
+  debug: jest.fn(),
+};
 
 // Mock dependencies
 jest.mock("clamscan");
 jest.mock("../../../apps/backend/src/config/env.js", () => ({
-  env: {
-    clamav: {
-      enabled: true,
-      host: "localhost",
-      port: 3310,
-      timeout: 5000,
-    },
-    isProduction: false,
-    NODE_ENV: "test",
-  },
+  env: mockEnv,
 }));
 
 jest.mock("../../../apps/backend/src/config/logger.js", () => ({
-  logger: {
-    info: jest.fn(),
-    warn: jest.fn(),
-    error: jest.fn(),
-    debug: jest.fn(),
-  },
+  logger: mockLoggerImpl,
 }));
-
-const mockLogger = logger as jest.Mocked<typeof logger>;
-const mockNodeClam = jest.mocked(NodeClam);
 
 describe("Antivirus Service", () => {
   let mockScanner: {
     scanStream: jest.Mock;
     getVersion: jest.Mock;
   };
+  let scanBuffer: typeof import("../../../apps/backend/src/services/antivirus.service.js").scanBuffer;
+  let checkHealth: typeof import("../../../apps/backend/src/services/antivirus.service.js").checkHealth;
+  let getVersion: typeof import("../../../apps/backend/src/services/antivirus.service.js").getVersion;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     jest.clearAllMocks();
 
+    // Reset env to defaults
+    mockEnv.clamav.enabled = true;
+    mockEnv.isProduction = false;
+    mockEnv.NODE_ENV = "test";
+
+    // Create fresh mock scanner for this test
     mockScanner = {
       scanStream: jest.fn(),
       getVersion: jest.fn(),
     };
 
-    // Mock NodeClam constructor and init
-    (NodeClam as jest.Mock).mockImplementation(() => ({
-      init: jest.fn().mockResolvedValue(mockScanner),
+    // Reset modules to clear singleton state
+    jest.resetModules();
+
+    // Re-mock NodeClam after resetModules
+    // Get the mocked module and set up the implementation
+    const MockedNodeClam = jest.requireMock("clamscan");
+    const mockInit = jest.fn().mockResolvedValue(mockScanner);
+    MockedNodeClam.mockImplementation(() => ({
+      init: mockInit,
     }));
+
+    // Import after mocks are set up
+    const antivirusModule = await import("../../../apps/backend/src/services/antivirus.service.js");
+    scanBuffer = antivirusModule.scanBuffer;
+    checkHealth = antivirusModule.checkHealth;
+    getVersion = antivirusModule.getVersion;
   });
 
   describe("scanBuffer", () => {
     it("should return clean result when scanning is disabled", async () => {
-      const originalEnabled = env.clamav.enabled;
-      (env.clamav as { enabled: boolean }).enabled = false;
+      const originalEnabled = mockEnv.clamav.enabled;
+      mockEnv.clamav.enabled = false;
 
       try {
         const buffer = Buffer.from("test content");
@@ -66,12 +82,12 @@ describe("Antivirus Service", () => {
         expect(result.isInfected).toBe(false);
         expect(result.viruses).toEqual([]);
         expect(result.scannedAt).toBeInstanceOf(Date);
-        expect(mockLogger.warn).toHaveBeenCalledWith(
+        expect(mockLoggerImpl.warn).toHaveBeenCalledWith(
           { filename: "test.jpg" },
           "[antivirus] Scanning disabled - skipping malware check (DEVELOPMENT ONLY)",
         );
       } finally {
-        (env.clamav as { enabled: boolean }).enabled = originalEnabled;
+        mockEnv.clamav.enabled = originalEnabled;
       }
     });
 
@@ -87,7 +103,7 @@ describe("Antivirus Service", () => {
       expect(result.isInfected).toBe(false);
       expect(result.viruses).toEqual([]);
       expect(mockScanner.scanStream).toHaveBeenCalled();
-      expect(mockLogger.debug).toHaveBeenCalled();
+      expect(mockLoggerImpl.debug).toHaveBeenCalled();
     });
 
     it("should detect malware and return infected result", async () => {
@@ -101,7 +117,7 @@ describe("Antivirus Service", () => {
 
       expect(result.isInfected).toBe(true);
       expect(result.viruses).toEqual(["Test.Virus"]);
-      expect(mockLogger.warn).toHaveBeenCalledWith(
+      expect(mockLoggerImpl.warn).toHaveBeenCalledWith(
         expect.objectContaining({
           filename: "malware.jpg",
           viruses: ["Test.Virus"],
@@ -119,15 +135,15 @@ describe("Antivirus Service", () => {
 
       expect(result.isInfected).toBe(false); // Fail-open in development
       expect(result.viruses).toEqual([]);
-      expect(mockLogger.error).toHaveBeenCalled();
-      expect(mockLogger.warn).toHaveBeenCalledWith(
+      expect(mockLoggerImpl.error).toHaveBeenCalled();
+      expect(mockLoggerImpl.warn).toHaveBeenCalledWith(
         "[antivirus] Scan error in development - allowing upload",
       );
     });
 
     it("should fail-closed in production mode", async () => {
-      const originalIsProduction = env.isProduction;
-      (env as { isProduction: boolean }).isProduction = true;
+      const originalIsProduction = mockEnv.isProduction;
+      mockEnv.isProduction = true;
 
       try {
         const buffer = Buffer.from("test content");
@@ -138,9 +154,9 @@ describe("Antivirus Service", () => {
 
         expect(result.isInfected).toBe(true); // Fail-closed in production
         expect(result.viruses).toEqual(["SCAN_ERROR"]);
-        expect(mockLogger.error).toHaveBeenCalled();
+        expect(mockLoggerImpl.error).toHaveBeenCalled();
       } finally {
-        (env as { isProduction: boolean }).isProduction = originalIsProduction;
+        mockEnv.isProduction = originalIsProduction;
       }
     });
 
@@ -160,14 +176,14 @@ describe("Antivirus Service", () => {
 
   describe("checkHealth", () => {
     it("should return true when scanning is disabled", async () => {
-      const originalEnabled = env.clamav.enabled;
-      (env.clamav as { enabled: boolean }).enabled = false;
+      const originalEnabled = mockEnv.clamav.enabled;
+      mockEnv.clamav.enabled = false;
 
       try {
         const result = await checkHealth();
         expect(result).toBe(true);
       } finally {
-        (env.clamav as { enabled: boolean }).enabled = originalEnabled;
+        mockEnv.clamav.enabled = originalEnabled;
       }
     });
 
@@ -178,7 +194,7 @@ describe("Antivirus Service", () => {
 
       expect(result).toBe(true);
       expect(mockScanner.getVersion).toHaveBeenCalled();
-      expect(mockLogger.debug).toHaveBeenCalled();
+      expect(mockLoggerImpl.debug).toHaveBeenCalled();
     });
 
     it("should return false when health check fails", async () => {
@@ -188,7 +204,7 @@ describe("Antivirus Service", () => {
       const result = await checkHealth();
 
       expect(result).toBe(false);
-      expect(mockLogger.error).toHaveBeenCalledWith(
+      expect(mockLoggerImpl.error).toHaveBeenCalledWith(
         { err: error },
         "[antivirus] Health check failed",
       );
@@ -197,14 +213,14 @@ describe("Antivirus Service", () => {
 
   describe("getVersion", () => {
     it("should return null when scanning is disabled", async () => {
-      const originalEnabled = env.clamav.enabled;
-      (env.clamav as { enabled: boolean }).enabled = false;
+      const originalEnabled = mockEnv.clamav.enabled;
+      mockEnv.clamav.enabled = false;
 
       try {
         const result = await getVersion();
         expect(result).toBeNull();
       } finally {
-        (env.clamav as { enabled: boolean }).enabled = originalEnabled;
+        mockEnv.clamav.enabled = originalEnabled;
       }
     });
 
@@ -224,7 +240,7 @@ describe("Antivirus Service", () => {
       const result = await getVersion();
 
       expect(result).toBeNull();
-      expect(mockLogger.error).toHaveBeenCalledWith(
+      expect(mockLoggerImpl.error).toHaveBeenCalledWith(
         { err: error },
         "[antivirus] Failed to get version",
       );
