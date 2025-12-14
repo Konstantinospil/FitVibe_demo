@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import PageIntro from "../components/PageIntro";
@@ -6,17 +6,38 @@ import { Button, VisibilityBadge, Skeleton } from "../components/ui";
 import { getFeed, likeFeedItem, unlikeFeedItem, cloneSessionFromFeed } from "../services/api";
 import type { VisibilityLevel } from "../components/ui";
 import { useToast } from "../contexts/ToastContext";
+import { Search, Filter } from "lucide-react";
 
 const Feed: React.FC = () => {
   const { t } = useTranslation();
   const toast = useToast();
   const queryClient = useQueryClient();
   const [limit] = useState(20);
-  const [offset] = useState(0);
+  const [offset, setOffset] = useState(0);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
+  const [sort, setSort] = useState<"date" | "popularity" | "relevance">("date");
+
+  // Debounce search query
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
 
   const { data, isLoading, error } = useQuery({
-    queryKey: ["feed", { scope: "public", limit, offset }],
-    queryFn: () => getFeed({ scope: "public", limit, offset }),
+    queryKey: ["feed", { scope: "public", limit, offset, q: debouncedSearchQuery, sort }],
+    queryFn: () =>
+      getFeed({
+        scope: "public",
+        limit,
+        offset,
+        q: debouncedSearchQuery || undefined,
+        sort,
+      }),
+    // Reset to first page when search or sort changes
+    enabled: true,
   });
 
   const likeMutation = useMutation({
@@ -112,62 +133,128 @@ const Feed: React.FC = () => {
       title={t("feed.title")}
       description={t("feed.description")}
     >
+      <div className="flex flex--column flex--gap-md mb-md">
+        <div className="flex flex--align-center flex--gap-md flex--wrap">
+          <div className="flex flex--align-center flex--gap-sm" style={{ flex: "1 1 300px" }}>
+            <Search size={20} className="text-muted" />
+            <input
+              type="text"
+              placeholder={t("feed.searchPlaceholder") || "Search sessions, exercises, users..."}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="input"
+              style={{ flex: "1" }}
+              aria-label={t("feed.searchLabel") || "Search feed"}
+            />
+          </div>
+          <div className="flex flex--align-center flex--gap-sm">
+            <Filter size={20} className="text-muted" />
+            <select
+              value={sort}
+              onChange={(e) => setSort(e.target.value as "date" | "popularity" | "relevance")}
+              className="select"
+              aria-label={t("feed.sortLabel") || "Sort feed"}
+            >
+              <option value="date">{t("feed.sortDate") || "Date"}</option>
+              <option value="popularity">{t("feed.sortPopularity") || "Popularity"}</option>
+              <option value="relevance">{t("feed.sortRelevance") || "Relevance"}</option>
+            </select>
+          </div>
+        </div>
+      </div>
       <div className="grid grid--gap-md">
         {items.map((item) => {
           const isRestricted = item.visibility === "private";
           const displayName = item.user.displayName || item.user.username;
 
           return (
-            <article key={item.id} className="card card--compact">
+            <article key={item.feedItemId || item.id} className="card card--compact">
               <header className="flex flex--justify-between flex--align-center flex--gap-md">
                 <div className="grid" style={{ gap: "0.25rem" }}>
                   <strong className="text-105">{displayName}</strong>
                   <span className="text-085 text-muted">
-                    {new Date(item.createdAt).toLocaleDateString()}
+                    {item.publishedAt
+                      ? new Date(item.publishedAt).toLocaleDateString()
+                      : new Date(item.createdAt).toLocaleDateString()}
                   </span>
                 </div>
                 <VisibilityBadge level={item.visibility as VisibilityLevel} />
               </header>
               <div>
-                {item.session.title && (
+                {item.session?.title && (
                   <strong className="block mb-05">{item.session.title}</strong>
-                )}
-                {item.session.notes && (
-                  <p className="m-0 text-secondary text-095">{item.session.notes}</p>
                 )}
               </div>
               <footer className="flex flex--justify-between flex--align-center flex--wrap flex--gap-075 text-09 text-secondary">
                 <span>
-                  {item.session.exerciseCount} {t("feed.exercises") || "exercises"} •{" "}
-                  {item.session.totalVolume
-                    ? `${(item.session.totalVolume / 1000).toFixed(1)}k kg`
-                    : "No volume data"}
+                  {item.likesCount} {t("feed.likes") || "likes"} • {item.commentsCount}{" "}
+                  {t("feed.comments") || "comments"}
                 </span>
                 <div className="flex flex--align-center flex--gap-06">
                   <Button
                     type="button"
                     size="sm"
                     variant={item.isLiked ? "primary" : "ghost"}
-                    onClick={() => handleLikeToggle(item.id, Boolean(item.isLiked))}
+                    onClick={() =>
+                      handleLikeToggle(item.feedItemId || item.id, Boolean(item.isLiked))
+                    }
                     disabled={likeMutation.isPending || unlikeMutation.isPending}
+                    aria-label={
+                      item.isLiked ? t("feed.unlike") || "Unlike" : t("feed.like") || "Like"
+                    }
                   >
                     {item.isLiked ? "♥" : "♡"} {item.likesCount}
                   </Button>
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="secondary"
-                    disabled={isRestricted || cloneMutation.isPending}
-                    onClick={() => handleClone(item.session.id)}
-                  >
-                    {t("feed.button") || "Clone"}
-                  </Button>
+                  {item.session?.id && (
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="secondary"
+                      disabled={isRestricted || cloneMutation.isPending}
+                      onClick={() => handleClone(item.session.id)}
+                    >
+                      {t("feed.clone") || "Clone"}
+                    </Button>
+                  )}
                 </div>
               </footer>
             </article>
           );
         })}
       </div>
+
+      {/* Pagination */}
+      {items.length >= limit && (
+        <div className="flex flex--align-center flex--justify-center flex--gap-md mt-md">
+          <Button
+            type="button"
+            variant="secondary"
+            size="sm"
+            onClick={() => setOffset(Math.max(0, offset - limit))}
+            disabled={offset === 0}
+            aria-label={t("feed.previousPage") || "Previous page"}
+          >
+            {t("feed.previous") || "Previous"}
+          </Button>
+          <span className="text-secondary">
+            {t("feed.pageInfo", {
+              from: offset + 1,
+              to: offset + items.length,
+              defaultValue: `Showing ${offset + 1}-${offset + items.length}`,
+            })}
+          </span>
+          <Button
+            type="button"
+            variant="secondary"
+            size="sm"
+            onClick={() => setOffset(offset + limit)}
+            disabled={items.length < limit}
+            aria-label={t("feed.nextPage") || "Next page"}
+          >
+            {t("feed.next") || "Next"}
+          </Button>
+        </div>
+      )}
     </PageIntro>
   );
 };

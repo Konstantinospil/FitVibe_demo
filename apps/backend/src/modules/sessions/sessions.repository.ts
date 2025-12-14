@@ -169,6 +169,7 @@ type SessionExerciseRow = {
   id: string;
   session_id: string;
   exercise_id: string | null;
+  exercise_name: string | null; // Snapshot of exercise name
   order_index: number;
   notes: string | null;
   created_at?: Date | string | null;
@@ -224,7 +225,7 @@ export async function getSessionWithDetails(
     .orderBy("se.order_index", "asc")
     .select<
       SessionExerciseRow[]
-    >(["se.id as id", "se.session_id as session_id", "se.exercise_id as exercise_id", "se.order_index as order_index", "se.notes as notes", "se.created_at as created_at", "se.updated_at as updated_at", "plan.sets as planned_sets", "plan.reps as planned_reps", "plan.load as planned_load", "plan.distance as planned_distance", "plan.duration as planned_duration", "plan.rpe as planned_rpe", "plan.rest as planned_rest", "plan.extras as planned_extras", "act.sets as actual_sets", "act.reps as actual_reps", "act.load as actual_load", "act.distance as actual_distance", "act.duration as actual_duration", "act.rpe as actual_rpe", "act.rest as actual_rest", "act.extras as actual_extras", "act.recorded_at as actual_recorded_at"]);
+    >(["se.id as id", "se.session_id as session_id", "se.exercise_id as exercise_id", "se.exercise_name as exercise_name", "se.order_index as order_index", "se.notes as notes", "se.created_at as created_at", "se.updated_at as updated_at", "plan.sets as planned_sets", "plan.reps as planned_reps", "plan.load as planned_load", "plan.distance as planned_distance", "plan.duration as planned_duration", "plan.rpe as planned_rpe", "plan.rest as planned_rest", "plan.extras as planned_extras", "act.sets as actual_sets", "act.reps as actual_reps", "act.load as actual_load", "act.distance as actual_distance", "act.duration as actual_duration", "act.rpe as actual_rpe", "act.rest as actual_rest", "act.extras as actual_extras", "act.recorded_at as actual_recorded_at"]);
 
   const exerciseIds = exerciseRows.map((row) => row.id);
 
@@ -294,6 +295,7 @@ export async function getSessionWithDetails(
       id: row.id,
       session_id: row.session_id,
       exercise_id: row.exercise_id,
+      exercise_name: row.exercise_name ?? null,
       order_index: row.order_index,
       notes: row.notes ?? null,
       created_at: toDateString(row.created_at),
@@ -379,11 +381,31 @@ export async function replaceSessionExercises(
 
   const timestamp = new Date().toISOString();
 
+  // Fetch exercise names for exercises that have an exercise_id
+  // This creates a snapshot of the exercise name at the time of session creation
+  const exerciseIds = exercises
+    .map((e) => e.exercise_id)
+    .filter((id): id is string => id !== null && id !== undefined);
+
+  const exerciseNamesMap = new Map<string, string>();
+  if (exerciseIds.length > 0) {
+    const exerciseRows = (await trx("exercises")
+      .whereIn("id", exerciseIds)
+      .select("id", "name")) as Array<{ id: string; name: string }>;
+
+    for (const row of exerciseRows) {
+      exerciseNamesMap.set(row.id, row.name);
+    }
+  }
+
   await trx("session_exercises").insert(
     exercises.map((exercise) => ({
       id: exercise.id,
       session_id: sessionId,
       exercise_id: exercise.exercise_id,
+      exercise_name: exercise.exercise_id
+        ? (exerciseNamesMap.get(exercise.exercise_id) ?? null)
+        : null,
       order_index: exercise.order_index,
       notes: exercise.notes,
       created_at: timestamp,

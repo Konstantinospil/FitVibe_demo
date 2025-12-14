@@ -1,6 +1,6 @@
 import crypto from "crypto";
 import type { Knex } from "knex";
-import { db } from "../../db/connection.js";
+import { db } from "../../db/index.js";
 
 const TABLE = "failed_login_attempts";
 const IP_TABLE = "failed_login_attempts_by_ip";
@@ -339,78 +339,70 @@ export async function recordFailedAttemptByIP(
   const existing = await getFailedAttemptByIP(ipAddress, trx);
 
   if (existing) {
-    // Check if this is a new email address for this IP
-    // Query to see if we've seen this email before from this IP
-    const existingEmailAttempts = await exec(TABLE)
-      .where({ ip_address: ipAddress, identifier: normalizedIdentifier })
-      .count("* as count")
-      .first();
+    // Count distinct identifiers for this IP in the failed_login_attempts table
+    // This is the source of truth for how many distinct emails have been attempted from this IP
+    // Since recordFailedAttempt may have already created a record in the same transaction,
+    // we count from the database to get the accurate current count
+    const distinctCountResult = await exec(TABLE)
+      .where({ ip_address: ipAddress })
+      .countDistinct("identifier as count")
+      .first<{ count: string | number }>();
 
-    let isNewEmail = !existingEmailAttempts || Number(existingEmailAttempts.count) === 0;
+    const actualDistinctCount = distinctCountResult ? Number(distinctCountResult.count) : 0;
 
-    // If this might be a new email, try to create a minimal record in failed_login_attempts for tracking
-    // This ensures subsequent calls can correctly identify it as an existing email
-    // Use onConflict to handle case where record already exists (e.g., from recordFailedAttempt)
-    if (isNewEmail) {
-      try {
-        const accountAttemptId = crypto.randomUUID();
-        const inserted = await exec(TABLE)
-          .insert({
-            id: accountAttemptId,
-            identifier: normalizedIdentifier,
-            ip_address: ipAddress,
-            user_agent: null,
-            attempt_count: 1,
-            locked_until: null,
-            last_attempt_at: now,
-            first_attempt_at: now,
-            created_at: now,
-            updated_at: now,
-          })
-          .onConflict(["identifier", "ip_address"])
-          .ignore()
-          .returning("*");
+    // Use the actual distinct count from the database as the source of truth
+    // This ensures we always have the correct count, even if records were created
+    // in a different order or in the same transaction
+    const newDistinctEmailCount = Math.max(actualDistinctCount, existing.distinct_email_count);
 
-        // If insert was ignored (conflict), the record already existed, so it's not a new email
-        if (inserted.length === 0) {
-          isNewEmail = false;
-        }
-      } catch (error) {
-        // If insert fails (e.g., unique constraint), that's OK - record already exists
-        // This can happen in race conditions or if recordFailedAttempt was called first
-        const errorMessage = error instanceof Error ? error.message : String(error);
-        if (errorMessage.includes("unique") || errorMessage.includes("duplicate")) {
-          isNewEmail = false;
-        } else {
-          throw error;
+    // Calculate new counts
+    const newTotalAttemptCount = existing.total_attempt_count + 1;
+
+    // Calculate new lockout duration
+    const newLockedUntil = calculateIPLockoutDuration(newTotalAttemptCount, newDistinctEmailCount);
+
+    // Only update locked_until if:
+    // 1. Not currently locked, OR
+    // 2. New lockout is longer than existing lockout (progressive escalation)
+    // This prevents overwriting longer lockouts with shorter ones
+    let finalLockedUntil = newLockedUntil;
+    if (existing.locked_until) {
+      const now = new Date();
+      const existingLockout = new Date(existing.locked_until);
+      // Check if currently locked (lockout hasn't expired)
+      if (now < existingLockout) {
+        const newLockout = newLockedUntil ? new Date(newLockedUntil) : null;
+        // Keep existing lockout if it's longer than the new one
+        if (newLockout && existingLockout > newLockout) {
+          finalLockedUntil = existing.locked_until;
         }
       }
     }
-
-    // Calculate lockout duration based on total attempt count
-    const newTotalAttemptCount = existing.total_attempt_count + 1;
-    const newDistinctEmailCount = isNewEmail
-      ? existing.distinct_email_count + 1
-      : existing.distinct_email_count;
-    const lockedUntil = calculateIPLockoutDuration(newTotalAttemptCount, newDistinctEmailCount);
 
     // Update existing record
     await exec(IP_TABLE).where({ id: existing.id }).update({
       distinct_email_count: newDistinctEmailCount,
       total_attempt_count: newTotalAttemptCount,
-      locked_until: lockedUntil,
+      locked_until: finalLockedUntil,
       last_attempt_at: now,
       updated_at: now,
     });
 
-    return {
-      ...existing,
-      distinct_email_count: newDistinctEmailCount,
-      total_attempt_count: newTotalAttemptCount,
-      locked_until: lockedUntil,
-      last_attempt_at: now,
-      updated_at: now,
-    };
+    // Fetch the updated record to ensure we return correct values
+    // This matches the pattern used in recordFailedAttempt
+    const updated = await getFailedAttemptByIP(ipAddress, trx);
+    if (!updated) {
+      // Fallback to constructing the return value if fetch fails
+      return {
+        ...existing,
+        distinct_email_count: newDistinctEmailCount,
+        total_attempt_count: newTotalAttemptCount,
+        locked_until: finalLockedUntil,
+        last_attempt_at: now,
+        updated_at: now,
+      };
+    }
+    return updated;
   }
 
   // Create new record

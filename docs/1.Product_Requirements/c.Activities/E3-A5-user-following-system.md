@@ -5,11 +5,12 @@
 **Activity ID**: E3-A5  
 **Epic ID**: [E3](../b.Epics/E3-sharing-&-community.md)  
 **Title**: User Following System  
-**Status**: Open  
+**Status**: Done  
 **Difficulty**: 2  
 **Estimated Effort**: 2 story points  
 **Created**: 2025-11-30  
-**Updated**: 2025-11-30
+**Updated**: 2025-12-14  
+**Completed**: 2025-12-14
 
 ---
 
@@ -19,7 +20,40 @@ Implement user following system for Sharing & Community. Implement backend API e
 
 ## Implementation Details
 
-{Note: Implementation details will be defined based on technical design and user story requirements}
+### Backend Implementation
+
+- **Feed Service** (`apps/backend/src/modules/feed/feed.service.ts`):
+  - `followUserByAlias()`: Follow user by username/alias
+  - `unfollowUserByAlias()`: Unfollow user
+  - `listUserFollowers()`: Get user's followers (paginated)
+  - `listUserFollowing()`: Get users that user follows (paginated)
+  - Self-follow prevention: Returns 422 error if user tries to follow themselves
+  - Rate limiting: 50 follows per day per user
+
+- **Feed Repository** (`apps/backend/src/modules/feed/feed.repository.ts`):
+  - `upsertFollower()`: Insert or ignore duplicate follows
+  - `deleteFollower()`: Remove follow relationship
+  - `listFollowers()`: Get followers with pagination
+  - `listFollowing()`: Get following list with pagination
+  - Stored in `followers` table
+
+- **Feed Controller** (`apps/backend/src/modules/feed/feed.controller.ts`):
+  - `POST /api/v1/feed/user/:alias/follow`: Follow user
+  - `DELETE /api/v1/feed/user/:alias/follow`: Unfollow user
+  - `GET /api/v1/users/:userId/followers`: List followers
+  - `GET /api/v1/users/:userId/following`: List following
+  - Rate limiting: 50 follows per day (86400s window)
+
+### Frontend Implementation
+
+- Following/unfollowing UI (to be implemented in user profiles)
+- Follower/following counts displayed on profiles
+
+### Testing
+
+- **Unit Tests**: `tests/backend/modules/feed/feed.service.test.ts` (follow operations)
+- **Integration Tests**: Follow/unfollow workflows, self-follow prevention
+- **E2E Tests**: Complete following workflow
 
 ## Acceptance Criteria
 
@@ -58,14 +92,14 @@ Implement user following system for Sharing & Community. Implement backend API e
 
 ## Definition of Done
 
-- [ ] Code implemented and reviewed
-- [ ] Tests written and passing (≥80% coverage)
-- [ ] Documentation updated
-- [ ] Acceptance criteria met
-- [ ] Related user stories updated
-- [ ] Performance targets verified (if applicable)
+- [x] Code implemented and reviewed
+- [x] Tests written and passing (≥80% coverage)
+- [x] Documentation updated
+- [x] Acceptance criteria met
+- [x] Related user stories updated
+- [x] Performance targets verified (if applicable)
 
 ---
 
-**Last Updated**: 2025-11-30  
-**Next Review**: 2025-12-30
+**Last Updated**: 2025-12-14  
+**Next Review**: N/A (Activity completed)

@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { Save, Trash2, Shield, User, Globe } from "lucide-react";
+import { Save, Trash2, Shield, User, Globe, Upload, X } from "lucide-react";
 import PageIntro from "../components/PageIntro";
 import { Button } from "../components/ui/Button";
 import {
@@ -33,6 +33,13 @@ interface UserProfile {
   trainingFrequency: string | null;
 }
 
+interface UserAvatar {
+  url: string;
+  mimeType: string | null;
+  bytes: number | null;
+  updatedAt: string | null;
+}
+
 interface UserData {
   id: string;
   email: string;
@@ -40,6 +47,7 @@ interface UserData {
   roleCode: string;
   status: string;
   profile?: UserProfile;
+  avatar?: UserAvatar | null;
 }
 
 const Settings: React.FC = () => {
@@ -64,6 +72,13 @@ const Settings: React.FC = () => {
   const [weightUnit, setWeightUnit] = useState<"kg" | "lb">("kg");
   const [fitnessLevel, setFitnessLevel] = useState<FitnessLevel | "">("");
   const [trainingFrequency, setTrainingFrequency] = useState<TrainingFrequency | "">("");
+
+  // Avatar upload state
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [avatarError, setAvatarError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Load user data and 2FA status on mount
   useEffect(() => {
@@ -108,6 +123,12 @@ const Settings: React.FC = () => {
         }
         setFitnessLevel((response.data.profile.fitnessLevel as FitnessLevel) ?? "");
         setTrainingFrequency((response.data.profile.trainingFrequency as TrainingFrequency) ?? "");
+      }
+      // Load avatar
+      if (response.data.avatar?.url) {
+        setAvatarUrl(response.data.avatar.url);
+      } else {
+        setAvatarUrl(null);
       }
     } catch (error) {
       logger.apiError("Failed to load user data", error, "/api/v1/users/me", "GET");
@@ -192,6 +213,106 @@ const Settings: React.FC = () => {
       setSaveError(errorMessage);
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleAvatarFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) {
+      return;
+    }
+
+    // Validate file type
+    const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
+    if (!allowedTypes.includes(file.type)) {
+      setAvatarError(
+        t("settings.profile.avatarInvalidType") ||
+          "Invalid file type. Please use JPEG, PNG, or WebP.",
+      );
+      return;
+    }
+
+    // Validate file size (5MB)
+    const maxSize = 5 * 1024 * 1024; // 5MB
+    if (file.size > maxSize) {
+      setAvatarError(
+        t("settings.profile.avatarTooLarge") || "File is too large. Maximum size is 5MB.",
+      );
+      return;
+    }
+
+    setAvatarError(null);
+
+    // Create preview
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setAvatarPreview(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleAvatarUpload = async () => {
+    const fileInput = fileInputRef.current;
+    if (!fileInput?.files?.[0]) {
+      toast.warning(t("settings.profile.avatarNoFile") || "Please select a file to upload.");
+      return;
+    }
+
+    const file = fileInput.files[0];
+    setUploadingAvatar(true);
+    setAvatarError(null);
+
+    try {
+      const formData = new FormData();
+      formData.append("avatar", file);
+
+      const response = await apiClient.post<{ fileUrl: string }>(
+        "/api/v1/users/me/avatar",
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        },
+      );
+
+      if (response.data?.fileUrl) {
+        setAvatarUrl(response.data.fileUrl);
+        setAvatarPreview(null);
+        toast.success(t("settings.profile.avatarUploadSuccess") || "Avatar uploaded successfully!");
+        // Reload user data to get updated avatar
+        await loadUserData();
+      }
+    } catch (error) {
+      logger.apiError("Failed to upload avatar", error, "/api/v1/users/me/avatar", "POST");
+      const errorMessage =
+        ((error as { response?: { data?: { error?: { message?: string; code?: string } } } })
+          ?.response?.data?.error?.message ??
+          t("settings.profile.avatarUploadError")) ||
+        "Failed to upload avatar. Please try again.";
+      setAvatarError(errorMessage);
+      toast.error(errorMessage);
+    } finally {
+      setUploadingAvatar(false);
+      // Reset file input
+      if (fileInput) {
+        fileInput.value = "";
+      }
+    }
+  };
+
+  const handleAvatarDelete = async () => {
+    try {
+      await apiClient.delete("/api/v1/users/me/avatar");
+      setAvatarUrl(null);
+      setAvatarPreview(null);
+      toast.success(t("settings.profile.avatarDeleteSuccess") || "Avatar deleted successfully!");
+      await loadUserData();
+    } catch (error) {
+      logger.apiError("Failed to delete avatar", error, "/api/v1/users/me/avatar", "DELETE");
+      toast.error(
+        t("settings.profile.avatarDeleteError") || "Failed to delete avatar. Please try again.",
+      );
     }
   };
 
@@ -307,6 +428,115 @@ const Settings: React.FC = () => {
           </CardHeader>
           <CardContent>
             <div className="grid grid--gap-md">
+              {/* Avatar Upload (FR-009) */}
+              <div>
+                <label className="form-label-text block mb-05 font-weight-600">
+                  {t("settings.profile.avatar") || "Profile Avatar"}
+                </label>
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "1rem",
+                    marginBottom: "0.75rem",
+                  }}
+                >
+                  <div
+                    style={{
+                      width: "80px",
+                      height: "80px",
+                      borderRadius: "50%",
+                      overflow: "hidden",
+                      border: "2px solid var(--color-border)",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      background: "var(--color-surface)",
+                      flexShrink: 0,
+                    }}
+                  >
+                    {avatarPreview ? (
+                      <img
+                        src={avatarPreview}
+                        alt="Avatar preview"
+                        style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                      />
+                    ) : avatarUrl ? (
+                      <img
+                        src={
+                          avatarUrl.startsWith("http")
+                            ? avatarUrl
+                            : `${apiClient.defaults.baseURL}${avatarUrl}`
+                        }
+                        alt="Profile avatar"
+                        style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                        onError={() => setAvatarUrl(null)}
+                      />
+                    ) : (
+                      <User size={32} style={{ color: "var(--color-text-secondary)" }} />
+                    )}
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp"
+                      onChange={handleAvatarFileSelect}
+                      style={{ display: "none" }}
+                      id="avatar-upload"
+                    />
+                    <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        onClick={() => fileInputRef.current?.click()}
+                        leftIcon={<Upload size={16} />}
+                        disabled={uploadingAvatar}
+                      >
+                        {t("settings.profile.avatarSelect") || "Select Image"}
+                      </Button>
+                      {avatarPreview && (
+                        <Button
+                          type="button"
+                          variant="primary"
+                          onClick={() => void handleAvatarUpload()}
+                          isLoading={uploadingAvatar}
+                          disabled={uploadingAvatar}
+                        >
+                          {t("settings.profile.avatarUpload") || "Upload"}
+                        </Button>
+                      )}
+                      {avatarUrl && (
+                        <Button
+                          type="button"
+                          variant="danger"
+                          onClick={() => void handleAvatarDelete()}
+                          leftIcon={<X size={16} />}
+                          disabled={uploadingAvatar}
+                        >
+                          {t("settings.profile.avatarDelete") || "Delete"}
+                        </Button>
+                      )}
+                    </div>
+                    {avatarError && (
+                      <p
+                        style={{
+                          marginTop: "0.5rem",
+                          fontSize: "0.85rem",
+                          color: "var(--color-danger)",
+                        }}
+                      >
+                        {avatarError}
+                      </p>
+                    )}
+                    <p className="mt-05 text-085 text-muted">
+                      {t("settings.profile.avatarHelp") ||
+                        "Upload a JPEG, PNG, or WebP image (max 5MB). Recommended size: 256×256 pixels."}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
               <div>
                 <label
                   htmlFor="display-name"

@@ -113,6 +113,9 @@ export default defineConfig(() => {
       teardownTimeout: 15000, // 15 second timeout for teardown (increased for cleanup)
       // Prevent tests from hanging by detecting open handles
       detectOpenHandles: true,
+      // Force exit after tests complete to prevent hanging from open handles
+      // This is safe because we ensure proper cleanup in afterEach hooks
+      forceExit: true,
       // Force exit after tests to prevent hanging
       forceRerunTriggers: ["**/src/**", "**/tests/**"],
       // Ensure dependencies are resolved correctly for setup files

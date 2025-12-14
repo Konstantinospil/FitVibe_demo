@@ -1,10 +1,11 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
+import "../../src/styles/global.css";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../../src/components/ui";
 
 describe("Card", () => {
   it("renders header, title, description, and content", () => {
-    render(
+    const { unmount } = render(
       <Card data-testid="card">
         <CardHeader>
           <CardTitle>Weekly Load</CardTitle>
@@ -20,5 +21,8 @@ describe("Card", () => {
     expect(screen.getByText(/weekly load/i)).toBeVisible();
     expect(screen.getByText(/planned vs completed/i)).toBeVisible();
     expect(screen.getByText(/42 sessions/i)).toBeVisible();
+
+    // Explicitly unmount to ensure cleanup
+    unmount();
   });
 });

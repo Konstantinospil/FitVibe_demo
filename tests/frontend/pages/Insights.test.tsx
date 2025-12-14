@@ -298,6 +298,498 @@ describe("Insights page", () => {
     expect(screen.getByText(/We could not refresh analytics right now/i)).toBeInTheDocument();
   });
 
+  describe("dashboard tab functionality", () => {
+    it("should display personal records", () => {
+      const mockData = {
+        summary: [],
+        personalRecords: [
+          {
+            lift: "Squat",
+            value: "200 kg",
+            achieved: "2 weeks ago",
+            visibility: "public" as const,
+          },
+        ],
+        aggregates: [],
+        meta: { range: "4w" as const, grain: "weekly" as const, totalRows: 0, truncated: false },
+      };
+
+      vi.mocked(useDashboardAnalytics).mockReturnValue({
+        data: mockData,
+        isLoading: false,
+        isFetching: false,
+        error: null,
+        refetch: vi.fn(),
+      } as unknown as ReturnType<typeof useDashboardAnalytics>);
+
+      renderInsights();
+
+      expect(screen.getByText("Squat")).toBeInTheDocument();
+      expect(screen.getByText("200 kg")).toBeInTheDocument();
+    });
+
+    it("should display default personal records when none provided", () => {
+      vi.mocked(useDashboardAnalytics).mockReturnValue({
+        data: {
+          summary: [],
+          personalRecords: [],
+          aggregates: [],
+          meta: { range: "4w" as const, grain: "weekly" as const, totalRows: 0, truncated: false },
+        },
+        isLoading: false,
+        isFetching: false,
+        error: null,
+        refetch: vi.fn(),
+      } as unknown as ReturnType<typeof useDashboardAnalytics>);
+
+      renderInsights();
+
+      expect(screen.getByText("Back squat")).toBeInTheDocument();
+    });
+
+    it("should display aggregate rows", () => {
+      const mockData = {
+        summary: [],
+        personalRecords: [],
+        aggregates: [
+          { period: "Week 1", volume: 50000, sessions: 5 },
+          { period: "Week 2", volume: 52000, sessions: 6 },
+        ],
+        meta: { range: "4w" as const, grain: "weekly" as const, totalRows: 2, truncated: false },
+      };
+
+      vi.mocked(useDashboardAnalytics).mockReturnValue({
+        data: mockData,
+        isLoading: false,
+        isFetching: false,
+        error: null,
+        refetch: vi.fn(),
+      } as unknown as ReturnType<typeof useDashboardAnalytics>);
+
+      renderInsights();
+
+      expect(screen.getByText("Week 1")).toBeInTheDocument();
+      expect(screen.getByText("50,000 kg")).toBeInTheDocument();
+    });
+
+    it("should show loading state for metrics", () => {
+      vi.mocked(useDashboardAnalytics).mockReturnValue({
+        data: undefined,
+        isLoading: true,
+        isFetching: false,
+        error: null,
+        refetch: vi.fn(),
+      } as unknown as ReturnType<typeof useDashboardAnalytics>);
+
+      renderInsights();
+
+      // Should show skeleton loaders
+      const skeletons = screen.getAllByTestId(/skeleton/i);
+      expect(skeletons.length).toBeGreaterThan(0);
+    });
+
+    it("should show refreshing indicator when fetching", () => {
+      vi.mocked(useDashboardAnalytics).mockReturnValue({
+        data: {
+          summary: [],
+          personalRecords: [],
+          aggregates: [],
+          meta: { range: "4w" as const, grain: "weekly" as const, totalRows: 0, truncated: false },
+        },
+        isLoading: false,
+        isFetching: true,
+        error: null,
+        refetch: vi.fn(),
+      } as unknown as ReturnType<typeof useDashboardAnalytics>);
+
+      renderInsights();
+
+      expect(screen.getByText("Refreshing…")).toBeInTheDocument();
+    });
+
+    it("should call refetch when retry button is clicked", () => {
+      const refetchMock = vi.fn();
+      vi.mocked(useDashboardAnalytics).mockReturnValue({
+        data: undefined,
+        isLoading: false,
+        isFetching: false,
+        error: new Error("Failed"),
+        refetch: refetchMock,
+      } as unknown as ReturnType<typeof useDashboardAnalytics>);
+
+      renderInsights();
+
+      const retryButton = screen.getByText("Retry");
+      fireEvent.click(retryButton);
+
+      expect(refetchMock).toHaveBeenCalled();
+    });
+  });
+
+  describe("progress tab functionality", () => {
+    beforeEach(() => {
+      vi.mocked(api.getProgressTrends).mockResolvedValue([]);
+      vi.mocked(api.getExerciseBreakdown).mockResolvedValue([]);
+    });
+
+    it("should switch to progress tab", () => {
+      vi.mocked(useDashboardAnalytics).mockReturnValue({
+        data: undefined,
+        isLoading: false,
+        isFetching: false,
+        error: null,
+        refetch: vi.fn(),
+      } as unknown as ReturnType<typeof useDashboardAnalytics>);
+
+      renderInsights();
+
+      const progressTab = screen.getByText("Progress");
+      fireEvent.click(progressTab);
+
+      expect(screen.getByText("Volume Trend")).toBeInTheDocument();
+    });
+
+    it("should toggle between preset and custom range modes", () => {
+      vi.mocked(useDashboardAnalytics).mockReturnValue({
+        data: undefined,
+        isLoading: false,
+        isFetching: false,
+        error: null,
+        refetch: vi.fn(),
+      } as unknown as ReturnType<typeof useDashboardAnalytics>);
+
+      renderInsights();
+
+      const progressTab = screen.getByText("Progress");
+      fireEvent.click(progressTab);
+
+      // Switch to custom mode
+      const customButton = screen.getByText("Custom");
+      fireEvent.click(customButton);
+
+      // Should show date range picker
+      await waitFor(
+        () => {
+          // DateRangePicker should be rendered
+          expect(screen.queryByText("Preset")).toBeInTheDocument();
+        },
+        { timeout: 2000 },
+      );
+
+      // Switch back to preset
+      const presetButton = screen.getByText("Preset");
+      fireEvent.click(presetButton);
+
+      await waitFor(
+        () => {
+          const periodSelect = screen.getByLabelText(/Period/i);
+          expect(periodSelect).toBeInTheDocument();
+        },
+        { timeout: 2000 },
+      );
+    });
+
+    it("should change period in preset mode", () => {
+      vi.mocked(useDashboardAnalytics).mockReturnValue({
+        data: undefined,
+        isLoading: false,
+        isFetching: false,
+        error: null,
+        refetch: vi.fn(),
+      } as unknown as ReturnType<typeof useDashboardAnalytics>);
+
+      renderInsights();
+
+      const progressTab = screen.getByText("Progress");
+      fireEvent.click(progressTab);
+
+      await waitFor(
+        () => {
+          const periodSelect = screen.getByLabelText(/Period/i) as HTMLSelectElement;
+          expect(periodSelect).toBeInTheDocument();
+
+          // Change period
+          fireEvent.change(periodSelect, { target: { value: "90" } });
+          expect(periodSelect.value).toBe("90");
+        },
+        { timeout: 5000 },
+      );
+    });
+
+    it("should change group by option", () => {
+      vi.mocked(useDashboardAnalytics).mockReturnValue({
+        data: undefined,
+        isLoading: false,
+        isFetching: false,
+        error: null,
+        refetch: vi.fn(),
+      } as unknown as ReturnType<typeof useDashboardAnalytics>);
+
+      renderInsights();
+
+      const progressTab = screen.getByText("Progress");
+      fireEvent.click(progressTab);
+
+      await waitFor(
+        () => {
+          const groupBySelect = screen.getByLabelText(/Group by/i) as HTMLSelectElement;
+          expect(groupBySelect).toBeInTheDocument();
+
+          // Change to daily
+          fireEvent.change(groupBySelect, { target: { value: "day" } });
+          expect(groupBySelect.value).toBe("day");
+        },
+        { timeout: 5000 },
+      );
+    });
+
+    it("should handle export error", async () => {
+      vi.mocked(useDashboardAnalytics).mockReturnValue({
+        data: undefined,
+        isLoading: false,
+        isFetching: false,
+        error: null,
+        refetch: vi.fn(),
+      } as unknown as ReturnType<typeof useDashboardAnalytics>);
+
+      vi.mocked(api.exportProgress).mockRejectedValueOnce(new Error("Export failed"));
+
+      renderInsights();
+
+      const progressTab = screen.getByText("Progress");
+      fireEvent.click(progressTab);
+
+      await waitFor(
+        () => {
+          expect(screen.getByText("Export")).toBeInTheDocument();
+        },
+        { timeout: 5000 },
+      );
+
+      const exportButton = screen.getByText("Export");
+      fireEvent.click(exportButton);
+
+      await waitFor(
+        () => {
+          expect(api.exportProgress).toHaveBeenCalled();
+        },
+        { timeout: 5000 },
+      );
+    });
+
+    it("should display trends data when loaded", async () => {
+      vi.mocked(useDashboardAnalytics).mockReturnValue({
+        data: undefined,
+        isLoading: false,
+        isFetching: false,
+        error: null,
+        refetch: vi.fn(),
+      } as unknown as ReturnType<typeof useDashboardAnalytics>);
+
+      const mockTrends = [
+        { label: "Week 1", volume: 50000, sessions: 5, avgIntensity: 7.5 },
+        { label: "Week 2", volume: 52000, sessions: 6, avgIntensity: 8.0 },
+      ];
+
+      vi.mocked(api.getProgressTrends).mockResolvedValueOnce(mockTrends as any);
+
+      renderInsights();
+
+      const progressTab = screen.getByText("Progress");
+      fireEvent.click(progressTab);
+
+      await waitFor(
+        () => {
+          expect(api.getProgressTrends).toHaveBeenCalled();
+        },
+        { timeout: 5000 },
+      );
+    });
+
+    it("should display exercise breakdown when loaded", async () => {
+      vi.mocked(useDashboardAnalytics).mockReturnValue({
+        data: undefined,
+        isLoading: false,
+        isFetching: false,
+        error: null,
+        refetch: vi.fn(),
+      } as unknown as ReturnType<typeof useDashboardAnalytics>);
+
+      const mockBreakdown = [
+        {
+          exercise: "Bench Press",
+          sessions: 10,
+          totalVolume: 50000,
+          avgVolume: 5000,
+          maxWeight: 100,
+          trend: "up" as const,
+        },
+      ];
+
+      vi.mocked(api.getExerciseBreakdown).mockResolvedValueOnce(mockBreakdown as any);
+
+      renderInsights();
+
+      const progressTab = screen.getByText("Progress");
+      fireEvent.click(progressTab);
+
+      await waitFor(
+        () => {
+          expect(api.getExerciseBreakdown).toHaveBeenCalled();
+        },
+        { timeout: 5000 },
+      );
+    });
+
+    it("should handle trends loading error", async () => {
+      vi.mocked(useDashboardAnalytics).mockReturnValue({
+        data: undefined,
+        isLoading: false,
+        isFetching: false,
+        error: null,
+        refetch: vi.fn(),
+      } as unknown as ReturnType<typeof useDashboardAnalytics>);
+
+      vi.mocked(api.getProgressTrends).mockRejectedValueOnce(new Error("Failed to load"));
+
+      renderInsights();
+
+      const progressTab = screen.getByText("Progress");
+      fireEvent.click(progressTab);
+
+      await waitFor(
+        () => {
+          expect(api.getProgressTrends).toHaveBeenCalled();
+        },
+        { timeout: 5000 },
+      );
+    });
+
+    it("should handle exercise breakdown loading error", async () => {
+      vi.mocked(useDashboardAnalytics).mockReturnValue({
+        data: undefined,
+        isLoading: false,
+        isFetching: false,
+        error: null,
+        refetch: vi.fn(),
+      } as unknown as ReturnType<typeof useDashboardAnalytics>);
+
+      vi.mocked(api.getExerciseBreakdown).mockRejectedValueOnce(new Error("Failed to load"));
+
+      renderInsights();
+
+      const progressTab = screen.getByText("Progress");
+      fireEvent.click(progressTab);
+
+      await waitFor(
+        () => {
+          expect(api.getExerciseBreakdown).toHaveBeenCalled();
+        },
+        { timeout: 5000 },
+      );
+    });
+
+    it("should display retry button on trends error", async () => {
+      vi.mocked(useDashboardAnalytics).mockReturnValue({
+        data: undefined,
+        isLoading: false,
+        isFetching: false,
+        error: null,
+        refetch: vi.fn(),
+      } as unknown as ReturnType<typeof useDashboardAnalytics>);
+
+      vi.mocked(api.getProgressTrends).mockRejectedValueOnce(new Error("Failed"));
+
+      renderInsights();
+
+      const progressTab = screen.getByText("Progress");
+      fireEvent.click(progressTab);
+
+      await waitFor(
+        () => {
+          expect(screen.getByText("Retry")).toBeInTheDocument();
+        },
+        { timeout: 5000 },
+      );
+    });
+
+    it("should call refetchTrends when retry is clicked", async () => {
+      vi.mocked(useDashboardAnalytics).mockReturnValue({
+        data: undefined,
+        isLoading: false,
+        isFetching: false,
+        error: null,
+        refetch: vi.fn(),
+      } as unknown as ReturnType<typeof useDashboardAnalytics>);
+
+      const refetchTrendsMock = vi.fn();
+      vi.mocked(api.getProgressTrends).mockRejectedValueOnce(new Error("Failed"));
+
+      renderInsights();
+
+      const progressTab = screen.getByText("Progress");
+      fireEvent.click(progressTab);
+
+      await waitFor(
+        () => {
+          const retryButton = screen.getByText("Retry");
+          fireEvent.click(retryButton);
+          // Note: refetchTrends is from useQuery, we verify the query was called
+          expect(api.getProgressTrends).toHaveBeenCalled();
+        },
+        { timeout: 5000 },
+      );
+    });
+
+    it("should display no data message when trends are empty", async () => {
+      vi.mocked(useDashboardAnalytics).mockReturnValue({
+        data: undefined,
+        isLoading: false,
+        isFetching: false,
+        error: null,
+        refetch: vi.fn(),
+      } as unknown as ReturnType<typeof useDashboardAnalytics>);
+
+      vi.mocked(api.getProgressTrends).mockResolvedValueOnce([]);
+
+      renderInsights();
+
+      const progressTab = screen.getByText("Progress");
+      fireEvent.click(progressTab);
+
+      await waitFor(
+        () => {
+          expect(screen.getByText("No data available")).toBeInTheDocument();
+        },
+        { timeout: 5000 },
+      );
+    });
+
+    it("should display no exercises message when breakdown is empty", async () => {
+      vi.mocked(useDashboardAnalytics).mockReturnValue({
+        data: undefined,
+        isLoading: false,
+        isFetching: false,
+        error: null,
+        refetch: vi.fn(),
+      } as unknown as ReturnType<typeof useDashboardAnalytics>);
+
+      vi.mocked(api.getExerciseBreakdown).mockResolvedValueOnce([]);
+
+      renderInsights();
+
+      const progressTab = screen.getByText("Progress");
+      fireEvent.click(progressTab);
+
+      await waitFor(
+        () => {
+          expect(screen.getByText("No exercises")).toBeInTheDocument();
+        },
+        { timeout: 5000 },
+      );
+    });
+  });
+
   it("should allow changing dashboard range", () => {
     const mockRefetch = vi.fn();
     vi.mocked(useDashboardAnalytics).mockReturnValue({

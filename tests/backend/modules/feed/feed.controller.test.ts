@@ -149,6 +149,75 @@ describe("Feed Controller", () => {
       });
     });
 
+    it("should parse search query from query parameter", async () => {
+      const mockFeed = {
+        items: [],
+        total: 0,
+        limit: 20,
+        offset: 0,
+      };
+
+      mockRequest.query = { q: "test query" };
+      mockFeedService.getFeed.mockResolvedValue(mockFeed);
+
+      await feedController.getFeedHandler(mockRequest as Request, mockResponse as Response);
+
+      expect(mockFeedService.getFeed).toHaveBeenCalledWith({
+        viewerId: userId,
+        scope: "public",
+        limit: 20,
+        offset: 0,
+        searchQuery: "test query",
+        sort: "date",
+      });
+    });
+
+    it("should parse sort parameter from query", async () => {
+      const mockFeed = {
+        items: [],
+        total: 0,
+        limit: 20,
+        offset: 0,
+      };
+
+      mockRequest.query = { sort: "popularity" };
+      mockFeedService.getFeed.mockResolvedValue(mockFeed);
+
+      await feedController.getFeedHandler(mockRequest as Request, mockResponse as Response);
+
+      expect(mockFeedService.getFeed).toHaveBeenCalledWith({
+        viewerId: userId,
+        scope: "public",
+        limit: 20,
+        offset: 0,
+        searchQuery: null,
+        sort: "popularity",
+      });
+    });
+
+    it("should parse both search and sort parameters", async () => {
+      const mockFeed = {
+        items: [],
+        total: 0,
+        limit: 20,
+        offset: 0,
+      };
+
+      mockRequest.query = { q: "workout", sort: "relevance" };
+      mockFeedService.getFeed.mockResolvedValue(mockFeed);
+
+      await feedController.getFeedHandler(mockRequest as Request, mockResponse as Response);
+
+      expect(mockFeedService.getFeed).toHaveBeenCalledWith({
+        viewerId: userId,
+        scope: "public",
+        limit: 20,
+        offset: 0,
+        searchQuery: "workout",
+        sort: "relevance",
+      });
+    });
+
     it("should return 401 when not authenticated", async () => {
       mockRequest.user = undefined;
 

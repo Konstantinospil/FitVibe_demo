@@ -171,7 +171,7 @@ The Test Manager Agent specification has been updated to align with the QA Plan 
 | Aspect               | Status                                                                   |
 | -------------------- | ------------------------------------------------------------------------ |
 | Coverage Thresholds  | ✅ Aligned (80% repo-wide, 90% critical)                                 |
-| Contract Tests       | ✅ Supported (zod ↔ OpenAPI, migration, observability)                  |
+| Contract Tests       | ✅ Supported (zod ↔ OpenAPI, migration, observability)                   |
 | Determinism Patterns | ✅ Documented (fake clock, seeded PRNG, UUIDs)                           |
 | Integration Patterns | ✅ Documented (transactional, ephemeral DB)                              |
 | E2E Patterns         | ✅ Documented (Playwright, fake clock, snapshots)                        |

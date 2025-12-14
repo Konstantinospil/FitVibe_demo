@@ -76,8 +76,14 @@ const ResetPassword: React.FC = () => {
       title={t("resetPassword.title")}
       description={t("resetPassword.description")}
     >
-      {/* eslint-disable-next-line @typescript-eslint/no-misused-promises */}
-      <form ref={formRef} onSubmit={handleSubmit} className="form">
+      <form
+        ref={formRef}
+        onSubmit={(e) => {
+          e.preventDefault();
+          void handleSubmit();
+        }}
+        className="form"
+      >
         <div
           className="rounded-md p-md text-sm text-secondary"
           style={{

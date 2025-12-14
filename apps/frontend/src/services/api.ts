@@ -481,6 +481,7 @@ export async function getDashboardAnalytics(params: {
 // Feed API
 export interface FeedItem {
   id: string;
+  feedItemId: string;
   user: {
     id: string;
     username: string;
@@ -497,21 +498,87 @@ export interface FeedItem {
   };
   visibility: string;
   createdAt: string;
+  publishedAt: string | null;
   likesCount: number;
   commentsCount: number;
   isLiked?: boolean;
+  isBookmarked?: boolean;
 }
 
 export interface FeedResponse {
   items: FeedItem[];
-  total: number;
+  total?: number;
+  limit?: number;
+  offset?: number;
 }
 
 export async function getFeed(
-  params: { scope?: string; limit?: number; offset?: number } = {},
+  params: {
+    scope?: string;
+    limit?: number;
+    offset?: number;
+    q?: string;
+    sort?: "date" | "popularity" | "relevance";
+  } = {},
 ): Promise<FeedResponse> {
-  const res = await apiClient.get<FeedResponse>("/api/v1/feed", { params });
-  return res.data;
+  const res = await apiClient.get<{
+    items: Array<{
+      feedItemId: string;
+      ownerId: string;
+      ownerUsername: string;
+      ownerDisplayName: string;
+      visibility: string;
+      publishedAt: string | null;
+      session: null | {
+        id: string;
+        title: string | null;
+        completedAt: string | null;
+        points: number | null;
+      };
+      stats: {
+        likes: number;
+        comments: number;
+        viewerHasLiked: boolean;
+        viewerHasBookmarked: boolean;
+      };
+    }>;
+  }>("/api/v1/feed", { params });
+
+  // Transform backend response to frontend format
+  return {
+    items: res.data.items.map((item) => ({
+      id: item.feedItemId,
+      feedItemId: item.feedItemId,
+      user: {
+        id: item.ownerId,
+        username: item.ownerUsername,
+        displayName: item.ownerDisplayName || undefined,
+      },
+      session: item.session
+        ? {
+            id: item.session.id,
+            title: item.session.title || undefined,
+            plannedAt: item.publishedAt || new Date().toISOString(),
+            completedAt: item.session.completedAt || undefined,
+            exerciseCount: 0, // Not provided by backend, would need to fetch separately
+            totalVolume: undefined,
+          }
+        : {
+            id: "",
+            plannedAt: item.publishedAt || new Date().toISOString(),
+            exerciseCount: 0,
+          },
+      visibility: item.visibility,
+      createdAt: item.publishedAt || new Date().toISOString(),
+      publishedAt: item.publishedAt,
+      likesCount: item.stats.likes,
+      commentsCount: item.stats.comments,
+      isLiked: item.stats.viewerHasLiked,
+      isBookmarked: item.stats.viewerHasBookmarked,
+    })),
+    limit: params.limit,
+    offset: params.offset,
+  };
 }
 
 export async function likeFeedItem(feedItemId: string): Promise<void> {

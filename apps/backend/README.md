@@ -46,21 +46,21 @@ pnpm ts-node apps/backend/src/db/scripts/migrate.ts
 
 The backend groups domain logic into modular verticals. The table below lists each module, its responsibilities, and the primary router or service entry point that wires it into the API.
 
-| Module         | Purpose                                                                                                 | Entry point                                          |
-| -------------- | ------------------------------------------------------------------------------------------------------- | ---------------------------------------------------- |
-| Auth           | Handles registration, authentication, token refresh, JWKS publishing, and session management endpoints. | `src/modules/auth/auth.routes.ts`                    |
-| Users          | Exposes profile management, admin user administration, contact management, and follow relationships.    | `src/modules/users/users.routes.ts`                  |
-| Exercise Types | Provides CRUD endpoints for managing the catalog of exercise types with admin-only mutations.           | `src/modules/exercise-types/exerciseTypes.routes.ts` |
-| Exercises      | Offers authenticated CRUD APIs for individual exercise records.                                         | `src/modules/exercises/exercise.routes.ts`           |
-| Sessions       | Supplies workout session CRUD plus clone and recurrence helpers.                                        | `src/modules/sessions/sessions.routes.ts`            |
+| Module         | Purpose                                                                                                       | Entry point                                          |
+| -------------- | ------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------- |
+| Auth           | Handles registration, authentication, token refresh, JWKS publishing, and session management endpoints.       | `src/modules/auth/auth.routes.ts`                    |
+| Users          | Exposes profile management, admin user administration, contact management, and follow relationships.          | `src/modules/users/users.routes.ts`                  |
+| Exercise Types | Provides CRUD endpoints for managing the catalog of exercise types with admin-only mutations.                 | `src/modules/exercise-types/exerciseTypes.routes.ts` |
+| Exercises      | Offers authenticated CRUD APIs for individual exercise records.                                               | `src/modules/exercises/exercise.routes.ts`           |
+| Sessions       | Supplies workout session CRUD plus clone and recurrence helpers.                                              | `src/modules/sessions/sessions.routes.ts`            |
 | Plans          | Provides CRUD endpoints for training plan management, including creation, updates, archiving, and statistics. | `src/modules/plans/plans.routes.ts`                  |
-| Logs           | Provides audit log querying and recent activity endpoints for administrative monitoring.                | `src/modules/logs/logs.routes.ts`                    |
-| Points         | Returns loyalty points summaries and history for authenticated users.                                   | `src/modules/points/points.routes.ts`                |
-| Progress       | Serves workout summaries, trends, exports, and plan progress analytics.                                 | `src/modules/progress/progress.routes.ts`            |
-| Feed           | Powers the social feed, bookmarks, reactions, shares, and moderation endpoints.                         | `src/modules/feed/feed.routes.ts`                    |
-| Health         | Lightweight heartbeat router exposing service availability.                                             | `src/modules/health/health.router.ts`                |
-| System         | Administrative health and read-only mode controls used for maintenance operations.                      | `src/modules/system/system.routes.ts`                |
-| Common         | Shared middleware and utilities such as idempotency handling, RBAC, rate limiting, and auditing.        | `src/modules/common/`                                |
+| Logs           | Provides audit log querying and recent activity endpoints for administrative monitoring.                      | `src/modules/logs/logs.routes.ts`                    |
+| Points         | Returns loyalty points summaries and history for authenticated users.                                         | `src/modules/points/points.routes.ts`                |
+| Progress       | Serves workout summaries, trends, exports, and plan progress analytics.                                       | `src/modules/progress/progress.routes.ts`            |
+| Feed           | Powers the social feed, bookmarks, reactions, shares, and moderation endpoints.                               | `src/modules/feed/feed.routes.ts`                    |
+| Health         | Lightweight heartbeat router exposing service availability.                                                   | `src/modules/health/health.router.ts`                |
+| System         | Administrative health and read-only mode controls used for maintenance operations.                            | `src/modules/system/system.routes.ts`                |
+| Common         | Shared middleware and utilities such as idempotency handling, RBAC, rate limiting, and auditing.              | `src/modules/common/`                                |
 
 See `src/modules/index.ts` for how these routers are mounted under the versioned API path.
 

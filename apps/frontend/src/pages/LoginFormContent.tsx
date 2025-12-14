@@ -156,8 +156,14 @@ const LoginFormContent: React.FC = () => {
   };
 
   return (
-    // eslint-disable-next-line @typescript-eslint/no-misused-promises
-    <form ref={formRef} onSubmit={handleSubmit} className="form">
+    <form
+      ref={formRef}
+      onSubmit={(e) => {
+        e.preventDefault();
+        void handleSubmit();
+      }}
+      className="form"
+    >
       <label className="form-label">
         <span className="form-label-text">{t("auth.login.emailLabel")}</span>
         <input

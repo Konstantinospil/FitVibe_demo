@@ -108,7 +108,10 @@ const loadLanguage = async (lng: SupportedLanguage): Promise<void> => {
     i18n.addResourceBundle(lng, "translation", translations, true, true);
     resources[lng] = { translation: translations };
   } catch (error) {
-    console.warn(`Failed to load language ${lng}:`, error);
+    // Log error but don't fail - fallback to English
+    if (process.env.NODE_ENV !== "production") {
+      console.warn(`Failed to load language ${lng}:`, error);
+    }
     // Fallback to English if language loading fails
     if (lng !== "en") {
       // Try to load English as fallback

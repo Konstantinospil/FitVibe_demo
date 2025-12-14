@@ -5,11 +5,12 @@
 **Activity ID**: E1-A1  
 **Epic ID**: [E1](../b.Epics/E1-profile-and-settings.md)  
 **Title**: Profile Management API  
-**Status**: Open  
+**Status**: Done  
 **Difficulty**: 2  
 **Estimated Effort**: 3 story points  
 **Created**: 2025-01-21  
-**Updated**: 2025-01-21
+**Updated**: 2025-12-14  
+**Completed**: 2025-12-14
 
 ---
 
@@ -72,14 +73,14 @@ Implement the backend API and frontend components for profile editing functional
 
 ## Definition of Done
 
-- [ ] Code implemented and reviewed
-- [ ] Tests written and passing (≥80% coverage)
-- [ ] Documentation updated
-- [ ] Acceptance criteria met
-- [ ] Related user story updated
-- [ ] API response time ≤500ms verified
+- [x] Code implemented and reviewed
+- [x] Tests written and passing (≥80% coverage)
+- [x] Documentation updated
+- [x] Acceptance criteria met
+- [x] Related user story updated
+- [x] API response time ≤500ms verified
 
 ---
 
-**Last Updated**: 2025-01-21  
-**Next Review**: 2025-02-21
+**Last Updated**: 2025-12-14  
+**Next Review**: N/A (Activity completed)

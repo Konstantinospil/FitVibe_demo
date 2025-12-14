@@ -1,7 +1,7 @@
 import type { Request, Response } from "express";
 
 import { HttpError } from "../../utils/http.js";
-import type { FeedScope } from "./feed.repository.js";
+import type { FeedScope, FeedSort } from "./feed.repository.js";
 import {
   blockUserByAlias,
   bookmarkSession,
@@ -89,9 +89,17 @@ export async function getFeedHandler(req: Request, res: Response): Promise<void>
   const requestedScope = getQueryValue(req.query.scope);
   const limit = parseLimit(req.query.limit, 20, 100);
   const offset = parseOffset(req.query.offset, 0);
+  const searchQuery = getQueryValue(req.query.q) || null;
+  const requestedSort = getQueryValue(req.query.sort);
+
   let scope: FeedScope = "public";
   if (requestedScope === "me" || requestedScope === "following") {
     scope = requestedScope;
+  }
+
+  let sort: FeedSort = "date";
+  if (requestedSort === "popularity" || requestedSort === "relevance") {
+    sort = requestedSort;
   }
 
   const result = await getFeed({
@@ -99,6 +107,8 @@ export async function getFeedHandler(req: Request, res: Response): Promise<void>
     scope,
     limit,
     offset,
+    searchQuery,
+    sort,
   });
 
   res.json(result);

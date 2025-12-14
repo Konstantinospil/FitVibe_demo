@@ -37,6 +37,9 @@ const Planner: React.FC = () => {
   // Session metadata
   const [sessionTitle, setSessionTitle] = useState("");
   const [sessionNotes, setSessionNotes] = useState("");
+  const [sessionVisibility, setSessionVisibility] = useState<"private" | "public" | "link">(
+    "private",
+  );
   const [plannedDate, setPlannedDate] = useState(() => {
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
@@ -189,7 +192,7 @@ const Planner: React.FC = () => {
         title: sessionTitle || null,
         planned_at: plannedAt,
         notes: sessionNotes || null,
-        visibility: "private",
+        visibility: sessionVisibility,
         exercises: sessionExercises,
       };
 
@@ -211,8 +214,14 @@ const Planner: React.FC = () => {
       title={t("planner.title")}
       description={t("planner.description")}
     >
-      {/* eslint-disable-next-line @typescript-eslint/no-misused-promises */}
-      <form ref={formRef} onSubmit={handleSave} className="form form--gap-lg">
+      <form
+        ref={formRef}
+        onSubmit={(e) => {
+          e.preventDefault();
+          void handleSave();
+        }}
+        className="form form--gap-lg"
+      >
         {/* Session Metadata Card */}
         <Card>
           <CardHeader>
@@ -301,6 +310,39 @@ const Planner: React.FC = () => {
                     resize: "vertical",
                   }}
                 />
+              </div>
+
+              <div>
+                <label
+                  htmlFor="session-visibility"
+                  className="form-label-text block mb-05 font-weight-600"
+                >
+                  {t("planner.visibility") || "Visibility"}
+                </label>
+                <select
+                  id="session-visibility"
+                  value={sessionVisibility}
+                  onChange={(e) =>
+                    setSessionVisibility(e.target.value as "private" | "public" | "link")
+                  }
+                  className="form-input"
+                  style={{ background: "var(--color-surface)" }}
+                  aria-label={t("planner.visibilityLabel") || "Session visibility"}
+                >
+                  <option value="private">
+                    {t("planner.visibilityPrivate") || "Private (only you)"}
+                  </option>
+                  <option value="link">
+                    {t("planner.visibilityLink") || "Link only (unlisted)"}
+                  </option>
+                  <option value="public">
+                    {t("planner.visibilityPublic") || "Public (visible in feed)"}
+                  </option>
+                </select>
+                <p className="mt-05 text-085 text-muted">
+                  {t("planner.visibilityHelp") ||
+                    "Private sessions are only visible to you. Link sessions can be shared via link. Public sessions appear in the community feed."}
+                </p>
               </div>
             </div>
           </CardContent>

@@ -27,7 +27,11 @@ vi.mock("../../src/services/api", () => ({
   apiClient: {
     get: vi.fn(),
     patch: vi.fn(),
+    post: vi.fn(),
     delete: vi.fn(),
+    defaults: {
+      baseURL: "http://localhost:3000",
+    },
   },
   setup2FA: vi.fn(),
   verify2FA: vi.fn(),
@@ -161,6 +165,7 @@ const renderSettings = () => {
 describe("Settings", () => {
   const mockGet = vi.mocked(apiClient.get);
   const mockPatch = vi.mocked(apiClient.patch);
+  const mockPost = vi.mocked(apiClient.post);
   const mockDelete = vi.mocked(apiClient.delete);
 
   // Set test timeout to prevent hanging
@@ -187,6 +192,7 @@ describe("Settings", () => {
 
     mockGet.mockResolvedValue({ data: mockUserData });
     mockPatch.mockResolvedValue({ data: {} });
+    mockPost.mockResolvedValue({ data: {} });
     mockDelete.mockResolvedValue({ data: {} });
     vi.mocked(get2FAStatus).mockResolvedValue({ enabled: false });
     vi.mocked(setup2FA).mockResolvedValue({
@@ -1619,6 +1625,403 @@ describe("Settings", () => {
             screen.getByText(
               /Alias may only contain letters, numbers, underscores, dots, or dashes/,
             ),
+          ).toBeInTheDocument();
+        },
+        { timeout: 5000 },
+      );
+    });
+  });
+
+  describe("Avatar Upload (FR-009)", () => {
+    it("displays avatar upload section", async () => {
+      const { container } = renderSettings();
+
+      await waitFor(
+        () => {
+          const settingsTexts = screen.queryAllByText("Settings");
+          expect(
+            Array.from(settingsTexts).find((el) => container.contains(el)),
+          ).toBeInTheDocument();
+        },
+        { timeout: 5000 },
+      );
+
+      await waitFor(
+        () => {
+          const selectButtons = screen.getAllByText(/select image/i);
+          expect(
+            Array.from(selectButtons).find((el) => container.contains(el)),
+          ).toBeInTheDocument();
+        },
+        { timeout: 5000 },
+      );
+    });
+
+    it("allows selecting an image file", async () => {
+      const { container } = renderSettings();
+
+      await waitFor(
+        () => {
+          const settingsTexts = screen.queryAllByText("Settings");
+          expect(
+            Array.from(settingsTexts).find((el) => container.contains(el)),
+          ).toBeInTheDocument();
+        },
+        { timeout: 5000 },
+      );
+
+      const fileInput = container.querySelector("#avatar-upload") as HTMLInputElement;
+      expect(fileInput).toBeDefined();
+
+      const file = new File(["fake-image-content"], "test.jpg", { type: "image/jpeg" });
+      fireEvent.change(fileInput, { target: { files: [file] } });
+
+      await waitFor(
+        () => {
+          const uploadButtons = screen.getAllByText(/upload/i);
+          expect(
+            Array.from(uploadButtons).find((el) => container.contains(el)),
+          ).toBeInTheDocument();
+        },
+        { timeout: 5000 },
+      );
+    });
+
+    it("rejects invalid file types", async () => {
+      const { container } = renderSettings();
+
+      await waitFor(
+        () => {
+          const settingsTexts = screen.queryAllByText("Settings");
+          expect(
+            Array.from(settingsTexts).find((el) => container.contains(el)),
+          ).toBeInTheDocument();
+        },
+        { timeout: 5000 },
+      );
+
+      const fileInput = container.querySelector("#avatar-upload") as HTMLInputElement;
+      const file = new File(["fake-pdf-content"], "test.pdf", { type: "application/pdf" });
+      fireEvent.change(fileInput, { target: { files: [file] } });
+
+      // Should show error message
+      await waitFor(
+        () => {
+          const errorTexts = screen.queryAllByText(/invalid file type/i);
+          expect(Array.from(errorTexts).find((el) => container.contains(el))).toBeInTheDocument();
+        },
+        { timeout: 5000 },
+      );
+    });
+
+    it("rejects files that are too large", async () => {
+      const { container } = renderSettings();
+
+      await waitFor(
+        () => {
+          const settingsTexts = screen.queryAllByText("Settings");
+          expect(
+            Array.from(settingsTexts).find((el) => container.contains(el)),
+          ).toBeInTheDocument();
+        },
+        { timeout: 5000 },
+      );
+
+      const fileInput = container.querySelector("#avatar-upload") as HTMLInputElement;
+      // Create a file larger than 5MB
+      const largeContent = new Array(6 * 1024 * 1024).fill("a").join("");
+      const file = new File([largeContent], "large.jpg", { type: "image/jpeg" });
+      fireEvent.change(fileInput, { target: { files: [file] } });
+
+      // Should show error message
+      await waitFor(
+        () => {
+          const errorTexts = screen.queryAllByText(/too large/i);
+          expect(Array.from(errorTexts).find((el) => container.contains(el))).toBeInTheDocument();
+        },
+        { timeout: 5000 },
+      );
+    });
+
+    it("uploads avatar successfully", async () => {
+      const { container } = renderSettings();
+
+      mockPost.mockResolvedValue({
+        data: {
+          success: true,
+          fileUrl: "/users/avatar/user-1",
+          bytes: 1024,
+          mimeType: "image/png",
+        },
+      });
+
+      await waitFor(
+        () => {
+          const settingsTexts = screen.queryAllByText("Settings");
+          expect(
+            Array.from(settingsTexts).find((el) => container.contains(el)),
+          ).toBeInTheDocument();
+        },
+        { timeout: 5000 },
+      );
+
+      const fileInput = container.querySelector("#avatar-upload") as HTMLInputElement;
+      const file = new File(["fake-image-content"], "test.jpg", { type: "image/jpeg" });
+      fireEvent.change(fileInput, { target: { files: [file] } });
+
+      await waitFor(
+        () => {
+          const uploadButtons = screen.getAllByText(/upload/i);
+          expect(
+            Array.from(uploadButtons).find((el) => container.contains(el)),
+          ).toBeInTheDocument();
+        },
+        { timeout: 5000 },
+      );
+
+      const uploadButtons = screen.getAllByText(/upload/i);
+      const uploadButton = Array.from(uploadButtons).find((el) => container.contains(el))!;
+      fireEvent.click(uploadButton);
+
+      await waitFor(
+        () => {
+          expect(mockPost).toHaveBeenCalledWith(
+            "/api/v1/users/me/avatar",
+            expect.any(FormData),
+            expect.objectContaining({
+              headers: expect.objectContaining({
+                "Content-Type": "multipart/form-data",
+              }),
+            }),
+          );
+        },
+        { timeout: 5000 },
+      );
+    });
+
+    it("displays existing avatar if available", async () => {
+      mockGet.mockResolvedValue({
+        data: {
+          ...mockUserData,
+          avatar: {
+            url: "/users/avatar/user-1",
+            mimeType: "image/png",
+            bytes: 1024,
+            updatedAt: new Date().toISOString(),
+          },
+        },
+      });
+
+      const { container } = renderSettings();
+
+      await waitFor(
+        () => {
+          const settingsTexts = screen.queryAllByText("Settings");
+          expect(
+            Array.from(settingsTexts).find((el) => container.contains(el)),
+          ).toBeInTheDocument();
+        },
+        { timeout: 5000 },
+      );
+
+      await waitFor(
+        () => {
+          const avatarImages = container.querySelectorAll('img[alt="Profile avatar"]');
+          expect(avatarImages.length).toBeGreaterThan(0);
+        },
+        { timeout: 5000 },
+      );
+    });
+
+    it("allows deleting avatar", async () => {
+      mockGet.mockResolvedValue({
+        data: {
+          ...mockUserData,
+          avatar: {
+            url: "/users/avatar/user-1",
+            mimeType: "image/png",
+            bytes: 1024,
+            updatedAt: new Date().toISOString(),
+          },
+        },
+      });
+
+      const { container } = renderSettings();
+
+      await waitFor(
+        () => {
+          const settingsTexts = screen.queryAllByText("Settings");
+          expect(
+            Array.from(settingsTexts).find((el) => container.contains(el)),
+          ).toBeInTheDocument();
+        },
+        { timeout: 5000 },
+      );
+
+      await waitFor(
+        () => {
+          const deleteButtons = screen.getAllByText(/delete/i);
+          expect(
+            Array.from(deleteButtons).find((el) => container.contains(el)),
+          ).toBeInTheDocument();
+        },
+        { timeout: 5000 },
+      );
+
+      const deleteButtons = screen.getAllByText(/delete/i);
+      const deleteButton = Array.from(deleteButtons).find((el) => container.contains(el))!;
+      fireEvent.click(deleteButton);
+
+      await waitFor(
+        () => {
+          expect(mockDelete).toHaveBeenCalledWith("/api/v1/users/me/avatar");
+        },
+        { timeout: 5000 },
+      );
+    });
+
+    it("handles avatar upload error", async () => {
+      const { container } = renderSettings();
+
+      mockPost.mockRejectedValue(new Error("Upload failed"));
+
+      await waitFor(
+        () => {
+          const settingsTexts = screen.queryAllByText("Settings");
+          expect(
+            Array.from(settingsTexts).find((el) => container.contains(el)),
+          ).toBeInTheDocument();
+        },
+        { timeout: 5000 },
+      );
+
+      const fileInput = container.querySelector("#avatar-upload") as HTMLInputElement;
+      const file = new File(["fake-image-content"], "test.jpg", { type: "image/jpeg" });
+      fireEvent.change(fileInput, { target: { files: [file] } });
+
+      await waitFor(
+        () => {
+          const uploadButtons = screen.getAllByText(/upload/i);
+          expect(
+            Array.from(uploadButtons).find((el) => container.contains(el)),
+          ).toBeInTheDocument();
+        },
+        { timeout: 5000 },
+      );
+
+      const uploadButtons = screen.getAllByText(/upload/i);
+      const uploadButton = Array.from(uploadButtons).find((el) => container.contains(el))!;
+      fireEvent.click(uploadButton);
+
+      await waitFor(
+        () => {
+          const errorTexts = screen.queryAllByText(/failed to upload/i);
+          expect(Array.from(errorTexts).find((el) => container.contains(el))).toBeInTheDocument();
+        },
+        { timeout: 5000 },
+      );
+    });
+
+    it("disables upload button while uploading", async () => {
+      const { container } = renderSettings();
+
+      mockPost.mockImplementation(
+        () => new Promise((resolve) => setTimeout(() => resolve({ data: {} }), 100)),
+      );
+
+      await waitFor(
+        () => {
+          const settingsTexts = screen.queryAllByText("Settings");
+          expect(
+            Array.from(settingsTexts).find((el) => container.contains(el)),
+          ).toBeInTheDocument();
+        },
+        { timeout: 5000 },
+      );
+
+      const fileInput = container.querySelector("#avatar-upload") as HTMLInputElement;
+      const file = new File(["fake-image-content"], "test.jpg", { type: "image/jpeg" });
+      fireEvent.change(fileInput, { target: { files: [file] } });
+
+      await waitFor(
+        () => {
+          const uploadButtons = screen.getAllByText(/upload/i);
+          expect(
+            Array.from(uploadButtons).find((el) => container.contains(el)),
+          ).toBeInTheDocument();
+        },
+        { timeout: 5000 },
+      );
+
+      const uploadButtons = screen.getAllByText(/upload/i);
+      const uploadButton = Array.from(uploadButtons).find((el) => container.contains(el))!;
+      fireEvent.click(uploadButton);
+
+      // Button should be disabled during upload
+      await waitFor(
+        () => {
+          expect(uploadButton).toBeDisabled();
+        },
+        { timeout: 5000 },
+      );
+    });
+
+    it("accepts JPEG, PNG, and WebP formats", async () => {
+      const { container } = renderSettings();
+
+      await waitFor(
+        () => {
+          const settingsTexts = screen.queryAllByText("Settings");
+          expect(
+            Array.from(settingsTexts).find((el) => container.contains(el)),
+          ).toBeInTheDocument();
+        },
+        { timeout: 5000 },
+      );
+
+      const fileInput = container.querySelector("#avatar-upload") as HTMLInputElement;
+      expect(fileInput.accept).toBe("image/jpeg,image/png,image/webp");
+
+      // Test JPEG
+      const jpegFile = new File(["fake-image"], "test.jpg", { type: "image/jpeg" });
+      fireEvent.change(fileInput, { target: { files: [jpegFile] } });
+      await waitFor(
+        () => {
+          const uploadButtons = screen.getAllByText(/upload/i);
+          expect(
+            Array.from(uploadButtons).find((el) => container.contains(el)),
+          ).toBeInTheDocument();
+        },
+        { timeout: 5000 },
+      );
+
+      // Reset
+      fireEvent.change(fileInput, { target: { files: [] } });
+
+      // Test PNG
+      const pngFile = new File(["fake-image"], "test.png", { type: "image/png" });
+      fireEvent.change(fileInput, { target: { files: [pngFile] } });
+      await waitFor(
+        () => {
+          const uploadButtons = screen.getAllByText(/upload/i);
+          expect(
+            Array.from(uploadButtons).find((el) => container.contains(el)),
+          ).toBeInTheDocument();
+        },
+        { timeout: 5000 },
+      );
+
+      // Reset
+      fireEvent.change(fileInput, { target: { files: [] } });
+
+      // Test WebP
+      const webpFile = new File(["fake-image"], "test.webp", { type: "image/webp" });
+      fireEvent.change(fileInput, { target: { files: [webpFile] } });
+      await waitFor(
+        () => {
+          const uploadButtons = screen.getAllByText(/upload/i);
+          expect(
+            Array.from(uploadButtons).find((el) => container.contains(el)),
           ).toBeInTheDocument();
         },
         { timeout: 5000 },

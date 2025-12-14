@@ -110,6 +110,81 @@ describe("Feed Repository", () => {
         userId,
       );
     });
+
+    it("should apply search query when provided", async () => {
+      const options: FeedQueryOptions = {
+        scope: "public",
+        searchQuery: "test query",
+      };
+      const mockRows: feedRepository.FeedItemWithSessionRow[] = [];
+
+      const dbModule = await import("../../../../apps/backend/src/db/connection.js");
+      const dbFn = dbModule.db as jest.Mock;
+      dbFn("feed_items");
+      if (queryBuilders["feed_items"]) {
+        const newBuilder = createMockQueryBuilder(mockRows);
+        queryBuilders["feed_items"] = newBuilder;
+      }
+
+      const result = await feedRepository.listFeedSessions(options);
+
+      expect(result).toEqual(mockRows);
+      expect(queryBuilders["feed_items"]?.leftJoin).toHaveBeenCalledWith(
+        "session_exercises",
+        "session_exercises.session_id",
+        "sessions.id",
+      );
+    });
+
+    it("should apply popularity sorting when sort is popularity", async () => {
+      const options: FeedQueryOptions = {
+        scope: "public",
+        sort: "popularity",
+      };
+      const mockRows: feedRepository.FeedItemWithSessionRow[] = [];
+
+      const dbModule = await import("../../../../apps/backend/src/db/connection.js");
+      const dbFn = dbModule.db as jest.Mock;
+      dbFn("feed_items");
+      if (queryBuilders["feed_items"]) {
+        const newBuilder = createMockQueryBuilder(mockRows);
+        queryBuilders["feed_items"] = newBuilder;
+      }
+
+      const result = await feedRepository.listFeedSessions(options);
+
+      expect(result).toEqual(mockRows);
+      expect(queryBuilders["feed_items"]?.leftJoin).toHaveBeenCalledWith(
+        "feed_likes",
+        "feed_likes.feed_item_id",
+        "feed_items.id",
+      );
+      expect(queryBuilders["feed_items"]?.groupBy).toHaveBeenCalled();
+    });
+
+    it("should apply relevance sorting when sort is relevance", async () => {
+      const options: FeedQueryOptions = {
+        scope: "public",
+        sort: "relevance",
+      };
+      const mockRows: feedRepository.FeedItemWithSessionRow[] = [];
+
+      const dbModule = await import("../../../../apps/backend/src/db/connection.js");
+      const dbFn = dbModule.db as jest.Mock;
+      dbFn("feed_items");
+      if (queryBuilders["feed_items"]) {
+        const newBuilder = createMockQueryBuilder(mockRows);
+        queryBuilders["feed_items"] = newBuilder;
+      }
+
+      const result = await feedRepository.listFeedSessions(options);
+
+      expect(result).toEqual(mockRows);
+      expect(queryBuilders["feed_items"]?.orderBy).toHaveBeenCalledWith(
+        "feed_items.published_at",
+        "desc",
+      );
+    });
   });
 
   describe("findFeedItemById", () => {

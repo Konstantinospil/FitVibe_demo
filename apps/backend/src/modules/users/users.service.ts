@@ -1,4 +1,4 @@
-﻿import crypto from "crypto";
+import crypto from "crypto";
 import bcrypt from "bcryptjs";
 import { db } from "../../db/connection.js";
 import type { ContactRow, UserRow, AvatarRow } from "./users.repository.js";
@@ -19,6 +19,7 @@ import {
   getProfileByUserId,
   checkAliasAvailable,
   updateProfileAlias,
+  canChangeAlias,
   insertUserMetric,
   getLatestUserMetrics,
   type ProfileRow,
@@ -414,10 +415,29 @@ export async function updateProfile(userId: string, dto: UpdateProfileDTO): Prom
     const currentAlias = profile?.alias ?? null;
 
     if (normalizedAlias !== currentAlias) {
+      // Check alias change rate limiting (max 1 per 30 days)
+      const aliasChangeCheck = await canChangeAlias(userId);
+      if (!aliasChangeCheck.allowed) {
+        const daysRemaining = aliasChangeCheck.daysRemaining ?? 30;
+        throw new HttpError(
+          429,
+          "E.ALIAS_CHANGE_RATE_LIMITED",
+          `Alias can only be changed once per 30 days. Please try again in ${daysRemaining} day${daysRemaining === 1 ? "" : "s"}.`,
+        );
+      }
+
       // Check alias availability (case-insensitive)
       const isAvailable = await checkAliasAvailable(normalizedAlias, userId);
       if (!isAvailable) {
-        throw new HttpError(409, "E.ALIAS_TAKEN", "This alias is already taken");
+        // Genericize error message to prevent enumeration attacks
+        // Add random delay (100-500ms) to prevent timing attacks
+        const delay = Math.floor(Math.random() * 400) + 100;
+        await new Promise((resolve) => setTimeout(resolve, delay));
+        throw new HttpError(
+          409,
+          "E.PROFILE_UPDATE_FAILED",
+          "Profile update failed. Please try again.",
+        );
       }
       changes.alias = { old: currentAlias, next: normalizedAlias };
     }
@@ -438,9 +458,20 @@ export async function updateProfile(userId: string, dto: UpdateProfileDTO): Prom
       weightInKg = dto.weight * 0.453592;
     }
 
+    // Validate and round weight precision (max 2 decimal places)
+    if (weightInKg !== undefined) {
+      // Round to 2 decimal places
+      weightInKg = Math.round(weightInKg * 100) / 100;
+
+      // Validate precision (should not have more than 2 decimal places)
+      if (weightInKg.toString().split(".")[1]?.length > 2) {
+        throw new HttpError(400, "E.VALIDATION_ERROR", "Weight must have at most 2 decimal places");
+      }
+    }
+
     const latestMetrics = await getLatestUserMetrics(userId);
     const currentWeight = latestMetrics?.weight ?? null;
-    if (weightInKg !== currentWeight) {
+    if (weightInKg !== undefined && weightInKg !== currentWeight) {
       metricUpdates.weight = weightInKg;
       metricUpdates.unit = dto.weightUnit ?? "kg";
       changes.weight = { old: currentWeight, next: weightInKg };

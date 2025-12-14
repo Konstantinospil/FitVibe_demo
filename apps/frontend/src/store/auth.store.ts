@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { logout as apiLogout } from "../services/api";
+import { logger } from "../utils/logger";
 
 /**
  * SECURITY FIX (CWE-922): Removed token storage from localStorage
@@ -60,7 +61,7 @@ export const useAuthStore = create<AuthState>()((set) => ({
     } catch (error) {
       // Even if logout fails, clear local state
       // This ensures user is signed out locally even if network request fails
-      console.error("Logout error:", error);
+      logger.apiError("Logout error", error, "/api/v1/auth/logout", "POST");
     }
     setAuthFlag(false);
     set({ ...initialState });

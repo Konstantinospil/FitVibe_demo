@@ -26,15 +26,15 @@ if (typeof window !== "undefined") {
 
     // Override console.error to suppress in production
     // Only log critical errors that need attention
-    console.error = (...args: unknown[]) => {
+    console.error = (..._args: unknown[]) => {
       // In production, only log to monitoring service (e.g., Sentry)
       // Don't log to console to avoid Lighthouse failures
       // You can still send to error tracking service here
-      // Example: Sentry.captureException(new Error(String(args[0])));
+      // Example: Sentry.captureException(new Error(String(_args[0])));
     };
 
     // Override console.warn to suppress in production
-    console.warn = (...args: unknown[]) => {
+    console.warn = (..._args: unknown[]) => {
       // Suppress warnings in production for Lighthouse compliance
       // Critical warnings can still be sent to monitoring service
     };

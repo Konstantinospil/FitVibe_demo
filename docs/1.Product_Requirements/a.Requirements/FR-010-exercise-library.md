@@ -5,12 +5,13 @@
 **Requirement ID**: FR-010  
 **Type**: Functional Requirement  
 **Title**: Exercise Library  
-**Status**: Open  
+**Status**: Done  
 **Priority**: Medium  
 **Gate**: SILVER  
 **Owner**: ENG/QA  
 **Created**: 2025-01-20  
-**Updated**: 2025-01-21
+**Updated**: 2025-12-14  
+**Completed**: 2025-12-14
 
 ---
 

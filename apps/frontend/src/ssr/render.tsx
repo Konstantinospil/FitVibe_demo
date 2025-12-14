@@ -114,7 +114,10 @@ async function prefetchRouteData(queryClient: QueryClient, url: string): Promise
     }
   } catch (error) {
     // Log error but don't fail SSR - let client-side handle data fetching
-    console.error("Error prefetching route data:", error);
+    // Only log in development to avoid console errors in production
+    if (process.env.NODE_ENV !== "production") {
+      console.error("Error prefetching route data:", error);
+    }
   }
 }
 

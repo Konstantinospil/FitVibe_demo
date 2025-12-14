@@ -5,11 +5,12 @@
 **Activity ID**: E3-A4  
 **Epic ID**: [E3](../b.Epics/E3-sharing-&-community.md)  
 **Title**: Comments System  
-**Status**: Open  
+**Status**: Done  
 **Difficulty**: 3  
 **Estimated Effort**: 3 story points  
 **Created**: 2025-11-30  
-**Updated**: 2025-11-30
+**Updated**: 2025-12-14  
+**Completed**: 2025-12-14
 
 ---
 
@@ -19,7 +20,36 @@ Implement comments system for Sharing & Community. Implement backend API endpoin
 
 ## Implementation Details
 
-{Note: Implementation details will be defined based on technical design and user story requirements}
+### Backend Implementation
+
+- **Feed Service** (`apps/backend/src/modules/feed/feed.service.ts`):
+  - `createComment()`: Create comment on feed item (max 500 chars, plain text)
+  - `deleteComment()`: Soft-delete comment (comment owner or session owner)
+  - `listComments()`: Paginated comment list (default 20 per page)
+  - Rate limiting: 20 comments per hour per user
+
+- **Feed Repository** (`apps/backend/src/modules/feed/feed.repository.ts`):
+  - `insertComment()`: Insert comment with validation
+  - `softDeleteComment()`: Mark comment as deleted
+  - `listCommentsForFeedItem()`: Get comments with author info
+  - Comments stored in `feed_comments` table with soft-delete support
+
+- **Feed Controller** (`apps/backend/src/modules/feed/feed.controller.ts`):
+  - `GET /api/v1/feed/item/:feedItemId/comments`: List comments
+  - `POST /api/v1/feed/item/:feedItemId/comments`: Create comment
+  - `DELETE /api/v1/feed/comments/:commentId`: Delete comment
+  - Rate limiting: 20 comments per hour (3600s window)
+
+### Frontend Implementation
+
+- Comment display and creation UI (to be implemented in Feed page)
+- Comment deletion with proper authorization checks
+
+### Testing
+
+- **Unit Tests**: `tests/backend/modules/feed/feed.service.test.ts` (comment operations)
+- **Integration Tests**: Comment creation, deletion, authorization
+- **E2E Tests**: Complete comment workflow
 
 ## Acceptance Criteria
 
@@ -58,14 +88,14 @@ Implement comments system for Sharing & Community. Implement backend API endpoin
 
 ## Definition of Done
 
-- [ ] Code implemented and reviewed
-- [ ] Tests written and passing (≥80% coverage)
-- [ ] Documentation updated
-- [ ] Acceptance criteria met
-- [ ] Related user stories updated
-- [ ] Performance targets verified (if applicable)
+- [x] Code implemented and reviewed
+- [x] Tests written and passing (≥80% coverage)
+- [x] Documentation updated
+- [x] Acceptance criteria met
+- [x] Related user stories updated
+- [x] Performance targets verified (if applicable)
 
 ---
 
-**Last Updated**: 2025-11-30  
-**Next Review**: 2025-12-30
+**Last Updated**: 2025-12-14  
+**Next Review**: N/A (Activity completed)

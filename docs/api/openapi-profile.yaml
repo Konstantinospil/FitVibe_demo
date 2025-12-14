@@ -1,0 +1,161 @@
+openapi: 3.0.3
+info:
+  title: FitVibe Profile API
+  version: 1.0.0
+  description: API for user profile management (Epic 1: Profile & Settings)
+servers:
+  - url: /api/v1
+    description: API v1
+
+paths:
+  /users/me:
+    patch:
+      summary: Update user profile
+      description: |
+        Update the authenticated user's profile information.
+        Supports partial updates (only provided fields are updated).
+        
+        **Security Features:**
+        - Alias change rate limiting: Maximum 1 change per 30 days
+        - Weight precision: Maximum 2 decimal places
+        - Immutable fields: `date_of_birth` and `gender` cannot be changed
+        - Genericized error messages to prevent enumeration attacks
+        
+        **Rate Limiting:** 20 requests per 60 seconds
+      operationId: updateProfile
+      tags:
+        - Profile
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                alias:
+                  type: string
+                  minLength: 3
+                  maxLength: 50
+                  pattern: "^[a-zA-Z0-9_.-]+$"
+                  description: User alias (URL-safe, case-insensitive unique)
+                weight:
+                  type: number
+                  minimum: 20
+                  maximum: 500
+                  multipleOf: 0.01
+                  description: Weight value (max 2 decimal places)
+                weightUnit:
+                  type: string
+                  enum: [kg, lb]
+                  description: Weight unit (converted to kg internally)
+                fitnessLevel:
+                  type: string
+                  enum: [beginner, intermediate, advanced, elite]
+                  description: Fitness level
+                trainingFrequency:
+                  type: string
+                  enum: [rarely, 1_2_per_week, 3_4_per_week, 5_plus_per_week]
+                  description: Training frequency
+                displayName:
+                  type: string
+                  maxLength: 100
+                locale:
+                  type: string
+                  pattern: "^[a-z]{2}(-[A-Z]{2})?$"
+                preferredLang:
+                  type: string
+                  pattern: "^[a-z]{2}(-[A-Z]{2})?$"
+                units:
+                  type: string
+                  enum: [metric, imperial]
+                defaultVisibility:
+                  type: string
+                  enum: [private, link, public]
+      responses:
+        '200':
+          description: Profile updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfile'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: "E.VALIDATION_ERROR"
+                message: "Weight must have at most 2 decimal places"
+        '401':
+          description: Unauthenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Profile update failed (alias conflict or other conflict)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: "E.PROFILE_UPDATE_FAILED"
+                message: "Profile update failed. Please try again."
+        '429':
+          description: Rate limited (alias change rate limit exceeded)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: "E.ALIAS_CHANGE_RATE_LIMITED"
+                message: "Alias can only be changed once per 30 days. Please try again in 25 days."
+
+components:
+  schemas:
+    UserProfile:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        username:
+          type: string
+        displayName:
+          type: string
+        alias:
+          type: string
+        profile:
+          type: object
+          properties:
+            alias:
+              type: string
+            weight:
+              type: number
+            weightUnit:
+              type: string
+            fitnessLevel:
+              type: string
+            trainingFrequency:
+              type: string
+    Error:
+      type: object
+      required: [error, message]
+      properties:
+        error:
+          type: string
+          description: Error code
+        message:
+          type: string
+          description: Error message
+        code:
+          type: string
+          description: HTTP status code
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: accessToken

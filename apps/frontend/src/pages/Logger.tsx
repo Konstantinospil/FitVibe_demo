@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { Pause, Check, Clock, ChevronDown, ChevronUp } from "lucide-react";
+import { Pause, Check, Clock, ChevronDown, ChevronUp, Eye } from "lucide-react";
 import PageIntro from "../components/PageIntro";
 import { Button } from "../components/ui/Button";
 import { Card, CardHeader, CardTitle, CardContent } from "../components/ui/Card";
+import { VisibilityBadge } from "../components/ui";
 import {
   getSession,
   updateSession,
@@ -43,6 +44,10 @@ const Logger: React.FC = () => {
   const [session, setSession] = useState<SessionWithExercises | null>(null);
   const [exerciseLogs, setExerciseLogs] = useState<ExerciseLog[]>([]);
   const [loading, setLoading] = useState(true);
+  const [sessionVisibility, setSessionVisibility] = useState<"private" | "public" | "link">(
+    "private",
+  );
+  const [isUpdatingVisibility, setIsUpdatingVisibility] = useState(false);
 
   // Timer state
   const [sessionStartTime, setSessionStartTime] = useState<Date | null>(null);
@@ -101,6 +106,11 @@ const Logger: React.FC = () => {
           collapsed: false,
         }));
         setExerciseLogs(logs);
+
+        // Set visibility state
+        if (data.visibility) {
+          setSessionVisibility(data.visibility as "private" | "public" | "link");
+        }
 
         // Start session timer if not already started
         if (data.status === "planned") {
@@ -290,6 +300,31 @@ const Logger: React.FC = () => {
     return `${mins}:${String(secs).padStart(2, "0")}`;
   };
 
+  const handleVisibilityChange = async (newVisibility: "private" | "public" | "link") => {
+    if (!sessionId || newVisibility === sessionVisibility) {
+      return;
+    }
+
+    setIsUpdatingVisibility(true);
+    try {
+      await updateSession(sessionId, {
+        visibility: newVisibility,
+      });
+      setSessionVisibility(newVisibility);
+      toast.success(t("logger.visibilityUpdated") || "Session visibility updated");
+    } catch (error) {
+      logger.apiError(
+        "Failed to update session visibility",
+        error,
+        `/api/v1/sessions/${sessionId}`,
+        "PATCH",
+      );
+      toast.error(t("logger.visibilityUpdateFailed") || "Failed to update visibility");
+    } finally {
+      setIsUpdatingVisibility(false);
+    }
+  };
+
   if (loading) {
     return (
       <PageIntro
@@ -385,6 +420,47 @@ const Logger: React.FC = () => {
         </Card>
 
         {saveError && <div className="alert alert--error p-md rounded-md">{saveError}</div>}
+
+        {/* Session Visibility Settings */}
+        <Card>
+          <CardHeader>
+            <div className="flex flex--align-center flex--gap-sm">
+              <Eye size={20} />
+              <CardTitle>{t("logger.visibilitySettings") || "Session Visibility"}</CardTitle>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex--align-center flex--justify-between flex--gap-md">
+              <div>
+                <div className="text-085 text-secondary mb-025">
+                  {t("logger.currentVisibility") || "Current visibility"}
+                </div>
+                <VisibilityBadge level={sessionVisibility} />
+              </div>
+              <select
+                value={sessionVisibility}
+                onChange={(e) =>
+                  void handleVisibilityChange(e.target.value as "private" | "public" | "link")
+                }
+                disabled={isUpdatingVisibility}
+                className="form-input"
+                style={{
+                  background: "var(--color-surface)",
+                  minWidth: "150px",
+                }}
+                aria-label={t("logger.visibilityLabel") || "Change session visibility"}
+              >
+                <option value="private">{t("logger.visibilityPrivate") || "Private"}</option>
+                <option value="link">{t("logger.visibilityLink") || "Link only"}</option>
+                <option value="public">{t("logger.visibilityPublic") || "Public"}</option>
+              </select>
+            </div>
+            <p className="mt-05 text-085 text-muted">
+              {t("logger.visibilityHelp") ||
+                "Private sessions are only visible to you. Link sessions can be shared via link. Public sessions appear in the community feed."}
+            </p>
+          </CardContent>
+        </Card>
 
         {/* Exercise List */}
         {exerciseLogs.map((exerciseLog, exerciseIndex) => {

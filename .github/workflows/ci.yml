@@ -1520,12 +1520,37 @@ jobs:
         timeout-minutes: 10
         run: pnpm exec playwright install --with-deps chromium
 
+      - name: Start preview server
+        timeout-minutes: 10
+        run: |
+          pnpm --filter @fitvibe/frontend exec vite preview --host 127.0.0.1 --port 4173 --strictPort &
+          echo $! > preview-server.pid
+          # Wait for server to be ready
+          for i in {1..30}; do
+            if curl -fsS http://127.0.0.1:4173 >/dev/null 2>&1; then
+              echo "Preview server started"
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "Preview server did not start in time" >&2
+          exit 1
+
       - name: Run visual regression tests
         timeout-minutes: 20
         env:
           APP_URL: "http://127.0.0.1:4173"
           CI: "true"
+          DISABLE_WEBSERVER: "true"
         run: pnpm exec playwright test --config tests/frontend/visual/config/playwright.config.ts
+
+      - name: Stop preview server
+        if: always()
+        run: |
+          if [ -f preview-server.pid ]; then
+            kill $(cat preview-server.pid) 2>/dev/null || true
+            rm -f preview-server.pid
+          fi
 
       - name: Upload visual test artifacts
         if: always()

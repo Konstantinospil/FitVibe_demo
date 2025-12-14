@@ -1,0 +1,37 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: fitvibe_test_postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: fitvibe_test
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - postgres_test_data:/var/lib/postgresql/data
+
+  clamav:
+    image: clamav/clamav:latest
+    container_name: fitvibe_test_clamav
+    platform: linux/amd64
+    environment:
+      FRESHCLAM_CHECKS: 0
+    ports:
+      - "3310:3310"
+    healthcheck:
+      test: ["CMD", "clamdscan", "--version"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    # Optional - if ClamAV fails to start, tests can continue without it
+    profiles:
+      - clamav
+
+volumes:
+  postgres_test_data:

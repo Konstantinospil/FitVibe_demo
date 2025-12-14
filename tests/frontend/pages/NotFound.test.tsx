@@ -34,16 +34,21 @@ const renderWithRouter = (ui: React.ReactElement) => {
 };
 
 describe("NotFound", () => {
+  afterEach(() => {
+    cleanup();
+  });
+
   it("renders 404 error message", () => {
-    renderWithRouter(<NotFound />);
+    const { unmount } = renderWithRouter(<NotFound />);
 
     expect(screen.getByText("404 Error")).toBeInTheDocument();
     expect(screen.getByText("Page Not Found")).toBeInTheDocument();
     expect(screen.getByText("The page you're looking for doesn't exist.")).toBeInTheDocument();
+    unmount();
   });
 
   it("renders navigation links", () => {
-    renderWithRouter(<NotFound />);
+    const { unmount } = renderWithRouter(<NotFound />);
 
     const dashboardLink = screen.getByRole("link", { name: /go to dashboard/i });
     const homeLink = screen.getByRole("link", { name: /go to home/i });
@@ -53,13 +58,15 @@ describe("NotFound", () => {
 
     expect(homeLink).toBeInTheDocument();
     expect(homeLink).toHaveAttribute("href", "/");
+    unmount();
   });
 
   it("renders PageIntro component with correct props", () => {
-    renderWithRouter(<NotFound />);
+    const { unmount } = renderWithRouter(<NotFound />);
 
     // PageIntro should render the eyebrow, title, and description
     expect(screen.getByText("404 Error")).toBeInTheDocument();
     expect(screen.getByText("Page Not Found")).toBeInTheDocument();
+    unmount();
   });
 });

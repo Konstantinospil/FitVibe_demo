@@ -676,8 +676,10 @@ const Home: React.FC = () => {
           >
             <form
               ref={formRef}
-              // eslint-disable-next-line @typescript-eslint/no-misused-promises
-              onSubmit={handleAddExercise}
+              onSubmit={(e) => {
+                e.preventDefault();
+                void handleAddExercise();
+              }}
               className="form form--gap-lg"
             >
               <h3

@@ -58,8 +58,14 @@ const ForgotPassword: React.FC = () => {
       title={t("forgotPassword.title")}
       description={t("forgotPassword.description")}
     >
-      {/* eslint-disable-next-line @typescript-eslint/no-misused-promises */}
-      <form ref={formRef} onSubmit={handleSubmit} className="form">
+      <form
+        ref={formRef}
+        onSubmit={(e) => {
+          e.preventDefault();
+          void handleSubmit();
+        }}
+        className="form"
+      >
         <label className="form-label">
           <span className="form-label-text">{t("forgotPassword.emailLabel")}</span>
           <input

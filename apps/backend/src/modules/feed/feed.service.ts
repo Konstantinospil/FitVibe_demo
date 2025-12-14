@@ -1,6 +1,6 @@
 import { HttpError } from "../../utils/http.js";
 import { insertAudit } from "../common/audit.util.js";
-import type { FeedScope } from "./feed.repository.js";
+import type { FeedScope, FeedSort } from "./feed.repository.js";
 import {
   findFeedItemById,
   findSessionById,
@@ -62,11 +62,15 @@ export async function getFeed({
   scope = "public",
   limit,
   offset,
+  searchQuery,
+  sort,
 }: {
   viewerId?: string | null;
   scope?: FeedScope;
   limit?: number;
   offset?: number;
+  searchQuery?: string | null;
+  sort?: FeedSort;
 }): Promise<FeedListResult> {
   const normalizedScope: FeedScope = scope === "me" || scope === "following" ? scope : "public";
 
@@ -79,6 +83,8 @@ export async function getFeed({
     scope: normalizedScope,
     limit,
     offset,
+    searchQuery,
+    sort,
   });
 
   const feedItemIds = rows.map((row) => row.feed_item_id);

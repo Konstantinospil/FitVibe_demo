@@ -4,11 +4,12 @@
 
 **AC ID**: US-2.1-AC05  
 **Story ID**: [US-2.1](../d.User_stories/US-2.1-exercise-crud.md)  
-**Status**: Proposed  
+**Status**: Done  
 **Priority**: Medium  
 **Test Method**: Unit + API negative  
 **Created**: 2025-01-21  
-**Updated**: 2025-01-21
+**Updated**: 2025-12-14  
+**Completed**: 2025-12-14
 
 ---
 
@@ -35,9 +36,9 @@ Unit tests for validation logic and API negative tests for error responses.
 
 ## Verification
 
-- [ ] Criterion is specific and measurable
-- [ ] Test method is appropriate
-- [ ] Evidence requirements are clear
+- [x] Criterion is specific and measurable
+- [x] Test method is appropriate
+- [x] Evidence requirements are clear
 
 ## Related Artifacts
 
@@ -49,6 +50,6 @@ Unit tests for validation logic and API negative tests for error responses.
 
 ---
 
-**Last Updated**: 2025-01-21  
-**Verified By**: {Name/Team}  
-**Verified Date**: {YYYY-MM-DD}
+**Last Updated**: 2025-12-14  
+**Verified By**: Development Team  
+**Verified Date**: 2025-12-14

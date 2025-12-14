@@ -8,7 +8,7 @@ const cardBaseStyle: React.CSSProperties = {
   background: "var(--color-bg-card)",
   borderRadius: "24px",
   border: "1px solid var(--color-border)",
-  boxShadow: "var(--shadow-elevated)",
+  boxShadow: "var(--shadow-e2)",
   backdropFilter: "blur(18px)",
   display: "flex",
   flexDirection: "column",

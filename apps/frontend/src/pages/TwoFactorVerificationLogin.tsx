@@ -105,8 +105,14 @@ const TwoFactorVerificationLogin: React.FC = () => {
         "Enter the 6-digit code from your authenticator app or use a backup code."
       }
     >
-      {/* eslint-disable-next-line @typescript-eslint/no-misused-promises */}
-      <form ref={formRef} onSubmit={handleSubmit} className="form form--gap-lg">
+      <form
+        ref={formRef}
+        onSubmit={(e) => {
+          e.preventDefault();
+          void handleSubmit();
+        }}
+        className="form form--gap-lg"
+      >
         <div
           className="flex flex--align-center flex--center p-md rounded-md flex--gap-075"
           style={{ background: "var(--color-surface-glass)" }}

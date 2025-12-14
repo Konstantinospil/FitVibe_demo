@@ -1,5 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
+// Import CSS at module level - Vitest processes CSS imports safely
 import "../../src/styles/global.css";
 import { CardTitle } from "../../src/components/ui";
 
@@ -12,8 +13,10 @@ describe("Design tokens", () => {
   });
 
   it("applies heading font family in CardTitle", () => {
-    render(<CardTitle>Typography Check</CardTitle>);
+    const { unmount } = render(<CardTitle>Typography Check</CardTitle>);
     const heading = screen.getByText("Typography Check");
     expect(heading.style.fontFamily).toBe("var(--font-family-heading)");
+    // Explicitly unmount to ensure cleanup
+    unmount();
   });
 });

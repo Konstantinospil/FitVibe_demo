@@ -19,6 +19,7 @@ const Logger = lazy(() => import("../pages/Logger"));
 const Insights = lazy(() => import("../pages/Insights"));
 const Profile = lazy(() => import("../pages/Profile"));
 const Settings = lazy(() => import("../pages/Settings"));
+const Exercises = lazy(() => import("../pages/Exercises"));
 const AdminDashboard = lazy(() => import("../pages/admin/AdminDashboard"));
 const ContentReports = lazy(() => import("../pages/admin/ContentReports"));
 const UserManagement = lazy(() => import("../pages/admin/UserManagement"));
@@ -83,6 +84,7 @@ const ProtectedRoutes: React.FC<ProtectedRoutesProps> = ({
             <Route path="insights" element={<Insights />} />
             <Route path="profile" element={<Profile />} />
             <Route path="settings" element={<Settings />} />
+            <Route path="exercises" element={<Exercises />} />
             <Route path="terms" element={<Terms />} />
             <Route path="privacy" element={<Privacy />} />
             <Route path="terms-reacceptance" element={<TermsReacceptance />} />

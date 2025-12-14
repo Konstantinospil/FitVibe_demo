@@ -45,7 +45,20 @@ const updateProfileSchema = z.object({
       "Alias may only contain letters, numbers, underscores, dots, or dashes",
     )
     .optional(),
-  weight: z.number().positive().min(20).max(500).optional(),
+  weight: z
+    .number()
+    .positive()
+    .min(20)
+    .max(500)
+    .refine(
+      (val) => {
+        // Check that weight has at most 2 decimal places
+        const decimalPart = val.toString().split(".")[1];
+        return !decimalPart || decimalPart.length <= 2;
+      },
+      { message: "Weight must have at most 2 decimal places" },
+    )
+    .optional(),
   weightUnit: z.enum(["kg", "lb"]).optional(),
   fitnessLevel: z.enum(["beginner", "intermediate", "advanced", "elite"]).optional(),
   trainingFrequency: z

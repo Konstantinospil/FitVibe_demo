@@ -5,11 +5,12 @@
 **Activity ID**: E2-A4  
 **Epic ID**: [E2](../b.Epics/E2-exercise-library.md)  
 **Title**: Global Exercise Management  
-**Status**: Open  
+**Status**: Done  
 **Difficulty**: 3  
 **Estimated Effort**: 3 story points  
 **Created**: 2025-11-30  
-**Updated**: 2025-11-30
+**Updated**: 2025-12-14  
+**Completed**: 2025-12-14
 
 ---
 
@@ -19,7 +20,20 @@ Implement global exercise management for Exercise Library. Implement functionali
 
 ## Implementation Details
 
-{Note: Implementation details will be defined based on technical design and user story requirements}
+- **Backend Implementation**: Global exercises identified by `owner_id = null` in database
+- **Backend Service**: `exercise.service.ts` supports admin creating global exercises via `owner_id: null`
+- **Access Control**:
+  - Only administrators can create global exercises (owner_id = null)
+  - Non-admin users cannot set owner_id to null
+  - All users can access global exercises (visible in exercise lists)
+  - Only admins can modify global exercises
+- **Frontend UI**: Exercise Management page shows global exercises with "Global" badge
+- **Exercise Selector**: Displays global exercises alongside personal and public exercises
+- **Features**:
+  - Admins can create system-wide exercises accessible to all users
+  - Global exercises are marked with visual indicators (badge)
+  - Access control prevents non-admins from modifying global exercises
+  - Global exercises appear in all users' exercise selectors
 
 ## Acceptance Criteria
 
@@ -58,14 +72,14 @@ Implement global exercise management for Exercise Library. Implement functionali
 
 ## Definition of Done
 
-- [ ] Code implemented and reviewed
-- [ ] Tests written and passing (≥80% coverage)
-- [ ] Documentation updated
-- [ ] Acceptance criteria met
-- [ ] Related user stories updated
-- [ ] Performance targets verified (if applicable)
+- [x] Code implemented and reviewed
+- [x] Tests written and passing (≥80% coverage)
+- [x] Documentation updated
+- [x] Acceptance criteria met
+- [x] Related user stories updated
+- [x] Performance targets verified (if applicable)
 
 ---
 
-**Last Updated**: 2025-11-30  
-**Next Review**: 2025-12-30
+**Last Updated**: 2025-12-14  
+**Next Review**: N/A (Activity completed)

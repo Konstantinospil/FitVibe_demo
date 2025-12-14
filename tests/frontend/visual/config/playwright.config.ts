@@ -19,7 +19,7 @@ export default defineConfig({
     ["junit", { outputFile: "../../test-results/visual-junit.xml" }],
   ],
   use: {
-    baseURL: process.env.APP_URL || "http://localhost:4173",
+    baseURL: process.env.APP_URL || "http://127.0.0.1:4173",
     timezoneId: "UTC",
     locale: "en-US",
     geolocation: { latitude: 52.52, longitude: 13.405 }, // Berlin for consistency
@@ -49,15 +49,18 @@ export default defineConfig({
   },
   retries: process.env.CI ? 2 : 0,
   timeout: 60_000,
-  // In CI, we build and start the server explicitly, so disable webServer
+  // In CI (GitHub Actions), we build and start the server explicitly, so disable webServer
   // In local development, webServer will auto-start the preview server
-  webServer: process.env.CI
-    ? undefined
-    : {
-        command:
-          "corepack pnpm --filter @fitvibe/frontend exec vite preview --host 127.0.0.1 --port 4173 --strictPort",
-        url: "http://127.0.0.1:4173",
-        timeout: 120_000,
-        reuseExistingServer: true,
-      },
+  // Allow override via DISABLE_WEBSERVER env var for cases where server is started manually
+  // Only disable webServer in actual CI environments (GitHub Actions), not just when CI=1
+  webServer:
+    process.env.DISABLE_WEBSERVER === "true" || (process.env.CI && process.env.GITHUB_ACTIONS)
+      ? undefined
+      : {
+          command:
+            "corepack pnpm --filter @fitvibe/frontend exec vite preview --host 127.0.0.1 --port 4173 --strictPort",
+          url: "http://127.0.0.1:4173",
+          timeout: 120_000,
+          reuseExistingServer: true,
+        },
 });

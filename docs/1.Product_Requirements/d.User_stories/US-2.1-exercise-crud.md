@@ -5,11 +5,12 @@
 **Story ID**: US-2.1  
 **Epic ID**: [E2](../b.Epics/E2-exercise-library.md)  
 **Title**: Exercise CRUD  
-**Status**: Proposed  
+**Status**: Done  
 **Story Points**: 5  
 **Priority**: Medium  
 **Created**: 2025-01-21  
-**Updated**: 2025-01-21
+**Updated**: 2025-12-14  
+**Completed**: 2025-12-14
 
 ---
 
@@ -53,13 +54,13 @@ Users need the ability to perform CRUD operations on exercises with proper valid
 
 ## Definition of Done
 
-- [ ] All acceptance criteria met
-- [ ] Code implemented and reviewed
-- [ ] Tests written and passing (≥80% coverage)
-- [ ] Documentation updated
-- [ ] Evidence collected for all ACs
+- [x] All acceptance criteria met
+- [x] Code implemented and reviewed
+- [x] Tests written and passing (≥80% coverage)
+- [x] Documentation updated
+- [x] Evidence collected for all ACs
 
 ---
 
-**Last Updated**: 2025-01-21  
-**Next Review**: 2025-02-21
+**Last Updated**: 2025-12-14  
+**Next Review**: N/A (Story completed)

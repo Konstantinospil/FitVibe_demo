@@ -1,4 +1,4 @@
-﻿export type SessionStatus = "planned" | "in_progress" | "completed" | "canceled";
+export type SessionStatus = "planned" | "in_progress" | "completed" | "canceled";
 export type SessionVisibility = "private" | "public" | "link";
 
 export interface Session {
@@ -151,6 +151,7 @@ export interface SessionExercise {
   id: string;
   session_id: string;
   exercise_id?: string | null;
+  exercise_name?: string | null; // Snapshot of exercise name at time of session creation
   order_index: number;
   notes?: string | null;
   planned?: SessionExerciseAttributes | null;

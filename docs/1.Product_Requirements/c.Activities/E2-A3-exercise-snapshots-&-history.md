@@ -5,11 +5,12 @@
 **Activity ID**: E2-A3  
 **Epic ID**: [E2](../b.Epics/E2-exercise-library.md)  
 **Title**: Exercise Snapshots & History  
-**Status**: Open  
+**Status**: Done  
 **Difficulty**: 2  
 **Estimated Effort**: 2 story points  
 **Created**: 2025-11-30  
-**Updated**: 2025-11-30
+**Updated**: 2025-12-14  
+**Completed**: 2025-12-14
 
 ---
 
@@ -19,7 +20,13 @@ Implement exercise snapshots & history for Exercise Library. Implement functiona
 
 ## Implementation Details
 
-{Note: Implementation details will be defined based on technical design and user story requirements}
+- **Database Migration**: Added `exercise_name` column to `session_exercises` table (migration: `202512140000_add_exercise_name_to_session_exercises.ts`)
+- **Backend Repository**: Updated `replaceSessionExercises` to fetch and store exercise name snapshots when exercises are added to sessions
+- **Backend Types**: Added `exercise_name` field to `SessionExercise` interface and `SessionExerciseRow` type
+- **Backend Queries**: Updated `getSessionWithDetails` to select and return `exercise_name` from `session_exercises`
+- **Integration Tests**: Created comprehensive integration tests in `tests/backend/integration/exercise-snapshots.integration.test.ts`
+
+The implementation ensures that when an exercise is used in a session, a snapshot of the exercise name is stored in `session_exercises.exercise_name`. This snapshot persists even if the exercise is later modified or archived, maintaining historical accuracy.
 
 ## Acceptance Criteria
 
@@ -58,14 +65,14 @@ Implement exercise snapshots & history for Exercise Library. Implement functiona
 
 ## Definition of Done
 
-- [ ] Code implemented and reviewed
-- [ ] Tests written and passing (≥80% coverage)
-- [ ] Documentation updated
-- [ ] Acceptance criteria met
-- [ ] Related user stories updated
-- [ ] Performance targets verified (if applicable)
+- [x] Code implemented and reviewed
+- [x] Tests written and passing (≥80% coverage)
+- [x] Documentation updated
+- [x] Acceptance criteria met
+- [x] Related user stories updated
+- [x] Performance targets verified (if applicable)
 
 ---
 
-**Last Updated**: 2025-11-30  
-**Next Review**: 2025-12-30
+**Last Updated**: 2025-12-14  
+**Next Review**: N/A (Activity completed)

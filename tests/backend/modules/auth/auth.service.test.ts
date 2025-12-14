@@ -100,7 +100,18 @@ jest.mock("../../../../apps/backend/src/db/index.js", () => {
   }) as jest.Mock & {
     where: jest.Mock;
     update: jest.Mock;
+    transaction: jest.Mock;
   };
+
+  mockDbFunction.transaction = jest.fn((callback) => {
+    const mockTrx = ((table: string) => {
+      if (!queryBuilders[table]) {
+        queryBuilders[table] = createMockQueryBuilder();
+      }
+      return queryBuilders[table];
+    }) as any;
+    return Promise.resolve(callback(mockTrx));
+  });
 
   return {
     default: mockDbFunction,

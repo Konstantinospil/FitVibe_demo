@@ -80,7 +80,7 @@ const MainLayout: React.FC = () => {
             <img
               src={logoFull}
               alt="FitVibe Logo"
-              fetchPriority="high"
+              fetchpriority="high"
               loading="eager"
               width="36"
               height="36"

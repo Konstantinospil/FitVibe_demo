@@ -329,6 +329,7 @@ export async function deleteContact(
 export type ProfileRow = {
   user_id: string;
   alias: string | null;
+  alias_changed_at: string | null;
   bio: string | null;
   avatar_asset_id: string | null;
   date_of_birth: string | null;
@@ -457,7 +458,23 @@ export async function getProfileByUserId(
   userId: string,
   trx?: Knex.Transaction,
 ): Promise<ProfileRow | null> {
-  const row = await withDb(trx)<ProfileRow>(PROFILES_TABLE).where({ user_id: userId }).first();
+  const row = await withDb(trx)<ProfileRow>(PROFILES_TABLE)
+    .select([
+      "user_id",
+      "alias",
+      "alias_changed_at",
+      "bio",
+      "avatar_asset_id",
+      "date_of_birth",
+      "gender_code",
+      "visibility",
+      "timezone",
+      "unit_preferences",
+      "created_at",
+      "updated_at",
+    ])
+    .where({ user_id: userId })
+    .first();
   return row ?? null;
 }
 
@@ -484,25 +501,57 @@ export async function updateProfileAlias(
   trx?: Knex.Transaction,
 ): Promise<number> {
   const exec = withDb(trx);
+  const now = new Date().toISOString();
   // Ensure profile exists
   const existing = await exec<ProfileRow>(PROFILES_TABLE).where({ user_id: userId }).first();
 
   if (existing) {
     return exec(PROFILES_TABLE).where({ user_id: userId }).update({
       alias,
-      updated_at: new Date().toISOString(),
+      alias_changed_at: now,
+      updated_at: now,
     });
   }
 
   // Create profile if it doesn't exist
+  const now = new Date().toISOString();
   return exec(PROFILES_TABLE).insert({
     user_id: userId,
     alias,
+    alias_changed_at: now,
     visibility: "private",
     unit_preferences: {},
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
+    created_at: now,
+    updated_at: now,
   });
+}
+
+/**
+ * Check if user can change alias (rate limiting: max 1 per 30 days)
+ * @returns true if alias change is allowed, false if rate limited
+ */
+export async function canChangeAlias(
+  userId: string,
+  trx?: Knex.Transaction,
+): Promise<{ allowed: boolean; daysRemaining?: number }> {
+  const profile = await getProfileByUserId(userId, trx);
+  if (!profile || !profile.alias_changed_at) {
+    // No previous alias change, allow it
+    return { allowed: true };
+  }
+
+  const lastChange = new Date(profile.alias_changed_at);
+  const now = new Date();
+  const daysSinceChange = Math.floor(
+    (now.getTime() - lastChange.getTime()) / (1000 * 60 * 60 * 24),
+  );
+
+  if (daysSinceChange >= 30) {
+    return { allowed: true };
+  }
+
+  const daysRemaining = 30 - daysSinceChange;
+  return { allowed: false, daysRemaining };
 }
 
 export async function insertUserMetric(

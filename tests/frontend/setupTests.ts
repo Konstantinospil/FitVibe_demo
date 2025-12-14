@@ -3,6 +3,7 @@ import { cleanup } from "@testing-library/react";
 import { mkdirSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { beforeAll, beforeEach, afterEach, afterAll, vi } from "vitest";
 import { ensurePrivateTranslationsLoaded } from "../src/i18n/config";
 
 // Ensure coverage temp directory exists to prevent ENOENT errors
@@ -46,6 +47,7 @@ beforeEach(() => {
 
 afterEach(() => {
   // Clean up rendered components to prevent DOM pollution between tests
+  // This must be called first to ensure all React components are unmounted
   cleanup();
 
   // Ensure fake timers are cleaned up after each test
@@ -61,6 +63,12 @@ afterEach(() => {
   // Clear any pending async operations
   // This prevents open handles from hanging tests
   vi.clearAllMocks();
+
+  // Force garbage collection hint (if available)
+  // This helps ensure all references are released
+  if (global.gc) {
+    global.gc();
+  }
 });
 
 // Global cleanup after all tests complete

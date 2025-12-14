@@ -116,6 +116,150 @@ export async function withDatabaseErrorHandling<T>(
 }
 
 /**
+ * Check if the database is available for integration tests.
+ * Returns true if database connection can be established, false otherwise.
+ */
+export async function isDatabaseAvailable(): Promise<boolean> {
+  try {
+    const db = await getDb();
+    await db.raw("SELECT 1");
+    return true;
+  } catch (error) {
+    const errorCode = (error as { code?: string }).code;
+    if (errorCode === "ECONNREFUSED" || error instanceof AggregateError) {
+      return false;
+    }
+    // For other errors, assume database is available but there might be other issues
+    // (e.g., migrations not run, permissions, etc.)
+    return true;
+  }
+}
+
+/**
+ * Ensures the username column exists in the users table.
+ * This is a safety check to ensure migrations have been applied.
+ * Idempotent - safe to call multiple times.
+ */
+export async function ensureUsernameColumnExists(): Promise<void> {
+  const db = await getDb();
+
+  // First, ensure citext extension is enabled (required for username column)
+  try {
+    await db.raw('CREATE EXTENSION IF NOT EXISTS "citext";');
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    // If citext extension is not available, create a domain as fallback
+    if (
+      errorMessage.includes("could not open extension control file") ||
+      (errorMessage.includes("extension") && errorMessage.includes("does not exist"))
+    ) {
+      await db.raw(`
+        DO $$
+        BEGIN
+          IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'citext') THEN
+            CREATE DOMAIN citext AS text;
+          END IF;
+        END $$;
+      `);
+    } else if (
+      errorMessage.includes("duplicate key value violates unique constraint") ||
+      errorMessage.includes("pg_extension_name_index")
+    ) {
+      // Extension is being created concurrently, verify it exists now
+      const checkExt = await db.raw(`SELECT 1 FROM pg_extension WHERE extname = 'citext'`);
+      const checkExtRows = (checkExt as { rows: Array<Record<string, unknown>> }).rows;
+      if (checkExtRows.length === 0) {
+        // Extension doesn't exist yet, wait a bit and retry once
+        await new Promise((resolve) => setTimeout(resolve, 100));
+        try {
+          await db.raw('CREATE EXTENSION IF NOT EXISTS "citext";');
+        } catch (retryError: unknown) {
+          // If it still fails, check if it exists now (might have been created by another process)
+          const checkAgain = await db.raw(`SELECT 1 FROM pg_extension WHERE extname = 'citext'`);
+          const checkAgainRows = (checkAgain as { rows: Array<Record<string, unknown>> }).rows;
+          if (checkAgainRows.length === 0) {
+            // Still doesn't exist and retry failed, create domain fallback
+            await db.raw(`
+              DO $$
+              BEGIN
+                IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'citext') THEN
+                  CREATE DOMAIN citext AS text;
+                END IF;
+              END $$;
+            `);
+          }
+        }
+      }
+    }
+    // For other errors, continue - the extension might already exist
+  }
+
+  // Check if users table exists
+  const hasUsersTable = await db.schema.hasTable("users");
+  if (!hasUsersTable) {
+    return; // Table doesn't exist yet, migrations will create it
+  }
+
+  // Check if username column already exists
+  const hasUsernameColumn = await db.schema.hasColumn("users", "username");
+  if (hasUsernameColumn) {
+    return; // Column already exists, nothing to do
+  }
+
+  // Column doesn't exist - add it using the same logic as the migration
+  const rowCount = await db("users").count<{ count: string | number }>("* as count").first();
+  const hasRows = rowCount !== undefined && Number(rowCount.count) > 0;
+
+  if (hasRows) {
+    // Table has existing rows: add nullable, populate, then make NOT NULL
+    await db.schema.alterTable("users", (table) => {
+      table.specificType("username", "citext").nullable();
+    });
+
+    // Populate username for existing rows
+    await db.raw(`
+      UPDATE users
+      SET username = 'user_' || id::text
+      WHERE username IS NULL
+    `);
+
+    // Make NOT NULL using raw SQL
+    await db.raw(`
+      ALTER TABLE users
+      ALTER COLUMN username SET NOT NULL
+    `);
+  } else {
+    // No existing rows: can add with all constraints at once
+    await db.schema.alterTable("users", (table) => {
+      table.specificType("username", "citext").notNullable();
+    });
+  }
+
+  // Add UNIQUE constraint if it doesn't exist
+  await db.raw(`
+    DO $$
+    BEGIN
+      IF NOT EXISTS (
+        SELECT 1
+        FROM pg_constraint c
+        JOIN pg_attribute a ON a.attrelid = c.conrelid AND a.attnum = ANY(c.conkey)
+        JOIN pg_class cls ON cls.oid = c.conrelid
+        JOIN pg_namespace n ON n.oid = cls.relnamespace
+        WHERE cls.relname = 'users'
+          AND c.contype = 'u'
+          AND a.attname = 'username'
+          AND n.nspname IN (SELECT unnest(current_schemas(false)))
+      ) THEN
+        ALTER TABLE users ADD CONSTRAINT users_username_unique UNIQUE (username);
+      END IF;
+    EXCEPTION
+      WHEN duplicate_object THEN
+        NULL;
+    END $$;
+  `);
+}
+
+/**
  * Truncate all tables in the test database.
  * Use with caution - only in test environments.
  * Silently skips tables that don't exist (e.g., if migrations haven't run yet).

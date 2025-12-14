@@ -1,0 +1,524 @@
+/**
+ * Integration test for avatar upload functionality
+ *
+ * Tests the complete avatar upload flow:
+ * 1. User registration and login
+ * 2. Avatar upload via POST /api/v1/users/avatar
+ * 3. File validation (type, size, malware scanning)
+ * 4. Image processing (resize, format conversion)
+ * 5. Avatar retrieval via GET /api/v1/users/avatar/:id
+ * 6. Avatar deletion via DELETE /api/v1/users/avatar
+ * 7. Idempotency support
+ * 8. Audit logging
+ *
+ * Uses real database with transaction-based cleanup.
+ */
+
+import { describe, it, expect, beforeEach, afterEach, beforeAll } from "@jest/globals";
+import request from "supertest";
+import bcrypt from "bcryptjs";
+import sharp from "sharp";
+import app from "../../../apps/backend/src/app.js";
+import db from "../../../apps/backend/src/db/index.js";
+import { createUser } from "../../../apps/backend/src/modules/auth/auth.repository.js";
+import {
+  truncateAll,
+  ensureRolesSeeded,
+  withDatabaseErrorHandling,
+  isDatabaseAvailable,
+  ensureUsernameColumnExists,
+} from "../../setup/test-helpers.js";
+import { v4 as uuidv4 } from "uuid";
+
+describe("Integration: Avatar Upload", () => {
+  let dbAvailable = false;
+  let authCookie: string;
+  let userId: string;
+
+  // Helper to create a test image buffer
+  async function createTestImageBuffer(
+    width = 500,
+    height = 500,
+    format: "png" | "jpeg" | "webp" = "png",
+  ): Promise<Buffer> {
+    return await sharp({
+      create: {
+        width,
+        height,
+        channels: 4,
+        background: { r: 255, g: 0, b: 0, alpha: 1 },
+      },
+    })
+      [format]({ quality: 90 })
+      .toBuffer();
+  }
+
+  beforeAll(async () => {
+    dbAvailable = await isDatabaseAvailable();
+    if (!dbAvailable) {
+      console.warn("\n⚠️  Integration tests will be skipped (database unavailable)");
+      return;
+    }
+    await ensureUsernameColumnExists();
+  });
+
+  beforeEach(async () => {
+    if (!dbAvailable) {
+      return;
+    }
+    await withDatabaseErrorHandling(async () => {
+      const { env } = await import("../../../apps/backend/src/config/env.js");
+      (env as { readOnlyMode: boolean }).readOnlyMode = false;
+
+      await truncateAll();
+      await ensureRolesSeeded();
+
+      // Create and login a test user
+      const testEmail = `test-${uuidv4()}@example.com`;
+      const testUsername = `testuser-${uuidv4().substring(0, 8)}`;
+      const hashedPassword = await bcrypt.hash("SecureP@ssw0rd123!", 10);
+
+      const user = await createUser({
+        id: uuidv4(),
+        email: testEmail,
+        username: testUsername,
+        passwordHash: hashedPassword,
+        displayName: "Test User",
+        roleCode: "user",
+        locale: "en",
+        preferredLang: "en",
+        status: "active",
+      });
+
+      userId = user.id;
+
+      // Login to get auth cookie
+      const loginResponse = await request(app).post("/api/v1/auth/login").send({
+        email: testEmail,
+        password: "SecureP@ssw0rd123!",
+      });
+
+      expect(loginResponse.status).toBe(200);
+      authCookie = loginResponse.headers["set-cookie"]?.[0] || "";
+      expect(authCookie).toBeTruthy();
+    }, "beforeEach");
+  });
+
+  afterEach(async () => {
+    if (!dbAvailable) {
+      return;
+    }
+    await truncateAll();
+  });
+
+  it("should upload avatar successfully", async () => {
+    if (!dbAvailable) {
+      console.warn("Skipping test: database unavailable");
+      return;
+    }
+
+    const imageBuffer = await createTestImageBuffer(500, 500, "png");
+
+    const response = await request(app)
+      .post("/api/v1/users/avatar")
+      .set("Cookie", authCookie)
+      .attach("avatar", imageBuffer, "test-avatar.png");
+
+    expect(response.status).toBe(201);
+    expect(response.body.success).toBe(true);
+    expect(response.body.fileUrl).toBe(`/users/avatar/${userId}`);
+    expect(response.body.mimeType).toBe("image/png");
+    expect(response.body.bytes).toBeGreaterThan(0);
+    expect(response.body.preview).toContain("data:image/png;base64,");
+    expect(response.body.updatedAt).toBeTruthy();
+  });
+
+  it("should reject upload without file", async () => {
+    if (!dbAvailable) {
+      console.warn("Skipping test: database unavailable");
+      return;
+    }
+
+    const response = await request(app).post("/api/v1/users/avatar").set("Cookie", authCookie);
+
+    expect(response.status).toBe(400);
+    expect(response.body.error).toBe("UPLOAD_NO_FILE");
+  });
+
+  it("should reject unsupported file type", async () => {
+    if (!dbAvailable) {
+      console.warn("Skipping test: database unavailable");
+      return;
+    }
+
+    const pdfBuffer = Buffer.from("%PDF-1.4 fake pdf content");
+
+    const response = await request(app)
+      .post("/api/v1/users/avatar")
+      .set("Cookie", authCookie)
+      .attach("avatar", pdfBuffer, "test.pdf")
+      .field("Content-Type", "application/pdf");
+
+    // Multer might reject before our handler, so we check for either 400 or 415
+    expect([400, 415]).toContain(response.status);
+  });
+
+  it("should reject file that is too large", async () => {
+    if (!dbAvailable) {
+      console.warn("Skipping test: database unavailable");
+      return;
+    }
+
+    // Create a large buffer (6 MB > 5 MB limit)
+    const largeBuffer = Buffer.alloc(6 * 1024 * 1024);
+
+    const response = await request(app)
+      .post("/api/v1/users/avatar")
+      .set("Cookie", authCookie)
+      .attach("avatar", largeBuffer, "large-file.png")
+      .field("Content-Type", "image/png");
+
+    // Multer might reject before our handler, so we check for either 400 or 413
+    expect([400, 413]).toContain(response.status);
+  });
+
+  it("should accept JPEG image", async () => {
+    if (!dbAvailable) {
+      console.warn("Skipping test: database unavailable");
+      return;
+    }
+
+    const imageBuffer = await createTestImageBuffer(500, 500, "jpeg");
+
+    const response = await request(app)
+      .post("/api/v1/users/avatar")
+      .set("Cookie", authCookie)
+      .attach("avatar", imageBuffer, "test-avatar.jpg");
+
+    expect(response.status).toBe(201);
+    expect(response.body.success).toBe(true);
+    expect(response.body.mimeType).toBe("image/png"); // Should be converted to PNG
+  });
+
+  it("should accept WebP image", async () => {
+    if (!dbAvailable) {
+      console.warn("Skipping test: database unavailable");
+      return;
+    }
+
+    const imageBuffer = await createTestImageBuffer(500, 500, "webp");
+
+    const response = await request(app)
+      .post("/api/v1/users/avatar")
+      .set("Cookie", authCookie)
+      .attach("avatar", imageBuffer, "test-avatar.webp");
+
+    expect(response.status).toBe(201);
+    expect(response.body.success).toBe(true);
+    expect(response.body.mimeType).toBe("image/png"); // Should be converted to PNG
+  });
+
+  it("should process and resize image to 256x256", async () => {
+    if (!dbAvailable) {
+      console.warn("Skipping test: database unavailable");
+      return;
+    }
+
+    // Create a large image (1000x1000)
+    const imageBuffer = await createTestImageBuffer(1000, 1000, "png");
+
+    const response = await request(app)
+      .post("/api/v1/users/avatar")
+      .set("Cookie", authCookie)
+      .attach("avatar", imageBuffer, "large-avatar.png");
+
+    expect(response.status).toBe(201);
+    expect(response.body.success).toBe(true);
+
+    // Verify the processed image is 256x256 by decoding the preview
+    const base64Data = response.body.preview.split(",")[1];
+    const processedBuffer = Buffer.from(base64Data, "base64");
+    const metadata = await sharp(processedBuffer).metadata();
+
+    expect(metadata.width).toBe(256);
+    expect(metadata.height).toBe(256);
+  });
+
+  it("should retrieve uploaded avatar", async () => {
+    if (!dbAvailable) {
+      console.warn("Skipping test: database unavailable");
+      return;
+    }
+
+    // Upload avatar first
+    const imageBuffer = await createTestImageBuffer(500, 500, "png");
+    const uploadResponse = await request(app)
+      .post("/api/v1/users/avatar")
+      .set("Cookie", authCookie)
+      .attach("avatar", imageBuffer, "test-avatar.png");
+
+    expect(uploadResponse.status).toBe(201);
+
+    // Retrieve avatar
+    const getResponse = await request(app).get(`/api/v1/users/avatar/${userId}`);
+
+    expect(getResponse.status).toBe(200);
+    expect(getResponse.headers["content-type"]).toContain("image/png");
+    expect(getResponse.headers["cache-control"]).toBe("private, max-age=300");
+    expect(Buffer.isBuffer(getResponse.body)).toBe(true);
+    expect(getResponse.body.length).toBeGreaterThan(0);
+  });
+
+  it("should return 404 for non-existent avatar", async () => {
+    if (!dbAvailable) {
+      console.warn("Skipping test: database unavailable");
+      return;
+    }
+
+    const nonExistentUserId = uuidv4();
+    const response = await request(app).get(`/api/v1/users/avatar/${nonExistentUserId}`);
+
+    expect(response.status).toBe(404);
+  });
+
+  it("should delete avatar successfully", async () => {
+    if (!dbAvailable) {
+      console.warn("Skipping test: database unavailable");
+      return;
+    }
+
+    // Upload avatar first
+    const imageBuffer = await createTestImageBuffer(500, 500, "png");
+    const uploadResponse = await request(app)
+      .post("/api/v1/users/avatar")
+      .set("Cookie", authCookie)
+      .attach("avatar", imageBuffer, "test-avatar.png");
+
+    expect(uploadResponse.status).toBe(201);
+
+    // Delete avatar
+    const deleteResponse = await request(app)
+      .delete("/api/v1/users/avatar")
+      .set("Cookie", authCookie);
+
+    expect(deleteResponse.status).toBe(204);
+
+    // Verify avatar is deleted
+    const getResponse = await request(app).get(`/api/v1/users/avatar/${userId}`);
+    expect(getResponse.status).toBe(404);
+  });
+
+  it("should handle deleting non-existent avatar gracefully", async () => {
+    if (!dbAvailable) {
+      console.warn("Skipping test: database unavailable");
+      return;
+    }
+
+    // Try to delete avatar that doesn't exist
+    const deleteResponse = await request(app)
+      .delete("/api/v1/users/avatar")
+      .set("Cookie", authCookie);
+
+    // Should return 204 even if avatar doesn't exist (idempotent)
+    expect(deleteResponse.status).toBe(204);
+  });
+
+  it("should replace existing avatar when uploading new one", async () => {
+    if (!dbAvailable) {
+      console.warn("Skipping test: database unavailable");
+      return;
+    }
+
+    // Upload first avatar
+    const imageBuffer1 = await createTestImageBuffer(500, 500, "png");
+    const uploadResponse1 = await request(app)
+      .post("/api/v1/users/avatar")
+      .set("Cookie", authCookie)
+      .attach("avatar", imageBuffer1, "avatar1.png");
+
+    expect(uploadResponse1.status).toBe(201);
+    const firstFileUrl = uploadResponse1.body.fileUrl;
+
+    // Upload second avatar (should replace first)
+    const imageBuffer2 = await createTestImageBuffer(600, 600, "png");
+    const uploadResponse2 = await request(app)
+      .post("/api/v1/users/avatar")
+      .set("Cookie", authCookie)
+      .attach("avatar", imageBuffer2, "avatar2.png");
+
+    expect(uploadResponse2.status).toBe(201);
+    expect(uploadResponse2.body.fileUrl).toBe(firstFileUrl); // Same URL
+
+    // Verify only one avatar exists
+    const getResponse = await request(app).get(`/api/v1/users/avatar/${userId}`);
+    expect(getResponse.status).toBe(200);
+  });
+
+  it("should support idempotency for upload", async () => {
+    if (!dbAvailable) {
+      console.warn("Skipping test: database unavailable");
+      return;
+    }
+
+    const imageBuffer = await createTestImageBuffer(500, 500, "png");
+    const idempotencyKey = `test-key-${uuidv4()}`;
+
+    // First upload
+    const response1 = await request(app)
+      .post("/api/v1/users/avatar")
+      .set("Cookie", authCookie)
+      .set("Idempotency-Key", idempotencyKey)
+      .attach("avatar", imageBuffer, "test-avatar.png");
+
+    expect(response1.status).toBe(201);
+    expect(response1.headers["idempotency-key"]).toBe(idempotencyKey);
+    const firstFileUrl = response1.body.fileUrl;
+    const firstBytes = response1.body.bytes;
+
+    // Second upload with same idempotency key (should replay)
+    const response2 = await request(app)
+      .post("/api/v1/users/avatar")
+      .set("Cookie", authCookie)
+      .set("Idempotency-Key", idempotencyKey)
+      .attach("avatar", imageBuffer, "test-avatar.png");
+
+    expect(response2.status).toBe(201);
+    expect(response2.headers["idempotent-replayed"]).toBe("true");
+    expect(response2.headers["idempotency-key"]).toBe(idempotencyKey);
+    expect(response2.body.fileUrl).toBe(firstFileUrl);
+    expect(response2.body.bytes).toBe(firstBytes);
+  });
+
+  it("should support idempotency for delete", async () => {
+    if (!dbAvailable) {
+      console.warn("Skipping test: database unavailable");
+      return;
+    }
+
+    // Upload avatar first
+    const imageBuffer = await createTestImageBuffer(500, 500, "png");
+    await request(app)
+      .post("/api/v1/users/avatar")
+      .set("Cookie", authCookie)
+      .attach("avatar", imageBuffer, "test-avatar.png");
+
+    const idempotencyKey = `test-key-${uuidv4()}`;
+
+    // First delete
+    const response1 = await request(app)
+      .delete("/api/v1/users/avatar")
+      .set("Cookie", authCookie)
+      .set("Idempotency-Key", idempotencyKey);
+
+    expect(response1.status).toBe(204);
+    expect(response1.headers["idempotency-key"]).toBe(idempotencyKey);
+
+    // Second delete with same idempotency key (should replay)
+    const response2 = await request(app)
+      .delete("/api/v1/users/avatar")
+      .set("Cookie", authCookie)
+      .set("Idempotency-Key", idempotencyKey);
+
+    expect(response2.status).toBe(204);
+    expect(response2.headers["idempotent-replayed"]).toBe("true");
+    expect(response2.headers["idempotency-key"]).toBe(idempotencyKey);
+  });
+
+  it("should verify audit log entry is created for upload", async () => {
+    if (!dbAvailable) {
+      console.warn("Skipping test: database unavailable");
+      return;
+    }
+
+    const imageBuffer = await createTestImageBuffer(500, 500, "png");
+
+    await request(app)
+      .post("/api/v1/users/avatar")
+      .set("Cookie", authCookie)
+      .attach("avatar", imageBuffer, "test-avatar.png");
+
+    // Check audit log
+    const auditLogs = await db("audit_logs")
+      .where({ actor_user_id: userId, action: "avatar_upload" })
+      .orderBy("created_at", "desc")
+      .limit(1);
+
+    expect(auditLogs.length).toBeGreaterThan(0);
+    expect(auditLogs[0].entity).toBe("user_media");
+    expect(auditLogs[0].metadata).toHaveProperty("size");
+    expect(auditLogs[0].metadata).toHaveProperty("mime");
+  });
+
+  it("should verify audit log entry is created for delete", async () => {
+    if (!dbAvailable) {
+      console.warn("Skipping test: database unavailable");
+      return;
+    }
+
+    // Upload avatar first
+    const imageBuffer = await createTestImageBuffer(500, 500, "png");
+    await request(app)
+      .post("/api/v1/users/avatar")
+      .set("Cookie", authCookie)
+      .attach("avatar", imageBuffer, "test-avatar.png");
+
+    // Delete avatar
+    await request(app).delete("/api/v1/users/avatar").set("Cookie", authCookie);
+
+    // Check audit log
+    const auditLogs = await db("audit_logs")
+      .where({ actor_user_id: userId, action: "avatar_delete" })
+      .orderBy("created_at", "desc")
+      .limit(1);
+
+    expect(auditLogs.length).toBeGreaterThan(0);
+    expect(auditLogs[0].entity).toBe("user_media");
+  });
+
+  it("should require authentication for upload", async () => {
+    if (!dbAvailable) {
+      console.warn("Skipping test: database unavailable");
+      return;
+    }
+
+    const imageBuffer = await createTestImageBuffer(500, 500, "png");
+
+    const response = await request(app)
+      .post("/api/v1/users/avatar")
+      .attach("avatar", imageBuffer, "test-avatar.png");
+
+    expect(response.status).toBe(401);
+  });
+
+  it("should require authentication for delete", async () => {
+    if (!dbAvailable) {
+      console.warn("Skipping test: database unavailable");
+      return;
+    }
+
+    const response = await request(app).delete("/api/v1/users/avatar");
+
+    expect(response.status).toBe(401);
+  });
+
+  it("should respond within reasonable time", async () => {
+    if (!dbAvailable) {
+      console.warn("Skipping test: database unavailable");
+      return;
+    }
+
+    const imageBuffer = await createTestImageBuffer(500, 500, "png");
+
+    const startTime = Date.now();
+    const response = await request(app)
+      .post("/api/v1/users/avatar")
+      .set("Cookie", authCookie)
+      .attach("avatar", imageBuffer, "test-avatar.png");
+    const endTime = Date.now();
+    const responseTime = endTime - startTime;
+
+    expect(response.status).toBe(201);
+    // Avatar processing (resize, format conversion) might take longer
+    expect(responseTime).toBeLessThan(2000); // 2 seconds
+  });
+});

@@ -138,14 +138,48 @@ async function recordAuditEvent(
     // Test IDs like "user-123" are not valid UUIDs and will cause database errors
     const validUserId = userId && isValidUUID(userId) ? userId : null;
 
-    await db("audit_log").insert({
-      id: uuidv4(),
-      actor_user_id: validUserId,
-      action,
-      entity_type: "auth",
-      metadata,
-      created_at: new Date().toISOString(),
-    });
+    // Use crypto.randomUUID() instead of uuidv4() to avoid conflicts with test mocks
+    const auditId = crypto.randomUUID();
+
+    // Retry logic to handle transaction visibility issues in test environments
+    // When a user is created in one transaction and login happens immediately after,
+    // the FK constraint might fail if the user isn't visible to the connection pool yet
+    let retries = 0;
+    const maxRetries = 10;
+    const baseDelay = 100; // ms
+
+    while (retries < maxRetries) {
+      try {
+        await db("audit_log").insert({
+          id: auditId,
+          actor_user_id: validUserId,
+          action,
+          entity_type: "auth",
+          metadata,
+          created_at: new Date().toISOString(),
+        });
+        return; // Success, exit the retry loop
+      } catch (error: unknown) {
+        const err = error as { code?: string; detail?: string; message?: string };
+        // Check if it's a FK constraint violation for actor_user_id
+        // The detail includes "is not present in table \"users\"" and message includes "audit_log"
+        const isFKViolation =
+          err.code === "23503" &&
+          err.detail?.includes('is not present in table "users"') &&
+          (err.message?.includes("audit_log") ||
+            err.detail?.includes("audit_log_actor_user_id_foreign"));
+
+        if (isFKViolation && retries < maxRetries - 1) {
+          // Wait with exponential backoff before retrying
+          const delay = baseDelay * Math.pow(2, retries);
+          await new Promise((resolve) => setTimeout(resolve, delay));
+          retries++;
+          continue;
+        }
+        // Re-throw if not a retryable error or max retries reached
+        throw error;
+      }
+    }
   } catch (error: unknown) {
     const err = asError(error);
     logger.error({ err, action }, "[audit] failed to record audit event");
@@ -481,12 +515,71 @@ export async function login(
       signAccess({ sub: dummyUserId, role: "athlete", sid: dummySessionId });
 
       // Record failed attempt (even for non-existent users to prevent enumeration)
-      const accountAttempt = await recordFailedAttempt(identifier, ipAddress, userAgent);
-      // Also record IP-based attempt
-      const ipAttempt = await recordFailedAttemptByIP(ipAddress, identifier);
+      // Use transaction to ensure atomicity between account-level and IP-level tracking
+      const accountAttempt = await db.transaction(async (trx) => {
+        const account = await recordFailedAttempt(identifier, ipAddress, userAgent, trx);
+        const ip = await recordFailedAttemptByIP(ipAddress, identifier, trx);
+        return { account, ip };
+      });
+      const ipAttempt = accountAttempt.ip;
+      const accountAttemptRecord = accountAttempt.account;
+
+      // Check if IP lockout was triggered by this attempt (after recording)
+      if (isIPLocked(ipAttempt)) {
+        const remainingSeconds = getRemainingIPLockoutSeconds(ipAttempt);
+        const remainingMinutes = Math.ceil(remainingSeconds / 60);
+
+        await recordAuditEvent(null, "auth.login_blocked_ip", {
+          ip: ipAddress,
+          remainingSeconds,
+          totalAttemptCount: ipAttempt.total_attempt_count,
+          distinctEmailCount: ipAttempt.distinct_email_count,
+          requestId: context.requestId ?? null,
+        });
+
+        throw new HttpError(
+          429,
+          "AUTH_IP_LOCKED",
+          `IP address temporarily locked due to multiple failed login attempts. Try again in ${remainingMinutes} minute${remainingMinutes === 1 ? "" : "s"}.`,
+          {
+            remainingSeconds,
+            lockoutType: "ip",
+            totalAttemptCount: ipAttempt.total_attempt_count,
+            distinctEmailCount: ipAttempt.distinct_email_count,
+            maxAttempts: getMaxIPAttempts(),
+            maxDistinctEmails: getMaxIPDistinctEmails(),
+          },
+        );
+      }
+
+      // Check if account lockout was triggered by this attempt (after recording)
+      if (isAccountLocked(accountAttemptRecord)) {
+        const remainingSeconds = getRemainingLockoutSeconds(accountAttemptRecord);
+        const remainingMinutes = Math.ceil(remainingSeconds / 60);
+
+        await recordAuditEvent(null, "auth.login_blocked", {
+          identifier,
+          ip: ipAddress,
+          remainingSeconds,
+          attemptCount: accountAttemptRecord.attempt_count,
+          requestId: context.requestId ?? null,
+        });
+
+        throw new HttpError(
+          429,
+          "AUTH_ACCOUNT_LOCKED",
+          `Account temporarily locked due to multiple failed login attempts. Try again in ${remainingMinutes} minute${remainingMinutes === 1 ? "" : "s"}.`,
+          {
+            remainingSeconds,
+            lockoutType: "account",
+            attemptCount: accountAttemptRecord.attempt_count,
+            maxAttempts: getMaxAccountAttempts(),
+          },
+        );
+      }
 
       // Check if we should warn about approaching lockout
-      const remainingAccountAttempts = getRemainingAccountAttempts(accountAttempt);
+      const remainingAccountAttempts = getRemainingAccountAttempts(accountAttemptRecord);
       const remainingIPAttempts = getRemainingIPAttempts(ipAttempt);
       const minRemaining = Math.min(
         remainingAccountAttempts,
@@ -501,7 +594,7 @@ export async function login(
         errorDetails.remainingAccountAttempts = remainingAccountAttempts;
         errorDetails.remainingIPAttempts = remainingIPAttempts.remainingAttempts;
         errorDetails.remainingIPDistinctEmails = remainingIPAttempts.remainingDistinctEmails;
-        errorDetails.accountAttemptCount = accountAttempt.attempt_count;
+        errorDetails.accountAttemptCount = accountAttemptRecord.attempt_count;
         errorDetails.ipTotalAttemptCount = ipAttempt.total_attempt_count;
         errorDetails.ipDistinctEmailCount = ipAttempt.distinct_email_count;
       }
@@ -523,9 +616,68 @@ export async function login(
       signAccess({ sub: user.id, role: user.role_code, sid: dummySessionId });
 
       // Record failed attempt
-      const attempt = await recordFailedAttempt(identifier, ipAddress, userAgent);
-      // Also record IP-based attempt
-      const ipAttempt = await recordFailedAttemptByIP(ipAddress, identifier);
+      // Use transaction to ensure atomicity between account-level and IP-level tracking
+      const attemptResult = await db.transaction(async (trx) => {
+        const account = await recordFailedAttempt(identifier, ipAddress, userAgent, trx);
+        const ip = await recordFailedAttemptByIP(ipAddress, identifier, trx);
+        return { account, ip };
+      });
+      const attempt = attemptResult.account;
+      const ipAttempt = attemptResult.ip;
+
+      // Check if IP lockout was triggered by this attempt (after recording)
+      if (isIPLocked(ipAttempt)) {
+        const remainingSeconds = getRemainingIPLockoutSeconds(ipAttempt);
+        const remainingMinutes = Math.ceil(remainingSeconds / 60);
+
+        await recordAuditEvent(user.id, "auth.login_blocked_ip", {
+          ip: ipAddress,
+          remainingSeconds,
+          totalAttemptCount: ipAttempt.total_attempt_count,
+          distinctEmailCount: ipAttempt.distinct_email_count,
+          requestId: context.requestId ?? null,
+        });
+
+        throw new HttpError(
+          429,
+          "AUTH_IP_LOCKED",
+          `IP address temporarily locked due to multiple failed login attempts. Try again in ${remainingMinutes} minute${remainingMinutes === 1 ? "" : "s"}.`,
+          {
+            remainingSeconds,
+            lockoutType: "ip",
+            totalAttemptCount: ipAttempt.total_attempt_count,
+            distinctEmailCount: ipAttempt.distinct_email_count,
+            maxAttempts: getMaxIPAttempts(),
+            maxDistinctEmails: getMaxIPDistinctEmails(),
+          },
+        );
+      }
+
+      // Check if account lockout was triggered by this attempt (after recording)
+      if (isAccountLocked(attempt)) {
+        const remainingSeconds = getRemainingLockoutSeconds(attempt);
+        const remainingMinutes = Math.ceil(remainingSeconds / 60);
+
+        await recordAuditEvent(user.id, "auth.login_blocked", {
+          identifier,
+          ip: ipAddress,
+          remainingSeconds,
+          attemptCount: attempt.attempt_count,
+          requestId: context.requestId ?? null,
+        });
+
+        throw new HttpError(
+          429,
+          "AUTH_ACCOUNT_LOCKED",
+          `Account temporarily locked due to multiple failed login attempts. Try again in ${remainingMinutes} minute${remainingMinutes === 1 ? "" : "s"}.`,
+          {
+            remainingSeconds,
+            lockoutType: "account",
+            attemptCount: attempt.attempt_count,
+            maxAttempts: getMaxAccountAttempts(),
+          },
+        );
+      }
 
       await recordAuditEvent(user.id, "auth.login_failed", {
         ip: ipAddress,
@@ -564,9 +716,11 @@ export async function login(
     }
 
     // Successful password authentication - reset failed attempts
-    await resetFailedAttempts(identifier, ipAddress);
-    // Also reset IP-based attempts (legitimate user from this IP)
-    await resetFailedAttemptsByIP(ipAddress);
+    // Use transaction to ensure atomicity between account-level and IP-level reset
+    await db.transaction(async (trx) => {
+      await resetFailedAttempts(identifier, ipAddress, trx);
+      await resetFailedAttemptsByIP(ipAddress, trx);
+    });
 
     // Check if user has accepted current terms version
     if (isTermsVersionOutdated(user.terms_version)) {

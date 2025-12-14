@@ -5,11 +5,12 @@
 **Activity ID**: E3-A2  
 **Epic ID**: [E3](../b.Epics/E3-sharing-&-community.md)  
 **Title**: Session Visibility Controls  
-**Status**: Open  
+**Status**: Done  
 **Difficulty**: 2  
 **Estimated Effort**: 2 story points  
 **Created**: 2025-11-30  
-**Updated**: 2025-11-30
+**Updated**: 2025-12-14  
+**Completed**: 2025-12-14
 
 ---
 
@@ -19,7 +20,36 @@ Implement session visibility controls for Sharing & Community. Implement functio
 
 ## Implementation Details
 
-{Note: Implementation details will be defined based on technical design and user story requirements}
+### Backend Implementation
+
+- **Sessions Service** (`apps/backend/src/modules/sessions/sessions.service.ts`):
+  - `updateOne()`: Accepts `visibility` field in DTO
+  - Supports `private`, `public`, and `link` visibility values
+  - Default visibility: `private` (privacy-by-default)
+  - Visibility changes take effect immediately
+
+- **Sessions Controller** (`apps/backend/src/modules/sessions/sessions.controller.ts`):
+  - `PATCH /api/v1/sessions/:id`: Accepts `visibility` field
+  - Validates visibility enum: `["private", "public", "link"]`
+  - Requires authentication and ownership
+
+### Frontend Implementation
+
+- **Planner Page** (`apps/frontend/src/pages/Planner.tsx`):
+  - Visibility selector dropdown in session creation form
+  - Options: Private, Link only, Public
+  - Default: Private
+
+- **Logger Page** (`apps/frontend/src/pages/Logger.tsx`):
+  - Session visibility settings card
+  - Visibility selector with current visibility badge
+  - Real-time visibility updates via `updateSession()` API
+
+### Testing
+
+- **Integration Tests**: Session visibility toggle functionality
+- **Security Tests**: Verify no data leakage when switching visibility
+- **E2E Tests**: Complete workflow for changing session visibility
 
 ## Acceptance Criteria
 
@@ -58,14 +88,14 @@ Implement session visibility controls for Sharing & Community. Implement functio
 
 ## Definition of Done
 
-- [ ] Code implemented and reviewed
-- [ ] Tests written and passing (≥80% coverage)
-- [ ] Documentation updated
-- [ ] Acceptance criteria met
-- [ ] Related user stories updated
-- [ ] Performance targets verified (if applicable)
+- [x] Code implemented and reviewed
+- [x] Tests written and passing (≥80% coverage)
+- [x] Documentation updated
+- [x] Acceptance criteria met
+- [x] Related user stories updated
+- [x] Performance targets verified (if applicable)
 
 ---
 
-**Last Updated**: 2025-11-30  
-**Next Review**: 2025-12-30
+**Last Updated**: 2025-12-14  
+**Next Review**: N/A (Activity completed)

@@ -77,7 +77,48 @@ describeFn("Brute Force Protection Repository", () => {
     // Run migrations to ensure tables exist
     // Migrations should be idempotent - safe to run multiple times
     try {
-      await db.migrate.latest();
+      // Check if tables exist using information_schema
+      const tableCheck = await db.raw(`
+        SELECT table_name 
+        FROM information_schema.tables 
+        WHERE table_schema = 'public' 
+        AND table_name IN ('failed_login_attempts', 'failed_login_attempts_by_ip')
+      `);
+      const existingTables = tableCheck.rows.map((row: { table_name: string }) => row.table_name);
+      const needsMigration =
+        !existingTables.includes("failed_login_attempts") ||
+        !existingTables.includes("failed_login_attempts_by_ip");
+
+      if (needsMigration) {
+        // Run migrations
+        const migrationResults = await db.migrate.latest();
+
+        // Verify tables exist after migration
+        const postMigrationCheck = await db.raw(`
+          SELECT table_name 
+          FROM information_schema.tables 
+          WHERE table_schema = 'public' 
+          AND table_name IN ('failed_login_attempts', 'failed_login_attempts_by_ip')
+        `);
+        const postMigrationTables = postMigrationCheck.rows.map(
+          (row: { table_name: string }) => row.table_name,
+        );
+
+        if (!postMigrationTables.includes("failed_login_attempts")) {
+          throw new Error(
+            `Table 'failed_login_attempts' was not created by migrations. ` +
+              `Migration results: ${JSON.stringify(migrationResults)}. ` +
+              `Existing tables: ${postMigrationTables.join(", ") || "none"}`,
+          );
+        }
+        if (!postMigrationTables.includes("failed_login_attempts_by_ip")) {
+          throw new Error(
+            `Table 'failed_login_attempts_by_ip' was not created by migrations. ` +
+              `Migration results: ${JSON.stringify(migrationResults)}. ` +
+              `Existing tables: ${postMigrationTables.join(", ") || "none"}`,
+          );
+        }
+      }
     } catch (error) {
       // If migrations fail due to connection issues, log and skip tests
       const errorMessage = error instanceof Error ? error.message : String(error);
@@ -88,8 +129,11 @@ describeFn("Brute Force Protection Repository", () => {
         isDatabaseAvailable = false;
         return;
       }
-      // Other migration errors (like "already exists" or table creation conflicts) are okay
-      // The tables might already be created from a previous test run
+      // Log other migration errors for debugging
+      console.error(`Migration error: ${errorMessage}`);
+      console.error(error);
+      // Re-throw to fail the test setup if migrations fail
+      throw error;
     }
   }, 60000); // 60 second timeout for database setup and migrations
 
@@ -303,6 +347,7 @@ describeFn("Brute Force Protection Repository", () => {
 
   describe("IP-Based Protection", () => {
     const ipAddress = "192.168.1.100";
+    const userAgent = "Mozilla/5.0";
 
     it("should return null when no IP-based attempts exist", async () => {
       if (!isDatabaseAvailable) {
@@ -343,6 +388,11 @@ describeFn("Brute Force Protection Repository", () => {
       if (!isDatabaseAvailable) {
         return;
       }
+      // Create account-level attempts first (required for distinct count)
+      await recordFailedAttempt("test1@example.com", ipAddress, userAgent);
+      await recordFailedAttempt("test2@example.com", ipAddress, userAgent);
+      await recordFailedAttempt("test3@example.com", ipAddress, userAgent);
+      // Then record IP-level attempts
       await recordFailedAttemptByIP(ipAddress, "test1@example.com");
       await recordFailedAttemptByIP(ipAddress, "test2@example.com");
       await recordFailedAttemptByIP(ipAddress, "test3@example.com");
@@ -356,6 +406,10 @@ describeFn("Brute Force Protection Repository", () => {
       if (!isDatabaseAvailable) {
         return;
       }
+      // Create account-level attempts first (required for distinct count)
+      await recordFailedAttempt("test1@example.com", ipAddress, userAgent);
+      await recordFailedAttempt("test2@example.com", ipAddress, userAgent);
+      // Then record IP-level attempts
       await recordFailedAttemptByIP(ipAddress, "test1@example.com");
       await recordFailedAttemptByIP(ipAddress, "test1@example.com");
       await recordFailedAttemptByIP(ipAddress, "test2@example.com");
@@ -393,7 +447,9 @@ describeFn("Brute Force Protection Repository", () => {
         return;
       }
       // Test with 5 distinct emails (less than 10 total attempts)
+      // Create account-level attempts first (required for distinct count)
       for (let i = 1; i <= 5; i++) {
+        await recordFailedAttempt(`test${i}@example.com`, ipAddress, userAgent);
         await recordFailedAttemptByIP(ipAddress, `test${i}@example.com`);
       }
 
@@ -432,7 +488,9 @@ describeFn("Brute Force Protection Repository", () => {
       if (!isDatabaseAvailable) {
         return;
       }
+      // Create account-level attempts first (required for distinct count)
       for (let i = 1; i <= 10; i++) {
+        await recordFailedAttempt(`test${i}@example.com`, ipAddress, userAgent);
         await recordFailedAttemptByIP(ipAddress, `test${i}@example.com`);
       }
 
@@ -469,7 +527,9 @@ describeFn("Brute Force Protection Repository", () => {
       if (!isDatabaseAvailable) {
         return;
       }
+      // Create account-level attempts first (required for distinct count)
       for (let i = 1; i <= 20; i++) {
+        await recordFailedAttempt(`test${i}@example.com`, ipAddress, userAgent);
         await recordFailedAttemptByIP(ipAddress, `test${i}@example.com`);
       }
 
@@ -562,6 +622,11 @@ describeFn("Brute Force Protection Repository", () => {
       const ip1 = "192.168.1.1";
       const ip2 = "192.168.1.2";
 
+      // Create account-level attempts first (required for distinct count)
+      await recordFailedAttempt("test1@example.com", ip1, userAgent);
+      await recordFailedAttempt("test2@example.com", ip1, userAgent);
+      await recordFailedAttempt("test1@example.com", ip2, userAgent);
+      // Then record IP-level attempts
       await recordFailedAttemptByIP(ip1, "test1@example.com");
       await recordFailedAttemptByIP(ip1, "test2@example.com");
       await recordFailedAttemptByIP(ip2, "test1@example.com");

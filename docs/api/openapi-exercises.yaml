@@ -1,0 +1,532 @@
+openapi: 3.0.3
+info:
+  title: FitVibe Exercise Library API
+  version: 1.0.0
+  description: API for exercise library management (Epic 2: Exercise Library)
+servers:
+  - url: /api/v1
+    description: API v1
+
+paths:
+  /exercises:
+    get:
+      summary: List exercises
+      description: |
+        List exercises with optional filtering, searching, and pagination.
+        
+        **Access Control:**
+        - Users can see their own exercises and public exercises
+        - Admins can see all exercises including archived ones
+        
+        **Rate Limiting:** 60 requests per 60 seconds
+      operationId: listExercises
+      tags:
+        - Exercises
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: q
+          in: query
+          description: Search query (searches in name, description)
+          schema:
+            type: string
+            maxLength: 120
+        - name: type_code
+          in: query
+          description: Filter by exercise type code
+          schema:
+            type: string
+            maxLength: 50
+        - name: muscle_group
+          in: query
+          description: Filter by muscle group
+          schema:
+            type: string
+            maxLength: 120
+        - name: equipment
+          in: query
+          description: Filter by equipment
+          schema:
+            type: string
+            maxLength: 120
+        - name: tags
+          in: query
+          description: Filter by tags (comma-separated or array)
+          schema:
+            oneOf:
+              - type: string
+              - type: array
+                items:
+                  type: string
+        - name: include_archived
+          in: query
+          description: Include archived exercises (default: false)
+          schema:
+            type: boolean
+        - name: is_public
+          in: query
+          description: Filter by public visibility (default: all)
+          schema:
+            type: boolean
+        - name: owner_id
+          in: query
+          description: Filter by owner ID (admin only). Use "null" or "global" for global exercises
+          schema:
+            oneOf:
+              - type: string
+                format: uuid
+              - type: string
+                enum: [null, global]
+        - name: limit
+          in: query
+          description: Number of results per page (default: 20, max: 100)
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: offset
+          in: query
+          description: Number of results to skip (default: 0, max: 10000)
+          schema:
+            type: integer
+            minimum: 0
+            maximum: 10000
+            default: 0
+      responses:
+        "200":
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaginatedExercises"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+    post:
+      summary: Create exercise
+      description: |
+        Create a new exercise. Users can create personal exercises, admins can create global exercises.
+        
+        **Idempotency:** Supports `Idempotency-Key` header (24h TTL)
+        
+        **Rate Limiting:** 20 requests per 60 seconds
+      operationId: createExercise
+      tags:
+        - Exercises
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateExerciseRequest"
+      responses:
+        "201":
+          description: Exercise created successfully
+          headers:
+            Idempotency-Key:
+              description: The idempotency key used for this request
+              schema:
+                type: string
+            Idempotent-Replayed:
+              description: Indicates if this is a replayed response
+              schema:
+                type: string
+                enum: ["true"]
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Exercise"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "409":
+          $ref: "#/components/responses/Conflict"
+  /exercises/{id}:
+    get:
+      summary: Get exercise by ID
+      description: |
+        Get a single exercise by ID.
+        
+        **Access Control:**
+        - Users can access their own exercises and public exercises
+        - Admins can access all exercises
+        
+        **Rate Limiting:** 60 requests per 60 seconds
+      operationId: getExercise
+      tags:
+        - Exercises
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Exercise ID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Exercise"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    put:
+      summary: Update exercise
+      description: |
+        Update an existing exercise. Users can only update their own exercises.
+        Admins can update any exercise, including global exercises.
+        
+        **Idempotency:** Supports `Idempotency-Key` header (24h TTL)
+        
+        **Rate Limiting:** 20 requests per 60 seconds
+      operationId: updateExercise
+      tags:
+        - Exercises
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Exercise ID
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateExerciseRequest"
+      responses:
+        "200":
+          description: Exercise updated successfully
+          headers:
+            Idempotency-Key:
+              description: The idempotency key used for this request
+              schema:
+                type: string
+            Idempotent-Replayed:
+              description: Indicates if this is a replayed response
+              schema:
+                type: string
+                enum: ["true"]
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Exercise"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    delete:
+      summary: Archive exercise
+      description: |
+        Archive (soft-delete) an exercise. Users can only archive their own exercises.
+        Admins can archive any exercise, including global exercises.
+        
+        **Note:** This is a soft-delete operation. The exercise is marked as archived but not permanently deleted.
+        
+        **Idempotency:** Supports `Idempotency-Key` header (24h TTL)
+        
+        **Rate Limiting:** 20 requests per 60 seconds
+      operationId: deleteExercise
+      tags:
+        - Exercises
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Exercise ID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: Exercise archived successfully
+          headers:
+            Idempotency-Key:
+              description: The idempotency key used for this request
+              schema:
+                type: string
+            Idempotent-Replayed:
+              description: Indicates if this is a replayed response
+              schema:
+                type: string
+                enum: ["true"]
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+components:
+  schemas:
+    Exercise:
+      type: object
+      required:
+        - id
+        - name
+        - type_code
+        - owner_id
+        - is_public
+        - tags
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Exercise ID
+        name:
+          type: string
+          minLength: 1
+          maxLength: 120
+          description: Exercise name (unique per owner)
+        type_code:
+          type: string
+          nullable: true
+          maxLength: 50
+          description: Exercise type code
+        owner_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: Owner user ID (null for global exercises)
+        muscle_group:
+          type: string
+          nullable: true
+          maxLength: 120
+          description: Primary muscle group
+        equipment:
+          type: string
+          nullable: true
+          maxLength: 120
+          description: Required equipment
+        tags:
+          type: array
+          items:
+            type: string
+            maxLength: 40
+          maxItems: 25
+          description: Exercise tags
+        is_public:
+          type: boolean
+          description: Whether the exercise is publicly visible
+        description_en:
+          type: string
+          nullable: true
+          maxLength: 2000
+          description: English description
+        description_de:
+          type: string
+          nullable: true
+          maxLength: 2000
+          description: German description
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+        updated_at:
+          type: string
+          format: date-time
+          description: Last update timestamp
+        archived_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: Archive timestamp (null if not archived)
+    CreateExerciseRequest:
+      type: object
+      required:
+        - name
+        - type_code
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 120
+          description: Exercise name (unique per owner)
+        type_code:
+          type: string
+          minLength: 1
+          maxLength: 50
+          description: Exercise type code
+        muscle_group:
+          type: string
+          maxLength: 120
+          description: Primary muscle group
+        equipment:
+          type: string
+          maxLength: 120
+          description: Required equipment
+        tags:
+          type: array
+          items:
+            type: string
+            minLength: 1
+            maxLength: 40
+          maxItems: 25
+          description: Exercise tags
+        is_public:
+          type: boolean
+          default: false
+          description: Whether the exercise is publicly visible
+        description_en:
+          type: string
+          maxLength: 2000
+          description: English description
+        description_de:
+          type: string
+          maxLength: 2000
+          description: German description
+        owner_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: Owner user ID (admin only - null for global exercises)
+    UpdateExerciseRequest:
+      type: object
+      minProperties: 1
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 120
+          description: Exercise name (unique per owner)
+        type_code:
+          type: string
+          minLength: 1
+          maxLength: 50
+          description: Exercise type code
+        muscle_group:
+          type: string
+          maxLength: 120
+          description: Primary muscle group
+        equipment:
+          type: string
+          maxLength: 120
+          description: Required equipment
+        tags:
+          type: array
+          items:
+            type: string
+            minLength: 1
+            maxLength: 40
+          maxItems: 25
+          description: Exercise tags
+        is_public:
+          type: boolean
+          description: Whether the exercise is publicly visible
+        description_en:
+          type: string
+          maxLength: 2000
+          description: English description
+        description_de:
+          type: string
+          maxLength: 2000
+          description: German description
+    PaginatedExercises:
+      type: object
+      required:
+        - data
+        - total
+        - limit
+        - offset
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Exercise"
+        total:
+          type: integer
+          minimum: 0
+          description: Total number of exercises matching the query
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 100
+          description: Number of results per page
+        offset:
+          type: integer
+          minimum: 0
+          description: Number of results skipped
+    Error:
+      type: object
+      required:
+        - error
+        - code
+      properties:
+        error:
+          type: string
+          description: Human-readable error message
+        code:
+          type: string
+          description: Error code (e.g., E.VALIDATION_ERROR, E.NOT_FOUND)
+  responses:
+    BadRequest:
+      description: Bad request (validation error)
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+          example:
+            error: "Validation failed"
+            code: "E.VALIDATION_ERROR"
+    Unauthorized:
+      description: Unauthorized (authentication required)
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+          example:
+            error: "Unauthorized"
+            code: "E.UNAUTHENTICATED"
+    Forbidden:
+      description: Forbidden (insufficient permissions)
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+          example:
+            error: "Forbidden"
+            code: "E.FORBIDDEN"
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+          example:
+            error: "Exercise not found"
+            code: "E.NOT_FOUND"
+    Conflict:
+      description: Conflict (e.g., duplicate name)
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+          example:
+            error: "Exercise name already exists"
+            code: "E.CONFLICT"
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: session
