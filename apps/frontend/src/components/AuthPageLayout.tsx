@@ -59,12 +59,13 @@ const AuthPageLayout: React.FC<AuthPageLayoutProps> = ({
       <div
         style={{
           position: "absolute",
-          top: "1.5rem",
-          right: "1.5rem",
+          top: "clamp(1rem, 3vw, 1.5rem)",
+          right: "clamp(0.75rem, 3vw, 1.5rem)",
           display: "flex",
           alignItems: "center",
           gap: "0.6rem",
           zIndex: 10,
+          maxWidth: "calc(100% - clamp(1rem, 4vw, 1.5rem) * 2)",
         }}
       >
         <HeaderUtilities />

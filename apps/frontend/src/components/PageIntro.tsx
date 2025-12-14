@@ -36,7 +36,7 @@ const PageIntro: React.FC<PageIntroProps> = ({ eyebrow, title, description, chil
       display: "flex",
       alignItems: "center",
       justifyContent: "center",
-      padding: "5rem 1.5rem",
+      padding: "clamp(2rem, 8vw, 5rem) clamp(1rem, 4vw, 1.5rem)",
     }}
   >
     <Card
@@ -79,7 +79,7 @@ const PageIntro: React.FC<PageIntroProps> = ({ eyebrow, title, description, chil
       {children ? (
         <CardContent
           style={{
-            padding: "0 3rem 3rem",
+            padding: `0 clamp(1.5rem, 4vw, 3rem) 3rem`,
             gap: "1.5rem",
           }}
         >
