@@ -69,6 +69,53 @@ export async function ensureRolesSeeded(): Promise<void> {
 }
 
 /**
+ * Wraps an async function with better error handling for database connection issues.
+ * Provides clearer error messages when database connection fails.
+ */
+export async function withDatabaseErrorHandling<T>(
+  fn: () => Promise<T>,
+  context: string = "operation",
+): Promise<T> {
+  try {
+    return await fn();
+  } catch (error) {
+    // Re-throw with more context for debugging
+    let errorMessage = error instanceof Error ? error.message : String(error);
+    const errorStack = error instanceof Error ? error.stack : undefined;
+
+    // Handle AggregateError - check for ECONNREFUSED which indicates database connection issue
+    if (error instanceof AggregateError) {
+      const errorCode = (error as { code?: string }).code;
+      if (errorCode === "ECONNREFUSED") {
+        errorMessage = `Database connection refused (ECONNREFUSED). Ensure PostgreSQL is running and accessible. Check PGHOST, PGPORT, PGUSER, PGPASSWORD, and PGDATABASE environment variables.`;
+      } else {
+        // Handle other AggregateError cases
+        const errorDetails: string[] = [];
+        errorDetails.push(`AggregateError: ${error.message || "no message"}`);
+        if (errorCode) {
+          errorDetails.push(`Error code: ${errorCode}`);
+        }
+        if (error.errors && error.errors.length > 0) {
+          errorDetails.push(`Contains ${error.errors.length} error(s):`);
+          error.errors.forEach((e, i) => {
+            const msg = e instanceof Error ? e.message : String(e);
+            const code = (e as { code?: string }).code;
+            errorDetails.push(`  Error ${i + 1}: ${msg}${code ? ` (code: ${code})` : ""}`);
+          });
+        }
+        errorMessage = errorDetails.join("\n");
+      }
+    } else if ((error as { code?: string }).code === "ECONNREFUSED") {
+      errorMessage = `Database connection refused (ECONNREFUSED). Ensure PostgreSQL is running and accessible.`;
+    }
+
+    throw new Error(
+      `${context} failed: ${errorMessage}${errorStack ? `\nStack: ${errorStack}` : ""}`,
+    );
+  }
+}
+
+/**
  * Truncate all tables in the test database.
  * Use with caution - only in test environments.
  * Silently skips tables that don't exist (e.g., if migrations haven't run yet).

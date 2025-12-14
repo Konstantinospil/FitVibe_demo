@@ -17,19 +17,25 @@ import bcrypt from "bcryptjs";
 import app from "../../../apps/backend/src/app.js";
 import db from "../../../apps/backend/src/db/index.js";
 import { createUser } from "../../../apps/backend/src/modules/auth/auth.repository.js";
-import { truncateAll, ensureRolesSeeded } from "../../setup/test-helpers.js";
+import {
+  truncateAll,
+  ensureRolesSeeded,
+  withDatabaseErrorHandling,
+} from "../../setup/test-helpers.js";
 import { v4 as uuidv4 } from "uuid";
 
 describe("Integration: Auth → Session Flow", () => {
   beforeEach(async () => {
-    // Ensure read-only mode is disabled for tests
-    const { env } = await import("../../../apps/backend/src/config/env.js");
-    (env as { readOnlyMode: boolean }).readOnlyMode = false;
+    await withDatabaseErrorHandling(async () => {
+      // Ensure read-only mode is disabled for tests
+      const { env } = await import("../../../apps/backend/src/config/env.js");
+      (env as { readOnlyMode: boolean }).readOnlyMode = false;
 
-    // Clean up any existing test data
-    await truncateAll();
-    // Ensure roles are seeded before creating users
-    await ensureRolesSeeded();
+      // Clean up any existing test data
+      await truncateAll();
+      // Ensure roles are seeded before creating users
+      await ensureRolesSeeded();
+    }, "beforeEach");
   });
 
   afterEach(async () => {

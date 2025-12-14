@@ -16,115 +16,121 @@ import bcrypt from "bcryptjs";
 import app from "../../../apps/backend/src/app.js";
 import db from "../../../apps/backend/src/db/index.js";
 import { createUser } from "../../../apps/backend/src/modules/auth/auth.repository.js";
-import { truncateAll, ensureRolesSeeded } from "../../setup/test-helpers.js";
+import {
+  truncateAll,
+  ensureRolesSeeded,
+  withDatabaseErrorHandling,
+} from "../../setup/test-helpers.js";
 import { v4 as uuidv4 } from "uuid";
 
 describe("Integration: Session → Points Flow", () => {
   let testUser: { id: string; email: string; password: string; accessToken: string };
 
   beforeEach(async () => {
-    // Ensure read-only mode is disabled for tests
-    const { env } = await import("../../../apps/backend/src/config/env.js");
-    (env as { readOnlyMode: boolean }).readOnlyMode = false;
+    await withDatabaseErrorHandling(async () => {
+      // Ensure read-only mode is disabled for tests
+      const { env } = await import("../../../apps/backend/src/config/env.js");
+      (env as { readOnlyMode: boolean }).readOnlyMode = false;
 
-    await truncateAll();
-    // Ensure roles are seeded before creating users
-    await ensureRolesSeeded();
+      await truncateAll();
+      // Ensure roles are seeded before creating users
+      await ensureRolesSeeded();
 
-    // Create a test user and get access token
-    const userId = uuidv4();
-    const password = "SecureP@ssw0rd123!";
-    const passwordHash = await bcrypt.hash(password, 12);
-    const now = new Date().toISOString();
+      // Create a test user and get access token
+      const userId = uuidv4();
+      const password = "SecureP@ssw0rd123!";
+      const passwordHash = await bcrypt.hash(password, 12);
+      const now = new Date().toISOString();
 
-    const userResult = await createUser({
-      id: userId,
-      username: "pointsuser",
-      display_name: "Points User",
-      status: "active",
-      role_code: "athlete",
-      password_hash: passwordHash,
-      primaryEmail: "points@example.com",
-      emailVerified: true,
-      terms_accepted: true,
-      terms_accepted_at: now,
-      terms_version: "2024-06-01",
-    });
+      const userResult = await createUser({
+        id: userId,
+        username: "pointsuser",
+        display_name: "Points User",
+        status: "active",
+        role_code: "athlete",
+        password_hash: passwordHash,
+        primaryEmail: "points@example.com",
+        emailVerified: true,
+        terms_accepted: true,
+        terms_accepted_at: now,
+        terms_version: "2024-06-01",
+      });
 
-    if (!userResult) {
-      throw new Error("Failed to create test user");
-    }
+      if (!userResult) {
+        throw new Error("Failed to create test user");
+      }
 
-    // Verify user exists in database before login
-    const verifyUser = await db("users").where({ id: userId }).first();
-    if (!verifyUser) {
-      throw new Error(`User ${userId} was not created in database`);
-    }
+      // Verify user exists in database before login
+      const verifyUser = await db("users").where({ id: userId }).first();
+      if (!verifyUser) {
+        throw new Error(`User ${userId} was not created in database`);
+      }
 
-    // Verify email contact was created
-    const verifyContact = await db("user_contacts")
-      .where({ user_id: userId, type: "email", is_primary: true })
-      .first();
-    if (!verifyContact) {
-      throw new Error(`User email contact was not created in database`);
-    }
+      // Verify email contact was created
+      const verifyContact = await db("user_contacts")
+        .where({ user_id: userId, type: "email", is_primary: true })
+        .first();
+      if (!verifyContact) {
+        throw new Error(`User email contact was not created in database`);
+      }
 
-    // Verify user can be found by email (same query login uses)
-    const { findUserByEmail } =
-      await import("../../../apps/backend/src/modules/auth/auth.repository.js");
-    let foundUser = await findUserByEmail("points@example.com");
-    let retries = 0;
-    while (!foundUser && retries < 10) {
-      await new Promise((resolve) => setTimeout(resolve, 100));
-      foundUser = await findUserByEmail("points@example.com");
-      retries++;
-    }
-    if (!foundUser) {
-      throw new Error(
-        `User not found by email after ${retries} retries. User exists: ${!!verifyUser}, Contact exists: ${!!verifyContact}`,
-      );
-    }
+      // Verify user can be found by email (same query login uses)
+      const { findUserByEmail } =
+        await import("../../../apps/backend/src/modules/auth/auth.repository.js");
+      let foundUser = await findUserByEmail("points@example.com");
+      let retries = 0;
+      while (!foundUser && retries < 10) {
+        await new Promise((resolve) => setTimeout(resolve, 100));
+        foundUser = await findUserByEmail("points@example.com");
+        retries++;
+      }
+      if (!foundUser) {
+        throw new Error(
+          `User not found by email after ${retries} retries. User exists: ${!!verifyUser}, Contact exists: ${!!verifyContact}`,
+        );
+      }
 
-    // Verify the user_id matches what we created
-    if (foundUser.id !== userId) {
-      throw new Error(
-        `User ID mismatch: created ${userId}, found ${foundUser.id}. This indicates a data integrity issue.`,
-      );
-    }
+      // Verify the user_id matches what we created
+      if (foundUser.id !== userId) {
+        throw new Error(
+          `User ID mismatch: created ${userId}, found ${foundUser.id}. This indicates a data integrity issue.`,
+        );
+      }
 
-    // Verify user exists in database using the found user_id (ensure FK constraint will pass)
-    const verifyUserForFK = await db("users").where({ id: foundUser.id }).first();
-    if (!verifyUserForFK) {
-      throw new Error(
-        `User ${foundUser.id} not found in users table. This will cause FK constraint violation in auth_sessions.`,
-      );
-    }
+      // Verify user exists in database using the found user_id (ensure FK constraint will pass)
+      const verifyUserForFK = await db("users").where({ id: foundUser.id }).first();
+      if (!verifyUserForFK) {
+        throw new Error(
+          `User ${foundUser.id} not found in users table. This will cause FK constraint violation in auth_sessions.`,
+        );
+      }
 
-    // Small delay to ensure transaction is fully committed and visible across connections
-    await new Promise((resolve) => setTimeout(resolve, 50));
+      // Small delay to ensure transaction is fully committed and visible across connections
+      await new Promise((resolve) => setTimeout(resolve, 50));
 
-    // Login to get access token
-    const loginResponse = await request(app).post("/api/v1/auth/login").send({
-      email: "points@example.com",
-      password: password,
-    });
+      // Login to get access token
+      const loginResponse = await request(app).post("/api/v1/auth/login").send({
+        email: "points@example.com",
+        password: password,
+      });
 
-    if (loginResponse.status !== 200) {
-      throw new Error(
-        `Failed to login test user: ${loginResponse.status} - ${JSON.stringify(loginResponse.body)}`,
-      );
-    }
+      if (loginResponse.status !== 200) {
+        throw new Error(
+          `Failed to login test user: ${loginResponse.status} - ${JSON.stringify(loginResponse.body)}`,
+        );
+      }
 
-    if (!loginResponse.body.tokens?.accessToken) {
-      throw new Error(`Login response missing tokens: ${JSON.stringify(loginResponse.body)}`);
-    }
+      if (!loginResponse.body.tokens?.accessToken) {
+        throw new Error(`Login response missing tokens: ${JSON.stringify(loginResponse.body)}`);
+      }
 
-    testUser = {
-      id: userId,
-      email: "points@example.com",
-      password: password,
-      accessToken: loginResponse.body.tokens.accessToken,
-    };
+      testUser = {
+        id: userId,
+        email: "points@example.com",
+        password: password,
+        accessToken: loginResponse.body.tokens.accessToken,
+      };
+    }, "beforeEach");
   });
 
   afterEach(async () => {

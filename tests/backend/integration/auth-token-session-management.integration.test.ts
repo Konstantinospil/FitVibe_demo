@@ -15,7 +15,11 @@ import bcrypt from "bcryptjs";
 import app from "../../../apps/backend/src/app.js";
 import db from "../../../apps/backend/src/db/index.js";
 import { createUser } from "../../../apps/backend/src/modules/auth/auth.repository.js";
-import { truncateAll, ensureRolesSeeded } from "../../setup/test-helpers.js";
+import {
+  truncateAll,
+  ensureRolesSeeded,
+  withDatabaseErrorHandling,
+} from "../../setup/test-helpers.js";
 import { v4 as uuidv4 } from "uuid";
 import type { Cookie } from "supertest";
 
@@ -26,35 +30,37 @@ describe("Integration: Token Refresh, Logout, and Session Management", () => {
   let cookies: Cookie[];
 
   beforeEach(async () => {
-    // Ensure read-only mode is disabled for tests
-    const { env } = await import("../../../apps/backend/src/config/env.js");
-    (env as { readOnlyMode: boolean }).readOnlyMode = false;
+    await withDatabaseErrorHandling(async () => {
+      // Ensure read-only mode is disabled for tests
+      const { env } = await import("../../../apps/backend/src/config/env.js");
+      (env as { readOnlyMode: boolean }).readOnlyMode = false;
 
-    // Clean up any existing test data
-    await truncateAll();
-    // Ensure roles are seeded before creating users
-    await ensureRolesSeeded();
+      // Clean up any existing test data
+      await truncateAll();
+      // Ensure roles are seeded before creating users
+      await ensureRolesSeeded();
 
-    // Create a verified user for testing
-    userId = uuidv4();
-    userEmail = `test-${uuidv4()}@example.com`;
-    userPassword = "SecureP@ssw0rd123!";
-    const passwordHash = await bcrypt.hash(userPassword, 12);
-    const now = new Date().toISOString();
+      // Create a verified user for testing
+      userId = uuidv4();
+      userEmail = `test-${uuidv4()}@example.com`;
+      userPassword = "SecureP@ssw0rd123!";
+      const passwordHash = await bcrypt.hash(userPassword, 12);
+      const now = new Date().toISOString();
 
-    await createUser({
-      id: userId,
-      username: `testuser-${uuidv4().substring(0, 8)}`,
-      display_name: "Test User",
-      status: "active",
-      role_code: "athlete",
-      password_hash: passwordHash,
-      primaryEmail: userEmail,
-      emailVerified: true,
-      terms_accepted: true,
-      terms_accepted_at: now,
-      terms_version: "2024-06-01",
-    });
+      await createUser({
+        id: userId,
+        username: `testuser-${uuidv4().substring(0, 8)}`,
+        display_name: "Test User",
+        status: "active",
+        role_code: "athlete",
+        password_hash: passwordHash,
+        primaryEmail: userEmail,
+        emailVerified: true,
+        terms_accepted: true,
+        terms_accepted_at: now,
+        terms_version: "2024-06-01",
+      });
+    }, "beforeEach");
   });
 
   afterEach(async () => {

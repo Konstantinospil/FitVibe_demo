@@ -9,16 +9,22 @@ import request from "supertest";
 import bcrypt from "bcryptjs";
 import app from "../../../apps/backend/src/app.js";
 import { createUser } from "../../../apps/backend/src/modules/auth/auth.repository.js";
-import { truncateAll, ensureRolesSeeded } from "../../setup/test-helpers.js";
+import {
+  truncateAll,
+  ensureRolesSeeded,
+  withDatabaseErrorHandling,
+} from "../../setup/test-helpers.js";
 import { getCurrentTermsVersion } from "../../../apps/backend/src/config/terms.js";
 
 describe("Integration: Lockout Error Details", () => {
   beforeEach(async () => {
-    const { env } = await import("../../../apps/backend/src/config/env.js");
-    (env as { readOnlyMode: boolean }).readOnlyMode = false;
+    await withDatabaseErrorHandling(async () => {
+      const { env } = await import("../../../apps/backend/src/config/env.js");
+      (env as { readOnlyMode: boolean }).readOnlyMode = false;
 
-    await truncateAll();
-    await ensureRolesSeeded();
+      await truncateAll();
+      await ensureRolesSeeded();
+    }, "beforeEach");
   });
 
   afterEach(async () => {
