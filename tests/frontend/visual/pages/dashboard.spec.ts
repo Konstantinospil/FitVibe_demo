@@ -3,6 +3,7 @@ import { freezeTime } from "../helpers/fakeClock.js";
 import { getDynamicMasks } from "../helpers/mask.js";
 import { assertNoHorizontalOverflow } from "../helpers/responsive.js";
 import { gotoAuthenticated } from "../helpers/auth.js";
+import { shouldRunForProject, getCurrentProject } from "../helpers/project.js";
 
 test.describe("Dashboard Page Visual Tests", () => {
   test.beforeEach(async ({ page }) => {
@@ -14,7 +15,10 @@ test.describe("Dashboard Page Visual Tests", () => {
   });
 
   test.describe("Unauthenticated State", () => {
-    test("dashboard redirect - light theme - xs", async ({ page }) => {
+    test("dashboard redirect - light theme - xs", async ({ page }, testInfo) => {
+      if (!shouldRunForProject(testInfo, "light", "xs")) {
+        test.skip();
+      }
       await page.goto("/dashboard");
       await page.waitForLoadState("networkidle");
 
@@ -29,7 +33,10 @@ test.describe("Dashboard Page Visual Tests", () => {
   });
 
   test.describe("Authenticated State", () => {
-    test("dashboard - light theme - xs", async ({ page }) => {
+    test("dashboard - light theme - xs", async ({ page }, testInfo) => {
+      if (!shouldRunForProject(testInfo, "light", "xs")) {
+        test.skip();
+      }
       await gotoAuthenticated(page, "/dashboard");
       await assertNoHorizontalOverflow(page);
       const masks = await getDynamicMasks(page);
@@ -39,7 +46,10 @@ test.describe("Dashboard Page Visual Tests", () => {
       });
     });
 
-    test("dashboard - light theme - sm", async ({ page }) => {
+    test("dashboard - light theme - sm", async ({ page }, testInfo) => {
+      if (!shouldRunForProject(testInfo, "light", "sm")) {
+        test.skip();
+      }
       await gotoAuthenticated(page, "/dashboard");
       await assertNoHorizontalOverflow(page);
       const masks = await getDynamicMasks(page);
@@ -49,7 +59,10 @@ test.describe("Dashboard Page Visual Tests", () => {
       });
     });
 
-    test("dashboard - light theme - md", async ({ page }) => {
+    test("dashboard - light theme - md", async ({ page }, testInfo) => {
+      if (!shouldRunForProject(testInfo, "light", "md")) {
+        test.skip();
+      }
       await gotoAuthenticated(page, "/dashboard");
       await assertNoHorizontalOverflow(page);
       const masks = await getDynamicMasks(page);
@@ -59,7 +72,10 @@ test.describe("Dashboard Page Visual Tests", () => {
       });
     });
 
-    test("dashboard - light theme - lg", async ({ page }) => {
+    test("dashboard - light theme - lg", async ({ page }, testInfo) => {
+      if (!shouldRunForProject(testInfo, "light", "lg")) {
+        test.skip();
+      }
       await gotoAuthenticated(page, "/dashboard");
       await assertNoHorizontalOverflow(page);
       const masks = await getDynamicMasks(page);
@@ -69,12 +85,19 @@ test.describe("Dashboard Page Visual Tests", () => {
       });
     });
 
-    test("dashboard - dark theme - xs", async ({ page }) => {
+    test("dashboard - dark theme - xs", async ({ page }, testInfo) => {
+      if (!shouldRunForProject(testInfo, "dark", "xs")) {
+        test.skip();
+      }
       await gotoAuthenticated(page, "/dashboard");
-      await page.evaluate(() => {
-        document.documentElement.setAttribute("data-theme", "dark");
-      });
-      await page.waitForTimeout(100);
+      // Ensure dark theme is set (project config should set colorScheme, but we also set data-theme for CSS)
+      const { theme } = getCurrentProject(testInfo);
+      if (theme === "dark") {
+        await page.evaluate(() => {
+          document.documentElement.setAttribute("data-theme", "dark");
+        });
+        await page.waitForTimeout(100);
+      }
 
       await assertNoHorizontalOverflow(page);
       const masks = await getDynamicMasks(page);
@@ -84,12 +107,19 @@ test.describe("Dashboard Page Visual Tests", () => {
       });
     });
 
-    test("dashboard - dark theme - lg", async ({ page }) => {
+    test("dashboard - dark theme - lg", async ({ page }, testInfo) => {
+      if (!shouldRunForProject(testInfo, "dark", "lg")) {
+        test.skip();
+      }
       await gotoAuthenticated(page, "/dashboard");
-      await page.evaluate(() => {
-        document.documentElement.setAttribute("data-theme", "dark");
-      });
-      await page.waitForTimeout(100);
+      // Ensure dark theme is set (project config should set colorScheme, but we also set data-theme for CSS)
+      const { theme } = getCurrentProject(testInfo);
+      if (theme === "dark") {
+        await page.evaluate(() => {
+          document.documentElement.setAttribute("data-theme", "dark");
+        });
+        await page.waitForTimeout(100);
+      }
 
       await assertNoHorizontalOverflow(page);
       const masks = await getDynamicMasks(page);

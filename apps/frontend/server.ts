@@ -9,6 +9,7 @@ import express, {
   type NextFunction,
   type RequestHandler,
 } from "express";
+import compression from "compression";
 import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
 import { readdirSync } from "node:fs";
@@ -22,6 +23,22 @@ const root = resolve(__dirname, ".");
 const app = express();
 const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 4173;
 const isProduction = process.env.NODE_ENV === "production";
+
+// Enable compression for all responses (gzip/brotli)
+// This improves Lighthouse "uses-text-compression" score
+app.use(
+  compression({
+    filter: (req: Request, res: Response) => {
+      // Compress all text-based responses
+      if (req.headers["x-no-compression"]) {
+        return false;
+      }
+      return compression.filter(req, res);
+    },
+    level: 6, // Balance between compression ratio and CPU usage
+    threshold: 1024, // Only compress responses > 1KB
+  }),
+);
 
 // Import SSR renderer - use built bundle in production, source in development
 // We'll import this dynamically in the route handler to avoid top-level await issues
@@ -93,11 +110,19 @@ const metricsHandler: RequestHandler = async (_req: Request, res: Response) => {
 app.get("/metrics", metricsHandler);
 
 // Serve static assets with performance headers
+// Long cache TTL for immutable assets (improves Lighthouse "uses-long-cache-ttl" score)
 const staticOptions = {
   maxAge: isProduction ? 31536000000 : 0, // 1 year in production, no cache in dev
   etag: true,
   lastModified: true,
   immutable: isProduction,
+  setHeaders: (res: Response, path: string) => {
+    // Set aggressive cache headers for static assets
+    if (isProduction) {
+      // Cache static assets for 1 year (immutable with hash in filename)
+      res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
+    }
+  },
 };
 
 if (isProduction) {
@@ -111,6 +136,21 @@ if (isProduction) {
   app.use("/fonts", express.static(resolve(root, "public/fonts")));
   app.use("/favicon.ico", express.static(resolve(root, "public/favicon.ico")));
 }
+
+// Serve robots.txt with proper headers
+app.get("/robots.txt", (_req: Request, res: Response) => {
+  const robotsPath = isProduction
+    ? resolve(root, "dist/client/robots.txt")
+    : resolve(root, "public/robots.txt");
+  res.setHeader("Content-Type", "text/plain; charset=utf-8");
+  res.setHeader("Cache-Control", "public, max-age=86400"); // Cache for 1 day
+  res.sendFile(robotsPath, (err) => {
+    if (err) {
+      // Fallback robots.txt if file doesn't exist
+      res.status(200).send("User-agent: *\nAllow: /\nDisallow: /api/\n");
+    }
+  });
+});
 
 // SSR route handler with caching and metrics
 // eslint-disable-next-line @typescript-eslint/no-misused-promises
@@ -166,6 +206,11 @@ const ssrHandler: RequestHandler = async (req: Request, res: Response, next: Nex
     } else {
       res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");
     }
+    // Security headers
+    res.setHeader("X-Content-Type-Options", "nosniff");
+    res.setHeader("X-Frame-Options", "DENY");
+    res.setHeader("X-XSS-Protection", "1; mode=block");
+    res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
     res.send(html);
   } catch (err) {
     const renderTime = Date.now() - startTime;

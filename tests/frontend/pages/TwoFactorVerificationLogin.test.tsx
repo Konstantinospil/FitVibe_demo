@@ -9,6 +9,16 @@ import { initReactI18next } from "react-i18next";
 import * as api from "../../src/services/api";
 import { AuthProvider } from "../../src/contexts/AuthContext";
 
+// Mock navigate
+const mockNavigate = vi.fn();
+vi.mock("react-router-dom", async () => {
+  const actual = await vi.importActual("react-router-dom");
+  return {
+    ...actual,
+    useNavigate: () => mockNavigate,
+  };
+});
+
 // Mock API
 vi.mock("../../src/services/api", async () => {
   const actual = await vi.importActual("../../src/services/api");
@@ -38,6 +48,7 @@ void testI18n.use(initReactI18next).init({
         "auth.twoFactor.invalidCode": "Invalid 2FA code. Please try again.",
         "auth.twoFactor.sessionExpired": "Session expired. Please log in again.",
         "auth.twoFactor.error": "Verification failed. Please try again.",
+        "auth.twoFactor.invalidSession": "Invalid session. Please try logging in again.",
       },
     },
   },
@@ -60,6 +71,7 @@ const renderWithProviders = (locationState = { pendingSessionId: "session123", f
 describe("TwoFactorVerificationLogin", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockNavigate.mockClear();
   });
 
   it("renders 2FA verification form", () => {
@@ -381,6 +393,116 @@ describe("TwoFactorVerificationLogin", () => {
         expect(screen.getByRole("alert")).toHaveTextContent(
           "Verification failed. Please try again.",
         );
+      },
+      { timeout: 5000 },
+    );
+  });
+
+  it("redirects to login when pendingSessionId is missing on mount", async () => {
+    renderWithProviders({ pendingSessionId: undefined, from: "/" });
+
+    await waitFor(
+      () => {
+        expect(mockNavigate).toHaveBeenCalledWith("/login", { replace: true });
+      },
+      { timeout: 2000 },
+    );
+  });
+
+  it("handles missing pendingSessionId in form submission", async () => {
+    renderWithProviders({ pendingSessionId: undefined, from: "/" });
+
+    const codeInput = screen.getByRole("textbox");
+    const form = codeInput.closest("form");
+
+    fireEvent.change(codeInput, { target: { value: "123456" } });
+
+    if (form) {
+      fireEvent.submit(form);
+    }
+
+    await waitFor(
+      () => {
+        expect(screen.getByRole("alert")).toHaveTextContent(
+          "Invalid session. Please try logging in again.",
+        );
+      },
+      { timeout: 5000 },
+    );
+
+    // Should navigate after 2 seconds
+    await waitFor(
+      () => {
+        expect(mockNavigate).toHaveBeenCalledWith("/login", { replace: true });
+      },
+      { timeout: 3000 },
+    );
+  });
+
+  it("handles TERMS_VERSION_OUTDATED error code", async () => {
+    vi.mocked(api.verify2FALogin).mockRejectedValue({
+      response: {
+        data: {
+          error: {
+            code: "TERMS_VERSION_OUTDATED",
+          },
+        },
+      },
+    });
+
+    renderWithProviders();
+
+    const codeInput = screen.getByRole("textbox");
+    const form = codeInput.closest("form");
+
+    fireEvent.change(codeInput, { target: { value: "123456" } });
+
+    if (form) {
+      fireEvent.submit(form);
+    }
+
+    await waitFor(
+      () => {
+        expect(mockNavigate).toHaveBeenCalledWith("/terms-reacceptance", { replace: true });
+      },
+      { timeout: 5000 },
+    );
+  });
+
+  it("handles back to login button click", async () => {
+    renderWithProviders();
+
+    const backButton = screen.getByRole("button", { name: /back to login/i });
+    fireEvent.click(backButton);
+
+    await waitFor(
+      () => {
+        expect(mockNavigate).toHaveBeenCalledWith("/login", { replace: true });
+      },
+      { timeout: 1000 },
+    );
+  });
+
+  it("navigates to custom 'from' path after successful verification", async () => {
+    vi.mocked(api.verify2FALogin).mockResolvedValue({
+      user: { id: "123", username: "testuser", email: "test@example.com" },
+      session: { id: "session123" },
+    });
+
+    renderWithProviders({ pendingSessionId: "session123", from: "/dashboard" });
+
+    const codeInput = screen.getByRole("textbox");
+    const form = codeInput.closest("form");
+
+    fireEvent.change(codeInput, { target: { value: "123456" } });
+
+    if (form) {
+      fireEvent.submit(form);
+    }
+
+    await waitFor(
+      () => {
+        expect(mockNavigate).toHaveBeenCalledWith("/dashboard", { replace: true });
       },
       { timeout: 5000 },
     );

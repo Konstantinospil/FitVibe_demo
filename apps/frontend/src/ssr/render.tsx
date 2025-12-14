@@ -234,8 +234,33 @@ export async function renderPage(url: string): Promise<string> {
     ? `<link rel="preload" href="${mainScriptPath}" as="script" crossorigin="anonymous" />`
     : "";
 
-  // Inject resource hints in head and scripts before closing body tag
-  html = html.replace("</head>", `${resourceHints}</head>`);
+  // Add Open Graph and Twitter Card meta tags for better SEO
+  // These improve Lighthouse SEO score and social sharing
+  const baseUrl = process.env.APP_URL || "https://fitvibe.app";
+  const ogMetaTags = `
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="${baseUrl}${url}" />
+    <meta property="og:title" content="FitVibe - Plan, Log & Share Your Training" />
+    <meta property="og:description" content="Plan, log, and share your training sessions. Track progress across six elemental vibes: Strength, Agility, Endurance, Explosivity, Intelligence, and Regeneration." />
+    <meta property="og:image" content="${baseUrl}/favicon.ico" />
+    <meta property="og:site_name" content="FitVibe" />
+    <meta property="og:locale" content="en_US" />
+    
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:url" content="${baseUrl}${url}" />
+    <meta name="twitter:title" content="FitVibe - Plan, Log & Share Your Training" />
+    <meta name="twitter:description" content="Plan, log, and share your training sessions. Track progress across six elemental vibes: Strength, Agility, Endurance, Explosivity, Intelligence, and Regeneration." />
+    <meta name="twitter:image" content="${baseUrl}/favicon.ico" />
+    
+    <!-- Additional SEO meta tags -->
+    <meta name="theme-color" content="#0B0C10" />
+    <link rel="canonical" href="${baseUrl}${url}" />
+  `;
+
+  // Inject resource hints and SEO meta tags in head
+  html = html.replace("</head>", `${resourceHints}${ogMetaTags}</head>`);
   html = html.replace("</body>", `${dehydratedStateScript}${hydrationScript}</body>`);
 
   return html;

@@ -408,4 +408,87 @@ describe("ProtectedRoutes", () => {
     // The component should render (loading state is handled by Suspense)
     expect(document.body).toBeInTheDocument();
   });
+
+  it("should use dehydratedState from prop when provided", async () => {
+    const dehydratedState = { queries: [{ queryKey: ["test"], state: { data: "test" } }] };
+
+    render(
+      <MemoryRouter initialEntries={["/"]}>
+        <ProtectedRoutes dehydratedState={dehydratedState} />
+      </MemoryRouter>,
+    );
+
+    await waitFor(
+      () => {
+        expect(screen.getByText("Home Page")).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
+  });
+
+  it("should get dehydratedState from window when prop is not provided", async () => {
+    const dehydratedState = { queries: [{ queryKey: ["test"], state: { data: "test" } }] };
+    (window as unknown as { __REACT_QUERY_STATE__?: unknown }).__REACT_QUERY_STATE__ =
+      dehydratedState;
+
+    render(
+      <MemoryRouter initialEntries={["/"]}>
+        <ProtectedRoutes />
+      </MemoryRouter>,
+    );
+
+    await waitFor(
+      () => {
+        expect(screen.getByText("Home Page")).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
+
+    // State should be cleared from window after use
+    expect((window as unknown as { __REACT_QUERY_STATE__?: unknown }).__REACT_QUERY_STATE__).toBe(
+      undefined,
+    );
+  });
+
+  it("should prefer prop dehydratedState over window state", async () => {
+    const propState = { queries: [{ queryKey: ["prop"], state: { data: "prop" } }] };
+    const windowState = { queries: [{ queryKey: ["window"], state: { data: "window" } }] };
+    (window as unknown as { __REACT_QUERY_STATE__?: unknown }).__REACT_QUERY_STATE__ = windowState;
+
+    render(
+      <MemoryRouter initialEntries={["/"]}>
+        <ProtectedRoutes dehydratedState={propState} />
+      </MemoryRouter>,
+    );
+
+    await waitFor(
+      () => {
+        expect(screen.getByText("Home Page")).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
+
+    // Window state should still be there since prop was used
+    expect((window as unknown as { __REACT_QUERY_STATE__?: unknown }).__REACT_QUERY_STATE__).toBe(
+      windowState,
+    );
+
+    // Clean up
+    delete (window as unknown as { __REACT_QUERY_STATE__?: unknown }).__REACT_QUERY_STATE__;
+  });
+
+  it("should handle missing dehydratedState gracefully", async () => {
+    render(
+      <MemoryRouter initialEntries={["/"]}>
+        <ProtectedRoutes />
+      </MemoryRouter>,
+    );
+
+    await waitFor(
+      () => {
+        expect(screen.getByText("Home Page")).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
+  });
 });

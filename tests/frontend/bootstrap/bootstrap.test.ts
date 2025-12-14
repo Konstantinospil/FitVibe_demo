@@ -103,4 +103,119 @@ describe("bootstrap entrypoint", () => {
     expect(document.getElementById("login-shell")).toBeNull();
     expect(mockReplace).not.toHaveBeenCalled();
   });
+
+  it("normalizes paths with trailing slashes", async () => {
+    setSessionFlag(undefined);
+    setWindowPath("/sessions/");
+
+    await importBootstrap();
+
+    // Should redirect because normalized path is not in PUBLIC_ROUTES
+    expect(mockReplace).toHaveBeenCalledWith("/login");
+  });
+
+  it("handles all public routes correctly", async () => {
+    const publicRoutes = [
+      "/login",
+      "/register",
+      "/forgot-password",
+      "/reset-password",
+      "/login/verify-2fa",
+      "/verify",
+      "/terms",
+      "/privacy",
+      "/terms-reacceptance",
+    ];
+
+    for (const route of publicRoutes) {
+      setSessionFlag(undefined);
+      setWindowPath(route);
+      mockReplace = vi.fn();
+
+      await importBootstrap();
+      await new Promise((resolve) => setTimeout(resolve, 50));
+
+      expect(mockReplace).not.toHaveBeenCalled();
+    }
+  });
+
+  it("uses requestIdleCallback when available", async () => {
+    setSessionFlag("1");
+    setWindowPath("/dashboard");
+
+    const mockIdleCallback = vi.fn((callback: () => void) => {
+      setTimeout(callback, 0);
+      return 1;
+    });
+    const originalIdleCallback = window.requestIdleCallback;
+    (window as { requestIdleCallback?: typeof mockIdleCallback }).requestIdleCallback =
+      mockIdleCallback;
+
+    await importBootstrap();
+
+    await new Promise((resolve) => setTimeout(resolve, 50));
+
+    expect(mockIdleCallback).toHaveBeenCalled();
+    expect(mockIdleCallback).toHaveBeenCalledWith(expect.any(Function), { timeout: 3000 });
+
+    // Restore
+    (window as { requestIdleCallback?: typeof originalIdleCallback }).requestIdleCallback =
+      originalIdleCallback;
+  });
+
+  it("falls back to setTimeout when requestIdleCallback is not available", async () => {
+    setSessionFlag("1");
+    setWindowPath("/dashboard");
+
+    const originalIdleCallback = window.requestIdleCallback;
+    delete (window as { requestIdleCallback?: unknown }).requestIdleCallback;
+
+    const mockSetTimeout = vi.spyOn(global, "setTimeout");
+
+    await importBootstrap();
+
+    await new Promise((resolve) => setTimeout(resolve, 50));
+
+    // Should have called setTimeout as fallback
+    expect(mockSetTimeout).toHaveBeenCalled();
+
+    // Restore
+    (window as { requestIdleCallback?: typeof originalIdleCallback }).requestIdleCallback =
+      originalIdleCallback;
+    mockSetTimeout.mockRestore();
+  });
+
+  it("handles missing sessionStorage gracefully", async () => {
+    setWindowPath("/dashboard");
+    Object.defineProperty(window, "sessionStorage", {
+      configurable: true,
+      value: undefined,
+    });
+
+    await importBootstrap();
+
+    // Should redirect because hasSessionFlag returns false when sessionStorage is undefined
+    expect(mockReplace).toHaveBeenCalledWith("/login");
+  });
+
+  it("handles case-insensitive path matching", async () => {
+    setSessionFlag(undefined);
+    setWindowPath("/LOGIN");
+
+    // Ensure requestIdleCallback is properly set up or removed
+    const originalIdleCallback = window.requestIdleCallback;
+    if (originalIdleCallback) {
+      // If it exists, make sure it's a function
+      (window as { requestIdleCallback?: typeof originalIdleCallback }).requestIdleCallback =
+        originalIdleCallback;
+    } else {
+      // If it doesn't exist, remove it to trigger setTimeout fallback
+      delete (window as { requestIdleCallback?: unknown }).requestIdleCallback;
+    }
+
+    await importBootstrap();
+
+    // Should not redirect because path is normalized to lowercase
+    expect(mockReplace).not.toHaveBeenCalled();
+  });
 });

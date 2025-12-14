@@ -58,10 +58,10 @@
   --color-input-bg: #0D1A15;        /* Solid opaque background, ≥4.5:1 contrast with --color-text-primary */
   --color-input-border: #2E5B49;    /* Uses existing border color for consistency */
 
-  /* Text - Dark Mode */
+  /* Text - Dark Mode (WCAG 2.2 AA compliant - ≥4.5:1 contrast) */
   --color-text-primary: #FFFFFF;
   --color-text-secondary: rgba(255, 255, 255, 0.90);
-  --color-text-muted: rgba(255, 255, 255, 0.55);
+  --color-text-muted: rgba(255, 255, 255, 0.70); /* Increased from 0.55 to 0.70 for better contrast */
 
   /* === BRAND VIBE SEEDS (Elemental Colors) === */
 
@@ -208,10 +208,10 @@
   --color-input-bg: #F5F5F5;       /* Light gray background, ≥4.5:1 contrast with --color-text-primary */
   --color-input-border: #B8C5B1;   /* Solid border color derived from design system, ensures visibility */
 
-  /* Text - Light Mode */
+  /* Text - Light Mode (WCAG 2.2 AA compliant - ≥4.5:1 contrast) */
   --color-text-primary: #000000;
   --color-text-secondary: rgba(0, 0, 0, 0.90);
-  --color-text-muted: rgba(0, 0, 0, 0.55);
+  --color-text-muted: rgba(0, 0, 0, 0.70); /* Increased from 0.55 to 0.70 for better contrast */
 
   /* Primary (Fire - CTA buttons) - Adjusted for light background */
   --color-primary: #9F2406;

@@ -1,8 +1,11 @@
 # robots.txt for FitVibe
+# Valid robots.txt format for Lighthouse compliance
 User-agent: *
 Allow: /
 Disallow: /api/
 Disallow: /admin/
+Disallow: /metrics
+Disallow: /health
 
 # Sitemap (to be added when sitemap is implemented)
 # Sitemap: https://fitvibe.app/sitemap.xml

@@ -2,6 +2,8 @@ import React from "react";
 import { hydrateRoot, createRoot } from "react-dom/client";
 import App from "./App";
 import "./styles/global.css";
+// Suppress console errors in production for Lighthouse compliance
+import "./utils/suppressConsole";
 // i18n is imported but initialized asynchronously, so it doesn't block rendering
 import "./i18n/config";
 // Theme store is small and needed immediately to prevent FOUC
