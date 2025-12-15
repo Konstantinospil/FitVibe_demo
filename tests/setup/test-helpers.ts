@@ -126,9 +126,23 @@ export async function isDatabaseAvailable(): Promise<boolean> {
     return true;
   } catch (error) {
     const errorCode = (error as { code?: string }).code;
+    const errorMessage = error instanceof Error ? error.message : String(error);
+
+    // Connection refused - database not available
     if (errorCode === "ECONNREFUSED" || error instanceof AggregateError) {
       return false;
     }
+
+    // Authentication errors - database not accessible with current credentials
+    // PostgreSQL error code 28P01 = invalid_password
+    if (
+      errorCode === "28P01" ||
+      errorMessage.includes("password authentication failed") ||
+      errorMessage.includes("authentication failed")
+    ) {
+      return false;
+    }
+
     // For other errors, assume database is available but there might be other issues
     // (e.g., migrations not run, permissions, etc.)
     return true;

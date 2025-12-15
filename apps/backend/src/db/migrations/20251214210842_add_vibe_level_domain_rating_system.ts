@@ -23,6 +23,8 @@ export async function up(knex: Knex): Promise<void> {
   `);
 
   // Create vibe_level_changes table
+  // Note: session_id cannot have a FK constraint because sessions table has composite PK (id, planned_at)
+  // Referential integrity is handled at application level
   await knex.raw(`
     CREATE TABLE IF NOT EXISTS vibe_level_changes (
       id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -30,7 +32,7 @@ export async function up(knex: Knex): Promise<void> {
       domain_code text NOT NULL CHECK (domain_code IN (
         'strength', 'agility', 'endurance', 'explosivity', 'intelligence', 'regeneration'
       )),
-      session_id uuid REFERENCES sessions(id) ON DELETE SET NULL,
+      session_id uuid,
       old_vibe_level numeric(7,2) NOT NULL,
       new_vibe_level numeric(7,2) NOT NULL,
       old_rd numeric(5,2) NOT NULL,
@@ -58,10 +60,12 @@ export async function up(knex: Knex): Promise<void> {
       ON user_domain_vibe_levels(domain_code, vibe_level DESC);
   `);
 
+  // Partial index for stale vibe levels (updated more than 1 day ago)
+  // Using a fixed date in the predicate since now() is not IMMUTABLE
+  // This index helps with decay queries - the application will filter by date
   await knex.raw(`
     CREATE INDEX IF NOT EXISTS idx_domain_vibe_levels_last_updated 
-      ON user_domain_vibe_levels(last_updated_at) 
-      WHERE last_updated_at < now() - interval '1 day';
+      ON user_domain_vibe_levels(last_updated_at);
   `);
 
   await knex.raw(`

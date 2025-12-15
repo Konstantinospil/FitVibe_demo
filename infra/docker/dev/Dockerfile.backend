@@ -30,24 +30,15 @@ COPY --from=builder /app/apps/backend/package.json ./package.json
 # Copy workspace files needed for pnpm to resolve the glob override
 COPY --from=builder /app/pnpm-workspace.yaml ./pnpm-workspace.yaml
 COPY --from=builder /app/pnpm-lock.yaml ./pnpm-lock.yaml
-COPY --from=builder /app/packages/patched-glob ./packages/patched-glob
 
-# Install production dependencies to ensure workspace overrides are resolved
-# This will install minimatch and other dependencies needed by patched-glob
+# Install production dependencies
+# Note: Use --no-frozen-lockfile to allow override resolution
 RUN corepack enable && corepack prepare pnpm@9.0.0 --activate && \
-    # Install minimatch first (required by patched-glob)
-    pnpm add minimatch@^9.0.4 --prod --frozen-lockfile || \
-    npm install minimatch@^9.0.4 --save-prod || true && \
-    # Install all production dependencies
-    pnpm install --prod --frozen-lockfile --offline --no-optional || \
-    pnpm install --prod --frozen-lockfile --no-optional || true && \
-    # Ensure glob resolves to patched-glob by creating symlink if needed
-    if [ ! -L node_modules/glob ] && [ -d packages/patched-glob ]; then \
-      ln -sf ../packages/patched-glob node_modules/glob; \
-    fi && \
-    # Verify minimatch is available (final check)
-    if [ ! -d node_modules/minimatch ]; then \
-      echo "Warning: minimatch not found, installing..." && \
+    # Install all production dependencies (pnpm overrides should handle glob via link:packages/patched-glob)
+    pnpm install --prod --no-frozen-lockfile --no-optional || \
+    npm install --production --no-optional || true && \
+    # Ensure minimatch is available (required by glob/patched-glob)
+    if [ ! -d node_modules/.pnpm/minimatch* ] && [ ! -d node_modules/minimatch ]; then \
       npm install minimatch@^9.0.4 --save-prod || true; \
     fi
 

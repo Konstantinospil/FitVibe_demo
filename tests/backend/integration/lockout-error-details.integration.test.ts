@@ -121,23 +121,25 @@ describe("Integration: Lockout Error Details", () => {
       }
       const ipAddress = "192.168.1.200";
 
-      // Make 10 failed attempts to trigger IP lockout
-      for (let i = 1; i <= 10; i++) {
+      // Make 4 failed attempts with different emails to approach the 5 distinct email limit
+      // (IP lockout triggers at 10 attempts OR 5 distinct emails)
+      // Stay within rate limit of 10 req/min - the 5th distinct email will trigger IP lockout
+      for (let i = 1; i <= 4; i++) {
         await request(app)
           .post("/api/v1/auth/login")
           .set("X-Forwarded-For", ipAddress)
           .send({
-            email: `test${i}@example.com`,
+            email: `iplockout${i}@example.com`,
             password: "WrongPassword123!",
           });
       }
 
-      // Next attempt should trigger IP lockout with structured details
+      // 5th distinct email attempt should trigger IP lockout with structured details
       const response = await request(app)
         .post("/api/v1/auth/login")
         .set("X-Forwarded-For", ipAddress)
         .send({
-          email: "test11@example.com",
+          email: "iplockout5@example.com",
           password: "WrongPassword123!",
         });
 
@@ -146,8 +148,8 @@ describe("Integration: Lockout Error Details", () => {
       expect(response.body.error.details).toBeDefined();
       expect(response.body.error.details.remainingSeconds).toBeGreaterThan(0);
       expect(response.body.error.details.lockoutType).toBe("ip");
-      expect(response.body.error.details.totalAttemptCount).toBeGreaterThanOrEqual(10);
-      expect(response.body.error.details.distinctEmailCount).toBeGreaterThanOrEqual(1);
+      expect(response.body.error.details.totalAttemptCount).toBeGreaterThanOrEqual(5);
+      expect(response.body.error.details.distinctEmailCount).toBeGreaterThanOrEqual(5);
       expect(response.body.error.details.maxAttempts).toBe(10);
       expect(response.body.error.details.maxDistinctEmails).toBe(5);
       expect(typeof response.body.error.details.remainingSeconds).toBe("number");
@@ -229,13 +231,8 @@ describe("Integration: Lockout Error Details", () => {
         terms_version: getCurrentTermsVersion(),
       });
 
-      // Make 1 failed attempt (4 remaining, should not trigger warning)
-      await request(app).post("/api/v1/auth/login").set("X-Forwarded-For", ipAddress).send({
-        email,
-        password: "WrongPassword123!",
-      });
-
-      // Next attempt should not include warning details
+      // Make 0 failed attempts initially - first attempt won't trigger warning
+      // (5 remaining attempts, warning threshold is <= 3 remaining)
       const response = await request(app)
         .post("/api/v1/auth/login")
         .set("X-Forwarded-For", ipAddress)
@@ -246,7 +243,8 @@ describe("Integration: Lockout Error Details", () => {
 
       expect(response.status).toBe(401);
       expect(response.body.error.code).toBe("AUTH_INVALID_CREDENTIALS");
-      // Should not have warning details when not approaching lockout
+      // Should not have warning details when not approaching lockout (4 remaining attempts)
+      // Warning is shown when <= 3 remaining, so with 4 remaining no warning should appear
       if (response.body.error.details) {
         expect(response.body.error.details.warning).not.toBe(true);
       }

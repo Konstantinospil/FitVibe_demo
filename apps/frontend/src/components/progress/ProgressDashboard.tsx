@@ -6,8 +6,8 @@ import { ProgressChart } from "./ProgressChart";
 import type { ChartDatum } from "../ui/Chart";
 import { ProgressFilters, type ProgressGroupBy } from "./ProgressFilters";
 import { DataTable, type DataTableColumn } from "./DataTable";
-import type { DashboardSummaryMetric, DashboardPersonalRecord } from "../../services/api";
 import type { DateRange } from "../DateRangePicker";
+import type { DashboardSummaryMetric, DashboardPersonalRecord } from "../../services/api";
 
 export interface ProgressDashboardProps {
   summaryMetrics?: DashboardSummaryMetric[];
@@ -130,7 +130,7 @@ export const ProgressDashboard: React.FC<ProgressDashboardProps> = ({
     },
   ];
 
-  const effectiveRange: DateRange = customRange ?? {
+  const effectiveRange = customRange || {
     from: new Date(Date.now() - period * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
     to: new Date().toISOString().split("T")[0],
   };
@@ -141,13 +141,13 @@ export const ProgressDashboard: React.FC<ProgressDashboardProps> = ({
       {(onRangeModeChange || onPeriodChange || onCustomRangeChange || onGroupByChange) && (
         <ProgressFilters
           rangeMode={rangeMode}
-          onRangeModeChange={onRangeModeChange ?? (() => {})}
+          onRangeModeChange={onRangeModeChange || (() => {})}
           period={period}
-          onPeriodChange={onPeriodChange ?? (() => {})}
-          customRange={customRange ?? effectiveRange}
-          onCustomRangeChange={onCustomRangeChange ?? (() => {})}
+          onPeriodChange={onPeriodChange || (() => {})}
+          customRange={customRange || effectiveRange}
+          onCustomRangeChange={onCustomRangeChange || (() => {})}
           groupBy={groupBy}
-          onGroupByChange={onGroupByChange ?? (() => {})}
+          onGroupByChange={onGroupByChange || (() => {})}
           onExport={onExport}
           isExporting={isExporting}
         />

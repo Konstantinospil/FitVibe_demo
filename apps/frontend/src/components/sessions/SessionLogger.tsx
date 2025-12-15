@@ -28,7 +28,8 @@ export const SessionLogger: React.FC<SessionLoggerProps> = ({
     session.exercises.forEach((ex) => {
       initial[ex.id] =
         ex.sets.length > 0
-          ? ex.sets.map((set) => ({
+          ? ex.sets.map((set, idx) => ({
+              id: `set-${ex.id}-${idx}`,
               order: set.order_index,
               reps: set.reps ?? null,
               weight_kg: set.weight_kg ?? null,

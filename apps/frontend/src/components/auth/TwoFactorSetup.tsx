@@ -56,7 +56,7 @@ export const TwoFactorSetup: React.FC<TwoFactorSetupProps> = ({ onSetupComplete,
       setSecret(response.secret);
       setBackupCodes(response.backupCodes);
       setStep("verify");
-    } catch (_err) {
+    } catch {
       setError(t("auth.2fa.setupFailed") || "Failed to setup 2FA");
     } finally {
       setIsLoading(false);
@@ -84,7 +84,7 @@ export const TwoFactorSetup: React.FC<TwoFactorSetupProps> = ({ onSetupComplete,
       } else {
         setError(response.message || t("auth.2fa.verificationFailed") || "Verification failed");
       }
-    } catch (_err) {
+    } catch {
       setError(t("auth.2fa.verificationFailed") || "Verification failed");
     } finally {
       setIsVerifying(false);

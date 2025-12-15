@@ -1,5 +1,4 @@
 import React from "react";
-import { useTranslation } from "react-i18next";
 import { Flame } from "lucide-react";
 import { Badge } from "../ui/Badge";
 

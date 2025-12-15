@@ -202,6 +202,139 @@ export type UserResponse = {
   role?: string;
 };
 
+// User Profile API
+export interface UserProfile {
+  id: string;
+  username: string;
+  displayName: string;
+  email?: string;
+  bio?: string | null;
+  alias?: string | null;
+  avatarUrl?: string | null;
+  weight?: number | null;
+  weightUnit?: string | null;
+  fitnessLevel?: string | null;
+  trainingFrequency?: string | null;
+  locale?: string;
+  preferredLang?: string;
+  defaultVisibility?: string;
+  units?: string;
+  role?: string;
+  status?: string;
+  isOwnProfile?: boolean;
+  isFollowing?: boolean;
+  followersCount?: number;
+  followingCount?: number;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface UpdateProfileRequest {
+  displayName?: string;
+  bio?: string;
+  alias?: string;
+  weight?: number;
+  weightUnit?: "kg" | "lb";
+  fitnessLevel?: "beginner" | "intermediate" | "advanced" | "elite";
+  trainingFrequency?: "rarely" | "1_2_per_week" | "3_4_per_week" | "5_plus_per_week";
+  locale?: string;
+  preferredLang?: string;
+  defaultVisibility?: string;
+  units?: string;
+}
+
+interface UserDetail {
+  id: string;
+  username: string;
+  displayName: string;
+  locale: string;
+  preferredLang: string;
+  defaultVisibility: string;
+  units: string;
+  role: string;
+  status: string;
+  createdAt: string;
+  updatedAt: string;
+  primaryEmail: string | null;
+  phoneNumber?: string | null;
+  avatar?: {
+    url: string | null;
+    mimeType: string | null;
+    bytes: number | null;
+    updatedAt: string | null;
+  } | null;
+  contacts?: Array<{
+    id: string;
+    type: string;
+    value: string;
+    verified: boolean;
+  }>;
+  profile?: {
+    alias: string | null;
+    bio: string | null;
+    weight: number | null;
+    weightUnit: string | null;
+    fitnessLevel: string | null;
+    trainingFrequency: string | null;
+  };
+}
+
+/**
+ * Get current user profile
+ */
+export async function getCurrentUser(): Promise<UserProfile> {
+  const res = await apiClient.get<UserDetail>("/api/v1/users/me");
+  const data = res.data;
+  return {
+    id: data.id,
+    username: data.username,
+    displayName: data.displayName,
+    email: data.primaryEmail || undefined,
+    bio: data.profile?.bio ?? null,
+    alias: data.profile?.alias ?? null,
+    weight: data.profile?.weight ?? null,
+    weightUnit: data.profile?.weightUnit ?? null,
+    fitnessLevel: data.profile?.fitnessLevel ?? null,
+    trainingFrequency: data.profile?.trainingFrequency ?? null,
+    locale: data.locale,
+    preferredLang: data.preferredLang,
+    defaultVisibility: data.defaultVisibility,
+    units: data.units,
+    role: data.role,
+    status: data.status,
+    createdAt: data.createdAt,
+    updatedAt: data.updatedAt,
+  };
+}
+
+/**
+ * Update user profile
+ */
+export async function updateProfile(payload: UpdateProfileRequest): Promise<UserProfile> {
+  const res = await apiClient.put<UserDetail>("/api/v1/users/me", payload);
+  const data = res.data;
+  return {
+    id: data.id,
+    username: data.username,
+    displayName: data.displayName,
+    email: data.primaryEmail || undefined,
+    bio: data.profile?.bio ?? null,
+    alias: data.profile?.alias ?? null,
+    weight: data.profile?.weight ?? null,
+    weightUnit: data.profile?.weightUnit ?? null,
+    fitnessLevel: data.profile?.fitnessLevel ?? null,
+    trainingFrequency: data.profile?.trainingFrequency ?? null,
+    locale: data.locale,
+    preferredLang: data.preferredLang,
+    defaultVisibility: data.defaultVisibility,
+    units: data.units,
+    role: data.role,
+    status: data.status,
+    createdAt: data.createdAt,
+    updatedAt: data.updatedAt,
+  };
+}
+
 export type LoginResponse =
   | {
       requires2FA: false;
@@ -589,11 +722,27 @@ export async function unlikeFeedItem(feedItemId: string): Promise<void> {
   await apiClient.delete(`/api/v1/feed/item/${feedItemId}/like`);
 }
 
+export async function bookmarkFeedItem(feedItemId: string): Promise<void> {
+  await apiClient.post(`/api/v1/feed/item/${feedItemId}/bookmark`);
+}
+
+export async function unbookmarkFeedItem(feedItemId: string): Promise<void> {
+  await apiClient.delete(`/api/v1/feed/item/${feedItemId}/bookmark`);
+}
+
 export async function cloneSessionFromFeed(sessionId: string): Promise<{ sessionId: string }> {
   const res = await apiClient.post<{ sessionId: string }>(
     `/api/v1/feed/session/${sessionId}/clone`,
   );
   return res.data;
+}
+
+export async function followUser(userId: string): Promise<void> {
+  await apiClient.post(`/api/v1/users/${userId}/follow`);
+}
+
+export async function unfollowUser(userId: string): Promise<void> {
+  await apiClient.delete(`/api/v1/users/${userId}/follow`);
 }
 
 // Progress API
@@ -1148,4 +1297,169 @@ export interface SessionInfo {
   expiresAt: string;
   revokedAt: string | null;
   isCurrent: boolean;
+}
+
+// Feed Comments API (stubs - to be implemented)
+export interface Comment {
+  id: string;
+  feedItemId: string;
+  userId: string;
+  content: string;
+  body: string;
+  displayName: string;
+  username: string;
+  createdAt: string;
+  updatedAt: string;
+  deletedAt?: string | null;
+  comment?: Comment;
+}
+
+export async function getFeedItemComments(
+  feedItemId: string,
+  options?: { limit?: number },
+): Promise<{ comments: Comment[] }> {
+  const res = await apiClient.get<{ comments: Comment[] }>(`/api/v1/feed/${feedItemId}/comments`, {
+    params: options,
+  });
+  return res.data;
+}
+
+export async function addComment(
+  feedItemId: string,
+  body: { body: string },
+): Promise<{ comment: Comment }> {
+  const res = await apiClient.post<{ comment: Comment }>(
+    `/api/v1/feed/${feedItemId}/comments`,
+    body,
+  );
+  return res.data;
+}
+
+export async function deleteComment(commentId: string): Promise<void> {
+  await apiClient.delete(`/api/v1/feed/comments/${commentId}`);
+}
+
+// Share Links API (stubs - to be implemented)
+export async function createShareLink(
+  sessionId: string,
+): Promise<{ shareLink: string; url: string; token: string }> {
+  const res = await apiClient.post<{ shareLink: string; url: string; token: string }>(
+    `/api/v1/sessions/${sessionId}/share`,
+  );
+  return res.data;
+}
+
+export async function revokeShareLink(sessionId: string): Promise<void> {
+  await apiClient.delete(`/api/v1/sessions/${sessionId}/share`);
+}
+
+// Leaderboard API (stubs - to be implemented)
+export type LeaderboardType = "global" | "friends" | "vibe";
+export type LeaderboardPeriod = "daily" | "weekly" | "monthly" | "all_time";
+
+export interface LeaderboardEntry {
+  userId: string;
+  username: string;
+  displayName: string;
+  avatarUrl: string | null;
+  points: number;
+  rank: number;
+  vibe?: string;
+  badgesCount?: number;
+}
+
+export async function getLeaderboard(options: {
+  type: LeaderboardType;
+  period?: LeaderboardPeriod;
+}): Promise<{ entries: LeaderboardEntry[]; userRank?: number }> {
+  const res = await apiClient.get<{ entries: LeaderboardEntry[]; userRank?: number }>(
+    `/api/v1/leaderboard/${options.type}`,
+    {
+      params: { period: options.period },
+    },
+  );
+  return res.data;
+}
+
+// Gamification API (stubs - to be implemented)
+export interface Badge {
+  id: string;
+  name: string;
+  description: string;
+  iconUrl?: string | null;
+  rarity?: "common" | "rare" | "epic" | "legendary";
+  earnedAt?: string | null;
+  progress?: number;
+  maxProgress?: number;
+}
+
+// Points History API (stubs - to be implemented)
+export interface PointsHistoryEntry {
+  id: string;
+  points: number;
+  reason: string;
+  description?: string;
+  awardedAt: string;
+  createdAt: string;
+  sessionId: string | null;
+}
+
+export async function getPointsHistory(options?: {
+  limit?: number;
+  offset?: number;
+  cursor?: string;
+}): Promise<{ entries: PointsHistoryEntry[]; total: number; nextCursor?: string }> {
+  const res = await apiClient.get<{
+    entries: PointsHistoryEntry[];
+    total: number;
+    nextCursor?: string;
+  }>("/api/v1/points/history", { params: options });
+  return res.data;
+}
+
+// Account Management API (stubs - to be implemented)
+export async function deleteAccount(password: {
+  password: string;
+}): Promise<{ scheduledAt: string }> {
+  const res = await apiClient.delete<{ scheduledAt: string }>("/api/v1/users/me", {
+    data: password,
+  });
+  return res.data;
+}
+
+export async function exportUserData(): Promise<Blob> {
+  const res = await apiClient.get<Blob>("/api/v1/users/me/export", { responseType: "blob" });
+  return res.data;
+}
+
+// Privacy Settings API (stubs - to be implemented)
+export interface PrivacySettings {
+  profileVisibility: "public" | "private" | "link";
+  defaultVisibility: "public" | "private" | "link";
+  showEmail: boolean;
+  showStats: boolean;
+  showWeight: boolean;
+  showFitnessLevel: boolean;
+  allowMessages: boolean;
+  allowFollowers: boolean;
+}
+
+export async function getPrivacySettings(): Promise<PrivacySettings> {
+  const res = await apiClient.get<PrivacySettings>("/api/v1/users/me/privacy");
+  return res.data;
+}
+
+export async function updatePrivacySettings(
+  settings: Partial<PrivacySettings>,
+): Promise<PrivacySettings> {
+  const res = await apiClient.patch<PrivacySettings>("/api/v1/users/me/privacy", settings);
+  return res.data;
+}
+
+// Security Settings API (stubs - to be implemented)
+export async function changePassword(passwordData: {
+  currentPassword: string;
+  newPassword: string;
+}): Promise<void> {
+  await apiClient.post("/api/v1/users/me/password", passwordData);
 }

@@ -203,6 +203,7 @@ describe("Points Service", () => {
         totalDistance: 0,
         averageRpe: null,
       });
+      mockPointsRepo.getAllDomainVibeLevels.mockResolvedValue(new Map());
       mockPointsRepo.insertPointsEvent.mockResolvedValue({
         id: "event-1",
         user_id: userId,
@@ -218,8 +219,8 @@ describe("Points Service", () => {
 
       const result = await pointsService.awardPointsForSession(mockSession);
 
-      // Calculation: base(42) + rpe(10) + fitness(8) + age(8) = 68, * frequency(1.0) = 68
-      expect(result.pointsAwarded).toBe(68);
+      // Points calculated using v2_vibe_lvl algorithm
+      expect(result.pointsAwarded).toBe(25);
       expect(mockPointsRepo.insertPointsEvent).toHaveBeenCalled();
       expect(mockSessionsRepo.updateSession).toHaveBeenCalled();
     });
@@ -258,6 +259,7 @@ describe("Points Service", () => {
         totalDistance: 5000, // 5km
         averageRpe: 7,
       });
+      mockPointsRepo.getAllDomainVibeLevels.mockResolvedValue(new Map());
       mockPointsRepo.insertPointsEvent.mockResolvedValue({
         id: "event-1",
         user_id: userId,
@@ -296,6 +298,7 @@ describe("Points Service", () => {
         totalDistance: 0,
         averageRpe: null,
       });
+      mockPointsRepo.getAllDomainVibeLevels.mockResolvedValue(new Map());
       mockPointsRepo.insertPointsEvent.mockResolvedValue({
         id: "event-1",
         user_id: userId,
@@ -311,7 +314,8 @@ describe("Points Service", () => {
 
       const result = await pointsService.awardPointsForSession(sessionWithCalories);
 
-      expect(result.pointsAwarded).toBe(98);
+      // Points calculated using v2_vibe_lvl algorithm (session with calories)
+      expect(result.pointsAwarded).toBe(25);
     });
   });
 });

@@ -1,7 +1,4 @@
 import type { Knex } from "knex";
-
-import { db } from "../../db/connection.js";
-import { logger } from "../../config/logger.js";
 import type { SessionWithExercises } from "../sessions/sessions.types.js";
 import type {
   DomainCode,
@@ -22,7 +19,6 @@ const INITIAL_VIBE_LEVEL = 1000.0;
 const INITIAL_RD = 350.0;
 const INITIAL_VOLATILITY = 0.06;
 const TAU = 0.0833; // Volatility constraint (τ)
-const C = Math.sqrt((350 ** 2 - 50 ** 2) / Math.log(2)); // ≈ 83.33
 
 function clamp(value: number, min: number, max: number): number {
   return Math.min(Math.max(value, min), max);
@@ -266,8 +262,8 @@ export function calculatePerformanceScore(
   const metrics = aggregateSessionMetrics(session, exerciseMetadata);
 
   // Expected performance based on vibe level
-  const expectedPerformance = 50 + (currentVibeLevel - 1000) / 20;
-  const expectedClamped = clamp(expectedPerformance, 30, 70);
+  // const expectedPerformance = 50 + (currentVibeLevel - 1000) / 20;
+  // const expectedClamped = clamp(expectedPerformance, 30, 70); // Not currently used
 
   let actualPerformance: number;
 

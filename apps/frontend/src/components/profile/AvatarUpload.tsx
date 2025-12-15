@@ -123,7 +123,7 @@ export const AvatarUpload: React.FC<AvatarUploadProps> = ({
       await apiClient.delete("/api/v1/users/me/avatar");
       setAvatarPreview(null);
       onDeleteSuccess?.();
-    } catch (_error) {
+    } catch {
       const errorMessage =
         t("settings.profile.avatarDeleteError") || "Failed to delete avatar. Please try again.";
       setAvatarError(errorMessage);

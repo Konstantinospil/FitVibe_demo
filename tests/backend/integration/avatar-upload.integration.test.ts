@@ -29,6 +29,7 @@ import {
   ensureUsernameColumnExists,
 } from "../../setup/test-helpers.js";
 import { v4 as uuidv4 } from "uuid";
+import { getCurrentTermsVersion } from "../../../apps/backend/src/config/terms.js";
 
 describe("Integration: Avatar Upload", () => {
   let dbAvailable = false;
@@ -77,18 +78,26 @@ describe("Integration: Avatar Upload", () => {
       const testUsername = `testuser-${uuidv4().substring(0, 8)}`;
       const hashedPassword = await bcrypt.hash("SecureP@ssw0rd123!", 10);
 
+      const userIdValue = uuidv4();
       const user = await createUser({
-        id: uuidv4(),
-        email: testEmail,
+        id: userIdValue,
         username: testUsername,
-        passwordHash: hashedPassword,
-        displayName: "Test User",
-        roleCode: "user",
-        locale: "en",
-        preferredLang: "en",
+        display_name: "Test User",
+        password_hash: hashedPassword,
+        primaryEmail: testEmail,
+        emailVerified: true,
+        role_code: "athlete",
+        locale: "en-US",
+        preferred_lang: "en",
         status: "active",
+        terms_accepted: true,
+        terms_accepted_at: new Date().toISOString(),
+        terms_version: getCurrentTermsVersion(),
       });
 
+      if (!user) {
+        throw new Error("Failed to create user");
+      }
       userId = user.id;
 
       // Login to get auth cookie

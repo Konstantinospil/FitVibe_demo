@@ -231,6 +231,8 @@ const LanguageSwitcher: React.FC = () => {
   const { i18n, t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const [focusedIndex, setFocusedIndex] = useState<number>(-1);
   const activeLanguage = (i18n.language?.slice(0, 2) || "en") as LangCode;
 
   // Fallback to 'en' if language is not in LANGUAGES
@@ -239,17 +241,25 @@ const LanguageSwitcher: React.FC = () => {
     : "en";
 
   const currentLanguage = LANGUAGES.find((lang) => lang.code === validLanguage) ?? LANGUAGES[0];
+  const currentIndex = LANGUAGES.findIndex((lang) => lang.code === validLanguage);
 
-  const handleLanguageChange = (code: LangCode) => {
-    void i18n.changeLanguage(code);
-    setIsOpen(false);
-  };
+  const handleLanguageChange = React.useCallback(
+    (code: LangCode) => {
+      void i18n.changeLanguage(code);
+      setIsOpen(false);
+      setFocusedIndex(-1);
+      // Return focus to button after selection
+      buttonRef.current?.focus();
+    },
+    [i18n],
+  );
 
   // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setIsOpen(false);
+        setFocusedIndex(-1);
       }
     };
     if (isOpen) {
@@ -257,6 +267,78 @@ const LanguageSwitcher: React.FC = () => {
     }
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [isOpen]);
+
+  // Handle keyboard navigation
+  const handleKeyDown = React.useCallback(
+    (e: React.KeyboardEvent<HTMLButtonElement>) => {
+      if (!isOpen) {
+        // Open dropdown on ArrowDown, ArrowUp, Enter, or Space
+        if (e.key === "ArrowDown" || e.key === "ArrowUp" || e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          setIsOpen(true);
+          setFocusedIndex(currentIndex >= 0 ? currentIndex : 0);
+        } else if (e.key === "Escape") {
+          setIsOpen(false);
+          setFocusedIndex(-1);
+        }
+        return;
+      }
+
+      // Handle keyboard navigation when dropdown is open
+      switch (e.key) {
+        case "Escape":
+          e.preventDefault();
+          setIsOpen(false);
+          setFocusedIndex(-1);
+          buttonRef.current?.focus();
+          break;
+        case "ArrowDown":
+          e.preventDefault();
+          setFocusedIndex((prev) => (prev < LANGUAGES.length - 1 ? prev + 1 : 0));
+          break;
+        case "ArrowUp":
+          e.preventDefault();
+          setFocusedIndex((prev) => (prev > 0 ? prev - 1 : LANGUAGES.length - 1));
+          break;
+        case "Home":
+          e.preventDefault();
+          setFocusedIndex(0);
+          break;
+        case "End":
+          e.preventDefault();
+          setFocusedIndex(LANGUAGES.length - 1);
+          break;
+        case "Enter":
+        case " ":
+          e.preventDefault();
+          if (focusedIndex >= 0 && focusedIndex < LANGUAGES.length) {
+            handleLanguageChange(LANGUAGES[focusedIndex].code);
+          }
+          break;
+        default:
+          // Close on other keys (optional - can be removed if not desired)
+          if (e.key.length === 1) {
+            // Single character - might be typing to search
+            // For now, just close dropdown
+            setIsOpen(false);
+            setFocusedIndex(-1);
+          }
+          break;
+      }
+    },
+    [isOpen, focusedIndex, handleLanguageChange, currentIndex],
+  );
+
+  // Focus management when dropdown opens
+  useEffect(() => {
+    if (isOpen && focusedIndex >= 0) {
+      const optionElements =
+        dropdownRef.current?.querySelectorAll<HTMLButtonElement>('[role="menuitemradio"]');
+      if (optionElements && optionElements[focusedIndex]) {
+        optionElements[focusedIndex].focus();
+      }
+    }
+  }, [isOpen, focusedIndex]);
 
   return (
     <div
@@ -267,11 +349,19 @@ const LanguageSwitcher: React.FC = () => {
       }}
     >
       <button
+        ref={buttonRef}
         type="button"
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={() => {
+          setIsOpen(!isOpen);
+          if (!isOpen) {
+            setFocusedIndex(currentIndex >= 0 ? currentIndex : 0);
+          }
+        }}
+        onKeyDown={handleKeyDown}
         style={buttonStyle}
         aria-label={t("language.label")}
         aria-expanded={isOpen}
+        aria-haspopup="menu"
       >
         <FlagIcon option={currentLanguage} size={24} />
         <ChevronDown size={14} style={{ opacity: 0.7 }} />
@@ -279,28 +369,33 @@ const LanguageSwitcher: React.FC = () => {
 
       {isOpen && (
         <div style={dropdownStyle} role="menu" aria-label={t("language.select")}>
-          {LANGUAGES.map((option) => (
+          {LANGUAGES.map((option, index) => (
             <button
               key={option.code}
               onClick={() => handleLanguageChange(option.code)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  handleLanguageChange(option.code);
+                }
+              }}
               style={{
                 ...optionStyle,
                 background:
-                  option.code === validLanguage ? "var(--color-surface-muted)" : "transparent",
+                  option.code === validLanguage || index === focusedIndex
+                    ? "var(--color-surface-muted)"
+                    : "transparent",
                 fontWeight: option.code === validLanguage ? 600 : 400,
               }}
-              onMouseEnter={(e) => {
-                if (option.code !== validLanguage) {
-                  e.currentTarget.style.background = "var(--color-surface-muted)";
-                }
+              onMouseEnter={() => {
+                setFocusedIndex(index);
               }}
-              onMouseLeave={(e) => {
-                if (option.code !== validLanguage) {
-                  e.currentTarget.style.background = "transparent";
-                }
+              onFocus={() => {
+                setFocusedIndex(index);
               }}
               role="menuitemradio"
               aria-checked={option.code === validLanguage}
+              tabIndex={index === focusedIndex ? 0 : -1}
             >
               <FlagIcon option={option} size={20} />
               <span>{t(option.labelKey)}</span>

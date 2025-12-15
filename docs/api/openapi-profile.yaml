@@ -2,7 +2,7 @@ openapi: 3.0.3
 info:
   title: FitVibe Profile API
   version: 1.0.0
-  description: API for user profile management (Epic 1: Profile & Settings)
+  description: "API for user profile management (Epic 1: Profile & Settings)"
 servers:
   - url: /api/v1
     description: API v1
@@ -14,13 +14,13 @@ paths:
       description: |
         Update the authenticated user's profile information.
         Supports partial updates (only provided fields are updated).
-        
+
         **Security Features:**
         - Alias change rate limiting: Maximum 1 change per 30 days
         - Weight precision: Maximum 2 decimal places
         - Immutable fields: `date_of_birth` and `gender` cannot be changed
         - Genericized error messages to prevent enumeration attacks
-        
+
         **Rate Limiting:** 20 requests per 60 seconds
       operationId: updateProfile
       tags:
@@ -74,42 +74,42 @@ paths:
                   type: string
                   enum: [private, link, public]
       responses:
-        '200':
+        "200":
           description: Profile updated successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/UserProfile'
-        '400':
+                $ref: "#/components/schemas/UserProfile"
+        "400":
           description: Validation error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
               example:
                 error: "E.VALIDATION_ERROR"
                 message: "Weight must have at most 2 decimal places"
-        '401':
+        "401":
           description: Unauthenticated
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-        '409':
+                $ref: "#/components/schemas/Error"
+        "409":
           description: Profile update failed (alias conflict or other conflict)
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
               example:
                 error: "E.PROFILE_UPDATE_FAILED"
                 message: "Profile update failed. Please try again."
-        '429':
+        "429":
           description: Rate limited (alias change rate limit exceeded)
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
               example:
                 error: "E.ALIAS_CHANGE_RATE_LIMITED"
                 message: "Alias can only be changed once per 30 days. Please try again in 25 days."

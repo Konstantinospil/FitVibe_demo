@@ -8,6 +8,7 @@ import { Select } from "../ui/Select";
 import { Alert } from "../ui/Alert";
 import { getCurrentUser, updateProfile, type UpdateProfileRequest } from "../../services/api";
 import { useToast } from "../ui/Toast";
+import { getErrorMessageSync } from "../../utils/errorMessages";
 
 export interface ProfileFormProps {
   onSave?: () => void;
@@ -43,19 +44,42 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({ onSave }) => {
           displayName: profile.displayName || "",
           bio: profile.bio || "",
           alias: profile.alias || "",
-          weight: profile.weight,
-          weightUnit: profile.weightUnit || "kg",
-          fitnessLevel: profile.fitnessLevel,
-          trainingFrequency: profile.trainingFrequency,
+          weight: profile.weight ?? undefined,
+          weightUnit: (profile.weightUnit as "kg" | "lb") || "kg",
+          fitnessLevel:
+            (profile.fitnessLevel as
+              | "beginner"
+              | "intermediate"
+              | "advanced"
+              | "elite"
+              | undefined) ?? undefined,
+          trainingFrequency:
+            (profile.trainingFrequency as
+              | "rarely"
+              | "1_2_per_week"
+              | "3_4_per_week"
+              | "5_plus_per_week"
+              | undefined) ?? undefined,
         });
-      } catch (_err) {
-        setError(t("settings.profile.loadError") || "Failed to load profile");
+      } catch (err) {
+        const errorMessage = getErrorMessageSync(
+          err,
+          t,
+          "settings.profile.loadError",
+          "Failed to load profile",
+        );
+        setError(errorMessage);
+        showToast({
+          variant: "error",
+          title: t("common.error") || "Error",
+          message: errorMessage,
+        });
       } finally {
         setIsLoading(false);
       }
     };
     void loadProfile();
-  }, [t]);
+  }, [t, showToast]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -70,8 +94,19 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({ onSave }) => {
         message: t("settings.profile.savedMessage") || "Your profile has been updated successfully",
       });
       onSave?.();
-    } catch (_err) {
-      setError(t("settings.profile.saveError") || "Failed to save profile");
+    } catch (err) {
+      const errorMessage = getErrorMessageSync(
+        err,
+        t,
+        "settings.profile.saveError",
+        "Failed to save profile",
+      );
+      setError(errorMessage);
+      showToast({
+        variant: "error",
+        title: t("common.error") || "Error",
+        message: errorMessage,
+      });
     } finally {
       setIsSaving(false);
     }
@@ -152,7 +187,9 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({ onSave }) => {
           <Textarea
             label={t("settings.profile.bio") || "Bio"}
             value={formData.bio || ""}
-            onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
+            onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
+              setFormData({ ...formData, bio: e.target.value })
+            }
             placeholder={t("settings.profile.bioPlaceholder") || "Tell us about yourself"}
             rows={4}
             maxLength={500}
@@ -180,7 +217,7 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({ onSave }) => {
                 { value: "lb", label: "lb" },
               ]}
               value={formData.weightUnit || "kg"}
-              onChange={(e) =>
+              onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
                 setFormData({ ...formData, weightUnit: e.target.value as "kg" | "lb" })
               }
             />
@@ -190,7 +227,7 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({ onSave }) => {
             label={t("settings.profile.fitnessLevel") || "Fitness Level"}
             options={fitnessLevelOptions}
             value={formData.fitnessLevel || ""}
-            onChange={(e) =>
+            onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
               setFormData({
                 ...formData,
                 fitnessLevel: e.target.value as UpdateProfileRequest["fitnessLevel"],
@@ -203,7 +240,7 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({ onSave }) => {
             label={t("settings.profile.trainingFrequency") || "Training Frequency"}
             options={trainingFrequencyOptions}
             value={formData.trainingFrequency || ""}
-            onChange={(e) =>
+            onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
               setFormData({
                 ...formData,
                 trainingFrequency: e.target.value as UpdateProfileRequest["trainingFrequency"],

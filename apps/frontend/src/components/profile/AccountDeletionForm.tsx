@@ -63,7 +63,7 @@ export const AccountDeletionForm: React.FC<AccountDeletionFormProps> = ({ onDele
       await signOut();
       navigate("/login");
       onDeleted?.();
-    } catch (_err) {
+    } catch {
       setError(
         t("settings.accountDeletion.failed") ||
           "Failed to delete account. Please check your password.",

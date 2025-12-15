@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import { Button } from "../ui/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/Card";
 import { Input } from "../ui/Input";
-import { Textarea } from "../ui/Textarea";
+import { Textarea } from "../ui/Textarea.js";
 import { Select } from "../ui/Select";
 import { Alert } from "../ui/Alert";
 import { Modal } from "../ui/Modal";
@@ -63,7 +63,7 @@ export const ExerciseForm: React.FC<ExerciseFormProps> = ({
             description_en: exercise.description_en || "",
             tags: exercise.tags || [],
           });
-        } catch (_err) {
+        } catch {
           setError(t("exercises.loadError") || "Failed to load exercise");
         } finally {
           setIsLoading(false);
@@ -105,7 +105,7 @@ export const ExerciseForm: React.FC<ExerciseFormProps> = ({
           : t("exercises.createdMessage") || "Exercise has been created successfully",
       });
       onSave?.(exercise);
-    } catch (_err) {
+    } catch {
       setError(
         exerciseId
           ? t("exercises.updateError") || "Failed to update exercise"
@@ -191,7 +191,9 @@ export const ExerciseForm: React.FC<ExerciseFormProps> = ({
       <Textarea
         label={t("exercises.description") || "Description"}
         value={formData.description_en || ""}
-        onChange={(e) => setFormData({ ...formData, description_en: e.target.value })}
+        onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
+          setFormData({ ...formData, description_en: e.target.value })
+        }
         placeholder={t("exercises.descriptionPlaceholder") || "Enter exercise description"}
         rows={4}
         maxLength={1000}

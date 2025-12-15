@@ -44,7 +44,7 @@ export const DataExportButton: React.FC<DataExportButtonProps> = ({
         message: t("settings.dataExport.successMessage") || "Your data export has been downloaded",
       });
       setShowModal(false);
-    } catch (_err) {
+    } catch {
       showToast({
         variant: "error",
         title: t("settings.dataExport.failed") || "Export Failed",

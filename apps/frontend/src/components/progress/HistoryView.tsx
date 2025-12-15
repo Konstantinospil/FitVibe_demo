@@ -1,5 +1,4 @@
 import React from "react";
-import { useTranslation } from "react-i18next";
 import { Card, CardContent } from "../ui/Card";
 import { SessionCard } from "../sessions/SessionCard";
 import Skeleton from "../ui/Skeleton";
