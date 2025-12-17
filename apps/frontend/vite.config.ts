@@ -284,8 +284,6 @@ export default defineConfig(() => {
           maxParallelFileOps: 5,
         },
       },
-      // Chunk size warnings threshold - reduce to catch large chunks
-      chunkSizeWarningLimit: 300, // Warn if chunks exceed 300KB
       // Enable tree shaking with more aggressive settings
       treeshake: {
         moduleSideEffects: (id: string) => {
