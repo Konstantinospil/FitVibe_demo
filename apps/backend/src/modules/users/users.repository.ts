@@ -612,7 +612,8 @@ export async function getLatestUserMetrics(
 
   return row
     ? {
-        weight: row.weight,
+        // PostgreSQL numeric columns are returned as strings, convert to number
+        weight: row.weight !== null && row.weight !== undefined ? Number(row.weight) : null,
         unit: row.unit,
         fitness_level_code: row.fitness_level_code,
         training_frequency: row.training_frequency,
