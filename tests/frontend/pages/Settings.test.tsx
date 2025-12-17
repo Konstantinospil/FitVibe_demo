@@ -53,6 +53,7 @@ vi.mock("react-router-dom", async () => {
 const mockUserData = {
   id: "user-1",
   email: "user@example.com",
+  primaryEmail: "user@example.com",
   username: "testuser",
   roleCode: "athlete",
   status: "active",

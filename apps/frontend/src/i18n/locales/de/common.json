@@ -100,9 +100,13 @@
     "brand": "FitVibe",
     "terms": "Allgemeine Geschäftsbedingungen",
     "privacy": "Datenschutzerklärung",
+    "impressum": "Impressum",
+    "contact": "Kontakt",
     "navigationLabel": "Footer-Navigation",
     "termsAriaLabel": "Allgemeine Geschäftsbedingungen anzeigen",
-    "privacyAriaLabel": "Datenschutzerklärung anzeigen"
+    "privacyAriaLabel": "Datenschutzerklärung anzeigen",
+    "impressumAriaLabel": "Impressum anzeigen",
+    "contactAriaLabel": "Kontaktieren Sie uns"
   },
   "terms": {
     "eyebrow": "Rechtliches",
@@ -590,6 +594,63 @@
       "strength": "Kraft",
       "cardio": "Cardio",
       "powerEndurance": "Kraft-Ausdauer"
+    }
+  },
+  "coach": {
+    "dashboard": {
+      "eyebrow": "Trainer-Dashboard",
+      "title": "Verwalten Sie Ihre Athleten",
+      "description": "Erstellen Sie Trainingspläne, überwachen Sie den Fortschritt der Athleten und weisen Sie Trainingseinheiten zu",
+      "metrics": {
+        "athletes": "Athleten",
+        "activeAssignments": "Aktive Zuweisungen",
+        "completedSessions": "Abgeschlossene Einheiten",
+        "pendingFeedback": "Ausstehendes Feedback"
+      },
+      "tabs": {
+        "overview": "Übersicht",
+        "workouts": "Trainingseinheiten",
+        "athletes": "Athleten",
+        "assign": "Zuweisen"
+      },
+      "overview": {
+        "recentActivity": {
+          "title": "Letzte Aktivität",
+          "empty": "Keine aktuelle Aktivität anzuzeigen"
+        },
+        "quickActions": {
+          "title": "Schnellaktionen",
+          "createWorkout": "Trainingseinheit erstellen",
+          "assignWorkout": "Trainingseinheit zuweisen",
+          "viewAthletes": "Athleten anzeigen"
+        }
+      },
+      "workouts": {
+        "title": "Trainingseinheiten",
+        "create": "Trainingseinheit erstellen",
+        "empty": "Noch keine Trainingseinheiten erstellt",
+        "description": "Erstellen Sie wiederverwendbare Trainingseinheiten, die Sie mehreren Athleten zuweisen können. Trainingseinheiten können Übungen, Sätze, Wiederholungen und andere Parameter enthalten."
+      },
+      "athletes": {
+        "title": "Athleten",
+        "empty": "Noch keine Athleten zugewiesen. Athleten müssen Ihnen über ihre Einstellungen Zugriff gewähren.",
+        "table": {
+          "athlete": "Athlet",
+          "assigned": "Zugewiesen",
+          "completed": "Abgeschlossen",
+          "adherence": "Einhaltung",
+          "status": "Status"
+        }
+      },
+      "assign": {
+        "title": "Trainingseinheit zuweisen",
+        "selectWorkout": "Trainingseinheit auswählen",
+        "selectWorkoutPlaceholder": "Wählen Sie eine Trainingseinheit...",
+        "selectAthletes": "Athleten auswählen",
+        "noAthletes": "Keine Athleten verfügbar. Athleten müssen Ihnen zuerst Zugriff gewähren.",
+        "assignmentDate": "Zuweisungsdatum",
+        "assignButton": "Trainingseinheit zuweisen"
+      }
     }
   }
 }

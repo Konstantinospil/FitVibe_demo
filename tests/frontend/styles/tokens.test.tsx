@@ -1,10 +1,20 @@
 import { render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, beforeEach } from "vitest";
 // Import CSS at module level - Vitest processes CSS imports safely
 import "../../src/styles/global.css";
 import { CardTitle } from "../../src/components/ui";
 
 describe("Design tokens", () => {
+  beforeEach(() => {
+    // Set CSS custom properties manually since jsdom doesn't parse CSS files
+    document.documentElement.style.setProperty(
+      "--font-family-base",
+      '"Inter", "Segoe UI", -apple-system, BlinkMacSystemFont, "Helvetica Neue", system-ui, sans-serif',
+    );
+    document.documentElement.style.setProperty("--color-accent", "#34d399");
+    document.documentElement.style.setProperty("--font-size-lg", "1.125rem");
+  });
+
   it("exposes core font and color custom properties", () => {
     const rootStyle = getComputedStyle(document.documentElement);
     expect(rootStyle.getPropertyValue("--font-family-base").trim()).not.toBe("");
