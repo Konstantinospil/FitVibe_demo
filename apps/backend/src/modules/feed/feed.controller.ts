@@ -16,6 +16,7 @@ import {
   listComments,
   listUserFollowers,
   listUserFollowing,
+  publishSession,
   removeBookmark,
   reportComment,
   reportFeedItem,
@@ -633,4 +634,41 @@ export async function listFollowersHandler(req: Request, res: Response): Promise
 export async function listFollowingHandler(req: Request, res: Response): Promise<void> {
   const rows = await listUserFollowing(req.params.alias);
   res.json({ following: rows });
+}
+
+export async function publishSessionHandler(req: Request, res: Response): Promise<void> {
+  const userId = req.user?.sub;
+  if (!userId) {
+    throw new HttpError(401, "E.UNAUTHENTICATED", "UNAUTHENTICATED");
+  }
+
+  // Idempotency support
+  const idempotencyKey = getIdempotencyKey(req);
+  if (idempotencyKey) {
+    const route = getRouteTemplate(req);
+    const resolution = await resolveIdempotency(
+      { userId, method: req.method, route, key: idempotencyKey },
+      { sessionId: req.params.sessionId },
+    );
+
+    if (resolution.type === "replay") {
+      res.set("Idempotency-Key", idempotencyKey);
+      res.set("Idempotent-Replayed", "true");
+      res.status(resolution.status).json(resolution.body);
+      return;
+    }
+
+    const result = await publishSession(userId, req.params.sessionId);
+
+    if (resolution.recordId) {
+      await persistIdempotencyResult(resolution.recordId, 201, result);
+    }
+
+    res.set("Idempotency-Key", idempotencyKey);
+    res.status(201).json(result);
+    return;
+  }
+
+  const result = await publishSession(userId, req.params.sessionId);
+  res.status(201).json(result);
 }

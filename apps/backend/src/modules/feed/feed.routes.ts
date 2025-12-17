@@ -17,6 +17,7 @@ import {
   listCommentsHandler,
   listFollowersHandler,
   listFollowingHandler,
+  publishSessionHandler,
   removeBookmarkHandler,
   reportCommentHandler,
   reportFeedItemHandler,
@@ -50,6 +51,22 @@ feedRouter.post(
   rateLimitByUser("feed_clone_user", 20, 60),
   rateLimit("feed_clone", 20, 60),
   asyncHandler(cloneSessionFromFeedHandler),
+);
+
+feedRouter.post(
+  "/session/:sessionId/publish",
+  requireAuth,
+  rateLimitByUser("feed_publish_user", 20, 60),
+  rateLimit("feed_publish", 20, 60),
+  asyncHandler(publishSessionHandler),
+);
+
+feedRouter.post(
+  "/session/:sessionId/link",
+  requireAuth,
+  rateLimitByUser("feed_link_user", 20, 60),
+  rateLimit("feed_link", 20, 60),
+  asyncHandler(publishSessionHandler),
 );
 
 feedRouter.post(

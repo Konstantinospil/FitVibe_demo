@@ -31,6 +31,7 @@ import { recomputeProgress } from "../plans/plans.service.js";
 import { awardPointsForSession } from "../points/points.service.js";
 import { insertAudit } from "../common/audit.util.js";
 import { HttpError } from "../../utils/http.js";
+import { findFeedItemBySessionId, insertFeedItem } from "../feed/feed.repository.js";
 
 const allowedTransitions: Record<string, string[]> = {
   planned: ["in_progress", "completed", "canceled"],
@@ -503,6 +504,8 @@ export async function updateOne(
 
   const statusChanged = current.status !== updated.status;
   const exercisesTouched = normalizedExercises !== null;
+  const visibilityChanged =
+    dto.visibility !== undefined && current.visibility !== updated.visibility;
 
   const shouldAwardPoints =
     updated.status === "completed" &&
@@ -512,6 +515,25 @@ export async function updateOne(
     const awardResult = await awardPointsForSession(updated);
     if (awardResult.pointsAwarded !== null) {
       updated.points = awardResult.pointsAwarded;
+    }
+  }
+
+  // Automatically create feed item when a completed session is public
+  // This handles both cases:
+  // 1. Session completed and visibility is already public
+  // 2. Session visibility changed to public and it's already completed
+  if (updated.status === "completed" && updated.visibility === "public") {
+    // Only create if something relevant changed (status or visibility)
+    // to avoid unnecessary checks on every update
+    if (statusChanged || visibilityChanged) {
+      const existingFeedItem = await findFeedItemBySessionId(id);
+      if (!existingFeedItem) {
+        await insertFeedItem({
+          ownerId: userId,
+          sessionId: id,
+          visibility: "public",
+        });
+      }
     }
   }
 

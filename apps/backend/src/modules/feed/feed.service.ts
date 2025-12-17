@@ -3,6 +3,7 @@ import { insertAudit } from "../common/audit.util.js";
 import type { FeedScope, FeedSort } from "./feed.repository.js";
 import {
   findFeedItemById,
+  findFeedItemBySessionId,
   findSessionById,
   listFeedSessions,
   upsertFollower,
@@ -27,6 +28,7 @@ import {
   deleteBlock,
   insertFeedReport,
   getLeaderboardRows,
+  insertFeedItem,
   type FeedItemStats,
   type SessionRow,
 } from "./feed.repository.js";
@@ -688,4 +690,48 @@ export async function getLeaderboard(
     points: Number(row.points ?? 0),
     badges: Number(row.badges_count ?? 0),
   }));
+}
+
+export async function publishSession(
+  userId: string,
+  sessionId: string,
+): Promise<{ feedItemId: string }> {
+  const session = await loadSessionOrThrow(sessionId);
+
+  if (session.owner_id !== userId) {
+    throw new HttpError(403, "E.FEED.NOT_OWNER", "FEED_NOT_OWNER");
+  }
+
+  if (session.status !== "completed") {
+    throw new HttpError(400, "E.FEED.SESSION_NOT_COMPLETED", "FEED_SESSION_NOT_COMPLETED");
+  }
+
+  if (session.visibility !== "public") {
+    throw new HttpError(400, "E.FEED.SESSION_NOT_PUBLIC", "FEED_SESSION_NOT_PUBLIC");
+  }
+
+  // Check if feed item already exists
+  const existing = await findFeedItemBySessionId(sessionId);
+  if (existing) {
+    return { feedItemId: existing.id };
+  }
+
+  // Create feed item
+  const feedItem = await insertFeedItem({
+    ownerId: userId,
+    sessionId,
+    visibility: "public",
+  });
+
+  await insertAudit({
+    actorUserId: userId,
+    entity: "feed_items",
+    action: "feed.publish",
+    entityId: feedItem.id,
+    metadata: {
+      session_id: sessionId,
+    },
+  });
+
+  return { feedItemId: feedItem.id };
 }
