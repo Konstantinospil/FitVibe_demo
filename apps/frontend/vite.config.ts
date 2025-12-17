@@ -280,8 +280,6 @@ export default defineConfig(() => {
             : "assets/[ext]/[name]-[hash].[ext]",
           // Compact output to reduce whitespace and file size
           compact: true,
-          // Optimize chunk size limits - split larger chunks automatically
-          maxParallelFileOps: 5,
         },
       },
       // Enable tree shaking with more aggressive settings
