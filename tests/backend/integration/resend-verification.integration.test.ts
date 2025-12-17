@@ -69,6 +69,8 @@ describe("Integration: Resend Verification Email", () => {
     if (!dbAvailable) {
       return;
     }
+    // Clear rate limiters after each test to ensure clean state
+    clearRateLimiters();
     // Ensure cleanup after each test
     await truncateAll();
   });
@@ -111,7 +113,7 @@ describe("Integration: Resend Verification Email", () => {
 
     // Verify a new token was created
     const tokens = await db("auth_tokens")
-      .where({ user_id: userId, type: "email_verification" })
+      .where({ user_id: userId, token_type: "email_verification" })
       .orderBy("created_at", "desc")
       .limit(1);
 
@@ -170,6 +172,8 @@ describe("Integration: Resend Verification Email", () => {
       console.warn("Skipping test: database unavailable");
       return;
     }
+    // Clear rate limiters at the start of this test to ensure clean state
+    clearRateLimiters();
     const userId = uuidv4();
     const email = "ratelimit@example.com";
 
@@ -209,6 +213,8 @@ describe("Integration: Resend Verification Email", () => {
       console.warn("Skipping test: database unavailable");
       return;
     }
+    // Clear rate limiters at the start of this test to ensure clean state
+    clearRateLimiters();
     const response = await request(app).post("/api/v1/auth/verify/resend").send({
       email: "invalid-email",
     });
@@ -222,6 +228,8 @@ describe("Integration: Resend Verification Email", () => {
       console.warn("Skipping test: database unavailable");
       return;
     }
+    // Clear rate limiters at the start of this test to ensure clean state
+    clearRateLimiters();
     const response = await request(app).post("/api/v1/auth/verify/resend").send({});
 
     expect(response.status).toBe(400);
@@ -233,6 +241,8 @@ describe("Integration: Resend Verification Email", () => {
       console.warn("Skipping test: database unavailable");
       return;
     }
+    // Clear rate limiters at the start of this test to ensure clean state
+    clearRateLimiters();
     const userId = uuidv4();
     const email = "multiresend@example.com";
 
@@ -267,7 +277,7 @@ describe("Integration: Resend Verification Email", () => {
 
     // Verify both tokens exist
     const tokens = await db("auth_tokens")
-      .where({ user_id: userId, type: "email_verification" })
+      .where({ user_id: userId, token_type: "email_verification" })
       .orderBy("created_at", "desc");
 
     expect(tokens.length).toBeGreaterThanOrEqual(2);
