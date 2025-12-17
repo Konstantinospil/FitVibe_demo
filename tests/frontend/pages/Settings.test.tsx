@@ -155,26 +155,6 @@ const createTestQueryClient = () => {
   });
 };
 
-// Helper to find button element from text element
-const findButtonFromText = (textElement: HTMLElement | null): HTMLButtonElement | null => {
-  if (!textElement) {
-    return null;
-  }
-  // Check if the element itself is a button
-  if (textElement.tagName === "BUTTON") {
-    return textElement as HTMLButtonElement;
-  }
-  // Otherwise, traverse up the DOM tree to find the button
-  let current: HTMLElement | null = textElement;
-  while (current) {
-    if (current.tagName === "BUTTON") {
-      return current as HTMLButtonElement;
-    }
-    current = current.parentElement;
-  }
-  return null;
-};
-
 // Helper to render Settings with all required providers
 const renderSettings = () => {
   const queryClient = createTestQueryClient();
@@ -1843,25 +1823,21 @@ describe("Settings", () => {
       const file = new File(["fake-image-content"], "test.jpg", { type: "image/jpeg" });
       fireEvent.change(fileInput, { target: { files: [file] } });
 
-      await waitFor(
+      // Wait for upload button to appear and find it by role
+      const uploadButton = await waitFor(
         () => {
-          const uploadButtons = screen.getAllByText(/upload/i);
-          expect(
-            Array.from(uploadButtons).find((el) => container.contains(el)),
-          ).toBeInTheDocument();
+          const buttons = screen.getAllByRole("button");
+          const button = Array.from(buttons).find(
+            (btn) => container.contains(btn) && /upload/i.test(btn.textContent || ""),
+          );
+          if (!button) {
+            throw new Error("Upload button not found");
+          }
+          return button as HTMLButtonElement;
         },
         { timeout: 5000 },
       );
-
-      const uploadButtons = screen.getAllByText(/upload/i);
-      const uploadButtonText = Array.from(uploadButtons).find((el) => container.contains(el));
-      expect(uploadButtonText).toBeDefined();
-
-      // Find the actual button element (parent of the span containing the text)
-      const uploadButton = findButtonFromText(uploadButtonText as HTMLElement);
-      if (!uploadButton) {
-        throw new Error("Upload button not found");
-      }
+      expect(uploadButton).toBeInTheDocument();
       fireEvent.click(uploadButton);
 
       await waitFor(
@@ -1998,25 +1974,21 @@ describe("Settings", () => {
       const file = new File(["fake-image-content"], "test.jpg", { type: "image/jpeg" });
       fireEvent.change(fileInput, { target: { files: [file] } });
 
-      await waitFor(
+      // Wait for upload button to appear and find it by role
+      const uploadButton = await waitFor(
         () => {
-          const uploadButtons = screen.getAllByText(/upload/i);
-          expect(
-            Array.from(uploadButtons).find((el) => container.contains(el)),
-          ).toBeInTheDocument();
+          const buttons = screen.getAllByRole("button");
+          const button = Array.from(buttons).find(
+            (btn) => container.contains(btn) && /upload/i.test(btn.textContent || ""),
+          );
+          if (!button) {
+            throw new Error("Upload button not found");
+          }
+          return button as HTMLButtonElement;
         },
         { timeout: 5000 },
       );
-
-      const uploadButtons = screen.getAllByText(/upload/i);
-      const uploadButtonText = Array.from(uploadButtons).find((el) => container.contains(el));
-      expect(uploadButtonText).toBeDefined();
-
-      // Find the actual button element (parent of the span containing the text)
-      const uploadButton = findButtonFromText(uploadButtonText as HTMLElement);
-      if (!uploadButton) {
-        throw new Error("Upload button not found");
-      }
+      expect(uploadButton).toBeInTheDocument();
       fireEvent.click(uploadButton);
 
       await waitFor(
@@ -2084,25 +2056,30 @@ describe("Settings", () => {
         { timeout: 5000 },
       );
 
-      const uploadButtons = screen.getAllByText(/upload/i);
-      const uploadButtonText = Array.from(uploadButtons).find((el) => container.contains(el));
-      expect(uploadButtonText).toBeDefined();
-
-      // Find the actual button element (parent of the span containing the text)
-      const uploadButton = findButtonFromText(uploadButtonText as HTMLElement);
-      expect(uploadButton).toBeDefined();
-
+      // Wait for upload button to appear and find it by role
+      const uploadButton = await waitFor(
+        () => {
+          const buttons = screen.getAllByRole("button");
+          const button = Array.from(buttons).find(
+            (btn) => container.contains(btn) && /upload/i.test(btn.textContent || ""),
+          );
+          if (!button) {
+            throw new Error("Upload button not found");
+          }
+          return button as HTMLButtonElement;
+        },
+        { timeout: 5000 },
+      );
+      expect(uploadButton).toBeInTheDocument();
       fireEvent.click(uploadButton);
 
       // Button should be disabled during upload - find it again after click to get updated state
       await waitFor(
         () => {
-          const buttonsAfterClick = screen.getAllByText(/upload/i);
-          const buttonTextAfterClick = Array.from(buttonsAfterClick).find((el) =>
-            container.contains(el),
+          const buttonsAfterClick = screen.getAllByRole("button");
+          const buttonAfterClick = Array.from(buttonsAfterClick).find(
+            (btn) => container.contains(btn) && /upload/i.test(btn.textContent || ""),
           );
-          expect(buttonTextAfterClick).toBeDefined();
-          const buttonAfterClick = findButtonFromText(buttonTextAfterClick as HTMLElement);
           expect(buttonAfterClick).toBeDefined();
           expect(buttonAfterClick).toBeDisabled();
         },
