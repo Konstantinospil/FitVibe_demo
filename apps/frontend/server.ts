@@ -216,16 +216,24 @@ const ssrHandler: RequestHandler = async (req: Request, res: Response, next: Nex
     const renderTime = Date.now() - startTime;
     error = err instanceof Error ? err.message : String(err);
 
+    // Sanitize URL and error to prevent log injection
+    const sanitizedUrl = String(req.url || "")
+      .replace(/[\r\n]/g, "")
+      .substring(0, 500);
+    const sanitizedError = String(error || "")
+      .replace(/[\r\n]/g, "")
+      .substring(0, 1000);
+
     recordSSRMetric({
       renderTime,
-      url: req.url,
+      url: sanitizedUrl,
       timestamp: Date.now(),
       cacheHit: false,
-      error,
+      error: sanitizedError,
     });
 
-    console.error("SSR Error for URL:", req.url);
-    console.error("Error details:", error);
+    console.error("SSR Error for URL:", sanitizedUrl);
+    console.error("Error details:", sanitizedError);
     if (err instanceof Error && err.stack) {
       console.error("Stack trace:", err.stack);
     }

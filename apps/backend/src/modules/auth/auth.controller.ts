@@ -177,14 +177,20 @@ export async function register(req: Request, res: Response, next: NextFunction):
 
 export async function verifyEmail(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
-    const queryToken = typeof req.query.token === "string" ? req.query.token : undefined;
+    // Prefer body token over query token for security (query params may be logged)
     const bodyToken =
       req.body && typeof req.body === "object" && "token" in req.body
         ? (req.body as Record<string, unknown>).token
         : undefined;
+    const queryToken = typeof req.query.token === "string" ? req.query.token : undefined;
+    // Only use query token if body token is not provided (backward compatibility)
     const token = typeof bodyToken === "string" ? bodyToken : queryToken;
-    if (!token) {
+    if (!token || typeof token !== "string" || token.length === 0) {
       throw new HttpError(400, "AUTH_INVALID_TOKEN", "AUTH_INVALID_TOKEN");
+    }
+    // Validate token format (basic sanity check)
+    if (token.length > 500) {
+      throw new HttpError(400, "AUTH_INVALID_TOKEN", "Token format invalid");
     }
     const user = await doVerifyEmail(token);
     res.json({ user });
@@ -300,8 +306,12 @@ export async function verify2FALogin(
 export async function refresh(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     const token = req.cookies?.[env.REFRESH_COOKIE_NAME] as string | undefined;
-    if (!token) {
+    if (!token || typeof token !== "string" || token.length === 0) {
       throw new HttpError(401, "UNAUTHENTICATED", "UNAUTHENTICATED");
+    }
+    // Validate token format (basic sanity check to prevent injection)
+    if (token.length > 1000) {
+      throw new HttpError(401, "UNAUTHENTICATED", "Invalid token format");
     }
     const context = buildAuthContext(req, res);
     const { user, newRefresh, accessToken } = await doRefresh(token, context);

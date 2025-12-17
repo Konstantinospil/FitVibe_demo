@@ -24,6 +24,7 @@ import {
   ensureUsernameColumnExists,
 } from "../../setup/test-helpers.js";
 import { v4 as uuidv4 } from "uuid";
+import { getCurrentTermsVersion } from "../../../apps/backend/src/config/terms.js";
 
 describe("Integration: Content Moderation", () => {
   let user1: { id: string; email: string; accessToken: string };
@@ -69,7 +70,7 @@ describe("Integration: Content Moderation", () => {
         emailVerified: true,
         terms_accepted: true,
         terms_accepted_at: now,
-        terms_version: "2024-06-01",
+        terms_version: getCurrentTermsVersion(),
       });
 
       const login1 = await request(app).post("/api/v1/auth/login").send({
@@ -96,7 +97,7 @@ describe("Integration: Content Moderation", () => {
         emailVerified: true,
         terms_accepted: true,
         terms_accepted_at: now,
-        terms_version: "2024-06-01",
+        terms_version: getCurrentTermsVersion(),
       });
 
       const login2 = await request(app).post("/api/v1/auth/login").send({
@@ -123,7 +124,7 @@ describe("Integration: Content Moderation", () => {
         emailVerified: true,
         terms_accepted: true,
         terms_accepted_at: now,
-        terms_version: "2024-06-01",
+        terms_version: getCurrentTermsVersion(),
       });
 
       const loginAdmin = await request(app).post("/api/v1/auth/login").send({

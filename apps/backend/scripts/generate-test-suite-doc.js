@@ -129,17 +129,6 @@ function getTestSuite(fullName, ancestorTitles) {
   return "Unknown";
 }
 
-// Extract test name from fullName
-function getTestName(fullName, ancestorTitles) {
-  if (ancestorTitles && ancestorTitles.length > 0) {
-    // Last part is the test name
-    return fullName.split(ancestorTitles.join(" ")).pop().trim();
-  }
-  // Fallback: last word is usually the test name
-  const parts = fullName.split(" ");
-  return parts[parts.length - 1] || fullName;
-}
-
 // Generate description from test name
 function generateDescription(testName) {
   return testName
@@ -350,13 +339,24 @@ This document lists all test cases in the FitVibe backend codebase.
 |---|------------|-----------|-----------|-------------|------|--------|----------|
 `;
 
+// Escape markdown special characters for table cells
+function escapeMarkdownTableCell(text) {
+  if (!text) return "";
+  return String(text)
+    .replace(/\\/g, "\\\\") // Escape backslashes first
+    .replace(/\|/g, "\\|") // Escape pipes
+    .replace(/\n/g, " ") // Replace newlines with spaces
+    .replace(/\r/g, "") // Remove carriage returns
+    .trim();
+}
+
 let testNumber = 1;
 allTests.forEach((test) => {
-  // Escape pipes in test data
-  const suite = test.suite.replace(/\|/g, "\\|");
-  const name = test.name.replace(/\|/g, "\\|");
-  const description = test.description.replace(/\|/g, "\\|");
-  const lastRun = test.lastRun || "";
+  // Escape all markdown special characters in test data
+  const suite = escapeMarkdownTableCell(test.suite);
+  const name = escapeMarkdownTableCell(test.name);
+  const description = escapeMarkdownTableCell(test.description);
+  const lastRun = escapeMarkdownTableCell(test.lastRun);
 
   markdown += `| ${testNumber} | ${suite} | ${name} | \`${test.file}\` | ${description} | ${test.type} | ${test.passes} | ${lastRun} |\n`;
   testNumber++;

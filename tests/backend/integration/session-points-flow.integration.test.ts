@@ -24,6 +24,7 @@ import {
   ensureUsernameColumnExists,
 } from "../../setup/test-helpers.js";
 import { v4 as uuidv4 } from "uuid";
+import { getCurrentTermsVersion } from "../../../apps/backend/src/config/terms.js";
 
 describe("Integration: Session → Points Flow", () => {
   let testUser: { id: string; email: string; password: string; accessToken: string };
@@ -77,7 +78,7 @@ describe("Integration: Session → Points Flow", () => {
         emailVerified: true,
         terms_accepted: true,
         terms_accepted_at: now,
-        terms_version: "2024-06-01",
+        terms_version: getCurrentTermsVersion(),
       });
 
       if (!userResult) {

@@ -24,6 +24,7 @@ import {
 } from "../../setup/test-helpers.js";
 import { clearRateLimiters } from "../../../apps/backend/src/middlewares/rate-limit.js";
 import { v4 as uuidv4 } from "uuid";
+import { getCurrentTermsVersion } from "../../../apps/backend/src/config/terms.js";
 
 describe("Integration: Resend Verification Email", () => {
   let dbAvailable = false;
@@ -92,7 +93,7 @@ describe("Integration: Resend Verification Email", () => {
       emailVerified: false,
       terms_accepted: true,
       terms_accepted_at: new Date().toISOString(),
-      terms_version: "2024-06-01",
+      terms_version: getCurrentTermsVersion(),
     });
 
     // Force transaction commit by doing a separate query that must see the committed data
@@ -152,7 +153,7 @@ describe("Integration: Resend Verification Email", () => {
       emailVerified: true,
       terms_accepted: true,
       terms_accepted_at: new Date().toISOString(),
-      terms_version: "2024-06-01",
+      terms_version: getCurrentTermsVersion(),
     });
 
     const response = await request(app).post("/api/v1/auth/verify/resend").send({
@@ -183,7 +184,7 @@ describe("Integration: Resend Verification Email", () => {
       emailVerified: false,
       terms_accepted: true,
       terms_accepted_at: new Date().toISOString(),
-      terms_version: "2024-06-01",
+      terms_version: getCurrentTermsVersion(),
     });
 
     // Make 3 successful requests
@@ -246,7 +247,7 @@ describe("Integration: Resend Verification Email", () => {
       emailVerified: false,
       terms_accepted: true,
       terms_accepted_at: new Date().toISOString(),
-      terms_version: "2024-06-01",
+      terms_version: getCurrentTermsVersion(),
     });
 
     // First resend

@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { spawnSync, spawn } from "node:child_process";
+import { spawn } from "node:child_process";
 import { createRequire } from "node:module";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";

@@ -26,10 +26,11 @@ import {
   ensureUsernameColumnExists,
 } from "../../setup/test-helpers.js";
 import { v4 as uuidv4 } from "uuid";
+import { getCurrentTermsVersion } from "../../../apps/backend/src/config/terms.js";
 
 describe("Integration: Profile Editing", () => {
   let dbAvailable = false;
-  let authCookie: string;
+  let authToken: string;
   let userId: string;
 
   beforeAll(async () => {
@@ -57,29 +58,38 @@ describe("Integration: Profile Editing", () => {
       const testUsername = `testuser-${uuidv4().substring(0, 8)}`;
       const hashedPassword = await bcrypt.hash("SecureP@ssw0rd123!", 10);
 
+      const userIdValue = uuidv4();
       const user = await createUser({
-        id: uuidv4(),
-        email: testEmail,
+        id: userIdValue,
         username: testUsername,
-        passwordHash: hashedPassword,
-        displayName: "Test User",
-        roleCode: "user",
-        locale: "en",
-        preferredLang: "en",
+        display_name: "Test User",
+        password_hash: hashedPassword,
+        primaryEmail: testEmail,
+        emailVerified: true,
+        role_code: "athlete",
+        locale: "en-US",
+        preferred_lang: "en",
         status: "active",
+        terms_accepted: true,
+        terms_accepted_at: new Date().toISOString(),
+        terms_version: getCurrentTermsVersion(),
       });
 
+      if (!user) {
+        throw new Error("Failed to create user");
+      }
       userId = user.id;
 
-      // Login to get auth cookie
+      // Login to get auth token
       const loginResponse = await request(app).post("/api/v1/auth/login").send({
         email: testEmail,
         password: "SecureP@ssw0rd123!",
       });
 
       expect(loginResponse.status).toBe(200);
-      authCookie = loginResponse.headers["set-cookie"]?.[0] || "";
-      expect(authCookie).toBeTruthy();
+      expect(loginResponse.body.tokens).toBeDefined();
+      authToken = loginResponse.body.tokens.accessToken;
+      expect(authToken).toBeTruthy();
     }, "beforeEach");
   });
 
@@ -96,9 +106,12 @@ describe("Integration: Profile Editing", () => {
       return;
     }
 
-    const response = await request(app).patch("/api/v1/users/me").set("Cookie", authCookie).send({
-      alias: "testalias",
-    });
+    const response = await request(app)
+      .patch("/api/v1/users/me")
+      .set("Authorization", `Bearer ${authToken}`)
+      .send({
+        alias: "testalias",
+      });
 
     expect(response.status).toBe(200);
     expect(response.body.profile?.alias).toBe("testalias");
@@ -111,19 +124,25 @@ describe("Integration: Profile Editing", () => {
     }
 
     // Test weight in kg
-    const responseKg = await request(app).patch("/api/v1/users/me").set("Cookie", authCookie).send({
-      weight: 75,
-      weightUnit: "kg",
-    });
+    const responseKg = await request(app)
+      .patch("/api/v1/users/me")
+      .set("Authorization", `Bearer ${authToken}`)
+      .send({
+        weight: 75,
+        weightUnit: "kg",
+      });
 
     expect(responseKg.status).toBe(200);
     expect(responseKg.body.profile?.weight).toBeCloseTo(75, 1);
 
     // Test weight in lb (should convert to kg internally)
-    const responseLb = await request(app).patch("/api/v1/users/me").set("Cookie", authCookie).send({
-      weight: 165,
-      weightUnit: "lb",
-    });
+    const responseLb = await request(app)
+      .patch("/api/v1/users/me")
+      .set("Authorization", `Bearer ${authToken}`)
+      .send({
+        weight: 165,
+        weightUnit: "lb",
+      });
 
     expect(responseLb.status).toBe(200);
     // 165 lb ≈ 74.84 kg
@@ -136,9 +155,12 @@ describe("Integration: Profile Editing", () => {
       return;
     }
 
-    const response = await request(app).patch("/api/v1/users/me").set("Cookie", authCookie).send({
-      fitnessLevel: "intermediate",
-    });
+    const response = await request(app)
+      .patch("/api/v1/users/me")
+      .set("Authorization", `Bearer ${authToken}`)
+      .send({
+        fitnessLevel: "intermediate",
+      });
 
     expect(response.status).toBe(200);
     expect(response.body.profile?.fitnessLevel).toBe("intermediate");
@@ -150,9 +172,12 @@ describe("Integration: Profile Editing", () => {
       return;
     }
 
-    const response = await request(app).patch("/api/v1/users/me").set("Cookie", authCookie).send({
-      trainingFrequency: "3_4_per_week",
-    });
+    const response = await request(app)
+      .patch("/api/v1/users/me")
+      .set("Authorization", `Bearer ${authToken}`)
+      .send({
+        trainingFrequency: "3_4_per_week",
+      });
 
     expect(response.status).toBe(200);
     expect(response.body.profile?.trainingFrequency).toBe("3_4_per_week");
@@ -164,13 +189,16 @@ describe("Integration: Profile Editing", () => {
       return;
     }
 
-    const response = await request(app).patch("/api/v1/users/me").set("Cookie", authCookie).send({
-      alias: "multitest",
-      weight: 80,
-      weightUnit: "kg",
-      fitnessLevel: "advanced",
-      trainingFrequency: "5_plus_per_week",
-    });
+    const response = await request(app)
+      .patch("/api/v1/users/me")
+      .set("Authorization", `Bearer ${authToken}`)
+      .send({
+        alias: "multitest",
+        weight: 80,
+        weightUnit: "kg",
+        fitnessLevel: "advanced",
+        trainingFrequency: "5_plus_per_week",
+      });
 
     expect(response.status).toBe(200);
     expect(response.body.profile?.alias).toBe("multitest");
@@ -185,9 +213,12 @@ describe("Integration: Profile Editing", () => {
       return;
     }
 
-    const response = await request(app).patch("/api/v1/users/me").set("Cookie", authCookie).send({
-      alias: "invalid alias with spaces!",
-    });
+    const response = await request(app)
+      .patch("/api/v1/users/me")
+      .set("Authorization", `Bearer ${authToken}`)
+      .send({
+        alias: "invalid alias with spaces!",
+      });
 
     expect(response.status).toBe(400);
   });
@@ -201,7 +232,7 @@ describe("Integration: Profile Editing", () => {
     // Test weight too low
     const responseLow = await request(app)
       .patch("/api/v1/users/me")
-      .set("Cookie", authCookie)
+      .set("Authorization", `Bearer ${authToken}`)
       .send({
         weight: 10,
         weightUnit: "kg",
@@ -212,7 +243,7 @@ describe("Integration: Profile Editing", () => {
     // Test weight too high
     const responseHigh = await request(app)
       .patch("/api/v1/users/me")
-      .set("Cookie", authCookie)
+      .set("Authorization", `Bearer ${authToken}`)
       .send({
         weight: 600,
         weightUnit: "kg",
@@ -227,9 +258,12 @@ describe("Integration: Profile Editing", () => {
       return;
     }
 
-    const response = await request(app).patch("/api/v1/users/me").set("Cookie", authCookie).send({
-      fitnessLevel: "invalid_level",
-    });
+    const response = await request(app)
+      .patch("/api/v1/users/me")
+      .set("Authorization", `Bearer ${authToken}`)
+      .send({
+        fitnessLevel: "invalid_level",
+      });
 
     expect(response.status).toBe(400);
   });
@@ -240,9 +274,12 @@ describe("Integration: Profile Editing", () => {
       return;
     }
 
-    const response = await request(app).patch("/api/v1/users/me").set("Cookie", authCookie).send({
-      trainingFrequency: "invalid_frequency",
-    });
+    const response = await request(app)
+      .patch("/api/v1/users/me")
+      .set("Authorization", `Bearer ${authToken}`)
+      .send({
+        trainingFrequency: "invalid_frequency",
+      });
 
     expect(response.status).toBe(400);
   });
@@ -253,7 +290,7 @@ describe("Integration: Profile Editing", () => {
       return;
     }
 
-    await request(app).patch("/api/v1/users/me").set("Cookie", authCookie).send({
+    await request(app).patch("/api/v1/users/me").set("Authorization", `Bearer ${authToken}`).send({
       alias: "audittest",
     });
 
@@ -276,9 +313,12 @@ describe("Integration: Profile Editing", () => {
     }
 
     const startTime = Date.now();
-    const response = await request(app).patch("/api/v1/users/me").set("Cookie", authCookie).send({
-      alias: "perftest",
-    });
+    const response = await request(app)
+      .patch("/api/v1/users/me")
+      .set("Authorization", `Bearer ${authToken}`)
+      .send({
+        alias: "perftest",
+      });
     const endTime = Date.now();
     const responseTime = endTime - startTime;
 

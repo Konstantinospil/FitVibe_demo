@@ -301,6 +301,10 @@ const Home: React.FC = () => {
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["exercises"] });
     },
+    onError: (err) => {
+      logger.apiError("Failed to create exercise", err, "/api/v1/exercises", "POST");
+      setError("Failed to add exercise");
+    },
   });
 
   const isLoading = sessionsLoading || exercisesLoading;

@@ -126,6 +126,16 @@ void testI18n.use(initReactI18next).init({
         "settings.account.yesDelete": "Yes, Delete My Account",
         "settings.account.confirmDelete": "Delete Account",
         "settings.account.deleteError": "Failed to delete account. Please try again.",
+        "settings.profile.avatar": "Profile Avatar",
+        "settings.profile.avatarSelect": "Select Image",
+        "settings.profile.avatarUpload": "Upload",
+        "settings.profile.avatarDelete": "Delete",
+        "settings.profile.avatarHelp":
+          "Upload a JPEG, PNG, or WebP image (max 5MB). Recommended size: 256×256 pixels.",
+        "settings.profile.avatarInvalidType": "Invalid file type. Please use JPEG, PNG, or WebP.",
+        "settings.profile.avatarTooLarge": "File is too large. Maximum size is 5MB.",
+        "settings.profile.avatarUploadError": "Failed to upload avatar. Please try again.",
+        "settings.profile.avatarNoFile": "Please select a file to upload.",
         "common.cancel": "Cancel",
         "common.confirm": "Confirm",
       },
@@ -143,6 +153,26 @@ const createTestQueryClient = () => {
       },
     },
   });
+};
+
+// Helper to find button element from text element
+const findButtonFromText = (textElement: HTMLElement | null): HTMLButtonElement | null => {
+  if (!textElement) {
+    return null;
+  }
+  // Check if the element itself is a button
+  if (textElement.tagName === "BUTTON") {
+    return textElement as HTMLButtonElement;
+  }
+  // Otherwise, traverse up the DOM tree to find the button
+  let current: HTMLElement | null = textElement;
+  while (current) {
+    if (current.tagName === "BUTTON") {
+      return current as HTMLButtonElement;
+    }
+    current = current.parentElement;
+  }
+  return null;
 };
 
 // Helper to render Settings with all required providers
@@ -1636,6 +1666,7 @@ describe("Settings", () => {
     it("displays avatar upload section", async () => {
       const { container } = renderSettings();
 
+      // Wait for component to render
       await waitFor(
         () => {
           const settingsTexts = screen.queryAllByText("Settings");
@@ -1646,6 +1677,15 @@ describe("Settings", () => {
         { timeout: 5000 },
       );
 
+      // Wait for user data to load (avatar section is in profile settings)
+      await waitFor(
+        () => {
+          expect(mockGet).toHaveBeenCalledWith("/api/v1/users/me");
+        },
+        { timeout: 5000 },
+      );
+
+      // Wait for avatar section to render
       await waitFor(
         () => {
           const selectButtons = screen.getAllByText(/select image/i);
@@ -1690,12 +1730,30 @@ describe("Settings", () => {
     it("rejects invalid file types", async () => {
       const { container } = renderSettings();
 
+      // Wait for component to render
       await waitFor(
         () => {
           const settingsTexts = screen.queryAllByText("Settings");
           expect(
             Array.from(settingsTexts).find((el) => container.contains(el)),
           ).toBeInTheDocument();
+        },
+        { timeout: 5000 },
+      );
+
+      // Wait for user data to load (avatar section is in profile settings)
+      await waitFor(
+        () => {
+          expect(mockGet).toHaveBeenCalledWith("/api/v1/users/me");
+        },
+        { timeout: 5000 },
+      );
+
+      // Wait for avatar upload input to be available
+      await waitFor(
+        () => {
+          const fileInput = container.querySelector("#avatar-upload") as HTMLInputElement;
+          expect(fileInput).toBeDefined();
         },
         { timeout: 5000 },
       );
@@ -1708,7 +1766,8 @@ describe("Settings", () => {
       await waitFor(
         () => {
           const errorTexts = screen.queryAllByText(/invalid file type/i);
-          expect(Array.from(errorTexts).find((el) => container.contains(el))).toBeInTheDocument();
+          const errorElement = Array.from(errorTexts).find((el) => container.contains(el));
+          expect(errorElement).toBeInTheDocument();
         },
         { timeout: 5000 },
       );
@@ -1748,19 +1807,34 @@ describe("Settings", () => {
 
       mockPost.mockResolvedValue({
         data: {
-          success: true,
           fileUrl: "/users/avatar/user-1",
-          bytes: 1024,
-          mimeType: "image/png",
         },
       });
 
+      // Wait for component to render
       await waitFor(
         () => {
           const settingsTexts = screen.queryAllByText("Settings");
           expect(
             Array.from(settingsTexts).find((el) => container.contains(el)),
           ).toBeInTheDocument();
+        },
+        { timeout: 5000 },
+      );
+
+      // Wait for user data to load (avatar section is in profile settings)
+      await waitFor(
+        () => {
+          expect(mockGet).toHaveBeenCalledWith("/api/v1/users/me");
+        },
+        { timeout: 5000 },
+      );
+
+      // Wait for avatar upload input to be available
+      await waitFor(
+        () => {
+          const fileInput = container.querySelector("#avatar-upload") as HTMLInputElement;
+          expect(fileInput).toBeDefined();
         },
         { timeout: 5000 },
       );
@@ -1780,7 +1854,14 @@ describe("Settings", () => {
       );
 
       const uploadButtons = screen.getAllByText(/upload/i);
-      const uploadButton = Array.from(uploadButtons).find((el) => container.contains(el))!;
+      const uploadButtonText = Array.from(uploadButtons).find((el) => container.contains(el));
+      expect(uploadButtonText).toBeDefined();
+
+      // Find the actual button element (parent of the span containing the text)
+      const uploadButton = findButtonFromText(uploadButtonText as HTMLElement);
+      if (!uploadButton) {
+        throw new Error("Upload button not found");
+      }
       fireEvent.click(uploadButton);
 
       await waitFor(
@@ -1885,12 +1966,30 @@ describe("Settings", () => {
 
       mockPost.mockRejectedValue(new Error("Upload failed"));
 
+      // Wait for component to render
       await waitFor(
         () => {
           const settingsTexts = screen.queryAllByText("Settings");
           expect(
             Array.from(settingsTexts).find((el) => container.contains(el)),
           ).toBeInTheDocument();
+        },
+        { timeout: 5000 },
+      );
+
+      // Wait for user data to load (avatar section is in profile settings)
+      await waitFor(
+        () => {
+          expect(mockGet).toHaveBeenCalledWith("/api/v1/users/me");
+        },
+        { timeout: 5000 },
+      );
+
+      // Wait for avatar upload input to be available
+      await waitFor(
+        () => {
+          const fileInput = container.querySelector("#avatar-upload") as HTMLInputElement;
+          expect(fileInput).toBeDefined();
         },
         { timeout: 5000 },
       );
@@ -1910,13 +2009,24 @@ describe("Settings", () => {
       );
 
       const uploadButtons = screen.getAllByText(/upload/i);
-      const uploadButton = Array.from(uploadButtons).find((el) => container.contains(el))!;
+      const uploadButtonText = Array.from(uploadButtons).find((el) => container.contains(el));
+      expect(uploadButtonText).toBeDefined();
+
+      // Find the actual button element (parent of the span containing the text)
+      const uploadButton = findButtonFromText(uploadButtonText as HTMLElement);
+      if (!uploadButton) {
+        throw new Error("Upload button not found");
+      }
       fireEvent.click(uploadButton);
 
       await waitFor(
         () => {
           const errorTexts = screen.queryAllByText(/failed to upload/i);
-          expect(Array.from(errorTexts).find((el) => container.contains(el))).toBeInTheDocument();
+          const errorElement = Array.from(errorTexts).find((el) => container.contains(el));
+          if (!errorElement) {
+            throw new Error("Error message not found");
+          }
+          expect(errorElement).toBeInTheDocument();
         },
         { timeout: 5000 },
       );
@@ -1926,15 +2036,36 @@ describe("Settings", () => {
       const { container } = renderSettings();
 
       mockPost.mockImplementation(
-        () => new Promise((resolve) => setTimeout(() => resolve({ data: {} }), 100)),
+        () =>
+          new Promise((resolve) =>
+            setTimeout(() => resolve({ data: { fileUrl: "test.jpg" } }), 100),
+          ),
       );
 
+      // Wait for component to render
       await waitFor(
         () => {
           const settingsTexts = screen.queryAllByText("Settings");
           expect(
             Array.from(settingsTexts).find((el) => container.contains(el)),
           ).toBeInTheDocument();
+        },
+        { timeout: 5000 },
+      );
+
+      // Wait for user data to load (avatar section is in profile settings)
+      await waitFor(
+        () => {
+          expect(mockGet).toHaveBeenCalledWith("/api/v1/users/me");
+        },
+        { timeout: 5000 },
+      );
+
+      // Wait for avatar upload input to be available
+      await waitFor(
+        () => {
+          const fileInput = container.querySelector("#avatar-upload") as HTMLInputElement;
+          expect(fileInput).toBeDefined();
         },
         { timeout: 5000 },
       );
@@ -1954,13 +2085,26 @@ describe("Settings", () => {
       );
 
       const uploadButtons = screen.getAllByText(/upload/i);
-      const uploadButton = Array.from(uploadButtons).find((el) => container.contains(el))!;
+      const uploadButtonText = Array.from(uploadButtons).find((el) => container.contains(el));
+      expect(uploadButtonText).toBeDefined();
+
+      // Find the actual button element (parent of the span containing the text)
+      const uploadButton = findButtonFromText(uploadButtonText as HTMLElement);
+      expect(uploadButton).toBeDefined();
+
       fireEvent.click(uploadButton);
 
-      // Button should be disabled during upload
+      // Button should be disabled during upload - find it again after click to get updated state
       await waitFor(
         () => {
-          expect(uploadButton).toBeDisabled();
+          const buttonsAfterClick = screen.getAllByText(/upload/i);
+          const buttonTextAfterClick = Array.from(buttonsAfterClick).find((el) =>
+            container.contains(el),
+          );
+          expect(buttonTextAfterClick).toBeDefined();
+          const buttonAfterClick = findButtonFromText(buttonTextAfterClick as HTMLElement);
+          expect(buttonAfterClick).toBeDefined();
+          expect(buttonAfterClick).toBeDisabled();
         },
         { timeout: 5000 },
       );

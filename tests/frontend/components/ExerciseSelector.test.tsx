@@ -135,7 +135,7 @@ describe("ExerciseSelector", () => {
     expect(mockListExercises).toHaveBeenCalledWith({
       limit: 100,
       offset: 0,
-      include_archived: true,
+      include_archived: false,
     });
   });
 
@@ -192,14 +192,21 @@ describe("ExerciseSelector", () => {
     });
 
     // Selected exercise should be highlighted
-    const benchPressItem = screen.getByText("Bench Press").closest("li");
-    expect(benchPressItem).toHaveAttribute("aria-selected", "true");
+    // Use getAllByText since "Bench Press" appears in both button and dropdown
+    const benchPressItems = screen.getAllByText("Bench Press");
+    const benchPressItem = benchPressItems.find((el) => el.closest("li"));
+    expect(benchPressItem?.closest("li")).toHaveAttribute("aria-selected", "true");
   });
 
   it("clears selection when clear button is clicked", async () => {
     const onChange = vi.fn();
     renderComponent({ value: "ex-1", onChange });
 
+    // Open dropdown to load exercises, which will set the selectedExercise
+    const trigger = screen.getByRole("button", { name: /select exercise/i });
+    fireEvent.click(trigger);
+
+    // Wait for exercises to load and selectedExercise to be set, then clear button should appear
     await waitFor(() => {
       const clearButton = screen.getByRole("button", { name: /clear selection/i });
       expect(clearButton).toBeInTheDocument();
@@ -269,7 +276,7 @@ describe("ExerciseSelector", () => {
     await waitFor(() => {
       expect(mockListExercises).toHaveBeenCalledWith(
         expect.objectContaining({
-          include_archived: true, // Note: excludeArchived prop defaults to true, but API uses include_archived
+          include_archived: false, // excludeArchived defaults to true, so include_archived is false
         }),
       );
     });

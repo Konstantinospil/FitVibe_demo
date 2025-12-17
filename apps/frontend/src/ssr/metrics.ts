@@ -27,9 +27,17 @@ export function recordSSRMetric(metric: SSRMetrics): void {
 
   // Log metrics in development
   if (process.env.NODE_ENV !== "production") {
-    console.warn(
-      `[SSR Metrics] ${metric.url}: ${metric.renderTime}ms (cache: ${metric.cacheHit ? "HIT" : "MISS"})`,
-    );
+    // Sanitize URL to prevent log injection
+    const sanitizedUrl = String(metric.url || "")
+      .replace(/[\r\n]/g, "")
+      .substring(0, 500);
+    const sanitizedError = metric.error
+      ? String(metric.error)
+          .replace(/[\r\n]/g, "")
+          .substring(0, 200)
+      : "";
+    const logMessage = `[SSR Metrics] ${sanitizedUrl}: ${metric.renderTime}ms (cache: ${metric.cacheHit ? "HIT" : "MISS"})`;
+    console.warn(metric.error ? `${logMessage} Error: ${sanitizedError}` : logMessage);
   }
 }
 

@@ -97,7 +97,7 @@ export const Alert: React.FC<AlertProps> = ({
           <h4
             style={{
               margin: 0,
-              marginBottom: title ? "var(--space-xs)" : 0,
+              marginBottom: "var(--space-xs)",
               fontSize: "var(--font-size-sm)",
               fontWeight: 600,
             }}

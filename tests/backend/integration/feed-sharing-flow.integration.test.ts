@@ -26,6 +26,7 @@ import {
   ensureUsernameColumnExists,
 } from "../../setup/test-helpers.js";
 import { v4 as uuidv4 } from "uuid";
+import { getCurrentTermsVersion } from "../../../apps/backend/src/config/terms.js";
 
 describe("Integration: Feed Sharing → Reactions Flow", () => {
   let user1: { id: string; email: string; accessToken: string };
@@ -82,7 +83,7 @@ describe("Integration: Feed Sharing → Reactions Flow", () => {
           emailVerified: true,
           terms_accepted: true,
           terms_accepted_at: now,
-          terms_version: "2024-06-01",
+          terms_version: getCurrentTermsVersion(),
         });
       } catch (error) {
         throw new Error(
@@ -202,7 +203,7 @@ describe("Integration: Feed Sharing → Reactions Flow", () => {
           emailVerified: true,
           terms_accepted: true,
           terms_accepted_at: now,
-          terms_version: "2024-06-01",
+          terms_version: getCurrentTermsVersion(),
         });
       } catch (error) {
         throw new Error(

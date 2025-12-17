@@ -20,10 +20,11 @@ import {
   ensureUsernameColumnExists,
 } from "../../setup/test-helpers.js";
 import { v4 as uuidv4 } from "uuid";
+import { getCurrentTermsVersion } from "../../../apps/backend/src/config/terms.js";
 
 describe("Integration: Exercise Snapshots", () => {
   let dbAvailable = false;
-  let authCookie: string;
+  let authToken: string;
   let userId: string;
   let exerciseId: string;
 
@@ -54,27 +55,44 @@ describe("Integration: Exercise Snapshots", () => {
 
       const user = await createUser({
         id: uuidv4(),
-        email: testEmail,
+
         username: testUsername,
-        passwordHash: hashedPassword,
-        displayName: "Test User",
-        roleCode: "user",
-        locale: "en",
-        preferredLang: "en",
+
+        display_name: "Test User",
+
+        password_hash: hashedPassword,
+
+        primaryEmail: testEmail,
+
+        emailVerified: true,
+
+        role_code: "athlete",
+
+        locale: "en-US",
+
+        preferred_lang: "en",
+
         status: "active",
+
+        terms_accepted: true,
+
+        terms_accepted_at: new Date().toISOString(),
+
+        terms_version: getCurrentTermsVersion(),
       });
 
       userId = user.id;
 
-      // Login to get auth cookie
+      // Login to get auth token
       const loginResponse = await request(app).post("/api/v1/auth/login").send({
         email: testEmail,
         password: "SecureP@ssw0rd123!",
       });
 
       expect(loginResponse.status).toBe(200);
-      authCookie = loginResponse.headers["set-cookie"]?.[0] || "";
-      expect(authCookie).toBeTruthy();
+      expect(loginResponse.body.tokens).toBeDefined();
+      authToken = loginResponse.body.tokens.accessToken;
+      expect(authToken).toBeTruthy();
 
       // Ensure exercise_types exist
       await db("exercise_types").insert({
@@ -86,7 +104,7 @@ describe("Integration: Exercise Snapshots", () => {
       // Create a test exercise
       const createExerciseResponse = await request(app)
         .post("/api/v1/exercises")
-        .set("Cookie", authCookie)
+        .set("Authorization", `Bearer ${authToken}`)
         .send({
           name: "Original Exercise Name",
           type_code: "strength",
@@ -119,7 +137,7 @@ describe("Integration: Exercise Snapshots", () => {
 
     const createSessionResponse = await request(app)
       .post("/api/v1/sessions")
-      .set("Cookie", authCookie)
+      .set("Authorization", `Bearer ${authToken}`)
       .send({
         title: "Test Session",
         planned_at: plannedAt,
@@ -158,7 +176,7 @@ describe("Integration: Exercise Snapshots", () => {
 
     const createSessionResponse = await request(app)
       .post("/api/v1/sessions")
-      .set("Cookie", authCookie)
+      .set("Authorization", `Bearer ${authToken}`)
       .send({
         title: "Test Session",
         planned_at: plannedAt,
@@ -182,7 +200,7 @@ describe("Integration: Exercise Snapshots", () => {
     // Modify the exercise name
     const updateResponse = await request(app)
       .put(`/api/v1/exercises/${exerciseId}`)
-      .set("Cookie", authCookie)
+      .set("Authorization", `Bearer ${authToken}`)
       .send({
         name: "Modified Exercise Name",
       });
@@ -210,7 +228,7 @@ describe("Integration: Exercise Snapshots", () => {
 
     const createSessionResponse = await request(app)
       .post("/api/v1/sessions")
-      .set("Cookie", authCookie)
+      .set("Authorization", `Bearer ${authToken}`)
       .send({
         title: "Test Session",
         planned_at: plannedAt,
@@ -234,7 +252,7 @@ describe("Integration: Exercise Snapshots", () => {
     // Archive the exercise
     const archiveResponse = await request(app)
       .delete(`/api/v1/exercises/${exerciseId}`)
-      .set("Cookie", authCookie);
+      .set("Authorization", `Bearer ${authToken}`);
 
     expect(archiveResponse.status).toBe(204);
 
@@ -262,7 +280,7 @@ describe("Integration: Exercise Snapshots", () => {
 
     const createSessionResponse = await request(app)
       .post("/api/v1/sessions")
-      .set("Cookie", authCookie)
+      .set("Authorization", `Bearer ${authToken}`)
       .send({
         title: "Test Session",
         planned_at: plannedAt,
@@ -280,14 +298,17 @@ describe("Integration: Exercise Snapshots", () => {
     const sessionId = createSessionResponse.body.id;
 
     // Modify the exercise name
-    await request(app).put(`/api/v1/exercises/${exerciseId}`).set("Cookie", authCookie).send({
-      name: "Modified Exercise Name",
-    });
+    await request(app)
+      .put(`/api/v1/exercises/${exerciseId}`)
+      .set("Authorization", `Bearer ${authToken}`)
+      .send({
+        name: "Modified Exercise Name",
+      });
 
     // Get session details
     const getSessionResponse = await request(app)
       .get(`/api/v1/sessions/${sessionId}`)
-      .set("Cookie", authCookie);
+      .set("Authorization", `Bearer ${authToken}`);
 
     expect(getSessionResponse.status).toBe(200);
     expect(getSessionResponse.body.exercises).toHaveLength(1);
@@ -307,7 +328,7 @@ describe("Integration: Exercise Snapshots", () => {
 
     const createSessionResponse = await request(app)
       .post("/api/v1/sessions")
-      .set("Cookie", authCookie)
+      .set("Authorization", `Bearer ${authToken}`)
       .send({
         title: "Test Session",
         planned_at: plannedAt,

@@ -1,5 +1,6 @@
 import type { NextFunction, Request, Response } from "express";
 import { ZodError } from "zod";
+import multer from "multer";
 import { logger } from "../config/logger.js";
 import { HttpError } from "../utils/http.js";
 
@@ -12,6 +13,21 @@ type GenericError = Error & {
 function normalizeError(err: unknown): HttpError {
   if (err instanceof HttpError) {
     return err;
+  }
+
+  // Handle Multer errors (file upload errors)
+  if (err instanceof multer.MulterError) {
+    if (err.code === "LIMIT_FILE_SIZE") {
+      return new HttpError(413, "E.UPLOAD.FILE_TOO_LARGE", "File size exceeds the allowed limit");
+    }
+    if (err.code === "LIMIT_FILE_COUNT") {
+      return new HttpError(400, "E.UPLOAD.TOO_MANY_FILES", "Too many files uploaded");
+    }
+    if (err.code === "LIMIT_UNEXPECTED_FILE") {
+      return new HttpError(400, "E.UPLOAD.UNEXPECTED_FILE", "Unexpected file field");
+    }
+    // Generic Multer error
+    return new HttpError(400, "E.UPLOAD.ERROR", err.message || "File upload error");
   }
 
   if (err instanceof ZodError) {

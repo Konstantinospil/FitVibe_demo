@@ -351,10 +351,8 @@ describe("Users Repository", () => {
     it("should insert state history", async () => {
       const dbModule = await import("../../../../apps/backend/src/db/connection.js");
       const dbFn = dbModule.db as jest.Mock;
-      dbFn("user_state_history");
-      if (queryBuilders["user_state_history"]) {
-        queryBuilders["user_state_history"].insert.mockResolvedValue(1);
-      }
+      // Mock db.raw() to return result with rowCount
+      dbFn.raw = jest.fn().mockResolvedValue({ rowCount: 1 });
 
       const result = await usersRepository.insertStateHistory(
         userId,
@@ -364,31 +362,26 @@ describe("Users Repository", () => {
       );
 
       expect(result).toBe(1);
-      expect(queryBuilders["user_state_history"]?.insert).toHaveBeenCalled();
+      expect(dbFn.raw).toHaveBeenCalled();
     });
 
     it("should handle null values", async () => {
       const dbModule = await import("../../../../apps/backend/src/db/connection.js");
       const dbFn = dbModule.db as jest.Mock;
-      dbFn("user_state_history");
-      if (queryBuilders["user_state_history"]) {
-        queryBuilders["user_state_history"].insert.mockResolvedValue(1);
-      }
+      // Mock db.raw() to return result with rowCount
+      dbFn.raw = jest.fn().mockResolvedValue({ rowCount: 1 });
 
       await usersRepository.insertStateHistory(userId, "status", null, "active");
 
-      expect(queryBuilders["user_state_history"]?.insert).toHaveBeenCalled();
+      expect(dbFn.raw).toHaveBeenCalled();
     });
 
     it("should work with transaction", async () => {
       const dbModule = await import("../../../../apps/backend/src/db/connection.js");
       const dbFn = dbModule.db as jest.Mock;
       const mockTrx = dbFn as any;
-
-      dbFn("user_state_history");
-      if (queryBuilders["user_state_history"]) {
-        queryBuilders["user_state_history"].insert.mockResolvedValue(1);
-      }
+      // Mock db.raw() to return result with rowCount
+      dbFn.raw = jest.fn().mockResolvedValue({ rowCount: 1 });
 
       const result = await usersRepository.insertStateHistory(
         userId,
@@ -399,6 +392,7 @@ describe("Users Repository", () => {
       );
 
       expect(result).toBe(1);
+      expect(dbFn.raw).toHaveBeenCalled();
     });
   });
 

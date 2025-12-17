@@ -33,7 +33,7 @@ import { getCurrentTermsVersion } from "../../../apps/backend/src/config/terms.j
 
 describe("Integration: Avatar Upload", () => {
   let dbAvailable = false;
-  let authCookie: string;
+  let authToken: string;
   let userId: string;
 
   // Helper to create a test image buffer
@@ -100,15 +100,16 @@ describe("Integration: Avatar Upload", () => {
       }
       userId = user.id;
 
-      // Login to get auth cookie
+      // Login to get auth token
       const loginResponse = await request(app).post("/api/v1/auth/login").send({
         email: testEmail,
         password: "SecureP@ssw0rd123!",
       });
 
       expect(loginResponse.status).toBe(200);
-      authCookie = loginResponse.headers["set-cookie"]?.[0] || "";
-      expect(authCookie).toBeTruthy();
+      expect(loginResponse.body.tokens).toBeDefined();
+      authToken = loginResponse.body.tokens.accessToken;
+      expect(authToken).toBeTruthy();
     }, "beforeEach");
   });
 
@@ -129,7 +130,7 @@ describe("Integration: Avatar Upload", () => {
 
     const response = await request(app)
       .post("/api/v1/users/avatar")
-      .set("Cookie", authCookie)
+      .set("Authorization", `Bearer ${authToken}`)
       .attach("avatar", imageBuffer, "test-avatar.png");
 
     expect(response.status).toBe(201);
@@ -147,7 +148,9 @@ describe("Integration: Avatar Upload", () => {
       return;
     }
 
-    const response = await request(app).post("/api/v1/users/avatar").set("Cookie", authCookie);
+    const response = await request(app)
+      .post("/api/v1/users/avatar")
+      .set("Authorization", `Bearer ${authToken}`);
 
     expect(response.status).toBe(400);
     expect(response.body.error).toBe("UPLOAD_NO_FILE");
@@ -163,7 +166,7 @@ describe("Integration: Avatar Upload", () => {
 
     const response = await request(app)
       .post("/api/v1/users/avatar")
-      .set("Cookie", authCookie)
+      .set("Authorization", `Bearer ${authToken}`)
       .attach("avatar", pdfBuffer, "test.pdf")
       .field("Content-Type", "application/pdf");
 
@@ -182,7 +185,7 @@ describe("Integration: Avatar Upload", () => {
 
     const response = await request(app)
       .post("/api/v1/users/avatar")
-      .set("Cookie", authCookie)
+      .set("Authorization", `Bearer ${authToken}`)
       .attach("avatar", largeBuffer, "large-file.png")
       .field("Content-Type", "image/png");
 
@@ -200,7 +203,7 @@ describe("Integration: Avatar Upload", () => {
 
     const response = await request(app)
       .post("/api/v1/users/avatar")
-      .set("Cookie", authCookie)
+      .set("Authorization", `Bearer ${authToken}`)
       .attach("avatar", imageBuffer, "test-avatar.jpg");
 
     expect(response.status).toBe(201);
@@ -218,7 +221,7 @@ describe("Integration: Avatar Upload", () => {
 
     const response = await request(app)
       .post("/api/v1/users/avatar")
-      .set("Cookie", authCookie)
+      .set("Authorization", `Bearer ${authToken}`)
       .attach("avatar", imageBuffer, "test-avatar.webp");
 
     expect(response.status).toBe(201);
@@ -237,7 +240,7 @@ describe("Integration: Avatar Upload", () => {
 
     const response = await request(app)
       .post("/api/v1/users/avatar")
-      .set("Cookie", authCookie)
+      .set("Authorization", `Bearer ${authToken}`)
       .attach("avatar", imageBuffer, "large-avatar.png");
 
     expect(response.status).toBe(201);
@@ -262,7 +265,7 @@ describe("Integration: Avatar Upload", () => {
     const imageBuffer = await createTestImageBuffer(500, 500, "png");
     const uploadResponse = await request(app)
       .post("/api/v1/users/avatar")
-      .set("Cookie", authCookie)
+      .set("Authorization", `Bearer ${authToken}`)
       .attach("avatar", imageBuffer, "test-avatar.png");
 
     expect(uploadResponse.status).toBe(201);
@@ -299,7 +302,7 @@ describe("Integration: Avatar Upload", () => {
     const imageBuffer = await createTestImageBuffer(500, 500, "png");
     const uploadResponse = await request(app)
       .post("/api/v1/users/avatar")
-      .set("Cookie", authCookie)
+      .set("Authorization", `Bearer ${authToken}`)
       .attach("avatar", imageBuffer, "test-avatar.png");
 
     expect(uploadResponse.status).toBe(201);
@@ -307,7 +310,7 @@ describe("Integration: Avatar Upload", () => {
     // Delete avatar
     const deleteResponse = await request(app)
       .delete("/api/v1/users/avatar")
-      .set("Cookie", authCookie);
+      .set("Authorization", `Bearer ${authToken}`);
 
     expect(deleteResponse.status).toBe(204);
 
@@ -325,7 +328,7 @@ describe("Integration: Avatar Upload", () => {
     // Try to delete avatar that doesn't exist
     const deleteResponse = await request(app)
       .delete("/api/v1/users/avatar")
-      .set("Cookie", authCookie);
+      .set("Authorization", `Bearer ${authToken}`);
 
     // Should return 204 even if avatar doesn't exist (idempotent)
     expect(deleteResponse.status).toBe(204);
@@ -341,7 +344,7 @@ describe("Integration: Avatar Upload", () => {
     const imageBuffer1 = await createTestImageBuffer(500, 500, "png");
     const uploadResponse1 = await request(app)
       .post("/api/v1/users/avatar")
-      .set("Cookie", authCookie)
+      .set("Authorization", `Bearer ${authToken}`)
       .attach("avatar", imageBuffer1, "avatar1.png");
 
     expect(uploadResponse1.status).toBe(201);
@@ -351,7 +354,7 @@ describe("Integration: Avatar Upload", () => {
     const imageBuffer2 = await createTestImageBuffer(600, 600, "png");
     const uploadResponse2 = await request(app)
       .post("/api/v1/users/avatar")
-      .set("Cookie", authCookie)
+      .set("Authorization", `Bearer ${authToken}`)
       .attach("avatar", imageBuffer2, "avatar2.png");
 
     expect(uploadResponse2.status).toBe(201);
@@ -374,7 +377,7 @@ describe("Integration: Avatar Upload", () => {
     // First upload
     const response1 = await request(app)
       .post("/api/v1/users/avatar")
-      .set("Cookie", authCookie)
+      .set("Authorization", `Bearer ${authToken}`)
       .set("Idempotency-Key", idempotencyKey)
       .attach("avatar", imageBuffer, "test-avatar.png");
 
@@ -386,7 +389,7 @@ describe("Integration: Avatar Upload", () => {
     // Second upload with same idempotency key (should replay)
     const response2 = await request(app)
       .post("/api/v1/users/avatar")
-      .set("Cookie", authCookie)
+      .set("Authorization", `Bearer ${authToken}`)
       .set("Idempotency-Key", idempotencyKey)
       .attach("avatar", imageBuffer, "test-avatar.png");
 
@@ -407,7 +410,7 @@ describe("Integration: Avatar Upload", () => {
     const imageBuffer = await createTestImageBuffer(500, 500, "png");
     await request(app)
       .post("/api/v1/users/avatar")
-      .set("Cookie", authCookie)
+      .set("Authorization", `Bearer ${authToken}`)
       .attach("avatar", imageBuffer, "test-avatar.png");
 
     const idempotencyKey = `test-key-${uuidv4()}`;
@@ -415,7 +418,7 @@ describe("Integration: Avatar Upload", () => {
     // First delete
     const response1 = await request(app)
       .delete("/api/v1/users/avatar")
-      .set("Cookie", authCookie)
+      .set("Authorization", `Bearer ${authToken}`)
       .set("Idempotency-Key", idempotencyKey);
 
     expect(response1.status).toBe(204);
@@ -424,7 +427,7 @@ describe("Integration: Avatar Upload", () => {
     // Second delete with same idempotency key (should replay)
     const response2 = await request(app)
       .delete("/api/v1/users/avatar")
-      .set("Cookie", authCookie)
+      .set("Authorization", `Bearer ${authToken}`)
       .set("Idempotency-Key", idempotencyKey);
 
     expect(response2.status).toBe(204);
@@ -442,7 +445,7 @@ describe("Integration: Avatar Upload", () => {
 
     await request(app)
       .post("/api/v1/users/avatar")
-      .set("Cookie", authCookie)
+      .set("Authorization", `Bearer ${authToken}`)
       .attach("avatar", imageBuffer, "test-avatar.png");
 
     // Check audit log
@@ -467,11 +470,11 @@ describe("Integration: Avatar Upload", () => {
     const imageBuffer = await createTestImageBuffer(500, 500, "png");
     await request(app)
       .post("/api/v1/users/avatar")
-      .set("Cookie", authCookie)
+      .set("Authorization", `Bearer ${authToken}`)
       .attach("avatar", imageBuffer, "test-avatar.png");
 
     // Delete avatar
-    await request(app).delete("/api/v1/users/avatar").set("Cookie", authCookie);
+    await request(app).delete("/api/v1/users/avatar").set("Authorization", `Bearer ${authToken}`);
 
     // Check audit log
     const auditLogs = await db("audit_logs")
@@ -520,7 +523,7 @@ describe("Integration: Avatar Upload", () => {
     const startTime = Date.now();
     const response = await request(app)
       .post("/api/v1/users/avatar")
-      .set("Cookie", authCookie)
+      .set("Authorization", `Bearer ${authToken}`)
       .attach("avatar", imageBuffer, "test-avatar.png");
     const endTime = Date.now();
     const responseTime = endTime - startTime;

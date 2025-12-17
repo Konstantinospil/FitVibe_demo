@@ -353,9 +353,8 @@ const LanguageSwitcher: React.FC = () => {
         type="button"
         onClick={() => {
           setIsOpen(!isOpen);
-          if (!isOpen) {
-            setFocusedIndex(currentIndex >= 0 ? currentIndex : 0);
-          }
+          // Don't auto-focus menu item on mouse click - keep focus on button
+          setFocusedIndex(-1);
         }}
         onKeyDown={handleKeyDown}
         style={buttonStyle}

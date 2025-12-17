@@ -26,24 +26,22 @@ export const Sidebar: React.FC<SidebarProps> = ({ items, isOpen, onClose, logo }
   const { t } = useTranslation();
   const location = useLocation();
 
-  if (!isOpen) {
-    return null;
-  }
-
   return (
     <>
       {/* Backdrop */}
-      <div
-        onClick={onClose}
-        style={{
-          position: "fixed",
-          inset: 0,
-          background: "rgba(11, 12, 16, 0.75)",
-          backdropFilter: "blur(4px)",
-          zIndex: 999,
-        }}
-        aria-hidden="true"
-      />
+      {isOpen && (
+        <div
+          onClick={onClose}
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(11, 12, 16, 0.75)",
+            backdropFilter: "blur(4px)",
+            zIndex: 999,
+          }}
+          aria-hidden="true"
+        />
+      )}
 
       {/* Sidebar */}
       <aside
@@ -61,9 +59,12 @@ export const Sidebar: React.FC<SidebarProps> = ({ items, isOpen, onClose, logo }
           zIndex: 1000,
           transform: isOpen ? "translateX(0)" : "translateX(-100%)",
           transition: "transform 150ms ease",
+          visibility: isOpen ? "visible" : "hidden",
+          pointerEvents: isOpen ? "auto" : "none",
         }}
         role="navigation"
         aria-label={t("navigation.sidebar") || "Main navigation"}
+        aria-hidden={!isOpen}
       >
         {/* Header */}
         <div

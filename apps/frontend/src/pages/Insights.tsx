@@ -214,7 +214,7 @@ const Insights: React.FC = () => {
         "/api/v1/progress/export",
         "GET",
       );
-      toast.error(t("progress.exportError") || t("progress.exportFailed"));
+      toast.error(t("progress.exportError"));
     } finally {
       setIsExporting(false);
     }
@@ -263,7 +263,7 @@ const Insights: React.FC = () => {
         {t("progress.chartError") || `Failed to render ${chartName} chart`}
       </p>
       <Button type="button" size="sm" variant="secondary" onClick={() => window.location.reload()}>
-        {t("progress.reload") || t("progress.reloadPage")}
+        {t("progress.reload")}
       </Button>
     </div>
   );
@@ -526,7 +526,7 @@ const Insights: React.FC = () => {
                 }
                 onClick={() => setRangeMode("preset")}
               >
-                {t("progress.presetRange") || t("progress.presetRange")}
+                {t("progress.presetRange")}
               </button>
               <button
                 type="button"
@@ -535,7 +535,7 @@ const Insights: React.FC = () => {
                 }
                 onClick={() => setRangeMode("custom")}
               >
-                {t("progress.customRange") || t("progress.customRange")}
+                {t("progress.customRange")}
               </button>
             </div>
 
@@ -560,9 +560,9 @@ const Insights: React.FC = () => {
                       value={period}
                       onChange={(e) => setPeriod(Number(e.target.value))}
                     >
-                      <option value={7}>{t("progress.7days") || t("progress.7days")}</option>
-                      <option value={30}>{t("progress.30days") || t("progress.30days")}</option>
-                      <option value={90}>{t("progress.90days") || t("progress.90days")}</option>
+                      <option value={7}>{t("progress.7days")}</option>
+                      <option value={30}>{t("progress.30days")}</option>
+                      <option value={90}>{t("progress.90days")}</option>
                     </select>
                   </label>
                 ) : (
@@ -577,7 +577,7 @@ const Insights: React.FC = () => {
                     value={groupBy}
                     onChange={(e) => setGroupBy(e.target.value as "day" | "week")}
                   >
-                    <option value="day">{t("progress.daily") || t("progress.daily")}</option>
+                    <option value="day">{t("progress.daily")}</option>
                     <option value="week">{t("progress.weekly") || "Weekly"}</option>
                   </select>
                 </label>
@@ -590,7 +590,7 @@ const Insights: React.FC = () => {
                 isLoading={isExporting}
                 disabled={isExporting}
               >
-                {t("progress.export") || t("progress.exportCsv")}
+                {t("progress.export")}
               </Button>
             </div>
           </div>
@@ -598,9 +598,7 @@ const Insights: React.FC = () => {
           {/* Volume Trend Chart */}
           <section className="card">
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <strong style={{ fontSize: "1.05rem" }}>
-                {t("progress.volumeTrend") || t("progress.volumeTrend")}
-              </strong>
+              <strong style={{ fontSize: "1.05rem" }}>{t("progress.volumeTrend")}</strong>
               <span style={{ color: "var(--color-text-secondary)", fontSize: "0.9rem" }}>
                 {effectiveDateRange.from} → {effectiveDateRange.to}
               </span>
@@ -618,16 +616,14 @@ const Insights: React.FC = () => {
                   border: "1px solid rgba(248, 113, 113, 0.3)",
                 }}
               >
-                <p style={{ margin: 0, marginBottom: "1rem" }}>
-                  {t("progress.loadError") || t("progress.failedToLoad")}
-                </p>
+                <p style={{ margin: 0, marginBottom: "1rem" }}>{t("progress.loadError")}</p>
                 <Button
                   type="button"
                   size="sm"
                   variant="secondary"
                   onClick={() => void refetchTrends()}
                 >
-                  {t("progress.retry") || t("progress.retry")}
+                  {t("progress.retry")}
                 </Button>
               </div>
             ) : volumeChartData.length > 0 ? (
@@ -651,7 +647,7 @@ const Insights: React.FC = () => {
                   borderRadius: "12px",
                 }}
               >
-                {t("progress.noData") || t("progress.noData")}
+                {t("progress.noData")}
               </div>
             )}
           </section>
@@ -659,9 +655,7 @@ const Insights: React.FC = () => {
           {/* Sessions Trend Chart */}
           <section className="card">
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <strong style={{ fontSize: "1.05rem" }}>
-                {t("progress.sessionsTrend") || t("progress.sessionsTrend")}
-              </strong>
+              <strong style={{ fontSize: "1.05rem" }}>{t("progress.sessionsTrend")}</strong>
             </div>
             {trendsLoading ? (
               <Skeleton width="100%" height="240px" />
@@ -676,16 +670,14 @@ const Insights: React.FC = () => {
                   border: "1px solid rgba(248, 113, 113, 0.3)",
                 }}
               >
-                <p style={{ margin: 0, marginBottom: "1rem" }}>
-                  {t("progress.loadError") || t("progress.failedToLoad")}
-                </p>
+                <p style={{ margin: 0, marginBottom: "1rem" }}>{t("progress.loadError")}</p>
                 <Button
                   type="button"
                   size="sm"
                   variant="secondary"
                   onClick={() => void refetchTrends()}
                 >
-                  {t("progress.retry") || t("progress.retry")}
+                  {t("progress.retry")}
                 </Button>
               </div>
             ) : sessionsChartData.length > 0 ? (
@@ -709,7 +701,7 @@ const Insights: React.FC = () => {
                   borderRadius: "12px",
                 }}
               >
-                {t("progress.noData") || t("progress.noData")}
+                {t("progress.noData")}
               </div>
             )}
           </section>
@@ -717,9 +709,7 @@ const Insights: React.FC = () => {
           {/* Average Intensity Trend Chart */}
           <section className="card">
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <strong style={{ fontSize: "1.05rem" }}>
-                {t("progress.intensityTrend") || t("progress.intensityTrend")}
-              </strong>
+              <strong style={{ fontSize: "1.05rem" }}>{t("progress.intensityTrend")}</strong>
             </div>
             {trendsLoading ? (
               <Skeleton width="100%" height="240px" />
@@ -734,16 +724,14 @@ const Insights: React.FC = () => {
                   border: "1px solid rgba(248, 113, 113, 0.3)",
                 }}
               >
-                <p style={{ margin: 0, marginBottom: "1rem" }}>
-                  {t("progress.loadError") || t("progress.failedToLoad")}
-                </p>
+                <p style={{ margin: 0, marginBottom: "1rem" }}>{t("progress.loadError")}</p>
                 <Button
                   type="button"
                   size="sm"
                   variant="secondary"
                   onClick={() => void refetchTrends()}
                 >
-                  {t("progress.retry") || t("progress.retry")}
+                  {t("progress.retry")}
                 </Button>
               </div>
             ) : intensityChartData.length > 0 ? (
@@ -767,16 +755,14 @@ const Insights: React.FC = () => {
                   borderRadius: "12px",
                 }}
               >
-                {t("progress.noData") || t("progress.noData")}
+                {t("progress.noData")}
               </div>
             )}
           </section>
 
           {/* Exercise Breakdown */}
           <section className="card">
-            <strong style={{ fontSize: "1.05rem" }}>
-              {t("progress.exerciseBreakdown") || t("progress.exerciseBreakdown")}
-            </strong>
+            <strong style={{ fontSize: "1.05rem" }}>{t("progress.exerciseBreakdown")}</strong>
             {exercisesLoading ? (
               <div style={{ display: "grid", gap: "0.75rem" }}>
                 {[1, 2, 3].map((i) => (
@@ -794,16 +780,14 @@ const Insights: React.FC = () => {
                   border: "1px solid rgba(248, 113, 113, 0.3)",
                 }}
               >
-                <p style={{ margin: 0, marginBottom: "1rem" }}>
-                  {t("progress.loadError") || t("progress.failedToLoadExercise")}
-                </p>
+                <p style={{ margin: 0, marginBottom: "1rem" }}>{t("progress.loadError")}</p>
                 <Button
                   type="button"
                   size="sm"
                   variant="secondary"
                   onClick={() => void refetchExercises()}
                 >
-                  {t("progress.retry") || t("progress.retry")}
+                  {t("progress.retry")}
                 </Button>
               </div>
             ) : exerciseData && exerciseData.exercises && exerciseData.exercises.length > 0 ? (
@@ -823,16 +807,16 @@ const Insights: React.FC = () => {
                         {t("progress.sessions") || "Sessions"}
                       </th>
                       <th style={{ padding: "0.75rem 0", color: "var(--color-text-secondary)" }}>
-                        {t("progress.totalVolume") || t("progress.totalVolume")}
+                        {t("progress.totalVolume")}
                       </th>
                       <th style={{ padding: "0.75rem 0", color: "var(--color-text-secondary)" }}>
-                        {t("progress.avgVolume") || t("progress.avgVolume")}
+                        {t("progress.avgVolume")}
                       </th>
                       <th style={{ padding: "0.75rem 0", color: "var(--color-text-secondary)" }}>
-                        {t("progress.maxWeight") || t("progress.maxWeight")}
+                        {t("progress.maxWeight")}
                       </th>
                       <th style={{ padding: "0.75rem 0", color: "var(--color-text-secondary)" }}>
-                        {t("progress.trend") || t("progress.trend")}
+                        {t("progress.trend")}
                       </th>
                     </tr>
                   </thead>
@@ -886,7 +870,7 @@ const Insights: React.FC = () => {
                   borderRadius: "12px",
                 }}
               >
-                {t("progress.noExercises") || t("progress.noExerciseData")}
+                {t("progress.noExercises")}
               </div>
             )}
           </section>

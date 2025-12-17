@@ -11,7 +11,7 @@ import {
 
 const upload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: 2 * 1024 * 1024 },
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5 MB per PRD (matches MAX_BYTES in controller)
 });
 
 export const usersAvatarRouter = Router();

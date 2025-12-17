@@ -385,6 +385,7 @@ describe("Feed visibility guards", () => {
       items: [
         {
           id: "feed-1",
+          feedItemId: "feed-1",
           user: {
             id: "user-1",
             username: "athlete1",
@@ -397,7 +398,7 @@ describe("Feed visibility guards", () => {
             plannedAt: "2025-01-15T08:00:00Z",
             completedAt: "2025-01-15T09:30:00Z",
             exerciseCount: 5,
-            totalVolume: null,
+            totalVolume: null as any,
           },
           visibility: "public",
           createdAt: "2025-01-15T09:30:00Z",

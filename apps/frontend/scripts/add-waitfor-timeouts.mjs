@@ -33,13 +33,11 @@ const waitForWithTimeout = /await\s+waitFor\s*\([^)]*timeout/;
 async function processFile(filePath) {
   const content = readFileSync(filePath, "utf-8");
   let modified = false;
-  let newContent = content;
 
   // Check if file has waitFor calls without timeouts
   const lines = content.split("\n");
   const modifiedLines = [];
   let inWaitFor = false;
-  let waitForStartLine = -1;
   let braceCount = 0;
 
   for (let i = 0; i < lines.length; i++) {
@@ -51,7 +49,6 @@ async function processFile(filePath) {
       const nextFewLines = lines.slice(i, Math.min(i + 10, lines.length)).join("\n");
       if (!waitForWithTimeout.test(nextFewLines)) {
         inWaitFor = true;
-        waitForStartLine = i;
         braceCount = (line.match(/\{/g) || []).length - (line.match(/\}/g) || []).length;
         modifiedLines.push(line);
         continue;
@@ -74,7 +71,6 @@ async function processFile(filePath) {
           modified = true;
         }
         inWaitFor = false;
-        waitForStartLine = -1;
       }
     } else {
       modifiedLines.push(line);

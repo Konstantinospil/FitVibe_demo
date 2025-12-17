@@ -18,10 +18,11 @@ import {
   ensureUsernameColumnExists,
 } from "../../setup/test-helpers.js";
 import { v4 as uuidv4 } from "uuid";
+import { getCurrentTermsVersion } from "../../../apps/backend/src/config/terms.js";
 
 describe("Integration: Alias Change Rate Limiting", () => {
   let dbAvailable = false;
-  let authCookie: string;
+  let authToken: string;
   let userId: string;
 
   beforeAll(async () => {
@@ -51,14 +52,30 @@ describe("Integration: Alias Change Rate Limiting", () => {
 
       const user = await createUser({
         id: uuidv4(),
-        email: testEmail,
+
         username: testUsername,
-        passwordHash: hashedPassword,
-        displayName: "Test User",
-        roleCode: "user",
-        locale: "en",
-        preferredLang: "en",
+
+        display_name: "Test User",
+
+        password_hash: hashedPassword,
+
+        primaryEmail: testEmail,
+
+        emailVerified: true,
+
+        role_code: "athlete",
+
+        locale: "en-US",
+
+        preferred_lang: "en",
+
         status: "active",
+
+        terms_accepted: true,
+
+        terms_accepted_at: new Date().toISOString(),
+
+        terms_version: getCurrentTermsVersion(),
       });
 
       userId = user.id;
@@ -70,8 +87,9 @@ describe("Integration: Alias Change Rate Limiting", () => {
       });
 
       expect(loginResponse.status).toBe(200);
-      authCookie = loginResponse.headers["set-cookie"]?.[0] || "";
-      expect(authCookie).toBeTruthy();
+      expect(loginResponse.body.tokens).toBeDefined();
+      authToken = loginResponse.body.tokens.accessToken;
+      expect(authToken).toBeTruthy();
     }, "beforeEach");
   });
 
@@ -88,9 +106,12 @@ describe("Integration: Alias Change Rate Limiting", () => {
       return;
     }
 
-    const response = await request(app).patch("/api/v1/users/me").set("Cookie", authCookie).send({
-      alias: "firstalias",
-    });
+    const response = await request(app)
+      .patch("/api/v1/users/me")
+      .set("Authorization", `Bearer ${authToken}`)
+      .send({
+        alias: "firstalias",
+      });
 
     expect(response.status).toBe(200);
     expect(response.body.profile?.alias).toBe("firstalias");
@@ -103,18 +124,22 @@ describe("Integration: Alias Change Rate Limiting", () => {
     }
 
     // Set initial alias
-    await request(app).patch("/api/v1/users/me").set("Cookie", authCookie).send({
+    await request(app).patch("/api/v1/users/me").set("Authorization", `Bearer ${authToken}`).send({
       alias: "firstalias",
     });
 
     // Try to change alias immediately (should fail)
-    const response = await request(app).patch("/api/v1/users/me").set("Cookie", authCookie).send({
-      alias: "secondalias",
-    });
+    const response = await request(app)
+      .patch("/api/v1/users/me")
+      .set("Authorization", `Bearer ${authToken}`)
+      .send({
+        alias: "secondalias",
+      });
 
     expect(response.status).toBe(429);
-    expect(response.body.error).toBe("E.ALIAS_CHANGE_RATE_LIMITED");
-    expect(response.body.message).toContain("30 days");
+    expect(response.body.error?.code || response.body.error).toBe("E.ALIAS_CHANGE_RATE_LIMITED");
+    const message = response.body.error?.message || response.body.message || "";
+    expect(message).toContain("30 days");
   });
 
   it("should allow alias change after 30 days", async () => {
@@ -124,7 +149,7 @@ describe("Integration: Alias Change Rate Limiting", () => {
     }
 
     // Set initial alias
-    await request(app).patch("/api/v1/users/me").set("Cookie", authCookie).send({
+    await request(app).patch("/api/v1/users/me").set("Authorization", `Bearer ${authToken}`).send({
       alias: "firstalias",
     });
 
@@ -136,9 +161,12 @@ describe("Integration: Alias Change Rate Limiting", () => {
       .update({ alias_changed_at: thirtyOneDaysAgo.toISOString() });
 
     // Try to change alias (should succeed)
-    const response = await request(app).patch("/api/v1/users/me").set("Cookie", authCookie).send({
-      alias: "secondalias",
-    });
+    const response = await request(app)
+      .patch("/api/v1/users/me")
+      .set("Authorization", `Bearer ${authToken}`)
+      .send({
+        alias: "secondalias",
+      });
 
     expect(response.status).toBe(200);
     expect(response.body.profile?.alias).toBe("secondalias");
@@ -151,14 +179,17 @@ describe("Integration: Alias Change Rate Limiting", () => {
     }
 
     // Set initial alias
-    await request(app).patch("/api/v1/users/me").set("Cookie", authCookie).send({
+    await request(app).patch("/api/v1/users/me").set("Authorization", `Bearer ${authToken}`).send({
       alias: "myalias",
     });
 
     // Try to set the same alias again (should succeed - no change)
-    const response = await request(app).patch("/api/v1/users/me").set("Cookie", authCookie).send({
-      alias: "myalias",
-    });
+    const response = await request(app)
+      .patch("/api/v1/users/me")
+      .set("Authorization", `Bearer ${authToken}`)
+      .send({
+        alias: "myalias",
+      });
 
     expect(response.status).toBe(200);
     expect(response.body.profile?.alias).toBe("myalias");

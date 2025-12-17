@@ -18,10 +18,11 @@ import {
   ensureUsernameColumnExists,
 } from "../../setup/test-helpers.js";
 import { v4 as uuidv4 } from "uuid";
+import { getCurrentTermsVersion } from "../../../apps/backend/src/config/terms.js";
 
 describe("Integration: Audit Logging Verification", () => {
   let dbAvailable = false;
-  let authCookie: string;
+  let authToken: string;
   let userId: string;
 
   beforeAll(async () => {
@@ -51,14 +52,30 @@ describe("Integration: Audit Logging Verification", () => {
 
       const user = await createUser({
         id: uuidv4(),
-        email: testEmail,
+
         username: testUsername,
-        passwordHash: hashedPassword,
-        displayName: "Test User",
-        roleCode: "user",
-        locale: "en",
-        preferredLang: "en",
+
+        display_name: "Test User",
+
+        password_hash: hashedPassword,
+
+        primaryEmail: testEmail,
+
+        emailVerified: true,
+
+        role_code: "athlete",
+
+        locale: "en-US",
+
+        preferred_lang: "en",
+
         status: "active",
+
+        terms_accepted: true,
+
+        terms_accepted_at: new Date().toISOString(),
+
+        terms_version: getCurrentTermsVersion(),
       });
 
       userId = user.id;
@@ -70,8 +87,9 @@ describe("Integration: Audit Logging Verification", () => {
       });
 
       expect(loginResponse.status).toBe(200);
-      authCookie = loginResponse.headers["set-cookie"]?.[0] || "";
-      expect(authCookie).toBeTruthy();
+      expect(loginResponse.body.tokens).toBeDefined();
+      authToken = loginResponse.body.tokens.accessToken;
+      expect(authToken).toBeTruthy();
     }, "beforeEach");
   });
 
@@ -89,7 +107,7 @@ describe("Integration: Audit Logging Verification", () => {
     }
 
     // Update alias
-    await request(app).patch("/api/v1/users/me").set("Cookie", authCookie).send({
+    await request(app).patch("/api/v1/users/me").set("Authorization", `Bearer ${authToken}`).send({
       alias: "testalias",
     });
 
@@ -115,7 +133,7 @@ describe("Integration: Audit Logging Verification", () => {
     }
 
     // Update weight
-    await request(app).patch("/api/v1/users/me").set("Cookie", authCookie).send({
+    await request(app).patch("/api/v1/users/me").set("Authorization", `Bearer ${authToken}`).send({
       weight: 75.5,
       weightUnit: "kg",
     });
@@ -144,7 +162,7 @@ describe("Integration: Audit Logging Verification", () => {
     }
 
     // Update alias
-    await request(app).patch("/api/v1/users/me").set("Cookie", authCookie).send({
+    await request(app).patch("/api/v1/users/me").set("Authorization", `Bearer ${authToken}`).send({
       alias: "newalias",
     });
 
@@ -167,7 +185,7 @@ describe("Integration: Audit Logging Verification", () => {
     }
 
     // Update multiple fields
-    await request(app).patch("/api/v1/users/me").set("Cookie", authCookie).send({
+    await request(app).patch("/api/v1/users/me").set("Authorization", `Bearer ${authToken}`).send({
       alias: "multialias",
       weight: 80,
       weightUnit: "kg",

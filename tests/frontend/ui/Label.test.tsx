@@ -127,8 +127,8 @@ describe("Label", () => {
 
   describe("Edge cases", () => {
     it("should handle empty children", () => {
-      render(<Label>{""}</Label>);
-      const label = screen.getByRole("label", { hidden: true });
+      const { container } = render(<Label>{""}</Label>);
+      const label = container.querySelector("label");
       expect(label).toBeInTheDocument();
     });
 

@@ -18,10 +18,11 @@ import {
   ensureUsernameColumnExists,
 } from "../../setup/test-helpers.js";
 import { v4 as uuidv4 } from "uuid";
+import { getCurrentTermsVersion } from "../../../apps/backend/src/config/terms.js";
 
 describe("Integration: Feed Search SQL Injection Protection", () => {
   let dbAvailable = false;
-  let authCookie: string;
+  let authToken: string;
   let userId: string;
 
   beforeAll(async () => {
@@ -51,14 +52,18 @@ describe("Integration: Feed Search SQL Injection Protection", () => {
 
       const user = await createUser({
         id: uuidv4(),
-        email: testEmail,
         username: testUsername,
-        passwordHash: hashedPassword,
-        displayName: "Test User",
-        roleCode: "user",
-        locale: "en",
-        preferredLang: "en",
+        display_name: "Test User",
+        password_hash: hashedPassword,
+        primaryEmail: testEmail,
+        emailVerified: true,
+        role_code: "athlete",
+        locale: "en-US",
+        preferred_lang: "en",
         status: "active",
+        terms_accepted: true,
+        terms_accepted_at: new Date().toISOString(),
+        terms_version: getCurrentTermsVersion(),
       });
 
       userId = user.id;
@@ -70,8 +75,9 @@ describe("Integration: Feed Search SQL Injection Protection", () => {
       });
 
       expect(loginResponse.status).toBe(200);
-      authCookie = loginResponse.headers["set-cookie"]?.[0] || "";
-      expect(authCookie).toBeTruthy();
+      expect(loginResponse.body.tokens).toBeDefined();
+      authToken = loginResponse.body.tokens.accessToken;
+      expect(authToken).toBeTruthy();
     }, "beforeEach");
   });
 
@@ -103,7 +109,7 @@ describe("Integration: Feed Search SQL Injection Protection", () => {
     for (const maliciousQuery of sqlInjectionAttempts) {
       const response = await request(app)
         .get("/api/v1/feed")
-        .set("Cookie", authCookie)
+        .set("Authorization", `Bearer ${authToken}`)
         .query({ q: maliciousQuery });
 
       // Should return 200 (not crash) and return empty results or handle gracefully
@@ -126,7 +132,7 @@ describe("Integration: Feed Search SQL Injection Protection", () => {
     for (const char of specialChars) {
       const response = await request(app)
         .get("/api/v1/feed")
-        .set("Cookie", authCookie)
+        .set("Authorization", `Bearer ${authToken}`)
         .query({ q: `test${char}query` });
 
       // Should return 200 (not crash)
@@ -147,7 +153,7 @@ describe("Integration: Feed Search SQL Injection Protection", () => {
     for (const query of emptyQueries) {
       const response = await request(app)
         .get("/api/v1/feed")
-        .set("Cookie", authCookie)
+        .set("Authorization", `Bearer ${authToken}`)
         .query(query !== null && query !== undefined ? { q: query } : {});
 
       expect(response.status).toBe(200);

@@ -185,8 +185,8 @@ describe("Badge", () => {
 
   describe("Edge cases", () => {
     it("should handle empty children", () => {
-      render(<Badge>{""}</Badge>);
-      const badge = screen.getByRole("generic", { hidden: true });
+      const { container } = render(<Badge>{""}</Badge>);
+      const badge = container.querySelector("span");
       expect(badge).toBeInTheDocument();
     });
 

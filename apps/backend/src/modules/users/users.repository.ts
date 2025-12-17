@@ -201,15 +201,30 @@ export async function insertStateHistory(
   oldValue: unknown,
   newValue: unknown,
   trx?: Knex.Transaction,
-) {
-  return withDb(trx)(STATE_TABLE).insert({
-    id: crypto.randomUUID(),
-    user_id: userId,
-    field,
-    old_value: oldValue ?? null,
-    new_value: newValue ?? null,
-    changed_at: new Date().toISOString(),
-  });
+): Promise<number> {
+  // For JSONB columns, we need to ensure values are properly JSON-encoded
+  // Knex should handle this, but we'll use raw SQL for JSONB to be explicit
+  const db = withDb(trx);
+  const id = crypto.randomUUID();
+  const now = new Date().toISOString();
+
+  // Use raw SQL with JSONB casting to ensure proper encoding
+  const result: { rowCount?: number } = await db.raw(
+    `
+    INSERT INTO ${STATE_TABLE} (id, user_id, field, old_value, new_value, changed_at)
+    VALUES (?, ?, ?, ?::jsonb, ?::jsonb, ?)
+    `,
+    [
+      id,
+      userId,
+      field,
+      oldValue === null || oldValue === undefined ? null : JSON.stringify(oldValue),
+      newValue === null || newValue === undefined ? null : JSON.stringify(newValue),
+      now,
+    ],
+  );
+  // Return row count (number of rows affected)
+  return result.rowCount ?? 1;
 }
 
 export async function getUserContacts(

@@ -63,13 +63,17 @@ export function getCachedHtml(url: string): string | null {
         const stats = statSync(cachePath);
         const age = Date.now() - stats.mtimeMs;
         if (age < CACHE_TTL) {
-          const html = readFileSync(cachePath, "utf-8");
-          // Store in memory cache for faster access
-          memoryCache.set(url, { html, timestamp: Date.now() });
-          return html;
+          // Re-check file exists after statSync to handle race condition
+          // where file might be deleted between statSync and readFileSync
+          if (existsSync(cachePath)) {
+            const html = readFileSync(cachePath, "utf-8");
+            // Store in memory cache for faster access
+            memoryCache.set(url, { html, timestamp: Date.now() });
+            return html;
+          }
         }
       } catch {
-        // Ignore errors reading cache
+        // Ignore errors reading cache (file might have been deleted)
       }
     }
   }

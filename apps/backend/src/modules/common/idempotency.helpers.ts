@@ -31,6 +31,7 @@ export function getIdempotencyKey(req: Request): string | null {
  * Get the route template from the request for idempotency scoping
  * @param req - Express request object
  * @returns Route template (e.g., "/api/v1/users/:id")
+ * @throws HttpError if route template is invalid or suspicious
  */
 export function getRouteTemplate(req: Request): string {
   const base = req.baseUrl ?? "";
@@ -45,7 +46,24 @@ export function getRouteTemplate(req: Request): string {
   const combined = `${base}${path}`.replace(/\/{2,}/g, "/");
   const trimmed =
     combined.length > 1 && combined.endsWith("/") ? combined.slice(0, -1) : combined || "/";
-  return trimmed || "/";
+  const route = trimmed || "/";
+
+  // Validate route template to prevent manipulation
+  // Route should start with / and contain only valid characters
+  if (!route.startsWith("/")) {
+    throw new HttpError(400, "E.ROUTE.INVALID", "Invalid route template");
+  }
+  // Check for control characters or suspicious patterns
+  // eslint-disable-next-line no-control-regex -- Security check: detect control characters in route
+  if (/[\x00-\x1F\x7F]/.test(route)) {
+    throw new HttpError(400, "E.ROUTE.INVALID", "Route template contains invalid characters");
+  }
+  // Limit length to prevent abuse
+  if (route.length > 500) {
+    throw new HttpError(400, "E.ROUTE.INVALID", "Route template too long");
+  }
+
+  return route;
 }
 
 /**

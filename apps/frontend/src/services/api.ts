@@ -144,9 +144,7 @@ apiClient.interceptors.response.use(
           processQueue(refreshError);
           window.location.href = "/terms-reacceptance";
           const error =
-            refreshError instanceof Error
-              ? refreshError
-              : new Error(refreshError ? JSON.stringify(refreshError) : "Unknown error");
+            refreshError instanceof Error ? refreshError : new Error(JSON.stringify(refreshError));
           return Promise.reject(error);
         }
       }
@@ -675,6 +673,9 @@ export async function getFeed(
         viewerHasBookmarked: boolean;
       };
     }>;
+    total?: number;
+    limit?: number;
+    offset?: number;
   }>("/api/v1/feed", { params });
 
   // Transform backend response to frontend format
@@ -709,8 +710,7 @@ export async function getFeed(
       isLiked: item.stats.viewerHasLiked,
       isBookmarked: item.stats.viewerHasBookmarked,
     })),
-    limit: params.limit,
-    offset: params.offset,
+    ...(res.data.total !== undefined ? { total: res.data.total } : {}),
   };
 }
 

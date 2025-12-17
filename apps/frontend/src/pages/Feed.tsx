@@ -181,9 +181,25 @@ const Feed: React.FC = () => {
                 <VisibilityBadge level={item.visibility as VisibilityLevel} />
               </header>
               <div>
-                {item.session?.title && (
+                {item.session?.title ? (
                   <strong className="block mb-05">{item.session.title}</strong>
-                )}
+                ) : item.session?.notes ? (
+                  <strong className="block mb-05">{item.session.notes}</strong>
+                ) : null}
+                {item.session &&
+                  (typeof item.session.totalVolume === "number" &&
+                  !isNaN(item.session.totalVolume) ? (
+                    <span className="text-09 text-secondary block mt-05">
+                      {t("feed.totalVolume", {
+                        volume: (item.session.totalVolume / 1000).toFixed(1),
+                        defaultValue: `${(item.session.totalVolume / 1000).toFixed(1)}k kg`,
+                      })}
+                    </span>
+                  ) : (
+                    <span className="text-09 text-muted block mt-05" data-testid="no-volume-data">
+                      {t("feed.noVolumeData", { defaultValue: "No volume data" })}
+                    </span>
+                  ))}
               </div>
               <footer className="flex flex--justify-between flex--align-center flex--wrap flex--gap-075 text-09 text-secondary">
                 <span>
