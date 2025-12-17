@@ -13,8 +13,12 @@ function getLimiter(key: string, points = 60, duration = 60) {
 
 /**
  * Clear all rate limiters (for test cleanup)
+ * This removes all limiter instances, forcing new ones to be created with fresh state
  */
 export function clearRateLimiters(): void {
+  // RateLimiterMemory doesn't expose a method to delete all keys,
+  // but clearing the map and creating new instances ensures fresh state
+  // The internal state is stored per instance, so new instances = fresh state
   limiters.clear();
 }
 

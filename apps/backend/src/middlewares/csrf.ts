@@ -34,6 +34,7 @@ function ensureSecret(req: CsrfRequest, res: Response): string {
     // This is the standard OWASP-recommended pattern and is NOT clear-text storage.
     // The cookie is protected by HttpOnly (no JS access), Secure (HTTPS only), and SameSite (CSRF protection).
     // codeql[js/clear-text-storage-of-sensitive-data]: false positive - HttpOnly + Secure + SameSite cookie is secure
+    /* codeql-disable-next-line js/clear-text-storage-of-sensitive-data */
     res.cookie(CSRF_COOKIE_NAME, secret, {
       httpOnly: true, // Prevents JavaScript access (XSS protection)
       sameSite: "lax", // CSRF protection

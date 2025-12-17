@@ -531,13 +531,35 @@ export async function verifyContactHandler(req: Request, res: Response): Promise
     return;
   }
 
-  // Idempotency support - safe because ownership is validated above
+  // SECURITY: Token is already validated by Zod schema (verifyContactBodySchema)
+  // which ensures it's a string between 10-256 characters. Additional format validation
+  // ensures it contains only expected characters (base64url-safe alphabet).
+  // This prevents user-controlled input from bypassing security checks.
+  const verificationToken = parsedBody.data.token;
+  // Additional validation: ensure token contains only expected characters
+  // Verification tokens are typically base64url encoded (A-Za-z0-9_-)
+  // This format check prevents injection attacks and ensures token integrity
+  if (!/^[A-Za-z0-9_-]+$/.test(verificationToken)) {
+    res.status(400).json({
+      error: {
+        code: "INVALID_TOKEN",
+        message: "Token format invalid",
+      },
+    });
+    return;
+  }
+
+  // Idempotency support - safe because:
+  // 1. Authorization is validated (userId matches contact owner)
+  // 2. Token format is validated (length and character set)
+  // 3. Contact ownership is validated before idempotency check
   const idempotencyKey = getIdempotencyKey(req);
   if (idempotencyKey) {
     const route = getRouteTemplate(req);
+    // Token is validated and ownership confirmed - safe to include in idempotency payload
     const resolution = await resolveIdempotency(
       { userId, method: req.method, route, key: idempotencyKey },
-      { contactId: parsedParams.data.contactId, token: parsedBody.data.token },
+      { contactId: parsedParams.data.contactId, token: verificationToken },
     );
 
     if (resolution.type === "replay") {
@@ -548,7 +570,7 @@ export async function verifyContactHandler(req: Request, res: Response): Promise
       return;
     }
 
-    const contact = await verifyContact(userId, parsedParams.data.contactId, parsedBody.data.token);
+    const contact = await verifyContact(userId, parsedParams.data.contactId, verificationToken);
 
     if (resolution.recordId) {
       await persistIdempotencyResult(resolution.recordId, 200, contact);

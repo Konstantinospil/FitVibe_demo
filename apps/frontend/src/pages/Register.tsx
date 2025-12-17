@@ -115,7 +115,7 @@ const Register: React.FC = () => {
         email: email.trim(),
         password,
         username: finalUsername,
-        terms_accepted: termsAccepted && privacyAccepted,
+        terms_accepted: true, // Both termsAccepted and privacyAccepted are already validated above
         profile: {
           display_name: name.trim(),
         },

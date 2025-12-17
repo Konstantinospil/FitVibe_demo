@@ -185,13 +185,24 @@ export async function verifyEmail(req: Request, res: Response, next: NextFunctio
     const queryToken = typeof req.query.token === "string" ? req.query.token : undefined;
     // Only use query token if body token is not provided (backward compatibility)
     const token = typeof bodyToken === "string" ? bodyToken : queryToken;
+
+    // SECURITY: Validate token before any use - reject invalid tokens immediately
+    // This prevents user-controlled input from bypassing security checks
     if (!token || typeof token !== "string" || token.length === 0) {
       throw new HttpError(400, "AUTH_INVALID_TOKEN", "AUTH_INVALID_TOKEN");
     }
-    // Validate token format (basic sanity check)
+    // Validate token format (basic sanity check) - reject tokens that are too long
+    // This prevents potential DoS or injection attacks
     if (token.length > 500) {
       throw new HttpError(400, "AUTH_INVALID_TOKEN", "Token format invalid");
     }
+    // Additional validation: ensure token contains only expected characters
+    // Verification tokens are typically base64url encoded UUIDs or similar
+    if (!/^[A-Za-z0-9_-]+$/.test(token)) {
+      throw new HttpError(400, "AUTH_INVALID_TOKEN", "Token format invalid");
+    }
+
+    // Token is now validated - safe to use
     const user = await doVerifyEmail(token);
     res.json({ user });
     return;
@@ -306,13 +317,24 @@ export async function verify2FALogin(
 export async function refresh(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     const token = req.cookies?.[env.REFRESH_COOKIE_NAME] as string | undefined;
+
+    // SECURITY: Validate token before any use - reject invalid tokens immediately
+    // This prevents user-controlled input from bypassing security checks
     if (!token || typeof token !== "string" || token.length === 0) {
       throw new HttpError(401, "UNAUTHENTICATED", "UNAUTHENTICATED");
     }
     // Validate token format (basic sanity check to prevent injection)
+    // JWT tokens have a maximum practical length, reject excessively long tokens
     if (token.length > 1000) {
       throw new HttpError(401, "UNAUTHENTICATED", "Invalid token format");
     }
+    // Additional validation: ensure token contains only expected characters
+    // JWT tokens are base64url encoded (A-Za-z0-9_-) with dots as separators
+    if (!/^[A-Za-z0-9_.-]+$/.test(token)) {
+      throw new HttpError(401, "UNAUTHENTICATED", "Invalid token format");
+    }
+
+    // Token is now validated - safe to use
     const context = buildAuthContext(req, res);
     const { user, newRefresh, accessToken } = await doRefresh(token, context);
     setRefreshCookie(res, newRefresh);

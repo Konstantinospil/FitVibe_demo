@@ -63,13 +63,18 @@ export function getCachedHtml(url: string): string | null {
         const stats = statSync(cachePath);
         const age = Date.now() - stats.mtimeMs;
         if (age < CACHE_TTL) {
-          // Re-check file exists after statSync to handle race condition
-          // where file might be deleted between statSync and readFileSync
-          if (existsSync(cachePath)) {
+          // SECURITY: Handle file system race condition
+          // File might be deleted between statSync and readFileSync
+          // Use try-catch around readFileSync to handle this race condition atomically
+          try {
             const html = readFileSync(cachePath, "utf-8");
             // Store in memory cache for faster access
             memoryCache.set(url, { html, timestamp: Date.now() });
             return html;
+          } catch {
+            // File was deleted or modified between statSync and readFileSync
+            // This is expected in concurrent environments - ignore and return null
+            // The cache will be regenerated on next request
           }
         }
       } catch {
