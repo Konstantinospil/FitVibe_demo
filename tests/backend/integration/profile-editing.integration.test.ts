@@ -21,12 +21,14 @@ import { createUser } from "../../../apps/backend/src/modules/auth/auth.reposito
 import {
   truncateAll,
   ensureRolesSeeded,
+  ensureFitnessLevelsSeeded,
   withDatabaseErrorHandling,
   isDatabaseAvailable,
   ensureUsernameColumnExists,
 } from "../../setup/test-helpers.js";
 import { v4 as uuidv4 } from "uuid";
 import { getCurrentTermsVersion } from "../../../apps/backend/src/config/terms.js";
+import { clearRateLimiters } from "../../../apps/backend/src/middlewares/rate-limit.js";
 
 describe("Integration: Profile Editing", () => {
   let dbAvailable = false;
@@ -46,12 +48,15 @@ describe("Integration: Profile Editing", () => {
     if (!dbAvailable) {
       return;
     }
+    // Clear rate limiters to prevent rate limiting issues between tests
+    clearRateLimiters();
     await withDatabaseErrorHandling(async () => {
       const { env } = await import("../../../apps/backend/src/config/env.js");
       (env as { readOnlyMode: boolean }).readOnlyMode = false;
 
       await truncateAll();
       await ensureRolesSeeded();
+      await ensureFitnessLevelsSeeded();
 
       // Create and login a test user
       const testEmail = `test-${uuidv4()}@example.com`;
@@ -295,7 +300,7 @@ describe("Integration: Profile Editing", () => {
     });
 
     // Check audit log
-    const auditLogs = await db("audit_logs")
+    const auditLogs = await db("audit_log")
       .where({ actor_user_id: userId, action: "profile_update" })
       .orderBy("created_at", "desc")
       .limit(1);

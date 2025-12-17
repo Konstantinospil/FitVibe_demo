@@ -112,8 +112,8 @@ describe("Integration: Audit Logging Verification", () => {
     });
 
     // Verify audit log entry was created
-    const auditLogs = await db("audit_logs")
-      .where({ actor_user_id: userId, entity: "users", action: "update" })
+    const auditLogs = await db("audit_log")
+      .where({ actor_user_id: userId, entity_type: "users", action: "profile_update" })
       .orderBy("created_at", "desc")
       .limit(1);
 
@@ -139,8 +139,8 @@ describe("Integration: Audit Logging Verification", () => {
     });
 
     // Verify audit log entry was created
-    const auditLogs = await db("audit_logs")
-      .where({ actor_user_id: userId, entity: "users", action: "update" })
+    const auditLogs = await db("audit_log")
+      .where({ actor_user_id: userId, entity_type: "users", action: "profile_update" })
       .orderBy("created_at", "desc")
       .limit(1);
 
@@ -175,7 +175,8 @@ describe("Integration: Audit Logging Verification", () => {
     expect(stateHistory.length).toBeGreaterThan(0);
     const historyEntry = stateHistory[0];
     expect(historyEntry.new_value).toBeDefined();
-    expect(JSON.parse(historyEntry.new_value as string)).toBe("newalias");
+    // JSONB values are already parsed when retrieved from PostgreSQL
+    expect(historyEntry.new_value).toBe("newalias");
   });
 
   it("should log all changed fields in audit log", async () => {
@@ -193,8 +194,8 @@ describe("Integration: Audit Logging Verification", () => {
     });
 
     // Verify audit log contains all changes
-    const auditLogs = await db("audit_logs")
-      .where({ actor_user_id: userId, entity: "users", action: "update" })
+    const auditLogs = await db("audit_log")
+      .where({ actor_user_id: userId, entity_type: "users", action: "profile_update" })
       .orderBy("created_at", "desc")
       .limit(1);
 
@@ -204,12 +205,12 @@ describe("Integration: Audit Logging Verification", () => {
       changes?: {
         alias?: { old?: string; next?: string };
         weight?: { old?: number; next?: number };
-        fitnessLevel?: { old?: string; next?: string };
+        fitness_level?: { old?: string; next?: string };
       };
     };
 
     expect(metadata.changes?.alias).toBeDefined();
     expect(metadata.changes?.weight).toBeDefined();
-    expect(metadata.changes?.fitnessLevel).toBeDefined();
+    expect(metadata.changes?.fitness_level).toBeDefined();
   });
 });

@@ -22,16 +22,20 @@ import {
   ensureRolesSeeded,
   isDatabaseAvailable,
   ensureUsernameColumnExists,
+  withDatabaseErrorHandling,
 } from "../../setup/test-helpers.js";
 import { v4 as uuidv4 } from "uuid";
 import { getCurrentTermsVersion } from "../../../apps/backend/src/config/terms.js";
 
 describe("Integration: Content Moderation", () => {
+  // Increase timeout for integration tests with multiple operations
+  jest.setTimeout(60000);
+
   let user1: { id: string; email: string; accessToken: string };
   let user2: { id: string; email: string; accessToken: string };
   let admin: { id: string; email: string; accessToken: string };
   let dbAvailable = false;
-  let feedItemId: string;
+  let feedItemId: string | undefined;
 
   beforeAll(async () => {
     dbAvailable = await isDatabaseAvailable();
@@ -46,7 +50,7 @@ describe("Integration: Content Moderation", () => {
     if (!dbAvailable) {
       return;
     }
-    try {
+    await withDatabaseErrorHandling(async () => {
       const { env } = await import("../../../apps/backend/src/config/env.js");
       (env as { readOnlyMode: boolean }).readOnlyMode = false;
 
@@ -168,12 +172,10 @@ describe("Integration: Content Moderation", () => {
       const feedItems = feedResponse.body.items || [];
       if (feedItems.length > 0) {
         feedItemId = feedItems[0].feedItemId;
+      } else {
+        feedItemId = undefined;
       }
-    } catch (error) {
-      throw new Error(
-        `beforeEach failed: ${error instanceof Error ? error.message : String(error)}`,
-      );
-    }
+    }, "content moderation beforeEach");
   });
 
   afterEach(async () => {

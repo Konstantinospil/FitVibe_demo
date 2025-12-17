@@ -69,6 +69,33 @@ export async function ensureRolesSeeded(): Promise<void> {
 }
 
 /**
+ * Ensure fitness_levels are seeded in the database.
+ * This is needed for integration tests that update user fitness levels.
+ * Uses onConflict to safely handle cases where fitness_levels already exist.
+ */
+export async function ensureFitnessLevelsSeeded(): Promise<void> {
+  const db = await getDb();
+  const FITNESS_LEVELS = [
+    { code: "beginner", description: "Getting started with consistent training" },
+    { code: "intermediate", description: "Trains 3-4 times per week" },
+    { code: "advanced", description: "Highly trained athlete" },
+    { code: "elite", description: "Elite level athlete" },
+  ];
+
+  try {
+    await db("fitness_levels").insert(FITNESS_LEVELS).onConflict("code").ignore();
+  } catch (error) {
+    // Silently skip if fitness_levels table doesn't exist (migrations haven't run)
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    if (errorMessage.includes("does not exist") || errorMessage.includes("relation")) {
+      return;
+    }
+    // Re-throw other errors
+    throw error;
+  }
+}
+
+/**
  * Wraps an async function with better error handling for database connection issues.
  * Provides clearer error messages when database connection fails.
  */
@@ -336,6 +363,7 @@ export async function truncateAll(): Promise<void> {
   }
   await db.raw("SET session_replication_role = 'origin'");
 
-  // Ensure roles are seeded after truncation (roles table is not truncated)
+  // Ensure roles and fitness_levels are seeded after truncation (these tables are not truncated)
   await ensureRolesSeeded();
+  await ensureFitnessLevelsSeeded();
 }

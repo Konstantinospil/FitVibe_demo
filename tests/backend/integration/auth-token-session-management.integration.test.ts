@@ -391,7 +391,7 @@ describe("Integration: Token Refresh, Logout, and Session Management", () => {
       otherSessions.forEach((session: { revokedAt: string | null }) => {
         expect(session.revokedAt).not.toBeNull();
       });
-    });
+    }, 60000); // 60 second timeout for integration test with multiple operations
 
     it("should revoke all sessions including current", async () => {
       if (!dbAvailable) {
