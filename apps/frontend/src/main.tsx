@@ -4,7 +4,8 @@ import App from "./App";
 import "./styles/global.css";
 // Suppress console errors in production for Lighthouse compliance
 import "./utils/suppressConsole";
-// i18n is imported but initialized asynchronously, so it doesn't block rendering
+// i18n is imported - initialization is async via void promises, so it doesn't block rendering
+// Components using translations will wait for i18n to be ready via useTranslation hook
 import "./i18n/config";
 // Theme store is small and needed immediately to prevent FOUC
 import { useThemeStore } from "./store/theme.store";

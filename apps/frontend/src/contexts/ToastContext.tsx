@@ -1,4 +1,5 @@
 import React, { createContext, useState, useContext, useCallback } from "react";
+// Tree-shakeable imports from lucide-react - only import used icons
 import { CheckCircle, XCircle, AlertCircle, Info, X } from "lucide-react";
 
 type ToastType = "success" | "error" | "warning" | "info";

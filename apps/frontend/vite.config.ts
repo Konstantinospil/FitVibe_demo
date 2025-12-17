@@ -178,6 +178,8 @@ export default defineConfig(() => {
       modulePreload: {
         polyfill: false, // Disable module preload polyfill to reduce size
       },
+      // Improve performance with better chunk size limits
+      chunkSizeWarningLimit: 250, // Reduce warning threshold to catch large chunks earlier
       // Improve loading performance with better chunking strategy
       rollupOptions: {
         output: {
@@ -276,8 +278,10 @@ export default defineConfig(() => {
           assetFileNames: isSSR
             ? "assets/[ext]/[name]-[hash].[ext]"
             : "assets/[ext]/[name]-[hash].[ext]",
-          // Compact output to reduce whitespace
+          // Compact output to reduce whitespace and file size
           compact: true,
+          // Optimize chunk size limits - split larger chunks automatically
+          maxParallelFileOps: 5,
         },
       },
       // Chunk size warnings threshold - reduce to catch large chunks
@@ -295,12 +299,17 @@ export default defineConfig(() => {
         propertyReadSideEffects: false,
         tryCatchDeoptimization: false,
       },
-      // Enable compression
+      // Enable compression reporting for monitoring
       reportCompressedSize: true,
-      // Optimize asset inlining threshold - inline more small assets
+      // Optimize asset inlining threshold - inline more small assets to reduce requests
       assetsInlineLimit: 16384, // Inline assets smaller than 16KB to reduce HTTP requests
       // Enable CSS code splitting to load only necessary CSS per route, improving LCP
       cssCodeSplit: true,
+      // Optimize for faster initial load by reducing initial bundle size
+      commonjsOptions: {
+        include: [/node_modules/],
+        transformMixedEsModules: true,
+      },
       // Reduce initial bundle size by using dynamic imports for non-critical code
       // This helps with code splitting and lazy loading
       experimental: {

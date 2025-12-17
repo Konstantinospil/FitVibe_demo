@@ -234,7 +234,14 @@ export async function renderPage(url: string): Promise<string> {
   // Add resource hints for performance optimization
   // Preload critical resources to improve LCP and FCP
   const resourceHints = isProduction
-    ? `<link rel="preload" href="${mainScriptPath}" as="script" crossorigin="anonymous" />`
+    ? `
+    <!-- Preload critical JavaScript for faster hydration -->
+    <link rel="preload" href="${mainScriptPath}" as="script" crossorigin="anonymous" />
+    <!-- Preconnect to same origin for faster resource loading -->
+    <link rel="preconnect" href="/" />
+    <!-- DNS prefetch for faster external resource resolution if needed -->
+    <link rel="dns-prefetch" href="/" />
+  `
     : "";
 
   // Add Open Graph and Twitter Card meta tags for better SEO
