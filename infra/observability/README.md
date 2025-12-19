@@ -226,7 +226,7 @@ rate(http_requests_total{status=~"5.."}[5m])
 histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m]))
 ```
 
-### Loki Qu Queries
+### Loki Queries
 
 ```logql
 # Error logs

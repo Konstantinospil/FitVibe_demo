@@ -25,13 +25,13 @@ export interface LeaderboardProps {
  */
 export const Leaderboard: React.FC<LeaderboardProps> = ({
   defaultType = "global",
-  defaultPeriod = "monthly",
+  defaultPeriod = "month",
   showPeriodSelector = true,
   limit = 100,
 }) => {
   const { t } = useTranslation("common");
   const [type, setType] = useState<LeaderboardType>(defaultType);
-  const [period, setPeriod] = useState<LeaderboardPeriod>(defaultPeriod || "monthly");
+  const [period, setPeriod] = useState<LeaderboardPeriod>(defaultPeriod);
   const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
   const [userRank, setUserRank] = useState<number | undefined>();
   const [isLoading, setIsLoading] = useState(true);
@@ -99,7 +99,7 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({
 
           {showPeriodSelector && (
             <div style={{ display: "flex", gap: "var(--space-sm)" }}>
-              {(["weekly", "monthly", "all_time"] as unknown as LeaderboardPeriod[]).map((p) => (
+              {(["week", "month", "year", "all"] as LeaderboardPeriod[]).map((p) => (
                 <button
                   key={p}
                   onClick={() => setPeriod(p)}
@@ -115,7 +115,7 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({
                     transition: "all 0.2s ease",
                   }}
                 >
-                  {t(`gamification.leaderboard.period.${p}`) || p}
+                  {t(`gamification.leaderboard.period.${p}`)}
                 </button>
               ))}
             </div>
@@ -164,7 +164,7 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({
                   </div>
                   <Avatar
                     name={entry.displayName || entry.username}
-                    src={entry.avatarUrl || undefined}
+                    src={entry.avatarUrl}
                     size={40}
                   />
                   <div style={{ flex: 1 }}>

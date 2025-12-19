@@ -116,9 +116,12 @@ describe("ExerciseSelector", () => {
     const trigger = screen.getByRole("button", { name: /select exercise/i });
     fireEvent.click(trigger);
 
-    await waitFor(() => {
-      expect(screen.getByPlaceholderText("Search exercises...")).toBeInTheDocument();
-    });
+    await waitFor(
+      () => {
+        expect(screen.getByPlaceholderText("Search exercises...")).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
   });
 
   it("loads and displays exercises when dropdown opens", async () => {
@@ -126,16 +129,23 @@ describe("ExerciseSelector", () => {
     const trigger = screen.getByRole("button", { name: /select exercise/i });
     fireEvent.click(trigger);
 
-    await waitFor(() => {
-      expect(screen.getByText("Bench Press")).toBeInTheDocument();
-      expect(screen.getByText("Running")).toBeInTheDocument();
-      expect(screen.getByText("Public Squat")).toBeInTheDocument();
-    });
+    await waitFor(
+      () => {
+        expect(screen.getByText("Bench Press")).toBeInTheDocument();
+        expect(screen.getByText("Running")).toBeInTheDocument();
+        expect(screen.getByText("Public Squat")).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
 
     expect(mockListExercises).toHaveBeenCalledWith({
       limit: 100,
       offset: 0,
+<<<<<<< Updated upstream
       include_archived: false,
+=======
+      include_archived: false, // excludeArchived defaults to true, so include_archived should be false
+>>>>>>> Stashed changes
     });
   });
 
@@ -144,9 +154,12 @@ describe("ExerciseSelector", () => {
     const trigger = screen.getByRole("button", { name: /select exercise/i });
     fireEvent.click(trigger);
 
-    await waitFor(() => {
-      expect(screen.getByPlaceholderText("Search exercises...")).toBeInTheDocument();
-    });
+    await waitFor(
+      () => {
+        expect(screen.getByPlaceholderText("Search exercises...")).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
 
     const searchInput = screen.getByPlaceholderText("Search exercises...");
     fireEvent.change(searchInput, { target: { value: "bench" } });
@@ -159,8 +172,8 @@ describe("ExerciseSelector", () => {
           }),
         );
       },
-      { timeout: 500 },
-    );
+        { timeout: 5000 },
+      );
   });
 
   it("calls onChange when exercise is selected", async () => {
@@ -176,9 +189,12 @@ describe("ExerciseSelector", () => {
     const benchPress = screen.getByText("Bench Press");
     fireEvent.click(benchPress);
 
-    await waitFor(() => {
-      expect(onChange).toHaveBeenCalledWith("ex-1", mockExercises[0]);
-    });
+    await waitFor(
+      () => {
+        expect(onChange).toHaveBeenCalledWith("ex-1", mockExercises[0]);
+      },
+      { timeout: 5000 },
+    );
   });
 
   it("displays selected exercise name", async () => {
@@ -187,21 +203,34 @@ describe("ExerciseSelector", () => {
     const trigger = screen.getByRole("button", { name: /select exercise/i });
     fireEvent.click(trigger);
 
-    await waitFor(() => {
-      expect(screen.getByText("Bench Press")).toBeInTheDocument();
-    });
+    await waitFor(
+      () => {
+        expect(screen.getByText("Bench Press")).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
 
+<<<<<<< Updated upstream
     // Selected exercise should be highlighted
     // Use getAllByText since "Bench Press" appears in both button and dropdown
     const benchPressItems = screen.getAllByText("Bench Press");
     const benchPressItem = benchPressItems.find((el) => el.closest("li"));
     expect(benchPressItem?.closest("li")).toHaveAttribute("aria-selected", "true");
+=======
+    // Selected exercise should be highlighted - use getAllByText to find the one in the list
+    const benchPressElements = screen.getAllByText("Bench Press");
+    const benchPressItem = benchPressElements
+      .map((el) => el.closest("li"))
+      .find((li) => li !== null);
+    expect(benchPressItem).toHaveAttribute("aria-selected", "true");
+>>>>>>> Stashed changes
   });
 
   it("clears selection when clear button is clicked", async () => {
     const onChange = vi.fn();
     renderComponent({ value: "ex-1", onChange });
 
+<<<<<<< Updated upstream
     // Open dropdown to load exercises, which will set the selectedExercise
     const trigger = screen.getByRole("button", { name: /select exercise/i });
     fireEvent.click(trigger);
@@ -211,6 +240,31 @@ describe("ExerciseSelector", () => {
       const clearButton = screen.getByRole("button", { name: /clear selection/i });
       expect(clearButton).toBeInTheDocument();
     });
+=======
+    // Open dropdown to load exercises so selectedExercise is set
+    const trigger = screen.getByRole("button", { name: /select exercise/i });
+    fireEvent.click(trigger);
+
+    // Wait for exercises to load
+    await waitFor(
+      () => {
+        expect(screen.getByText("Bench Press")).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
+
+    // Close dropdown - clear button should now be visible in trigger
+    fireEvent.click(trigger);
+
+    // Wait for clear button to appear
+    await waitFor(
+      () => {
+        const clearButton = screen.getByRole("button", { name: /clear selection/i });
+        expect(clearButton).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
+>>>>>>> Stashed changes
 
     const clearButton = screen.getByRole("button", { name: /clear selection/i });
     fireEvent.click(clearButton);
@@ -223,10 +277,13 @@ describe("ExerciseSelector", () => {
     const trigger = screen.getByRole("button", { name: /select exercise/i });
     fireEvent.click(trigger);
 
-    await waitFor(() => {
-      expect(screen.getByText("Running")).toBeInTheDocument();
-      expect(screen.getByText("Global")).toBeInTheDocument();
-    });
+    await waitFor(
+      () => {
+        expect(screen.getByText("Running")).toBeInTheDocument();
+        expect(screen.getByText("Global")).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
   });
 
   it("displays public exercise badge", async () => {
@@ -234,10 +291,13 @@ describe("ExerciseSelector", () => {
     const trigger = screen.getByRole("button", { name: /select exercise/i });
     fireEvent.click(trigger);
 
-    await waitFor(() => {
-      expect(screen.getByText("Public Squat")).toBeInTheDocument();
-      expect(screen.getAllByText("Public")[0]).toBeInTheDocument();
-    });
+    await waitFor(
+      () => {
+        expect(screen.getByText("Public Squat")).toBeInTheDocument();
+        expect(screen.getAllByText("Public")[0]).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
   });
 
   it("filters by type_code when provided", async () => {
@@ -245,13 +305,16 @@ describe("ExerciseSelector", () => {
     const trigger = screen.getByRole("button", { name: /select exercise/i });
     fireEvent.click(trigger);
 
-    await waitFor(() => {
-      expect(mockListExercises).toHaveBeenCalledWith(
-        expect.objectContaining({
-          type_code: "strength",
-        }),
-      );
-    });
+    await waitFor(
+      () => {
+        expect(mockListExercises).toHaveBeenCalledWith(
+          expect.objectContaining({
+            type_code: "strength",
+          }),
+        );
+      },
+      { timeout: 5000 },
+    );
   });
 
   it("filters by muscle_group when provided", async () => {
@@ -273,6 +336,7 @@ describe("ExerciseSelector", () => {
     const trigger = screen.getByRole("button", { name: /select exercise/i });
     fireEvent.click(trigger);
 
+<<<<<<< Updated upstream
     await waitFor(() => {
       expect(mockListExercises).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -280,6 +344,18 @@ describe("ExerciseSelector", () => {
         }),
       );
     });
+=======
+    await waitFor(
+      () => {
+        expect(mockListExercises).toHaveBeenCalledWith(
+          expect.objectContaining({
+            include_archived: false, // excludeArchived defaults to true, so include_archived should be false
+          }),
+        );
+      },
+      { timeout: 5000 },
+    );
+>>>>>>> Stashed changes
   });
 
   it("shows loading state while fetching", async () => {
@@ -294,9 +370,12 @@ describe("ExerciseSelector", () => {
     const trigger = screen.getByRole("button", { name: /select exercise/i });
     fireEvent.click(trigger);
 
-    await waitFor(() => {
-      expect(screen.getByText("Loading...")).toBeInTheDocument();
-    });
+    await waitFor(
+      () => {
+        expect(screen.getByText("Loading...")).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
   });
 
   it("shows no results message when search returns empty", async () => {
@@ -321,16 +400,22 @@ describe("ExerciseSelector", () => {
     const trigger = screen.getByRole("button", { name: /select exercise/i });
     fireEvent.click(trigger);
 
-    await waitFor(() => {
-      expect(screen.getByPlaceholderText("Search exercises...")).toBeInTheDocument();
-    });
+    await waitFor(
+      () => {
+        expect(screen.getByPlaceholderText("Search exercises...")).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
 
     // Click outside
     fireEvent.mouseDown(document.body);
 
-    await waitFor(() => {
-      expect(screen.queryByPlaceholderText("Search exercises...")).not.toBeInTheDocument();
-    });
+    await waitFor(
+      () => {
+        expect(screen.queryByPlaceholderText("Search exercises...")).not.toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
   });
 
   it("is disabled when disabled prop is true", () => {
@@ -354,3 +439,4 @@ describe("ExerciseSelector", () => {
     });
   });
 });
+

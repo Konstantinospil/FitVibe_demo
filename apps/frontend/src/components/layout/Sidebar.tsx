@@ -26,6 +26,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ items, isOpen, onClose, logo }
   const { t } = useTranslation();
   const location = useLocation();
 
+<<<<<<< Updated upstream
   return (
     <>
       {/* Backdrop */}
@@ -42,6 +43,26 @@ export const Sidebar: React.FC<SidebarProps> = ({ items, isOpen, onClose, logo }
           aria-hidden="true"
         />
       )}
+=======
+  if (!isOpen) {
+    return null;
+  }
+
+  return (
+    <>
+      {/* Backdrop */}
+      <div
+        onClick={onClose}
+        style={{
+          position: "fixed",
+          inset: 0,
+          background: "rgba(11, 12, 16, 0.75)",
+          backdropFilter: "blur(4px)",
+          zIndex: 999,
+        }}
+        aria-hidden="true"
+      />
+>>>>>>> Stashed changes
 
       {/* Sidebar */}
       <aside
@@ -59,12 +80,18 @@ export const Sidebar: React.FC<SidebarProps> = ({ items, isOpen, onClose, logo }
           zIndex: 1000,
           transform: isOpen ? "translateX(0)" : "translateX(-100%)",
           transition: "transform 150ms ease",
+<<<<<<< Updated upstream
           visibility: isOpen ? "visible" : "hidden",
           pointerEvents: isOpen ? "auto" : "none",
         }}
         role="navigation"
         aria-label={t("navigation.sidebar") || "Main navigation"}
         aria-hidden={!isOpen}
+=======
+        }}
+        role="navigation"
+        aria-label={t("navigation.sidebar") || "Main navigation"}
+>>>>>>> Stashed changes
       >
         {/* Header */}
         <div

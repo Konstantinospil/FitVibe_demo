@@ -331,3 +331,4 @@ describe("Integration: Profile Editing", () => {
     expect(responseTime).toBeLessThan(500);
   });
 });
+

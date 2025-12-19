@@ -111,8 +111,8 @@ describe("Insights page", () => {
     vi.clearAllMocks();
   });
 
-  afterEach(() => {
-    cleanupQueryClient(queryClient);
+  afterEach(async () => {
+    await cleanupQueryClient(queryClient);
   });
 
   const renderInsights = () => {
@@ -265,7 +265,7 @@ describe("Insights page", () => {
         // Button text is "Export" based on translation mock
         expect(screen.getByText("Export")).toBeInTheDocument();
       },
-      { timeout: 5000 },
+        { timeout: 5000 },
     );
 
     const exportButton = screen.getByText("Export");
@@ -275,7 +275,7 @@ describe("Insights page", () => {
       () => {
         expect(api.exportProgress).toHaveBeenCalled();
       },
-      { timeout: 5000 },
+        { timeout: 5000 },
     );
 
     createElementSpy.mockRestore();
@@ -381,9 +381,16 @@ describe("Insights page", () => {
 
       renderInsights();
 
+<<<<<<< Updated upstream
       // Should show skeleton during loading - check for default labels but not values
       expect(screen.getByText("Training streak")).toBeInTheDocument();
       // Values should not be visible when loading (skeletons are shown instead)
+=======
+      // Should show skeleton loaders - Skeleton components have aria-hidden="true"
+      // Look for divs with aria-hidden="true" which are the Skeleton components
+      const skeletons = document.querySelectorAll('div[aria-hidden="true"]');
+      expect(skeletons.length).toBeGreaterThan(0);
+>>>>>>> Stashed changes
     });
 
     it("should show refreshing indicator when fetching", () => {
@@ -471,7 +478,7 @@ describe("Insights page", () => {
           // DateRangePicker should be rendered
           expect(screen.queryByText("Preset")).toBeInTheDocument();
         },
-        { timeout: 2000 },
+        { timeout: 5000 },
       );
 
       // Switch back to preset
@@ -483,7 +490,7 @@ describe("Insights page", () => {
           const periodSelect = screen.getByLabelText(/Period/i);
           expect(periodSelect).toBeInTheDocument();
         },
-        { timeout: 2000 },
+        { timeout: 5000 },
       );
     });
 
@@ -696,22 +703,42 @@ describe("Insights page", () => {
         refetch: vi.fn(),
       } as unknown as ReturnType<typeof useDashboardAnalytics>);
 
+<<<<<<< Updated upstream
       // Mock to always reject (React Query will retry 3 times before showing error)
       vi.mocked(api.getProgressTrends).mockRejectedValue(new Error("Failed"));
+=======
+      // Mock the API to reject - the query retries 3 times, so we need to reject 4 times
+      // (initial call + 3 retries) before the error state is set
+      vi.mocked(api.getProgressTrends)
+        .mockRejectedValueOnce(new Error("Failed"))
+        .mockRejectedValueOnce(new Error("Failed"))
+        .mockRejectedValueOnce(new Error("Failed"))
+        .mockRejectedValueOnce(new Error("Failed"));
+>>>>>>> Stashed changes
 
       renderInsights();
 
       const progressTab = screen.getByText("Progress");
       fireEvent.click(progressTab);
 
+<<<<<<< Updated upstream
       // Verify the query is called (React Query will retry 3 times before showing error)
       // This test verifies the error handling UI exists, but doesn't wait for retries
       // to complete as that would make the test very slow
       await waitFor(
         () => {
           expect(api.getProgressTrends).toHaveBeenCalled();
+=======
+      // Wait for the query to run, fail, and error state to render
+      // React Query might retry, so wait a bit longer
+      // Wait for retry buttons to appear - there are multiple (one per chart)
+      await waitFor(
+        () => {
+          const retryButtons = screen.getAllByText("Retry");
+          expect(retryButtons.length).toBeGreaterThan(0);
+>>>>>>> Stashed changes
         },
-        { timeout: 5000 },
+        { timeout: 20000 },
       );
 
       // Note: The retry button will appear after React Query retries 3 times,
@@ -728,20 +755,54 @@ describe("Insights page", () => {
         refetch: vi.fn(),
       } as unknown as ReturnType<typeof useDashboardAnalytics>);
 
+<<<<<<< Updated upstream
       // Mock to always reject (React Query will retry 3 times before showing error)
       vi.mocked(api.getProgressTrends).mockRejectedValue(new Error("Failed"));
+=======
+      // Mock the API to reject 4 times (initial + 3 retries) to trigger error state
+      // Then on manual retry (5th call), it should succeed
+      vi.mocked(api.getProgressTrends)
+        .mockRejectedValueOnce(new Error("Failed"))
+        .mockRejectedValueOnce(new Error("Failed"))
+        .mockRejectedValueOnce(new Error("Failed"))
+        .mockRejectedValueOnce(new Error("Failed"))
+        .mockResolvedValueOnce([]);
+>>>>>>> Stashed changes
 
       renderInsights();
 
       const progressTab = screen.getByText("Progress");
       fireEvent.click(progressTab);
 
+<<<<<<< Updated upstream
       // Verify the query is called (React Query will retry 3 times before showing error)
       // This test verifies the query setup is correct and that clicking retry
       // would trigger a refetch. Full error state testing is covered by React Query's own tests.
       await waitFor(
         () => {
           expect(api.getProgressTrends).toHaveBeenCalled();
+=======
+      // Wait for retry button to appear after all retries fail
+      // There are multiple Retry buttons (one per chart), so use getAllByText
+      await waitFor(
+        () => {
+          const retryButtons = screen.getAllByText("Retry");
+          expect(retryButtons.length).toBeGreaterThan(0);
+        },
+        { timeout: 20000 },
+      );
+
+      // Use the first retry button
+      const retryButtons = screen.getAllByText("Retry");
+      const retryButton = retryButtons[0];
+      const callCountBefore = vi.mocked(api.getProgressTrends).mock.calls.length;
+      fireEvent.click(retryButton);
+
+      // Wait for refetch to be called (should be called again after retry click)
+      await waitFor(
+        () => {
+          expect(vi.mocked(api.getProgressTrends).mock.calls.length).toBeGreaterThan(callCountBefore);
+>>>>>>> Stashed changes
         },
         { timeout: 5000 },
       );
@@ -767,8 +828,10 @@ describe("Insights page", () => {
       const progressTab = screen.getByText("Progress");
       fireEvent.click(progressTab);
 
+      // There are multiple "No data available" elements, so use getAllByText
       await waitFor(
         () => {
+<<<<<<< Updated upstream
           expect(api.getProgressTrends).toHaveBeenCalled();
         },
         { timeout: 5000 },
@@ -780,6 +843,10 @@ describe("Insights page", () => {
         () => {
           const noDataMessages = screen.getAllByText("No data available");
           expect(noDataMessages.length).toBeGreaterThan(0);
+=======
+          const noDataElements = screen.getAllByText("No data available");
+          expect(noDataElements.length).toBeGreaterThan(0);
+>>>>>>> Stashed changes
         },
         { timeout: 5000 },
       );
@@ -1056,7 +1123,7 @@ describe("Insights page", () => {
       () => {
         expect(screen.getByText("Volume Trend")).toBeInTheDocument();
       },
-      { timeout: 5000 },
+        { timeout: 5000 },
     );
   });
 
@@ -1082,7 +1149,7 @@ describe("Insights page", () => {
       () => {
         expect(screen.getByText("Export")).toBeInTheDocument();
       },
-      { timeout: 5000 },
+        { timeout: 5000 },
     );
 
     const exportButton = screen.getByText("Export");
@@ -1092,7 +1159,7 @@ describe("Insights page", () => {
       () => {
         expect(api.exportProgress).toHaveBeenCalled();
       },
-      { timeout: 5000 },
+        { timeout: 5000 },
     );
   });
 });

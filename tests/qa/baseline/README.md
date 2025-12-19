@@ -2,7 +2,7 @@
 
 This directory stores the canonical snapshot of the QA Plan (v2.0) quality
 objectives. The baseline mirrors the targets defined in
-`apps/docs/4a.Testing_and_Quality_Assurance_Plan.md` and records the current
+`docs/4.Testing_and_Quality_Assurance_Plan/4a.Testing_and_Quality_Assurance_Plan.md` and records the current
 measurement status for each objective.
 
 - `qa_plan_v2.0.json` &mdash; structured baseline data (targets, gates, status).

@@ -1,4 +1,8 @@
 import React from "react";
+<<<<<<< Updated upstream
+=======
+import { useTranslation } from "react-i18next";
+>>>>>>> Stashed changes
 import { Calendar, Play, Eye, Trash2 } from "lucide-react";
 import { Card, CardContent } from "../ui/Card";
 import type { SessionStatus } from "./SessionStatusBadge";

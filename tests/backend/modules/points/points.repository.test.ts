@@ -663,3 +663,4 @@ describe("Points Repository", () => {
     });
   });
 });
+

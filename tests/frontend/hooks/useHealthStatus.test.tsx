@@ -25,8 +25,8 @@ describe("useHealthStatus", () => {
     vi.clearAllMocks();
   });
 
-  afterEach(() => {
-    cleanupQueryClient(queryClient);
+  afterEach(async () => {
+    await cleanupQueryClient(queryClient);
   });
 
   it("should return health status data when API call succeeds", async () => {
@@ -165,7 +165,7 @@ describe("useHealthStatus", () => {
       { timeout: 5000 },
     );
 
-    cleanupQueryClient(testQueryClient);
+    await cleanupQueryClient(testQueryClient);
 
     // Should not make additional API calls due to staleTime
     const secondCallCount = mockApi.getHealthStatus.mock.calls.length;

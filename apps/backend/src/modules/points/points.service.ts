@@ -13,11 +13,14 @@ import {
   getPointsHistory as fetchPointsHistory,
   getRecentPointsEvents,
   insertPointsEvent,
+  getAllDomainVibeLevels,
   type HistoryCursor,
   type PointsHistoryOptions,
 } from "./points.repository.js";
 import type {
   AwardPointsResult,
+  PointsCalculationContext,
+  PointsCalculationResult,
   PointsEventRecord,
   PointsHistoryQuery,
   PointsHistoryResult,
@@ -30,6 +33,8 @@ import { evaluateBadgesForSession } from "./badges.service.js";
 import { detectSessionDomains, updateDomainVibeLevelForSession } from "./vibe-level.service.js";
 
 const ALGORITHM_VERSION = "v2_vibe_lvl";
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const _LEGACY_ALGORITHM_VERSION = "v1"; // Reserved for future use
 const DEFAULT_RECENT_LIMIT = 10;
 const MAX_HISTORY_LIMIT = 100;
 
@@ -46,8 +51,6 @@ function encodeCursor(event: PointsEventRecord): string {
   return `${event.awarded_at}|${event.id}`;
 }
 
-// Legacy helper functions - kept for reference but not currently used (only used by commented-out calculatePoints)
-/*
 function clamp(value: number, min: number, max: number): number {
   return Math.min(Math.max(value, min), max);
 }
@@ -139,7 +142,8 @@ function estimateCalories(distanceMeters: number, averageRpe: number | null): nu
   return base * modifier;
 }
 
-function calculatePoints(context: PointsCalculationContext): PointsCalculationResult {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+function _calculatePoints(context: PointsCalculationContext): PointsCalculationResult {
   const caloriesRaw =
     context.sessionCalories ?? estimateCalories(context.distanceMeters, context.averageRpe);
   const calories = caloriesRaw === null ? null : clamp(caloriesRaw, 0, 1800);
@@ -175,7 +179,6 @@ function calculatePoints(context: PointsCalculationContext): PointsCalculationRe
     },
   };
 }
-*/
 
 function computeSessionMetrics(
   session: SessionWithExercises,
@@ -342,8 +345,9 @@ export async function awardPointsForSession(
     // Detect domains trained in this session
     const domainImpacts = detectSessionDomains(session, exerciseMetadata);
 
-    // Get current vibe levels for all domains (currently not used but may be needed for future features)
-    // const domainVibeLevels = await getAllDomainVibeLevels(session.owner_id, trx);
+    // Get current vibe levels for all domains (reserved for future use)
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const _domainVibeLevels = await getAllDomainVibeLevels(session.owner_id, trx);
 
     // Update vibe levels and calculate points for each domain
     let totalPoints = 0;

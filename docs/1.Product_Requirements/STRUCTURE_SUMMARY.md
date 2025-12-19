@@ -138,7 +138,7 @@ When artifacts are added, modified, or completed:
 
 1. Update the individual artifact file
 2. Update the folder's INDEX.md
-3. Update REQUIREMENTS_SCHEMA.md if structure changes
+3. Update 0.REQUIREMENTS_SCHEMA.md if structure changes
 4. Update Requirements_Catalogue.md
 5. Update AC_Master.md for acceptance criteria
 6. Update rtm_comprehensive.csv for traceability

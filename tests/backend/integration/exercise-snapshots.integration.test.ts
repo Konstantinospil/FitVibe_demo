@@ -354,3 +354,4 @@ describe("Integration: Exercise Snapshots", () => {
     expect(sessionExercise.exercise_name).toBeNull();
   });
 });
+

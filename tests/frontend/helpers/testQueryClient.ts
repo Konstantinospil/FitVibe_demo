@@ -26,10 +26,30 @@ export function createTestQueryClient(): QueryClient {
 /**
  * Cleans up a QueryClient instance
  * Call this in afterEach to prevent memory leaks and open handles
+ * This function is async to ensure all pending queries/mutations are cancelled
  */
-export function cleanupQueryClient(queryClient: QueryClient): void {
+export async function cleanupQueryClient(queryClient: QueryClient): Promise<void> {
+  // Cancel all pending queries and mutations
+  queryClient.getQueryCache().getAll().forEach((query) => {
+    queryClient.cancelQueries({ queryKey: query.queryKey });
+  });
+  queryClient.getMutationCache().getAll().forEach((mutation) => {
+    mutation.cancel?.();
+  });
+
+  // Clear caches
   queryClient.clear();
   queryClient.removeQueries();
   queryClient.getQueryCache().clear();
   queryClient.getMutationCache().clear();
+
+  // Wait a tick to ensure all cancellations are processed
+  await new Promise((resolve) => {
+    if (typeof setImmediate !== "undefined") {
+      setImmediate(resolve);
+    } else {
+      setTimeout(resolve, 0);
+    }
+  });
 }
+

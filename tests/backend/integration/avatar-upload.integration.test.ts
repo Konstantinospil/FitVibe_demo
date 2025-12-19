@@ -533,3 +533,4 @@ describe("Integration: Avatar Upload", () => {
     expect(responseTime).toBeLessThan(2000); // 2 seconds
   });
 });
+

@@ -159,3 +159,4 @@ components:
       type: apiKey
       in: cookie
       name: accessToken
+

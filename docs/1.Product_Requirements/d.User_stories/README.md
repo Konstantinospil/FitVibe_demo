@@ -20,7 +20,7 @@ See [TEMPLATE.md](./TEMPLATE.md) for the structure and required fields.
 
 ## Single Source of Truth
 
-**IMPORTANT**: User story files contain ONLY story-level information. They link to acceptance criteria but do NOT embed AC details. See [REQUIREMENTS_SCHEMA.md](../REQUIREMENTS_SCHEMA.md) for the SSOT principle.
+**IMPORTANT**: User story files contain ONLY story-level information. They link to acceptance criteria but do NOT embed AC details. See [0.REQUIREMENTS_SCHEMA.md](../0.REQUIREMENTS_SCHEMA.md) for the SSOT principle.
 
 ## Index
 

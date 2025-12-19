@@ -1,7 +1,6 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
 import { FormField } from "../ui";
-import { Input } from "../ui/Input";
 import { Card, CardContent } from "../ui/Card";
 
 export type ExerciseType = "strength" | "cardio" | "powerEndurance" | "all";
@@ -38,15 +37,8 @@ export const ExerciseFilters: React.FC<ExerciseFiltersProps> = ({
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
             placeholder={t("exercises.searchPlaceholder")}
-          >
-            <Input
-              type="search"
-              value={searchQuery}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => onSearchChange(e.target.value)}
-              placeholder={t("exercises.searchPlaceholder")}
-              size="sm"
-            />
-          </FormField>
+            size="sm"
+          />
           <div className="grid" style={{ gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
             <div>
               <label className="text-sm font-weight-600 mb-sm block">

@@ -1,12 +1,18 @@
 import React, { createContext, useContext, useState } from "react";
 
 interface TabsContextValue {
+<<<<<<< Updated upstream
   value: string;
   onValueChange: (value: string) => void;
+=======
+  activeTab: string;
+  setActiveTab: (value: string) => void;
+>>>>>>> Stashed changes
 }
 
 const TabsContext = createContext<TabsContextValue | undefined>(undefined);
 
+<<<<<<< Updated upstream
 const useTabsContext = () => {
   const context = useContext(TabsContext);
   if (!context) {
@@ -56,6 +62,57 @@ export const Tabs: React.FC<TabsProps> = ({
           flexDirection: "column",
           ...style,
         }}
+=======
+export interface TabsProps extends React.HTMLAttributes<HTMLDivElement> {
+  defaultValue: string;
+  value?: string;
+  onValueChange?: (value: string) => void;
+  children: React.ReactNode;
+}
+
+const tabsStyle: React.CSSProperties = {
+  display: "flex",
+  flexDirection: "column",
+  width: "100%",
+};
+
+const listStyle: React.CSSProperties = {
+  display: "flex",
+  gap: "var(--space-sm)",
+  borderBottom: "1px solid var(--color-border)",
+  marginBottom: "var(--space-md)",
+};
+
+export const Tabs: React.FC<TabsProps> = ({
+  defaultValue,
+  value: controlledValue,
+  onValueChange,
+  children,
+  className,
+  style,
+  ...props
+}) => {
+  const [internalValue, setInternalValue] = useState(defaultValue);
+  const activeTab = controlledValue ?? internalValue;
+
+  const setActiveTab = (newValue: string) => {
+    if (controlledValue === undefined) {
+      setInternalValue(newValue);
+    }
+    onValueChange?.(newValue);
+  };
+
+  return (
+    <TabsContext.Provider value={{ activeTab, setActiveTab }}>
+      <div
+        className={className}
+        style={{
+          ...tabsStyle,
+          ...style,
+        }}
+        role="tablist"
+        {...props}
+>>>>>>> Stashed changes
       >
         {children}
       </div>
@@ -67,6 +124,7 @@ export interface TabsListProps extends React.HTMLAttributes<HTMLDivElement> {
   children: React.ReactNode;
 }
 
+<<<<<<< Updated upstream
 /**
  * TabsList component - container for tab triggers.
  */
@@ -82,6 +140,18 @@ export const TabsList: React.FC<TabsListProps> = ({ children, className, style, 
         ...style,
       }}
       {...rest}
+=======
+export const TabsList: React.FC<TabsListProps> = ({ children, className, style, ...props }) => {
+  return (
+    <div
+      className={className}
+      style={{
+        ...listStyle,
+        ...style,
+      }}
+      role="tablist"
+      {...props}
+>>>>>>> Stashed changes
     >
       {children}
     </div>
@@ -93,14 +163,37 @@ export interface TabsTriggerProps extends React.ButtonHTMLAttributes<HTMLButtonE
   children: React.ReactNode;
 }
 
+<<<<<<< Updated upstream
 /**
  * TabsTrigger component - individual tab button.
  */
+=======
+const triggerBaseStyle: React.CSSProperties = {
+  padding: "var(--space-sm) var(--space-md)",
+  background: "transparent",
+  border: "none",
+  borderBottom: "2px solid transparent",
+  color: "var(--color-text-secondary)",
+  cursor: "pointer",
+  fontWeight: 500,
+  fontSize: "var(--font-size-md)",
+  transition: "color 150ms ease, border-color 150ms ease",
+  position: "relative",
+  bottom: "-1px",
+};
+
+const triggerActiveStyle: React.CSSProperties = {
+  color: "var(--color-text-primary)",
+  borderBottomColor: "var(--color-primary)",
+};
+
+>>>>>>> Stashed changes
 export const TabsTrigger: React.FC<TabsTriggerProps> = ({
   value,
   children,
   className,
   style,
+<<<<<<< Updated upstream
   onClick,
   ...rest
 }) => {
@@ -110,10 +203,32 @@ export const TabsTrigger: React.FC<TabsTriggerProps> = ({
   const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
     onValueChange(value);
     onClick?.(e);
+=======
+  ...props
+}) => {
+  const context = useContext(TabsContext);
+  if (!context) {
+    throw new Error("TabsTrigger must be used within Tabs");
+  }
+
+  const { activeTab, setActiveTab } = context;
+  const isActive = activeTab === value;
+
+  const handleClick = () => {
+    setActiveTab(value);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLButtonElement>) => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      setActiveTab(value);
+    }
+>>>>>>> Stashed changes
   };
 
   return (
     <button
+<<<<<<< Updated upstream
       role="tab"
       aria-selected={isSelected}
       aria-controls={`tabpanel-${value}`}
@@ -134,6 +249,22 @@ export const TabsTrigger: React.FC<TabsTriggerProps> = ({
       }}
       onClick={handleClick}
       {...rest}
+=======
+      type="button"
+      role="tab"
+      aria-selected={isActive}
+      aria-controls={`tabpanel-${value}`}
+      id={`tab-${value}`}
+      className={className}
+      style={{
+        ...triggerBaseStyle,
+        ...(isActive ? triggerActiveStyle : {}),
+        ...style,
+      }}
+      onClick={handleClick}
+      onKeyDown={handleKeyDown}
+      {...props}
+>>>>>>> Stashed changes
     >
       {children}
     </button>
@@ -145,20 +276,37 @@ export interface TabsContentProps extends React.HTMLAttributes<HTMLDivElement> {
   children: React.ReactNode;
 }
 
+<<<<<<< Updated upstream
 /**
  * TabsContent component - content panel for a tab.
  */
+=======
+>>>>>>> Stashed changes
 export const TabsContent: React.FC<TabsContentProps> = ({
   value,
   children,
   className,
   style,
+<<<<<<< Updated upstream
   ...rest
 }) => {
   const { value: selectedValue } = useTabsContext();
   const isSelected = selectedValue === value;
 
   if (!isSelected) {
+=======
+  ...props
+}) => {
+  const context = useContext(TabsContext);
+  if (!context) {
+    throw new Error("TabsContent must be used within Tabs");
+  }
+
+  const { activeTab } = context;
+  const isActive = activeTab === value;
+
+  if (!isActive) {
+>>>>>>> Stashed changes
     return null;
   }
 
@@ -169,10 +317,16 @@ export const TabsContent: React.FC<TabsContentProps> = ({
       aria-labelledby={`tab-${value}`}
       className={className}
       style={{
+<<<<<<< Updated upstream
         padding: "var(--space-lg)",
         ...style,
       }}
       {...rest}
+=======
+        ...style,
+      }}
+      {...props}
+>>>>>>> Stashed changes
     >
       {children}
     </div>

@@ -4,6 +4,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import userEvent from "@testing-library/user-event";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { createTestQueryClient } from "../helpers/testQueryClient";
 import { ToastProvider } from "../../src/contexts/ToastContext";
 import { AuthProvider } from "../../src/contexts/AuthContext";
 import { useAuthStore } from "../../src/store/auth.store";
@@ -50,16 +51,7 @@ vi.mock("react-i18next", () => ({
   }),
 }));
 
-const createTestQueryClient = () => {
-  return new QueryClient({
-    defaultOptions: {
-      queries: {
-        retry: false,
-        gcTime: 0,
-      },
-    },
-  });
-};
+import { createTestQueryClient } from "../helpers/testQueryClient";
 
 const wrapper = ({ children }: { children: React.ReactNode }) => {
   const queryClient = createTestQueryClient();

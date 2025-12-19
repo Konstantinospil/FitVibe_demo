@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Copy, Download, Eye, EyeOff, Check } from "lucide-react";
+import { Copy, Check, Download, Eye, EyeOff } from "lucide-react";
 import { Button } from "../ui/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/Card";
 import { Alert } from "../ui/Alert";
@@ -8,26 +8,24 @@ import { Alert } from "../ui/Alert";
 export interface BackupCodesDisplayProps {
   backupCodes: string[];
   onCodesCopied?: () => void;
-  className?: string;
-  style?: React.CSSProperties;
+  onDownload?: () => void;
 }
 
 /**
- * BackupCodesDisplay component for showing 2FA backup codes.
- * Supports showing/hiding codes, copying individual/all codes, and downloading.
+ * BackupCodesDisplay component for displaying 2FA backup codes.
+ * Provides copy, download, and hide/show functionality.
  */
 export const BackupCodesDisplay: React.FC<BackupCodesDisplayProps> = ({
   backupCodes,
   onCodesCopied,
-  className,
-  style,
+  onDownload,
 }) => {
   const { t } = useTranslation("common");
-  const [showCodes, setShowCodes] = useState(false);
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
+  const [showCodes, setShowCodes] = useState(false);
   const [allCopied, setAllCopied] = useState(false);
 
-  const copyCode = async (code: string, index: number) => {
+  const handleCopyCode = async (code: string, index: number) => {
     try {
       await navigator.clipboard.writeText(code);
       setCopiedIndex(index);
@@ -45,7 +43,7 @@ export const BackupCodesDisplay: React.FC<BackupCodesDisplayProps> = ({
     }
   };
 
-  const copyAllCodes = async () => {
+  const handleCopyAll = async () => {
     const allCodes = backupCodes.join("\n");
     try {
       await navigator.clipboard.writeText(allCodes);
@@ -53,7 +51,7 @@ export const BackupCodesDisplay: React.FC<BackupCodesDisplayProps> = ({
       setTimeout(() => setAllCopied(false), 2000);
       onCodesCopied?.();
     } catch {
-      // Fallback for older browsers
+      // Fallback
       const textArea = document.createElement("textarea");
       textArea.value = allCodes;
       document.body.appendChild(textArea);
@@ -66,8 +64,8 @@ export const BackupCodesDisplay: React.FC<BackupCodesDisplayProps> = ({
     }
   };
 
-  const downloadCodes = () => {
-    const content = backupCodes.join("\n");
+  const handleDownload = () => {
+    const content = `FitVibe Backup Codes\n\nGenerated: ${new Date().toLocaleString()}\n\n${backupCodes.join("\n")}\n\nKeep these codes safe. Each code can only be used once.`;
     const blob = new Blob([content], { type: "text/plain" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -77,110 +75,90 @@ export const BackupCodesDisplay: React.FC<BackupCodesDisplayProps> = ({
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
+    onDownload?.();
+  };
+
+  const codeItemStyle: React.CSSProperties = {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    padding: "var(--space-sm) var(--space-md)",
+    background: "var(--color-surface)",
+    border: "1px solid var(--color-border)",
+    borderRadius: "var(--radius-md)",
+    fontFamily: "var(--font-family-mono)",
+    fontSize: "var(--font-size-md)",
+    letterSpacing: "0.1em",
   };
 
   return (
-    <Card className={className} style={style}>
+    <Card>
       <CardHeader>
         <CardTitle>{t("auth.2fa.backupCodes") || "Backup Codes"}</CardTitle>
       </CardHeader>
       <CardContent>
-        <Alert variant="warning">
+        <Alert variant="warning" style={{ marginBottom: "var(--space-lg)" }}>
           {t("auth.2fa.backupCodesWarning") ||
-            "Save these codes in a safe place. You'll need them if you lose access to your authenticator app."}
+            "Save these backup codes in a safe place. Each code can only be used once."}
         </Alert>
 
-        <div style={{ marginTop: "var(--space-lg)" }}>
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              marginBottom: "var(--space-md)",
-            }}
-          >
+        <div className="flex flex--column flex--gap-md" style={{ marginBottom: "var(--space-lg)" }}>
+          <div className="flex flex--align-center flex--justify-between">
             <Button
               variant="ghost"
               size="sm"
               onClick={() => setShowCodes(!showCodes)}
               leftIcon={showCodes ? <EyeOff size={16} /> : <Eye size={16} />}
             >
-              {showCodes
-                ? t("auth.2fa.hideCodes") || "Hide Codes"
-                : t("auth.2fa.showCodes") || "Show Codes"}
+              {showCodes ? t("common.hide") || "Hide" : t("common.show") || "Show"}
             </Button>
-            <div style={{ display: "flex", gap: "var(--space-xs)" }}>
+            <div className="flex flex--gap-sm">
               <Button
-                variant="ghost"
+                variant="secondary"
                 size="sm"
-                onClick={() => {
-                  void copyAllCodes();
-                }}
-                leftIcon={<Copy size={16} />}
+                onClick={() => void handleCopyAll()}
+                leftIcon={allCopied ? <Check size={16} /> : <Copy size={16} />}
               >
-                {allCopied ? t("common.copied") || "Copied!" : t("auth.2fa.copyAll") || "Copy All"}
+                {allCopied ? t("common.copied") || "Copied" : t("common.copyAll") || "Copy All"}
               </Button>
               <Button
-                variant="ghost"
+                variant="secondary"
                 size="sm"
-                onClick={() => {
-                  void downloadCodes();
-                }}
+                onClick={handleDownload}
                 leftIcon={<Download size={16} />}
               >
-                {t("auth.2fa.download") || "Download"}
+                {t("common.download") || "Download"}
               </Button>
             </div>
           </div>
 
           <div
+            className="grid"
             style={{
-              display: "grid",
               gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))",
               gap: "var(--space-sm)",
             }}
           >
             {backupCodes.map((code, index) => (
-              <div
-                key={index}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  padding: "var(--space-sm)",
-                  background: "var(--color-surface)",
-                  borderRadius: "var(--radius-md)",
-                  border: "1px solid var(--color-border)",
-                }}
-              >
-                <code
-                  style={{
-                    fontFamily: "var(--font-family-mono)",
-                    fontSize: "var(--font-size-sm)",
-                    color: showCodes ? "var(--color-text-primary)" : "transparent",
-                    textShadow: showCodes ? "none" : "0 0 8px var(--color-text-primary)",
-                    userSelect: "none",
-                  }}
-                >
-                  {code}
-                </code>
+              <div key={index} style={codeItemStyle}>
+                <span>{showCodes ? code : "•".repeat(code.length)}</span>
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => {
-                    void copyCode(code, index);
-                  }}
-                  aria-label={
-                    t("auth.2fa.copyCode", { number: index + 1 }) || `Copy code ${index + 1}`
-                  }
-                  style={{ minWidth: "auto", padding: "var(--space-xs)" }}
-                >
-                  {copiedIndex === index ? <Check size={16} /> : <Copy size={16} />}
-                </Button>
+                  onClick={() => void handleCopyCode(code, index)}
+                  leftIcon={copiedIndex === index ? <Check size={14} /> : <Copy size={14} />}
+                  style={{ minWidth: "auto", padding: "0.25rem" }}
+                  aria-label={t("common.copy") || "Copy code"}
+                />
               </div>
             ))}
           </div>
         </div>
+
+        <Alert variant="info">
+          {t("auth.2fa.backupCodesInfo") ||
+            "If you lose access to your authenticator app, you can use these codes to sign in."}
+        </Alert>
       </CardContent>
     </Card>
   );

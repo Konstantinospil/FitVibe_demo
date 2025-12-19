@@ -1,21 +1,23 @@
 import React, { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Copy } from "lucide-react";
 import { Button } from "../ui/Button";
 import { cloneSessionFromFeed } from "../../services/api";
 import { useToast } from "../ui/Toast";
-import { useTranslation } from "react-i18next";
 
 export interface CloneSessionButtonProps {
   sessionId: string;
-  onCloned?: (sessionId: string) => void;
   onCloneSuccess?: (newSessionId: string) => void;
   size?: "sm" | "md" | "lg";
-  variant?: "minimal" | "default";
+  variant?: "default" | "minimal";
 }
 
+/**
+ * CloneSessionButton component for cloning sessions from the feed.
+ * Creates a copy of the session for the current user.
+ */
 export const CloneSessionButton: React.FC<CloneSessionButtonProps> = ({
   sessionId,
-  onCloned,
   onCloneSuccess,
   size = "md",
   variant = "default",
@@ -24,42 +26,66 @@ export const CloneSessionButton: React.FC<CloneSessionButtonProps> = ({
   const { showToast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleClick = async () => {
+  const handleClick = async (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+
     if (isLoading) {
       return;
     }
 
     setIsLoading(true);
+
     try {
-      const result = await cloneSessionFromFeed(sessionId);
+      const response = await cloneSessionFromFeed(sessionId);
       showToast({
         variant: "success",
-        title: t("feed.cloneSuccess") || "Session Cloned",
-        message: t("feed.cloneSuccessMessage") || "Session has been cloned successfully",
+        title: t("feed.clone.success"),
+        message: t("feed.clone.message"),
       });
-      onCloned?.(result.sessionId);
-      onCloneSuccess?.(result.sessionId);
+      onCloneSuccess?.(response.sessionId);
     } catch {
       showToast({
         variant: "error",
-        title: t("feed.cloneFailed") || "Clone Failed",
-        message: t("feed.cloneFailedMessage") || "Failed to clone session. Please try again.",
+        title: t("feed.clone.error.title"),
+        message: t("feed.clone.error.message"),
       });
     } finally {
       setIsLoading(false);
     }
   };
 
+  const buttonStyle: React.CSSProperties =
+    variant === "minimal"
+      ? {
+          background: "transparent",
+          border: "none",
+          boxShadow: "none",
+          padding: "0.5rem",
+          minWidth: "auto",
+        }
+      : {};
+
   return (
     <Button
-      variant={variant === "minimal" ? "ghost" : "secondary"}
+      variant="secondary"
       size={size}
-      onClick={() => {
-        void handleClick();
+      onClick={(e) => {
+        void handleClick(e);
       }}
       isLoading={isLoading}
-      leftIcon={<Copy size={16} />}
-      aria-label={t("feed.clone") || "Clone session"}
-    />
+      leftIcon={
+        <Copy
+          style={{
+            width: size === "sm" ? "16px" : size === "lg" ? "20px" : "18px",
+            height: size === "sm" ? "16px" : size === "lg" ? "20px" : "18px",
+          }}
+        />
+      }
+      style={buttonStyle}
+      aria-label={t("feed.clone.clone")}
+    >
+      {variant === "default" && t("feed.clone.clone")}
+    </Button>
   );
 };

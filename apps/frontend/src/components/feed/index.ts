@@ -1,4 +1,4 @@
-// export * from "./FeedView"; // To be implemented
+export * from "./FeedView";
 export * from "./FeedSessionCard";
 export * from "./FeedFilters";
 export * from "./LikeButton";

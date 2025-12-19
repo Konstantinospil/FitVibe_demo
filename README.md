@@ -34,12 +34,13 @@ FitVibe V2 is built as a **monorepo** using PNPM workspaces with a modular, scal
 
 ```text
 FitVibe V2/
-├── app/
+├── apps/
 │   ├── backend/         # Express/TypeScript REST API
 │   └── frontend/        # React SPA built with Vite
 ├── docs/                # Product, design, and governance documentation
 ├── infra/               # Infrastructure, Docker, Kubernetes configs
-└── packages/            # Shared tooling, lint rules, TypeScript config
+├── packages/            # Shared tooling, lint rules, TypeScript config
+└── tests/               # Test suites (E2E, integration, performance)
 ```
 
 ### Tech Stack
@@ -80,7 +81,7 @@ FitVibe V2/
 
    ```bash
    git clone <repository-url>
-   cd Cursor_fitvibe
+   cd fitvibe
    ```
 
 2. **Install dependencies:**
@@ -90,7 +91,7 @@ FitVibe V2/
    ```
 
 3. **Set up environment variables:**
-   - Copy `.env.example` files in the root, `app/backend`, `app/frontend`, and `infra/` to `.env`
+   - Copy `.env.example` files in the root, `apps/backend`, `apps/frontend`, and `infra/` to `.env`
    - Adjust values as needed
 
 4. **Start the development environment:**
@@ -129,7 +130,6 @@ pnpm lint --fix
 | `docs/`          | Authoritative product, design, and governance content | [Docs README](docs/README.md)              |
 | `infra/`         | Infrastructure configurations, Docker, Kubernetes     | [Infra README](infra/README.md)            |
 | `packages/`      | Shared tooling, lint rules, TypeScript config         | [Packages README](packages/README.md)      |
-| `scripts/`       | Utility scripts for development and maintenance       | [Scripts README](scripts/README.md)        |
 | `tests/`         | Test suites (E2E, integration, performance)           | [Tests README](tests/README.md)            |
 
 Refer to the individual READMEs inside each directory for detailed setup and workflow information.
@@ -181,4 +181,4 @@ Konstantinos Pilpilidis (Dr.)
 
 ---
 
-For more information, visit the [Documentation Hub](docs/README.md) or check the individual application READMEs in `app/backend/` and `app/frontend/`.
+For more information, visit the [Documentation Hub](docs/README.md) or check the individual application READMEs in `apps/backend/` and `apps/frontend/`.

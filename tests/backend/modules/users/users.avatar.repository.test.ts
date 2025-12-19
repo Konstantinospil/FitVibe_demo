@@ -189,3 +189,4 @@ describe("Users Avatar Repository", () => {
     });
   });
 });
+

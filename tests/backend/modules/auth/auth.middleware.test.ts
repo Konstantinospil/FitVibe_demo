@@ -170,3 +170,4 @@ describe("Auth Middleware", () => {
     });
   });
 });
+

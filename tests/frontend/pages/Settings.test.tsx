@@ -1,6 +1,6 @@
-import { render, screen, fireEvent, waitFor, act, cleanup } from "@testing-library/react";
-import { MemoryRouter } from "react-router-dom";
+import { screen, fireEvent, waitFor, cleanup } from "@testing-library/react";
 import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
+<<<<<<< Updated upstream
 import Settings from "../../src/pages/Settings";
 import { useAuthStore } from "../../src/store/auth.store";
 import {
@@ -172,52 +172,19 @@ const renderSettings = () => {
   );
   return result;
 };
+=======
+import { apiClient } from "../../src/services/api";
+import { renderSettings, setupSettingsTests, mockUserData } from "./Settings.test.helpers";
+>>>>>>> Stashed changes
 
 describe("Settings", () => {
-  const mockGet = vi.mocked(apiClient.get);
-  const mockPatch = vi.mocked(apiClient.patch);
-  const mockPost = vi.mocked(apiClient.post);
-  const mockDelete = vi.mocked(apiClient.delete);
+  const { mockGet, mockPatch } = setupSettingsTests();
 
   // Set test timeout to prevent hanging
   vi.setConfig({ testTimeout: 10000 });
 
   beforeEach(() => {
-    vi.clearAllMocks();
-    mockNavigate.mockClear();
-
-    vi.mocked(useAuthStore).mockReturnValue({
-      isAuthenticated: true,
-      user: {
-        id: "user-1",
-        username: "testuser",
-        email: "user@example.com",
-        role: "athlete",
-        isVerified: true,
-        createdAt: new Date().toISOString(),
-      },
-      signIn: vi.fn(),
-      signOut: mockSignOut,
-      updateUser: vi.fn(),
-    });
-
-    mockGet.mockResolvedValue({ data: mockUserData });
-    mockPatch.mockResolvedValue({ data: {} });
-    mockPost.mockResolvedValue({ data: {} });
-    mockDelete.mockResolvedValue({ data: {} });
-    vi.mocked(get2FAStatus).mockResolvedValue({ enabled: false });
-    vi.mocked(setup2FA).mockResolvedValue({
-      qrCode: "data:image/png;base64,mock-qr-code",
-      secret: "mock-secret",
-      backupCodes: ["CODE1", "CODE2", "CODE3", "CODE4", "CODE5"],
-      message: "2FA setup initiated",
-    });
-    vi.mocked(verify2FA).mockResolvedValue({ success: true, message: "2FA enabled successfully" });
-    vi.mocked(disable2FA).mockResolvedValue({
-      success: true,
-      message: "2FA disabled successfully",
-    });
-    vi.mocked(listAuthSessions).mockResolvedValue({ sessions: [] });
+    setupSettingsTests();
   });
 
   afterEach(() => {
@@ -234,7 +201,7 @@ describe("Settings", () => {
         const description = Array.from(descriptions).find((el) => container.contains(el));
         expect(description).toBeInTheDocument();
       },
-      { timeout: 5000 },
+      { timeout: 2000 },
     );
 
     const profileSettings = screen.getAllByText("Profile Settings");
@@ -257,7 +224,7 @@ describe("Settings", () => {
       () => {
         expect(mockGet).toHaveBeenCalledWith("/api/v1/users/me");
       },
-      { timeout: 5000 },
+      { timeout: 2000 },
     );
   });
 
@@ -270,7 +237,7 @@ describe("Settings", () => {
         const settingsTexts = screen.queryAllByText("Settings");
         expect(Array.from(settingsTexts).find((el) => container.contains(el))).toBeInTheDocument();
       },
-      { timeout: 5000 },
+      { timeout: 2000 },
     );
 
     // Wait for API call to complete
@@ -278,7 +245,7 @@ describe("Settings", () => {
       () => {
         expect(mockGet).toHaveBeenCalledWith("/api/v1/users/me");
       },
-      { timeout: 5000 },
+      { timeout: 2000 },
     );
 
     // Wait for the email input to exist and value to update from "Loading..." to actual email
@@ -289,7 +256,7 @@ describe("Settings", () => {
         expect(emailInput.value).not.toBe("Loading...");
         expect(emailInput.value).toBe("user@example.com");
       },
-      { timeout: 5000 },
+      { timeout: 2000 },
     );
   });
 
@@ -302,7 +269,7 @@ describe("Settings", () => {
         const settingsTexts = screen.queryAllByText("Settings");
         expect(Array.from(settingsTexts).find((el) => container.contains(el))).toBeInTheDocument();
       },
-      { timeout: 5000 },
+      { timeout: 2000 },
     );
 
     let displayNameInput: HTMLElement | undefined;
@@ -313,7 +280,7 @@ describe("Settings", () => {
         expect(displayNameInput).toBeDefined();
         expect(displayNameInput).toBeInTheDocument();
       },
-      { timeout: 5000 },
+      { timeout: 2000 },
     );
 
     expect(displayNameInput).toBeDefined();
@@ -331,7 +298,7 @@ describe("Settings", () => {
         const settingsTexts = screen.queryAllByText("Settings");
         expect(Array.from(settingsTexts).find((el) => container.contains(el))).toBeInTheDocument();
       },
-      { timeout: 5000 },
+      { timeout: 2000 },
     );
 
     let visibilitySelect: HTMLSelectElement | undefined;
@@ -350,7 +317,7 @@ describe("Settings", () => {
         expect(visibilitySelect).toBeDefined();
         expect(visibilitySelect).toBeInTheDocument();
       },
-      { timeout: 5000 },
+      { timeout: 2000 },
     );
 
     expect(visibilitySelect).toBeDefined();
@@ -368,7 +335,7 @@ describe("Settings", () => {
         const settingsTexts = screen.queryAllByText("Settings");
         expect(Array.from(settingsTexts).find((el) => container.contains(el))).toBeInTheDocument();
       },
-      { timeout: 5000 },
+      { timeout: 2000 },
     );
 
     let unitsSelect: HTMLSelectElement | undefined;
@@ -387,7 +354,7 @@ describe("Settings", () => {
         expect(unitsSelect).toBeDefined();
         expect(unitsSelect).toBeInTheDocument();
       },
-      { timeout: 5000 },
+      { timeout: 2000 },
     );
 
     expect(unitsSelect).toBeDefined();
@@ -405,7 +372,7 @@ describe("Settings", () => {
         const settingsTexts = screen.queryAllByText("Settings");
         expect(Array.from(settingsTexts).find((el) => container.contains(el))).toBeInTheDocument();
       },
-      { timeout: 5000 },
+      { timeout: 2000 },
     );
 
     let languageSelect: HTMLSelectElement | undefined;
@@ -424,7 +391,7 @@ describe("Settings", () => {
         expect(languageSelect).toBeDefined();
         expect(languageSelect).toBeInTheDocument();
       },
-      { timeout: 5000 },
+      { timeout: 2000 },
     );
 
     expect(languageSelect).toBeDefined();
@@ -442,7 +409,7 @@ describe("Settings", () => {
         const settingsTexts = screen.queryAllByText("Settings");
         expect(Array.from(settingsTexts).find((el) => container.contains(el))).toBeInTheDocument();
       },
-      { timeout: 5000 },
+      { timeout: 2000 },
     );
 
     let displayNameInput: HTMLElement | undefined;
@@ -458,7 +425,7 @@ describe("Settings", () => {
         displayNameInput = Array.from(displayNameInputs).find((el) => container.contains(el));
         expect(displayNameInput).toBeDefined();
       },
-      { timeout: 5000 },
+      { timeout: 2000 },
     );
 
     expect(displayNameInput).toBeDefined();
@@ -469,7 +436,7 @@ describe("Settings", () => {
       () => {
         expect(mockGet).toHaveBeenCalled();
       },
-      { timeout: 5000 },
+      { timeout: 2000 },
     );
 
     fireEvent.change(displayNameInput!, { target: { value: "Test Name" } });
@@ -487,7 +454,7 @@ describe("Settings", () => {
           units: "metric",
         });
       },
-      { timeout: 5000 },
+      { timeout: 2000 },
     );
   });
 
@@ -500,7 +467,7 @@ describe("Settings", () => {
         const settingsTexts = screen.queryAllByText("Settings");
         expect(Array.from(settingsTexts).find((el) => container.contains(el))).toBeInTheDocument();
       },
-      { timeout: 5000 },
+      { timeout: 2000 },
     );
 
     let saveButton: HTMLElement | undefined;
@@ -511,7 +478,7 @@ describe("Settings", () => {
         saveButton = Array.from(savePrefs).find((el) => container.contains(el));
         expect(saveButton).toBeDefined();
       },
-      { timeout: 5000 },
+      { timeout: 2000 },
     );
 
     expect(saveButton).toBeDefined();
@@ -524,12 +491,13 @@ describe("Settings", () => {
           Array.from(successMessages).find((el) => container.contains(el)),
         ).toBeInTheDocument();
       },
-      { timeout: 5000 },
+      { timeout: 2000 },
     );
   });
 
   it("shows error message when saving preferences fails", async () => {
-    mockPatch.mockRejectedValue(new Error("Save failed"));
+    const { mockPatch: mockPatchLocal } = setupSettingsTests();
+    mockPatchLocal.mockRejectedValue(new Error("Save failed"));
 
     const { container } = renderSettings();
 
@@ -539,7 +507,7 @@ describe("Settings", () => {
         const settingsTexts = screen.queryAllByText("Settings");
         expect(Array.from(settingsTexts).find((el) => container.contains(el))).toBeInTheDocument();
       },
-      { timeout: 5000 },
+      { timeout: 2000 },
     );
 
     await waitFor(
@@ -547,7 +515,7 @@ describe("Settings", () => {
         const savePrefs = screen.getAllByText("Save Preferences");
         expect(Array.from(savePrefs).find((el) => container.contains(el))).toBeInTheDocument();
       },
-      { timeout: 5000 },
+      { timeout: 2000 },
     );
 
     const savePrefs = screen.getAllByText("Save Preferences");
@@ -563,9 +531,10 @@ describe("Settings", () => {
           })(),
         ).toBeInTheDocument();
       },
-      { timeout: 5000 },
+      { timeout: 2000 },
     );
   });
+<<<<<<< Updated upstream
 
   it("shows enable 2FA button when 2FA is disabled", async () => {
     const { container } = renderSettings();
@@ -2150,4 +2119,6 @@ describe("Settings", () => {
       );
     });
   });
+=======
+>>>>>>> Stashed changes
 });

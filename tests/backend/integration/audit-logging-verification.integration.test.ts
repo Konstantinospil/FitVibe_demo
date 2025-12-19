@@ -214,3 +214,4 @@ describe("Integration: Audit Logging Verification", () => {
     expect(metadata.changes?.fitness_level).toBeDefined();
   });
 });
+

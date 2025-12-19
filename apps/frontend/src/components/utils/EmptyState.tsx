@@ -1,5 +1,9 @@
 import React from "react";
 import { Card, CardContent } from "../ui/Card";
+<<<<<<< Updated upstream
+=======
+import { Button } from "../ui/Button";
+>>>>>>> Stashed changes
 
 export interface EmptyStateProps {
   title: string;
@@ -11,6 +15,13 @@ export interface EmptyStateProps {
   };
 }
 
+<<<<<<< Updated upstream
+=======
+/**
+ * EmptyState component displays a message when there's no content to show.
+ * Supports icon, title, message, and optional action button.
+ */
+>>>>>>> Stashed changes
 export const EmptyState: React.FC<EmptyStateProps> = ({ title, message, icon, action }) => {
   return (
     <Card>
@@ -61,6 +72,7 @@ export const EmptyState: React.FC<EmptyStateProps> = ({ title, message, icon, ac
             </p>
           )}
           {action && (
+<<<<<<< Updated upstream
             <button
               type="button"
               onClick={action.onClick}
@@ -75,6 +87,11 @@ export const EmptyState: React.FC<EmptyStateProps> = ({ title, message, icon, ac
             >
               {action.label}
             </button>
+=======
+            <Button variant="primary" size="md" onClick={action.onClick}>
+              {action.label}
+            </Button>
+>>>>>>> Stashed changes
           )}
         </div>
       </CardContent>

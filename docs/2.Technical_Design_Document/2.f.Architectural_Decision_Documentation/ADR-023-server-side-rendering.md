@@ -230,3 +230,4 @@ CMD ["node", "dist/server/server.js"]
 | Version | Date       | Change                             | Author       |
 | ------- | ---------- | ---------------------------------- | ------------ |
 | v1.0    | 2025-12-12 | Initial ADR for SSR implementation | AI Assistant |
+

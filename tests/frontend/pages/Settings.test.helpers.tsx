@@ -206,3 +206,8 @@ export const setupSettingsTests = () => {
 
   return { mockGet, mockPatch, mockPost, mockDelete };
 };
+<<<<<<< Updated upstream
+=======
+
+
+>>>>>>> Stashed changes

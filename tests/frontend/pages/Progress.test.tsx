@@ -91,8 +91,8 @@ describe("Progress page", () => {
     vi.clearAllMocks();
   });
 
-  afterEach(() => {
-    cleanupQueryClient(queryClient);
+  afterEach(async () => {
+    await cleanupQueryClient(queryClient);
   });
 
   const renderProgress = () => {
@@ -133,7 +133,7 @@ describe("Progress page", () => {
       () => {
         expect(screen.getByText("Volume Trend")).toBeInTheDocument();
       },
-      { timeout: 5000 },
+      { timeout: 2000 },
     );
   });
 
@@ -207,7 +207,7 @@ describe("Progress page", () => {
       () => {
         expect(screen.getByText("Export")).toBeInTheDocument();
       },
-      { timeout: 5000 },
+      { timeout: 2000 },
     );
 
     const exportButton = screen.getByText("Export");
@@ -217,7 +217,7 @@ describe("Progress page", () => {
       () => {
         expect(api.exportProgress).toHaveBeenCalled();
       },
-      { timeout: 5000 },
+      { timeout: 2000 },
     );
 
     createElementSpy.mockRestore();
@@ -272,7 +272,7 @@ describe("Progress page", () => {
         expect(screen.getByText("Exercise Breakdown")).toBeInTheDocument();
         expect(screen.getByText("Bench Press")).toBeInTheDocument();
       },
-      { timeout: 5000 },
+      { timeout: 2000 },
     );
   });
 
@@ -311,7 +311,7 @@ describe("Progress page", () => {
       () => {
         expect(screen.getByText("Export")).toBeInTheDocument();
       },
-      { timeout: 5000 },
+      { timeout: 2000 },
     );
 
     const exportButton = screen.getByText("Export");
@@ -322,7 +322,7 @@ describe("Progress page", () => {
       () => {
         expect(api.exportProgress).toHaveBeenCalled();
       },
-      { timeout: 5000 },
+      { timeout: 2000 },
     );
 
     // Component should still be rendered (error handled gracefully)
@@ -384,7 +384,7 @@ describe("Progress page", () => {
         // Component should render even with empty data
         expect(screen.getByText("Progress Tracking")).toBeInTheDocument();
       },
-      { timeout: 5000 },
+      { timeout: 2000 },
     );
   });
 
@@ -406,7 +406,7 @@ describe("Progress page", () => {
       () => {
         expect(screen.getByText("Exercise Breakdown")).toBeInTheDocument();
       },
-      { timeout: 5000 },
+      { timeout: 2000 },
     );
   });
 
@@ -467,7 +467,7 @@ describe("Progress page", () => {
         expect(screen.getByText("Sessions Trend")).toBeInTheDocument();
         expect(screen.getByText("Intensity Trend")).toBeInTheDocument();
       },
-      { timeout: 5000 },
+      { timeout: 2000 },
     );
   });
 
@@ -513,7 +513,7 @@ describe("Progress page", () => {
         expect(screen.getByText("Squat")).toBeInTheDocument();
         expect(screen.getByText("Deadlift")).toBeInTheDocument();
       },
-      { timeout: 5000 },
+      { timeout: 2000 },
     );
   });
 
@@ -543,7 +543,7 @@ describe("Progress page", () => {
       () => {
         expect(screen.getByText("Volume Trend")).toBeInTheDocument();
       },
-      { timeout: 5000 },
+      { timeout: 2000 },
     );
   });
 
@@ -565,7 +565,7 @@ describe("Progress page", () => {
       () => {
         expect(screen.getByText("Exercise Breakdown")).toBeInTheDocument();
       },
-      { timeout: 5000 },
+      { timeout: 2000 },
     );
   });
 
@@ -621,7 +621,7 @@ describe("Progress page", () => {
         expect(screen.getByText("Sessions Trend")).toBeInTheDocument();
         expect(screen.getByText("Intensity Trend")).toBeInTheDocument();
       },
-      { timeout: 5000 },
+      { timeout: 2000 },
     );
   });
 
@@ -645,7 +645,7 @@ describe("Progress page", () => {
       () => {
         expect(screen.getByText("Sessions Trend")).toBeInTheDocument();
       },
-      { timeout: 5000 },
+      { timeout: 2000 },
     );
   });
 
@@ -669,7 +669,7 @@ describe("Progress page", () => {
       () => {
         expect(screen.getByText("Sessions Trend")).toBeInTheDocument();
       },
-      { timeout: 5000 },
+      { timeout: 2000 },
     );
   });
 
@@ -693,7 +693,7 @@ describe("Progress page", () => {
       () => {
         expect(screen.getByText("Intensity Trend")).toBeInTheDocument();
       },
-      { timeout: 5000 },
+      { timeout: 2000 },
     );
   });
 
@@ -707,7 +707,7 @@ describe("Progress page", () => {
       () => {
         expect(screen.getByText("Intensity Trend")).toBeInTheDocument();
       },
-      { timeout: 5000 },
+      { timeout: 2000 },
     );
   });
 
@@ -733,7 +733,7 @@ describe("Progress page", () => {
       () => {
         expect(screen.getByText("Bench Press")).toBeInTheDocument();
       },
-      { timeout: 5000 },
+      { timeout: 2000 },
     );
   });
 
@@ -759,7 +759,7 @@ describe("Progress page", () => {
       () => {
         expect(screen.getByText("Squat")).toBeInTheDocument();
       },
-      { timeout: 5000 },
+      { timeout: 2000 },
     );
   });
 
@@ -785,7 +785,7 @@ describe("Progress page", () => {
       () => {
         expect(screen.getByText("Deadlift")).toBeInTheDocument();
       },
-      { timeout: 5000 },
+      { timeout: 2000 },
     );
   });
 
@@ -804,7 +804,7 @@ describe("Progress page", () => {
       () => {
         expect(customButton).toBeInTheDocument();
       },
-      { timeout: 5000 },
+      { timeout: 2000 },
     );
   });
 
@@ -819,7 +819,7 @@ describe("Progress page", () => {
       () => {
         expect(screen.getByText("Volume Trend")).toBeInTheDocument();
       },
-      { timeout: 5000 },
+      { timeout: 2000 },
     );
   });
 
@@ -834,7 +834,7 @@ describe("Progress page", () => {
       () => {
         expect(screen.getByText("Volume Trend")).toBeInTheDocument();
       },
-      { timeout: 5000 },
+      { timeout: 2000 },
     );
   });
 
@@ -848,7 +848,7 @@ describe("Progress page", () => {
       () => {
         expect(screen.getByText("Exercise Breakdown")).toBeInTheDocument();
       },
-      { timeout: 5000 },
+      { timeout: 2000 },
     );
   });
 
@@ -862,7 +862,7 @@ describe("Progress page", () => {
       () => {
         expect(screen.getByText("Exercise Breakdown")).toBeInTheDocument();
       },
-      { timeout: 5000 },
+      { timeout: 2000 },
     );
   });
 
@@ -876,7 +876,7 @@ describe("Progress page", () => {
       () => {
         expect(screen.getByText("Exercise Breakdown")).toBeInTheDocument();
       },
-      { timeout: 5000 },
+      { timeout: 2000 },
     );
   });
 
@@ -893,7 +893,7 @@ describe("Progress page", () => {
       () => {
         expect(screen.getByText("Exercise Breakdown")).toBeInTheDocument();
       },
-      { timeout: 5000 },
+      { timeout: 2000 },
     );
   });
 
@@ -917,7 +917,7 @@ describe("Progress page", () => {
       () => {
         expect(screen.getByText("Volume Trend")).toBeInTheDocument();
       },
-      { timeout: 5000 },
+      { timeout: 2000 },
     );
 
     // The chartErrorFallback is rendered by ErrorBoundary when chart errors occur
@@ -944,7 +944,7 @@ describe("Progress page", () => {
       () => {
         expect(screen.getByText("Volume Trend")).toBeInTheDocument();
       },
-      { timeout: 5000 },
+      { timeout: 2000 },
     );
   });
 
@@ -968,7 +968,7 @@ describe("Progress page", () => {
       () => {
         expect(screen.getByText("Intensity Trend")).toBeInTheDocument();
       },
-      { timeout: 5000 },
+      { timeout: 2000 },
     );
   });
 
@@ -1017,7 +1017,7 @@ describe("Progress page", () => {
         expect(screen.getByText("Down")).toBeInTheDocument();
         expect(screen.getByText("Stable")).toBeInTheDocument();
       },
-      { timeout: 5000 },
+      { timeout: 2000 },
     );
   });
 
@@ -1073,7 +1073,7 @@ describe("Progress page", () => {
       () => {
         expect(screen.getByText("Volume Trend")).toBeInTheDocument();
       },
-      { timeout: 5000 },
+      { timeout: 2000 },
     );
   });
 
@@ -1097,7 +1097,7 @@ describe("Progress page", () => {
       () => {
         expect(screen.getByText("Sessions Trend")).toBeInTheDocument();
       },
-      { timeout: 5000 },
+      { timeout: 2000 },
     );
   });
 
@@ -1121,7 +1121,7 @@ describe("Progress page", () => {
       () => {
         expect(screen.getByText("Intensity Trend")).toBeInTheDocument();
       },
-      { timeout: 5000 },
+      { timeout: 2000 },
     );
   });
 
@@ -1139,7 +1139,7 @@ describe("Progress page", () => {
       () => {
         expect(screen.getByText("Volume Trend")).toBeInTheDocument();
       },
-      { timeout: 5000 },
+      { timeout: 2000 },
     );
   });
 
@@ -1169,7 +1169,7 @@ describe("Progress page", () => {
       () => {
         expect(screen.getByText("Volume Trend")).toBeInTheDocument();
       },
-      { timeout: 5000 },
+      { timeout: 2000 },
     );
   });
 
@@ -1185,7 +1185,7 @@ describe("Progress page", () => {
       () => {
         expect(screen.getByText("Sessions Trend")).toBeInTheDocument();
       },
-      { timeout: 5000 },
+      { timeout: 2000 },
     );
   });
 
@@ -1214,7 +1214,7 @@ describe("Progress page", () => {
       () => {
         expect(screen.getByText("Sessions Trend")).toBeInTheDocument();
       },
-      { timeout: 5000 },
+      { timeout: 2000 },
     );
   });
 
@@ -1230,7 +1230,7 @@ describe("Progress page", () => {
       () => {
         expect(screen.getByText("Intensity Trend")).toBeInTheDocument();
       },
-      { timeout: 5000 },
+      { timeout: 2000 },
     );
   });
 
@@ -1259,7 +1259,7 @@ describe("Progress page", () => {
       () => {
         expect(screen.getByText("Intensity Trend")).toBeInTheDocument();
       },
-      { timeout: 5000 },
+      { timeout: 2000 },
     );
   });
 
@@ -1275,7 +1275,7 @@ describe("Progress page", () => {
       () => {
         expect(screen.getByText("Exercise Breakdown")).toBeInTheDocument();
       },
-      { timeout: 5000 },
+      { timeout: 2000 },
     );
   });
 
@@ -1304,7 +1304,7 @@ describe("Progress page", () => {
       () => {
         expect(screen.getByText("Exercise Breakdown")).toBeInTheDocument();
       },
-      { timeout: 5000 },
+      { timeout: 2000 },
     );
   });
 
@@ -1332,7 +1332,7 @@ describe("Progress page", () => {
         expect(screen.getByText("10")).toBeInTheDocument(); // totalSessions
         expect(screen.getByText(/100.*kg/i)).toBeInTheDocument(); // maxWeight with "kg"
       },
-      { timeout: 5000 },
+      { timeout: 2000 },
     );
   });
 
@@ -1350,7 +1350,7 @@ describe("Progress page", () => {
       () => {
         expect(screen.getByText("Volume Trend")).toBeInTheDocument();
       },
-      { timeout: 5000 },
+      { timeout: 2000 },
     );
   });
 
@@ -1380,7 +1380,7 @@ describe("Progress page", () => {
       () => {
         expect(screen.getByText("Volume Trend")).toBeInTheDocument();
       },
-      { timeout: 5000 },
+      { timeout: 2000 },
     );
   });
 
@@ -1396,7 +1396,7 @@ describe("Progress page", () => {
       () => {
         expect(screen.getByText("Sessions Trend")).toBeInTheDocument();
       },
-      { timeout: 5000 },
+      { timeout: 2000 },
     );
   });
 
@@ -1425,7 +1425,7 @@ describe("Progress page", () => {
       () => {
         expect(screen.getByText("Sessions Trend")).toBeInTheDocument();
       },
-      { timeout: 5000 },
+      { timeout: 2000 },
     );
   });
 
@@ -1441,7 +1441,7 @@ describe("Progress page", () => {
       () => {
         expect(screen.getByText("Intensity Trend")).toBeInTheDocument();
       },
-      { timeout: 5000 },
+      { timeout: 2000 },
     );
   });
 
@@ -1470,7 +1470,7 @@ describe("Progress page", () => {
       () => {
         expect(screen.getByText("Intensity Trend")).toBeInTheDocument();
       },
-      { timeout: 5000 },
+      { timeout: 2000 },
     );
   });
 
@@ -1486,7 +1486,7 @@ describe("Progress page", () => {
       () => {
         expect(screen.getByText("Exercise Breakdown")).toBeInTheDocument();
       },
-      { timeout: 5000 },
+      { timeout: 2000 },
     );
   });
 
@@ -1515,7 +1515,7 @@ describe("Progress page", () => {
       () => {
         expect(screen.getByText("Exercise Breakdown")).toBeInTheDocument();
       },
-      { timeout: 5000 },
+      { timeout: 2000 },
     );
   });
 
@@ -1543,7 +1543,7 @@ describe("Progress page", () => {
         () => {
           expect(api.getProgressTrends).toHaveBeenCalled();
         },
-        { timeout: 2000 },
+        { timeout: 1000 },
       );
 
       // Mock successful response for refetch
@@ -1560,7 +1560,7 @@ describe("Progress page", () => {
           () => {
             expect(api.getProgressTrends).toHaveBeenCalledTimes(2);
           },
-          { timeout: 5000 },
+          { timeout: 1000 },
         );
       }
     });
@@ -1588,7 +1588,7 @@ describe("Progress page", () => {
         () => {
           expect(api.getExerciseBreakdown).toHaveBeenCalled();
         },
-        { timeout: 2000 },
+        { timeout: 1000 },
       );
 
       // Mock successful response for refetch
@@ -1609,7 +1609,7 @@ describe("Progress page", () => {
           () => {
             expect(api.getExerciseBreakdown).toHaveBeenCalledTimes(2);
           },
-          { timeout: 5000 },
+          { timeout: 1000 },
         );
       }
     });
@@ -1639,7 +1639,7 @@ describe("Progress page", () => {
           const volumeTrendSection = screen.getByText("Volume Trend").closest("section");
           expect(volumeTrendSection?.textContent).toMatch(dateRangePattern);
         },
-        { timeout: 5000 },
+        { timeout: 1000 },
       );
     });
 
@@ -1658,7 +1658,7 @@ describe("Progress page", () => {
         () => {
           expect(customButton).toBeInTheDocument();
         },
-        { timeout: 5000 },
+        { timeout: 1000 },
       );
 
       // The DateRangePicker component should be rendered
@@ -1683,7 +1683,7 @@ describe("Progress page", () => {
           // Period select might still be in DOM but hidden, so we check the mode
           expect(customButton).toBeInTheDocument();
         },
-        { timeout: 5000 },
+        { timeout: 1000 },
       );
     });
   });
@@ -1717,7 +1717,7 @@ describe("Progress page", () => {
           expect(screen.getByText("Volume Trend")).toBeInTheDocument();
           // Chart should render with converted data (50k, 123k)
         },
-        { timeout: 5000 },
+        { timeout: 1000 },
       );
     });
 
@@ -1749,7 +1749,7 @@ describe("Progress page", () => {
           expect(screen.getByText("Intensity Trend")).toBeInTheDocument();
           // Chart should render with rounded intensity values
         },
-        { timeout: 5000 },
+        { timeout: 1000 },
       );
     });
 
@@ -1781,7 +1781,7 @@ describe("Progress page", () => {
           expect(screen.getByText("Sessions Trend")).toBeInTheDocument();
           // Chart formatter should handle singular vs plural
         },
-        { timeout: 5000 },
+        { timeout: 1000 },
       );
     });
 
@@ -1813,7 +1813,7 @@ describe("Progress page", () => {
           expect(screen.getByText(/50\.0k kg/i)).toBeInTheDocument();
           expect(screen.getByText(/5\.0k kg/i)).toBeInTheDocument();
         },
-        { timeout: 5000 },
+        { timeout: 1000 },
       );
     });
   });
@@ -1835,7 +1835,7 @@ describe("Progress page", () => {
           // Query should be called with new date range
           expect(api.getProgressTrends).toHaveBeenCalled();
         },
-        { timeout: 5000 },
+        { timeout: 1000 },
       );
     });
 
@@ -1854,7 +1854,7 @@ describe("Progress page", () => {
           // In custom mode, queries should use customRange
           expect(api.getProgressTrends).toHaveBeenCalled();
         },
-        { timeout: 5000 },
+        { timeout: 1000 },
       );
     });
   });
@@ -1886,7 +1886,7 @@ describe("Progress page", () => {
         () => {
           expect(screen.getByText("Export")).toBeInTheDocument();
         },
-        { timeout: 5000 },
+        { timeout: 1000 },
       );
 
       const exportButton = screen.getByText("Export");
@@ -1901,7 +1901,7 @@ describe("Progress page", () => {
           // Verify revokeObjectURL was called
           expect(revokeObjectURLSpy).toHaveBeenCalledWith("blob:test");
         },
-        { timeout: 5000 },
+        { timeout: 1000 },
       );
 
       // Verify filename pattern by checking the download attribute was set
@@ -1931,7 +1931,7 @@ describe("Progress page", () => {
         () => {
           expect(screen.getByText("Export")).toBeInTheDocument();
         },
-        { timeout: 5000 },
+        { timeout: 1000 },
       );
 
       const exportButton = screen.getByText("Export");
@@ -1978,7 +1978,7 @@ describe("Progress page", () => {
           // ErrorBoundary wraps charts in the component
           // We verify the structure exists rather than triggering an error
         },
-        { timeout: 5000 },
+        { timeout: 1000 },
       );
     });
   });
@@ -2004,7 +2004,7 @@ describe("Progress page", () => {
           ];
           expect(lastCall[0]).toHaveProperty("group_by", "day");
         },
-        { timeout: 5000 },
+        { timeout: 1000 },
       );
     });
   });

@@ -28,8 +28,12 @@ export const SessionLogger: React.FC<SessionLoggerProps> = ({
     session.exercises.forEach((ex) => {
       initial[ex.id] =
         ex.sets.length > 0
+<<<<<<< Updated upstream
           ? ex.sets.map((set, idx) => ({
               id: `set-${ex.id}-${idx}`,
+=======
+          ? ex.sets.map((set) => ({
+>>>>>>> Stashed changes
               order: set.order_index,
               reps: set.reps ?? null,
               weight_kg: set.weight_kg ?? null,

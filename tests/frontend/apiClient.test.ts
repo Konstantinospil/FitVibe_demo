@@ -18,6 +18,10 @@ describe("apiClient authentication flow", () => {
   beforeEach(async () => {
     apiMock = new MockAdapter(apiClient);
     rawMock = new MockAdapter(rawHttpClient);
+    
+    // Mock logout endpoint to prevent 404 errors during cleanup
+    rawMock.onPost("/api/v1/auth/logout").reply(200);
+    
     await useAuthStore.getState().signOut();
   });
 

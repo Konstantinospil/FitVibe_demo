@@ -1,6 +1,6 @@
 import { render, screen, fireEvent, waitFor, act } from "@testing-library/react";
 import { BrowserRouter, MemoryRouter } from "react-router-dom";
-import { describe, expect, it, vi, beforeEach } from "vitest";
+import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
 import Register from "../../src/pages/Register";
 import { I18nextProvider } from "react-i18next";
 import i18n from "i18next";
@@ -93,6 +93,11 @@ const renderWithProviders = (ui: React.ReactElement, initialEntries?: string[]) 
 describe("Register", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    // Real timers are now the default in setupTests.ts
+  });
+
+  afterEach(() => {
+    // Cleanup is handled by setupTests.ts
   });
 
   it("renders registration form", () => {
@@ -150,15 +155,9 @@ describe("Register", () => {
       }
     });
 
-    // Wait for error to appear - check if alert exists first, then check text
-    await waitFor(
-      () => {
-        const alert = screen.queryByRole("alert");
-        expect(alert).toBeInTheDocument();
-        expect(alert).toHaveTextContent(/passwords do not match/i);
-      },
-      { timeout: 3000 },
-    );
+    // Wait for error to appear using findBy* query
+    const alert = await screen.findByRole("alert", {}, { timeout: 1000 });
+    expect(alert).toHaveTextContent(/passwords do not match/i);
 
     expect(api.register).not.toHaveBeenCalled();
   });
@@ -192,29 +191,20 @@ describe("Register", () => {
       }
     });
 
-    await waitFor(
-      () => {
-        expect(api.register).toHaveBeenCalledWith(
-          expect.objectContaining({
-            email: "john@example.com",
-            password: "Password123!",
-            username: expect.any(String),
-            terms_accepted: true,
-            profile: expect.objectContaining({
-              display_name: "John Doe",
-            }),
-          }),
-        );
-      },
-      { timeout: 3000 },
-    );
-
-    await waitFor(
-      () => {
-        expect(screen.getByText("Account Created!")).toBeInTheDocument();
-        expect(screen.getByText("Check your email to verify your account")).toBeInTheDocument();
-      },
-      { timeout: 5000 },
+    // Wait for API call and success message
+    await screen.findByText("Account Created!", {}, { timeout: 2000 });
+    expect(screen.getByText("Check your email to verify your account")).toBeInTheDocument();
+    
+    expect(api.register).toHaveBeenCalledWith(
+      expect.objectContaining({
+        email: "john@example.com",
+        password: "Password123!",
+        username: expect.any(String),
+        terms_accepted: true,
+        profile: expect.objectContaining({
+          display_name: "John Doe",
+        }),
+      }),
     );
   });
 
@@ -244,12 +234,8 @@ describe("Register", () => {
       }
     });
 
-    await waitFor(
-      () => {
-        expect(screen.getByRole("alert")).toHaveTextContent(/registration failed/i);
-      },
-      { timeout: 3000 },
-    );
+    const alert = await screen.findByRole("alert", {}, { timeout: 1000 });
+    expect(alert).toHaveTextContent(/registration failed/i);
   });
 
   it("handles user already exists error", async () => {
@@ -287,19 +273,15 @@ describe("Register", () => {
       }
     });
 
-    await waitFor(
-      () => {
-        expect(screen.getByRole("alert")).toHaveTextContent(
-          /account with this email already exists/i,
-        );
-      },
-      { timeout: 3000 },
-    );
+    const alert = await screen.findByRole("alert", {}, { timeout: 1000 });
+    expect(alert).toHaveTextContent(/account with this email already exists/i);
   });
 
   it("disables form during submission", async () => {
+    // Use real timers for this test since it uses setTimeout
+    vi.useRealTimers();
     vi.mocked(api.register).mockImplementation(
-      () => new Promise((resolve) => setTimeout(resolve, 1000)),
+      () => new Promise((resolve) => setTimeout(resolve, 100)),
     );
 
     renderWithProviders(<Register />);
@@ -334,7 +316,7 @@ describe("Register", () => {
         expect(passwordInput).toBeDisabled();
         expect(confirmPasswordInput).toBeDisabled();
       },
-      { timeout: 5000 },
+      { timeout: 1000 },
     );
 
     // Checkboxes should also be disabled during submission
@@ -380,20 +362,18 @@ describe("Register", () => {
       }
     });
 
-    await waitFor(
-      () => {
-        expect(api.register).toHaveBeenCalledWith({
-          email: "test.user+tag@example.com",
-          password: "Password123!",
-          username: "test.user_tag", // Special characters replaced with underscores
-          terms_accepted: true,
-          profile: {
-            display_name: "Test User",
-          },
-        });
+    // Wait for success message to confirm registration completed
+    await screen.findByText("Account Created!", {}, { timeout: 2000 });
+    
+    expect(api.register).toHaveBeenCalledWith({
+      email: "test.user+tag@example.com",
+      password: "Password123!",
+      username: "test.user_tag", // Special characters replaced with underscores
+      terms_accepted: true,
+      profile: {
+        display_name: "Test User",
       },
-      { timeout: 5000 },
-    );
+    });
   });
 
   it("validates password minimum length", async () => {
@@ -422,13 +402,8 @@ describe("Register", () => {
       }
     });
 
-    await waitFor(
-      () => {
-        const alert = screen.getByRole("alert");
-        expect(alert.textContent).toMatch(/password must be at least 12 characters/i);
-      },
-      { timeout: 3000 },
-    );
+    const alert = await screen.findByRole("alert", {}, { timeout: 1000 });
+    expect(alert.textContent).toMatch(/password must be at least 12 characters/i);
 
     expect(api.register).not.toHaveBeenCalled();
   });
@@ -459,13 +434,8 @@ describe("Register", () => {
       }
     });
 
-    await waitFor(
-      () => {
-        const alert = screen.getByRole("alert");
-        expect(alert.textContent).toMatch(/password must contain at least one lowercase/i);
-      },
-      { timeout: 3000 },
-    );
+    const alert = await screen.findByRole("alert", {}, { timeout: 1000 });
+    expect(alert.textContent).toMatch(/password must contain at least one lowercase/i);
 
     expect(api.register).not.toHaveBeenCalled();
   });
@@ -496,13 +466,8 @@ describe("Register", () => {
       }
     });
 
-    await waitFor(
-      () => {
-        const alert = screen.getByRole("alert");
-        expect(alert.textContent).toMatch(/password must contain at least one uppercase/i);
-      },
-      { timeout: 3000 },
-    );
+    const alert = await screen.findByRole("alert", {}, { timeout: 1000 });
+    expect(alert.textContent).toMatch(/password must contain at least one uppercase/i);
 
     expect(api.register).not.toHaveBeenCalled();
   });
@@ -533,13 +498,8 @@ describe("Register", () => {
       }
     });
 
-    await waitFor(
-      () => {
-        const alert = screen.getByRole("alert");
-        expect(alert.textContent).toMatch(/password must contain at least one digit/i);
-      },
-      { timeout: 3000 },
-    );
+    const alert = await screen.findByRole("alert", {}, { timeout: 1000 });
+    expect(alert.textContent).toMatch(/password must contain at least one digit/i);
 
     expect(api.register).not.toHaveBeenCalled();
   });
@@ -570,13 +530,8 @@ describe("Register", () => {
       }
     });
 
-    await waitFor(
-      () => {
-        const alert = screen.getByRole("alert");
-        expect(alert.textContent).toMatch(/password must contain at least one symbol/i);
-      },
-      { timeout: 3000 },
-    );
+    const alert = await screen.findByRole("alert", {}, { timeout: 1000 });
+    expect(alert.textContent).toMatch(/password must contain at least one symbol/i);
 
     expect(api.register).not.toHaveBeenCalled();
   });
@@ -603,18 +558,9 @@ describe("Register", () => {
       }
     });
 
-    await waitFor(
-      () => {
-        const alert = screen.queryByRole("alert");
-        if (alert) {
-          expect(alert).toHaveTextContent(/accept.*terms/i);
-        } else {
-          // Fallback: check for error text anywhere
-          expect(screen.getByText(/accept.*terms/i)).toBeInTheDocument();
-        }
-      },
-      { timeout: 5000 },
-    );
+    // Wait for error message about terms
+    const errorMessage = await screen.findByText(/accept.*terms/i, {}, { timeout: 2000 });
+    expect(errorMessage).toBeInTheDocument();
 
     expect(api.register).not.toHaveBeenCalled();
   });
@@ -629,18 +575,9 @@ describe("Register", () => {
       }
     });
 
-    await waitFor(
-      () => {
-        const alert = screen.queryByRole("alert");
-        if (alert) {
-          expect(alert).toHaveTextContent(/fill.*all.*fields/i);
-        } else {
-          // Fallback: check for error text anywhere
-          expect(screen.getByText(/fill.*all.*fields/i)).toBeInTheDocument();
-        }
-      },
-      { timeout: 5000 },
-    );
+    // Wait for error message about filling all fields
+    const errorMessage = await screen.findByText(/fill.*all.*fields/i, {}, { timeout: 2000 });
+    expect(errorMessage).toBeInTheDocument();
 
     expect(api.register).not.toHaveBeenCalled();
   });
@@ -681,12 +618,8 @@ describe("Register", () => {
       }
     });
 
-    await waitFor(
-      () => {
-        expect(screen.getByRole("alert")).toHaveTextContent("Custom error message");
-      },
-      { timeout: 3000 },
-    );
+    const alert = await screen.findByRole("alert", {}, { timeout: 1000 });
+    expect(alert).toHaveTextContent("Custom error message");
   });
 
   it("handles error with translated error code", async () => {
@@ -727,12 +660,8 @@ describe("Register", () => {
       }
     });
 
-    await waitFor(
-      () => {
-        expect(screen.getByRole("alert")).toBeInTheDocument();
-      },
-      { timeout: 3000 },
-    );
+    const alert = await screen.findByRole("alert", {}, { timeout: 1000 });
+    expect(alert).toBeInTheDocument();
   });
 
   it("handles network error without response object", async () => {
@@ -763,12 +692,8 @@ describe("Register", () => {
       }
     });
 
-    await waitFor(
-      () => {
-        expect(screen.getByRole("alert")).toBeInTheDocument();
-      },
-      { timeout: 3000 },
-    );
+    const alert = await screen.findByRole("alert", {}, { timeout: 1000 });
+    expect(alert).toBeInTheDocument();
   });
 
   it("handles input focus and blur events", () => {
@@ -849,19 +774,17 @@ describe("Register", () => {
       }
     });
 
-    await waitFor(
-      () => {
-        const checkboxes = screen.getAllByRole("checkbox", { name: /accept the/i });
-        const termsCheckbox = checkboxes[0]; // Terms checkbox
-        const termsLabel = termsCheckbox.closest("label");
-        // Verify error styling is applied (check for border style presence rather than exact value)
-        expect(termsLabel).toBeInTheDocument();
-        const borderStyle = window.getComputedStyle(termsLabel!).border;
-        // Just verify that a border exists (error styling), exact color value checking is brittle
-        expect(borderStyle).toBeTruthy();
-      },
-      { timeout: 5000 },
-    );
+    // Wait for error message first
+    await screen.findByText(/accept.*terms/i, {}, { timeout: 2000 });
+    
+    const checkboxes = screen.getAllByRole("checkbox", { name: /accept the/i });
+    const termsCheckbox = checkboxes[0]; // Terms checkbox
+    const termsLabel = termsCheckbox.closest("label");
+    // Verify error styling is applied (check for border style presence rather than exact value)
+    expect(termsLabel).toBeInTheDocument();
+    const borderStyle = window.getComputedStyle(termsLabel!).border;
+    // Just verify that a border exists (error styling), exact color value checking is brittle
+    expect(borderStyle).toBeTruthy();
   });
 
   it("trims whitespace from name and email inputs", async () => {
@@ -895,21 +818,19 @@ describe("Register", () => {
       }
     });
 
-    await waitFor(
-      () => {
-        expect(api.register).toHaveBeenCalledWith(
-          expect.objectContaining({
-            email: "john@example.com",
-            password: "Password123!",
-            username: expect.any(String),
-            terms_accepted: true,
-            profile: expect.objectContaining({
-              display_name: "John Doe",
-            }),
-          }),
-        );
-      },
-      { timeout: 3000 },
+    // Wait for success message to confirm registration completed
+    await screen.findByText("Account Created!", {}, { timeout: 2000 });
+    
+    expect(api.register).toHaveBeenCalledWith(
+      expect.objectContaining({
+        email: "john@example.com",
+        password: "Password123!",
+        username: expect.any(String),
+        terms_accepted: true,
+        profile: expect.objectContaining({
+          display_name: "John Doe",
+        }),
+      }),
     );
   });
 
@@ -939,12 +860,8 @@ describe("Register", () => {
       }
     });
 
-    await waitFor(
-      () => {
-        expect(screen.getByRole("alert")).toBeInTheDocument();
-      },
-      { timeout: 3000 },
-    );
+    const alert = await screen.findByRole("alert", {}, { timeout: 1000 });
+    expect(alert).toBeInTheDocument();
 
     expect(api.register).not.toHaveBeenCalled();
   });
@@ -975,12 +892,8 @@ describe("Register", () => {
       }
     });
 
-    await waitFor(
-      () => {
-        expect(screen.getByRole("alert")).toBeInTheDocument();
-      },
-      { timeout: 3000 },
-    );
+    const alert = await screen.findByRole("alert", {}, { timeout: 1000 });
+    expect(alert).toBeInTheDocument();
 
     expect(api.register).not.toHaveBeenCalled();
   });
@@ -1000,16 +913,15 @@ describe("Register", () => {
       }
     });
 
-    // Wait for validation to trigger
-    await waitFor(
-      () => {
-        // Check that the email field has the custom validation message
-        if (!emailInput.checkValidity()) {
-          expect(emailInput.validationMessage).toBe("Fill in this field");
-        }
-      },
-      { timeout: 5000 },
-    );
+    // Wait for validation to trigger - form submission should trigger validation
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 100));
+    });
+    
+    // Check that the email field has the custom validation message
+    if (!emailInput.checkValidity()) {
+      expect(emailInput.validationMessage).toBe("Fill in this field");
+    }
   });
 
   it("pre-fills email from location state when navigating from expired token", async () => {
@@ -1028,13 +940,8 @@ describe("Register", () => {
       </MemoryRouter>,
     );
 
-    await waitFor(
-      () => {
-        const emailInput = screen.getByRole("textbox", { name: /email/i }) as HTMLInputElement;
-        expect(emailInput.value).toBe("prefilled@example.com");
-      },
-      { timeout: 5000 },
-    );
+    const emailInput = await screen.findByRole("textbox", { name: /email/i }, { timeout: 1000 }) as HTMLInputElement;
+    expect(emailInput.value).toBe("prefilled@example.com");
   });
 
   it("does not pre-fill email when location state is null", () => {
@@ -1055,13 +962,8 @@ describe("Register", () => {
       </MemoryRouter>,
     );
 
-    await waitFor(
-      () => {
-        const emailInput = screen.getByRole("textbox", { name: /email/i }) as HTMLInputElement;
-        expect(emailInput.value).toBe("");
-      },
-      { timeout: 5000 },
-    );
+    const emailInput = screen.getByRole("textbox", { name: /email/i }) as HTMLInputElement;
+    expect(emailInput.value).toBe("");
   });
 
   it("should show resend link on registration success page", async () => {
@@ -1104,21 +1006,10 @@ describe("Register", () => {
       }
     });
 
-    // Wait for API call
-    await waitFor(
-      () => {
-        expect(mockRegister).toHaveBeenCalled();
-      },
-      { timeout: 5000 },
-    );
-
-    await waitFor(
-      () => {
-        // Check for success screen title to confirm registration succeeded
-        expect(screen.getByText("Account Created!")).toBeInTheDocument();
-      },
-      { timeout: 5000 },
-    );
+    // Wait for success screen to confirm registration succeeded
+    await screen.findByText("Account Created!", {}, { timeout: 2000 });
+    
+    expect(mockRegister).toHaveBeenCalled();
 
     // Then check for the email message (might be split across elements)
     expect(screen.getByText(/verification email sent to/i)).toBeInTheDocument();
@@ -1172,21 +1063,10 @@ describe("Register", () => {
       }
     });
 
-    // Wait for API call
-    await waitFor(
-      () => {
-        expect(mockRegister).toHaveBeenCalled();
-      },
-      { timeout: 5000 },
-    );
-
-    await waitFor(
-      () => {
-        // Check for success screen title to confirm registration succeeded
-        expect(screen.getByText("Account Created!")).toBeInTheDocument();
-      },
-      { timeout: 5000 },
-    );
+    // Wait for success screen to confirm registration succeeded
+    await screen.findByText("Account Created!", {}, { timeout: 2000 });
+    
+    expect(mockRegister).toHaveBeenCalled();
 
     // Then check for the email message (might be split across elements)
     expect(screen.getByText(/verification email sent to/i)).toBeInTheDocument();
@@ -1197,22 +1077,16 @@ describe("Register", () => {
       fireEvent.click(resendButton);
     });
 
+    // Wait for resend API call
     await waitFor(
       () => {
         expect(mockResend).toHaveBeenCalledWith({ email: "test@example.com" });
       },
-      { timeout: 5000 },
+      { timeout: 1000 },
     );
 
     // Check for success message
-    await waitFor(
-      () => {
-        expect(
-          screen.getByText(/verification email sent! please check your inbox/i),
-        ).toBeInTheDocument();
-      },
-      { timeout: 5000 },
-    );
+    await screen.findByText(/verification email sent! please check your inbox/i, {}, { timeout: 2000 });
   });
 
   it("should show error message when resend fails", async () => {
@@ -1266,21 +1140,10 @@ describe("Register", () => {
       }
     });
 
-    // Wait for API call
-    await waitFor(
-      () => {
-        expect(mockRegister).toHaveBeenCalled();
-      },
-      { timeout: 5000 },
-    );
-
-    await waitFor(
-      () => {
-        // Check for success screen title to confirm registration succeeded
-        expect(screen.getByText("Account Created!")).toBeInTheDocument();
-      },
-      { timeout: 5000 },
-    );
+    // Wait for success screen to confirm registration succeeded
+    await screen.findByText("Account Created!", {}, { timeout: 2000 });
+    
+    expect(mockRegister).toHaveBeenCalled();
 
     // Then check for the email message (might be split across elements)
     expect(screen.getByText(/verification email sent to/i)).toBeInTheDocument();
@@ -1291,11 +1154,6 @@ describe("Register", () => {
       fireEvent.click(resendButton);
     });
 
-    await waitFor(
-      () => {
-        expect(screen.getByText(/too many requests/i)).toBeInTheDocument();
-      },
-      { timeout: 5000 },
-    );
+    await screen.findByText(/too many requests/i, {}, { timeout: 2000 });
   });
 });

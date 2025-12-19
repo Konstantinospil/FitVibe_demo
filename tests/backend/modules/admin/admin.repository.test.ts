@@ -122,3 +122,4 @@ describe("Admin Repository", () => {
     });
   });
 });
+

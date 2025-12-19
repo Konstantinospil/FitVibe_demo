@@ -12,4 +12,4 @@ Key references for data/ops tasks:
 
 All ADRs follow the template in `ADR_TEMPLATE.md` and are indexed in
 `ADR_INDEX.md`. When implementation diverges, update the relevant ADR and link
-the change from pull requests or task tickets (see `apps/docs/5. Tasks.md`).
+the change from pull requests or related documentation.

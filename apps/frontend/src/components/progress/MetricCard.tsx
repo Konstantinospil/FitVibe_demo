@@ -1,5 +1,6 @@
 import React from "react";
 import { Card, CardContent } from "../ui/Card";
+<<<<<<< Updated upstream
 import { TrendingUp, TrendingDown, Minus } from "lucide-react";
 import type { DashboardSummaryMetric } from "../../services/api";
 import Skeleton from "../ui/Skeleton";
@@ -22,11 +23,29 @@ export interface MetricCardProps {
 export const MetricCard: React.FC<MetricCardProps> = ({
   metric: metricProp,
   key: _key,
+=======
+import Skeleton from "../ui/Skeleton";
+
+export interface MetricCardProps {
+  label: string;
+  value: string | number;
+  trend?: string;
+  loading?: boolean;
+  className?: string;
+}
+
+/**
+ * MetricCard component displays individual metrics with label, value, and optional trend.
+ * Used in dashboards and progress views.
+ */
+export const MetricCard: React.FC<MetricCardProps> = ({
+>>>>>>> Stashed changes
   label,
   value,
   trend,
   loading = false,
   className,
+<<<<<<< Updated upstream
   style,
 }) => {
   const metric = metricProp || {
@@ -83,13 +102,66 @@ export const MetricCard: React.FC<MetricCardProps> = ({
           <div
             style={{
               fontSize: "var(--font-size-xl)",
+=======
+}) => {
+  const formatValue = (val: string | number): string => {
+    return typeof val === "number" ? val.toLocaleString() : val;
+  };
+
+  return (
+    <Card
+      className={className}
+      style={{
+        flex: "1 1 200px",
+        minWidth: "200px",
+        background: "var(--color-surface-glass)",
+        border: "1px solid var(--color-border)",
+        display: "grid",
+        gap: "0.35rem",
+      }}
+    >
+      <CardContent>
+        <span
+          className="text-sm"
+          style={{
+            color: "var(--color-text-secondary)",
+            fontSize: "0.85rem",
+          }}
+        >
+          {label}
+        </span>
+        {loading ? (
+          <Skeleton height="2rem" />
+        ) : (
+          <strong
+            className="text-2xl"
+            style={{
+              fontSize: "2rem",
+>>>>>>> Stashed changes
               fontWeight: 600,
               color: "var(--color-text-primary)",
             }}
           >
+<<<<<<< Updated upstream
             {typeof metric.value === "number" ? metric.value.toLocaleString() : metric.value}
           </div>
         </div>
+=======
+            {formatValue(value)}
+          </strong>
+        )}
+        {trend && !loading && (
+          <span
+            className="text-sm"
+            style={{
+              fontSize: "0.9rem",
+              color: "var(--color-highlight)",
+            }}
+          >
+            {trend}
+          </span>
+        )}
+>>>>>>> Stashed changes
       </CardContent>
     </Card>
   );

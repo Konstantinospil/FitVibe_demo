@@ -673,9 +673,15 @@ export async function getFeed(
         viewerHasBookmarked: boolean;
       };
     }>;
+<<<<<<< Updated upstream
     total?: number;
     limit?: number;
     offset?: number;
+=======
+    total: number;
+    limit: number;
+    offset: number;
+>>>>>>> Stashed changes
   }>("/api/v1/feed", { params });
 
   // Transform backend response to frontend format
@@ -710,7 +716,13 @@ export async function getFeed(
       isLiked: item.stats.viewerHasLiked,
       isBookmarked: item.stats.viewerHasBookmarked,
     })),
+<<<<<<< Updated upstream
     ...(res.data.total !== undefined ? { total: res.data.total } : {}),
+=======
+    total: res.data.total,
+    limit: res.data.limit,
+    offset: res.data.offset,
+>>>>>>> Stashed changes
   };
 }
 
@@ -737,12 +749,124 @@ export async function cloneSessionFromFeed(sessionId: string): Promise<{ session
   return res.data;
 }
 
+<<<<<<< Updated upstream
 export async function followUser(userId: string): Promise<void> {
   await apiClient.post(`/api/v1/users/${userId}/follow`);
 }
 
 export async function unfollowUser(userId: string): Promise<void> {
   await apiClient.delete(`/api/v1/users/${userId}/follow`);
+=======
+// Bookmark API
+export async function bookmarkSession(sessionId: string): Promise<void> {
+  await apiClient.post(`/api/v1/sessions/${sessionId}/bookmark`);
+}
+
+export async function unbookmarkSession(sessionId: string): Promise<void> {
+  await apiClient.delete(`/api/v1/sessions/${sessionId}/bookmark`);
+}
+
+export async function bookmarkFeedItem(feedItemId: string): Promise<void> {
+  await apiClient.post(`/api/v1/feed/item/${feedItemId}/bookmark`);
+}
+
+export async function unbookmarkFeedItem(feedItemId: string): Promise<void> {
+  await apiClient.delete(`/api/v1/feed/item/${feedItemId}/bookmark`);
+}
+
+// Comment API
+export interface Comment {
+  id: string;
+  feedItemId: string;
+  userId: string;
+  username: string;
+  displayName?: string;
+  body: string;
+  createdAt: string;
+  deletedAt?: string;
+}
+
+export interface CommentsResponse {
+  comments: Comment[];
+  total?: number;
+  limit?: number;
+  offset?: number;
+}
+
+export async function getFeedItemComments(
+  feedItemId: string,
+  params?: { limit?: number; offset?: number },
+): Promise<CommentsResponse> {
+  const res = await apiClient.get<CommentsResponse>(`/api/v1/feed/item/${feedItemId}/comments`, {
+    params,
+  });
+  return res.data;
+}
+
+export interface AddCommentRequest {
+  body: string;
+}
+
+export interface AddCommentResponse {
+  comment: Comment;
+}
+
+export async function addComment(
+  feedItemId: string,
+  payload: AddCommentRequest,
+): Promise<AddCommentResponse> {
+  const res = await apiClient.post<AddCommentResponse>(
+    `/api/v1/feed/item/${feedItemId}/comments`,
+    payload,
+  );
+  return res.data;
+}
+
+export async function deleteComment(commentId: string): Promise<void> {
+  await apiClient.delete(`/api/v1/feed/comments/${commentId}`);
+}
+
+// Follow API
+export async function followUser(alias: string): Promise<void> {
+  await apiClient.post(`/api/v1/users/${alias}/follow`);
+}
+
+export async function unfollowUser(alias: string): Promise<void> {
+  await apiClient.delete(`/api/v1/users/${alias}/follow`);
+}
+
+export interface UserProfile {
+  id: string;
+  username: string;
+  alias: string;
+  displayName?: string;
+  avatarUrl?: string;
+  bio?: string;
+  followersCount?: number;
+  followingCount?: number;
+  isFollowing?: boolean;
+  isOwnProfile?: boolean;
+}
+
+export async function getUserProfile(alias: string): Promise<UserProfile> {
+  const res = await apiClient.get<UserProfile>(`/api/v1/users/${alias}`);
+  return res.data;
+}
+
+// Share API
+export interface ShareLinkResponse {
+  token: string;
+  url: string;
+}
+
+export async function createShareLink(feedItemId: string): Promise<ShareLinkResponse> {
+  const res = await apiClient.post<ShareLinkResponse>(`/api/v1/feed/item/${feedItemId}/link`);
+  return res.data;
+}
+
+export async function revokeShareLink(feedItemId: string): Promise<void> {
+  await apiClient.delete(`/api/v1/feed/item/${feedItemId}/link`);
+>>>>>>> Stashed changes
 }
 
 // Progress API
@@ -1169,6 +1293,113 @@ export async function moderateContent(
   return res.data;
 }
 
+// Points API
+export interface PointsBalance {
+  total: number;
+  recentEvents?: Array<{
+    id: string;
+    type: string;
+    points: number;
+    description: string;
+    createdAt: string;
+  }>;
+}
+
+export interface PointsHistoryEntry {
+  id: string;
+  type: string;
+  points: number;
+  description: string;
+  createdAt: string;
+  sessionId?: string;
+  exerciseId?: string;
+}
+
+export interface PointsHistoryResponse {
+  entries: PointsHistoryEntry[];
+  total: number;
+  limit: number;
+  offset: number;
+}
+
+export async function getPointsBalance(): Promise<PointsBalance> {
+  const res = await apiClient.get<PointsBalance>("/api/v1/points");
+  return res.data;
+}
+
+export async function getPointsHistory(params?: {
+  limit?: number;
+  offset?: number;
+}): Promise<PointsHistoryResponse> {
+  const res = await apiClient.get<PointsHistoryResponse>("/api/v1/points/history", { params });
+  return res.data;
+}
+
+// Badges API
+export interface Badge {
+  id: string;
+  code: string;
+  name: string;
+  description: string;
+  iconUrl?: string;
+  category?: string;
+  rarity?: "common" | "rare" | "epic" | "legendary";
+  earnedAt?: string;
+  progress?: number;
+  maxProgress?: number;
+}
+
+export interface BadgeCatalogResponse {
+  badges: Badge[];
+  total: number;
+}
+
+export interface UserBadgesResponse {
+  badges: Badge[];
+  total: number;
+}
+
+export async function getUserBadges(): Promise<UserBadgesResponse> {
+  const res = await apiClient.get<UserBadgesResponse>("/api/v1/badges");
+  return res.data;
+}
+
+export async function getBadgeCatalog(): Promise<BadgeCatalogResponse> {
+  const res = await apiClient.get<BadgeCatalogResponse>("/api/v1/badges/catalog");
+  return res.data;
+}
+
+// Leaderboard API
+export type LeaderboardType = "global" | "friends";
+export type LeaderboardPeriod = "week" | "month" | "year" | "all";
+
+export interface LeaderboardEntry {
+  rank: number;
+  userId: string;
+  username: string;
+  displayName?: string;
+  avatarUrl?: string;
+  points: number;
+  badgesCount: number;
+  streak?: number;
+}
+
+export interface LeaderboardResponse {
+  entries: LeaderboardEntry[];
+  total: number;
+  type: LeaderboardType;
+  period: LeaderboardPeriod;
+  userRank?: number;
+}
+
+export async function getLeaderboard(params: {
+  type: LeaderboardType;
+  period: LeaderboardPeriod;
+}): Promise<LeaderboardResponse> {
+  const res = await apiClient.get<LeaderboardResponse>("/api/v1/leaderboards", { params });
+  return res.data;
+}
+
 // Admin - User Management API
 export interface UserRecord {
   id: string;
@@ -1211,6 +1442,17 @@ export async function suspendUser(
 ): Promise<{ success: boolean; message: string }> {
   const res = await apiClient.post<{ success: boolean; message: string }>(
     `/api/v1/admin/users/${userId}/suspend`,
+    payload ?? {},
+  );
+  return res.data;
+}
+
+export async function unsuspendUser(
+  userId: string,
+  payload?: UserActionRequest,
+): Promise<{ success: boolean; message: string }> {
+  const res = await apiClient.post<{ success: boolean; message: string }>(
+    `/api/v1/admin/users/${userId}/unsuspend`,
     payload ?? {},
   );
   return res.data;
@@ -1285,6 +1527,94 @@ export async function disable2FA(password: string): Promise<{ success: boolean; 
 
 export async function get2FAStatus(): Promise<TwoFactorStatusResponse> {
   const res = await apiClient.get<TwoFactorStatusResponse>("/api/v1/auth/2fa/status");
+  return res.data;
+}
+
+// User Profile API
+export interface UpdateProfileRequest {
+  displayName?: string;
+  bio?: string;
+  locale?: string;
+  alias?: string;
+  weight?: number;
+  weightUnit?: "kg" | "lb";
+  fitnessLevel?: "beginner" | "intermediate" | "advanced" | "elite";
+  trainingFrequency?: "rarely" | "1_2_per_week" | "3_4_per_week" | "5_plus_per_week";
+}
+
+export interface UserProfileResponse {
+  id: string;
+  username: string;
+  alias: string;
+  displayName?: string;
+  bio?: string;
+  avatarUrl?: string;
+  weight?: number;
+  weightUnit?: "kg" | "lb";
+  fitnessLevel?: "beginner" | "intermediate" | "advanced" | "elite";
+  trainingFrequency?: "rarely" | "1_2_per_week" | "3_4_per_week" | "5_plus_per_week";
+  locale?: string;
+}
+
+export async function getCurrentUser(): Promise<UserProfileResponse> {
+  const res = await apiClient.get<UserProfileResponse>("/api/v1/users/me");
+  return res.data;
+}
+
+export async function updateProfile(payload: UpdateProfileRequest): Promise<UserProfileResponse> {
+  const res = await apiClient.patch<UserProfileResponse>("/api/v1/users/me", payload);
+  return res.data;
+}
+
+export interface ChangePasswordRequest {
+  currentPassword: string;
+  newPassword: string;
+}
+
+export async function changePassword(payload: ChangePasswordRequest): Promise<void> {
+  await apiClient.patch("/api/v1/users/me/password", payload);
+}
+
+export interface PrivacySettings {
+  defaultVisibility: "private" | "public" | "link" | "followers";
+  allowFollowers: boolean;
+  showEmail: boolean;
+  showWeight: boolean;
+  showFitnessLevel: boolean;
+}
+
+export async function getPrivacySettings(): Promise<PrivacySettings> {
+  const res = await apiClient.get<PrivacySettings>("/api/v1/users/me/privacy");
+  return res.data;
+}
+
+export async function updatePrivacySettings(
+  payload: Partial<PrivacySettings>,
+): Promise<PrivacySettings> {
+  const res = await apiClient.patch<PrivacySettings>("/api/v1/users/me/privacy", payload);
+  return res.data;
+}
+
+export interface DeleteAccountRequest {
+  password: string;
+}
+
+export interface DeleteAccountResponse {
+  status: "pending_deletion";
+  scheduledAt: string;
+  purgeDueAt: string;
+  backupPurgeDueAt: string;
+}
+
+export async function deleteAccount(payload: DeleteAccountRequest): Promise<DeleteAccountResponse> {
+  const res = await apiClient.delete<DeleteAccountResponse>("/api/v1/users/me", { data: payload });
+  return res.data;
+}
+
+export async function exportUserData(): Promise<Blob> {
+  const res = await apiClient.get<Blob>("/api/v1/users/me/export", {
+    responseType: "blob",
+  });
   return res.data;
 }
 

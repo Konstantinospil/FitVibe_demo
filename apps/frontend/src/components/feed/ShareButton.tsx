@@ -82,7 +82,7 @@ export const ShareButton: React.FC<ShareButtonProps> = ({
       setTimeout(() => {
         setCopied(false);
       }, 2000);
-    } catch {
+    } catch (_error) {
       showToast({
         variant: "error",
         title: t("feed.share.copyError"),

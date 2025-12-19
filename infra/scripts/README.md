@@ -179,6 +179,6 @@ Ensure the database user has:
 
 ## Related Documentation
 
-- [Database Schema Documentation](../apps/backend/src/db/README.md)
+- [Database Schema Documentation](../../apps/backend/src/db/README.md)
 - [Infrastructure README](../README.md)
 - [Backend README](../../apps/backend/README.md)

@@ -146,6 +146,86 @@ export async function listFeedSessions({
   return query;
 }
 
+export async function countFeedSessions({
+  viewerId,
+  scope,
+  searchQuery,
+}: {
+  viewerId?: string | null;
+  scope: FeedScope;
+  searchQuery?: string | null;
+}): Promise<number> {
+  const query = db(FEED_ITEMS_TABLE)
+    .leftJoin(SESSIONS_TABLE, `${SESSIONS_TABLE}.id`, `${FEED_ITEMS_TABLE}.session_id`)
+    .leftJoin(USERS_TABLE, `${USERS_TABLE}.id`, `${FEED_ITEMS_TABLE}.owner_id`);
+
+  // For search, we need to join with session_exercises to search exercise names
+  if (searchQuery) {
+    query.leftJoin(
+      SESSION_EXERCISES_TABLE,
+      `${SESSION_EXERCISES_TABLE}.session_id`,
+      `${SESSIONS_TABLE}.id`,
+    );
+  }
+
+  query.whereNull(`${FEED_ITEMS_TABLE}.deleted_at`);
+
+  // Apply search query if provided
+  if (searchQuery && searchQuery.trim().length > 0) {
+    const searchTerm = `%${searchQuery.trim().toLowerCase()}%`;
+    query.where((builder) => {
+      builder
+        .whereRaw(`LOWER(${SESSIONS_TABLE}.title) LIKE ?`, [searchTerm])
+        .orWhereRaw(`LOWER(${SESSION_EXERCISES_TABLE}.exercise_name) LIKE ?`, [searchTerm])
+        .orWhereRaw(`LOWER(${USERS_TABLE}.username) LIKE ?`, [searchTerm])
+        .orWhereRaw(`LOWER(${USERS_TABLE}.display_name) LIKE ?`, [searchTerm]);
+    });
+  }
+
+  if (viewerId) {
+    query.whereNotExists(
+      db(USER_BLOCKS_TABLE)
+        .select(1)
+        .where(`${USER_BLOCKS_TABLE}.blocker_id`, viewerId)
+        .whereRaw(`${USER_BLOCKS_TABLE}.blocked_id = ${FEED_ITEMS_TABLE}.owner_id`),
+    );
+    query.whereNotExists(
+      db(USER_BLOCKS_TABLE)
+        .select(1)
+        .where(`${USER_BLOCKS_TABLE}.blocked_id`, viewerId)
+        .whereRaw(`${USER_BLOCKS_TABLE}.blocker_id = ${FEED_ITEMS_TABLE}.owner_id`),
+    );
+  }
+
+  if (scope === "public") {
+    query.where(`${FEED_ITEMS_TABLE}.visibility`, "public");
+  } else if (scope === "me") {
+    if (!viewerId) {
+      return 0;
+    }
+    query.where(`${FEED_ITEMS_TABLE}.owner_id`, viewerId);
+  } else if (scope === "following") {
+    if (!viewerId) {
+      return 0;
+    }
+    query.whereIn(`${FEED_ITEMS_TABLE}.owner_id`, (builder) => {
+      builder.select("following_id").from(FOLLOWERS_TABLE).where({ follower_id: viewerId });
+    });
+    query.where(`${FEED_ITEMS_TABLE}.visibility`, "public");
+  }
+
+  // For count, we need to use distinct on feed_item_id to avoid duplicates from joins
+  const result = await query
+    .countDistinct(`${FEED_ITEMS_TABLE}.id as count`)
+    .first<{ count: string | number }>();
+
+  if (!result) {
+    return 0;
+  }
+
+  return typeof result.count === "string" ? parseInt(result.count, 10) : result.count;
+}
+
 export interface SessionRow {
   id: string;
   owner_id: string;

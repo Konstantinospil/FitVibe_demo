@@ -27,6 +27,7 @@ export const PrivacySettings: React.FC<PrivacySettingsProps> = ({ onUpdate }) =>
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [settings, setSettings] = useState<PrivacySettingsData>({
+<<<<<<< Updated upstream
     profileVisibility: "private",
     defaultVisibility: "private",
     allowFollowers: true,
@@ -35,6 +36,13 @@ export const PrivacySettings: React.FC<PrivacySettingsProps> = ({ onUpdate }) =>
     showWeight: false,
     showFitnessLevel: false,
     allowMessages: false,
+=======
+    defaultVisibility: "private",
+    allowFollowers: true,
+    showEmail: false,
+    showWeight: false,
+    showFitnessLevel: false,
+>>>>>>> Stashed changes
   });
 
   useEffect(() => {
@@ -43,7 +51,11 @@ export const PrivacySettings: React.FC<PrivacySettingsProps> = ({ onUpdate }) =>
       try {
         const data = await getPrivacySettings();
         setSettings(data);
+<<<<<<< Updated upstream
       } catch {
+=======
+      } catch (_err) {
+>>>>>>> Stashed changes
         setError(t("settings.privacy.loadError") || "Failed to load privacy settings");
       } finally {
         setIsLoading(false);
@@ -64,7 +76,11 @@ export const PrivacySettings: React.FC<PrivacySettingsProps> = ({ onUpdate }) =>
         message: t("settings.privacy.savedMessage") || "Your privacy settings have been updated",
       });
       onUpdate?.();
+<<<<<<< Updated upstream
     } catch {
+=======
+    } catch (_err) {
+>>>>>>> Stashed changes
       setError(t("settings.privacy.saveError") || "Failed to save privacy settings");
     } finally {
       setIsSaving(false);

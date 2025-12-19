@@ -58,7 +58,7 @@ export const EmailVerification: React.FC<EmailVerificationProps> = ({ onVerified
         title: t("auth.verification.emailSent") || "Verification email sent",
         message: t("auth.verification.checkInbox") || "Please check your inbox",
       });
-    } catch {
+    } catch (_err) {
       setError(t("auth.verification.resendFailed") || "Failed to resend verification email");
     } finally {
       setIsResending(false);

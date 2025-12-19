@@ -2,6 +2,7 @@ import { screen, fireEvent, waitFor, cleanup } from "@testing-library/react";
 import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
 import { apiClient } from "../../src/services/api";
 import { renderSettings, setupSettingsTests, mockUserData } from "./Settings.test.helpers";
+<<<<<<< Updated upstream
 import { cleanupQueryClient } from "../helpers/testQueryClient";
 
 // Mock FileReader to prevent async timing issues in tests
@@ -76,37 +77,80 @@ describe("Settings - Avatar Upload (FR-009)", () => {
     if ((result as any).queryClient) {
       queryClients.push((result as any).queryClient);
     }
+=======
+
+describe("Settings - Avatar Upload (FR-009)", () => {
+  beforeEach(() => {
+    setupSettingsTests();
+  });
+
+  afterEach(() => {
+    cleanup();
+    vi.clearAllTimers();
+  });
+
+  it("displays avatar upload section", async () => {
+    const { container } = renderSettings();
+>>>>>>> Stashed changes
 
     await waitFor(
       () => {
         const settingsTexts = screen.queryAllByText("Settings");
+<<<<<<< Updated upstream
         expect(Array.from(settingsTexts).find((el) => container.contains(el))).toBeInTheDocument();
       },
       { timeout: 5000 },
+=======
+        expect(
+          Array.from(settingsTexts).find((el) => container.contains(el)),
+        ).toBeInTheDocument();
+      },
+      { timeout: 2000 },
+>>>>>>> Stashed changes
     );
 
     await waitFor(
       () => {
         const selectButtons = screen.getAllByText(/select image/i);
+<<<<<<< Updated upstream
         expect(Array.from(selectButtons).find((el) => container.contains(el))).toBeInTheDocument();
       },
       { timeout: 5000 },
+=======
+        expect(
+          Array.from(selectButtons).find((el) => container.contains(el)),
+        ).toBeInTheDocument();
+      },
+      { timeout: 2000 },
+>>>>>>> Stashed changes
     );
   });
 
   it("allows selecting an image file", async () => {
+<<<<<<< Updated upstream
     const result = renderSettings();
     const { container } = result;
     if ((result as any).queryClient) {
       queryClients.push((result as any).queryClient);
     }
+=======
+    const { container } = renderSettings();
+>>>>>>> Stashed changes
 
     await waitFor(
       () => {
         const settingsTexts = screen.queryAllByText("Settings");
+<<<<<<< Updated upstream
         expect(Array.from(settingsTexts).find((el) => container.contains(el))).toBeInTheDocument();
       },
       { timeout: 5000 },
+=======
+        expect(
+          Array.from(settingsTexts).find((el) => container.contains(el)),
+        ).toBeInTheDocument();
+      },
+      { timeout: 2000 },
+>>>>>>> Stashed changes
     );
 
     const fileInput = container.querySelector("#avatar-upload") as HTMLInputElement;
@@ -118,25 +162,45 @@ describe("Settings - Avatar Upload (FR-009)", () => {
     await waitFor(
       () => {
         const uploadButtons = screen.getAllByText(/upload/i);
+<<<<<<< Updated upstream
         expect(Array.from(uploadButtons).find((el) => container.contains(el))).toBeInTheDocument();
       },
       { timeout: 5000 },
+=======
+        expect(
+          Array.from(uploadButtons).find((el) => container.contains(el)),
+        ).toBeInTheDocument();
+      },
+      { timeout: 2000 },
+>>>>>>> Stashed changes
     );
   });
 
   it("rejects invalid file types", async () => {
+<<<<<<< Updated upstream
     const result = renderSettings();
     const { container } = result;
     if ((result as any).queryClient) {
       queryClients.push((result as any).queryClient);
     }
+=======
+    const { container } = renderSettings();
+>>>>>>> Stashed changes
 
     await waitFor(
       () => {
         const settingsTexts = screen.queryAllByText("Settings");
+<<<<<<< Updated upstream
         expect(Array.from(settingsTexts).find((el) => container.contains(el))).toBeInTheDocument();
       },
       { timeout: 5000 },
+=======
+        expect(
+          Array.from(settingsTexts).find((el) => container.contains(el)),
+        ).toBeInTheDocument();
+      },
+      { timeout: 2000 },
+>>>>>>> Stashed changes
     );
 
     const fileInput = container.querySelector("#avatar-upload") as HTMLInputElement;
@@ -149,23 +213,39 @@ describe("Settings - Avatar Upload (FR-009)", () => {
         const errorTexts = screen.queryAllByText(/invalid file type/i);
         expect(Array.from(errorTexts).find((el) => container.contains(el))).toBeInTheDocument();
       },
+<<<<<<< Updated upstream
       { timeout: 5000 },
+=======
+      { timeout: 2000 },
+>>>>>>> Stashed changes
     );
   });
 
   it("rejects files that are too large", async () => {
+<<<<<<< Updated upstream
     const result = renderSettings();
     const { container } = result;
     if ((result as any).queryClient) {
       queryClients.push((result as any).queryClient);
     }
+=======
+    const { container } = renderSettings();
+>>>>>>> Stashed changes
 
     await waitFor(
       () => {
         const settingsTexts = screen.queryAllByText("Settings");
+<<<<<<< Updated upstream
         expect(Array.from(settingsTexts).find((el) => container.contains(el))).toBeInTheDocument();
       },
       { timeout: 5000 },
+=======
+        expect(
+          Array.from(settingsTexts).find((el) => container.contains(el)),
+        ).toBeInTheDocument();
+      },
+      { timeout: 2000 },
+>>>>>>> Stashed changes
     );
 
     const fileInput = container.querySelector("#avatar-upload") as HTMLInputElement;
@@ -180,7 +260,11 @@ describe("Settings - Avatar Upload (FR-009)", () => {
         const errorTexts = screen.queryAllByText(/too large/i);
         expect(Array.from(errorTexts).find((el) => container.contains(el))).toBeInTheDocument();
       },
+<<<<<<< Updated upstream
       { timeout: 5000 },
+=======
+      { timeout: 2000 },
+>>>>>>> Stashed changes
     );
   });
 
@@ -195,25 +279,43 @@ describe("Settings - Avatar Upload (FR-009)", () => {
       },
     });
 
+<<<<<<< Updated upstream
     const result = renderSettings();
     const { container } = result;
     if ((result as any).queryClient) {
       queryClients.push((result as any).queryClient);
     }
+=======
+    const { container } = renderSettings();
+>>>>>>> Stashed changes
 
     await waitFor(
       () => {
         const settingsTexts = screen.queryAllByText("Settings");
+<<<<<<< Updated upstream
         expect(Array.from(settingsTexts).find((el) => container.contains(el))).toBeInTheDocument();
       },
       { timeout: 5000 },
+=======
+        expect(
+          Array.from(settingsTexts).find((el) => container.contains(el)),
+        ).toBeInTheDocument();
+      },
+      { timeout: 2000 },
+>>>>>>> Stashed changes
     );
 
     const fileInput = container.querySelector("#avatar-upload") as HTMLInputElement;
     expect(fileInput).toBeDefined();
+<<<<<<< Updated upstream
 
     const file = new File(["fake-image-content"], "test.jpg", { type: "image/jpeg" });
 
+=======
+    
+    const file = new File(["fake-image-content"], "test.jpg", { type: "image/jpeg" });
+    
+>>>>>>> Stashed changes
     // Create a FileList-like object that can be accessed by the component
     const fileList = {
       0: file,
@@ -223,11 +325,16 @@ describe("Settings - Avatar Upload (FR-009)", () => {
         yield file;
       },
     } as FileList;
+<<<<<<< Updated upstream
 
+=======
+    
+>>>>>>> Stashed changes
     // Trigger change event to run handleAvatarFileSelect
     fireEvent.change(fileInput, { target: { files: fileList } });
 
     // Wait for FileReader to complete and upload button to appear
+<<<<<<< Updated upstream
     // FileReader is mocked to complete asynchronously, so we need to wait
     await waitFor(
       () => {
@@ -235,6 +342,16 @@ describe("Settings - Avatar Upload (FR-009)", () => {
         expect(Array.from(uploadButtons).find((el) => container.contains(el))).toBeInTheDocument();
       },
       { timeout: 5000 },
+=======
+    await waitFor(
+      () => {
+        const uploadButtons = screen.getAllByText(/upload/i);
+        expect(
+          Array.from(uploadButtons).find((el) => container.contains(el)),
+        ).toBeInTheDocument();
+      },
+      { timeout: 2000 },
+>>>>>>> Stashed changes
     );
 
     // Re-query the input element and ensure files are set before clicking upload
@@ -264,7 +381,11 @@ describe("Settings - Avatar Upload (FR-009)", () => {
           }),
         });
       },
+<<<<<<< Updated upstream
       { timeout: 5000 },
+=======
+      { timeout: 2000 },
+>>>>>>> Stashed changes
     );
   });
 
@@ -282,18 +403,30 @@ describe("Settings - Avatar Upload (FR-009)", () => {
       },
     });
 
+<<<<<<< Updated upstream
     const result = renderSettings();
     const { container } = result;
     if ((result as any).queryClient) {
       queryClients.push((result as any).queryClient);
     }
+=======
+    const { container } = renderSettings();
+>>>>>>> Stashed changes
 
     await waitFor(
       () => {
         const settingsTexts = screen.queryAllByText("Settings");
+<<<<<<< Updated upstream
         expect(Array.from(settingsTexts).find((el) => container.contains(el))).toBeInTheDocument();
       },
       { timeout: 5000 },
+=======
+        expect(
+          Array.from(settingsTexts).find((el) => container.contains(el)),
+        ).toBeInTheDocument();
+      },
+      { timeout: 2000 },
+>>>>>>> Stashed changes
     );
 
     await waitFor(
@@ -301,7 +434,11 @@ describe("Settings - Avatar Upload (FR-009)", () => {
         const avatarImages = container.querySelectorAll('img[alt="Profile avatar"]');
         expect(avatarImages.length).toBeGreaterThan(0);
       },
+<<<<<<< Updated upstream
       { timeout: 5000 },
+=======
+      { timeout: 2000 },
+>>>>>>> Stashed changes
     );
   });
 
@@ -319,26 +456,46 @@ describe("Settings - Avatar Upload (FR-009)", () => {
       },
     });
 
+<<<<<<< Updated upstream
     const result = renderSettings();
     const { container } = result;
     if ((result as any).queryClient) {
       queryClients.push((result as any).queryClient);
     }
+=======
+    const { container } = renderSettings();
+>>>>>>> Stashed changes
 
     await waitFor(
       () => {
         const settingsTexts = screen.queryAllByText("Settings");
+<<<<<<< Updated upstream
         expect(Array.from(settingsTexts).find((el) => container.contains(el))).toBeInTheDocument();
       },
       { timeout: 5000 },
+=======
+        expect(
+          Array.from(settingsTexts).find((el) => container.contains(el)),
+        ).toBeInTheDocument();
+      },
+      { timeout: 2000 },
+>>>>>>> Stashed changes
     );
 
     await waitFor(
       () => {
         const deleteButtons = screen.getAllByText(/delete/i);
+<<<<<<< Updated upstream
         expect(Array.from(deleteButtons).find((el) => container.contains(el))).toBeInTheDocument();
       },
       { timeout: 5000 },
+=======
+        expect(
+          Array.from(deleteButtons).find((el) => container.contains(el)),
+        ).toBeInTheDocument();
+      },
+      { timeout: 2000 },
+>>>>>>> Stashed changes
     );
 
     const deleteButtons = screen.getAllByText(/delete/i);
@@ -349,7 +506,11 @@ describe("Settings - Avatar Upload (FR-009)", () => {
       () => {
         expect(mockDelete).toHaveBeenCalledWith("/api/v1/users/me/avatar");
       },
+<<<<<<< Updated upstream
       { timeout: 5000 },
+=======
+      { timeout: 2000 },
+>>>>>>> Stashed changes
     );
   });
 
@@ -357,18 +518,30 @@ describe("Settings - Avatar Upload (FR-009)", () => {
     const { mockPost } = setupSettingsTests();
     mockPost.mockRejectedValue(new Error("Upload failed"));
 
+<<<<<<< Updated upstream
     const result = renderSettings();
     const { container } = result;
     if ((result as any).queryClient) {
       queryClients.push((result as any).queryClient);
     }
+=======
+    const { container } = renderSettings();
+>>>>>>> Stashed changes
 
     await waitFor(
       () => {
         const settingsTexts = screen.queryAllByText("Settings");
+<<<<<<< Updated upstream
         expect(Array.from(settingsTexts).find((el) => container.contains(el))).toBeInTheDocument();
       },
       { timeout: 5000 },
+=======
+        expect(
+          Array.from(settingsTexts).find((el) => container.contains(el)),
+        ).toBeInTheDocument();
+      },
+      { timeout: 2000 },
+>>>>>>> Stashed changes
     );
 
     const fileInput = container.querySelector("#avatar-upload") as HTMLInputElement;
@@ -378,9 +551,17 @@ describe("Settings - Avatar Upload (FR-009)", () => {
     await waitFor(
       () => {
         const uploadButtons = screen.getAllByText(/upload/i);
+<<<<<<< Updated upstream
         expect(Array.from(uploadButtons).find((el) => container.contains(el))).toBeInTheDocument();
       },
       { timeout: 5000 },
+=======
+        expect(
+          Array.from(uploadButtons).find((el) => container.contains(el)),
+        ).toBeInTheDocument();
+      },
+      { timeout: 2000 },
+>>>>>>> Stashed changes
     );
 
     const uploadButtons = screen.getAllByText(/upload/i);
@@ -392,12 +573,17 @@ describe("Settings - Avatar Upload (FR-009)", () => {
         const errorTexts = screen.queryAllByText(/failed to upload|upload failed|error/i);
         expect(Array.from(errorTexts).find((el) => container.contains(el))).toBeInTheDocument();
       },
+<<<<<<< Updated upstream
       { timeout: 5000 },
+=======
+      { timeout: 2000 },
+>>>>>>> Stashed changes
     );
   });
 
   it("disables upload button while uploading", async () => {
     const { mockPost } = setupSettingsTests();
+<<<<<<< Updated upstream
     // Create a promise that resolves after a short delay to simulate upload
     // Use a proper async delay that can be awaited
     mockPost.mockImplementation(
@@ -418,19 +604,35 @@ describe("Settings - Avatar Upload (FR-009)", () => {
     if ((result as any).queryClient) {
       queryClients.push((result as any).queryClient);
     }
+=======
+    mockPost.mockImplementation(
+      () => new Promise((resolve) => setTimeout(() => resolve({ data: {} }), 100)),
+    );
+
+    const { container } = renderSettings();
+>>>>>>> Stashed changes
 
     await waitFor(
       () => {
         const settingsTexts = screen.queryAllByText("Settings");
+<<<<<<< Updated upstream
         expect(Array.from(settingsTexts).find((el) => container.contains(el))).toBeInTheDocument();
       },
       { timeout: 5000 },
+=======
+        expect(
+          Array.from(settingsTexts).find((el) => container.contains(el)),
+        ).toBeInTheDocument();
+      },
+      { timeout: 2000 },
+>>>>>>> Stashed changes
     );
 
     const fileInput = container.querySelector("#avatar-upload") as HTMLInputElement;
     const file = new File(["fake-image-content"], "test.jpg", { type: "image/jpeg" });
     fireEvent.change(fileInput, { target: { files: [file] } });
 
+<<<<<<< Updated upstream
     // Wait for FileReader to complete and upload button to appear
     await waitFor(
       () => {
@@ -438,6 +640,17 @@ describe("Settings - Avatar Upload (FR-009)", () => {
         expect(Array.from(uploadButtons).find((el) => container.contains(el))).toBeInTheDocument();
       },
       { timeout: 5000 },
+=======
+    // Wait for upload button to appear
+    await waitFor(
+      () => {
+        const uploadButtons = screen.getAllByText(/upload/i);
+        expect(
+          Array.from(uploadButtons).find((el) => container.contains(el)),
+        ).toBeInTheDocument();
+      },
+      { timeout: 2000 },
+>>>>>>> Stashed changes
     );
 
     const uploadButtons = screen.getAllByText(/upload/i);
@@ -456,23 +669,39 @@ describe("Settings - Avatar Upload (FR-009)", () => {
         const buttonElement = currentButtonText?.closest("button");
         expect(buttonElement).toBeDisabled();
       },
+<<<<<<< Updated upstream
       { timeout: 5000 },
+=======
+      { timeout: 2000 },
+>>>>>>> Stashed changes
     );
   });
 
   it("accepts JPEG, PNG, and WebP formats", async () => {
+<<<<<<< Updated upstream
     const result = renderSettings();
     const { container } = result;
     if ((result as any).queryClient) {
       queryClients.push((result as any).queryClient);
     }
+=======
+    const { container } = renderSettings();
+>>>>>>> Stashed changes
 
     await waitFor(
       () => {
         const settingsTexts = screen.queryAllByText("Settings");
+<<<<<<< Updated upstream
         expect(Array.from(settingsTexts).find((el) => container.contains(el))).toBeInTheDocument();
       },
       { timeout: 5000 },
+=======
+        expect(
+          Array.from(settingsTexts).find((el) => container.contains(el)),
+        ).toBeInTheDocument();
+      },
+      { timeout: 2000 },
+>>>>>>> Stashed changes
     );
 
     const fileInput = container.querySelector("#avatar-upload") as HTMLInputElement;
@@ -485,9 +714,17 @@ describe("Settings - Avatar Upload (FR-009)", () => {
     await waitFor(
       () => {
         const uploadButtons = screen.getAllByText(/upload/i);
+<<<<<<< Updated upstream
         expect(Array.from(uploadButtons).find((el) => container.contains(el))).toBeInTheDocument();
       },
       { timeout: 5000 },
+=======
+        expect(
+          Array.from(uploadButtons).find((el) => container.contains(el)),
+        ).toBeInTheDocument();
+      },
+      { timeout: 2000 },
+>>>>>>> Stashed changes
     );
 
     // Reset
@@ -500,9 +737,17 @@ describe("Settings - Avatar Upload (FR-009)", () => {
     await waitFor(
       () => {
         const uploadButtons = screen.getAllByText(/upload/i);
+<<<<<<< Updated upstream
         expect(Array.from(uploadButtons).find((el) => container.contains(el))).toBeInTheDocument();
       },
       { timeout: 5000 },
+=======
+        expect(
+          Array.from(uploadButtons).find((el) => container.contains(el)),
+        ).toBeInTheDocument();
+      },
+      { timeout: 2000 },
+>>>>>>> Stashed changes
     );
 
     // Reset
@@ -515,9 +760,22 @@ describe("Settings - Avatar Upload (FR-009)", () => {
     await waitFor(
       () => {
         const uploadButtons = screen.getAllByText(/upload/i);
+<<<<<<< Updated upstream
         expect(Array.from(uploadButtons).find((el) => container.contains(el))).toBeInTheDocument();
       },
       { timeout: 5000 },
     );
   });
 });
+=======
+        expect(
+          Array.from(uploadButtons).find((el) => container.contains(el)),
+        ).toBeInTheDocument();
+      },
+      { timeout: 2000 },
+    );
+  });
+});
+
+
+>>>>>>> Stashed changes

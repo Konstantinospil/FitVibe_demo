@@ -1,4 +1,8 @@
 import React from "react";
+<<<<<<< Updated upstream
+=======
+import { useTranslation } from "react-i18next";
+>>>>>>> Stashed changes
 import { Card, CardContent } from "../ui/Card";
 import { SessionCard } from "../sessions/SessionCard";
 import Skeleton from "../ui/Skeleton";

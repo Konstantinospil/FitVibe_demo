@@ -126,3 +126,4 @@ describe("Exercise Types Repository", () => {
     });
   });
 });
+

@@ -42,6 +42,9 @@ beforeAll(async () => {
 });
 
 beforeEach(() => {
+  // Use real timers by default - most tests need them (especially waitFor)
+  // Tests that need fake timers can override by calling vi.useFakeTimers()
+  vi.useRealTimers();
   vi.restoreAllMocks();
 });
 
@@ -50,13 +53,17 @@ afterEach(() => {
   // This must be called first to ensure all React components are unmounted
   cleanup();
 
-  // Ensure fake timers are cleaned up after each test
+  // Only clear timers if we're using fake timers
   if (vi.isFakeTimers()) {
-    // Clear all timers before restoring real timers
+    // Run any pending timers to completion to avoid hanging
+    vi.runOnlyPendingTimers();
+    // Clear all remaining timers
     vi.clearAllTimers();
+    // Restore real timers
     vi.useRealTimers();
   } else {
-    // Even with real timers, clear any pending timers that might leak
+    // With real timers, clear any that might have leaked
+    // This includes setTimeout/setInterval from font loading, etc.
     vi.clearAllTimers();
   }
 
@@ -64,23 +71,29 @@ afterEach(() => {
   // This prevents open handles from hanging tests
   vi.clearAllMocks();
 
-  // Force garbage collection hint (if available)
-  // This helps ensure all references are released
-  if (global.gc) {
-    global.gc();
-  }
+  // Note: No async microtask flush needed with real timers
+  // Only flush if using fake timers (handled above)
 });
 
 // Global cleanup after all tests complete
 // This ensures any remaining timers or handles are cleaned up
 afterAll(() => {
   // Clear all timers to prevent hanging
+  if (vi.isFakeTimers()) {
+    vi.runOnlyPendingTimers();
+  }
   vi.clearAllTimers();
   vi.useRealTimers();
   // Clear all mocks
   vi.clearAllMocks();
   // Restore all mocks
   vi.restoreAllMocks();
+
+  // Note: No async microtask flush needed - real timers handle this naturally
+  // Only call gc() if explicitly needed for memory leak detection
+  // if (global.gc && process.env.DETECT_MEMORY_LEAKS === "true") {
+  //   global.gc();
+  // }
 });
 
 class ResizeObserverMock {

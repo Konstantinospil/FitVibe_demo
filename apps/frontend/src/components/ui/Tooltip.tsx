@@ -1,4 +1,8 @@
+<<<<<<< Updated upstream
 import React, { useState, useRef, useEffect, useCallback } from "react";
+=======
+import React, { useState, useRef, useEffect } from "react";
+>>>>>>> Stashed changes
 
 export interface TooltipProps {
   content: React.ReactNode;
@@ -23,7 +27,11 @@ export const Tooltip: React.FC<TooltipProps> = ({
   const tooltipRef = useRef<HTMLDivElement>(null);
   const timeoutRef = useRef<NodeJS.Timeout>();
 
+<<<<<<< Updated upstream
   const updatePosition = useCallback(() => {
+=======
+  const updatePosition = () => {
+>>>>>>> Stashed changes
     if (!triggerRef.current || !tooltipRef.current) {
       return;
     }
@@ -77,7 +85,11 @@ export const Tooltip: React.FC<TooltipProps> = ({
       left: `${left}px`,
       zIndex: 9999,
     });
+<<<<<<< Updated upstream
   }, [position]);
+=======
+  };
+>>>>>>> Stashed changes
 
   const handleMouseEnter = () => {
     timeoutRef.current = setTimeout(() => {
@@ -103,7 +115,11 @@ export const Tooltip: React.FC<TooltipProps> = ({
         window.removeEventListener("resize", updatePosition);
       };
     }
+<<<<<<< Updated upstream
   }, [isVisible, updatePosition]);
+=======
+  }, [isVisible]);
+>>>>>>> Stashed changes
 
   return (
     <>

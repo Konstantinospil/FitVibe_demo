@@ -35,7 +35,7 @@ See [TEMPLATE.md](./TEMPLATE.md) for the structure and required fields.
 
 ## Single Source of Truth
 
-**IMPORTANT**: Acceptance criteria files contain ONLY AC-level information. They link to tests and evidence but do NOT embed their details. See [REQUIREMENTS_SCHEMA.md](../REQUIREMENTS_SCHEMA.md) for the SSOT principle.
+**IMPORTANT**: Acceptance criteria files contain ONLY AC-level information. They link to tests and evidence but do NOT embed their details. See [0.REQUIREMENTS_SCHEMA.md](../0.REQUIREMENTS_SCHEMA.md) for the SSOT principle.
 
 ## Index
 

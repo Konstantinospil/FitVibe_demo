@@ -73,7 +73,7 @@ export const CommentSection: React.FC<CommentSectionProps> = ({
       const response = await addComment(feedItemId, { body: commentText });
       setComments((prev) => [response.comment, ...prev]);
       onCommentAdded?.(response.comment);
-    } catch {
+    } catch (_error) {
       setNewComment(commentText);
       showToast({
         variant: "error",

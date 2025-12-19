@@ -19,6 +19,8 @@ const INITIAL_VIBE_LEVEL = 1000.0;
 const INITIAL_RD = 350.0;
 const INITIAL_VOLATILITY = 0.06;
 const TAU = 0.0833; // Volatility constraint (τ)
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const _C = Math.sqrt((350 ** 2 - 50 ** 2) / Math.log(2)); // ≈ 83.33 (for future use)
 
 function clamp(value: number, min: number, max: number): number {
   return Math.min(Math.max(value, min), max);
@@ -262,8 +264,9 @@ export function calculatePerformanceScore(
   const metrics = aggregateSessionMetrics(session, exerciseMetadata);
 
   // Expected performance based on vibe level
-  // const expectedPerformance = 50 + (currentVibeLevel - 1000) / 20;
-  // const expectedClamped = clamp(expectedPerformance, 30, 70); // Not currently used
+  const expectedPerformance = 50 + (currentVibeLevel - 1000) / 20;
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const _expectedClamped = clamp(expectedPerformance, 30, 70); // Reserved for future use
 
   let actualPerformance: number;
 

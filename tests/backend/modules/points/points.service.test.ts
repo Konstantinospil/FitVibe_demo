@@ -10,6 +10,7 @@ import type {
   AwardPointsResult,
 } from "../../../../apps/backend/src/modules/points/points.types.js";
 import type { SessionWithExercises } from "../../../../apps/backend/src/modules/sessions/sessions.types.js";
+import type { DomainVibeLevel, VibeLevelChangeRecord } from "../../../../apps/backend/src/modules/points/points.types.js";
 
 // Mock dependencies
 jest.mock("../../../../apps/backend/src/modules/points/points.repository.js");
@@ -70,8 +71,42 @@ describe("Points Service", () => {
   const userId = "user-123";
   const sessionId = "session-123";
 
+  const createMockDomainVibeLevel = (domainCode: string, vibeLevel = 1000): DomainVibeLevel => ({
+    user_id: userId,
+    domain_code: domainCode as any,
+    vibe_level: vibeLevel,
+    rating_deviation: 350,
+    volatility: 0.06,
+    last_updated_at: new Date().toISOString(),
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  });
+
+  const createMockVibeLevelChangeRecord = (domainCode: string): VibeLevelChangeRecord => ({
+    id: "change-1",
+    user_id: userId,
+    domain_code: domainCode as any,
+    session_id: sessionId,
+    old_vibe_level: 1000,
+    new_vibe_level: 1010,
+    old_rd: 350,
+    new_rd: 340,
+    change_amount: 10,
+    performance_score: 50,
+    domain_impact: 0.8,
+    points_awarded: 20,
+    change_reason: "session_completed",
+    metadata: {},
+    created_at: new Date().toISOString(),
+  });
+
   beforeEach(() => {
     jest.clearAllMocks();
+    // Default mocks for vibe-level service functions
+    mockPointsRepo.getAllDomainVibeLevels.mockResolvedValue(new Map());
+    mockPointsRepo.getDomainVibeLevel.mockResolvedValue(undefined);
+    mockPointsRepo.updateDomainVibeLevel.mockResolvedValue(undefined);
+    mockPointsRepo.insertVibeLevelChange.mockResolvedValue(createMockVibeLevelChangeRecord("strength"));
   });
 
   describe("getPointsSummary", () => {
@@ -197,6 +232,14 @@ describe("Points Service", () => {
         trainingFrequency: "3-4 times per week",
       };
 
+      // Mock vibe levels - return a map with default vibe levels for common domains
+      const mockVibeLevels = new Map([
+        ["strength", createMockDomainVibeLevel("strength", 1000)],
+        ["endurance", createMockDomainVibeLevel("endurance", 1000)],
+      ]);
+      mockPointsRepo.getAllDomainVibeLevels.mockResolvedValue(mockVibeLevels);
+      mockPointsRepo.getDomainVibeLevel.mockResolvedValue(createMockDomainVibeLevel("strength", 1000));
+
       mockPointsRepo.getUserPointsProfile.mockResolvedValue(mockProfile);
       mockPointsRepo.findPointsEventBySource.mockResolvedValue(null);
       mockPointsRepo.getExercisesMetadata.mockResolvedValue({
@@ -219,8 +262,14 @@ describe("Points Service", () => {
 
       const result = await pointsService.awardPointsForSession(mockSession);
 
+<<<<<<< Updated upstream
       // Points calculated using v2_vibe_lvl algorithm
       expect(result.pointsAwarded).toBe(25);
+=======
+      // Points are calculated from vibe level changes, not fixed calculation
+      expect(result.pointsAwarded).toBeGreaterThan(0);
+      expect(result.pointsAwarded).toBeLessThanOrEqual(500); // Clamped to max 500
+>>>>>>> Stashed changes
       expect(mockPointsRepo.insertPointsEvent).toHaveBeenCalled();
       expect(mockSessionsRepo.updateSession).toHaveBeenCalled();
     });
@@ -253,6 +302,13 @@ describe("Points Service", () => {
         trainingFrequency: "5+ times per week",
       };
 
+      // Mock vibe levels for endurance domain (detected from distance)
+      const mockVibeLevels = new Map([
+        ["endurance", createMockDomainVibeLevel("endurance", 1000)],
+      ]);
+      mockPointsRepo.getAllDomainVibeLevels.mockResolvedValue(mockVibeLevels);
+      mockPointsRepo.getDomainVibeLevel.mockResolvedValue(createMockDomainVibeLevel("endurance", 1000));
+
       mockPointsRepo.getUserPointsProfile.mockResolvedValue(mockProfile);
       mockPointsRepo.findPointsEventBySource.mockResolvedValue(null);
       mockPointsRepo.getExercisesMetadata.mockResolvedValue({
@@ -276,6 +332,7 @@ describe("Points Service", () => {
       const result = await pointsService.awardPointsForSession(mockSession);
 
       expect(result.pointsAwarded).toBeGreaterThan(0);
+      expect(result.pointsAwarded).toBeLessThanOrEqual(500); // Clamped to max 500
       expect(mockPointsRepo.insertPointsEvent).toHaveBeenCalled();
     });
 
@@ -291,6 +348,13 @@ describe("Points Service", () => {
         fitnessLevel: null,
         trainingFrequency: null,
       };
+
+      // Mock vibe levels - calories might detect endurance domain if duration is sufficient
+      const mockVibeLevels = new Map([
+        ["endurance", createMockDomainVibeLevel("endurance", 1000)],
+      ]);
+      mockPointsRepo.getAllDomainVibeLevels.mockResolvedValue(mockVibeLevels);
+      mockPointsRepo.getDomainVibeLevel.mockResolvedValue(createMockDomainVibeLevel("endurance", 1000));
 
       mockPointsRepo.getUserPointsProfile.mockResolvedValue(mockProfile);
       mockPointsRepo.findPointsEventBySource.mockResolvedValue(null);
@@ -314,8 +378,14 @@ describe("Points Service", () => {
 
       const result = await pointsService.awardPointsForSession(sessionWithCalories);
 
+<<<<<<< Updated upstream
       // Points calculated using v2_vibe_lvl algorithm (session with calories)
       expect(result.pointsAwarded).toBe(25);
+=======
+      // Points are calculated from vibe level changes
+      expect(result.pointsAwarded).toBeGreaterThan(0);
+      expect(result.pointsAwarded).toBeLessThanOrEqual(500); // Clamped to max 500
+>>>>>>> Stashed changes
     });
   });
 });

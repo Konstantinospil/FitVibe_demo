@@ -6,6 +6,7 @@ import {
   findFeedItemBySessionId,
   findSessionById,
   listFeedSessions,
+  countFeedSessions,
   upsertFollower,
   deleteFollower,
   listFollowers,
@@ -57,6 +58,9 @@ export interface FeedListResult {
       viewerHasBookmarked: boolean;
     };
   }>;
+  total: number;
+  limit: number;
+  offset: number;
 }
 
 export async function getFeed({
@@ -80,14 +84,25 @@ export async function getFeed({
     throw new HttpError(401, "E.FEED.AUTH_REQUIRED", "FEED_AUTH_REQUIRED");
   }
 
-  const rows = await listFeedSessions({
-    viewerId,
-    scope: normalizedScope,
-    limit,
-    offset,
-    searchQuery,
-    sort,
-  });
+  const normalizedLimit = limit ?? 20;
+  const normalizedOffset = offset ?? 0;
+
+  // Get total count and items in parallel
+  const [total, rows] = await Promise.all([
+    countFeedSessions({
+      viewerId,
+      scope: normalizedScope,
+      searchQuery,
+    }),
+    listFeedSessions({
+      viewerId,
+      scope: normalizedScope,
+      limit: normalizedLimit,
+      offset: normalizedOffset,
+      searchQuery,
+      sort,
+    }),
+  ]);
 
   const feedItemIds = rows.map((row) => row.feed_item_id);
   const sessionIds = rows
@@ -122,6 +137,9 @@ export async function getFeed({
         viewerHasBookmarked: row.session_id !== null ? viewerBookmarks.has(row.session_id) : false,
       },
     })),
+    total,
+    limit: normalizedLimit,
+    offset: normalizedOffset,
   };
 }
 

@@ -34,4 +34,4 @@ GitHub Actions workflows (`.github/workflows/ci.yml`, `cd-prod.yml`, `security-s
 
 ## Security Policies
 
-Policies under `security/policies/` are markdown documents reviewed with the security team. Update them whenever security posture changes and reference them from `apps/docs/` where relevant.
+Policies under `security/policies/` are markdown documents reviewed with the security team. Update them whenever security posture changes and reference them from `docs/` where relevant.
