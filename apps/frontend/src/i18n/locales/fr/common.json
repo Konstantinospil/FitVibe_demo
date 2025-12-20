@@ -100,9 +100,13 @@
     "brand": "FitVibe",
     "terms": "Conditions générales",
     "privacy": "Politique de confidentialité",
+    "impressum": "Mentions légales",
+    "contact": "Contact",
     "navigationLabel": "Navigation du pied de page",
     "termsAriaLabel": "Voir les Conditions générales",
-    "privacyAriaLabel": "Voir la Politique de confidentialité"
+    "privacyAriaLabel": "Voir la Politique de confidentialité",
+    "impressumAriaLabel": "Voir les Mentions légales",
+    "contactAriaLabel": "Nous contacter"
   },
   "terms": {
     "eyebrow": "Légal",
@@ -546,5 +550,107 @@
   },
   "twoFactor": {
     "codePlaceholder": "000000"
+  },
+  "exercises": {
+    "selectExercise": "Sélectionner un exercice",
+    "clearSelection": "Effacer la sélection",
+    "searchPlaceholder": "Rechercher des exercices...",
+    "searchLabel": "Rechercher des exercices",
+    "noResults": "Aucun exercice trouvé",
+    "noExercises": "Aucun exercice disponible",
+    "global": "Global",
+    "public": "Public",
+    "private": "Privé",
+    "loading": "Chargement...",
+    "page": {
+      "eyebrow": "Bibliothèque d'exercices",
+      "title": "Gérez vos exercices",
+      "description": "Créez, modifiez et gérez votre bibliothèque d'exercices personnelle. Les exercices globaux sont disponibles pour tous les utilisateurs."
+    },
+    "create": "Créer un exercice",
+    "edit": "Modifier l'exercice",
+    "name": "Nom",
+    "type": "Type",
+    "muscleGroup": "Groupe musculaire",
+    "equipment": "Équipement",
+    "description": "Description",
+    "makePublic": "Rendre cet exercice public",
+    "created": "Exercice créé avec succès",
+    "updated": "Exercice mis à jour avec succès",
+    "deleted": "Exercice archivé avec succès",
+    "createError": "Échec de la création de l'exercice",
+    "updateError": "Échec de la mise à jour de l'exercice",
+    "deleteError": "Échec de l'archivage de l'exercice",
+    "loadError": "Échec du chargement des exercices",
+    "requiredFields": "Le nom et le type sont requis",
+    "cannotEdit": "Vous ne pouvez modifier que vos propres exercices",
+    "cannotArchive": "Vous ne pouvez archiver que vos propres exercices",
+    "archiveConfirm": "Archiver l'exercice",
+    "archiveMessage": "Êtes-vous sûr de vouloir archiver cet exercice ? Il sera masqué dans les sélecteurs mais conservé pour les enregistrements historiques.",
+    "allTypes": "Tous les types",
+    "showArchived": "Afficher les archivés",
+    "filterType": "Filtrer par type",
+    "type": {
+      "strength": "Force",
+      "cardio": "Cardio",
+      "powerEndurance": "Force-Endurance"
+    }
+  },
+  "coach": {
+    "dashboard": {
+      "eyebrow": "Tableau de bord Entraîneur",
+      "title": "Gérez vos Athlètes",
+      "description": "Créez des plans d'entraînement, surveillez les progrès des athlètes et assignez des entraînements",
+      "metrics": {
+        "athletes": "Athlètes",
+        "activeAssignments": "Assignations Actives",
+        "completedSessions": "Séances Terminées",
+        "pendingFeedback": "Retour en Attente"
+      },
+      "tabs": {
+        "overview": "Vue d'ensemble",
+        "workouts": "Entraînements",
+        "athletes": "Athlètes",
+        "assign": "Assigner"
+      },
+      "overview": {
+        "recentActivity": {
+          "title": "Activité Récente",
+          "empty": "Aucune activité récente à afficher"
+        },
+        "quickActions": {
+          "title": "Actions Rapides",
+          "createWorkout": "Créer un Entraînement",
+          "assignWorkout": "Assigner un Entraînement",
+          "viewAthletes": "Voir les Athlètes"
+        }
+      },
+      "workouts": {
+        "title": "Entraînements",
+        "create": "Créer un Entraînement",
+        "empty": "Aucun entraînement créé pour le moment",
+        "description": "Créez des entraînements réutilisables que vous pouvez assigner à plusieurs athlètes. Les entraînements peuvent inclure des exercices, séries, répétitions et autres paramètres."
+      },
+      "athletes": {
+        "title": "Athlètes",
+        "empty": "Aucun athlète assigné pour le moment. Les athlètes doivent vous accorder l'accès via leurs paramètres.",
+        "table": {
+          "athlete": "Athlète",
+          "assigned": "Assigné",
+          "completed": "Terminé",
+          "adherence": "Adhésion",
+          "status": "Statut"
+        }
+      },
+      "assign": {
+        "title": "Assigner un Entraînement",
+        "selectWorkout": "Sélectionner un Entraînement",
+        "selectWorkoutPlaceholder": "Choisissez un entraînement...",
+        "selectAthletes": "Sélectionner des Athlètes",
+        "noAthletes": "Aucun athlète disponible. Les athlètes doivent d'abord vous accorder l'accès.",
+        "assignmentDate": "Date d'Assignation",
+        "assignButton": "Assigner l'Entraînement"
+      }
+    }
   }
 }

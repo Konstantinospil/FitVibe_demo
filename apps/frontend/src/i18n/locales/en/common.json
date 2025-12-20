@@ -546,5 +546,107 @@
   },
   "twoFactor": {
     "codePlaceholder": "000000"
+  },
+  "exercises": {
+    "selectExercise": "Select exercise",
+    "clearSelection": "Clear selection",
+    "searchPlaceholder": "Search exercises...",
+    "searchLabel": "Search exercises",
+    "noResults": "No exercises found",
+    "noExercises": "No exercises available",
+    "global": "Global",
+    "public": "Public",
+    "private": "Private",
+    "loading": "Loading...",
+    "page": {
+      "eyebrow": "Exercise Library",
+      "title": "Manage Your Exercises",
+      "description": "Create, edit, and manage your personal exercise library. Global exercises are available to all users."
+    },
+    "create": "Create Exercise",
+    "edit": "Edit Exercise",
+    "name": "Name",
+    "type": "Type",
+    "muscleGroup": "Muscle Group",
+    "equipment": "Equipment",
+    "description": "Description",
+    "makePublic": "Make this exercise public",
+    "created": "Exercise created successfully",
+    "updated": "Exercise updated successfully",
+    "deleted": "Exercise archived successfully",
+    "createError": "Failed to create exercise",
+    "updateError": "Failed to update exercise",
+    "deleteError": "Failed to archive exercise",
+    "loadError": "Failed to load exercises",
+    "requiredFields": "Name and type are required",
+    "cannotEdit": "You can only edit your own exercises",
+    "cannotArchive": "You can only archive your own exercises",
+    "archiveConfirm": "Archive Exercise",
+    "archiveMessage": "Are you sure you want to archive this exercise? It will be hidden from selectors but retained for historical records.",
+    "allTypes": "All Types",
+    "showArchived": "Show archived",
+    "filterType": "Filter by type",
+    "type": {
+      "strength": "Strength",
+      "cardio": "Cardio",
+      "powerEndurance": "Power-Endurance"
+    }
+  },
+  "coach": {
+    "dashboard": {
+      "eyebrow": "Coach Dashboard",
+      "title": "Manage Your Athletes",
+      "description": "Create training plans, monitor athlete progress, and assign workouts",
+      "metrics": {
+        "athletes": "Athletes",
+        "activeAssignments": "Active Assignments",
+        "completedSessions": "Completed Sessions",
+        "pendingFeedback": "Pending Feedback"
+      },
+      "tabs": {
+        "overview": "Overview",
+        "workouts": "Workouts",
+        "athletes": "Athletes",
+        "assign": "Assign"
+      },
+      "overview": {
+        "recentActivity": {
+          "title": "Recent Activity",
+          "empty": "No recent activity to display"
+        },
+        "quickActions": {
+          "title": "Quick Actions",
+          "createWorkout": "Create Workout",
+          "assignWorkout": "Assign Workout",
+          "viewAthletes": "View Athletes"
+        }
+      },
+      "workouts": {
+        "title": "Workouts",
+        "create": "Create Workout",
+        "empty": "No workouts created yet",
+        "description": "Create reusable workouts that you can assign to multiple athletes. Workouts can include exercises, sets, reps, and other parameters."
+      },
+      "athletes": {
+        "title": "Athletes",
+        "empty": "No athletes assigned yet. Athletes must grant you access through their settings.",
+        "table": {
+          "athlete": "Athlete",
+          "assigned": "Assigned",
+          "completed": "Completed",
+          "adherence": "Adherence",
+          "status": "Status"
+        }
+      },
+      "assign": {
+        "title": "Assign Workout",
+        "selectWorkout": "Select Workout",
+        "selectWorkoutPlaceholder": "Choose a workout...",
+        "selectAthletes": "Select Athletes",
+        "noAthletes": "No athletes available. Athletes must grant you access first.",
+        "assignmentDate": "Assignment Date",
+        "assignButton": "Assign Workout"
+      }
+    }
   }
 }
