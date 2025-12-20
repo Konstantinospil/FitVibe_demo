@@ -396,3 +396,6 @@ After completing the workflow:
 
 **Note**: This command uses Cursor IDE's built-in AI features (Chat and Composer) to simulate the multi-agent workflow system. No external API calls are made, and you have full control over each step.
 
+
+
+

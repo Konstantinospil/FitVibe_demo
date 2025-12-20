@@ -721,4 +721,3 @@ describe("Exercise Controller", () => {
     });
   });
 });
-

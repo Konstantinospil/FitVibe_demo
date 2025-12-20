@@ -136,4 +136,3 @@ describe("Request Logger Middleware", () => {
     });
   });
 });
-

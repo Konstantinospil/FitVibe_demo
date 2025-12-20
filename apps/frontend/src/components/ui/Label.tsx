@@ -1,30 +1,10 @@
 import React from "react";
-<<<<<<< Updated upstream
-=======
 import { useTranslation } from "react-i18next";
->>>>>>> Stashed changes
 
 export interface LabelProps extends React.LabelHTMLAttributes<HTMLLabelElement> {
+  children: React.ReactNode;
   required?: boolean;
   error?: boolean;
-<<<<<<< Updated upstream
-  children: React.ReactNode;
-}
-
-export const Label: React.FC<LabelProps> = ({ required, error, children, ...props }) => {
-  return (
-    <label
-      {...props}
-      style={{
-        fontSize: "var(--font-size-sm)",
-        fontWeight: 500,
-        color: error ? "var(--color-danger)" : "var(--color-text-primary)",
-        ...props.style,
-      }}
-    >
-      {children}
-      {required && <span style={{ color: "var(--color-danger)", marginLeft: "0.25rem" }}>*</span>}
-=======
 }
 
 /**
@@ -62,7 +42,6 @@ export const Label: React.FC<LabelProps> = ({
           *
         </span>
       )}
->>>>>>> Stashed changes
     </label>
   );
 };

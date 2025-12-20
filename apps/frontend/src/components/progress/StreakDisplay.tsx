@@ -1,8 +1,4 @@
 import React from "react";
-<<<<<<< Updated upstream
-=======
-import { useTranslation } from "react-i18next";
->>>>>>> Stashed changes
 import { Flame } from "lucide-react";
 import { Badge } from "../ui/Badge";
 

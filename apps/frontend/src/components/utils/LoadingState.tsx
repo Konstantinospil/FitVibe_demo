@@ -3,14 +3,6 @@ import { Spinner } from "../ui/Spinner";
 
 export interface LoadingStateProps {
   message?: string;
-<<<<<<< Updated upstream
-}
-
-export const LoadingState: React.FC<LoadingStateProps> = ({ message }) => {
-  return (
-    <div
-      style={{
-=======
   size?: "sm" | "md" | "lg";
   fullScreen?: boolean;
 }
@@ -31,19 +23,10 @@ export const LoadingState: React.FC<LoadingStateProps> = ({
         left: 0,
         right: 0,
         bottom: 0,
->>>>>>> Stashed changes
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
         justifyContent: "center",
-<<<<<<< Updated upstream
-        padding: "var(--space-xl)",
-        gap: "var(--space-md)",
-      }}
-    >
-      <Spinner size="lg" />
-      {message && <p style={{ color: "var(--color-text-secondary)" }}>{message}</p>}
-=======
         gap: "var(--space-md)",
         background: "rgba(0, 0, 0, 0.5)",
         zIndex: 9999,
@@ -71,7 +54,6 @@ export const LoadingState: React.FC<LoadingStateProps> = ({
           {message}
         </p>
       )}
->>>>>>> Stashed changes
     </div>
   );
 };

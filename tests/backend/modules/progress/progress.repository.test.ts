@@ -119,4 +119,3 @@ describe("Progress Repository", () => {
     });
   });
 });
-

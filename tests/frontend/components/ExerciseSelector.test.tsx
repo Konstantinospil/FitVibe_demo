@@ -141,11 +141,7 @@ describe("ExerciseSelector", () => {
     expect(mockListExercises).toHaveBeenCalledWith({
       limit: 100,
       offset: 0,
-<<<<<<< Updated upstream
-      include_archived: false,
-=======
       include_archived: false, // excludeArchived defaults to true, so include_archived should be false
->>>>>>> Stashed changes
     });
   });
 
@@ -172,8 +168,8 @@ describe("ExerciseSelector", () => {
           }),
         );
       },
-        { timeout: 5000 },
-      );
+      { timeout: 5000 },
+    );
   });
 
   it("calls onChange when exercise is selected", async () => {
@@ -210,37 +206,18 @@ describe("ExerciseSelector", () => {
       { timeout: 5000 },
     );
 
-<<<<<<< Updated upstream
-    // Selected exercise should be highlighted
-    // Use getAllByText since "Bench Press" appears in both button and dropdown
-    const benchPressItems = screen.getAllByText("Bench Press");
-    const benchPressItem = benchPressItems.find((el) => el.closest("li"));
-    expect(benchPressItem?.closest("li")).toHaveAttribute("aria-selected", "true");
-=======
     // Selected exercise should be highlighted - use getAllByText to find the one in the list
     const benchPressElements = screen.getAllByText("Bench Press");
     const benchPressItem = benchPressElements
       .map((el) => el.closest("li"))
       .find((li) => li !== null);
     expect(benchPressItem).toHaveAttribute("aria-selected", "true");
->>>>>>> Stashed changes
   });
 
   it("clears selection when clear button is clicked", async () => {
     const onChange = vi.fn();
     renderComponent({ value: "ex-1", onChange });
 
-<<<<<<< Updated upstream
-    // Open dropdown to load exercises, which will set the selectedExercise
-    const trigger = screen.getByRole("button", { name: /select exercise/i });
-    fireEvent.click(trigger);
-
-    // Wait for exercises to load and selectedExercise to be set, then clear button should appear
-    await waitFor(() => {
-      const clearButton = screen.getByRole("button", { name: /clear selection/i });
-      expect(clearButton).toBeInTheDocument();
-    });
-=======
     // Open dropdown to load exercises so selectedExercise is set
     const trigger = screen.getByRole("button", { name: /select exercise/i });
     fireEvent.click(trigger);
@@ -264,7 +241,6 @@ describe("ExerciseSelector", () => {
       },
       { timeout: 5000 },
     );
->>>>>>> Stashed changes
 
     const clearButton = screen.getByRole("button", { name: /clear selection/i });
     fireEvent.click(clearButton);
@@ -336,15 +312,6 @@ describe("ExerciseSelector", () => {
     const trigger = screen.getByRole("button", { name: /select exercise/i });
     fireEvent.click(trigger);
 
-<<<<<<< Updated upstream
-    await waitFor(() => {
-      expect(mockListExercises).toHaveBeenCalledWith(
-        expect.objectContaining({
-          include_archived: false, // excludeArchived defaults to true, so include_archived is false
-        }),
-      );
-    });
-=======
     await waitFor(
       () => {
         expect(mockListExercises).toHaveBeenCalledWith(
@@ -355,7 +322,6 @@ describe("ExerciseSelector", () => {
       },
       { timeout: 5000 },
     );
->>>>>>> Stashed changes
   });
 
   it("shows loading state while fetching", async () => {
@@ -439,4 +405,3 @@ describe("ExerciseSelector", () => {
     });
   });
 });
-

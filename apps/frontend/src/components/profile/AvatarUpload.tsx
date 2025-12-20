@@ -123,11 +123,7 @@ export const AvatarUpload: React.FC<AvatarUploadProps> = ({
       await apiClient.delete("/api/v1/users/me/avatar");
       setAvatarPreview(null);
       onDeleteSuccess?.();
-<<<<<<< Updated upstream
     } catch {
-=======
-    } catch (_error) {
->>>>>>> Stashed changes
       const errorMessage =
         t("settings.profile.avatarDeleteError") || "Failed to delete avatar. Please try again.";
       setAvatarError(errorMessage);
@@ -230,7 +226,3 @@ export const AvatarUpload: React.FC<AvatarUploadProps> = ({
     </div>
   );
 };
-<<<<<<< Updated upstream
-=======
-
->>>>>>> Stashed changes

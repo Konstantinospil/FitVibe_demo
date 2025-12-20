@@ -232,4 +232,3 @@ describe("Mailer Service", () => {
     });
   });
 });
-

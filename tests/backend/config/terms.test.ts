@@ -38,4 +38,3 @@ describe("Terms Configuration", () => {
     });
   });
 });
-

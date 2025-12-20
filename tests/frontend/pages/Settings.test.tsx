@@ -1,184 +1,16 @@
 import { screen, fireEvent, waitFor, cleanup } from "@testing-library/react";
 import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
-<<<<<<< Updated upstream
-import Settings from "../../src/pages/Settings";
-import { useAuthStore } from "../../src/store/auth.store";
-import {
-  apiClient,
-  setup2FA,
-  verify2FA,
-  disable2FA,
-  get2FAStatus,
-  listAuthSessions,
-} from "../../src/services/api";
-import { ToastProvider } from "../../src/contexts/ToastContext";
-import { I18nextProvider } from "react-i18next";
-import i18n from "i18next";
-import { initReactI18next } from "react-i18next";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-
-// Mock auth store
-vi.mock("../../src/store/auth.store", () => ({
-  useAuthStore: vi.fn(),
-}));
-
-// Mock API client
-vi.mock("../../src/services/api", () => ({
-  apiClient: {
-    get: vi.fn(),
-    patch: vi.fn(),
-    post: vi.fn(),
-    delete: vi.fn(),
-    defaults: {
-      baseURL: "http://localhost:3000",
-    },
-  },
-  setup2FA: vi.fn(),
-  verify2FA: vi.fn(),
-  disable2FA: vi.fn(),
-  get2FAStatus: vi.fn(),
-  listAuthSessions: vi.fn(),
-}));
-
-// Mock navigate
-const mockNavigate = vi.fn();
-vi.mock("react-router-dom", async () => {
-  const actual = await vi.importActual("react-router-dom");
-  return {
-    ...actual,
-    useNavigate: () => mockNavigate,
-  };
-});
-
-const mockUserData = {
-  id: "user-1",
-  email: "user@example.com",
-  primaryEmail: "user@example.com",
-  username: "testuser",
-  roleCode: "athlete",
-  status: "active",
-  profile: {
-    alias: "testalias",
-    bio: null,
-    weight: 75.5,
-    weightUnit: "kg",
-    fitnessLevel: "intermediate",
-    trainingFrequency: "3_4_per_week",
-  },
-};
-
-const mockSignOut = vi.fn();
-
-// Initialize i18n for tests
-const testI18n = i18n.createInstance();
-void testI18n.use(initReactI18next).init({
-  lng: "en",
-  fallbackLng: "en",
-  resources: {
-    en: {
-      common: {
-        "settings.title": "Settings",
-        "settings.description": "Your preferences and account settings",
-        "settings.profile.title": "Profile Settings",
-        "settings.profile.description": "Update your display name and basic information",
-        "settings.profile.displayName": "Display Name",
-        "settings.profile.displayNamePlaceholder": "Your display name",
-        "settings.profile.alias": "Alias",
-        "settings.profile.aliasPlaceholder": "Your public alias",
-        "settings.profile.aliasHelp":
-          "Alias may only contain letters, numbers, underscores, dots, or dashes",
-        "settings.profile.email": "Email",
-        "settings.profile.emailCannotChange": "Email cannot be changed",
-        "settings.profile.weight": "Weight",
-        "settings.profile.weightPlaceholder": "Enter your weight",
-        "settings.profile.weightUnit": "Weight Unit",
-        "settings.profile.weightKg": "kg",
-        "settings.profile.weightLb": "lb",
-        "settings.profile.fitnessLevel": "Fitness Level",
-        "settings.profile.fitnessLevelBeginner": "Beginner",
-        "settings.profile.fitnessLevelIntermediate": "Intermediate",
-        "settings.profile.fitnessLevelAdvanced": "Advanced",
-        "settings.profile.fitnessLevelElite": "Elite",
-        "settings.profile.trainingFrequency": "Training Frequency",
-        "settings.profile.trainingFrequencyRarely": "Rarely",
-        "settings.profile.trainingFrequency1_2": "1-2 times per week",
-        "settings.profile.trainingFrequency3_4": "3-4 times per week",
-        "settings.profile.trainingFrequency5Plus": "5+ times per week",
-        "settings.profile.twoFactorCodePlaceholder": "Enter 6-digit code",
-        "settings.profile.passwordPlaceholder": "Enter your password",
-        "settings.preferences.title": "Preferences",
-        "settings.preferences.description":
-          "Set your default session visibility, units, and language",
-        "settings.preferences.saveButton": "Save Preferences",
-        "settings.preferences.saving": "Saving...",
-        "settings.preferences.saveSuccess": "Preferences saved successfully!",
-        "settings.preferences.saveError": "Failed to save preferences. Please try again.",
-        "settings.security.title": "Two-Factor Authentication (2FA)",
-        "settings.security.enable2FA": "Enable 2FA",
-        "settings.security.disable2FA": "Disable 2FA",
-        "settings.security.verifyAndEnable": "Verify and Enable",
-        "settings.security.2FAEnabled": "2FA is currently enabled",
-        "settings.security.2FAEnabledSuccess": "2FA enabled successfully!",
-        "settings.security.scanQRCode": "Scan this QR code",
-        "settings.account.title": "Danger Zone",
-        "settings.account.deleteAccount": "Delete My Account",
-        "settings.account.deleteWarning": "⚠️ Warning: This will permanently delete your account",
-        "settings.account.passwordPlaceholder": "Enter your password",
-        "settings.account.yesDelete": "Yes, Delete My Account",
-        "settings.account.confirmDelete": "Delete Account",
-        "settings.account.deleteError": "Failed to delete account. Please try again.",
-        "settings.profile.avatar": "Profile Avatar",
-        "settings.profile.avatarSelect": "Select Image",
-        "settings.profile.avatarUpload": "Upload",
-        "settings.profile.avatarDelete": "Delete",
-        "settings.profile.avatarHelp":
-          "Upload a JPEG, PNG, or WebP image (max 5MB). Recommended size: 256×256 pixels.",
-        "settings.profile.avatarInvalidType": "Invalid file type. Please use JPEG, PNG, or WebP.",
-        "settings.profile.avatarTooLarge": "File is too large. Maximum size is 5MB.",
-        "settings.profile.avatarUploadError": "Failed to upload avatar. Please try again.",
-        "settings.profile.avatarNoFile": "Please select a file to upload.",
-        "common.cancel": "Cancel",
-        "common.confirm": "Confirm",
-      },
-    },
-  },
-});
-
-// Create a test query client
-const createTestQueryClient = () => {
-  return new QueryClient({
-    defaultOptions: {
-      queries: {
-        retry: false,
-        gcTime: 0,
-      },
-    },
-  });
-};
-
-// Helper to render Settings with all required providers
-const renderSettings = () => {
-  const queryClient = createTestQueryClient();
-  const result = render(
-    <QueryClientProvider client={queryClient}>
-      <I18nextProvider i18n={testI18n}>
-        <ToastProvider>
-          <MemoryRouter>
-            <Settings />
-          </MemoryRouter>
-        </ToastProvider>
-      </I18nextProvider>
-    </QueryClientProvider>,
-  );
-  return result;
-};
-=======
 import { apiClient } from "../../src/services/api";
-import { renderSettings, setupSettingsTests, mockUserData } from "./Settings.test.helpers";
->>>>>>> Stashed changes
+import {
+  renderSettings,
+  setupSettingsTests,
+  mockUserData,
+  mockSignOut,
+  mockNavigate,
+} from "./Settings.test.helpers";
 
 describe("Settings", () => {
-  const { mockGet, mockPatch } = setupSettingsTests();
+  const { mockGet, mockPatch, mockPost, mockDelete } = setupSettingsTests();
 
   // Set test timeout to prevent hanging
   vi.setConfig({ testTimeout: 10000 });
@@ -534,7 +366,6 @@ describe("Settings", () => {
       { timeout: 2000 },
     );
   });
-<<<<<<< Updated upstream
 
   it("shows enable 2FA button when 2FA is disabled", async () => {
     const { container } = renderSettings();
@@ -1910,7 +1741,17 @@ describe("Settings", () => {
     it("handles avatar upload error", async () => {
       const { container } = renderSettings();
 
-      mockPost.mockRejectedValue(new Error("Upload failed"));
+      // Mock an Axios-like error structure that the component expects
+      const axiosError = {
+        response: {
+          data: {
+            error: {
+              message: "Upload failed",
+            },
+          },
+        },
+      };
+      mockPost.mockRejectedValue(axiosError);
 
       // Wait for component to render
       await waitFor(
@@ -1961,11 +1802,25 @@ describe("Settings", () => {
       expect(uploadButton).toBeInTheDocument();
       fireEvent.click(uploadButton);
 
+      // Wait for error message to appear
+      // The component sets avatarError state and displays it in a paragraph
       await waitFor(
         () => {
-          const errorTexts = screen.queryAllByText(/failed to upload/i);
+          // The error message should be "Upload failed" from the mock, or the translation fallback
+          // Check for any error text related to upload
+          const errorTexts = screen.queryAllByText(/upload failed|failed to upload/i);
           const errorElement = Array.from(errorTexts).find((el) => container.contains(el));
+
           if (!errorElement) {
+            // Also try to find the error paragraph by checking all paragraphs
+            const allParagraphs = Array.from(container.querySelectorAll("p"));
+            const errorParagraph = allParagraphs.find((p) =>
+              /upload failed|failed to upload/i.test(p.textContent || ""),
+            );
+            if (errorParagraph) {
+              expect(errorParagraph).toBeInTheDocument();
+              return;
+            }
             throw new Error("Error message not found");
           }
           expect(errorElement).toBeInTheDocument();
@@ -2119,6 +1974,4 @@ describe("Settings", () => {
       );
     });
   });
-=======
->>>>>>> Stashed changes
 });

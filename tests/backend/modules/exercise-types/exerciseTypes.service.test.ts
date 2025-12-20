@@ -230,4 +230,3 @@ describe("Exercise Types Service", () => {
     });
   });
 });
-

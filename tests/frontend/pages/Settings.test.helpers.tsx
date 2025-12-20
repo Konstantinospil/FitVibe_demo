@@ -110,6 +110,7 @@ void testI18n.use(initReactI18next).init({
         "settings.profile.avatarDelete": "Delete",
         "settings.profile.avatarInvalidType": "Invalid file type. Please use JPEG, PNG, or WebP.",
         "settings.profile.avatarTooLarge": "File is too large. Maximum size is 5MB.",
+        "settings.profile.avatarUploadError": "Failed to upload avatar. Please try again.",
         "settings.profile.avatarHelp":
           "Upload a JPEG, PNG, or WebP image (max 5MB). Recommended size: 256×256 pixels.",
         "settings.profile.twoFactorCodePlaceholder": "Enter 6-digit code",
@@ -206,8 +207,3 @@ export const setupSettingsTests = () => {
 
   return { mockGet, mockPatch, mockPost, mockDelete };
 };
-<<<<<<< Updated upstream
-=======
-
-
->>>>>>> Stashed changes

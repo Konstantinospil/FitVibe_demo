@@ -43,7 +43,7 @@ export const ExerciseArchiveDialog: React.FC<ExerciseArchiveDialogProps> = ({
       });
       onArchived?.();
       onClose();
-    } catch (_err) {
+    } catch {
       showToast({
         variant: "error",
         title: t("exercises.archiveFailed") || "Archive Failed",

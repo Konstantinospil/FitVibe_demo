@@ -129,6 +129,7 @@ export const Popover: React.FC<PopoverProps> = ({
         window.removeEventListener("resize", updatePosition);
       };
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, closeOnClickOutside]);
 
   return (

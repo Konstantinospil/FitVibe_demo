@@ -182,4 +182,3 @@ test.describe("Exercise Snapshots E2E", () => {
     // This verifies the snapshot is working
   });
 });
-

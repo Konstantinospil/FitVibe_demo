@@ -72,10 +72,14 @@ describe("Feed Service", () => {
       const result = await feedService.getFeed({ viewerId: userId, scope: "me" });
 
       expect(result.items).toEqual([]);
-      expect(mockFeedRepo.listFeedSessions).toHaveBeenCalledWith({
-        viewerId: userId,
-        scope: "me",
-      });
+      expect(mockFeedRepo.listFeedSessions).toHaveBeenCalledWith(
+        expect.objectContaining({
+          viewerId: userId,
+          scope: "me",
+          limit: 20,
+          offset: 0,
+        }),
+      );
     });
   });
 
@@ -445,4 +449,3 @@ describe("Feed Service", () => {
     });
   });
 });
-

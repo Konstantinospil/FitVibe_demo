@@ -63,7 +63,7 @@ export const ExerciseForm: React.FC<ExerciseFormProps> = ({
             description_en: exercise.description_en || "",
             tags: exercise.tags || [],
           });
-        } catch (_err) {
+        } catch {
           setError(t("exercises.loadError") || "Failed to load exercise");
         } finally {
           setIsLoading(false);
@@ -105,7 +105,7 @@ export const ExerciseForm: React.FC<ExerciseFormProps> = ({
           : t("exercises.createdMessage") || "Exercise has been created successfully",
       });
       onSave?.(exercise);
-    } catch (_err) {
+    } catch {
       setError(
         exerciseId
           ? t("exercises.updateError") || "Failed to update exercise"

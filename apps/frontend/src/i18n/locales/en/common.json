@@ -100,9 +100,13 @@
     "brand": "FitVibe",
     "terms": "Terms and Conditions",
     "privacy": "Privacy Policy",
+    "impressum": "Impressum",
+    "contact": "Contact",
     "navigationLabel": "Footer navigation",
     "termsAriaLabel": "View Terms and Conditions",
-    "privacyAriaLabel": "View Privacy Policy"
+    "privacyAriaLabel": "View Privacy Policy",
+    "impressumAriaLabel": "View Impressum",
+    "contactAriaLabel": "Contact us"
   },
   "terms": {
     "eyebrow": "Legal",

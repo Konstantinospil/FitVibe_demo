@@ -10,7 +10,10 @@ import type {
   AwardPointsResult,
 } from "../../../../apps/backend/src/modules/points/points.types.js";
 import type { SessionWithExercises } from "../../../../apps/backend/src/modules/sessions/sessions.types.js";
-import type { DomainVibeLevel, VibeLevelChangeRecord } from "../../../../apps/backend/src/modules/points/points.types.js";
+import type {
+  DomainVibeLevel,
+  VibeLevelChangeRecord,
+} from "../../../../apps/backend/src/modules/points/points.types.js";
 
 // Mock dependencies
 jest.mock("../../../../apps/backend/src/modules/points/points.repository.js");
@@ -106,7 +109,9 @@ describe("Points Service", () => {
     mockPointsRepo.getAllDomainVibeLevels.mockResolvedValue(new Map());
     mockPointsRepo.getDomainVibeLevel.mockResolvedValue(undefined);
     mockPointsRepo.updateDomainVibeLevel.mockResolvedValue(undefined);
-    mockPointsRepo.insertVibeLevelChange.mockResolvedValue(createMockVibeLevelChangeRecord("strength"));
+    mockPointsRepo.insertVibeLevelChange.mockResolvedValue(
+      createMockVibeLevelChangeRecord("strength"),
+    );
   });
 
   describe("getPointsSummary", () => {
@@ -238,7 +243,9 @@ describe("Points Service", () => {
         ["endurance", createMockDomainVibeLevel("endurance", 1000)],
       ]);
       mockPointsRepo.getAllDomainVibeLevels.mockResolvedValue(mockVibeLevels);
-      mockPointsRepo.getDomainVibeLevel.mockResolvedValue(createMockDomainVibeLevel("strength", 1000));
+      mockPointsRepo.getDomainVibeLevel.mockResolvedValue(
+        createMockDomainVibeLevel("strength", 1000),
+      );
 
       mockPointsRepo.getUserPointsProfile.mockResolvedValue(mockProfile);
       mockPointsRepo.findPointsEventBySource.mockResolvedValue(null);
@@ -262,14 +269,9 @@ describe("Points Service", () => {
 
       const result = await pointsService.awardPointsForSession(mockSession);
 
-<<<<<<< Updated upstream
-      // Points calculated using v2_vibe_lvl algorithm
-      expect(result.pointsAwarded).toBe(25);
-=======
       // Points are calculated from vibe level changes, not fixed calculation
       expect(result.pointsAwarded).toBeGreaterThan(0);
       expect(result.pointsAwarded).toBeLessThanOrEqual(500); // Clamped to max 500
->>>>>>> Stashed changes
       expect(mockPointsRepo.insertPointsEvent).toHaveBeenCalled();
       expect(mockSessionsRepo.updateSession).toHaveBeenCalled();
     });
@@ -303,11 +305,11 @@ describe("Points Service", () => {
       };
 
       // Mock vibe levels for endurance domain (detected from distance)
-      const mockVibeLevels = new Map([
-        ["endurance", createMockDomainVibeLevel("endurance", 1000)],
-      ]);
+      const mockVibeLevels = new Map([["endurance", createMockDomainVibeLevel("endurance", 1000)]]);
       mockPointsRepo.getAllDomainVibeLevels.mockResolvedValue(mockVibeLevels);
-      mockPointsRepo.getDomainVibeLevel.mockResolvedValue(createMockDomainVibeLevel("endurance", 1000));
+      mockPointsRepo.getDomainVibeLevel.mockResolvedValue(
+        createMockDomainVibeLevel("endurance", 1000),
+      );
 
       mockPointsRepo.getUserPointsProfile.mockResolvedValue(mockProfile);
       mockPointsRepo.findPointsEventBySource.mockResolvedValue(null);
@@ -350,11 +352,11 @@ describe("Points Service", () => {
       };
 
       // Mock vibe levels - calories might detect endurance domain if duration is sufficient
-      const mockVibeLevels = new Map([
-        ["endurance", createMockDomainVibeLevel("endurance", 1000)],
-      ]);
+      const mockVibeLevels = new Map([["endurance", createMockDomainVibeLevel("endurance", 1000)]]);
       mockPointsRepo.getAllDomainVibeLevels.mockResolvedValue(mockVibeLevels);
-      mockPointsRepo.getDomainVibeLevel.mockResolvedValue(createMockDomainVibeLevel("endurance", 1000));
+      mockPointsRepo.getDomainVibeLevel.mockResolvedValue(
+        createMockDomainVibeLevel("endurance", 1000),
+      );
 
       mockPointsRepo.getUserPointsProfile.mockResolvedValue(mockProfile);
       mockPointsRepo.findPointsEventBySource.mockResolvedValue(null);
@@ -378,14 +380,9 @@ describe("Points Service", () => {
 
       const result = await pointsService.awardPointsForSession(sessionWithCalories);
 
-<<<<<<< Updated upstream
-      // Points calculated using v2_vibe_lvl algorithm (session with calories)
-      expect(result.pointsAwarded).toBe(25);
-=======
       // Points are calculated from vibe level changes
       expect(result.pointsAwarded).toBeGreaterThan(0);
       expect(result.pointsAwarded).toBeLessThanOrEqual(500); // Clamped to max 500
->>>>>>> Stashed changes
     });
   });
 });

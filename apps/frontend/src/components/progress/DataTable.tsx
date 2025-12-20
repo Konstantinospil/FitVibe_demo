@@ -1,8 +1,4 @@
 import React, { useState } from "react";
-<<<<<<< Updated upstream
-=======
-import { useTranslation } from "react-i18next";
->>>>>>> Stashed changes
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/Card";
 import { Button } from "../ui/Button";
 import { Eye, EyeOff } from "lucide-react";

@@ -30,12 +30,18 @@ export function createTestQueryClient(): QueryClient {
  */
 export async function cleanupQueryClient(queryClient: QueryClient): Promise<void> {
   // Cancel all pending queries and mutations
-  queryClient.getQueryCache().getAll().forEach((query) => {
-    queryClient.cancelQueries({ queryKey: query.queryKey });
-  });
-  queryClient.getMutationCache().getAll().forEach((mutation) => {
-    mutation.cancel?.();
-  });
+  queryClient
+    .getQueryCache()
+    .getAll()
+    .forEach((query) => {
+      queryClient.cancelQueries({ queryKey: query.queryKey });
+    });
+  queryClient
+    .getMutationCache()
+    .getAll()
+    .forEach((mutation) => {
+      mutation.cancel?.();
+    });
 
   // Clear caches
   queryClient.clear();
@@ -52,4 +58,3 @@ export async function cleanupQueryClient(queryClient: QueryClient): Promise<void
     }
   });
 }
-

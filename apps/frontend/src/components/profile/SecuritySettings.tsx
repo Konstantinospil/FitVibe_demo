@@ -78,11 +78,7 @@ export const SecuritySettings: React.FC<SecuritySettingsProps> = ({ onUpdate }) 
       });
       setPasswordData({ currentPassword: "", newPassword: "", confirmPassword: "" });
       onUpdate?.();
-<<<<<<< Updated upstream
     } catch {
-=======
-    } catch (_err) {
->>>>>>> Stashed changes
       setError(
         t("settings.security.passwordChangeFailed") ||
           "Failed to change password. Please check your current password.",
@@ -114,11 +110,7 @@ export const SecuritySettings: React.FC<SecuritySettingsProps> = ({ onUpdate }) 
           "Two-factor authentication has been disabled",
       });
       onUpdate?.();
-<<<<<<< Updated upstream
     } catch {
-=======
-    } catch (_err) {
->>>>>>> Stashed changes
       setError(
         t("settings.security.2FADisableFailed") ||
           "Failed to disable 2FA. Please check your password.",

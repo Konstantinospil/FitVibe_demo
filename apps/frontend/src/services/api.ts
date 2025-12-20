@@ -673,15 +673,9 @@ export async function getFeed(
         viewerHasBookmarked: boolean;
       };
     }>;
-<<<<<<< Updated upstream
-    total?: number;
-    limit?: number;
-    offset?: number;
-=======
     total: number;
     limit: number;
     offset: number;
->>>>>>> Stashed changes
   }>("/api/v1/feed", { params });
 
   // Transform backend response to frontend format
@@ -716,13 +710,9 @@ export async function getFeed(
       isLiked: item.stats.viewerHasLiked,
       isBookmarked: item.stats.viewerHasBookmarked,
     })),
-<<<<<<< Updated upstream
-    ...(res.data.total !== undefined ? { total: res.data.total } : {}),
-=======
     total: res.data.total,
     limit: res.data.limit,
     offset: res.data.offset,
->>>>>>> Stashed changes
   };
 }
 
@@ -749,124 +739,12 @@ export async function cloneSessionFromFeed(sessionId: string): Promise<{ session
   return res.data;
 }
 
-<<<<<<< Updated upstream
 export async function followUser(userId: string): Promise<void> {
   await apiClient.post(`/api/v1/users/${userId}/follow`);
 }
 
 export async function unfollowUser(userId: string): Promise<void> {
   await apiClient.delete(`/api/v1/users/${userId}/follow`);
-=======
-// Bookmark API
-export async function bookmarkSession(sessionId: string): Promise<void> {
-  await apiClient.post(`/api/v1/sessions/${sessionId}/bookmark`);
-}
-
-export async function unbookmarkSession(sessionId: string): Promise<void> {
-  await apiClient.delete(`/api/v1/sessions/${sessionId}/bookmark`);
-}
-
-export async function bookmarkFeedItem(feedItemId: string): Promise<void> {
-  await apiClient.post(`/api/v1/feed/item/${feedItemId}/bookmark`);
-}
-
-export async function unbookmarkFeedItem(feedItemId: string): Promise<void> {
-  await apiClient.delete(`/api/v1/feed/item/${feedItemId}/bookmark`);
-}
-
-// Comment API
-export interface Comment {
-  id: string;
-  feedItemId: string;
-  userId: string;
-  username: string;
-  displayName?: string;
-  body: string;
-  createdAt: string;
-  deletedAt?: string;
-}
-
-export interface CommentsResponse {
-  comments: Comment[];
-  total?: number;
-  limit?: number;
-  offset?: number;
-}
-
-export async function getFeedItemComments(
-  feedItemId: string,
-  params?: { limit?: number; offset?: number },
-): Promise<CommentsResponse> {
-  const res = await apiClient.get<CommentsResponse>(`/api/v1/feed/item/${feedItemId}/comments`, {
-    params,
-  });
-  return res.data;
-}
-
-export interface AddCommentRequest {
-  body: string;
-}
-
-export interface AddCommentResponse {
-  comment: Comment;
-}
-
-export async function addComment(
-  feedItemId: string,
-  payload: AddCommentRequest,
-): Promise<AddCommentResponse> {
-  const res = await apiClient.post<AddCommentResponse>(
-    `/api/v1/feed/item/${feedItemId}/comments`,
-    payload,
-  );
-  return res.data;
-}
-
-export async function deleteComment(commentId: string): Promise<void> {
-  await apiClient.delete(`/api/v1/feed/comments/${commentId}`);
-}
-
-// Follow API
-export async function followUser(alias: string): Promise<void> {
-  await apiClient.post(`/api/v1/users/${alias}/follow`);
-}
-
-export async function unfollowUser(alias: string): Promise<void> {
-  await apiClient.delete(`/api/v1/users/${alias}/follow`);
-}
-
-export interface UserProfile {
-  id: string;
-  username: string;
-  alias: string;
-  displayName?: string;
-  avatarUrl?: string;
-  bio?: string;
-  followersCount?: number;
-  followingCount?: number;
-  isFollowing?: boolean;
-  isOwnProfile?: boolean;
-}
-
-export async function getUserProfile(alias: string): Promise<UserProfile> {
-  const res = await apiClient.get<UserProfile>(`/api/v1/users/${alias}`);
-  return res.data;
-}
-
-// Share API
-export interface ShareLinkResponse {
-  token: string;
-  url: string;
-}
-
-export async function createShareLink(feedItemId: string): Promise<ShareLinkResponse> {
-  const res = await apiClient.post<ShareLinkResponse>(`/api/v1/feed/item/${feedItemId}/link`);
-  return res.data;
-}
-
-export async function revokeShareLink(feedItemId: string): Promise<void> {
-  await apiClient.delete(`/api/v1/feed/item/${feedItemId}/link`);
->>>>>>> Stashed changes
 }
 
 // Progress API
@@ -1307,11 +1185,13 @@ export interface PointsBalance {
 
 export interface PointsHistoryEntry {
   id: string;
-  type: string;
+  type?: string;
   points: number;
-  description: string;
+  description?: string;
+  reason?: string;
   createdAt: string;
-  sessionId?: string;
+  awardedAt?: string;
+  sessionId?: string | null;
   exerciseId?: string;
 }
 
@@ -1556,16 +1436,6 @@ export interface UserProfileResponse {
   locale?: string;
 }
 
-export async function getCurrentUser(): Promise<UserProfileResponse> {
-  const res = await apiClient.get<UserProfileResponse>("/api/v1/users/me");
-  return res.data;
-}
-
-export async function updateProfile(payload: UpdateProfileRequest): Promise<UserProfileResponse> {
-  const res = await apiClient.patch<UserProfileResponse>("/api/v1/users/me", payload);
-  return res.data;
-}
-
 export interface ChangePasswordRequest {
   currentPassword: string;
   newPassword: string;
@@ -1683,113 +1553,11 @@ export async function revokeShareLink(sessionId: string): Promise<void> {
   await apiClient.delete(`/api/v1/sessions/${sessionId}/share`);
 }
 
-// Leaderboard API (stubs - to be implemented)
-export type LeaderboardType = "global" | "friends" | "vibe";
-export type LeaderboardPeriod = "daily" | "weekly" | "monthly" | "all_time";
+// Leaderboard API - using the definitions above (lines 1251-1263)
 
-export interface LeaderboardEntry {
-  userId: string;
-  username: string;
-  displayName: string;
-  avatarUrl: string | null;
-  points: number;
-  rank: number;
-  vibe?: string;
-  badgesCount?: number;
-}
+// Gamification API - using the definition above (lines 1219-1230)
 
-export async function getLeaderboard(options: {
-  type: LeaderboardType;
-  period?: LeaderboardPeriod;
-}): Promise<{ entries: LeaderboardEntry[]; userRank?: number }> {
-  const res = await apiClient.get<{ entries: LeaderboardEntry[]; userRank?: number }>(
-    `/api/v1/leaderboard/${options.type}`,
-    {
-      params: { period: options.period },
-    },
-  );
-  return res.data;
-}
-
-// Gamification API (stubs - to be implemented)
-export interface Badge {
-  id: string;
-  name: string;
-  description: string;
-  iconUrl?: string | null;
-  rarity?: "common" | "rare" | "epic" | "legendary";
-  earnedAt?: string | null;
-  progress?: number;
-  maxProgress?: number;
-}
-
-// Points History API (stubs - to be implemented)
-export interface PointsHistoryEntry {
-  id: string;
-  points: number;
-  reason: string;
-  description?: string;
-  awardedAt: string;
-  createdAt: string;
-  sessionId: string | null;
-}
-
-export async function getPointsHistory(options?: {
-  limit?: number;
-  offset?: number;
-  cursor?: string;
-}): Promise<{ entries: PointsHistoryEntry[]; total: number; nextCursor?: string }> {
-  const res = await apiClient.get<{
-    entries: PointsHistoryEntry[];
-    total: number;
-    nextCursor?: string;
-  }>("/api/v1/points/history", { params: options });
-  return res.data;
-}
+// Points History API - using the definition above (lines 1186-1194)
 
 // Account Management API (stubs - to be implemented)
-export async function deleteAccount(password: {
-  password: string;
-}): Promise<{ scheduledAt: string }> {
-  const res = await apiClient.delete<{ scheduledAt: string }>("/api/v1/users/me", {
-    data: password,
-  });
-  return res.data;
-}
-
-export async function exportUserData(): Promise<Blob> {
-  const res = await apiClient.get<Blob>("/api/v1/users/me/export", { responseType: "blob" });
-  return res.data;
-}
-
-// Privacy Settings API (stubs - to be implemented)
-export interface PrivacySettings {
-  profileVisibility: "public" | "private" | "link";
-  defaultVisibility: "public" | "private" | "link";
-  showEmail: boolean;
-  showStats: boolean;
-  showWeight: boolean;
-  showFitnessLevel: boolean;
-  allowMessages: boolean;
-  allowFollowers: boolean;
-}
-
-export async function getPrivacySettings(): Promise<PrivacySettings> {
-  const res = await apiClient.get<PrivacySettings>("/api/v1/users/me/privacy");
-  return res.data;
-}
-
-export async function updatePrivacySettings(
-  settings: Partial<PrivacySettings>,
-): Promise<PrivacySettings> {
-  const res = await apiClient.patch<PrivacySettings>("/api/v1/users/me/privacy", settings);
-  return res.data;
-}
-
-// Security Settings API (stubs - to be implemented)
-export async function changePassword(passwordData: {
-  currentPassword: string;
-  newPassword: string;
-}): Promise<void> {
-  await apiClient.post("/api/v1/users/me/password", passwordData);
-}
+// Note: deleteAccount and exportUserData are already defined above

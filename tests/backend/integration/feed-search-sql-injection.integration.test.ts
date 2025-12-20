@@ -162,4 +162,3 @@ describe("Integration: Feed Search SQL Injection Protection", () => {
     }
   });
 });
-

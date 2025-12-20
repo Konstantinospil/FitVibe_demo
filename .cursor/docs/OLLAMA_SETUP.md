@@ -135,3 +135,6 @@ OPENAI_API_KEY=sk-your-key-here
 3. **Close unused applications** to free up RAM
 4. **Use GPU if available** (Ollama automatically uses GPU if detected)
 
+
+
+

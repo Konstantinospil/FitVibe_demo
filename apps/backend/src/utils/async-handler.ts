@@ -13,6 +13,10 @@ type AsyncRouteHandler = (
  */
 export function asyncHandler(fn: AsyncRouteHandler): RequestHandler {
   return (req: Request, res: Response, next: NextFunction) => {
-    void Promise.resolve(fn(req, res, next)).catch(next);
+    try {
+      void Promise.resolve(fn(req, res, next)).catch(next);
+    } catch (error) {
+      next(error);
+    }
   };
 }

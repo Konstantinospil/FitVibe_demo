@@ -39,7 +39,11 @@ export const UserCard: React.FC<UserCardProps> = ({
             alignItems: "flex-start",
           }}
         >
-          <Avatar name={user.displayName || user.username} src={user.avatarUrl} size={56} />
+          <Avatar
+            name={user.displayName || user.username}
+            src={user.avatarUrl ?? undefined}
+            size={56}
+          />
           <div
             style={{
               flex: 1,
@@ -83,7 +87,7 @@ export const UserCard: React.FC<UserCardProps> = ({
                   @{user.username}
                 </p>
               </div>
-              {showFollowButton && !user.isOwnProfile && (
+              {showFollowButton && !user.isOwnProfile && user.alias && (
                 <FollowButton
                   userAlias={user.alias}
                   initialFollowing={user.isFollowing}

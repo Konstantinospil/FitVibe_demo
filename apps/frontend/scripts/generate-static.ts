@@ -17,4 +17,3 @@ main().catch((error) => {
   console.error("Error generating static pages:", error);
   process.exit(1);
 });
-

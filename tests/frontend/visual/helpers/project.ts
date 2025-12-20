@@ -56,4 +56,3 @@ export function getCurrentProject(testInfo: TestInfo): {
 } {
   return parseProjectName(testInfo.project.name);
 }
-

@@ -349,4 +349,3 @@ describe("CSRF Middleware", () => {
     });
   });
 });
-

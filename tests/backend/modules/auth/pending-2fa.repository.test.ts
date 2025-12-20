@@ -237,4 +237,3 @@ describe("pending-2fa.repository", () => {
     });
   });
 });
-

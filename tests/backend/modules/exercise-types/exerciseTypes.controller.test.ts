@@ -225,4 +225,3 @@ describe("Exercise Types Controller", () => {
     });
   });
 });
-
