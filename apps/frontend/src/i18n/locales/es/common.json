@@ -100,9 +100,13 @@
     "brand": "FitVibe",
     "terms": "Términos y Condiciones",
     "privacy": "Política de Privacidad",
+    "impressum": "Aviso Legal",
+    "contact": "Contacto",
     "navigationLabel": "Navegación del pie de página",
     "termsAriaLabel": "Ver Términos y Condiciones",
-    "privacyAriaLabel": "Ver Política de Privacidad"
+    "privacyAriaLabel": "Ver Política de Privacidad",
+    "impressumAriaLabel": "Ver Aviso Legal",
+    "contactAriaLabel": "Contáctanos"
   },
   "terms": {
     "eyebrow": "Legal",
@@ -590,6 +594,63 @@
       "strength": "Fuerza",
       "cardio": "Cardio",
       "powerEndurance": "Fuerza-Resistencia"
+    }
+  },
+  "coach": {
+    "dashboard": {
+      "eyebrow": "Panel de Entrenador",
+      "title": "Gestiona tus Atletas",
+      "description": "Crea planes de entrenamiento, monitorea el progreso de los atletas y asigna entrenamientos",
+      "metrics": {
+        "athletes": "Atletas",
+        "activeAssignments": "Asignaciones Activas",
+        "completedSessions": "Sesiones Completadas",
+        "pendingFeedback": "Feedback Pendiente"
+      },
+      "tabs": {
+        "overview": "Resumen",
+        "workouts": "Entrenamientos",
+        "athletes": "Atletas",
+        "assign": "Asignar"
+      },
+      "overview": {
+        "recentActivity": {
+          "title": "Actividad Reciente",
+          "empty": "No hay actividad reciente para mostrar"
+        },
+        "quickActions": {
+          "title": "Acciones Rápidas",
+          "createWorkout": "Crear Entrenamiento",
+          "assignWorkout": "Asignar Entrenamiento",
+          "viewAthletes": "Ver Atletas"
+        }
+      },
+      "workouts": {
+        "title": "Entrenamientos",
+        "create": "Crear Entrenamiento",
+        "empty": "Aún no se han creado entrenamientos",
+        "description": "Crea entrenamientos reutilizables que puedes asignar a múltiples atletas. Los entrenamientos pueden incluir ejercicios, series, repeticiones y otros parámetros."
+      },
+      "athletes": {
+        "title": "Atletas",
+        "empty": "Aún no hay atletas asignados. Los atletas deben otorgarte acceso a través de su configuración.",
+        "table": {
+          "athlete": "Atleta",
+          "assigned": "Asignado",
+          "completed": "Completado",
+          "adherence": "Adherencia",
+          "status": "Estado"
+        }
+      },
+      "assign": {
+        "title": "Asignar Entrenamiento",
+        "selectWorkout": "Seleccionar Entrenamiento",
+        "selectWorkoutPlaceholder": "Elige un entrenamiento...",
+        "selectAthletes": "Seleccionar Atletas",
+        "noAthletes": "No hay atletas disponibles. Los atletas deben otorgarte acceso primero.",
+        "assignmentDate": "Fecha de Asignación",
+        "assignButton": "Asignar Entrenamiento"
+      }
     }
   }
 }
