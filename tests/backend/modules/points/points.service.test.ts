@@ -1,0 +1,314 @@
+import * as pointsService from "../../../../apps/backend/src/modules/points/points.service.js";
+import * as pointsRepository from "../../../../apps/backend/src/modules/points/points.repository.js";
+import * as badgesService from "../../../../apps/backend/src/modules/points/badges.service.js";
+import * as sessionsRepository from "../../../../apps/backend/src/modules/sessions/sessions.repository.js";
+import { HttpError } from "../../../../apps/backend/src/utils/http.js";
+import type {
+  PointsSummary,
+  PointsHistoryQuery,
+  PointsHistoryResult,
+  AwardPointsResult,
+} from "../../../../apps/backend/src/modules/points/points.types.js";
+import type { SessionWithExercises } from "../../../../apps/backend/src/modules/sessions/sessions.types.js";
+
+// Mock dependencies
+jest.mock("../../../../apps/backend/src/modules/points/points.repository.js");
+jest.mock("../../../../apps/backend/src/modules/points/badges.service.js");
+jest.mock("../../../../apps/backend/src/modules/sessions/sessions.repository.js");
+jest.mock("../../../../apps/backend/src/db/connection.js", () => {
+  const createTrx = () => {
+    const builder = Object.assign(Promise.resolve([]), {
+      where: jest.fn().mockReturnThis(),
+      select: jest.fn().mockReturnThis(),
+      first: jest.fn().mockResolvedValue(null),
+    });
+    const callableBuilder = Object.assign(
+      jest.fn((table: string) => builder),
+      builder,
+    );
+    return callableBuilder;
+  };
+
+  const mockTransaction = jest.fn((cb: (trx: ReturnType<typeof createTrx>) => Promise<void>) =>
+    cb(createTrx()),
+  );
+
+  const mockDbFunction = jest.fn((table: string) => {
+    const builder = Object.assign(Promise.resolve([]), {
+      where: jest.fn().mockReturnThis(),
+      select: jest.fn().mockReturnThis(),
+      first: jest.fn().mockResolvedValue(null),
+    });
+    return Object.assign(
+      jest.fn((t: string) => builder),
+      builder,
+    );
+  }) as jest.Mock & {
+    transaction: jest.Mock;
+  };
+  mockDbFunction.transaction = mockTransaction;
+
+  return {
+    db: mockDbFunction,
+  };
+});
+jest.mock("../../../../apps/backend/src/observability/metrics.js", () => ({
+  incrementPointsAwarded: jest.fn(),
+}));
+jest.mock("../../../../apps/backend/src/jobs/services/points-jobs.service.js", () => ({
+  pointsJobsService: {
+    scheduleStreakEvaluation: jest.fn(),
+    scheduleSeasonalEventSweep: jest.fn(),
+  },
+}));
+
+const mockPointsRepo = jest.mocked(pointsRepository);
+const mockBadgesService = jest.mocked(badgesService);
+const mockSessionsRepo = jest.mocked(sessionsRepository);
+
+describe("Points Service", () => {
+  const userId = "user-123";
+  const sessionId = "session-123";
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    // Default mocks - only mock methods that actually exist in the repository
+    // Note: vibe-level methods may be in a different service or removed
+  });
+
+  describe("getPointsSummary", () => {
+    it("should return points summary", async () => {
+      const mockSummary: PointsSummary = {
+        balance: 1000,
+        recent: [
+          {
+            id: "event-1",
+            points: 50,
+            source_type: "session",
+            source_id: sessionId,
+            awarded_at: new Date().toISOString(),
+            algorithm_version: "v1",
+          },
+        ],
+      };
+
+      mockPointsRepo.getPointsBalance.mockResolvedValue(1000);
+      mockPointsRepo.getRecentPointsEvents.mockResolvedValue(mockSummary.recent);
+
+      const result = await pointsService.getPointsSummary(userId);
+
+      expect(result).toEqual(mockSummary);
+      expect(mockPointsRepo.getPointsBalance).toHaveBeenCalledWith(userId);
+      expect(mockPointsRepo.getRecentPointsEvents).toHaveBeenCalledWith(userId, 10);
+    });
+  });
+
+  describe("getPointsHistory", () => {
+    it("should return points history", async () => {
+      const query: PointsHistoryQuery = {
+        limit: 20,
+      };
+
+      const mockHistoryItems = [
+        {
+          id: "event-1",
+          points: 50,
+          source_type: "session",
+          source_id: sessionId,
+          awarded_at: new Date().toISOString(),
+          algorithm_version: "v1",
+        },
+      ];
+
+      mockPointsRepo.getPointsHistory.mockResolvedValue(mockHistoryItems);
+
+      const result = await pointsService.getPointsHistory(userId, query);
+
+      expect(result.items).toEqual(mockHistoryItems);
+      expect(result.nextCursor).toBeNull();
+      expect(mockPointsRepo.getPointsHistory).toHaveBeenCalled();
+    });
+
+    it("should decode cursor when provided", async () => {
+      const query: PointsHistoryQuery = {
+        limit: 20,
+        cursor: "2024-01-01T00:00:00Z|event-123",
+      };
+
+      mockPointsRepo.getPointsHistory.mockResolvedValue([]);
+
+      await pointsService.getPointsHistory(userId, query);
+
+      expect(mockPointsRepo.getPointsHistory).toHaveBeenCalledWith(
+        userId,
+        expect.objectContaining({
+          cursor: {
+            awardedAt: new Date("2024-01-01T00:00:00Z"),
+            id: "event-123",
+          },
+        }),
+      );
+    });
+
+    it("should throw error for invalid cursor", async () => {
+      const query: PointsHistoryQuery = {
+        limit: 20,
+        cursor: "invalid-cursor",
+      };
+
+      await expect(pointsService.getPointsHistory(userId, query)).rejects.toThrow(HttpError);
+      await expect(pointsService.getPointsHistory(userId, query)).rejects.toThrow(
+        "POINTS_INVALID_CURSOR",
+      );
+    });
+
+    it("should clamp limit to max", async () => {
+      const query: PointsHistoryQuery = {
+        limit: 200, // Exceeds MAX_HISTORY_LIMIT (100)
+      };
+
+      mockPointsRepo.getPointsHistory.mockResolvedValue([]);
+
+      await pointsService.getPointsHistory(userId, query);
+
+      expect(mockPointsRepo.getPointsHistory).toHaveBeenCalledWith(
+        userId,
+        expect.objectContaining({
+          limit: 101, // limit + 1 for pagination check
+        }),
+      );
+    });
+  });
+
+  describe("awardPointsForSession", () => {
+    const mockSession: SessionWithExercises = {
+      id: sessionId,
+      owner_id: userId,
+      title: "Test Session",
+      planned_at: new Date().toISOString(),
+      status: "completed",
+      completed_at: new Date().toISOString(),
+      visibility: "private",
+      exercises: [],
+    } as SessionWithExercises;
+
+    it("should award points for completed session", async () => {
+      const mockProfile = {
+        dateOfBirth: "1990-01-01",
+        fitnessLevelCode: "intermediate",
+        trainingFrequency: "3-4 times per week",
+      };
+
+      mockPointsRepo.getUserPointsProfile.mockResolvedValue(mockProfile);
+      mockPointsRepo.findPointsEventBySource.mockResolvedValue(null);
+      mockPointsRepo.getExercisesMetadata.mockResolvedValue(new Map());
+      mockPointsRepo.insertPointsEvent.mockResolvedValue({
+        id: "event-1",
+        user_id: userId,
+        points: 70,
+        source_type: "session_completed",
+        source_id: sessionId,
+        awarded_at: new Date().toISOString(),
+        algorithm_version: "v1",
+        created_at: new Date().toISOString(),
+      });
+      mockSessionsRepo.updateSession.mockResolvedValue(1);
+      mockBadgesService.evaluateBadgesForSession.mockResolvedValue([]);
+
+      const result = await pointsService.awardPointsForSession(mockSession);
+
+      // Points are calculated from vibe level changes, not fixed calculation
+      expect(result.pointsAwarded).toBeGreaterThan(0);
+      expect(result.pointsAwarded).toBeLessThanOrEqual(500); // Clamped to max 500
+      expect(mockPointsRepo.insertPointsEvent).toHaveBeenCalled();
+      expect(mockSessionsRepo.updateSession).toHaveBeenCalled();
+    });
+
+    it("should return existing points if already awarded", async () => {
+      const existingEvent = {
+        id: "event-1",
+        user_id: userId,
+        points: 50,
+        source_type: "session_completed",
+        source_id: sessionId,
+        awarded_at: new Date().toISOString(),
+        algorithm_version: "v1",
+        created_at: new Date().toISOString(),
+      };
+
+      mockPointsRepo.findPointsEventBySource.mockResolvedValue(existingEvent);
+      mockSessionsRepo.updateSession.mockResolvedValue(1);
+
+      const result = await pointsService.awardPointsForSession(mockSession);
+
+      expect(result.pointsAwarded).toBe(50);
+      expect(mockPointsRepo.insertPointsEvent).not.toHaveBeenCalled();
+    });
+
+    it("should calculate points based on session metrics", async () => {
+      const mockProfile = {
+        dateOfBirth: "1980-01-01",
+        fitnessLevel: "advanced",
+        trainingFrequency: "5+ times per week",
+      };
+
+      mockPointsRepo.getUserPointsProfile.mockResolvedValue(mockProfile);
+      mockPointsRepo.findPointsEventBySource.mockResolvedValue(null);
+      mockPointsRepo.getExercisesMetadata.mockResolvedValue(new Map());
+      mockPointsRepo.insertPointsEvent.mockResolvedValue({
+        id: "event-1",
+        user_id: userId,
+        points: 100,
+        source_type: "session_completed",
+        source_id: sessionId,
+        awarded_at: new Date().toISOString(),
+        algorithm_version: "v1",
+        created_at: new Date().toISOString(),
+      });
+      mockSessionsRepo.updateSession.mockResolvedValue(1);
+      mockBadgesService.evaluateBadgesForSession.mockResolvedValue([]);
+
+      const result = await pointsService.awardPointsForSession(mockSession);
+
+      expect(result.pointsAwarded).toBeGreaterThan(0);
+      expect(result.pointsAwarded).toBeLessThanOrEqual(500); // Clamped to max 500
+      expect(mockPointsRepo.insertPointsEvent).toHaveBeenCalled();
+    });
+
+    it("should handle session with calories", async () => {
+      const sessionWithCalories: SessionWithExercises = {
+        ...mockSession,
+        calories: 500,
+        completed_at: new Date().toISOString(),
+      };
+
+      const mockProfile = {
+        dateOfBirth: null,
+        fitnessLevel: null,
+        trainingFrequency: null,
+      };
+
+      mockPointsRepo.getUserPointsProfile.mockResolvedValue(mockProfile);
+      mockPointsRepo.findPointsEventBySource.mockResolvedValue(null);
+      mockPointsRepo.getExercisesMetadata.mockResolvedValue(new Map());
+      mockPointsRepo.insertPointsEvent.mockResolvedValue({
+        id: "event-1",
+        user_id: userId,
+        points: 75,
+        source_type: "session_completed",
+        source_id: sessionId,
+        awarded_at: new Date().toISOString(),
+        algorithm_version: "v1",
+        created_at: new Date().toISOString(),
+      });
+      mockSessionsRepo.updateSession.mockResolvedValue(1);
+      mockBadgesService.evaluateBadgesForSession.mockResolvedValue([]);
+
+      const result = await pointsService.awardPointsForSession(sessionWithCalories);
+
+      // Points are calculated from vibe level changes
+      expect(result.pointsAwarded).toBeGreaterThan(0);
+      expect(result.pointsAwarded).toBeLessThanOrEqual(500); // Clamped to max 500
+    });
+  });
+});

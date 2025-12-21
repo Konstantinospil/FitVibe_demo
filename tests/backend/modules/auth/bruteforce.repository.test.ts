@@ -21,7 +21,7 @@ import {
   cleanupOldAttempts,
   cleanupOldIPAttempts,
 } from "../../../../apps/backend/src/modules/auth/bruteforce.repository.js";
-import { truncateAll } from "../../../setup/test-helpers";
+import { truncateAll } from "../../../setup/test-helpers.js";
 
 // Check database availability before running tests
 let isDatabaseAvailable = false;

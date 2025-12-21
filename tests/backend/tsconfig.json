@@ -1,15 +1,17 @@
 {
   "extends": "../../apps/backend/tsconfig.json",
   "compilerOptions": {
-    "rootDir": ".",
+    "rootDir": "../..",
     "outDir": "../../apps/backend/dist-tests",
     "baseUrl": ".",
     "paths": {
       "../../src/*": ["../../apps/backend/src/*"],
       "../../openapi/*": ["../../apps/backend/openapi/*"]
     },
-    "types": ["node", "jest"]
+    "types": ["jest"],
+    "typeRoots": ["../../node_modules/@types"],
+    "skipLibCheck": true
   },
   "include": ["**/*.ts", "../setup/**/*.ts"],
-  "exclude": ["node_modules"]
+  "exclude": ["node_modules", "**/node_modules"]
 }

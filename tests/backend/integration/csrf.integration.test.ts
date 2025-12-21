@@ -69,7 +69,11 @@ describe("CSRF middleware integration", () => {
     expect(tokenResponse.status).toBe(200);
 
     const cookies = tokenResponse.headers["set-cookie"] ?? [];
-    const csrfCookie = cookies.find((value: string) => value.startsWith("__Host-fitvibe-csrf"));
+    // Cookie name is environment-dependent: __Host-fitvibe-csrf (production) or fitvibe-csrf (development/test)
+    const csrfCookie = cookies.find(
+      (value: string) =>
+        value.startsWith("__Host-fitvibe-csrf") || value.startsWith("fitvibe-csrf"),
+    );
     expect(csrfCookie).toBeDefined();
 
     const { csrfToken } = tokenResponse.body;
@@ -103,7 +107,11 @@ describe("CSRF middleware integration", () => {
     expect(response.status).toBe(200);
 
     const cookies = response.headers["set-cookie"] ?? [];
-    const csrfCookie = cookies.find((value: string) => value.startsWith("__Host-fitvibe-csrf"));
+    // Cookie name is environment-dependent: __Host-fitvibe-csrf (production) or fitvibe-csrf (development/test)
+    const csrfCookie = cookies.find(
+      (value: string) =>
+        value.startsWith("__Host-fitvibe-csrf") || value.startsWith("fitvibe-csrf"),
+    );
     expect(csrfCookie).toBeDefined();
     expect(csrfCookie).toContain("HttpOnly");
     expect(csrfCookie).toContain("SameSite=Lax");
