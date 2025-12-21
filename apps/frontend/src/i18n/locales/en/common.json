@@ -74,7 +74,12 @@
     "title": "Share progress with teammates and followers.",
     "description": "Private work stays private. Public achievements are discoverable and easy to celebrate.",
     "timestamp": "moments ago",
-    "button": "Open session",
+    "button": "Clone",
+    "cloneSuccess": "Session cloned successfully!",
+    "error": "Failed to load feed. Please try again later.",
+    "empty": "No activity yet. Start training and share your sessions!",
+    "exercises": "exercises",
+    "noVolumeData": "No volume data",
     "items": {
       "leah": {
         "user": "Leah",
@@ -98,11 +103,17 @@
   },
   "footer": {
     "brand": "FitVibe",
+    "impressum": "Impressum",
     "terms": "Terms and Conditions",
     "privacy": "Privacy Policy",
+    "cookie": "Cookie Policy",
+    "contact": "Contact",
     "navigationLabel": "Footer navigation",
+    "impressumAriaLabel": "View Impressum",
     "termsAriaLabel": "View Terms and Conditions",
-    "privacyAriaLabel": "View Privacy Policy"
+    "privacyAriaLabel": "View Privacy Policy",
+    "cookieAriaLabel": "View Cookie Policy",
+    "contactAriaLabel": "Contact us"
   },
   "terms": {
     "eyebrow": "Legal",
@@ -115,6 +126,32 @@
     "title": "Privacy Policy",
     "description": "Learn how we collect, use, and protect your personal data.",
     "effectiveDate": "Effective date"
+  },
+  "impressum": {
+    "eyebrow": "Legal",
+    "title": "Impressum",
+    "description": "Company information and legal details.",
+    "content": "FitVibe is operated by [Company Name]. For inquiries, please contact us at contact@fitvibe.example.com."
+  },
+  "contact": {
+    "eyebrow": "Contact",
+    "title": "Contact Us",
+    "description": "Get in touch with the FitVibe team.",
+    "content": "For inquiries, please contact us at contact@fitvibe.example.com.",
+    "form": {
+      "emailLabel": "Email",
+      "topicLabel": "Topic",
+      "messageLabel": "Message",
+      "emailRequired": "Email is required",
+      "topicRequired": "Topic is required",
+      "messageRequired": "Message is required",
+      "invalidEmail": "Please enter a valid email address",
+      "submit": "Send Message",
+      "submitting": "Sending...",
+      "success": "Your message has been sent successfully!",
+      "error": "Failed to send message. Please try again.",
+      "characters": "characters"
+    }
   },
   "errors": {
     "TERMS_ACCEPTANCE_REQUIRED": "You must accept the Terms and Conditions and Privacy Policy to create an account",
@@ -227,6 +264,7 @@
     "weekly": "Weekly",
     "monthly": "Monthly",
     "refreshing": "Refreshing…",
+    "range": "Range",
     "period": "Period",
     "volume": "Volume",
     "sessions": "Sessions",
@@ -341,7 +379,11 @@
     "load": "Load",
     "repsPlaceholder": "10",
     "weightPlaceholder": "80",
-    "rpePlaceholder": "7"
+    "rpePlaceholder": "7",
+    "expand": "Expand",
+    "collapse": "Collapse",
+    "markComplete": "Mark complete",
+    "markIncomplete": "Mark incomplete"
   },
   "planner": {
     "eyebrow": "Session architecture",
@@ -351,6 +393,10 @@
     "sessionTitlePlaceholder": "e.g., Upper Body Strength",
     "notesPlaceholder": "Add session notes, training goals, or context...",
     "exerciseSearchPlaceholder": "Search for exercises (e.g., squat, bench press)...",
+    "searchExercises": "Search exercises",
+    "moveUp": "Move up",
+    "moveDown": "Move down",
+    "removeExercise": "Remove exercise",
     "repsPlaceholder": "10",
     "weightPlaceholder": "80",
     "rpePlaceholder": "7",
@@ -362,7 +408,32 @@
     "title": "Plan and log your workouts",
     "description": "Design training blocks and capture every rep without breaking flow.",
     "plannerTab": "Planner",
-    "loggerTab": "Logger"
+    "loggerTab": "Logger",
+    "createNew": "Create New Session",
+    "noPlanned": "No planned sessions",
+    "createFirst": "Create your first workout session to get started",
+    "createSession": "Create Session",
+    "untitled": "Untitled Session",
+    "statusPlanned": "Planned",
+    "statusInProgress": "In Progress",
+    "exercise": "exercise",
+    "exercises": "exercises",
+    "customExercise": "Custom Exercise",
+    "more": "more",
+    "startSession": "Start session",
+    "viewSession": "View session",
+    "deleteSession": "Delete session",
+    "deleteSuccess": "Session deleted successfully",
+    "deleteError": "Failed to delete session. Please try again.",
+    "deleteConfirmTitle": "Delete Session",
+    "deleteConfirmMessage": "Are you sure you want to delete this session? This action cannot be undone.",
+    "deleteConfirmLabel": "Yes, Delete Session",
+    "noActive": "No active sessions",
+    "startFromPlanner": "Start a planned session from the Planner tab to begin logging",
+    "goToPlanner": "Go to Planner",
+    "started": "Started",
+    "recently": "recently",
+    "continue": "Continue"
   },
   "insights": {
     "eyebrow": "Analytics & trends",
@@ -397,11 +468,14 @@
     }
   },
   "settings": {
-    "title": "Settings",
-    "description": "Your preferences and account settings",
+    "eyebrow": "Settings",
+    "title": "Your preferences and account settings",
+    "description": "Manage your profile, privacy, security, and account settings.",
+    "loading": "Loading...",
+    "notAvailable": "Not available",
     "profile": {
       "title": "Profile Settings",
-      "description": "Update your profile information",
+      "description": "Update your display name and basic information",
       "displayName": "Display Name",
       "displayNamePlaceholder": "Your display name",
       "alias": "Alias",
@@ -431,12 +505,72 @@
       "title": "Preferences",
       "description": "Set your default session visibility, units, and language",
       "defaultVisibility": "Default Session Visibility",
+      "visibilityOptions": {
+        "private": "Private (only you)",
+        "followers": "Followers",
+        "link": "Link only",
+        "public": "Public"
+      },
       "units": "Units",
+      "unitsOptions": {
+        "metric": "Metric (kg, km)",
+        "imperial": "Imperial (lb, mi)"
+      },
       "language": "Language",
+      "languageOptions": {
+        "en": "English",
+        "de": "Deutsch (German)"
+      },
       "saveSuccess": "Preferences saved successfully!",
       "saveError": "Failed to save preferences. Please try again.",
       "saveButton": "Save Preferences",
       "saving": "Saving..."
+    },
+    "twoFactor": {
+      "title": "Two-Factor Authentication (2FA)",
+      "description": "Add an extra layer of security to your account with 2FA",
+      "disabled": "2FA is currently <strong>disabled</strong>. Enable it to secure your account with a time-based one-time password (TOTP).",
+      "enable": "Enable 2FA",
+      "scanQRCode": "Scan this QR code with your authenticator app (Google Authenticator, Authy, etc.):",
+      "loadingQRCode": "Loading QR Code...",
+      "enterCode": "Enter the 6-digit code from your app:",
+      "verifyAndEnable": "Verify and Enable",
+      "backupCodes": "Backup Codes",
+      "backupCodesDescription": "Save these backup codes in a secure location. You can use them to access your account if you lose your authenticator device.",
+      "enabled": "✓ 2FA is currently <strong>enabled</strong>",
+      "enabledDescription": "Your account is protected with two-factor authentication.",
+      "enterPasswordToDisable": "Enter your password to disable 2FA",
+      "disable": "Disable 2FA",
+      "disableConfirmTitle": "Disable Two-Factor Authentication",
+      "disableConfirmMessage": "Are you sure you want to disable 2FA? This will make your account less secure.",
+      "disableConfirmLabel": "Yes, Disable 2FA",
+      "enableError": "Failed to enable 2FA. Please try again.",
+      "verifyError": "Invalid code. Please try again.",
+      "disableError": "Failed to disable 2FA. Please check your password and try again.",
+      "disableSuccess": "2FA disabled successfully",
+      "enableSuccess": "2FA enabled successfully!",
+      "invalidCode": "Please enter a valid 6-digit code",
+      "enterPasswordWarning": "Please enter your password to disable 2FA"
+    },
+    "dangerZone": {
+      "title": "Danger Zone",
+      "description": "Irreversible actions that will permanently affect your account",
+      "deleteAccount": "Delete My Account",
+      "deleteWarning": "⚠️ Warning: This will permanently delete your account",
+      "deleteDescription": "Deleting your account will:",
+      "deleteItems": {
+        "data": "Permanently delete all your workout data",
+        "sessions": "Remove all your sessions and progress records",
+        "profile": "Delete your profile and account information",
+        "irreversible": "This action cannot be undone"
+      },
+      "deleteConfirmTitle": "Delete Account",
+      "deleteConfirmMessage": "This will permanently delete your account and all your data. This action cannot be undone. Are you absolutely sure?",
+      "deleteConfirmLabel": "Yes, Delete My Account",
+      "deletePasswordPrompt": "Please enter your password to confirm account deletion:",
+      "deleteSuccess": "Your account has been scheduled for deletion. You will be logged out now.",
+      "deleteError": "Failed to delete account. Please try again.",
+      "deletePasswordWarning": "Please enter your password to confirm account deletion"
     }
   },
   "common": {
@@ -535,13 +669,31 @@
     }
   },
   "admin": {
+    "dashboard": {
+      "eyebrow": "Admin Dashboard",
+      "title": "FitVibe Administration",
+      "description": "Manage users, moderate content, and control system settings"
+    },
+    "contentReports": {
+      "title": "Content Reports",
+      "description": "Review and moderate reported content"
+    },
     "userManagement": {
+      "title": "User Management",
+      "description": "Manage user accounts and permissions",
       "searchPlaceholder": "Search by email, username, or ID..."
     },
     "systemControls": {
+      "title": "System Controls",
+      "description": "System configuration and maintenance",
       "maintenanceMessagePlaceholder": "e.g., Emergency database maintenance",
       "durationPlaceholder": "e.g., 30 minutes",
-      "completionMessagePlaceholder": "e.g., Maintenance completed successfully"
+      "completionMessagePlaceholder": "e.g., Maintenance completed successfully",
+      "readOnlyEnabled": "Read-only mode enabled successfully",
+      "readOnlyDisabled": "Read-only mode disabled successfully",
+      "readOnlyEnableError": "Failed to enable read-only mode. Please try again.",
+      "readOnlyDisableError": "Failed to disable read-only mode. Please try again.",
+      "loadStatusError": "Failed to load system status"
     }
   },
   "twoFactor": {

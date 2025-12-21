@@ -75,6 +75,11 @@
     "description": "El trabajo privado permanece privado. Los logros públicos son descubribles y fáciles de celebrar.",
     "timestamp": "hace un momento",
     "button": "Abrir sesión",
+    "cloneSuccess": "¡Sesión clonada con éxito!",
+    "error": "Error al cargar el flujo. Por favor, inténtalo más tarde.",
+    "empty": "Aún no hay actividad. ¡Comienza a entrenar y comparte tus sesiones!",
+    "exercises": "ejercicios",
+    "noVolumeData": "Sin datos de volumen",
     "items": {
       "leah": {
         "user": "Leah",
@@ -100,11 +105,13 @@
     "brand": "FitVibe",
     "terms": "Términos y Condiciones",
     "privacy": "Política de Privacidad",
+    "cookie": "Política de Cookies",
     "impressum": "Aviso Legal",
     "contact": "Contacto",
     "navigationLabel": "Navegación del pie de página",
     "termsAriaLabel": "Ver Términos y Condiciones",
     "privacyAriaLabel": "Ver Política de Privacidad",
+    "cookieAriaLabel": "Ver Política de Cookies",
     "impressumAriaLabel": "Ver Aviso Legal",
     "contactAriaLabel": "Contáctanos"
   },
@@ -119,6 +126,32 @@
     "title": "Política de Privacidad",
     "description": "Aprende cómo recopilamos, usamos y protegemos tus datos personales.",
     "effectiveDate": "Fecha de vigencia"
+  },
+  "impressum": {
+    "eyebrow": "Legal",
+    "title": "Aviso Legal",
+    "description": "Información de la empresa y detalles legales.",
+    "content": "FitVibe es operado por [Nombre de la empresa]. Para consultas, contáctenos en contact@fitvibe.example.com."
+  },
+  "contact": {
+    "eyebrow": "Contacto",
+    "title": "Contáctanos",
+    "description": "Ponte en contacto con el equipo de FitVibe.",
+    "content": "Para consultas, contáctenos en contact@fitvibe.example.com.",
+    "form": {
+      "emailLabel": "Correo electrónico",
+      "topicLabel": "Asunto",
+      "messageLabel": "Mensaje",
+      "emailRequired": "El correo electrónico es obligatorio",
+      "topicRequired": "El asunto es obligatorio",
+      "messageRequired": "El mensaje es obligatorio",
+      "invalidEmail": "Por favor, ingrese una dirección de correo electrónico válida",
+      "submit": "Enviar mensaje",
+      "submitting": "Enviando...",
+      "success": "¡Su mensaje ha sido enviado con éxito!",
+      "error": "No se pudo enviar el mensaje. Por favor, inténtelo de nuevo.",
+      "characters": "caracteres"
+    }
   },
   "errors": {
     "TERMS_ACCEPTANCE_REQUIRED": "Debes aceptar los Términos y Condiciones y la Política de Privacidad para crear una cuenta",
@@ -231,6 +264,7 @@
     "weekly": "Semanal",
     "monthly": "Mensual",
     "refreshing": "Actualizando…",
+    "range": "Rango",
     "period": "Período",
     "volume": "Volumen",
     "sessions": "Sesiones",
@@ -345,7 +379,11 @@
     "load": "Carga",
     "repsPlaceholder": "10",
     "weightPlaceholder": "80",
-    "rpePlaceholder": "7"
+    "rpePlaceholder": "7",
+    "expand": "Expandir",
+    "collapse": "Contraer",
+    "markComplete": "Marcar como completado",
+    "markIncomplete": "Marcar como incompleto"
   },
   "planner": {
     "eyebrow": "Arquitectura de sesión",
@@ -355,6 +393,10 @@
     "sessionTitlePlaceholder": "p. ej., Fuerza Tren Superior",
     "notesPlaceholder": "Agrega notas de sesión, objetivos de entrenamiento o contexto...",
     "exerciseSearchPlaceholder": "Buscar ejercicios (p. ej., sentadilla, press banca)...",
+    "searchExercises": "Buscar ejercicios",
+    "moveUp": "Mover hacia arriba",
+    "moveDown": "Mover hacia abajo",
+    "removeExercise": "Eliminar ejercicio",
     "repsPlaceholder": "10",
     "weightPlaceholder": "80",
     "rpePlaceholder": "7",
@@ -366,7 +408,32 @@
     "title": "Planifica y registra tus entrenamientos",
     "description": "Diseña bloques de entrenamiento y captura cada repetición sin romper el flujo.",
     "plannerTab": "Planificador",
-    "loggerTab": "Registro"
+    "loggerTab": "Registro",
+    "createNew": "Crear Nueva Sesión",
+    "noPlanned": "No hay sesiones planificadas",
+    "createFirst": "Crea tu primera sesión de entrenamiento para comenzar",
+    "createSession": "Crear Sesión",
+    "untitled": "Sesión Sin Título",
+    "statusPlanned": "Planificada",
+    "statusInProgress": "En Progreso",
+    "exercise": "ejercicio",
+    "exercises": "ejercicios",
+    "customExercise": "Ejercicio Personalizado",
+    "more": "más",
+    "startSession": "Iniciar sesión",
+    "viewSession": "Ver sesión",
+    "deleteSession": "Eliminar sesión",
+    "deleteSuccess": "Sesión eliminada con éxito",
+    "deleteError": "Error al eliminar la sesión. Por favor, inténtalo de nuevo.",
+    "deleteConfirmTitle": "Eliminar Sesión",
+    "deleteConfirmMessage": "¿Estás seguro de que quieres eliminar esta sesión? Esta acción no se puede deshacer.",
+    "deleteConfirmLabel": "Sí, Eliminar Sesión",
+    "noActive": "No hay sesiones activas",
+    "startFromPlanner": "Inicia una sesión planificada desde la pestaña Planificador para comenzar a registrar",
+    "goToPlanner": "Ir al Planificador",
+    "started": "Iniciada",
+    "recently": "recientemente",
+    "continue": "Continuar"
   },
   "insights": {
     "eyebrow": "Analíticas y tendencias",
@@ -496,8 +563,11 @@
     }
   },
   "settings": {
-    "title": "Configuración",
-    "description": "Tus preferencias y configuración de cuenta",
+    "eyebrow": "Configuración",
+    "title": "Tus preferencias y configuración de cuenta",
+    "description": "Gestiona tu perfil, privacidad, seguridad y configuración de cuenta.",
+    "loading": "Cargando...",
+    "notAvailable": "No disponible",
     "profile": {
       "title": "Configuración de Perfil",
       "description": "Actualiza la información de tu perfil",
@@ -530,22 +600,100 @@
       "title": "Preferencias",
       "description": "Establece la visibilidad predeterminada de sesión, unidades e idioma",
       "defaultVisibility": "Visibilidad Predeterminada de Sesión",
+      "visibilityOptions": {
+        "private": "Privado (solo tú)",
+        "followers": "Seguidores",
+        "link": "Solo enlace",
+        "public": "Público"
+      },
       "units": "Unidades",
+      "unitsOptions": {
+        "metric": "Métrico (kg, km)",
+        "imperial": "Imperial (lb, mi)"
+      },
       "language": "Idioma",
+      "languageOptions": {
+        "en": "Inglés",
+        "de": "Deutsch (German)"
+      },
       "saveSuccess": "¡Preferencias guardadas exitosamente!",
       "saveError": "Error al guardar preferencias. Por favor, inténtalo de nuevo.",
       "saveButton": "Guardar Preferencias",
       "saving": "Guardando..."
+    },
+    "twoFactor": {
+      "title": "Autenticación de Dos Factores (2FA)",
+      "description": "Añade una capa adicional de seguridad a tu cuenta con 2FA",
+      "disabled": "2FA está actualmente <strong>desactivado</strong>. Actívalo para proteger tu cuenta con una contraseña de un solo uso basada en tiempo (TOTP).",
+      "enable": "Activar 2FA",
+      "scanQRCode": "Escanea este código QR con tu aplicación de autenticación (Google Authenticator, Authy, etc.):",
+      "loadingQRCode": "Cargando código QR...",
+      "enterCode": "Ingresa el código de 6 dígitos de tu aplicación:",
+      "verifyAndEnable": "Verificar y activar",
+      "backupCodes": "Códigos de respaldo",
+      "backupCodesDescription": "Guarda estos códigos de respaldo en un lugar seguro. Puedes usarlos para acceder a tu cuenta si pierdes tu dispositivo de autenticación.",
+      "enabled": "✓ 2FA está actualmente <strong>activado</strong>",
+      "enabledDescription": "Tu cuenta está protegida con autenticación de dos factores.",
+      "enterPasswordToDisable": "Ingresa tu contraseña para desactivar 2FA",
+      "disable": "Desactivar 2FA",
+      "disableConfirmTitle": "Desactivar Autenticación de Dos Factores",
+      "disableConfirmMessage": "¿Estás seguro de que quieres desactivar 2FA? Esto hará que tu cuenta sea menos segura.",
+      "disableConfirmLabel": "Sí, Desactivar 2FA",
+      "enableError": "Error al activar 2FA. Por favor, inténtalo de nuevo.",
+      "verifyError": "Código inválido. Por favor, inténtalo de nuevo.",
+      "disableError": "Error al desactivar 2FA. Por favor, verifica tu contraseña e inténtalo de nuevo.",
+      "disableSuccess": "2FA desactivado con éxito",
+      "enableSuccess": "¡2FA activado con éxito!",
+      "invalidCode": "Por favor, ingresa un código de 6 dígitos válido",
+      "enterPasswordWarning": "Por favor, ingresa tu contraseña para desactivar 2FA"
+    },
+    "dangerZone": {
+      "title": "Zona de Peligro",
+      "description": "Acciones irreversibles que afectarán permanentemente tu cuenta",
+      "deleteAccount": "Eliminar Mi Cuenta",
+      "deleteWarning": "⚠️ Advertencia: Esto eliminará permanentemente tu cuenta",
+      "deleteDescription": "Eliminar tu cuenta:",
+      "deleteItems": {
+        "data": "Eliminará permanentemente todos tus datos de entrenamiento",
+        "sessions": "Eliminará todas tus sesiones y registros de progreso",
+        "profile": "Eliminará tu perfil e información de cuenta",
+        "irreversible": "Esta acción no se puede deshacer"
+      },
+      "deleteConfirmTitle": "Eliminar Cuenta",
+      "deleteConfirmMessage": "Esto eliminará permanentemente tu cuenta y todos tus datos. Esta acción no se puede deshacer. ¿Estás absolutamente seguro?",
+      "deleteConfirmLabel": "Sí, Eliminar Mi Cuenta",
+      "deletePasswordPrompt": "Por favor, ingresa tu contraseña para confirmar la eliminación de la cuenta:",
+      "deleteSuccess": "Tu cuenta ha sido programada para eliminación. Serás desconectado ahora.",
+      "deleteError": "Error al eliminar la cuenta. Por favor, inténtalo de nuevo.",
+      "deletePasswordWarning": "Por favor, ingresa tu contraseña para confirmar la eliminación de la cuenta"
     }
   },
   "admin": {
+    "dashboard": {
+      "eyebrow": "Panel de Administración",
+      "title": "Administración FitVibe",
+      "description": "Gestiona usuarios, modera contenido y controla la configuración del sistema"
+    },
+    "contentReports": {
+      "title": "Reportes de Contenido",
+      "description": "Revisar y moderar contenido reportado"
+    },
     "userManagement": {
+      "title": "Gestión de Usuarios",
+      "description": "Gestionar cuentas de usuario y permisos",
       "searchPlaceholder": "Buscar por correo electrónico, nombre de usuario o ID..."
     },
     "systemControls": {
+      "title": "Controles del Sistema",
+      "description": "Configuración y mantenimiento del sistema",
       "maintenanceMessagePlaceholder": "p. ej., Mantenimiento de emergencia de base de datos",
       "durationPlaceholder": "p. ej., 30 minutos",
-      "completionMessagePlaceholder": "p. ej., Mantenimiento completado exitosamente"
+      "completionMessagePlaceholder": "p. ej., Mantenimiento completado exitosamente",
+      "readOnlyEnabled": "Modo de solo lectura activado con éxito",
+      "readOnlyDisabled": "Modo de solo lectura desactivado con éxito",
+      "readOnlyEnableError": "Error al activar el modo de solo lectura. Por favor, inténtalo de nuevo.",
+      "readOnlyDisableError": "Error al desactivar el modo de solo lectura. Por favor, inténtalo de nuevo.",
+      "loadStatusError": "Error al cargar el estado del sistema"
     }
   },
   "twoFactor": {

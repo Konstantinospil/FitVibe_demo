@@ -75,6 +75,11 @@
     "description": "Der Feed filtert Einheiten nach Sichtbarkeit – Privates bleibt privat, öffentliche Erfolge bekommen das verdiente Rampenlicht.",
     "timestamp": "gerade eben",
     "button": "Session öffnen",
+    "cloneSuccess": "Session erfolgreich geklont!",
+    "error": "Feed konnte nicht geladen werden. Bitte versuche es später erneut.",
+    "empty": "Noch keine Aktivität. Starte mit dem Training und teile deine Sessions!",
+    "exercises": "Übungen",
+    "noVolumeData": "Keine Volumendaten",
     "items": {
       "leah": {
         "user": "Leah",
@@ -98,11 +103,17 @@
   },
   "footer": {
     "brand": "FitVibe",
+    "impressum": "Impressum",
     "terms": "Allgemeine Geschäftsbedingungen",
     "privacy": "Datenschutzerklärung",
+    "cookie": "Cookie-Richtlinie",
+    "contact": "Kontakt",
     "navigationLabel": "Footer-Navigation",
+    "impressumAriaLabel": "Impressum anzeigen",
     "termsAriaLabel": "Allgemeine Geschäftsbedingungen anzeigen",
-    "privacyAriaLabel": "Datenschutzerklärung anzeigen"
+    "privacyAriaLabel": "Datenschutzerklärung anzeigen",
+    "cookieAriaLabel": "Cookie-Richtlinie anzeigen",
+    "contactAriaLabel": "Kontaktieren Sie uns"
   },
   "terms": {
     "eyebrow": "Rechtliches",
@@ -115,6 +126,32 @@
     "title": "Datenschutzerklärung",
     "description": "Erfahren Sie, wie wir Ihre persönlichen Daten sammeln, verwenden und schützen.",
     "effectiveDate": "Gültigkeitsdatum"
+  },
+  "impressum": {
+    "eyebrow": "Rechtliches",
+    "title": "Impressum",
+    "description": "Firmeninformationen und rechtliche Angaben.",
+    "content": "FitVibe wird betrieben von [Firmenname]. Bei Anfragen kontaktieren Sie uns bitte unter contact@fitvibe.example.com."
+  },
+  "contact": {
+    "eyebrow": "Kontakt",
+    "title": "Kontaktieren Sie uns",
+    "description": "Kontaktieren Sie das FitVibe-Team.",
+    "content": "Bei Anfragen kontaktieren Sie uns bitte unter contact@fitvibe.example.com.",
+    "form": {
+      "emailLabel": "E-Mail",
+      "topicLabel": "Betreff",
+      "messageLabel": "Nachricht",
+      "emailRequired": "E-Mail ist erforderlich",
+      "topicRequired": "Betreff ist erforderlich",
+      "messageRequired": "Nachricht ist erforderlich",
+      "invalidEmail": "Bitte geben Sie eine gültige E-Mail-Adresse ein",
+      "submit": "Nachricht senden",
+      "submitting": "Wird gesendet...",
+      "success": "Ihre Nachricht wurde erfolgreich gesendet!",
+      "error": "Nachricht konnte nicht gesendet werden. Bitte versuchen Sie es erneut.",
+      "characters": "Zeichen"
+    }
   },
   "errors": {
     "TERMS_ACCEPTANCE_REQUIRED": "Sie müssen die Allgemeinen Geschäftsbedingungen und die Datenschutzerklärung akzeptieren, um ein Konto zu erstellen",
@@ -227,6 +264,7 @@
     "weekly": "Wöchentlich",
     "monthly": "Monatlich",
     "refreshing": "Wird aktualisiert…",
+    "range": "Bereich",
     "period": "Zeitraum",
     "volume": "Volumen",
     "sessions": "Einheiten",
@@ -339,6 +377,10 @@
     "sessionTitlePlaceholder": "z.B., Oberkörper-Kraft",
     "notesPlaceholder": "Einheitsnotizen, Trainingsziele oder Kontext hinzufügen...",
     "exerciseSearchPlaceholder": "Nach Übungen suchen (z.B., Kniebeuge, Bankdrücken)...",
+    "searchExercises": "Übungen suchen",
+    "moveUp": "Nach oben",
+    "moveDown": "Nach unten",
+    "removeExercise": "Übung entfernen",
     "repsPlaceholder": "10",
     "weightPlaceholder": "80",
     "rpePlaceholder": "7",
@@ -350,7 +392,32 @@
     "title": "Plane und protokolliere deine Workouts",
     "description": "Gestalte Trainingsblöcke und erfasse jede Wiederholung ohne Unterbrechung.",
     "plannerTab": "Planer",
-    "loggerTab": "Protokoll"
+    "loggerTab": "Protokoll",
+    "createNew": "Neue Session erstellen",
+    "noPlanned": "Keine geplanten Sessions",
+    "createFirst": "Erstelle deine erste Trainingssession, um zu beginnen",
+    "createSession": "Session erstellen",
+    "untitled": "Unbenannte Session",
+    "statusPlanned": "Geplant",
+    "statusInProgress": "In Bearbeitung",
+    "exercise": "Übung",
+    "exercises": "Übungen",
+    "customExercise": "Benutzerdefinierte Übung",
+    "more": "mehr",
+    "startSession": "Session starten",
+    "viewSession": "Session anzeigen",
+    "deleteSession": "Session löschen",
+    "deleteSuccess": "Session erfolgreich gelöscht",
+    "deleteError": "Session konnte nicht gelöscht werden. Bitte versuche es erneut.",
+    "deleteConfirmTitle": "Session löschen",
+    "deleteConfirmMessage": "Bist du sicher, dass du diese Session löschen möchtest? Diese Aktion kann nicht rückgängig gemacht werden.",
+    "deleteConfirmLabel": "Ja, Session löschen",
+    "noActive": "Keine aktiven Sessions",
+    "startFromPlanner": "Starte eine geplante Session im Planer-Tab, um mit dem Protokollieren zu beginnen",
+    "goToPlanner": "Zum Planer",
+    "started": "Gestartet",
+    "recently": "kürzlich",
+    "continue": "Fortsetzen"
   },
   "insights": {
     "eyebrow": "Analytics & Trends",
@@ -385,8 +452,11 @@
     }
   },
   "settings": {
-    "title": "Einstellungen",
-    "description": "Deine Präferenzen und Kontoeinstellungen",
+    "eyebrow": "Einstellungen",
+    "title": "Deine Präferenzen und Kontoeinstellungen",
+    "description": "Verwalte dein Profil, Privatsphäre, Sicherheit und Kontoeinstellungen.",
+    "loading": "Lädt...",
+    "notAvailable": "Nicht verfügbar",
     "profile": {
       "title": "Profileinstellungen",
       "description": "Aktualisiere deine Profilinformationen",
@@ -419,12 +489,72 @@
       "title": "Präferenzen",
       "description": "Setze deine Standard-Session-Sichtbarkeit, Einheiten und Sprache",
       "defaultVisibility": "Standard-Session-Sichtbarkeit",
+      "visibilityOptions": {
+        "private": "Privat (nur du)",
+        "followers": "Follower",
+        "link": "Nur Link",
+        "public": "Öffentlich"
+      },
       "units": "Einheiten",
+      "unitsOptions": {
+        "metric": "Metrisch (kg, km)",
+        "imperial": "Imperial (lb, mi)"
+      },
       "language": "Sprache",
+      "languageOptions": {
+        "en": "Englisch",
+        "de": "Deutsch (German)"
+      },
       "saveSuccess": "Präferenzen erfolgreich gespeichert!",
       "saveError": "Fehler beim Speichern der Präferenzen. Bitte versuche es erneut.",
       "saveButton": "Präferenzen speichern",
       "saving": "Wird gespeichert..."
+    },
+    "twoFactor": {
+      "title": "Zwei-Faktor-Authentifizierung (2FA)",
+      "description": "Füge deinem Konto eine zusätzliche Sicherheitsebene mit 2FA hinzu",
+      "disabled": "2FA ist derzeit <strong>deaktiviert</strong>. Aktiviere es, um dein Konto mit einem zeitbasierten Einmalpasswort (TOTP) zu schützen.",
+      "enable": "2FA aktivieren",
+      "scanQRCode": "Scanne diesen QR-Code mit deiner Authenticator-App (Google Authenticator, Authy, etc.):",
+      "loadingQRCode": "QR-Code wird geladen...",
+      "enterCode": "Gib den 6-stelligen Code aus deiner App ein:",
+      "verifyAndEnable": "Verifizieren und aktivieren",
+      "backupCodes": "Backup-Codes",
+      "backupCodesDescription": "Speichere diese Backup-Codes an einem sicheren Ort. Du kannst sie verwenden, um auf dein Konto zuzugreifen, wenn du dein Authenticator-Gerät verlierst.",
+      "enabled": "✓ 2FA ist derzeit <strong>aktiviert</strong>",
+      "enabledDescription": "Dein Konto ist mit Zwei-Faktor-Authentifizierung geschützt.",
+      "enterPasswordToDisable": "Gib dein Passwort ein, um 2FA zu deaktivieren",
+      "disable": "2FA deaktivieren",
+      "disableConfirmTitle": "Zwei-Faktor-Authentifizierung deaktivieren",
+      "disableConfirmMessage": "Bist du sicher, dass du 2FA deaktivieren möchtest? Dies macht dein Konto weniger sicher.",
+      "disableConfirmLabel": "Ja, 2FA deaktivieren",
+      "enableError": "2FA konnte nicht aktiviert werden. Bitte versuche es erneut.",
+      "verifyError": "Ungültiger Code. Bitte versuche es erneut.",
+      "disableError": "2FA konnte nicht deaktiviert werden. Bitte überprüfe dein Passwort und versuche es erneut.",
+      "disableSuccess": "2FA erfolgreich deaktiviert",
+      "enableSuccess": "2FA erfolgreich aktiviert!",
+      "invalidCode": "Bitte gib einen gültigen 6-stelligen Code ein",
+      "enterPasswordWarning": "Bitte gib dein Passwort ein, um 2FA zu deaktivieren"
+    },
+    "dangerZone": {
+      "title": "Gefahrenzone",
+      "description": "Unwiderrufliche Aktionen, die dein Konto dauerhaft beeinträchtigen",
+      "deleteAccount": "Mein Konto löschen",
+      "deleteWarning": "⚠️ Warnung: Dies wird dein Konto dauerhaft löschen",
+      "deleteDescription": "Das Löschen deines Kontos wird:",
+      "deleteItems": {
+        "data": "Alle deine Trainingsdaten dauerhaft löschen",
+        "sessions": "Alle deine Sessions und Fortschrittsaufzeichnungen entfernen",
+        "profile": "Dein Profil und Kontoinformationen löschen",
+        "irreversible": "Diese Aktion kann nicht rückgängig gemacht werden"
+      },
+      "deleteConfirmTitle": "Konto löschen",
+      "deleteConfirmMessage": "Dies wird dein Konto und alle deine Daten dauerhaft löschen. Diese Aktion kann nicht rückgängig gemacht werden. Bist du absolut sicher?",
+      "deleteConfirmLabel": "Ja, mein Konto löschen",
+      "deletePasswordPrompt": "Bitte gib dein Passwort ein, um die Kontolöschung zu bestätigen:",
+      "deleteSuccess": "Dein Konto wurde zur Löschung vorgemerkt. Du wirst jetzt abgemeldet.",
+      "deleteError": "Konto konnte nicht gelöscht werden. Bitte versuche es erneut.",
+      "deletePasswordWarning": "Bitte gib dein Passwort ein, um die Kontolöschung zu bestätigen"
     }
   },
   "common": {
@@ -532,19 +662,143 @@
     "load": "Last",
     "repsPlaceholder": "10",
     "weightPlaceholder": "80",
-    "rpePlaceholder": "7"
+    "rpePlaceholder": "7",
+    "expand": "Erweitern",
+    "collapse": "Einklappen",
+    "markComplete": "Als abgeschlossen markieren",
+    "markIncomplete": "Als unvollständig markieren"
   },
   "admin": {
+    "dashboard": {
+      "eyebrow": "Admin-Dashboard",
+      "title": "FitVibe Administration",
+      "description": "Verwalte Benutzer, moderiere Inhalte und kontrolliere Systemeinstellungen"
+    },
+    "contentReports": {
+      "title": "Inhaltsmeldungen",
+      "description": "Gemeldete Inhalte überprüfen und moderieren"
+    },
     "userManagement": {
+      "title": "Benutzerverwaltung",
+      "description": "Benutzerkonten und Berechtigungen verwalten",
       "searchPlaceholder": "Suche nach E-Mail, Benutzername oder ID..."
     },
     "systemControls": {
+      "title": "Systemsteuerung",
+      "description": "Systemkonfiguration und Wartung",
       "maintenanceMessagePlaceholder": "z.B. Notfall-Datenbankwartung",
       "durationPlaceholder": "z.B. 30 Minuten",
-      "completionMessagePlaceholder": "z.B. Wartung erfolgreich abgeschlossen"
+      "completionMessagePlaceholder": "z.B. Wartung erfolgreich abgeschlossen",
+      "readOnlyEnabled": "Nur-Lese-Modus erfolgreich aktiviert",
+      "readOnlyDisabled": "Nur-Lese-Modus erfolgreich deaktiviert",
+      "readOnlyEnableError": "Nur-Lese-Modus konnte nicht aktiviert werden. Bitte versuche es erneut.",
+      "readOnlyDisableError": "Nur-Lese-Modus konnte nicht deaktiviert werden. Bitte versuche es erneut.",
+      "loadStatusError": "Systemstatus konnte nicht geladen werden"
     }
   },
   "twoFactor": {
     "codePlaceholder": "000000"
+  },
+  "exercises": {
+    "selectExercise": "Übung auswählen",
+    "clearSelection": "Auswahl löschen",
+    "searchPlaceholder": "Übungen suchen...",
+    "searchLabel": "Übungen suchen",
+    "noResults": "Keine Übungen gefunden",
+    "noExercises": "Keine Übungen verfügbar",
+    "global": "Global",
+    "public": "Öffentlich",
+    "private": "Privat",
+    "loading": "Lädt...",
+    "page": {
+      "eyebrow": "Übungsbibliothek",
+      "title": "Verwalte deine Übungen",
+      "description": "Erstelle, bearbeite und verwalte deine persönliche Übungsbibliothek. Globale Übungen sind für alle Benutzer verfügbar."
+    },
+    "create": "Übung erstellen",
+    "edit": "Übung bearbeiten",
+    "name": "Name",
+    "type": "Typ",
+    "muscleGroup": "Muskelgruppe",
+    "equipment": "Ausrüstung",
+    "description": "Beschreibung",
+    "makePublic": "Diese Übung öffentlich machen",
+    "created": "Übung erfolgreich erstellt",
+    "updated": "Übung erfolgreich aktualisiert",
+    "deleted": "Übung erfolgreich archiviert",
+    "createError": "Übung konnte nicht erstellt werden",
+    "updateError": "Übung konnte nicht aktualisiert werden",
+    "deleteError": "Übung konnte nicht archiviert werden",
+    "loadError": "Übungen konnten nicht geladen werden",
+    "requiredFields": "Name und Typ sind erforderlich",
+    "cannotEdit": "Du kannst nur deine eigenen Übungen bearbeiten",
+    "cannotArchive": "Du kannst nur deine eigenen Übungen archivieren",
+    "archiveConfirm": "Übung archivieren",
+    "archiveMessage": "Bist du sicher, dass du diese Übung archivieren möchtest? Sie wird in den Auswahlfeldern ausgeblendet, bleibt aber für historische Aufzeichnungen erhalten.",
+    "allTypes": "Alle Typen",
+    "showArchived": "Archivierte anzeigen",
+    "filterType": "Nach Typ filtern",
+    "type": {
+      "strength": "Kraft",
+      "cardio": "Cardio",
+      "powerEndurance": "Kraft-Ausdauer"
+    }
+  },
+  "coach": {
+    "dashboard": {
+      "eyebrow": "Coach-Dashboard",
+      "title": "Verwalte deine Athleten",
+      "description": "Erstelle Trainingspläne, überwache den Fortschritt der Athleten und weise Workouts zu",
+      "metrics": {
+        "athletes": "Athleten",
+        "activeAssignments": "Aktive Zuweisungen",
+        "completedSessions": "Abgeschlossene Sessions",
+        "pendingFeedback": "Ausstehendes Feedback"
+      },
+      "tabs": {
+        "overview": "Übersicht",
+        "workouts": "Workouts",
+        "athletes": "Athleten",
+        "assign": "Zuweisen"
+      },
+      "overview": {
+        "recentActivity": {
+          "title": "Letzte Aktivität",
+          "empty": "Keine aktuelle Aktivität anzuzeigen"
+        },
+        "quickActions": {
+          "title": "Schnellaktionen",
+          "createWorkout": "Workout erstellen",
+          "assignWorkout": "Workout zuweisen",
+          "viewAthletes": "Athleten anzeigen"
+        }
+      },
+      "workouts": {
+        "title": "Workouts",
+        "create": "Workout erstellen",
+        "empty": "Noch keine Workouts erstellt",
+        "description": "Erstelle wiederverwendbare Workouts, die du mehreren Athleten zuweisen kannst. Workouts können Übungen, Sätze, Wiederholungen und andere Parameter enthalten."
+      },
+      "athletes": {
+        "title": "Athleten",
+        "empty": "Noch keine Athleten zugewiesen. Athleten müssen dir über ihre Einstellungen Zugriff gewähren.",
+        "table": {
+          "athlete": "Athlet",
+          "assigned": "Zugewiesen",
+          "completed": "Abgeschlossen",
+          "adherence": "Einhaltung",
+          "status": "Status"
+        }
+      },
+      "assign": {
+        "title": "Workout zuweisen",
+        "selectWorkout": "Workout auswählen",
+        "selectWorkoutPlaceholder": "Wähle ein Workout...",
+        "selectAthletes": "Athleten auswählen",
+        "noAthletes": "Keine Athleten verfügbar. Athleten müssen dir zuerst Zugriff gewähren.",
+        "assignmentDate": "Zuweisungsdatum",
+        "assignButton": "Workout zuweisen"
+      }
+    }
   }
 }

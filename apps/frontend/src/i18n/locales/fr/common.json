@@ -75,6 +75,11 @@
     "description": "Le travail privé reste privé. Les réalisations publiques sont découvrables et faciles à célébrer.",
     "timestamp": "il y a un instant",
     "button": "Ouvrir la séance",
+    "cloneSuccess": "Séance clonée avec succès !",
+    "error": "Échec du chargement du flux. Veuillez réessayer plus tard.",
+    "empty": "Aucune activité pour le moment. Commencez à vous entraîner et partagez vos séances !",
+    "exercises": "exercices",
+    "noVolumeData": "Aucune donnée de volume",
     "items": {
       "leah": {
         "user": "Leah",
@@ -100,11 +105,13 @@
     "brand": "FitVibe",
     "terms": "Conditions générales",
     "privacy": "Politique de confidentialité",
+    "cookie": "Politique des cookies",
     "impressum": "Mentions légales",
     "contact": "Contact",
     "navigationLabel": "Navigation du pied de page",
     "termsAriaLabel": "Voir les Conditions générales",
     "privacyAriaLabel": "Voir la Politique de confidentialité",
+    "cookieAriaLabel": "Voir la Politique des cookies",
     "impressumAriaLabel": "Voir les Mentions légales",
     "contactAriaLabel": "Nous contacter"
   },
@@ -119,6 +126,32 @@
     "title": "Politique de confidentialité",
     "description": "Découvrez comment nous collectons, utilisons et protégeons vos données personnelles.",
     "effectiveDate": "Date d'entrée en vigueur"
+  },
+  "impressum": {
+    "eyebrow": "Légal",
+    "title": "Mentions légales",
+    "description": "Informations sur l'entreprise et détails légaux.",
+    "content": "FitVibe est exploité par [Nom de l'entreprise]. Pour toute demande, veuillez nous contacter à contact@fitvibe.example.com."
+  },
+  "contact": {
+    "eyebrow": "Contact",
+    "title": "Nous contacter",
+    "description": "Contactez l'équipe FitVibe.",
+    "content": "Pour toute demande, veuillez nous contacter à contact@fitvibe.example.com.",
+    "form": {
+      "emailLabel": "E-mail",
+      "topicLabel": "Sujet",
+      "messageLabel": "Message",
+      "emailRequired": "L'e-mail est requis",
+      "topicRequired": "Le sujet est requis",
+      "messageRequired": "Le message est requis",
+      "invalidEmail": "Veuillez entrer une adresse e-mail valide",
+      "submit": "Envoyer le message",
+      "submitting": "Envoi en cours...",
+      "success": "Votre message a été envoyé avec succès !",
+      "error": "Échec de l'envoi du message. Veuillez réessayer.",
+      "characters": "caractères"
+    }
   },
   "errors": {
     "TERMS_ACCEPTANCE_REQUIRED": "Vous devez accepter les Conditions générales et la Politique de confidentialité pour créer un compte",
@@ -231,6 +264,7 @@
     "weekly": "Hebdomadaire",
     "monthly": "Mensuel",
     "refreshing": "Actualisation…",
+    "range": "Plage",
     "period": "Période",
     "volume": "Volume",
     "sessions": "Séances",
@@ -345,7 +379,11 @@
     "load": "Charge",
     "repsPlaceholder": "10",
     "weightPlaceholder": "80",
-    "rpePlaceholder": "7"
+    "rpePlaceholder": "7",
+    "expand": "Développer",
+    "collapse": "Réduire",
+    "markComplete": "Marquer comme terminé",
+    "markIncomplete": "Marquer comme incomplet"
   },
   "planner": {
     "eyebrow": "Architecture de séance",
@@ -355,6 +393,10 @@
     "sessionTitlePlaceholder": "ex. Force du haut du corps",
     "notesPlaceholder": "Ajoutez des notes de séance, des objectifs d'entraînement ou du contexte...",
     "exerciseSearchPlaceholder": "Rechercher des exercices (ex. squat, développé couché)...",
+    "searchExercises": "Rechercher des exercices",
+    "moveUp": "Déplacer vers le haut",
+    "moveDown": "Déplacer vers le bas",
+    "removeExercise": "Supprimer l'exercice",
     "repsPlaceholder": "10",
     "weightPlaceholder": "80",
     "rpePlaceholder": "7",
@@ -366,7 +408,32 @@
     "title": "Planifiez et enregistrez vos entraînements",
     "description": "Concevez des blocs d'entraînement et capturez chaque répétition sans interrompre le flux.",
     "plannerTab": "Planificateur",
-    "loggerTab": "Carnet"
+    "loggerTab": "Carnet",
+    "createNew": "Créer une nouvelle séance",
+    "noPlanned": "Aucune séance planifiée",
+    "createFirst": "Créez votre première séance d'entraînement pour commencer",
+    "createSession": "Créer une séance",
+    "untitled": "Séance sans titre",
+    "statusPlanned": "Planifiée",
+    "statusInProgress": "En cours",
+    "exercise": "exercice",
+    "exercises": "exercices",
+    "customExercise": "Exercice personnalisé",
+    "more": "plus",
+    "startSession": "Démarrer la séance",
+    "viewSession": "Voir la séance",
+    "deleteSession": "Supprimer la séance",
+    "deleteSuccess": "Séance supprimée avec succès",
+    "deleteError": "Échec de la suppression de la séance. Veuillez réessayer.",
+    "deleteConfirmTitle": "Supprimer la séance",
+    "deleteConfirmMessage": "Êtes-vous sûr de vouloir supprimer cette séance ? Cette action ne peut pas être annulée.",
+    "deleteConfirmLabel": "Oui, supprimer la séance",
+    "noActive": "Aucune séance active",
+    "startFromPlanner": "Démarrez une séance planifiée depuis l'onglet Planificateur pour commencer l'enregistrement",
+    "goToPlanner": "Aller au Planificateur",
+    "started": "Démarrée",
+    "recently": "récemment",
+    "continue": "Continuer"
   },
   "insights": {
     "eyebrow": "Analyses et tendances",
@@ -496,8 +563,11 @@
     }
   },
   "settings": {
-    "title": "Paramètres",
-    "description": "Vos préférences et paramètres de compte",
+    "eyebrow": "Paramètres",
+    "title": "Vos préférences et paramètres de compte",
+    "description": "Gérez votre profil, confidentialité, sécurité et paramètres de compte.",
+    "loading": "Chargement...",
+    "notAvailable": "Non disponible",
     "profile": {
       "title": "Paramètres de Profil",
       "description": "Mettez à jour les informations de votre profil",
@@ -530,22 +600,100 @@
       "title": "Préférences",
       "description": "Définissez la visibilité de séance par défaut, les unités et la langue",
       "defaultVisibility": "Visibilité de Séance par Défaut",
+      "visibilityOptions": {
+        "private": "Privé (seulement vous)",
+        "followers": "Abonnés",
+        "link": "Lien uniquement",
+        "public": "Public"
+      },
       "units": "Unités",
+      "unitsOptions": {
+        "metric": "Métrique (kg, km)",
+        "imperial": "Impérial (lb, mi)"
+      },
       "language": "Langue",
+      "languageOptions": {
+        "en": "Anglais",
+        "de": "Deutsch (German)"
+      },
       "saveSuccess": "Préférences enregistrées avec succès !",
       "saveError": "Échec de l'enregistrement des préférences. Veuillez réessayer.",
       "saveButton": "Enregistrer les Préférences",
       "saving": "Enregistrement..."
+    },
+    "twoFactor": {
+      "title": "Authentification à deux facteurs (2FA)",
+      "description": "Ajoutez une couche de sécurité supplémentaire à votre compte avec 2FA",
+      "disabled": "2FA est actuellement <strong>désactivé</strong>. Activez-le pour sécuriser votre compte avec un mot de passe à usage unique basé sur le temps (TOTP).",
+      "enable": "Activer 2FA",
+      "scanQRCode": "Scannez ce code QR avec votre application d'authentification (Google Authenticator, Authy, etc.) :",
+      "loadingQRCode": "Chargement du code QR...",
+      "enterCode": "Entrez le code à 6 chiffres de votre application :",
+      "verifyAndEnable": "Vérifier et activer",
+      "backupCodes": "Codes de sauvegarde",
+      "backupCodesDescription": "Enregistrez ces codes de sauvegarde dans un endroit sûr. Vous pouvez les utiliser pour accéder à votre compte si vous perdez votre appareil d'authentification.",
+      "enabled": "✓ 2FA est actuellement <strong>activé</strong>",
+      "enabledDescription": "Votre compte est protégé par l'authentification à deux facteurs.",
+      "enterPasswordToDisable": "Entrez votre mot de passe pour désactiver 2FA",
+      "disable": "Désactiver 2FA",
+      "disableConfirmTitle": "Désactiver l'authentification à deux facteurs",
+      "disableConfirmMessage": "Êtes-vous sûr de vouloir désactiver 2FA ? Cela rendra votre compte moins sécurisé.",
+      "disableConfirmLabel": "Oui, désactiver 2FA",
+      "enableError": "Échec de l'activation de 2FA. Veuillez réessayer.",
+      "verifyError": "Code invalide. Veuillez réessayer.",
+      "disableError": "Échec de la désactivation de 2FA. Veuillez vérifier votre mot de passe et réessayer.",
+      "disableSuccess": "2FA désactivé avec succès",
+      "enableSuccess": "2FA activé avec succès !",
+      "invalidCode": "Veuillez entrer un code à 6 chiffres valide",
+      "enterPasswordWarning": "Veuillez entrer votre mot de passe pour désactiver 2FA"
+    },
+    "dangerZone": {
+      "title": "Zone de danger",
+      "description": "Actions irréversibles qui affecteront définitivement votre compte",
+      "deleteAccount": "Supprimer mon compte",
+      "deleteWarning": "⚠️ Avertissement : Cela supprimera définitivement votre compte",
+      "deleteDescription": "La suppression de votre compte va :",
+      "deleteItems": {
+        "data": "Supprimer définitivement toutes vos données d'entraînement",
+        "sessions": "Supprimer toutes vos séances et enregistrements de progression",
+        "profile": "Supprimer votre profil et vos informations de compte",
+        "irreversible": "Cette action ne peut pas être annulée"
+      },
+      "deleteConfirmTitle": "Supprimer le compte",
+      "deleteConfirmMessage": "Cela supprimera définitivement votre compte et toutes vos données. Cette action ne peut pas être annulée. Êtes-vous absolument sûr ?",
+      "deleteConfirmLabel": "Oui, supprimer mon compte",
+      "deletePasswordPrompt": "Veuillez entrer votre mot de passe pour confirmer la suppression du compte :",
+      "deleteSuccess": "Votre compte a été programmé pour suppression. Vous serez déconnecté maintenant.",
+      "deleteError": "Échec de la suppression du compte. Veuillez réessayer.",
+      "deletePasswordWarning": "Veuillez entrer votre mot de passe pour confirmer la suppression du compte"
     }
   },
   "admin": {
+    "dashboard": {
+      "eyebrow": "Tableau de bord Admin",
+      "title": "Administration FitVibe",
+      "description": "Gérez les utilisateurs, modérez le contenu et contrôlez les paramètres système"
+    },
+    "contentReports": {
+      "title": "Signalements de contenu",
+      "description": "Examiner et modérer le contenu signalé"
+    },
     "userManagement": {
+      "title": "Gestion des utilisateurs",
+      "description": "Gérer les comptes utilisateurs et les permissions",
       "searchPlaceholder": "Rechercher par e-mail, nom d'utilisateur ou ID..."
     },
     "systemControls": {
+      "title": "Contrôles système",
+      "description": "Configuration et maintenance du système",
       "maintenanceMessagePlaceholder": "ex. Maintenance d'urgence de la base de données",
       "durationPlaceholder": "ex. 30 minutes",
-      "completionMessagePlaceholder": "ex. Maintenance terminée avec succès"
+      "completionMessagePlaceholder": "ex. Maintenance terminée avec succès",
+      "readOnlyEnabled": "Mode lecture seule activé avec succès",
+      "readOnlyDisabled": "Mode lecture seule désactivé avec succès",
+      "readOnlyEnableError": "Échec de l'activation du mode lecture seule. Veuillez réessayer.",
+      "readOnlyDisableError": "Échec de la désactivation du mode lecture seule. Veuillez réessayer.",
+      "loadStatusError": "Échec du chargement du statut système"
     }
   },
   "twoFactor": {
