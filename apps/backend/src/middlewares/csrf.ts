@@ -10,7 +10,9 @@ import { env } from "../config/env.js";
 import { HttpError } from "../utils/http.js";
 
 const tokens = new Tokens();
-const CSRF_COOKIE_NAME = "__Host-fitvibe-csrf";
+// Use __Host- prefix only in production (requires Secure flag)
+// In development, use regular cookie name since Secure=false
+const CSRF_COOKIE_NAME = env.isProduction ? "__Host-fitvibe-csrf" : "fitvibe-csrf";
 const SAFE_METHODS = new Set(["GET", "HEAD", "OPTIONS"]);
 
 type CsrfRequest = Request & {

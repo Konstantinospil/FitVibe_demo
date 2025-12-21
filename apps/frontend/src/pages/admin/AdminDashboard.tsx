@@ -1,10 +1,12 @@
 import React from "react";
 import { useNavigate, Outlet, useLocation } from "react-router-dom";
 import { Users, Settings as SettingsIcon, AlertTriangle } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import PageIntro from "../../components/PageIntro";
 import { Card, CardContent } from "../../components/ui/Card";
 
 const AdminDashboard: React.FC = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -13,29 +15,29 @@ const AdminDashboard: React.FC = () => {
   const navItems = [
     {
       path: "/admin/reports",
-      label: "Content Reports",
+      label: t("admin.contentReports.title"),
       icon: <AlertTriangle size={20} />,
-      description: "Review and moderate reported content",
+      description: t("admin.contentReports.description"),
     },
     {
       path: "/admin/users",
-      label: "User Management",
+      label: t("admin.userManagement.title"),
       icon: <Users size={20} />,
-      description: "Manage user accounts and permissions",
+      description: t("admin.userManagement.description"),
     },
     {
       path: "/admin/system",
-      label: "System Controls",
+      label: t("admin.systemControls.title"),
       icon: <SettingsIcon size={20} />,
-      description: "System configuration and maintenance",
+      description: t("admin.systemControls.description"),
     },
   ];
 
   return (
     <PageIntro
-      eyebrow="Admin Dashboard"
-      title="FitVibe Administration"
-      description="Manage users, moderate content, and control system settings"
+      eyebrow={t("admin.dashboard.eyebrow")}
+      title={t("admin.dashboard.title")}
+      description={t("admin.dashboard.description")}
     >
       <div className="grid grid--gap-15">
         {/* Admin Navigation */}

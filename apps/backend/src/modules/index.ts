@@ -11,6 +11,7 @@ import { pointsRouter } from "./points/points.routes.js";
 import { progressRouter } from "./progress/progress.routes.js";
 import { feedRouter } from "./feed/feed.routes.js";
 import { healthRouter } from "./health/health.router.js";
+import { contactRouter } from "./contact/contact.routes.js";
 
 export const apiRouter = Router();
 
@@ -25,5 +26,6 @@ apiRouter.use("/points", pointsRouter);
 apiRouter.use("/progress", progressRouter);
 apiRouter.use("/feed", feedRouter);
 apiRouter.use("/health", healthRouter);
+apiRouter.use("/contact", contactRouter);
 
 export default apiRouter;

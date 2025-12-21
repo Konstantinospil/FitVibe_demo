@@ -30,10 +30,10 @@ const LoginFormContent: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
 
   const showPasswordLabel = t("auth.login.showPassword", {
-    defaultValue: t("auth.showPassword", { defaultValue: "Show password" }),
+    defaultValue: t("auth.showPassword"),
   });
   const hidePasswordLabel = t("auth.login.hidePassword", {
-    defaultValue: t("auth.hidePassword", { defaultValue: "Hide password" }),
+    defaultValue: t("auth.hidePassword"),
   });
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -41,7 +41,7 @@ const LoginFormContent: React.FC = () => {
 
     // Validate inputs
     if (!email.trim() || !password) {
-      setError(t("auth.login.fillAllFields") || "Please fill in all fields");
+      setError(t("auth.login.fillAllFields"));
       return;
     }
 
@@ -68,7 +68,7 @@ const LoginFormContent: React.FC = () => {
         signIn(response.user);
         void navigate(from, { replace: true });
       } else {
-        setError(t("auth.login.error") || "Login failed. Please try again.");
+        setError(t("auth.login.error"));
       }
     } catch (err: unknown) {
       logger.error("Login error", err instanceof Error ? err : new Error(String(err)), {
@@ -117,7 +117,7 @@ const LoginFormContent: React.FC = () => {
           errorDetails?.remainingSeconds !== undefined &&
           errorDetails?.lockoutType
         ) {
-          setError(errorMessage || t("auth.lockout.locked", { defaultValue: "Account locked" }));
+          setError(errorMessage || t("auth.lockout.locked"));
           return;
         }
 

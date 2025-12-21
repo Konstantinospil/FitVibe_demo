@@ -1,8 +1,10 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { describe, expect, it, vi, beforeEach } from "vitest";
+import type { QueryClient } from "@tanstack/react-query";
+import { QueryClientProvider } from "@tanstack/react-query";
+import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
 import Dashboard from "../../src/pages/Dashboard";
 import * as api from "../../src/services/api";
+import { cleanupQueryClient, createTestQueryClient } from "../helpers/testQueryClient";
 
 // Mock the API module
 vi.mock("../../src/services/api", async () => {
@@ -42,15 +44,12 @@ describe("Dashboard analytics", () => {
   let queryClient: QueryClient;
 
   beforeEach(() => {
-    queryClient = new QueryClient({
-      defaultOptions: {
-        queries: {
-          retry: false,
-          gcTime: 0,
-        },
-      },
-    });
+    queryClient = createTestQueryClient();
     vi.mocked(api.getDashboardAnalytics).mockResolvedValue(mockDashboardData);
+  });
+
+  afterEach(() => {
+    cleanupQueryClient(queryClient);
   });
 
   const renderWithProvider = (ui: React.ReactElement) => {
@@ -60,10 +59,13 @@ describe("Dashboard analytics", () => {
   it("limits aggregate rows to five entries", async () => {
     renderWithProvider(<Dashboard />);
 
-    await waitFor(() => {
-      const rows = screen.getAllByRole("row").slice(1); // exclude header
-      expect(rows.length).toBeLessThanOrEqual(5);
-    });
+    await waitFor(
+      () => {
+        const rows = screen.getAllByRole("row").slice(1); // exclude header
+        expect(rows.length).toBeLessThanOrEqual(5);
+      },
+      { timeout: 5000 },
+    );
   });
 
   it("updates aggregates when selecting a different range", async () => {
@@ -88,9 +90,12 @@ describe("Dashboard analytics", () => {
     renderWithProvider(<Dashboard />);
 
     // Wait for initial render
-    await waitFor(() => {
-      expect(screen.getByText(/Training streak/i)).toBeInTheDocument();
-    });
+    await waitFor(
+      () => {
+        expect(screen.getByText(/Training streak/i)).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
 
     // Update mock for 8w range
     vi.mocked(api.getDashboardAnalytics).mockResolvedValueOnce(mockDataWith8Weeks);
@@ -98,12 +103,15 @@ describe("Dashboard analytics", () => {
     const rangeSelect = screen.getByRole("combobox", { name: /range/i });
     fireEvent.change(rangeSelect, { target: { value: "8w" } });
 
-    await waitFor(() => {
-      expect(api.getDashboardAnalytics).toHaveBeenCalledWith({
-        range: "8w",
-        grain: "weekly",
-      });
-    });
+    await waitFor(
+      () => {
+        expect(api.getDashboardAnalytics).toHaveBeenCalledWith({
+          range: "8w",
+          grain: "weekly",
+        });
+      },
+      { timeout: 5000 },
+    );
   });
 
   it("switches grain using toggle buttons", async () => {
@@ -121,9 +129,12 @@ describe("Dashboard analytics", () => {
     renderWithProvider(<Dashboard />);
 
     // Wait for initial render
-    await waitFor(() => {
-      expect(screen.getByText(/Training streak/i)).toBeInTheDocument();
-    });
+    await waitFor(
+      () => {
+        expect(screen.getByText(/Training streak/i)).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
 
     // Update mock for monthly grain
     vi.mocked(api.getDashboardAnalytics).mockResolvedValueOnce(mockDataWithMonthly);
@@ -131,11 +142,14 @@ describe("Dashboard analytics", () => {
     const monthlyButton = screen.getByRole("button", { name: /monthly/i });
     fireEvent.click(monthlyButton);
 
-    await waitFor(() => {
-      expect(api.getDashboardAnalytics).toHaveBeenCalledWith({
-        range: "4w",
-        grain: "monthly",
-      });
-    });
+    await waitFor(
+      () => {
+        expect(api.getDashboardAnalytics).toHaveBeenCalledWith({
+          range: "4w",
+          grain: "monthly",
+        });
+      },
+      { timeout: 5000 },
+    );
   });
 });

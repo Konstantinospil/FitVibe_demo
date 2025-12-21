@@ -1,32 +1,32 @@
 import React, { type ReactNode } from "react";
 import { renderHook, waitFor } from "@testing-library/react";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { describe, expect, it, vi, beforeEach } from "vitest";
+import type { QueryClient } from "@tanstack/react-query";
+import { QueryClientProvider } from "@tanstack/react-query";
+import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
 import { useHealthStatus, HEALTH_STATUS_QUERY_KEY } from "../../src/hooks/useHealthStatus";
 import * as api from "../../src/services/api";
+import { cleanupQueryClient, createTestQueryClient } from "../helpers/testQueryClient";
 
 vi.mock("../../src/services/api");
 
 const mockApi = vi.mocked(api);
 
-function createWrapper() {
-  const queryClient = new QueryClient({
-    defaultOptions: {
-      queries: {
-        retry: false,
-        gcTime: 0,
-      },
-    },
-  });
-
+function createWrapper(queryClient: QueryClient) {
   return ({ children }: { children: ReactNode }) => (
     <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
   );
 }
 
 describe("useHealthStatus", () => {
+  let queryClient: QueryClient;
+
   beforeEach(() => {
+    queryClient = createTestQueryClient();
     vi.clearAllMocks();
+  });
+
+  afterEach(() => {
+    cleanupQueryClient(queryClient);
   });
 
   it("should return health status data when API call succeeds", async () => {
@@ -35,12 +35,15 @@ describe("useHealthStatus", () => {
     });
 
     const { result } = renderHook(() => useHealthStatus(), {
-      wrapper: createWrapper(),
+      wrapper: createWrapper(queryClient),
     });
 
-    await waitFor(() => {
-      expect(result.current.isSuccess).toBe(true);
-    });
+    await waitFor(
+      () => {
+        expect(result.current.isSuccess).toBe(true);
+      },
+      { timeout: 5000 },
+    );
 
     expect(result.current.data).toBe("healthy");
   });
@@ -53,12 +56,15 @@ describe("useHealthStatus", () => {
     mockApi.getHealthStatus.mockRejectedValue(new Error("Network error"));
 
     const { result } = renderHook(() => useHealthStatus(), {
-      wrapper: createWrapper(),
+      wrapper: createWrapper(queryClient),
     });
 
-    await waitFor(() => {
-      expect(result.current.isError).toBe(true);
-    });
+    await waitFor(
+      () => {
+        expect(result.current.isError).toBe(true);
+      },
+      { timeout: 5000 },
+    );
 
     expect(result.current.error).toBeDefined();
   });
@@ -72,16 +78,19 @@ describe("useHealthStatus", () => {
     );
 
     const { result } = renderHook(() => useHealthStatus(), {
-      wrapper: createWrapper(),
+      wrapper: createWrapper(queryClient),
     });
 
     expect(result.current.isLoading).toBe(true);
     expect(result.current.data).toBeUndefined();
 
     // Wait for the promise to resolve to prevent leaving open timer handles
-    await waitFor(() => {
-      expect(result.current.isSuccess).toBe(true);
-    });
+    await waitFor(
+      () => {
+        expect(result.current.isSuccess).toBe(true);
+      },
+      { timeout: 5000 },
+    );
   });
 
   it("should refetch on configured interval", async () => {
@@ -90,12 +99,15 @@ describe("useHealthStatus", () => {
     });
 
     const { result } = renderHook(() => useHealthStatus(), {
-      wrapper: createWrapper(),
+      wrapper: createWrapper(queryClient),
     });
 
-    await waitFor(() => {
-      expect(result.current.isSuccess).toBe(true);
-    });
+    await waitFor(
+      () => {
+        expect(result.current.isSuccess).toBe(true);
+      },
+      { timeout: 5000 },
+    );
 
     const initialCallCount = mockApi.getHealthStatus.mock.calls.length;
 
@@ -110,12 +122,15 @@ describe("useHealthStatus", () => {
     });
 
     const { result } = renderHook(() => useHealthStatus(), {
-      wrapper: createWrapper(),
+      wrapper: createWrapper(queryClient),
     });
 
-    await waitFor(() => {
-      expect(result.current.isSuccess).toBe(true);
-    });
+    await waitFor(
+      () => {
+        expect(result.current.isSuccess).toBe(true);
+      },
+      { timeout: 5000 },
+    );
 
     expect(result.current.data).toBe("degraded");
   });
@@ -125,33 +140,32 @@ describe("useHealthStatus", () => {
       status: "healthy",
     });
 
-    const queryClient = new QueryClient({
-      defaultOptions: {
-        queries: {
-          retry: false,
-          gcTime: 0,
-        },
-      },
-    });
+    const testQueryClient = createTestQueryClient();
 
-    const wrapper = ({ children }: { children: ReactNode }) => (
-      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-    );
+    const wrapper = createWrapper(testQueryClient);
 
     const { result } = renderHook(() => useHealthStatus(), { wrapper });
 
-    await waitFor(() => {
-      expect(result.current.isSuccess).toBe(true);
-    });
+    await waitFor(
+      () => {
+        expect(result.current.isSuccess).toBe(true);
+      },
+      { timeout: 5000 },
+    );
 
     const firstCallCount = mockApi.getHealthStatus.mock.calls.length;
 
     // Render hook again with same query client (should use cache)
     const { result: result2 } = renderHook(() => useHealthStatus(), { wrapper });
 
-    await waitFor(() => {
-      expect(result2.current.isSuccess).toBe(true);
-    });
+    await waitFor(
+      () => {
+        expect(result2.current.isSuccess).toBe(true);
+      },
+      { timeout: 5000 },
+    );
+
+    cleanupQueryClient(testQueryClient);
 
     // Should not make additional API calls due to staleTime
     const secondCallCount = mockApi.getHealthStatus.mock.calls.length;

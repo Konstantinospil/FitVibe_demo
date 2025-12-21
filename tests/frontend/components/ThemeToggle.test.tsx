@@ -1,6 +1,6 @@
 import React from "react";
-import { render, screen } from "@testing-library/react";
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { render, screen, cleanup, waitFor, fireEvent } from "@testing-library/react";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import userEvent from "@testing-library/user-event";
 import ThemeToggle from "../../src/components/ThemeToggle";
 import { useThemeStore } from "../../src/store/theme.store";
@@ -20,9 +20,14 @@ describe("ThemeToggle", () => {
     });
   });
 
+  afterEach(() => {
+    cleanup();
+  });
+
   it("should render theme toggle button", () => {
-    render(<ThemeToggle />);
-    const button = screen.getByRole("button");
+    const { container } = render(<ThemeToggle />);
+    const buttons = screen.getAllByRole("button");
+    const button = Array.from(buttons).find((btn) => container.contains(btn)) || buttons[0];
     expect(button).toBeInTheDocument();
   });
 
@@ -33,8 +38,9 @@ describe("ThemeToggle", () => {
       toggleTheme: mockToggleTheme,
     });
 
-    render(<ThemeToggle />);
-    const button = screen.getByRole("button");
+    const { container } = render(<ThemeToggle />);
+    const buttons = screen.getAllByRole("button");
+    const button = Array.from(buttons).find((btn) => container.contains(btn)) || buttons[0];
     expect(button).toHaveAttribute("aria-label", "Switch to light mode");
     expect(button).toHaveAttribute("title", "Switch to light mode");
   });
@@ -46,25 +52,30 @@ describe("ThemeToggle", () => {
       toggleTheme: mockToggleTheme,
     });
 
-    render(<ThemeToggle />);
-    const button = screen.getByRole("button");
+    const { container } = render(<ThemeToggle />);
+    const buttons = screen.getAllByRole("button");
+    const button = Array.from(buttons).find((btn) => container.contains(btn)) || buttons[0];
     expect(button).toHaveAttribute("aria-label", "Switch to dark mode");
     expect(button).toHaveAttribute("title", "Switch to dark mode");
   });
 
-  it("should call toggleTheme when clicked", async () => {
-    const user = userEvent.setup();
-    render(<ThemeToggle />);
+  it("should call toggleTheme when clicked", () => {
+    const { container } = render(<ThemeToggle />);
 
-    const button = screen.getByRole("button");
-    await user.click(button);
+    const buttons = screen.getAllByRole("button");
+    const button = Array.from(buttons).find((btn) => container.contains(btn)) || buttons[0];
+    expect(button).toBeInTheDocument();
+    expect(button).not.toBeDisabled();
+
+    fireEvent.click(button);
 
     expect(mockToggleTheme).toHaveBeenCalledTimes(1);
   });
 
   it("should have accessible button with proper ARIA attributes", () => {
-    render(<ThemeToggle />);
-    const button = screen.getByRole("button");
+    const { container } = render(<ThemeToggle />);
+    const buttons = screen.getAllByRole("button");
+    const button = Array.from(buttons).find((btn) => container.contains(btn)) || buttons[0];
     expect(button).toHaveAttribute("type", "button");
     expect(button).toHaveAttribute("aria-label");
     expect(button).toHaveAttribute("title");

@@ -15,10 +15,10 @@ describe("apiClient authentication flow", () => {
     role: "athlete",
   };
 
-  beforeEach(() => {
+  beforeEach(async () => {
     apiMock = new MockAdapter(apiClient);
     rawMock = new MockAdapter(rawHttpClient);
-    useAuthStore.getState().signOut();
+    await useAuthStore.getState().signOut();
   });
 
   afterEach(() => {
@@ -43,7 +43,10 @@ describe("apiClient authentication flow", () => {
   });
 
   it("refreshes the session on the first 401", async () => {
+    // Set authenticated state
     useAuthStore.getState().signIn(mockUser);
+    // Ensure state is set
+    expect(useAuthStore.getState().isAuthenticated).toBe(true);
 
     let callCount = 0;
 
@@ -65,7 +68,8 @@ describe("apiClient authentication flow", () => {
     expect(response.status).toBe(200);
     expect(response.data).toEqual({ ok: true });
     expect(callCount).toBe(2);
-    // User should still be authenticated
+    // User should still be authenticated after successful refresh
+    // Note: The refresh doesn't change auth state, it just updates cookies
     expect(useAuthStore.getState().isAuthenticated).toBe(true);
   });
 

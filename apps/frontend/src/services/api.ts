@@ -22,7 +22,10 @@ const API_URL =
  * No Authorization header needed - cookies are immune to XSS attacks.
  */
 
-type RetryableRequestConfig = InternalAxiosRequestConfig & { _retry?: boolean };
+type RetryableRequestConfig = InternalAxiosRequestConfig & {
+  _retry?: boolean;
+  _csrfRetry?: boolean;
+};
 
 export type HealthStatusResponse = {
   status: string;
@@ -43,6 +46,70 @@ export const apiClient = axios.create(baseConfig);
 export const rawHttpClient = axios.create(baseConfig);
 
 let isRefreshing = false;
+
+// CSRF token management
+let csrfTokenPromise: Promise<string> | null = null;
+let cachedCsrfToken: string | null = null;
+
+const SAFE_METHODS = new Set(["GET", "HEAD", "OPTIONS"]);
+
+async function fetchCsrfToken(): Promise<string> {
+  // If we already have a token fetch in progress, reuse that promise
+  if (csrfTokenPromise) {
+    return csrfTokenPromise;
+  }
+
+  // Create new token fetch promise
+  csrfTokenPromise = (async () => {
+    try {
+      const response = await rawHttpClient.get<{ csrfToken: string }>("/api/v1/csrf-token");
+      const token = response.data.csrfToken;
+      cachedCsrfToken = token;
+      return token;
+    } catch (error) {
+      // Clear the promise on error so we can retry
+      csrfTokenPromise = null;
+      throw error;
+    } finally {
+      // Clear the promise after completion so we can fetch a new one if needed
+      csrfTokenPromise = null;
+    }
+  })();
+
+  return csrfTokenPromise;
+}
+
+function requiresCsrfToken(method: string): boolean {
+  return !SAFE_METHODS.has(method.toUpperCase());
+}
+
+// Request interceptor to add CSRF tokens to state-changing requests
+const csrfRequestInterceptor = async (config: InternalAxiosRequestConfig) => {
+  if (requiresCsrfToken(config.method || "GET")) {
+    // Fetch CSRF token if we don't have one cached
+    if (!cachedCsrfToken) {
+      try {
+        await fetchCsrfToken();
+      } catch (error) {
+        // If CSRF token fetch fails, still proceed - the backend will return 403
+        // which we can handle in the response interceptor
+        console.warn("Failed to fetch CSRF token:", error);
+      }
+    }
+
+    // Add CSRF token to request header if we have one
+    // Backend accepts: x-csrf-token, csrf-token, or x-xsrf-token
+    if (cachedCsrfToken) {
+      config.headers["x-csrf-token"] = cachedCsrfToken;
+    }
+  }
+
+  return config;
+};
+
+// Add CSRF interceptor to both clients
+apiClient.interceptors.request.use(csrfRequestInterceptor);
+rawHttpClient.interceptors.request.use(csrfRequestInterceptor);
 
 type QueueEntry = {
   resolve: (value: unknown) => void;
@@ -85,6 +152,30 @@ apiClient.interceptors.response.use(
 
     if (!originalRequest || !response) {
       return Promise.reject(error);
+    }
+
+    // Handle CSRF token errors (403)
+    if (response.status === 403) {
+      const errorCode = (response.data as { error?: { code?: string } })?.error?.code;
+      if (
+        errorCode === "CSRF_TOKEN_INVALID" &&
+        !originalRequest._csrfRetry &&
+        requiresCsrfToken(originalRequest.method || "GET")
+      ) {
+        originalRequest._csrfRetry = true;
+        // Clear cached token and fetch a new one
+        cachedCsrfToken = null;
+        try {
+          await fetchCsrfToken();
+          // Clear the old token from headers so the interceptor adds the new one
+          delete originalRequest.headers["x-csrf-token"];
+          // Retry the request with the new CSRF token (interceptor will add it)
+          return apiClient(originalRequest);
+        } catch {
+          // If fetching CSRF token fails, reject with original error
+          return Promise.reject(error);
+        }
+      }
     }
 
     // Only attempt refresh on 401, and only once per request
@@ -154,8 +245,67 @@ apiClient.interceptors.response.use(
   },
 );
 
+// Add CSRF error handling to rawHttpClient as well (for registration, login, etc.)
+rawHttpClient.interceptors.response.use(
+  (response) => response,
+  async (error: AxiosError) => {
+    const { response, config } = error;
+    const originalRequest = config as RetryableRequestConfig | undefined;
+
+    if (!originalRequest || !response) {
+      return Promise.reject(error);
+    }
+
+    // Handle CSRF token errors (403)
+    if (response.status === 403) {
+      const errorCode = (response.data as { error?: { code?: string } })?.error?.code;
+      if (
+        errorCode === "CSRF_TOKEN_INVALID" &&
+        !originalRequest._csrfRetry &&
+        requiresCsrfToken(originalRequest.method || "GET")
+      ) {
+        originalRequest._csrfRetry = true;
+        // Clear cached token and fetch a new one
+        cachedCsrfToken = null;
+        try {
+          await fetchCsrfToken();
+          // Clear the old token from headers so the interceptor adds the new one
+          delete originalRequest.headers["x-csrf-token"];
+          // Retry the request with the new CSRF token (interceptor will add it)
+          return rawHttpClient(originalRequest);
+        } catch {
+          // If fetching CSRF token fails, reject with original error
+          return Promise.reject(error);
+        }
+      }
+    }
+
+    return Promise.reject(error);
+  },
+);
+
 export async function getHealthStatus(): Promise<HealthStatusResponse> {
   const res = await apiClient.get<HealthStatusResponse>("/health");
+  return res.data;
+}
+
+export type SubmitContactRequest = {
+  email: string;
+  topic: string;
+  message: string;
+};
+
+export type SubmitContactResponse = {
+  success: boolean;
+  data: {
+    id: string;
+    createdAt: string;
+  };
+};
+
+export async function submitContact(payload: SubmitContactRequest): Promise<SubmitContactResponse> {
+  // Public endpoint - no authentication required
+  const res = await rawHttpClient.post<SubmitContactResponse>("/api/v1/contact", payload);
   return res.data;
 }
 
@@ -180,6 +330,78 @@ export type UserResponse = {
   email: string;
   role?: string;
 };
+
+export type UserStatus = "pending_verification" | "active" | "archived" | "pending_deletion";
+
+export interface UserAvatar {
+  url: string;
+  mimeType: string | null;
+  bytes: number | null;
+  updatedAt: string | null;
+}
+
+export interface UserDetail {
+  id: string;
+  username: string;
+  displayName: string;
+  locale: string;
+  preferredLang: string;
+  defaultVisibility: string;
+  units: string;
+  role: string;
+  status: UserStatus;
+  createdAt: string;
+  updatedAt: string;
+  primaryEmail: string | null;
+  phoneNumber: string | null;
+  avatar: UserAvatar | null;
+  contacts: Array<{
+    id: string;
+    type: "email" | "phone";
+    value: string;
+    isPrimary: boolean;
+    isRecovery: boolean;
+    isVerified: boolean;
+    verifiedAt: string | null;
+    createdAt: string;
+  }>;
+  profile?: {
+    alias: string | null;
+    bio: string | null;
+    weight: number | null;
+    weightUnit: string | null;
+    fitnessLevel: string | null;
+    trainingFrequency: string | null;
+  };
+}
+
+export interface UserProfile {
+  id: string;
+  username: string;
+  displayName: string;
+  avatarUrl?: string | null;
+  bio?: string | null;
+  alias?: string | null;
+  isOwnProfile?: boolean;
+  isFollowing?: boolean;
+  followersCount?: number;
+  followingCount?: number;
+}
+
+export interface UpdateProfileRequest {
+  username?: string;
+  displayName?: string;
+  locale?: string;
+  preferredLang?: string;
+  defaultVisibility?: string;
+  units?: string;
+  alias?: string;
+  bio?: string;
+  weight?: number;
+  weightUnit?: "kg" | "lb";
+  fitnessLevel?: "beginner" | "intermediate" | "advanced" | "elite";
+  trainingFrequency?: "rarely" | "1_2_per_week" | "3_4_per_week" | "5_plus_per_week";
+}
 
 export type LoginResponse =
   | {
@@ -297,6 +519,17 @@ export async function resetPassword(payload: ResetPasswordRequest): Promise<Rese
  */
 export async function logout(): Promise<void> {
   await rawHttpClient.post("/api/v1/auth/logout");
+}
+
+// User Profile API
+export async function getCurrentUser(): Promise<UserDetail> {
+  const res = await apiClient.get<UserDetail>("/api/v1/users/me");
+  return res.data;
+}
+
+export async function updateProfile(payload: UpdateProfileRequest): Promise<UserDetail> {
+  const res = await apiClient.patch<UserDetail>("/api/v1/users/me", payload);
+  return res.data;
 }
 
 // Session Management API
@@ -484,6 +717,25 @@ export interface FeedItem {
 export interface FeedResponse {
   items: FeedItem[];
   total: number;
+}
+
+// Follow/Unfollow API
+export interface FollowUserResponse {
+  followingId: string;
+}
+
+export interface UnfollowUserResponse {
+  unfollowedId: string;
+}
+
+export async function followUser(alias: string): Promise<FollowUserResponse> {
+  const res = await apiClient.post<FollowUserResponse>(`/api/v1/users/${alias}/follow`);
+  return res.data;
+}
+
+export async function unfollowUser(alias: string): Promise<UnfollowUserResponse> {
+  const res = await apiClient.delete<UnfollowUserResponse>(`/api/v1/users/${alias}/follow`);
+  return res.data;
 }
 
 export async function getFeed(

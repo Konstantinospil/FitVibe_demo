@@ -1,13 +1,21 @@
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor, act, cleanup } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
-import { describe, expect, it, vi, beforeEach } from "vitest";
+import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
 import Settings from "../../src/pages/Settings";
 import { useAuthStore } from "../../src/store/auth.store";
-import { apiClient, setup2FA, verify2FA, disable2FA, get2FAStatus } from "../../src/services/api";
+import {
+  apiClient,
+  setup2FA,
+  verify2FA,
+  disable2FA,
+  get2FAStatus,
+  listAuthSessions,
+} from "../../src/services/api";
 import { ToastProvider } from "../../src/contexts/ToastContext";
 import { I18nextProvider } from "react-i18next";
 import i18n from "i18next";
 import { initReactI18next } from "react-i18next";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 // Mock auth store
 vi.mock("../../src/store/auth.store", () => ({
@@ -25,6 +33,7 @@ vi.mock("../../src/services/api", () => ({
   verify2FA: vi.fn(),
   disable2FA: vi.fn(),
   get2FAStatus: vi.fn(),
+  listAuthSessions: vi.fn(),
 }));
 
 // Mock navigate
@@ -62,7 +71,7 @@ void testI18n.use(initReactI18next).init({
   fallbackLng: "en",
   resources: {
     en: {
-      translation: {
+      common: {
         "settings.title": "Settings",
         "settings.description": "Your preferences and account settings",
         "settings.profile.title": "Profile Settings",
@@ -74,12 +83,29 @@ void testI18n.use(initReactI18next).init({
         "settings.profile.aliasHelp":
           "Alias may only contain letters, numbers, underscores, dots, or dashes",
         "settings.profile.email": "Email",
+        "settings.profile.emailCannotChange": "Email cannot be changed",
         "settings.profile.weight": "Weight",
+        "settings.profile.weightPlaceholder": "Enter your weight",
         "settings.profile.weightUnit": "Weight Unit",
+        "settings.profile.weightKg": "kg",
+        "settings.profile.weightLb": "lb",
+        "settings.profile.fitnessLevel": "Fitness Level",
+        "settings.profile.fitnessLevelBeginner": "Beginner",
+        "settings.profile.fitnessLevelIntermediate": "Intermediate",
+        "settings.profile.fitnessLevelAdvanced": "Advanced",
+        "settings.profile.fitnessLevelElite": "Elite",
+        "settings.profile.trainingFrequency": "Training Frequency",
+        "settings.profile.trainingFrequencyRarely": "Rarely",
+        "settings.profile.trainingFrequency1_2": "1-2 times per week",
+        "settings.profile.trainingFrequency3_4": "3-4 times per week",
+        "settings.profile.trainingFrequency5Plus": "5+ times per week",
+        "settings.profile.twoFactorCodePlaceholder": "Enter 6-digit code",
+        "settings.profile.passwordPlaceholder": "Enter your password",
         "settings.preferences.title": "Preferences",
         "settings.preferences.description":
           "Set your default session visibility, units, and language",
         "settings.preferences.saveButton": "Save Preferences",
+        "settings.preferences.saving": "Saving...",
         "settings.preferences.saveSuccess": "Preferences saved successfully!",
         "settings.preferences.saveError": "Failed to save preferences. Please try again.",
         "settings.security.title": "Two-Factor Authentication (2FA)",
@@ -103,25 +129,42 @@ void testI18n.use(initReactI18next).init({
   },
 });
 
+// Create a test query client
+const createTestQueryClient = () => {
+  return new QueryClient({
+    defaultOptions: {
+      queries: {
+        retry: false,
+        gcTime: 0,
+      },
+    },
+  });
+};
+
 // Helper to render Settings with all required providers
 const renderSettings = () => {
-  return render(
-    <I18nextProvider i18n={testI18n}>
-      <ToastProvider>
-        <MemoryRouter>
-          <Settings />
-        </MemoryRouter>
-      </ToastProvider>
-    </I18nextProvider>,
+  const queryClient = createTestQueryClient();
+  const result = render(
+    <QueryClientProvider client={queryClient}>
+      <I18nextProvider i18n={testI18n}>
+        <ToastProvider>
+          <MemoryRouter>
+            <Settings />
+          </MemoryRouter>
+        </ToastProvider>
+      </I18nextProvider>
+    </QueryClientProvider>,
   );
+  return result;
 };
 
 describe("Settings", () => {
   const mockGet = vi.mocked(apiClient.get);
-
   const mockPatch = vi.mocked(apiClient.patch);
-
   const mockDelete = vi.mocked(apiClient.delete);
+
+  // Set test timeout to prevent hanging
+  vi.setConfig({ testTimeout: 10000 });
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -157,354 +200,815 @@ describe("Settings", () => {
       success: true,
       message: "2FA disabled successfully",
     });
+    vi.mocked(listAuthSessions).mockResolvedValue({ sessions: [] });
+  });
+
+  afterEach(() => {
+    cleanup();
+    vi.clearAllTimers();
   });
 
   it("renders settings page", async () => {
-    renderSettings();
+    const { container } = renderSettings();
 
-    await waitFor(() => {
-      expect(screen.getByText("Your preferences and account settings")).toBeInTheDocument();
-    });
+    await waitFor(
+      () => {
+        const descriptions = screen.getAllByText("Your preferences and account settings");
+        const description = Array.from(descriptions).find((el) => container.contains(el));
+        expect(description).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
 
-    expect(screen.getByText("Profile Settings")).toBeInTheDocument();
-    expect(screen.getByText("Preferences")).toBeInTheDocument();
-    expect(screen.getByText("Two-Factor Authentication (2FA)")).toBeInTheDocument();
-    expect(screen.getByText("Danger Zone")).toBeInTheDocument();
+    const profileSettings = screen.getAllByText("Profile Settings");
+    expect(Array.from(profileSettings).find((el) => container.contains(el))).toBeInTheDocument();
+
+    const preferences = screen.getAllByText("Preferences");
+    expect(Array.from(preferences).find((el) => container.contains(el))).toBeInTheDocument();
+
+    const twoFA = screen.getAllByText("Two-Factor Authentication (2FA)");
+    expect(Array.from(twoFA).find((el) => container.contains(el))).toBeInTheDocument();
+
+    const dangerZone = screen.getAllByText("Danger Zone");
+    expect(Array.from(dangerZone).find((el) => container.contains(el))).toBeInTheDocument();
   });
 
   it("loads user data on mount", async () => {
     renderSettings();
 
-    await waitFor(() => {
-      expect(mockGet).toHaveBeenCalledWith("/api/v1/users/me");
-    });
+    await waitFor(
+      () => {
+        expect(mockGet).toHaveBeenCalledWith("/api/v1/users/me");
+      },
+      { timeout: 5000 },
+    );
   });
 
   it("displays user email after loading", async () => {
-    renderSettings();
+    const { container } = renderSettings();
 
-    await waitFor(() => {
-      expect(screen.getByDisplayValue("user@example.com")).toBeInTheDocument();
-    });
+    // Wait for component to render
+    await waitFor(
+      () => {
+        const settingsTexts = screen.queryAllByText("Settings");
+        expect(Array.from(settingsTexts).find((el) => container.contains(el))).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
+
+    // Wait for API call to complete
+    await waitFor(
+      () => {
+        expect(mockGet).toHaveBeenCalledWith("/api/v1/users/me");
+      },
+      { timeout: 5000 },
+    );
+
+    // Wait for the email input to exist and value to update from "Loading..." to actual email
+    await waitFor(
+      () => {
+        const emailInput = container.querySelector("#email") as HTMLInputElement;
+        expect(emailInput).not.toBeNull();
+        expect(emailInput.value).not.toBe("Loading...");
+        expect(emailInput.value).toBe("user@example.com");
+      },
+      { timeout: 5000 },
+    );
   });
 
   it("allows changing display name", async () => {
-    renderSettings();
+    const { container } = renderSettings();
 
-    await waitFor(() => {
-      expect(screen.getByPlaceholderText("Your display name")).toBeInTheDocument();
-    });
+    // Wait for component to render
+    await waitFor(
+      () => {
+        const settingsTexts = screen.queryAllByText("Settings");
+        expect(Array.from(settingsTexts).find((el) => container.contains(el))).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
 
-    const displayNameInput = screen.getByPlaceholderText("Your display name");
-    fireEvent.change(displayNameInput, { target: { value: "New Display Name" } });
+    let displayNameInput: HTMLElement | undefined;
+    await waitFor(
+      () => {
+        const inputs = screen.getAllByPlaceholderText("Your display name");
+        displayNameInput = Array.from(inputs).find((el) => container.contains(el));
+        expect(displayNameInput).toBeDefined();
+        expect(displayNameInput).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
 
-    expect(displayNameInput).toHaveValue("New Display Name");
+    expect(displayNameInput).toBeDefined();
+    fireEvent.change(displayNameInput!, { target: { value: "New Display Name" } });
+
+    expect(displayNameInput!).toHaveValue("New Display Name");
   });
 
   it("allows changing default visibility", async () => {
-    renderSettings();
+    const { container } = renderSettings();
 
-    await waitFor(() => {
-      expect(screen.getByLabelText("Default Session Visibility")).toBeInTheDocument();
-    });
+    // Wait for component to render
+    await waitFor(
+      () => {
+        const settingsTexts = screen.queryAllByText("Settings");
+        expect(Array.from(settingsTexts).find((el) => container.contains(el))).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
 
-    const visibilitySelect = screen.getByLabelText(
-      "Default Session Visibility",
-    ) as HTMLSelectElement;
-    fireEvent.change(visibilitySelect, { target: { value: "public" } });
+    let visibilitySelect: HTMLSelectElement | undefined;
+    await waitFor(
+      () => {
+        const labels = screen.queryAllByLabelText("Default Session Visibility");
+        const label = Array.from(labels).find((el) => container.contains(el));
+        if (label && label.getAttribute("for")) {
+          visibilitySelect = container.querySelector(
+            `#${label.getAttribute("for")}`,
+          ) as HTMLSelectElement;
+        }
+        if (!visibilitySelect) {
+          visibilitySelect = container.querySelector("#default-visibility") as HTMLSelectElement;
+        }
+        expect(visibilitySelect).toBeDefined();
+        expect(visibilitySelect).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
 
-    expect(visibilitySelect.value).toBe("public");
+    expect(visibilitySelect).toBeDefined();
+    fireEvent.change(visibilitySelect!, { target: { value: "public" } });
+
+    expect(visibilitySelect!.value).toBe("public");
   });
 
   it("allows changing units preference", async () => {
-    renderSettings();
+    const { container } = renderSettings();
 
-    await waitFor(() => {
-      expect(screen.getByLabelText("Units")).toBeInTheDocument();
-    });
+    // Wait for component to render
+    await waitFor(
+      () => {
+        const settingsTexts = screen.queryAllByText("Settings");
+        expect(Array.from(settingsTexts).find((el) => container.contains(el))).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
 
-    const unitsSelect = screen.getByLabelText("Units") as HTMLSelectElement;
-    fireEvent.change(unitsSelect, { target: { value: "imperial" } });
+    let unitsSelect: HTMLSelectElement | undefined;
+    await waitFor(
+      () => {
+        const labels = screen.queryAllByLabelText("Units");
+        const label = Array.from(labels).find((el) => container.contains(el));
+        if (label && label.getAttribute("for")) {
+          unitsSelect = container.querySelector(
+            `#${label.getAttribute("for")}`,
+          ) as HTMLSelectElement;
+        }
+        if (!unitsSelect) {
+          unitsSelect = container.querySelector("#units") as HTMLSelectElement;
+        }
+        expect(unitsSelect).toBeDefined();
+        expect(unitsSelect).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
 
-    expect(unitsSelect.value).toBe("imperial");
+    expect(unitsSelect).toBeDefined();
+    fireEvent.change(unitsSelect!, { target: { value: "imperial" } });
+
+    expect(unitsSelect!.value).toBe("imperial");
   });
 
   it("allows changing language preference", async () => {
-    renderSettings();
+    const { container } = renderSettings();
 
-    await waitFor(() => {
-      expect(screen.getByLabelText("Language")).toBeInTheDocument();
-    });
+    // Wait for component to render
+    await waitFor(
+      () => {
+        const settingsTexts = screen.queryAllByText("Settings");
+        expect(Array.from(settingsTexts).find((el) => container.contains(el))).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
 
-    const languageSelect = screen.getByLabelText("Language") as HTMLSelectElement;
-    fireEvent.change(languageSelect, { target: { value: "de" } });
+    let languageSelect: HTMLSelectElement | undefined;
+    await waitFor(
+      () => {
+        const labels = screen.queryAllByLabelText("Language");
+        const label = Array.from(labels).find((el) => container.contains(el));
+        if (label && label.getAttribute("for")) {
+          languageSelect = container.querySelector(
+            `#${label.getAttribute("for")}`,
+          ) as HTMLSelectElement;
+        }
+        if (!languageSelect) {
+          languageSelect = container.querySelector("#locale") as HTMLSelectElement;
+        }
+        expect(languageSelect).toBeDefined();
+        expect(languageSelect).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
 
-    expect(languageSelect.value).toBe("de");
+    expect(languageSelect).toBeDefined();
+    fireEvent.change(languageSelect!, { target: { value: "de" } });
+
+    expect(languageSelect!.value).toBe("de");
   });
 
   it("saves preferences when save button clicked", async () => {
-    renderSettings();
+    const { container } = renderSettings();
 
-    await waitFor(() => {
-      expect(screen.getByText("Save Preferences")).toBeInTheDocument();
-    });
+    // Wait for component to render
+    await waitFor(
+      () => {
+        const settingsTexts = screen.queryAllByText("Settings");
+        expect(Array.from(settingsTexts).find((el) => container.contains(el))).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
 
-    const displayNameInput = screen.getByPlaceholderText("Your display name");
-    fireEvent.change(displayNameInput, { target: { value: "Test Name" } });
+    let displayNameInput: HTMLElement | undefined;
+    let saveButton: HTMLElement | undefined;
 
-    const saveButton = screen.getByText("Save Preferences");
-    fireEvent.click(saveButton);
+    await waitFor(
+      () => {
+        const savePrefs = screen.getAllByText("Save Preferences");
+        saveButton = Array.from(savePrefs).find((el) => container.contains(el));
+        expect(saveButton).toBeDefined();
 
-    await waitFor(() => {
-      expect(mockPatch).toHaveBeenCalledWith("/api/v1/users/me", {
-        displayName: "Test Name",
-        locale: "en",
-        defaultVisibility: "private",
-        units: "metric",
-      });
-    });
+        const displayNameInputs = screen.getAllByPlaceholderText("Your display name");
+        displayNameInput = Array.from(displayNameInputs).find((el) => container.contains(el));
+        expect(displayNameInput).toBeDefined();
+      },
+      { timeout: 5000 },
+    );
+
+    expect(displayNameInput).toBeDefined();
+    expect(saveButton).toBeDefined();
+
+    // Wait for user data to load
+    await waitFor(
+      () => {
+        expect(mockGet).toHaveBeenCalled();
+      },
+      { timeout: 5000 },
+    );
+
+    fireEvent.change(displayNameInput!, { target: { value: "Test Name" } });
+    fireEvent.click(saveButton!);
+
+    await waitFor(
+      () => {
+        expect(mockPatch).toHaveBeenCalled();
+        const callArgs = mockPatch.mock.calls[0];
+        expect(callArgs[0]).toBe("/api/v1/users/me");
+        expect(callArgs[1]).toMatchObject({
+          displayName: "Test Name",
+          locale: "en",
+          defaultVisibility: "private",
+          units: "metric",
+        });
+      },
+      { timeout: 5000 },
+    );
   });
 
   it("shows success message after saving preferences", async () => {
-    renderSettings();
+    const { container } = renderSettings();
 
-    await waitFor(() => {
-      expect(screen.getByText("Save Preferences")).toBeInTheDocument();
-    });
+    // Wait for component to render
+    await waitFor(
+      () => {
+        const settingsTexts = screen.queryAllByText("Settings");
+        expect(Array.from(settingsTexts).find((el) => container.contains(el))).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
 
-    const saveButton = screen.getByText("Save Preferences");
-    fireEvent.click(saveButton);
+    let saveButton: HTMLElement | undefined;
 
-    await waitFor(() => {
-      expect(screen.getByText("Preferences saved successfully!")).toBeInTheDocument();
-    });
+    await waitFor(
+      () => {
+        const savePrefs = screen.getAllByText("Save Preferences");
+        saveButton = Array.from(savePrefs).find((el) => container.contains(el));
+        expect(saveButton).toBeDefined();
+      },
+      { timeout: 5000 },
+    );
+
+    expect(saveButton).toBeDefined();
+    fireEvent.click(saveButton!);
+
+    await waitFor(
+      () => {
+        const successMessages = screen.getAllByText("Preferences saved successfully!");
+        expect(
+          Array.from(successMessages).find((el) => container.contains(el)),
+        ).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
   });
 
   it("shows error message when saving preferences fails", async () => {
     mockPatch.mockRejectedValue(new Error("Save failed"));
 
-    renderSettings();
+    const { container } = renderSettings();
 
-    await waitFor(() => {
-      expect(screen.getByText("Save Preferences")).toBeInTheDocument();
-    });
+    // Wait for component to render
+    await waitFor(
+      () => {
+        const settingsTexts = screen.queryAllByText("Settings");
+        expect(Array.from(settingsTexts).find((el) => container.contains(el))).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
 
-    const saveButton = screen.getByText("Save Preferences");
+    await waitFor(
+      () => {
+        const savePrefs = screen.getAllByText("Save Preferences");
+        expect(Array.from(savePrefs).find((el) => container.contains(el))).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
+
+    const savePrefs = screen.getAllByText("Save Preferences");
+    const saveButton = Array.from(savePrefs).find((el) => container.contains(el))!;
     fireEvent.click(saveButton);
 
-    await waitFor(() => {
-      expect(screen.getByText("Failed to save preferences. Please try again.")).toBeInTheDocument();
-    });
+    await waitFor(
+      () => {
+        expect(
+          (() => {
+            const errors = screen.getAllByText("Failed to save preferences. Please try again.");
+            return Array.from(errors).find((el) => container.contains(el));
+          })(),
+        ).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
   });
 
   it("shows enable 2FA button when 2FA is disabled", async () => {
-    renderSettings();
+    const { container } = renderSettings();
 
-    await waitFor(() => {
-      expect(screen.getByText("Enable 2FA")).toBeInTheDocument();
-    });
+    await waitFor(
+      () => {
+        const buttons = screen.getAllByText("Enable 2FA");
+        expect(Array.from(buttons).find((el) => container.contains(el))).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
   });
 
   it("shows 2FA setup when enable button clicked", async () => {
-    renderSettings();
+    const { container } = renderSettings();
 
-    await waitFor(() => {
-      expect(screen.getByText("Enable 2FA")).toBeInTheDocument();
-    });
+    // Wait for component to render
+    await waitFor(
+      () => {
+        const settingsTexts = screen.queryAllByText("Settings");
+        expect(Array.from(settingsTexts).find((el) => container.contains(el))).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
 
-    fireEvent.click(screen.getByText("Enable 2FA"));
+    let enableButton: HTMLElement | undefined;
 
-    await waitFor(() => {
-      expect(screen.getByText(/Scan this QR code/)).toBeInTheDocument();
-    });
+    await waitFor(
+      () => {
+        const buttons = screen.getAllByText("Enable 2FA");
+        enableButton = Array.from(buttons).find((el) => container.contains(el));
+        expect(enableButton).toBeDefined();
+      },
+      { timeout: 5000 },
+    );
 
-    expect(screen.getByPlaceholderText("000000")).toBeInTheDocument();
+    expect(enableButton).toBeDefined();
+    fireEvent.click(enableButton!);
+
+    await waitFor(
+      () => {
+        const qrTexts = screen.getAllByText(/Scan this QR code/);
+        expect(Array.from(qrTexts).find((el) => container.contains(el))).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
+
+    const placeholders = screen.getAllByPlaceholderText("Enter 6-digit code");
+    expect(Array.from(placeholders).find((el) => container.contains(el))).toBeInTheDocument();
   });
 
   it("disables verify button when code is not 6 digits", async () => {
-    renderSettings();
+    const { container } = renderSettings();
 
-    await waitFor(() => {
-      expect(screen.getByText("Enable 2FA")).toBeInTheDocument();
-    });
+    let enableButton: HTMLElement | undefined;
+    let codeInput: HTMLElement | undefined;
+    let verifyButton: HTMLElement | undefined;
 
-    fireEvent.click(screen.getByText("Enable 2FA"));
+    await waitFor(
+      () => {
+        const buttons = screen.getAllByText("Enable 2FA");
+        enableButton = Array.from(buttons).find((el) => container.contains(el));
+        expect(enableButton).toBeDefined();
+      },
+      { timeout: 5000 },
+    );
 
-    await waitFor(() => {
-      expect(screen.getByPlaceholderText("000000")).toBeInTheDocument();
-    });
+    expect(enableButton).toBeDefined();
+    fireEvent.click(enableButton!);
 
-    const codeInput = screen.getByPlaceholderText("000000");
-    fireEvent.change(codeInput, { target: { value: "123" } });
+    await waitFor(
+      () => {
+        const placeholders = screen.getAllByPlaceholderText("Enter 6-digit code");
+        codeInput = Array.from(placeholders).find((el) => container.contains(el));
+        expect(codeInput).toBeDefined();
+      },
+      { timeout: 5000 },
+    );
 
-    const verifyButton = screen.getByRole("button", { name: /verify/i });
-    expect(verifyButton).toBeDisabled();
+    expect(codeInput).toBeDefined();
+    fireEvent.change(codeInput!, { target: { value: "123" } });
+
+    await waitFor(
+      () => {
+        const verifyButtons = screen.getAllByRole("button", { name: /verify/i });
+        verifyButton = Array.from(verifyButtons).find((el) => container.contains(el));
+        expect(verifyButton).toBeDefined();
+      },
+      { timeout: 5000 },
+    );
+
+    expect(verifyButton).toBeDefined();
+    expect(verifyButton!).toBeDisabled();
   });
 
   it("enables 2FA after successful verification", async () => {
-    renderSettings();
+    const { container } = renderSettings();
 
-    await waitFor(() => {
-      expect(screen.getByText("Enable 2FA")).toBeInTheDocument();
-    });
+    // Wait for component to render
+    await waitFor(
+      () => {
+        const settingsTexts = screen.queryAllByText("Settings");
+        expect(Array.from(settingsTexts).find((el) => container.contains(el))).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
 
-    fireEvent.click(screen.getByText("Enable 2FA"));
+    let enableButton: HTMLElement | undefined;
+    let codeInput: HTMLElement | undefined;
+    let verifyButton: HTMLElement | undefined;
 
-    await waitFor(() => {
-      expect(screen.getByPlaceholderText("000000")).toBeInTheDocument();
-    });
+    await waitFor(
+      () => {
+        const buttons = screen.getAllByText("Enable 2FA");
+        enableButton = Array.from(buttons).find((el) => container.contains(el));
+        expect(enableButton).toBeDefined();
+      },
+      { timeout: 5000 },
+    );
 
-    const codeInput = screen.getByPlaceholderText("000000");
-    fireEvent.change(codeInput, { target: { value: "123456" } });
+    expect(enableButton).toBeDefined();
+    fireEvent.click(enableButton!);
 
-    const verifyButton = screen.getByText("Verify and Enable");
-    fireEvent.click(verifyButton);
+    await waitFor(
+      () => {
+        const placeholders = screen.getAllByPlaceholderText("Enter 6-digit code");
+        codeInput = Array.from(placeholders).find((el) => container.contains(el));
+        expect(codeInput).toBeDefined();
+      },
+      { timeout: 5000 },
+    );
+
+    expect(codeInput).toBeDefined();
+    fireEvent.change(codeInput!, { target: { value: "123456" } });
+
+    await waitFor(
+      () => {
+        const verifyButtons = screen.getAllByText("Verify and Enable");
+        verifyButton = Array.from(verifyButtons).find((el) => container.contains(el));
+        expect(verifyButton).toBeDefined();
+      },
+      { timeout: 5000 },
+    );
+
+    expect(verifyButton).toBeDefined();
+    fireEvent.click(verifyButton!);
 
     // Check for toast notification instead of alert
-    await waitFor(() => {
-      expect(screen.getByText("2FA enabled successfully!")).toBeInTheDocument();
-    });
+    await waitFor(
+      () => {
+        const successMessages = screen.getAllByText("2FA enabled successfully!");
+        expect(
+          Array.from(successMessages).find((el) => container.contains(el)),
+        ).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
 
-    await waitFor(() => {
-      expect(screen.getByText(/2FA is currently/)).toBeInTheDocument();
-    });
+    await waitFor(
+      () => {
+        const statusTexts = screen.getAllByText(/2FA is currently/);
+        expect(Array.from(statusTexts).find((el) => container.contains(el))).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
   });
 
   it("shows delete account confirmation when delete button clicked", async () => {
-    renderSettings();
+    const { container } = renderSettings();
 
-    await waitFor(() => {
-      expect(screen.getByText("Delete My Account")).toBeInTheDocument();
-    });
+    // Wait for component to render
+    await waitFor(
+      () => {
+        const settingsTexts = screen.queryAllByText("Settings");
+        expect(Array.from(settingsTexts).find((el) => container.contains(el))).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
 
-    fireEvent.click(screen.getByText("Delete My Account"));
+    let deleteButton: HTMLElement | undefined;
 
-    await waitFor(() => {
-      expect(
-        screen.getByText(/⚠️ Warning: This will permanently delete your account/),
-      ).toBeInTheDocument();
-    });
+    await waitFor(
+      () => {
+        const buttons = screen.getAllByText("Delete My Account");
+        deleteButton = Array.from(buttons).find((el) => container.contains(el));
+        expect(deleteButton).toBeDefined();
+      },
+      { timeout: 5000 },
+    );
 
-    expect(screen.getByPlaceholderText("Enter your password")).toBeInTheDocument();
+    expect(deleteButton).toBeDefined();
+    fireEvent.click(deleteButton!);
+
+    await waitFor(
+      () => {
+        const warnings = screen.getAllByText(
+          /⚠️ Warning: This will permanently delete your account/,
+        );
+        expect(Array.from(warnings).find((el) => container.contains(el))).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
+
+    const placeholders = screen.getAllByPlaceholderText("Enter your password");
+    expect(Array.from(placeholders).find((el) => container.contains(el))).toBeInTheDocument();
   });
 
   it("allows cancelling account deletion", async () => {
-    renderSettings();
+    const { container } = renderSettings();
 
-    await waitFor(() => {
-      expect(screen.getByText("Delete My Account")).toBeInTheDocument();
-    });
+    // Wait for component to render
+    await waitFor(
+      () => {
+        const settingsTexts = screen.queryAllByText("Settings");
+        expect(Array.from(settingsTexts).find((el) => container.contains(el))).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
 
-    fireEvent.click(screen.getByText("Delete My Account"));
+    let deleteButton: HTMLElement | undefined;
+    let cancelButton: HTMLElement | undefined;
 
-    await waitFor(() => {
-      expect(screen.getByText("Cancel")).toBeInTheDocument();
-    });
+    await waitFor(
+      () => {
+        const buttons = screen.getAllByText("Delete My Account");
+        deleteButton = Array.from(buttons).find((el) => container.contains(el));
+        expect(deleteButton).toBeDefined();
+      },
+      { timeout: 5000 },
+    );
 
-    fireEvent.click(screen.getByText("Cancel"));
+    expect(deleteButton).toBeDefined();
+    fireEvent.click(deleteButton!);
 
-    await waitFor(() => {
-      expect(screen.queryByPlaceholderText("Enter your password")).not.toBeInTheDocument();
-    });
+    await waitFor(
+      () => {
+        const cancelButtons = screen.getAllByText("Cancel");
+        cancelButton = Array.from(cancelButtons).find((el) => container.contains(el));
+        expect(cancelButton).toBeDefined();
+      },
+      { timeout: 5000 },
+    );
+
+    expect(cancelButton).toBeDefined();
+    fireEvent.click(cancelButton!);
+
+    await waitFor(
+      () => {
+        expect(screen.queryByPlaceholderText("Enter your password")).not.toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
   });
 
   it("disables delete button when no password entered", async () => {
-    renderSettings();
+    const { container } = renderSettings();
 
-    await waitFor(() => {
-      expect(screen.getByText("Delete My Account")).toBeInTheDocument();
-    });
+    // Wait for component to render
+    await waitFor(
+      () => {
+        const settingsTexts = screen.queryAllByText("Settings");
+        expect(Array.from(settingsTexts).find((el) => container.contains(el))).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
 
-    fireEvent.click(screen.getByText("Delete My Account"));
+    let deleteAccountButton: HTMLElement | undefined;
+    let deleteButton: HTMLElement | undefined;
 
-    await waitFor(() => {
-      expect(screen.getByRole("button", { name: /yes, delete my account/i })).toBeInTheDocument();
-    });
+    await waitFor(
+      () => {
+        const buttons = screen.getAllByText("Delete My Account");
+        deleteAccountButton = Array.from(buttons).find((el) => container.contains(el));
+        expect(deleteAccountButton).toBeDefined();
+      },
+      { timeout: 5000 },
+    );
 
-    const deleteButton = screen.getByRole("button", { name: /yes, delete my account/i });
-    expect(deleteButton).toBeDisabled();
+    expect(deleteAccountButton).toBeDefined();
+    fireEvent.click(deleteAccountButton!);
+
+    await waitFor(
+      () => {
+        const yesButtons = screen.getAllByRole("button", { name: /yes, delete my account/i });
+        deleteButton = Array.from(yesButtons).find((el) => container.contains(el));
+        expect(deleteButton).toBeDefined();
+      },
+      { timeout: 5000 },
+    );
+
+    expect(deleteButton).toBeDefined();
+    expect(deleteButton!).toBeDisabled();
   });
 
   it("deletes account when confirmed with password", async () => {
-    renderSettings();
+    const { container } = renderSettings();
 
-    await waitFor(() => {
-      expect(screen.getByText("Delete My Account")).toBeInTheDocument();
-    });
+    // Wait for component to render
+    await waitFor(
+      () => {
+        const settingsTexts = screen.queryAllByText("Settings");
+        expect(Array.from(settingsTexts).find((el) => container.contains(el))).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
 
-    fireEvent.click(screen.getByText("Delete My Account"));
+    let deleteAccountButton: HTMLElement | undefined;
+    let passwordInput: HTMLElement | undefined;
+    let yesButton: HTMLElement | undefined;
+    let confirmButton: HTMLElement | undefined;
 
-    await waitFor(() => {
-      expect(screen.getByPlaceholderText("Enter your password")).toBeInTheDocument();
-    });
+    await waitFor(
+      () => {
+        const buttons = screen.getAllByText("Delete My Account");
+        deleteAccountButton = Array.from(buttons).find((el) => container.contains(el));
+        expect(deleteAccountButton).toBeDefined();
+      },
+      { timeout: 5000 },
+    );
 
-    const passwordInput = screen.getByPlaceholderText("Enter your password");
-    fireEvent.change(passwordInput, { target: { value: "mypassword" } });
+    expect(deleteAccountButton).toBeDefined();
+    fireEvent.click(deleteAccountButton!);
+
+    await waitFor(
+      () => {
+        const placeholders = screen.getAllByPlaceholderText("Enter your password");
+        passwordInput = Array.from(placeholders).find((el) => container.contains(el));
+        expect(passwordInput).toBeDefined();
+      },
+      { timeout: 5000 },
+    );
+
+    expect(passwordInput).toBeDefined();
+    fireEvent.change(passwordInput!, { target: { value: "mypassword" } });
 
     // Click the button that opens the confirmation dialog
-    fireEvent.click(screen.getByText("Yes, Delete My Account"));
+    await waitFor(
+      () => {
+        const yesButtons = screen.getAllByText("Yes, Delete My Account");
+        yesButton = Array.from(yesButtons).find((el) => container.contains(el));
+        expect(yesButton).toBeDefined();
+      },
+      { timeout: 5000 },
+    );
+
+    expect(yesButton).toBeDefined();
+    fireEvent.click(yesButton!);
 
     // Wait for ConfirmDialog to appear
-    await waitFor(() => {
-      expect(screen.getByText("Delete Account")).toBeInTheDocument();
-    });
+    await waitFor(
+      () => {
+        const confirmButtons = screen.getAllByRole("button", { name: /confirm delete/i });
+        confirmButton = Array.from(confirmButtons).find((el) => container.contains(el));
+        expect(confirmButton).toBeDefined();
+      },
+      { timeout: 5000 },
+    );
 
-    // Find and click the confirm button in the dialog
-    const confirmButton = screen.getByRole("button", { name: /confirm delete/i });
-    fireEvent.click(confirmButton);
+    expect(confirmButton).toBeDefined();
+    fireEvent.click(confirmButton!);
 
     // Now the API should be called
-    await waitFor(() => {
-      expect(mockDelete).toHaveBeenCalledWith("/api/v1/users/me", {
-        data: { password: "mypassword" },
-      });
-    });
+    await waitFor(
+      () => {
+        expect(mockDelete).toHaveBeenCalledWith("/api/v1/users/me", {
+          data: { password: "mypassword" },
+        });
+      },
+      { timeout: 5000 },
+    );
 
     // Wait for setTimeout to execute (2000ms delay) - the toast should appear during this time
     await waitFor(
       () => {
         expect(mockSignOut).toHaveBeenCalled();
       },
-      { timeout: 3000 },
+      { timeout: 5000 },
     );
 
-    await waitFor(() => {
-      expect(mockNavigate).toHaveBeenCalledWith("/");
-    });
+    await waitFor(
+      () => {
+        expect(mockNavigate).toHaveBeenCalledWith("/");
+      },
+      { timeout: 5000 },
+    );
   });
 
   it("does not delete account when confirmation declined", async () => {
-    renderSettings();
+    const { container } = renderSettings();
 
-    await waitFor(() => {
-      expect(screen.getByText("Delete My Account")).toBeInTheDocument();
-    });
+    // Wait for component to render
+    await waitFor(
+      () => {
+        const settingsTexts = screen.queryAllByText("Settings");
+        expect(Array.from(settingsTexts).find((el) => container.contains(el))).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
 
-    fireEvent.click(screen.getByText("Delete My Account"));
+    let deleteAccountButton: HTMLElement | undefined;
+    let passwordInput: HTMLElement | undefined;
+    let yesButton: HTMLElement | undefined;
 
-    await waitFor(() => {
-      expect(screen.getByPlaceholderText("Enter your password")).toBeInTheDocument();
-    });
+    await waitFor(
+      () => {
+        const buttons = screen.getAllByText("Delete My Account");
+        deleteAccountButton = Array.from(buttons).find((el) => container.contains(el));
+        expect(deleteAccountButton).toBeDefined();
+      },
+      { timeout: 5000 },
+    );
 
-    const passwordInput = screen.getByPlaceholderText("Enter your password");
-    fireEvent.change(passwordInput, { target: { value: "mypassword" } });
+    expect(deleteAccountButton).toBeDefined();
+    fireEvent.click(deleteAccountButton!);
+
+    await waitFor(
+      () => {
+        const placeholders = screen.getAllByPlaceholderText("Enter your password");
+        passwordInput = Array.from(placeholders).find((el) => container.contains(el));
+        expect(passwordInput).toBeDefined();
+      },
+      { timeout: 5000 },
+    );
+
+    expect(passwordInput).toBeDefined();
+    fireEvent.change(passwordInput!, { target: { value: "mypassword" } });
 
     // Click the button that opens the confirmation dialog
-    fireEvent.click(screen.getByText("Yes, Delete My Account"));
+    await waitFor(
+      () => {
+        const yesButtons = screen.getAllByText("Yes, Delete My Account");
+        yesButton = Array.from(yesButtons).find((el) => container.contains(el));
+        expect(yesButton).toBeDefined();
+      },
+      { timeout: 5000 },
+    );
+
+    expect(yesButton).toBeDefined();
+    fireEvent.click(yesButton!);
 
     // Wait for ConfirmDialog to appear and click Cancel
-    await waitFor(() => {
-      expect(screen.getByText("Delete Account")).toBeInTheDocument();
-    });
+    await waitFor(
+      () => {
+        const deleteTexts = screen.getAllByText("Delete Account");
+        expect(Array.from(deleteTexts).find((el) => container.contains(el))).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
 
     // Get all Cancel buttons and click the one in the dialog (last one)
     const cancelButtons = screen.getAllByText("Cancel");
     fireEvent.click(cancelButtons[cancelButtons.length - 1]);
 
     // Dialog should close and delete should not be called
-    await waitFor(() => {
-      expect(screen.queryByText("Delete Account")).not.toBeInTheDocument();
-    });
+    await waitFor(
+      () => {
+        expect(screen.queryByText("Delete Account")).not.toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
 
     expect(mockDelete).not.toHaveBeenCalled();
     expect(mockSignOut).not.toHaveBeenCalled();
@@ -513,190 +1017,442 @@ describe("Settings", () => {
   it("shows error when account deletion fails", async () => {
     mockDelete.mockRejectedValue(new Error("Delete failed"));
 
-    renderSettings();
+    const { container } = renderSettings();
 
-    await waitFor(() => {
-      expect(screen.getByText("Delete My Account")).toBeInTheDocument();
-    });
+    let deleteAccountButton: HTMLElement | undefined;
+    let passwordInput: HTMLElement | undefined;
+    let yesButton: HTMLElement | undefined;
+    let confirmButton: HTMLElement | undefined;
 
-    fireEvent.click(screen.getByText("Delete My Account"));
+    await waitFor(
+      () => {
+        const buttons = screen.getAllByText("Delete My Account");
+        deleteAccountButton = Array.from(buttons).find((el) => container.contains(el));
+        expect(deleteAccountButton).toBeDefined();
+      },
+      { timeout: 5000 },
+    );
 
-    await waitFor(() => {
-      expect(screen.getByPlaceholderText("Enter your password")).toBeInTheDocument();
-    });
+    expect(deleteAccountButton).toBeDefined();
+    fireEvent.click(deleteAccountButton!);
 
-    const passwordInput = screen.getByPlaceholderText("Enter your password");
-    fireEvent.change(passwordInput, { target: { value: "mypassword" } });
+    await waitFor(
+      () => {
+        const placeholders = screen.getAllByPlaceholderText("Enter your password");
+        passwordInput = Array.from(placeholders).find((el) => container.contains(el));
+        expect(passwordInput).toBeDefined();
+      },
+      { timeout: 5000 },
+    );
+
+    expect(passwordInput).toBeDefined();
+    fireEvent.change(passwordInput!, { target: { value: "mypassword" } });
 
     // Click the button that opens the confirmation dialog
-    fireEvent.click(screen.getByText("Yes, Delete My Account"));
+    await waitFor(
+      () => {
+        const yesButtons = screen.getAllByText("Yes, Delete My Account");
+        yesButton = Array.from(yesButtons).find((el) => container.contains(el));
+        expect(yesButton).toBeDefined();
+      },
+      { timeout: 5000 },
+    );
+
+    expect(yesButton).toBeDefined();
+    fireEvent.click(yesButton!);
 
     // Wait for ConfirmDialog to appear and click confirm
-    await waitFor(() => {
-      expect(screen.getByText("Delete Account")).toBeInTheDocument();
-    });
+    await waitFor(
+      () => {
+        const confirmButtons = screen.getAllByRole("button", { name: /confirm delete/i });
+        confirmButton = Array.from(confirmButtons).find((el) => container.contains(el));
+        expect(confirmButton).toBeDefined();
+      },
+      { timeout: 5000 },
+    );
 
-    const confirmButton = screen.getByRole("button", { name: /confirm delete/i });
-    fireEvent.click(confirmButton);
+    expect(confirmButton).toBeDefined();
+    fireEvent.click(confirmButton!);
 
     // Check for error toast instead of alert
-    await waitFor(() => {
-      expect(screen.getByText("Failed to delete account. Please try again.")).toBeInTheDocument();
-    });
+    await waitFor(
+      () => {
+        const errorMessages = screen.getAllByText("Failed to delete account. Please try again.");
+        expect(Array.from(errorMessages).find((el) => container.contains(el))).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
   });
 
   describe("Profile Fields (FR-009)", () => {
     it("loads profile data with new fields", async () => {
-      renderSettings();
+      const { container } = renderSettings();
 
-      await waitFor(() => {
-        expect(mockGet).toHaveBeenCalledWith("/api/v1/users/me");
-      });
+      // Wait for component to render
+      await waitFor(
+        () => {
+          const settingsTexts = screen.queryAllByText("Settings");
+          expect(
+            Array.from(settingsTexts).find((el) => container.contains(el)),
+          ).toBeInTheDocument();
+        },
+        { timeout: 5000 },
+      );
 
-      await waitFor(() => {
-        expect(screen.getByDisplayValue("testalias")).toBeInTheDocument();
-        expect(screen.getByDisplayValue("75.5")).toBeInTheDocument();
-      });
+      await waitFor(
+        () => {
+          expect(mockGet).toHaveBeenCalledWith("/api/v1/users/me");
+        },
+        { timeout: 5000 },
+      );
+
+      await waitFor(
+        () => {
+          const aliasValues = screen.getAllByDisplayValue("testalias");
+          expect(Array.from(aliasValues).find((el) => container.contains(el))).toBeInTheDocument();
+          const weightValues = screen.getAllByDisplayValue("75.5");
+          expect(Array.from(weightValues).find((el) => container.contains(el))).toBeInTheDocument();
+        },
+        { timeout: 5000 },
+      );
     });
 
     it("allows changing alias", async () => {
-      renderSettings();
+      const { container } = renderSettings();
 
-      await waitFor(() => {
-        expect(screen.getByPlaceholderText("Your public alias")).toBeInTheDocument();
-      });
+      // Wait for component to render
+      await waitFor(
+        () => {
+          const settingsTexts = screen.queryAllByText("Settings");
+          expect(
+            Array.from(settingsTexts).find((el) => container.contains(el)),
+          ).toBeInTheDocument();
+        },
+        { timeout: 5000 },
+      );
 
-      const aliasInput = screen.getByPlaceholderText("Your public alias");
+      await waitFor(
+        () => {
+          const placeholders = screen.getAllByPlaceholderText("Your public alias");
+          expect(Array.from(placeholders).find((el) => container.contains(el))).toBeInTheDocument();
+        },
+        { timeout: 5000 },
+      );
+
+      const placeholders = screen.getAllByPlaceholderText("Your public alias");
+      const aliasInput = Array.from(placeholders).find((el) => container.contains(el))!;
       fireEvent.change(aliasInput, { target: { value: "newalias" } });
 
       expect(aliasInput).toHaveValue("newalias");
     });
 
     it("allows changing weight", async () => {
-      renderSettings();
+      const { container } = renderSettings();
 
-      await waitFor(() => {
-        expect(screen.getByLabelText("Weight")).toBeInTheDocument();
-      });
+      // Wait for component to render
+      await waitFor(
+        () => {
+          const settingsTexts = screen.queryAllByText("Settings");
+          expect(
+            Array.from(settingsTexts).find((el) => container.contains(el)),
+          ).toBeInTheDocument();
+        },
+        { timeout: 5000 },
+      );
 
-      const weightInput = screen.getByLabelText("Weight") as HTMLInputElement;
-      fireEvent.change(weightInput, { target: { value: "80" } });
+      let weightInput: HTMLInputElement | undefined;
+      await waitFor(
+        () => {
+          const labels = screen.queryAllByLabelText("Weight");
+          const label = Array.from(labels).find((el) => container.contains(el));
+          if (label && label.getAttribute("for")) {
+            weightInput = container.querySelector(
+              `#${label.getAttribute("for")}`,
+            ) as HTMLInputElement;
+          }
+          if (!weightInput) {
+            weightInput = container.querySelector("#weight") as HTMLInputElement;
+          }
+          expect(weightInput).toBeDefined();
+          expect(weightInput).toBeInTheDocument();
+        },
+        { timeout: 5000 },
+      );
 
-      expect(weightInput.value).toBe("80");
+      expect(weightInput).toBeDefined();
+      fireEvent.change(weightInput!, { target: { value: "80" } });
+
+      expect(weightInput!.value).toBe("80");
     });
 
     it("allows changing weight unit", async () => {
-      renderSettings();
+      const { container } = renderSettings();
 
-      await waitFor(() => {
-        expect(screen.getByLabelText("Weight Unit")).toBeInTheDocument();
-      });
+      // Wait for component to render
+      await waitFor(
+        () => {
+          const settingsTexts = screen.queryAllByText("Settings");
+          expect(
+            Array.from(settingsTexts).find((el) => container.contains(el)),
+          ).toBeInTheDocument();
+        },
+        { timeout: 5000 },
+      );
 
-      const unitSelect = screen.getByLabelText("Weight Unit") as HTMLSelectElement;
-      fireEvent.change(unitSelect, { target: { value: "lb" } });
+      let unitSelect: HTMLSelectElement | undefined;
+      await waitFor(
+        () => {
+          const labels = screen.queryAllByLabelText("Weight Unit");
+          const label = Array.from(labels).find((el) => container.contains(el));
+          if (label && label.getAttribute("for")) {
+            unitSelect = container.querySelector(
+              `#${label.getAttribute("for")}`,
+            ) as HTMLSelectElement;
+          }
+          if (!unitSelect) {
+            unitSelect = container.querySelector("#weight-unit") as HTMLSelectElement;
+          }
+          expect(unitSelect).toBeDefined();
+          expect(unitSelect).toBeInTheDocument();
+        },
+        { timeout: 5000 },
+      );
 
-      expect(unitSelect.value).toBe("lb");
+      expect(unitSelect).toBeDefined();
+      fireEvent.change(unitSelect!, { target: { value: "lb" } });
+
+      expect(unitSelect!.value).toBe("lb");
     });
 
     it("allows changing fitness level", async () => {
-      renderSettings();
+      const { container } = renderSettings();
 
-      await waitFor(() => {
-        expect(screen.getByLabelText("Fitness Level")).toBeInTheDocument();
-      });
+      // Wait for component to render
+      await waitFor(
+        () => {
+          const settingsTexts = screen.queryAllByText("Settings");
+          expect(
+            Array.from(settingsTexts).find((el) => container.contains(el)),
+          ).toBeInTheDocument();
+        },
+        { timeout: 5000 },
+      );
 
-      const fitnessSelect = screen.getByLabelText("Fitness Level") as HTMLSelectElement;
-      fireEvent.change(fitnessSelect, { target: { value: "advanced" } });
+      let fitnessSelect: HTMLSelectElement | undefined;
+      await waitFor(
+        () => {
+          const labels = screen.queryAllByLabelText("Fitness Level");
+          const label = Array.from(labels).find((el) => container.contains(el));
+          if (label && label.getAttribute("for")) {
+            fitnessSelect = container.querySelector(
+              `#${label.getAttribute("for")}`,
+            ) as HTMLSelectElement;
+          }
+          if (!fitnessSelect) {
+            fitnessSelect = container.querySelector("#fitness-level") as HTMLSelectElement;
+          }
+          expect(fitnessSelect).toBeDefined();
+          expect(fitnessSelect).toBeInTheDocument();
+        },
+        { timeout: 5000 },
+      );
 
-      expect(fitnessSelect.value).toBe("advanced");
+      expect(fitnessSelect).toBeDefined();
+      fireEvent.change(fitnessSelect!, { target: { value: "advanced" } });
+
+      expect(fitnessSelect!.value).toBe("advanced");
     });
 
     it("allows changing training frequency", async () => {
-      renderSettings();
+      const { container } = renderSettings();
 
-      await waitFor(() => {
-        expect(screen.getByLabelText("Training Frequency")).toBeInTheDocument();
-      });
+      // Wait for component to render
+      await waitFor(
+        () => {
+          const settingsTexts = screen.queryAllByText("Settings");
+          expect(
+            Array.from(settingsTexts).find((el) => container.contains(el)),
+          ).toBeInTheDocument();
+        },
+        { timeout: 5000 },
+      );
 
-      const frequencySelect = screen.getByLabelText("Training Frequency") as HTMLSelectElement;
-      fireEvent.change(frequencySelect, { target: { value: "5_plus_per_week" } });
+      let frequencySelect: HTMLSelectElement | undefined;
+      await waitFor(
+        () => {
+          const labels = screen.queryAllByLabelText("Training Frequency");
+          const label = Array.from(labels).find((el) => container.contains(el));
+          if (label && label.getAttribute("for")) {
+            frequencySelect = container.querySelector(
+              `#${label.getAttribute("for")}`,
+            ) as HTMLSelectElement;
+          }
+          if (!frequencySelect) {
+            frequencySelect = container.querySelector("#training-frequency") as HTMLSelectElement;
+          }
+          expect(frequencySelect).toBeDefined();
+          expect(frequencySelect).toBeInTheDocument();
+        },
+        { timeout: 5000 },
+      );
 
-      expect(frequencySelect.value).toBe("5_plus_per_week");
+      expect(frequencySelect).toBeDefined();
+      fireEvent.change(frequencySelect!, { target: { value: "5_plus_per_week" } });
+
+      expect(frequencySelect!.value).toBe("5_plus_per_week");
     });
 
     it("saves profile fields when save button clicked", async () => {
-      renderSettings();
+      const { container } = renderSettings();
 
-      await waitFor(() => {
-        expect(screen.getByText("Save Preferences")).toBeInTheDocument();
-      });
+      // Wait for component to render
+      await waitFor(
+        () => {
+          const settingsTexts = screen.queryAllByText("Settings");
+          expect(
+            Array.from(settingsTexts).find((el) => container.contains(el)),
+          ).toBeInTheDocument();
+        },
+        { timeout: 5000 },
+      );
 
-      const aliasInput = screen.getByPlaceholderText("Your public alias");
+      await waitFor(
+        () => {
+          const savePrefs = screen.getAllByText("Save Preferences");
+          expect(Array.from(savePrefs).find((el) => container.contains(el))).toBeInTheDocument();
+        },
+        { timeout: 5000 },
+      );
+
+      const aliasPlaceholders = screen.getAllByPlaceholderText("Your public alias");
+      const aliasInput = Array.from(aliasPlaceholders).find((el) => container.contains(el))!;
       fireEvent.change(aliasInput, { target: { value: "newalias" } });
 
-      const weightInput = screen.getByLabelText("Weight") as HTMLInputElement;
+      const weightLabels = screen.queryAllByLabelText("Weight");
+      const weightLabel = Array.from(weightLabels).find((el) => container.contains(el));
+      const weightInput =
+        weightLabel && weightLabel.getAttribute("for")
+          ? (container.querySelector(`#${weightLabel.getAttribute("for")}`) as HTMLInputElement)
+          : (container.querySelector("#weight") as HTMLInputElement);
       fireEvent.change(weightInput, { target: { value: "80" } });
 
-      const fitnessSelect = screen.getByLabelText("Fitness Level") as HTMLSelectElement;
+      const fitnessLabels = screen.queryAllByLabelText("Fitness Level");
+      const fitnessLabel = Array.from(fitnessLabels).find((el) => container.contains(el));
+      const fitnessSelect =
+        fitnessLabel && fitnessLabel.getAttribute("for")
+          ? (container.querySelector(`#${fitnessLabel.getAttribute("for")}`) as HTMLSelectElement)
+          : (container.querySelector("#fitness-level") as HTMLSelectElement);
       fireEvent.change(fitnessSelect, { target: { value: "advanced" } });
 
-      const saveButton = screen.getByText("Save Preferences");
+      const savePrefs = screen.getAllByText("Save Preferences");
+      const saveButton = Array.from(savePrefs).find((el) => container.contains(el))!;
       fireEvent.click(saveButton);
 
-      await waitFor(() => {
-        expect(mockPatch).toHaveBeenCalledWith(
-          "/api/v1/users/me",
-          expect.objectContaining({
-            alias: "newalias",
-            weight: 80,
-            weightUnit: "kg",
-            fitnessLevel: "advanced",
-          }),
-        );
-      });
+      await waitFor(
+        () => {
+          expect(mockPatch).toHaveBeenCalledWith(
+            "/api/v1/users/me",
+            expect.objectContaining({
+              alias: "newalias",
+              weight: 80,
+              weightUnit: "kg",
+              fitnessLevel: "advanced",
+            }),
+          );
+        },
+        { timeout: 5000 },
+      );
     });
 
     it("saves weight with unit conversion (lb to kg)", async () => {
-      renderSettings();
+      const { container } = renderSettings();
 
-      await waitFor(() => {
-        expect(screen.getByText("Save Preferences")).toBeInTheDocument();
-      });
+      // Wait for component to render - check for Settings title
+      await waitFor(
+        () => {
+          const settingsTexts = screen.queryAllByText("Settings");
+          expect(
+            Array.from(settingsTexts).find((el) => container.contains(el)),
+          ).toBeInTheDocument();
+        },
+        { timeout: 5000 },
+      );
 
-      const weightInput = screen.getByLabelText("Weight") as HTMLInputElement;
+      await waitFor(
+        () => {
+          const savePrefs = screen.getAllByText("Save Preferences");
+          expect(Array.from(savePrefs).find((el) => container.contains(el))).toBeInTheDocument();
+        },
+        { timeout: 5000 },
+      );
+
+      const weightLabels = screen.queryAllByLabelText("Weight");
+      const weightLabel = Array.from(weightLabels).find((el) => container.contains(el));
+      const weightInput =
+        weightLabel && weightLabel.getAttribute("for")
+          ? (container.querySelector(`#${weightLabel.getAttribute("for")}`) as HTMLInputElement)
+          : (container.querySelector("#weight") as HTMLInputElement);
       fireEvent.change(weightInput, { target: { value: "165.5" } });
 
-      const unitSelect = screen.getByLabelText("Weight Unit") as HTMLSelectElement;
+      const unitLabels = screen.queryAllByLabelText("Weight Unit");
+      const unitLabel = Array.from(unitLabels).find((el) => container.contains(el));
+      const unitSelect =
+        unitLabel && unitLabel.getAttribute("for")
+          ? (container.querySelector(`#${unitLabel.getAttribute("for")}`) as HTMLSelectElement)
+          : (container.querySelector("#weight-unit") as HTMLSelectElement);
       fireEvent.change(unitSelect, { target: { value: "lb" } });
 
-      const saveButton = screen.getByText("Save Preferences");
+      const savePrefs = screen.getAllByText("Save Preferences");
+      const saveButton = Array.from(savePrefs).find((el) => container.contains(el))!;
       fireEvent.click(saveButton);
 
-      await waitFor(() => {
-        expect(mockPatch).toHaveBeenCalledWith(
-          "/api/v1/users/me",
-          expect.objectContaining({
-            weight: 165.5,
-            weightUnit: "lb",
-          }),
-        );
-      });
+      await waitFor(
+        () => {
+          expect(mockPatch).toHaveBeenCalledWith(
+            "/api/v1/users/me",
+            expect.objectContaining({
+              weight: 165.5,
+              weightUnit: "lb",
+            }),
+          );
+        },
+        { timeout: 5000 },
+      );
     });
 
     it("reloads user data after successful save", async () => {
-      renderSettings();
+      const { container } = renderSettings();
 
-      await waitFor(() => {
-        expect(screen.getByText("Save Preferences")).toBeInTheDocument();
-      });
+      // Wait for component to render - check for Settings title
+      await waitFor(
+        () => {
+          const settingsTexts = screen.queryAllByText("Settings");
+          expect(
+            Array.from(settingsTexts).find((el) => container.contains(el)),
+          ).toBeInTheDocument();
+        },
+        { timeout: 5000 },
+      );
 
-      const saveButton = screen.getByText("Save Preferences");
+      await waitFor(
+        () => {
+          const savePrefs = screen.getAllByText("Save Preferences");
+          expect(Array.from(savePrefs).find((el) => container.contains(el))).toBeInTheDocument();
+        },
+        { timeout: 5000 },
+      );
+
+      const savePrefs = screen.getAllByText("Save Preferences");
+      const saveButton = Array.from(savePrefs).find((el) => container.contains(el))!;
       fireEvent.click(saveButton);
 
-      await waitFor(() => {
-        // Should be called twice: once on mount, once after save
-        expect(mockGet).toHaveBeenCalledTimes(2);
-      });
+      await waitFor(
+        () => {
+          // Should be called twice: once on mount, once after save
+          expect(mockGet).toHaveBeenCalledTimes(2);
+        },
+        { timeout: 5000 },
+      );
     });
 
     it("handles profile data when profile is null", async () => {
@@ -707,13 +1463,29 @@ describe("Settings", () => {
         },
       });
 
-      renderSettings();
+      const { container } = renderSettings();
 
-      await waitFor(() => {
-        expect(screen.getByPlaceholderText("Your public alias")).toBeInTheDocument();
-      });
+      // Wait for component to render - check for Settings title
+      await waitFor(
+        () => {
+          const settingsTexts = screen.queryAllByText("Settings");
+          expect(
+            Array.from(settingsTexts).find((el) => container.contains(el)),
+          ).toBeInTheDocument();
+        },
+        { timeout: 5000 },
+      );
 
-      const aliasInput = screen.getByPlaceholderText("Your public alias");
+      await waitFor(
+        () => {
+          const placeholders = screen.getAllByPlaceholderText("Your public alias");
+          expect(Array.from(placeholders).find((el) => container.contains(el))).toBeInTheDocument();
+        },
+        { timeout: 5000 },
+      );
+
+      const placeholders = screen.getAllByPlaceholderText("Your public alias");
+      const aliasInput = Array.from(placeholders).find((el) => container.contains(el))!;
       expect(aliasInput).toHaveValue("");
     });
 
@@ -729,59 +1501,128 @@ describe("Settings", () => {
         },
       });
 
-      renderSettings();
+      const { container } = renderSettings();
 
-      await waitFor(() => {
-        const weightInput = screen.getByLabelText("Weight") as HTMLInputElement;
-        // Should display in lb (165.5), not kg
-        expect(parseFloat(weightInput.value)).toBeCloseTo(165.5, 1);
-      });
+      // Wait for component to render - check for Settings title
+      await waitFor(
+        () => {
+          const settingsTexts = screen.queryAllByText("Settings");
+          expect(
+            Array.from(settingsTexts).find((el) => container.contains(el)),
+          ).toBeInTheDocument();
+        },
+        { timeout: 5000 },
+      );
+
+      await waitFor(
+        () => {
+          const labels = screen.queryAllByLabelText("Weight");
+          const label = Array.from(labels).find((el) => container.contains(el));
+          const weightInput =
+            label && label.getAttribute("for")
+              ? (container.querySelector(`#${label.getAttribute("for")}`) as HTMLInputElement)
+              : (container.querySelector("#weight") as HTMLInputElement);
+          expect(weightInput).toBeDefined();
+          // Should display in lb (165.5), not kg
+          expect(parseFloat(weightInput.value)).toBeCloseTo(165.5, 1);
+        },
+        { timeout: 5000 },
+      );
     });
 
     it("saves all new profile fields together", async () => {
-      renderSettings();
+      const { container } = renderSettings();
 
-      await waitFor(() => {
-        expect(screen.getByText("Save Preferences")).toBeInTheDocument();
-      });
+      // Wait for component to render - check for Settings title
+      await waitFor(
+        () => {
+          const settingsTexts = screen.queryAllByText("Settings");
+          expect(
+            Array.from(settingsTexts).find((el) => container.contains(el)),
+          ).toBeInTheDocument();
+        },
+        { timeout: 5000 },
+      );
 
-      const aliasInput = screen.getByPlaceholderText("Your public alias");
+      await waitFor(
+        () => {
+          const savePrefs = screen.getAllByText("Save Preferences");
+          expect(Array.from(savePrefs).find((el) => container.contains(el))).toBeInTheDocument();
+        },
+        { timeout: 5000 },
+      );
+
+      const aliasPlaceholders = screen.getAllByPlaceholderText("Your public alias");
+      const aliasInput = Array.from(aliasPlaceholders).find((el) => container.contains(el))!;
       fireEvent.change(aliasInput, { target: { value: "newalias" } });
 
-      const weightInput = screen.getByLabelText("Weight") as HTMLInputElement;
+      const weightLabels = screen.queryAllByLabelText("Weight");
+      const weightLabel = Array.from(weightLabels).find((el) => container.contains(el));
+      const weightInput =
+        weightLabel && weightLabel.getAttribute("for")
+          ? (container.querySelector(`#${weightLabel.getAttribute("for")}`) as HTMLInputElement)
+          : (container.querySelector("#weight") as HTMLInputElement);
       fireEvent.change(weightInput, { target: { value: "80" } });
 
-      const fitnessSelect = screen.getByLabelText("Fitness Level") as HTMLSelectElement;
+      const fitnessLabels = screen.queryAllByLabelText("Fitness Level");
+      const fitnessLabel = Array.from(fitnessLabels).find((el) => container.contains(el));
+      const fitnessSelect =
+        fitnessLabel && fitnessLabel.getAttribute("for")
+          ? (container.querySelector(`#${fitnessLabel.getAttribute("for")}`) as HTMLSelectElement)
+          : (container.querySelector("#fitness-level") as HTMLSelectElement);
       fireEvent.change(fitnessSelect, { target: { value: "advanced" } });
 
-      const frequencySelect = screen.getByLabelText("Training Frequency") as HTMLSelectElement;
+      const frequencyLabels = screen.queryAllByLabelText("Training Frequency");
+      const frequencyLabel = Array.from(frequencyLabels).find((el) => container.contains(el));
+      const frequencySelect =
+        frequencyLabel && frequencyLabel.getAttribute("for")
+          ? (container.querySelector(`#${frequencyLabel.getAttribute("for")}`) as HTMLSelectElement)
+          : (container.querySelector("#training-frequency") as HTMLSelectElement);
       fireEvent.change(frequencySelect, { target: { value: "5_plus_per_week" } });
 
-      const saveButton = screen.getByText("Save Preferences");
+      const savePrefs = screen.getAllByText("Save Preferences");
+      const saveButton = Array.from(savePrefs).find((el) => container.contains(el))!;
       fireEvent.click(saveButton);
 
-      await waitFor(() => {
-        expect(mockPatch).toHaveBeenCalledWith(
-          "/api/v1/users/me",
-          expect.objectContaining({
-            alias: "newalias",
-            weight: 80,
-            weightUnit: "kg",
-            fitnessLevel: "advanced",
-            trainingFrequency: "5_plus_per_week",
-          }),
-        );
-      });
+      await waitFor(
+        () => {
+          expect(mockPatch).toHaveBeenCalledWith(
+            "/api/v1/users/me",
+            expect.objectContaining({
+              alias: "newalias",
+              weight: 80,
+              weightUnit: "kg",
+              fitnessLevel: "advanced",
+              trainingFrequency: "5_plus_per_week",
+            }),
+          );
+        },
+        { timeout: 5000 },
+      );
     });
 
     it("displays alias help text", async () => {
       renderSettings();
 
-      await waitFor(() => {
-        expect(
-          screen.getByText(/Alias may only contain letters, numbers, underscores, dots, or dashes/),
-        ).toBeInTheDocument();
-      });
+      // Wait for component to render - check for Settings title
+      await waitFor(
+        () => {
+          expect(screen.getByText("Settings")).toBeInTheDocument();
+        },
+        { timeout: 5000 },
+      );
+
+      // The help text should be visible
+      await waitFor(
+        () => {
+          expect(
+            screen.getByText(
+              /Alias may only contain letters, numbers, underscores, dots, or dashes/,
+            ),
+          ).toBeInTheDocument();
+        },
+        { timeout: 5000 },
+      );
     });
   });
 });

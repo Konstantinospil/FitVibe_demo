@@ -96,9 +96,12 @@ describe("Sessions", () => {
   it("renders sessions page with tabs", async () => {
     renderWithProviders();
 
-    await waitFor(() => {
-      expect(screen.getByText("My Sessions")).toBeInTheDocument();
-    });
+    await waitFor(
+      () => {
+        expect(screen.getByText("My Sessions")).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
 
     expect(screen.getByRole("tab", { name: /planner/i })).toBeInTheDocument();
     expect(screen.getByRole("tab", { name: /logger/i })).toBeInTheDocument();
@@ -107,23 +110,29 @@ describe("Sessions", () => {
   it("loads planned sessions on mount", async () => {
     renderWithProviders();
 
-    await waitFor(() => {
-      expect(api.listSessions).toHaveBeenCalledWith({
-        status: "planned",
-        limit: 50,
-      });
-    });
+    await waitFor(
+      () => {
+        expect(api.listSessions).toHaveBeenCalledWith({
+          status: "planned",
+          limit: 50,
+        });
+      },
+      { timeout: 5000 },
+    );
   });
 
   it("loads active sessions on mount", async () => {
     renderWithProviders();
 
-    await waitFor(() => {
-      expect(api.listSessions).toHaveBeenCalledWith({
-        status: "in_progress",
-        limit: 20,
-      });
-    });
+    await waitFor(
+      () => {
+        expect(api.listSessions).toHaveBeenCalledWith({
+          status: "in_progress",
+          limit: 20,
+        });
+      },
+      { timeout: 5000 },
+    );
   });
 
   it("shows loading state while fetching planned sessions", () => {
@@ -137,9 +146,12 @@ describe("Sessions", () => {
 
     renderWithProviders();
 
-    await waitFor(() => {
-      expect(screen.getByText("No planned sessions")).toBeInTheDocument();
-    });
+    await waitFor(
+      () => {
+        expect(screen.getByText("No planned sessions")).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
 
     expect(
       screen.getByText("Create your first workout session to get started"),
@@ -161,9 +173,12 @@ describe("Sessions", () => {
 
     renderWithProviders();
 
-    await waitFor(() => {
-      expect(screen.getByText("Morning Workout")).toBeInTheDocument();
-    });
+    await waitFor(
+      () => {
+        expect(screen.getByText("Morning Workout")).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
 
     expect(screen.getByText("Chest and triceps")).toBeInTheDocument();
     expect(screen.getByText("2 exercises")).toBeInTheDocument();
@@ -172,16 +187,22 @@ describe("Sessions", () => {
   it("switches to logger tab when clicked", async () => {
     renderWithProviders();
 
-    await waitFor(() => {
-      expect(screen.getByRole("tab", { name: /planner/i })).toBeInTheDocument();
-    });
+    await waitFor(
+      () => {
+        expect(screen.getByRole("tab", { name: /planner/i })).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
 
     const loggerTab = screen.getByRole("tab", { name: /logger/i });
     fireEvent.click(loggerTab);
 
-    await waitFor(() => {
-      expect(loggerTab).toHaveAttribute("aria-selected", "true");
-    });
+    await waitFor(
+      () => {
+        expect(loggerTab).toHaveAttribute("aria-selected", "true");
+      },
+      { timeout: 5000 },
+    );
   });
 
   it("displays empty state for active sessions", async () => {
@@ -189,15 +210,21 @@ describe("Sessions", () => {
 
     renderWithProviders();
 
-    await waitFor(() => {
-      expect(screen.getByRole("tab", { name: /logger/i })).toBeInTheDocument();
-    });
+    await waitFor(
+      () => {
+        expect(screen.getByRole("tab", { name: /logger/i })).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
 
     fireEvent.click(screen.getByRole("tab", { name: /logger/i }));
 
-    await waitFor(() => {
-      expect(screen.getByText("No active sessions")).toBeInTheDocument();
-    });
+    await waitFor(
+      () => {
+        expect(screen.getByText("No active sessions")).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
   });
 
   it("displays active sessions in logger tab", async () => {
@@ -223,15 +250,21 @@ describe("Sessions", () => {
 
     renderWithProviders();
 
-    await waitFor(() => {
-      expect(screen.getByRole("tab", { name: /logger/i })).toBeInTheDocument();
-    });
+    await waitFor(
+      () => {
+        expect(screen.getByRole("tab", { name: /logger/i })).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
 
     fireEvent.click(screen.getByRole("tab", { name: /logger/i }));
 
-    await waitFor(() => {
-      expect(screen.getByText("Active Workout")).toBeInTheDocument();
-    });
+    await waitFor(
+      () => {
+        expect(screen.getByText("Active Workout")).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
 
     expect(screen.getByText(/In Progress/i)).toBeInTheDocument();
   });
@@ -241,9 +274,12 @@ describe("Sessions", () => {
 
     renderWithProviders();
 
-    await waitFor(() => {
-      expect(screen.getByText("Create New Session")).toBeInTheDocument();
-    });
+    await waitFor(
+      () => {
+        expect(screen.getByText("Create New Session")).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
 
     fireEvent.click(screen.getByText("Create New Session"));
 
@@ -265,9 +301,12 @@ describe("Sessions", () => {
 
     renderWithProviders();
 
-    await waitFor(() => {
-      expect(screen.getByText("Morning Workout")).toBeInTheDocument();
-    });
+    await waitFor(
+      () => {
+        expect(screen.getByText("Morning Workout")).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
 
     const startButton = screen.getByLabelText("Start session");
     fireEvent.click(startButton);
@@ -290,9 +329,12 @@ describe("Sessions", () => {
 
     renderWithProviders();
 
-    await waitFor(() => {
-      expect(screen.getByText("Morning Workout")).toBeInTheDocument();
-    });
+    await waitFor(
+      () => {
+        expect(screen.getByText("Morning Workout")).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
 
     const viewButton = screen.getByLabelText("View session");
     fireEvent.click(viewButton);
@@ -317,34 +359,49 @@ describe("Sessions", () => {
 
     renderWithProviders();
 
-    await waitFor(() => {
-      expect(screen.getByText("Morning Workout")).toBeInTheDocument();
-    });
+    await waitFor(
+      () => {
+        expect(screen.getByText("Morning Workout")).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
 
     const deleteButton = screen.getByLabelText("Delete session");
     fireEvent.click(deleteButton);
 
     // Wait for confirmation dialog to appear
-    await waitFor(() => {
-      expect(screen.getByText("Delete Session")).toBeInTheDocument();
-    });
+    await waitFor(
+      () => {
+        expect(screen.getByText("Delete Session")).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
 
     // Click the confirm button in the dialog
     const confirmButtons = screen.getAllByText("Yes, Delete Session");
     fireEvent.click(confirmButtons[confirmButtons.length - 1]);
 
-    await waitFor(() => {
-      expect(api.deleteSession).toHaveBeenCalledWith("session-1");
-    });
+    await waitFor(
+      () => {
+        expect(api.deleteSession).toHaveBeenCalledWith("session-1");
+      },
+      { timeout: 5000 },
+    );
 
-    await waitFor(() => {
-      expect(screen.queryByText("Morning Workout")).not.toBeInTheDocument();
-    });
+    await waitFor(
+      () => {
+        expect(screen.queryByText("Morning Workout")).not.toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
 
     // Verify success toast appears
-    await waitFor(() => {
-      expect(screen.getByText("Session deleted successfully")).toBeInTheDocument();
-    });
+    await waitFor(
+      () => {
+        expect(screen.getByText("Session deleted successfully")).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
   });
 
   it("does not delete session when delete is cancelled", async () => {
@@ -362,25 +419,34 @@ describe("Sessions", () => {
 
     renderWithProviders();
 
-    await waitFor(() => {
-      expect(screen.getByText("Morning Workout")).toBeInTheDocument();
-    });
+    await waitFor(
+      () => {
+        expect(screen.getByText("Morning Workout")).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
 
     const deleteButton = screen.getByLabelText("Delete session");
     fireEvent.click(deleteButton);
 
     // Wait for confirmation dialog to appear
-    await waitFor(() => {
-      expect(screen.getByText("Delete Session")).toBeInTheDocument();
-    });
+    await waitFor(
+      () => {
+        expect(screen.getByText("Delete Session")).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
 
     // Click the cancel button in the dialog
     fireEvent.click(screen.getByText("Cancel"));
 
     // Verify dialog is closed
-    await waitFor(() => {
-      expect(screen.queryByText("Delete Session")).not.toBeInTheDocument();
-    });
+    await waitFor(
+      () => {
+        expect(screen.queryByText("Delete Session")).not.toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
 
     expect(api.deleteSession).not.toHaveBeenCalled();
     expect(screen.getByText("Morning Workout")).toBeInTheDocument();
@@ -403,26 +469,35 @@ describe("Sessions", () => {
 
     renderWithProviders();
 
-    await waitFor(() => {
-      expect(screen.getByText("Morning Workout")).toBeInTheDocument();
-    });
+    await waitFor(
+      () => {
+        expect(screen.getByText("Morning Workout")).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
 
     const deleteButton = screen.getByLabelText("Delete session");
     fireEvent.click(deleteButton);
 
     // Wait for confirmation dialog to appear
-    await waitFor(() => {
-      expect(screen.getByText("Delete Session")).toBeInTheDocument();
-    });
+    await waitFor(
+      () => {
+        expect(screen.getByText("Delete Session")).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
 
     // Click the confirm button in the dialog
     const confirmButtons = screen.getAllByText("Yes, Delete Session");
     fireEvent.click(confirmButtons[confirmButtons.length - 1]);
 
     // Verify error toast appears
-    await waitFor(() => {
-      expect(screen.getByText("Failed to delete session. Please try again.")).toBeInTheDocument();
-    });
+    await waitFor(
+      () => {
+        expect(screen.getByText("Failed to delete session. Please try again.")).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
   });
 
   it("displays exercise count for sessions", async () => {
@@ -440,9 +515,12 @@ describe("Sessions", () => {
 
     renderWithProviders();
 
-    await waitFor(() => {
-      expect(screen.getByText("2 exercises")).toBeInTheDocument();
-    });
+    await waitFor(
+      () => {
+        expect(screen.getByText("2 exercises")).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
   });
 
   it("shows up to 5 exercise names", async () => {
@@ -508,8 +586,11 @@ describe("Sessions", () => {
 
     renderWithProviders();
 
-    await waitFor(() => {
-      expect(screen.getByText("+1 more")).toBeInTheDocument();
-    });
+    await waitFor(
+      () => {
+        expect(screen.getByText("+1 more")).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
   });
 });

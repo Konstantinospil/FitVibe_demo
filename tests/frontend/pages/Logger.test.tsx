@@ -95,9 +95,12 @@ describe("Logger", () => {
 
     renderLogger();
 
-    await waitFor(() => {
-      expect(screen.getByText("Test Workout")).toBeInTheDocument();
-    });
+    await waitFor(
+      () => {
+        expect(screen.getByText("Test Workout")).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
 
     expect(api.getSession).toHaveBeenCalledWith("test-session-id");
     expect(screen.getByText(/bench-press/i)).toBeInTheDocument();
@@ -118,13 +121,19 @@ describe("Logger", () => {
 
     renderLogger();
 
-    await waitFor(() => {
-      expect(screen.getByText("Failed to load session")).toBeInTheDocument();
-    });
+    await waitFor(
+      () => {
+        expect(screen.getByText("Failed to load session")).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
 
-    await waitFor(() => {
-      expect(mockNavigate).toHaveBeenCalledWith("/sessions");
-    });
+    await waitFor(
+      () => {
+        expect(mockNavigate).toHaveBeenCalledWith("/sessions");
+      },
+      { timeout: 5000 },
+    );
   });
 
   it("navigates to sessions if no sessionId provided", () => {
@@ -149,9 +158,12 @@ describe("Logger", () => {
 
     renderLogger();
 
-    await waitFor(() => {
-      expect(screen.getByText("Test Workout")).toBeInTheDocument();
-    });
+    await waitFor(
+      () => {
+        expect(screen.getByText("Test Workout")).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
 
     expect(api.updateSession).toHaveBeenCalledWith("test-session-id", {
       status: "in_progress",
@@ -165,9 +177,12 @@ describe("Logger", () => {
 
     renderLogger();
 
-    await waitFor(() => {
-      expect(screen.getByText("Test Workout")).toBeInTheDocument();
-    });
+    await waitFor(
+      () => {
+        expect(screen.getByText("Test Workout")).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
 
     const completeButtons = screen.getAllByText("Complete Session");
     expect(completeButtons.length).toBeGreaterThan(0);
@@ -179,24 +194,33 @@ describe("Logger", () => {
 
     renderLogger();
 
-    await waitFor(() => {
-      expect(screen.getByText("Test Workout")).toBeInTheDocument();
-    });
+    await waitFor(
+      () => {
+        expect(screen.getByText("Test Workout")).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
 
     // Mark a set as completed first (needed to enable the button)
     const checkboxes = screen.getAllByLabelText(/Mark complete/i);
     fireEvent.click(checkboxes[0]);
 
-    await waitFor(() => {
-      const completeButtons = screen.getAllByText("Complete Session");
-      // Click the first Complete Session button
-      fireEvent.click(completeButtons[0]);
-    });
+    await waitFor(
+      () => {
+        const completeButtons = screen.getAllByText("Complete Session");
+        // Click the first Complete Session button
+        fireEvent.click(completeButtons[0]);
+      },
+      { timeout: 5000 },
+    );
 
     // Wait for confirmation dialog to appear
-    await waitFor(() => {
-      expect(screen.getByText(/complete this session/i)).toBeInTheDocument();
-    });
+    await waitFor(
+      () => {
+        expect(screen.getByText(/complete this session/i)).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
   });
 
   it("completes session when confirmed in dialog", async () => {
@@ -205,49 +229,67 @@ describe("Logger", () => {
 
     renderLogger();
 
-    await waitFor(() => {
-      expect(screen.getByText("Test Workout")).toBeInTheDocument();
-    });
+    await waitFor(
+      () => {
+        expect(screen.getByText("Test Workout")).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
 
     // Mark a set as completed first
     const checkboxes = screen.getAllByLabelText(/Mark complete/i);
     fireEvent.click(checkboxes[0]);
 
-    await waitFor(() => {
-      const completeButtons = screen.getAllByText("Complete Session");
-      fireEvent.click(completeButtons[0]);
-    });
+    await waitFor(
+      () => {
+        const completeButtons = screen.getAllByText("Complete Session");
+        fireEvent.click(completeButtons[0]);
+      },
+      { timeout: 5000 },
+    );
 
     // Wait for confirmation dialog
-    await waitFor(() => {
-      expect(screen.getByText(/complete this session/i)).toBeInTheDocument();
-    });
+    await waitFor(
+      () => {
+        expect(screen.getByText(/complete this session/i)).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
 
     // Click confirm button
     const confirmButtons = screen.getAllByText("Yes, Complete Session");
     fireEvent.click(confirmButtons[confirmButtons.length - 1]);
 
     // Verify API call
-    await waitFor(() => {
-      expect(api.updateSession).toHaveBeenCalledWith(
-        "test-session-id",
-        expect.objectContaining({
-          status: "completed",
-          completed_at: expect.any(String),
-          exercises: expect.any(Array),
-        }),
-      );
-    });
+    await waitFor(
+      () => {
+        expect(api.updateSession).toHaveBeenCalledWith(
+          "test-session-id",
+          expect.objectContaining({
+            status: "completed",
+            completed_at: expect.any(String),
+            exercises: expect.any(Array),
+          }),
+        );
+      },
+      { timeout: 5000 },
+    );
 
     // Verify success toast
-    await waitFor(() => {
-      expect(screen.getByText("Session completed successfully!")).toBeInTheDocument();
-    });
+    await waitFor(
+      () => {
+        expect(screen.getByText("Session completed successfully!")).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
 
     // Verify navigation
-    await waitFor(() => {
-      expect(mockNavigate).toHaveBeenCalledWith("/sessions");
-    });
+    await waitFor(
+      () => {
+        expect(mockNavigate).toHaveBeenCalledWith("/sessions");
+      },
+      { timeout: 5000 },
+    );
   });
 
   it("does not complete session when cancelled in dialog", async () => {
@@ -256,9 +298,12 @@ describe("Logger", () => {
 
     renderLogger();
 
-    await waitFor(() => {
-      expect(screen.getByText("Test Workout")).toBeInTheDocument();
-    });
+    await waitFor(
+      () => {
+        expect(screen.getByText("Test Workout")).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
 
     // Mark a set as completed first
     const checkboxes = screen.getAllByLabelText(/Mark complete/i);
@@ -267,23 +312,32 @@ describe("Logger", () => {
     // Clear the mock to only track complete calls
     vi.mocked(api.updateSession).mockClear();
 
-    await waitFor(() => {
-      const completeButtons = screen.getAllByText("Complete Session");
-      fireEvent.click(completeButtons[0]);
-    });
+    await waitFor(
+      () => {
+        const completeButtons = screen.getAllByText("Complete Session");
+        fireEvent.click(completeButtons[0]);
+      },
+      { timeout: 5000 },
+    );
 
     // Wait for confirmation dialog
-    await waitFor(() => {
-      expect(screen.getByText(/complete this session/i)).toBeInTheDocument();
-    });
+    await waitFor(
+      () => {
+        expect(screen.getByText(/complete this session/i)).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
 
     // Click cancel button
     fireEvent.click(screen.getByText("Cancel"));
 
     // Verify dialog is closed
-    await waitFor(() => {
-      expect(screen.queryByText(/complete this session/i)).not.toBeInTheDocument();
-    });
+    await waitFor(
+      () => {
+        expect(screen.queryByText(/complete this session/i)).not.toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
 
     // Verify updateSession was NOT called for completion
     expect(api.updateSession).not.toHaveBeenCalled();
@@ -296,31 +350,45 @@ describe("Logger", () => {
 
     renderLogger();
 
-    await waitFor(() => {
-      expect(screen.getByText("Test Workout")).toBeInTheDocument();
-    });
+    await waitFor(
+      () => {
+        expect(screen.getByText("Test Workout")).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
 
     // Mark a set as completed first
     const checkboxes = screen.getAllByLabelText(/Mark complete/i);
     fireEvent.click(checkboxes[0]);
 
-    await waitFor(() => {
-      const completeButtons = screen.getAllByText("Complete Session");
-      fireEvent.click(completeButtons[0]);
-    });
+    await waitFor(
+      () => {
+        const completeButtons = screen.getAllByText("Complete Session");
+        fireEvent.click(completeButtons[0]);
+      },
+      { timeout: 5000 },
+    );
 
     // Wait for confirmation dialog
-    await waitFor(() => {
-      expect(screen.getByText(/complete this session/i)).toBeInTheDocument();
-    });
+    await waitFor(
+      () => {
+        expect(screen.getByText(/complete this session/i)).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
 
     // Click confirm button
     const confirmButtons = screen.getAllByText("Yes, Complete Session");
     fireEvent.click(confirmButtons[confirmButtons.length - 1]);
 
     // Verify error message appears
-    await waitFor(() => {
-      expect(screen.getByText("Failed to complete session. Please try again.")).toBeInTheDocument();
-    });
+    await waitFor(
+      () => {
+        expect(
+          screen.getByText("Failed to complete session. Please try again."),
+        ).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
   });
 });

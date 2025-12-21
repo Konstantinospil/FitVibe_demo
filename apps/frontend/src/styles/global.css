@@ -1126,6 +1126,27 @@ small {
   color: var(--color-text-muted);
 }
 
+/* Contact form responsive styles */
+.contact-form-container {
+  max-width: 900px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.contact-form-content {
+  padding: clamp(1rem, 4vw, 2rem) !important;
+}
+
+@media (max-width: 768px) {
+  .contact-form-content {
+    padding: 1rem !important;
+  }
+  
+  .contact-form-container {
+    padding: 0 1rem;
+  }
+}
+
 .status-badge {
   display: inline-flex;
   align-items: center;

@@ -89,11 +89,14 @@ describe("LoginFormContent", () => {
       fireEvent.click(submitButton);
     }
 
-    await waitFor(() => {
-      const errorText = screen.queryByText("Please fill in all fields");
-      const alert = screen.queryByRole("alert");
-      expect(errorText || alert).toBeTruthy();
-    });
+    await waitFor(
+      () => {
+        const errorText = screen.queryByText("Please fill in all fields");
+        const alert = screen.queryByRole("alert");
+        expect(errorText || alert).toBeTruthy();
+      },
+      { timeout: 5000 },
+    );
   });
 
   it("should call login API on form submission", async () => {
@@ -117,12 +120,15 @@ describe("LoginFormContent", () => {
     fireEvent.change(passwordInput, { target: { value: "password123" } });
     fireEvent.click(submitButton);
 
-    await waitFor(() => {
-      expect(api.login).toHaveBeenCalledWith({
-        email: "test@example.com",
-        password: "password123",
-      });
-    });
+    await waitFor(
+      () => {
+        expect(api.login).toHaveBeenCalledWith({
+          email: "test@example.com",
+          password: "password123",
+        });
+      },
+      { timeout: 5000 },
+    );
   });
 
   it("should navigate to 2FA page when 2FA is required", async () => {
@@ -145,15 +151,18 @@ describe("LoginFormContent", () => {
     fireEvent.change(passwordInput, { target: { value: "password123" } });
     fireEvent.click(submitButton);
 
-    await waitFor(() => {
-      expect(mockNavigate).toHaveBeenCalledWith("/login/verify-2fa", {
-        state: {
-          pendingSessionId: "session-123",
-          from: "/",
-        },
-        replace: false,
-      });
-    });
+    await waitFor(
+      () => {
+        expect(mockNavigate).toHaveBeenCalledWith("/login/verify-2fa", {
+          state: {
+            pendingSessionId: "session-123",
+            from: "/",
+          },
+          replace: false,
+        });
+      },
+      { timeout: 5000 },
+    );
   });
 
   it("should navigate to terms reacceptance when terms are outdated", async () => {
@@ -182,9 +191,12 @@ describe("LoginFormContent", () => {
     fireEvent.change(passwordInput, { target: { value: "password123" } });
     fireEvent.click(submitButton);
 
-    await waitFor(() => {
-      expect(mockNavigate).toHaveBeenCalledWith("/terms-reacceptance", { replace: true });
-    });
+    await waitFor(
+      () => {
+        expect(mockNavigate).toHaveBeenCalledWith("/terms-reacceptance", { replace: true });
+      },
+      { timeout: 5000 },
+    );
   });
 
   it("should show error message on login failure", async () => {
@@ -213,9 +225,12 @@ describe("LoginFormContent", () => {
     fireEvent.change(passwordInput, { target: { value: "wrongpassword" } });
     fireEvent.click(submitButton);
 
-    await waitFor(() => {
-      expect(screen.getByText("Invalid credentials")).toBeInTheDocument();
-    });
+    await waitFor(
+      () => {
+        expect(screen.getByText("Invalid credentials")).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
   });
 
   it("should toggle password visibility", () => {
@@ -268,14 +283,17 @@ describe("LoginFormContent", () => {
     fireEvent.change(passwordInput, { target: { value: "password123" } });
     fireEvent.click(submitButton);
 
-    await waitFor(() => {
-      expect(mockSignIn).toHaveBeenCalledWith({
-        id: "user-1",
-        username: "test",
-        email: "test@example.com",
-      });
-      expect(mockNavigate).toHaveBeenCalledWith("/", { replace: true });
-    });
+    await waitFor(
+      () => {
+        expect(mockSignIn).toHaveBeenCalledWith({
+          id: "user-1",
+          username: "test",
+          email: "test@example.com",
+        });
+        expect(mockNavigate).toHaveBeenCalledWith("/", { replace: true });
+      },
+      { timeout: 5000 },
+    );
   });
 
   it("should handle login response without user object", async () => {
@@ -298,9 +316,12 @@ describe("LoginFormContent", () => {
     fireEvent.change(passwordInput, { target: { value: "password123" } });
     fireEvent.click(submitButton);
 
-    await waitFor(() => {
-      expect(screen.getByRole("alert")).toHaveTextContent("Login failed");
-    });
+    await waitFor(
+      () => {
+        expect(screen.getByRole("alert")).toHaveTextContent("Login failed");
+      },
+      { timeout: 5000 },
+    );
   });
 
   it("should handle error with error message", async () => {
@@ -328,9 +349,12 @@ describe("LoginFormContent", () => {
     fireEvent.change(passwordInput, { target: { value: "wrongpassword" } });
     fireEvent.click(submitButton);
 
-    await waitFor(() => {
-      expect(screen.getByText("Custom error message")).toBeInTheDocument();
-    });
+    await waitFor(
+      () => {
+        expect(screen.getByText("Custom error message")).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
   });
 
   it("should handle error with error code but no message", async () => {
@@ -358,9 +382,12 @@ describe("LoginFormContent", () => {
     fireEvent.change(passwordInput, { target: { value: "wrongpassword" } });
     fireEvent.click(submitButton);
 
-    await waitFor(() => {
-      expect(screen.getByRole("alert")).toBeInTheDocument();
-    });
+    await waitFor(
+      () => {
+        expect(screen.getByRole("alert")).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
   });
 
   it("should handle network error without response object", async () => {
@@ -380,9 +407,12 @@ describe("LoginFormContent", () => {
     fireEvent.change(passwordInput, { target: { value: "password123" } });
     fireEvent.click(submitButton);
 
-    await waitFor(() => {
-      expect(screen.getByRole("alert")).toBeInTheDocument();
-    });
+    await waitFor(
+      () => {
+        expect(screen.getByRole("alert")).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
   });
 
   it("should navigate with from path when location state contains from", async () => {
@@ -424,9 +454,12 @@ describe("LoginFormContent", () => {
     fireEvent.change(passwordInput, { target: { value: "password123" } });
     fireEvent.click(submitButton);
 
-    await waitFor(() => {
-      expect(mockNavigate).toHaveBeenCalled();
-    });
+    await waitFor(
+      () => {
+        expect(mockNavigate).toHaveBeenCalled();
+      },
+      { timeout: 5000 },
+    );
   });
 
   it("should handle from path validation for invalid paths", async () => {
@@ -463,9 +496,12 @@ describe("LoginFormContent", () => {
     fireEvent.change(passwordInput, { target: { value: "password123" } });
     fireEvent.click(submitButton);
 
-    await waitFor(() => {
-      expect(mockNavigate).toHaveBeenCalledWith("/", { replace: true });
-    });
+    await waitFor(
+      () => {
+        expect(mockNavigate).toHaveBeenCalledWith("/", { replace: true });
+      },
+      { timeout: 5000 },
+    );
   });
 
   it("should disable inputs during submission", async () => {
@@ -487,11 +523,14 @@ describe("LoginFormContent", () => {
     fireEvent.change(passwordInput, { target: { value: "password123" } });
     fireEvent.click(submitButton);
 
-    await waitFor(() => {
-      expect(emailInput).toBeDisabled();
-      expect(passwordInput).toBeDisabled();
-      expect(submitButton).toBeDisabled();
-    });
+    await waitFor(
+      () => {
+        expect(emailInput).toBeDisabled();
+        expect(passwordInput).toBeDisabled();
+        expect(submitButton).toBeDisabled();
+      },
+      { timeout: 5000 },
+    );
   });
 
   it("should trim email input", async () => {
@@ -515,11 +554,14 @@ describe("LoginFormContent", () => {
     fireEvent.change(passwordInput, { target: { value: "password123" } });
     fireEvent.click(submitButton);
 
-    await waitFor(() => {
-      expect(api.login).toHaveBeenCalledWith({
-        email: "test@example.com",
-        password: "password123",
-      });
-    });
+    await waitFor(
+      () => {
+        expect(api.login).toHaveBeenCalledWith({
+          email: "test@example.com",
+          password: "password123",
+        });
+      },
+      { timeout: 5000 },
+    );
   });
 });

@@ -177,6 +177,7 @@
     "USER_DISPLAY_NAME_REQUIRED": "Le nom d'affichage est requis",
     "USER_EMAIL_INVALID": "L'e-mail est requis",
     "USER_ROLE_INVALID": "Le rôle est requis",
+    "DATABASE_CONFIGURATION_ERROR": "L'inscription n'est actuellement pas disponible. Veuillez contacter le support.",
     "USER_NOT_FOUND": "Utilisateur introuvable",
     "USER_EMAIL_TAKEN": "L'e-mail est déjà utilisé",
     "USER_REFRESH_FAILED": "Impossible de charger les données utilisateur",

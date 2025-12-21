@@ -36,7 +36,7 @@ const Feed: React.FC = () => {
   const cloneMutation = useMutation({
     mutationFn: cloneSessionFromFeed,
     onSuccess: () => {
-      toast.success(t("feed.cloneSuccess") || "Session cloned successfully!");
+      toast.success(t("feed.cloneSuccess"));
     },
   });
 
@@ -80,9 +80,7 @@ const Feed: React.FC = () => {
         description={t("feed.description")}
       >
         <div className="empty-state card">
-          <p className="text-secondary">
-            {t("feed.error") || "Failed to load feed. Please try again later."}
-          </p>
+          <p className="text-secondary">{t("feed.error")}</p>
         </div>
       </PageIntro>
     );
@@ -98,9 +96,7 @@ const Feed: React.FC = () => {
         description={t("feed.description")}
       >
         <div className="empty-state card">
-          <p className="text-muted">
-            {t("feed.empty") || "No activity yet. Start training and share your sessions!"}
-          </p>
+          <p className="text-muted">{t("feed.empty")}</p>
         </div>
       </PageIntro>
     );
@@ -138,10 +134,10 @@ const Feed: React.FC = () => {
               </div>
               <footer className="flex flex--justify-between flex--align-center flex--wrap flex--gap-075 text-09 text-secondary">
                 <span>
-                  {item.session.exerciseCount} {t("feed.exercises") || "exercises"} •{" "}
+                  {item.session.exerciseCount} {t("feed.exercises")} •{" "}
                   {item.session.totalVolume
                     ? `${(item.session.totalVolume / 1000).toFixed(1)}k kg`
-                    : "No volume data"}
+                    : t("feed.noVolumeData")}
                 </span>
                 <div className="flex flex--align-center flex--gap-06">
                   <Button
@@ -160,7 +156,7 @@ const Feed: React.FC = () => {
                     disabled={isRestricted || cloneMutation.isPending}
                     onClick={() => handleClone(item.session.id)}
                   >
-                    {t("feed.button") || "Clone"}
+                    {t("feed.button")}
                   </Button>
                 </div>
               </footer>

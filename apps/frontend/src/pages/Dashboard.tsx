@@ -121,9 +121,9 @@ const Dashboard: React.FC = () => {
             role="alert"
             className="alert alert--error flex flex--align-center flex--justify-between flex--gap-md flex--wrap rounded-md p-sm"
           >
-            <span>We could not refresh analytics right now. Showing the last loaded snapshot.</span>
+            <span>{t("dashboard.errorRefresh")}</span>
             <Button size="sm" variant="ghost" type="button" onClick={() => void refetch()}>
-              Retry
+              {t("dashboard.retry")}
             </Button>
           </div>
         ) : null}
@@ -147,7 +147,7 @@ const Dashboard: React.FC = () => {
 
         <div className="card">
           <header className="flex flex--justify-between flex--align-center">
-            <strong className="text-11">Personal bests</strong>
+            <strong className="text-11">{t("dashboard.personalBests")}</strong>
             <VisibilityBadge level="public" />
           </header>
           <ul className="list-unstyled grid grid--gap-06">
@@ -165,7 +165,7 @@ const Dashboard: React.FC = () => {
 
         <div className="card">
           <header className="flex flex--justify-between flex--align-center flex--wrap flex--gap-075">
-            <strong className="text-11">Volume aggregates</strong>
+            <strong className="text-11">{t("dashboard.volumeAggregates")}</strong>
             <div className="flex flex--gap-05 flex--wrap">
               <select
                 aria-label={t("dashboard.selectRange")}
@@ -179,8 +179,8 @@ const Dashboard: React.FC = () => {
                   padding: "0.35rem 0.75rem",
                 }}
               >
-                <option value="4w">Last 4 weeks</option>
-                <option value="8w">Last 8 weeks</option>
+                <option value="4w">{t("dashboard.last4Weeks")}</option>
+                <option value="8w">{t("dashboard.last8Weeks")}</option>
               </select>
               <div style={{ display: "inline-flex", gap: "0.35rem" }}>
                 {(
@@ -204,17 +204,18 @@ const Dashboard: React.FC = () => {
           </header>
           <div className="flex flex--justify-between flex--align-center flex--wrap flex--gap-06 text-085 text-muted">
             <span aria-live="polite">
-              Range: {rangeLabels[activeRange]} • Grain: {grainLabels[activeGrain]}
+              {t("dashboard.range")}: {rangeLabels[activeRange]} • {t("dashboard.period")}:{" "}
+              {grainLabels[activeGrain]}
             </span>
-            {isFetching && !isLoading ? <span>Refreshing…</span> : null}
+            {isFetching && !isLoading ? <span>{t("dashboard.refreshing")}</span> : null}
           </div>
           <div style={{ overflowX: "auto" }}>
             <table className="w-full text-09" style={{ borderCollapse: "collapse" }}>
               <thead>
                 <tr className="text-left text-secondary">
-                  <th className="pb-05">Period</th>
-                  <th className="pb-05">Volume</th>
-                  <th className="pb-05">Sessions</th>
+                  <th className="pb-05">{t("dashboard.period")}</th>
+                  <th className="pb-05">{t("dashboard.volume")}</th>
+                  <th className="pb-05">{t("dashboard.sessions")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -228,9 +229,7 @@ const Dashboard: React.FC = () => {
               </tbody>
             </table>
           </div>
-          <small className="text-muted">
-            Showing up to 5 periods to keep payloads light on shared dashboards.
-          </small>
+          <small className="text-muted">{t("dashboard.helperText")}</small>
         </div>
       </section>
     </PageIntro>

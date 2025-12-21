@@ -19,6 +19,40 @@ const shared: Partial<Knex.Config> = {
   seeds: { extension: "ts", directory: seedsDir },
 };
 
+/**
+ * Get SSL configuration for database connections
+ * - Production: Requires certificate verification (rejectUnauthorized: true)
+ * - Development/Test: Allows self-signed certificates (rejectUnauthorized: false)
+ */
+function getSslConfig():
+  | { rejectUnauthorized: boolean; ca?: string; cert?: string; key?: string }
+  | undefined {
+  const isProduction = process.env.NODE_ENV === "production";
+  const sslEnabled = process.env.PGSSL === "true";
+
+  if (!sslEnabled) {
+    return undefined;
+  }
+
+  if (isProduction) {
+    // Production: Strict SSL with certificate verification
+    return {
+      rejectUnauthorized: true,
+      ca: process.env.PGSSL_CA,
+      cert: process.env.PGSSL_CERT,
+      key: process.env.PGSSL_KEY,
+    };
+  }
+
+  // Development/Test: Relaxed SSL (allows self-signed certificates)
+  return {
+    rejectUnauthorized: false,
+    ca: process.env.PGSSL_CA,
+    cert: process.env.PGSSL_CERT,
+    key: process.env.PGSSL_KEY,
+  };
+}
+
 const config: { [key: string]: Knex.Config } = {
   development: {
     ...shared,
@@ -28,6 +62,7 @@ const config: { [key: string]: Knex.Config } = {
       database: process.env.PGDATABASE || "fitvibe",
       user: process.env.PGUSER || "fitvibe",
       password: process.env.PGPASSWORD || "fitvibe",
+      ssl: getSslConfig(),
     },
   },
   test: {
@@ -38,6 +73,7 @@ const config: { [key: string]: Knex.Config } = {
       database: process.env.PGDATABASE || "fitvibe_test",
       user: process.env.PGUSER || "fitvibe",
       password: process.env.PGPASSWORD || "fitvibe",
+      ssl: getSslConfig(),
     },
   },
   production: {
@@ -48,7 +84,7 @@ const config: { [key: string]: Knex.Config } = {
       database: process.env.PGDATABASE,
       user: process.env.PGUSER,
       password: process.env.PGPASSWORD,
-      ssl: process.env.PGSSL === "true" ? { rejectUnauthorized: false } : undefined,
+      ssl: getSslConfig(),
     },
   },
 };

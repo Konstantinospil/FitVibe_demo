@@ -45,7 +45,7 @@ describe("API client interceptors", () => {
 
   it("signs out when the refresh request fails", async () => {
     const originalState = useAuthStore.getState();
-    const signOut = vi.fn();
+    const signOut = vi.fn().mockResolvedValue(undefined);
     useAuthStore.setState({ ...originalState, signOut });
 
     rawMock.onPost("/api/v1/auth/refresh").reply(500);
@@ -53,6 +53,9 @@ describe("API client interceptors", () => {
     apiMock.onGet("/secure").reply(401);
 
     await expect(apiClient.get("/secure")).rejects.toThrow();
+
+    // Wait for async signOut to be called
+    await new Promise((resolve) => setTimeout(resolve, 10));
 
     expect(signOut).toHaveBeenCalled();
     expect(rawMock.history.post.filter((req) => req.url === "/api/v1/auth/logout")).toHaveLength(1);
@@ -149,7 +152,7 @@ describe("API client interceptors", () => {
 
   it("processes queued requests with error when refresh fails", async () => {
     const originalState = useAuthStore.getState();
-    const signOut = vi.fn();
+    const signOut = vi.fn().mockResolvedValue(undefined);
     useAuthStore.setState({ ...originalState, signOut });
 
     rawMock.onPost("/api/v1/auth/refresh").reply(500);
@@ -159,6 +162,9 @@ describe("API client interceptors", () => {
     const promises = [apiClient.get("/secure"), apiClient.get("/secure"), apiClient.get("/secure")];
 
     await Promise.allSettled(promises);
+
+    // Wait for async signOut to be called
+    await new Promise((resolve) => setTimeout(resolve, 10));
 
     expect(signOut).toHaveBeenCalled();
     expect(rawMock.history.post.filter((req) => req.url === "/api/v1/auth/logout")).toHaveLength(1);

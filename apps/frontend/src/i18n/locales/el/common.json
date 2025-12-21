@@ -177,6 +177,7 @@
     "USER_DISPLAY_NAME_REQUIRED": "Το εμφανιζόμενο όνομα απαιτείται",
     "USER_EMAIL_INVALID": "Το email απαιτείται",
     "USER_ROLE_INVALID": "Ο ρόλος απαιτείται",
+    "DATABASE_CONFIGURATION_ERROR": "Η εγγραφή δεν είναι διαθέσιμη αυτή τη στιγμή. Παρακαλώ επικοινωνήστε με την υποστήριξη.",
     "USER_NOT_FOUND": "Ο χρήστης δεν βρέθηκε",
     "USER_EMAIL_TAKEN": "Το email χρησιμοποιείται ήδη",
     "USER_REFRESH_FAILED": "Αδυναμία φόρτωσης δεδομένων χρήστη",

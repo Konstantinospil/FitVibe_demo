@@ -10,6 +10,6 @@
     "skipLibCheck": true,
     "types": []
   },
-  "include": ["**/*.ts", "**/*.tsx"],
+  "include": ["**/*.ts", "**/*.tsx", "ssr/render.test.tsx"],
   "exclude": ["node_modules", "e2e"]
 }

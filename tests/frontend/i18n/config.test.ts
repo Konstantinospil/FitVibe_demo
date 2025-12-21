@@ -1,5 +1,9 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { ensurePrivateTranslationsLoaded } from "../../src/i18n/config";
+import {
+  ensurePrivateTranslationsLoaded,
+  loadFullTranslations,
+  loadLanguageTranslations,
+} from "../../src/i18n/config";
 import i18n from "../../src/i18n/config";
 
 describe("i18n config", () => {
@@ -109,5 +113,50 @@ describe("i18n config", () => {
       expect(setItemSpy).toHaveBeenCalledWith("fitvibe:language", "de");
     }
     setItemSpy.mockRestore();
+  });
+
+  it("should load full translations when not already loaded", async () => {
+    // Clear existing resources to simulate not loaded
+    const result = await loadFullTranslations();
+    expect(result).toBeUndefined();
+    // Should have loaded translations
+    expect(i18n.hasResourceBundle("en", "translation")).toBe(true);
+  });
+
+  it("should skip loading full translations when already loaded", async () => {
+    // First load
+    await loadFullTranslations();
+    // Second call should skip
+    const result = await loadFullTranslations();
+    expect(result).toBeUndefined();
+  });
+
+  it("should handle loadLanguage error and fallback to English", async () => {
+    const consoleWarnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+
+    // Try to load a non-existent language
+    await loadLanguageTranslations("xx" as any);
+
+    // Should have warned and attempted to load English
+    expect(consoleWarnSpy).toHaveBeenCalledWith(
+      expect.stringContaining("Failed to load language"),
+      expect.any(Error),
+    );
+
+    consoleWarnSpy.mockRestore();
+  });
+
+  it("should handle loadLanguage when language is already loaded", async () => {
+    // Load language first
+    await loadLanguageTranslations("de");
+    // Load again - should return early
+    const result = await loadLanguageTranslations("de");
+    expect(result).toBeUndefined();
+  });
+
+  it("should load language translations successfully", async () => {
+    const result = await loadLanguageTranslations("de");
+    expect(result).toBeUndefined();
+    expect(i18n.hasResourceBundle("de", "translation")).toBe(true);
   });
 });

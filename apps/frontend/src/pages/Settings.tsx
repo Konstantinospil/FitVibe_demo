@@ -46,7 +46,7 @@ const Settings: React.FC = () => {
   const navigate = useNavigate();
   const { signOut } = useAuthStore();
   const toast = useToast();
-  const { t } = useTranslation("common");
+  const { t } = useTranslation();
 
   // User data
   const [userData, setUserData] = useState<UserData | null>(null);
@@ -204,7 +204,7 @@ const Settings: React.FC = () => {
       setShowTwoFASetup(true);
     } catch (error) {
       logger.apiError("Failed to enable 2FA", error, "/api/v1/auth/2fa/setup", "GET");
-      toast.error("Failed to enable 2FA. Please try again.");
+      toast.error(t("settings.twoFactor.enableError"));
     } finally {
       setLoading2FA(false);
     }
@@ -212,7 +212,7 @@ const Settings: React.FC = () => {
 
   const handleVerify2FA = async () => {
     if (twoFACode.length !== 6) {
-      toast.warning("Please enter a valid 6-digit code");
+      toast.warning(t("settings.twoFactor.invalidCode"));
       return;
     }
 
@@ -224,10 +224,10 @@ const Settings: React.FC = () => {
       setTwoFACode("");
       setTwoFAQRCode(null);
       setTwoFABackupCodes([]);
-      toast.success("2FA enabled successfully!");
+      toast.success(t("settings.twoFactor.enableSuccess"));
     } catch (error) {
       logger.apiError("Failed to verify 2FA", error, "/api/v1/auth/2fa/verify", "POST");
-      toast.error("Invalid code. Please try again.");
+      toast.error(t("settings.twoFactor.verifyError"));
     } finally {
       setLoading2FA(false);
     }
@@ -235,7 +235,7 @@ const Settings: React.FC = () => {
 
   const handleDisable2FA = () => {
     if (!disable2FAPassword) {
-      toast.warning("Please enter your password to disable 2FA");
+      toast.warning(t("settings.twoFactor.enterPasswordWarning"));
       return;
     }
 
@@ -249,10 +249,10 @@ const Settings: React.FC = () => {
       await disable2FA(disable2FAPassword);
       setTwoFAEnabled(false);
       setDisable2FAPassword("");
-      toast.success("2FA disabled successfully");
+      toast.success(t("settings.twoFactor.disableSuccess"));
     } catch (error) {
       logger.apiError("Failed to disable 2FA", error, "/api/v1/auth/2fa/disable", "POST");
-      toast.error("Failed to disable 2FA. Please check your password and try again.");
+      toast.error(t("settings.twoFactor.disableError"));
     } finally {
       setLoading2FA(false);
     }
@@ -260,7 +260,7 @@ const Settings: React.FC = () => {
 
   const handleDeleteAccount = () => {
     if (!deleteConfirmPassword) {
-      toast.warning("Please enter your password to confirm account deletion");
+      toast.warning(t("settings.dangerZone.deletePasswordWarning"));
       return;
     }
 
@@ -276,7 +276,7 @@ const Settings: React.FC = () => {
         data: { password: deleteConfirmPassword },
       });
 
-      toast.success("Your account has been scheduled for deletion. You will be logged out now.");
+      toast.success(t("settings.dangerZone.deleteSuccess"));
       setTimeout(() => {
         void (async () => {
           await signOut();
@@ -285,15 +285,15 @@ const Settings: React.FC = () => {
       }, 2000);
     } catch (error) {
       logger.apiError("Failed to delete account", error, "/api/v1/users/me", "DELETE");
-      toast.error("Failed to delete account. Please try again.");
+      toast.error(t("settings.dangerZone.deleteError"));
     }
   };
 
   return (
     <PageIntro
-      eyebrow="Settings"
-      title="Your preferences and account settings"
-      description="Manage your profile, privacy, security, and account settings."
+      eyebrow={t("settings.eyebrow")}
+      title={t("settings.title")}
+      description={t("settings.description")}
     >
       <div className="grid grid--gap-15" style={{ maxWidth: "900px" }}>
         {/* Profile Settings */}
@@ -301,9 +301,9 @@ const Settings: React.FC = () => {
           <CardHeader>
             <div className="flex flex--align-center flex--gap-075">
               <User size={20} />
-              <CardTitle>Profile Settings</CardTitle>
+              <CardTitle>{t("settings.profile.title")}</CardTitle>
             </div>
-            <CardDescription>Update your display name and basic information</CardDescription>
+            <CardDescription>{t("settings.profile.description")}</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="grid grid--gap-md">
@@ -312,7 +312,7 @@ const Settings: React.FC = () => {
                   htmlFor="display-name"
                   className="form-label-text block mb-05 font-weight-600"
                 >
-                  Display Name
+                  {t("settings.profile.displayName")}
                 </label>
                 <input
                   id="display-name"
@@ -332,7 +332,11 @@ const Settings: React.FC = () => {
                 <input
                   id="email"
                   type="email"
-                  value={loadingUser ? "Loading..." : (userData?.email ?? "Not available")}
+                  value={
+                    loadingUser
+                      ? t("settings.loading")
+                      : (userData?.email ?? t("settings.notAvailable"))
+                  }
                   disabled
                   className="form-input"
                   style={{
@@ -503,11 +507,9 @@ const Settings: React.FC = () => {
           <CardHeader>
             <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
               <Globe size={20} />
-              <CardTitle>Preferences</CardTitle>
+              <CardTitle>{t("settings.preferences.title")}</CardTitle>
             </div>
-            <CardDescription>
-              Set your default session visibility, units, and language
-            </CardDescription>
+            <CardDescription>{t("settings.preferences.description")}</CardDescription>
           </CardHeader>
           <CardContent>
             <div style={{ display: "grid", gap: "1.5rem" }}>
@@ -521,7 +523,7 @@ const Settings: React.FC = () => {
                     fontWeight: 600,
                   }}
                 >
-                  Default Session Visibility
+                  {t("settings.preferences.defaultVisibility")}
                 </label>
                 <select
                   id="default-visibility"
@@ -537,10 +539,16 @@ const Settings: React.FC = () => {
                     fontSize: "1rem",
                   }}
                 >
-                  <option value="private">Private (only you)</option>
-                  <option value="followers">Followers</option>
-                  <option value="link">Link only</option>
-                  <option value="public">Public</option>
+                  <option value="private">
+                    {t("settings.preferences.visibilityOptions.private")}
+                  </option>
+                  <option value="followers">
+                    {t("settings.preferences.visibilityOptions.followers")}
+                  </option>
+                  <option value="link">{t("settings.preferences.visibilityOptions.link")}</option>
+                  <option value="public">
+                    {t("settings.preferences.visibilityOptions.public")}
+                  </option>
                 </select>
               </div>
 
@@ -554,7 +562,7 @@ const Settings: React.FC = () => {
                     fontWeight: 600,
                   }}
                 >
-                  Units
+                  {t("settings.preferences.units")}
                 </label>
                 <select
                   id="units"
@@ -570,8 +578,10 @@ const Settings: React.FC = () => {
                     fontSize: "1rem",
                   }}
                 >
-                  <option value="metric">Metric (kg, km)</option>
-                  <option value="imperial">Imperial (lb, mi)</option>
+                  <option value="metric">{t("settings.preferences.unitsOptions.metric")}</option>
+                  <option value="imperial">
+                    {t("settings.preferences.unitsOptions.imperial")}
+                  </option>
                 </select>
               </div>
 
@@ -585,7 +595,7 @@ const Settings: React.FC = () => {
                     fontWeight: 600,
                   }}
                 >
-                  Language
+                  {t("settings.preferences.language")}
                 </label>
                 <select
                   id="locale"
@@ -601,8 +611,8 @@ const Settings: React.FC = () => {
                     fontSize: "1rem",
                   }}
                 >
-                  <option value="en">English</option>
-                  <option value="de">Deutsch (German)</option>
+                  <option value="en">{t("settings.preferences.languageOptions.en")}</option>
+                  <option value="de">{t("settings.preferences.languageOptions.de")}</option>
                 </select>
               </div>
             </div>
@@ -652,19 +662,17 @@ const Settings: React.FC = () => {
           <CardHeader>
             <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
               <Shield size={20} />
-              <CardTitle>Two-Factor Authentication (2FA)</CardTitle>
+              <CardTitle>{t("settings.twoFactor.title")}</CardTitle>
             </div>
-            <CardDescription>
-              Add an extra layer of security to your account with 2FA
-            </CardDescription>
+            <CardDescription>{t("settings.twoFactor.description")}</CardDescription>
           </CardHeader>
           <CardContent>
             {!twoFAEnabled && !showTwoFASetup && (
               <div>
-                <p style={{ marginBottom: "1rem", color: "var(--color-text-secondary)" }}>
-                  2FA is currently <strong>disabled</strong>. Enable it to secure your account with
-                  a time-based one-time password (TOTP).
-                </p>
+                <p
+                  style={{ marginBottom: "1rem", color: "var(--color-text-secondary)" }}
+                  dangerouslySetInnerHTML={{ __html: t("settings.twoFactor.disabled") }}
+                />
                 <Button
                   variant="primary"
                   onClick={() => void handleEnable2FA()}
@@ -672,7 +680,7 @@ const Settings: React.FC = () => {
                   disabled={loading2FA}
                   isLoading={loading2FA}
                 >
-                  Enable 2FA
+                  {t("settings.twoFactor.enable")}
                 </Button>
               </div>
             )}
@@ -680,7 +688,7 @@ const Settings: React.FC = () => {
             {showTwoFASetup && (
               <div>
                 <p style={{ marginBottom: "1rem", color: "var(--color-text-secondary)" }}>
-                  Scan this QR code with your authenticator app (Google Authenticator, Authy, etc.):
+                  {t("settings.twoFactor.scanQRCode")}
                 </p>
                 <div
                   style={{
@@ -711,7 +719,7 @@ const Settings: React.FC = () => {
                         style={{ width: "100%", height: "100%", objectFit: "contain" }}
                       />
                     ) : (
-                      <span style={{ color: "#666" }}>Loading QR Code...</span>
+                      <span style={{ color: "#666" }}>{t("settings.twoFactor.loadingQRCode")}</span>
                     )}
                   </div>
                 </div>
@@ -725,7 +733,7 @@ const Settings: React.FC = () => {
                     fontWeight: 600,
                   }}
                 >
-                  Enter the 6-digit code from your app:
+                  {t("settings.twoFactor.enterCode")}
                 </label>
                 <div style={{ display: "flex", gap: "0.75rem" }}>
                   <input
@@ -754,7 +762,7 @@ const Settings: React.FC = () => {
                     disabled={twoFACode.length !== 6 || loading2FA}
                     isLoading={loading2FA}
                   >
-                    Verify and Enable
+                    {t("settings.twoFactor.verifyAndEnable")}
                   </Button>
                 </div>
 
@@ -769,7 +777,7 @@ const Settings: React.FC = () => {
                     }}
                   >
                     <h4 style={{ marginBottom: "0.5rem", fontSize: "0.95rem", fontWeight: 600 }}>
-                      Backup Codes
+                      {t("settings.twoFactor.backupCodes")}
                     </h4>
                     <p
                       style={{
@@ -778,8 +786,7 @@ const Settings: React.FC = () => {
                         color: "var(--color-text-secondary)",
                       }}
                     >
-                      Save these backup codes in a secure location. You can use them to access your
-                      account if you lose your authenticator device.
+                      {t("settings.twoFactor.backupCodesDescription")}
                     </p>
                     <div
                       style={{
@@ -810,11 +817,12 @@ const Settings: React.FC = () => {
 
             {twoFAEnabled && (
               <div>
-                <p style={{ marginBottom: "1rem", color: "var(--color-accent)", fontWeight: 600 }}>
-                  ✓ 2FA is currently <strong>enabled</strong>
-                </p>
+                <p
+                  style={{ marginBottom: "1rem", color: "var(--color-accent)", fontWeight: 600 }}
+                  dangerouslySetInnerHTML={{ __html: t("settings.twoFactor.enabled") }}
+                />
                 <p style={{ marginBottom: "1rem", color: "var(--color-text-secondary)" }}>
-                  Your account is protected with two-factor authentication.
+                  {t("settings.twoFactor.enabledDescription")}
                 </p>
                 <div style={{ marginBottom: "1rem" }}>
                   <label
@@ -826,7 +834,7 @@ const Settings: React.FC = () => {
                       fontWeight: 600,
                     }}
                   >
-                    Enter your password to disable 2FA
+                    {t("settings.twoFactor.enterPasswordToDisable")}
                   </label>
                   <input
                     type="password"
@@ -851,7 +859,7 @@ const Settings: React.FC = () => {
                   disabled={!disable2FAPassword || loading2FA}
                   isLoading={loading2FA}
                 >
-                  Disable 2FA
+                  {t("settings.twoFactor.disable")}
                 </Button>
               </div>
             )}
@@ -866,17 +874,17 @@ const Settings: React.FC = () => {
           <CardHeader>
             <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
               <Trash2 size={20} style={{ color: "var(--color-danger)" }} />
-              <CardTitle style={{ color: "var(--color-danger)" }}>Danger Zone</CardTitle>
+              <CardTitle style={{ color: "var(--color-danger)" }}>
+                {t("settings.dangerZone.title")}
+              </CardTitle>
             </div>
-            <CardDescription>
-              Irreversible actions that will permanently affect your account
-            </CardDescription>
+            <CardDescription>{t("settings.dangerZone.description")}</CardDescription>
           </CardHeader>
           <CardContent>
             {!showDeleteConfirm && (
               <div>
                 <p style={{ marginBottom: "1rem", color: "var(--color-text-secondary)" }}>
-                  Deleting your account will:
+                  {t("settings.dangerZone.deleteDescription")}
                 </p>
                 <ul
                   style={{
@@ -885,17 +893,17 @@ const Settings: React.FC = () => {
                     color: "var(--color-text-secondary)",
                   }}
                 >
-                  <li>Permanently delete all your workout data</li>
-                  <li>Remove all your sessions and progress records</li>
-                  <li>Delete your profile and account information</li>
-                  <li>This action cannot be undone</li>
+                  <li>{t("settings.dangerZone.deleteItems.data")}</li>
+                  <li>{t("settings.dangerZone.deleteItems.sessions")}</li>
+                  <li>{t("settings.dangerZone.deleteItems.profile")}</li>
+                  <li>{t("settings.dangerZone.deleteItems.irreversible")}</li>
                 </ul>
                 <Button
                   variant="danger"
                   onClick={() => setShowDeleteConfirm(true)}
                   leftIcon={<Trash2 size={18} />}
                 >
-                  Delete My Account
+                  {t("settings.dangerZone.deleteAccount")}
                 </Button>
               </div>
             )}
@@ -903,10 +911,10 @@ const Settings: React.FC = () => {
             {showDeleteConfirm && (
               <div>
                 <p style={{ marginBottom: "1rem", color: "var(--color-danger)", fontWeight: 600 }}>
-                  ⚠️ Warning: This will permanently delete your account
+                  {t("settings.dangerZone.deleteWarning")}
                 </p>
                 <p style={{ marginBottom: "1rem", color: "var(--color-text-secondary)" }}>
-                  Please enter your password to confirm account deletion:
+                  {t("settings.dangerZone.deletePasswordPrompt")}
                 </p>
                 <div style={{ marginBottom: "1rem" }}>
                   <input
@@ -933,14 +941,14 @@ const Settings: React.FC = () => {
                       setDeleteConfirmPassword("");
                     }}
                   >
-                    Cancel
+                    {t("common.cancel")}
                   </Button>
                   <Button
                     variant="danger"
                     onClick={() => void handleDeleteAccount()}
                     disabled={!deleteConfirmPassword}
                   >
-                    Yes, Delete My Account
+                    {t("settings.dangerZone.deleteConfirmLabel")}
                   </Button>
                 </div>
               </div>
@@ -952,10 +960,10 @@ const Settings: React.FC = () => {
       {/* Confirmation Dialogs */}
       <ConfirmDialog
         isOpen={showDisable2FAConfirm}
-        title="Disable Two-Factor Authentication"
-        message="Are you sure you want to disable 2FA? This will make your account less secure."
-        confirmLabel="Yes, Disable 2FA"
-        cancelLabel="Cancel"
+        title={t("settings.twoFactor.disableConfirmTitle")}
+        message={t("settings.twoFactor.disableConfirmMessage")}
+        confirmLabel={t("settings.twoFactor.disableConfirmLabel")}
+        cancelLabel={t("common.cancel")}
         variant="warning"
         onConfirm={() => void confirmDisable2FA()}
         onCancel={() => setShowDisable2FAConfirm(false)}
@@ -963,10 +971,10 @@ const Settings: React.FC = () => {
 
       <ConfirmDialog
         isOpen={showDeleteAccountConfirm}
-        title="Delete Account"
-        message="This will permanently delete your account and all your data. This action cannot be undone. Are you absolutely sure?"
-        confirmLabel="Confirm Delete"
-        cancelLabel="Cancel"
+        title={t("settings.dangerZone.deleteConfirmTitle")}
+        message={t("settings.dangerZone.deleteConfirmMessage")}
+        confirmLabel={t("settings.dangerZone.deleteConfirmLabel")}
+        cancelLabel={t("common.cancel")}
         variant="danger"
         onConfirm={() => void confirmDeleteAccount()}
         onCancel={() => setShowDeleteAccountConfirm(false)}

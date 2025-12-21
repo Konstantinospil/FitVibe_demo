@@ -14,9 +14,33 @@ export const db: Knex = knex({
 export async function testConnection(): Promise<void> {
   try {
     await db.raw("SELECT 1 + 1 AS result");
-    logger.info("Database connection successful");
+    const sslInfo = DB_CONFIG.ssl
+      ? `SSL enabled (rejectUnauthorized: ${DB_CONFIG.ssl.rejectUnauthorized})`
+      : "SSL disabled";
+    logger.info({ ssl: sslInfo }, "Database connection successful");
   } catch (error) {
-    logger.error({ err: error }, "Database connection failed");
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    const isSslError = errorMessage.includes("SSL") || errorMessage.includes("certificate");
+
+    logger.error(
+      {
+        err: error,
+        sslEnabled: !!DB_CONFIG.ssl,
+        sslRejectUnauthorized: DB_CONFIG.ssl?.rejectUnauthorized,
+        isSslError,
+      },
+      "Database connection failed",
+    );
+
+    if (isSslError) {
+      logger.error(
+        {
+          hint: "Check SSL certificate configuration and PGSSL environment variables",
+        },
+        "SSL connection error detected",
+      );
+    }
+
     process.exit(1);
   }
 }

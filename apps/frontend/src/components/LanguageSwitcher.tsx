@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { ChevronDown } from "lucide-react";
+import { loadLanguageTranslations } from "../i18n/config";
 
 /**
  * Reliable flag rendering:
@@ -227,8 +228,10 @@ const LanguageSwitcher: React.FC = () => {
 
   const currentLanguage = LANGUAGES.find((lang) => lang.code === validLanguage) ?? LANGUAGES[0];
 
-  const handleLanguageChange = (code: LangCode) => {
-    void i18n.changeLanguage(code);
+  const handleLanguageChange = async (code: LangCode) => {
+    // Ensure translations are loaded before changing language
+    await loadLanguageTranslations(code);
+    await i18n.changeLanguage(code);
     setIsOpen(false);
   };
 
@@ -269,7 +272,9 @@ const LanguageSwitcher: React.FC = () => {
           {LANGUAGES.map((option) => (
             <button
               key={option.code}
-              onClick={() => handleLanguageChange(option.code)}
+              onClick={() => {
+                void handleLanguageChange(option.code);
+              }}
               style={{
                 ...optionStyle,
                 background:

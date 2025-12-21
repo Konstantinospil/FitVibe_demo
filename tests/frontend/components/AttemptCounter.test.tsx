@@ -4,7 +4,7 @@
 
 import { describe, it, expect } from "vitest";
 import { render, screen } from "@testing-library/react";
-import { AttemptCounter } from "../../../apps/frontend/src/components/AttemptCounter";
+import { AttemptCounter } from "../../src/components/AttemptCounter";
 
 describe("AttemptCounter", () => {
   it("should display warning when 3 attempts remaining", () => {
@@ -131,7 +131,7 @@ describe("AttemptCounter", () => {
   });
 
   it("should be accessible with ARIA alert role", () => {
-    render(
+    const { container } = render(
       <AttemptCounter
         remainingAccountAttempts={3}
         remainingIPAttempts={5}
@@ -142,7 +142,9 @@ describe("AttemptCounter", () => {
       />,
     );
 
-    const alertElement = screen.getByRole("alert");
+    const alertElements = screen.getAllByRole("alert");
+    const alertElement =
+      Array.from(alertElements).find((el) => container.contains(el)) || alertElements[0];
     expect(alertElement).toBeInTheDocument();
   });
 });

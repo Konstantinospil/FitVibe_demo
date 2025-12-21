@@ -406,7 +406,7 @@ const Logger: React.FC = () => {
 
                   <button
                     onClick={() => toggleExerciseCollapsed(exerciseIndex)}
-                    aria-label={exerciseLog.collapsed ? "Expand" : "Collapse"}
+                    aria-label={exerciseLog.collapsed ? t("logger.expand") : t("logger.collapse")}
                     className="bg-transparent border-none"
                     style={{
                       color: "var(--color-text-secondary)",
@@ -536,7 +536,9 @@ const Logger: React.FC = () => {
 
                         <button
                           onClick={() => toggleSetCompleted(exerciseIndex, setIndex)}
-                          aria-label={set.completed ? "Mark incomplete" : "Mark complete"}
+                          aria-label={
+                            set.completed ? t("logger.markIncomplete") : t("logger.markComplete")
+                          }
                           style={{
                             width: "36px",
                             height: "36px",

@@ -81,7 +81,7 @@ const Sessions: React.FC = () => {
     try {
       await deleteSession(sessionToDelete);
       setPlannedSessions(plannedSessions.filter((s) => s.id !== sessionToDelete));
-      toast.success("Session deleted successfully");
+      toast.success(t("sessions.deleteSuccess"));
       setSessionToDelete(null);
     } catch (error) {
       logger.apiError(
@@ -90,7 +90,7 @@ const Sessions: React.FC = () => {
         `/api/v1/sessions/${sessionToDelete}`,
         "DELETE",
       );
-      toast.error("Failed to delete session. Please try again.");
+      toast.error(t("sessions.deleteError"));
       setSessionToDelete(null);
     }
   };
@@ -142,7 +142,7 @@ const Sessions: React.FC = () => {
               leftIcon={<Plus size={18} />}
               onClick={() => void navigate("/planner")}
             >
-              Create New Session
+              {t("sessions.createNew")}
             </Button>
           </div>
 
@@ -161,16 +161,14 @@ const Sessions: React.FC = () => {
                     className="icon icon--muted"
                     style={{ margin: "0 auto 1rem" }}
                   />
-                  <h3 className="text-125 mb-05">No planned sessions</h3>
-                  <p className="text-secondary mb-15">
-                    Create your first workout session to get started
-                  </p>
+                  <h3 className="text-125 mb-05">{t("sessions.noPlanned")}</h3>
+                  <p className="text-secondary mb-15">{t("sessions.createFirst")}</p>
                   <Button
                     variant="primary"
                     leftIcon={<Plus size={18} />}
                     onClick={() => void navigate("/planner")}
                   >
-                    Create Session
+                    {t("sessions.createSession")}
                   </Button>
                 </div>
               </CardContent>
@@ -184,7 +182,7 @@ const Sessions: React.FC = () => {
                       <div className="flex-1">
                         <div className="flex flex--align-center flex--gap-075 mb-05">
                           <h3 className="text-11 font-weight-600 m-0">
-                            {session.title || "Untitled Session"}
+                            {session.title || t("sessions.untitled")}
                           </h3>
                           <span
                             style={{
@@ -196,7 +194,7 @@ const Sessions: React.FC = () => {
                               fontWeight: 600,
                             }}
                           >
-                            Planned
+                            {t("sessions.statusPlanned")}
                           </span>
                         </div>
 
@@ -223,7 +221,9 @@ const Sessions: React.FC = () => {
                           {session.exercises && session.exercises.length > 0 && (
                             <div className="text-09 text-secondary">
                               {session.exercises.length}{" "}
-                              {session.exercises.length === 1 ? "exercise" : "exercises"}
+                              {session.exercises.length === 1
+                                ? t("sessions.exercise")
+                                : t("sessions.exercises")}
                             </div>
                           )}
                         </div>
@@ -246,7 +246,7 @@ const Sessions: React.FC = () => {
                                     background: "rgba(148, 163, 184, 0.1)",
                                   }}
                                 >
-                                  {ex.exercise_id || "Custom Exercise"}
+                                  {ex.exercise_id || t("sessions.customExercise")}
                                 </span>
                               ))}
                               {session.exercises.length > 5 && (
@@ -254,7 +254,7 @@ const Sessions: React.FC = () => {
                                   className="rounded-sm text-085 text-muted"
                                   style={{ padding: "0.35rem 0.75rem" }}
                                 >
-                                  +{session.exercises.length - 5} more
+                                  +{session.exercises.length - 5} {t("sessions.more")}
                                 </span>
                               )}
                             </div>
@@ -265,7 +265,7 @@ const Sessions: React.FC = () => {
                       <div className="flex flex--gap-05">
                         <button
                           onClick={() => void navigate(`/logger/${session.id}`)}
-                          aria-label="Start session"
+                          aria-label={t("sessions.startSession")}
                           className="rounded-sm"
                           style={{
                             padding: "0.5rem",
@@ -280,7 +280,7 @@ const Sessions: React.FC = () => {
                         </button>
                         <button
                           onClick={() => void navigate(`/sessions/${session.id}`)}
-                          aria-label="View session"
+                          aria-label={t("sessions.viewSession")}
                           className="rounded-sm"
                           style={{
                             padding: "0.5rem",
@@ -295,7 +295,7 @@ const Sessions: React.FC = () => {
                         </button>
                         <button
                           onClick={() => void handleDeleteSession(session.id)}
-                          aria-label="Delete session"
+                          aria-label={t("sessions.deleteSession")}
                           className="rounded-sm"
                           style={{
                             padding: "0.5rem",
@@ -341,13 +341,13 @@ const Sessions: React.FC = () => {
                 <div style={{ padding: "3rem 2rem", textAlign: "center" }}>
                   <Play size={48} style={{ margin: "0 auto 1rem", opacity: 0.3 }} />
                   <h3 style={{ fontSize: "1.25rem", marginBottom: "0.5rem" }}>
-                    No active sessions
+                    {t("sessions.noActive")}
                   </h3>
                   <p style={{ color: "var(--color-text-secondary)", marginBottom: "1.5rem" }}>
-                    Start a planned session from the Planner tab to begin logging
+                    {t("sessions.startFromPlanner")}
                   </p>
                   <Button variant="secondary" onClick={() => setActiveTab("planner")}>
-                    Go to Planner
+                    {t("sessions.goToPlanner")}
                   </Button>
                 </div>
               </CardContent>
@@ -368,7 +368,7 @@ const Sessions: React.FC = () => {
                           }}
                         >
                           <h3 style={{ fontSize: "1.1rem", fontWeight: 600, margin: 0 }}>
-                            {session.title || "Untitled Session"}
+                            {session.title || t("sessions.untitled")}
                           </h3>
                           <span
                             style={{
@@ -380,7 +380,7 @@ const Sessions: React.FC = () => {
                               fontWeight: 600,
                             }}
                           >
-                            In Progress
+                            {t("sessions.statusInProgress")}
                           </span>
                         </div>
 
@@ -402,15 +402,19 @@ const Sessions: React.FC = () => {
                             }}
                           >
                             <Calendar size={16} />
-                            Started{" "}
-                            {session.started_at ? formatDate(session.started_at) : "recently"}
+                            {t("sessions.started")}{" "}
+                            {session.started_at
+                              ? formatDate(session.started_at)
+                              : t("sessions.recently")}
                           </div>
                           {session.exercises && session.exercises.length > 0 && (
                             <div
                               style={{ color: "var(--color-text-secondary)", fontSize: "0.9rem" }}
                             >
                               {session.exercises.length}{" "}
-                              {session.exercises.length === 1 ? "exercise" : "exercises"}
+                              {session.exercises.length === 1
+                                ? t("sessions.exercise")
+                                : t("sessions.exercises")}
                             </div>
                           )}
                         </div>
@@ -422,7 +426,7 @@ const Sessions: React.FC = () => {
                         leftIcon={<Play size={16} />}
                         onClick={() => void navigate(`/logger/${session.id}`)}
                       >
-                        Continue
+                        {t("sessions.continue")}
                       </Button>
                     </div>
                   </CardContent>
@@ -436,10 +440,10 @@ const Sessions: React.FC = () => {
       {/* Confirmation Dialog */}
       <ConfirmDialog
         isOpen={showDeleteConfirm}
-        title="Delete Session"
-        message="Are you sure you want to delete this session? This action cannot be undone."
-        confirmLabel="Yes, Delete Session"
-        cancelLabel="Cancel"
+        title={t("sessions.deleteConfirmTitle")}
+        message={t("sessions.deleteConfirmMessage")}
+        confirmLabel={t("sessions.deleteConfirmLabel")}
+        cancelLabel={t("common.cancel")}
         variant="danger"
         onConfirm={() => void confirmDeleteSession()}
         onCancel={() => {

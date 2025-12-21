@@ -9,10 +9,10 @@ import {
   renderProgressReportCsv,
 } from "./progress.service.js";
 
-const periodEnum = z
-  .enum(["7", "30", "90"])
-  .transform((v) => parseInt(v, 10))
-  .default(30);
+const periodEnum = z.preprocess(
+  (val) => val ?? "30",
+  z.enum(["7", "30", "90"]).transform((v) => parseInt(v, 10)),
+);
 const groupByEnum = z.enum(["day", "week"]);
 
 function requireUserId(req: Request, res: Response): string | null {
@@ -58,10 +58,10 @@ export async function trendsHandler(req: Request, res: Response): Promise<void> 
 }
 
 export async function exercisesHandler(req: Request, res: Response): Promise<void> {
-  const periodEnum90 = z
-    .enum(["7", "30", "90"])
-    .transform((v) => parseInt(v, 10))
-    .default(90);
+  const periodEnum90 = z.preprocess(
+    (val) => val ?? "90",
+    z.enum(["7", "30", "90"]).transform((v) => parseInt(v, 10)),
+  );
   const parsed = z.object({ period: periodEnum90 }).safeParse(req.query);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.flatten() });

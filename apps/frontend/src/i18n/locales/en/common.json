@@ -177,6 +177,7 @@
     "USER_DISPLAY_NAME_REQUIRED": "Display name is required",
     "USER_EMAIL_INVALID": "Email is required",
     "USER_ROLE_INVALID": "Role is required",
+    "DATABASE_CONFIGURATION_ERROR": "Registration is currently unavailable. Please contact support.",
     "USER_NOT_FOUND": "User not found",
     "USER_EMAIL_TAKEN": "Email already in use",
     "USER_REFRESH_FAILED": "Unable to load user data",

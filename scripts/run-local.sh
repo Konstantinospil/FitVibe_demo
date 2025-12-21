@@ -133,6 +133,16 @@ run_migrations() {
     echo -e "${GREEN}✓ Migrations completed${NC}"
 }
 
+# Function to seed database
+seed_database() {
+    echo -e "${YELLOW}🌱 Seeding database...${NC}"
+    pnpm --filter @fitvibe/backend run db:seed || {
+        echo -e "${RED}✗ Database seeding failed${NC}"
+        exit 1
+    }
+    echo -e "${GREEN}✓ Database seeded${NC}"
+}
+
 # Function to check and free ports
 check_and_free_ports() {
     echo -e "${YELLOW}🔌 Checking ports...${NC}"
@@ -152,6 +162,89 @@ check_and_free_ports() {
     echo -e "${GREEN}✓ Ports 4000 and 5173 are available${NC}"
 }
 
+# Function to check and install dependencies
+check_dependencies() {
+    echo -e "${YELLOW}📦 Checking dependencies...${NC}"
+    
+    # Check if node_modules exists in root
+    if [ ! -d "node_modules" ]; then
+        echo -e "${YELLOW}Dependencies not found. Installing...${NC}"
+        pnpm install || {
+            echo -e "${RED}✗ Failed to install dependencies${NC}"
+            exit 1
+        }
+        echo -e "${GREEN}✓ Dependencies installed${NC}"
+    else
+        echo -e "${GREEN}✓ Dependencies found${NC}"
+    fi
+    
+    # Verify frontend dependencies exist
+    if [ ! -d "apps/frontend/node_modules" ] && [ ! -f "apps/frontend/package.json" ]; then
+        echo -e "${YELLOW}Frontend dependencies may be missing. Ensuring they're installed...${NC}"
+        pnpm install --filter @fitvibe/frontend || {
+            echo -e "${YELLOW}Warning: Frontend dependencies installation had issues${NC}"
+        }
+    fi
+    
+    # Verify backend dependencies exist
+    if [ ! -d "apps/backend/node_modules" ] && [ ! -f "apps/backend/package.json" ]; then
+        echo -e "${YELLOW}Backend dependencies may be missing. Ensuring they're installed...${NC}"
+        pnpm install --filter @fitvibe/backend || {
+            echo -e "${YELLOW}Warning: Backend dependencies installation had issues${NC}"
+        }
+    fi
+}
+
+# Function to check frontend environment
+check_frontend_env() {
+    echo -e "${YELLOW}🔧 Checking frontend environment...${NC}"
+    
+    local env_file="apps/frontend/.env"
+    local env_local_file="apps/frontend/.env.local"
+    
+    # Check if .env.local exists (takes precedence)
+    if [ -f "$env_local_file" ]; then
+        echo -e "${GREEN}✓ Frontend .env.local found${NC}"
+        return 0
+    fi
+    
+    # Check if .env exists
+    if [ -f "$env_file" ]; then
+        echo -e "${GREEN}✓ Frontend .env found${NC}"
+        return 0
+    fi
+    
+    # Create .env.local with default values
+    echo -e "${YELLOW}Creating frontend .env.local with default values...${NC}"
+    mkdir -p "$(dirname "$env_local_file")"
+    cat > "$env_local_file" << EOF
+VITE_API_BASE_URL=http://localhost:4000/api/v1
+EOF
+    echo -e "${GREEN}✓ Created frontend .env.local${NC}"
+}
+
+# Function to wait for a service to be ready
+wait_for_service() {
+    local port=$1
+    local service_name=$2
+    local max_attempts=30
+    local attempt=0
+    
+    echo -e "${YELLOW}⏳ Waiting for $service_name to start on port $port...${NC}"
+    
+    while [ $attempt -lt $max_attempts ]; do
+        if check_port $port; then
+            echo -e "${GREEN}✓ $service_name is running on port $port${NC}"
+            return 0
+        fi
+        attempt=$((attempt + 1))
+        sleep 1
+    done
+    
+    echo -e "${RED}✗ $service_name failed to start on port $port after ${max_attempts} seconds${NC}"
+    return 1
+}
+
 # Main execution
 main() {
     # Stop Docker containers
@@ -162,6 +255,12 @@ main() {
     
     # Check and free ports if needed
     check_and_free_ports
+    
+    # Check and install dependencies
+    check_dependencies
+    
+    # Check frontend environment
+    check_frontend_env
     
     # Check PostgreSQL
     if ! check_postgres; then
@@ -174,17 +273,36 @@ main() {
     # Run migrations
     run_migrations
     
+    # Seed database
+    seed_database
+    
     echo -e "${GREEN}✅ Setup complete!${NC}"
     echo ""
     echo -e "${YELLOW}Starting development servers...${NC}"
     echo -e "${GREEN}Backend will run on: http://localhost:4000${NC}"
     echo -e "${GREEN}Frontend will run on: http://localhost:5173${NC}"
     echo ""
+    echo -e "${YELLOW}Note: Servers may take a few seconds to start.${NC}"
+    echo -e "${YELLOW}If you see connection errors, wait 10-15 seconds and refresh.${NC}"
+    echo ""
+    echo -e "${YELLOW}Troubleshooting:${NC}"
+    echo -e "  - If frontend doesn't start, try: pnpm --filter @fitvibe/frontend dev"
+    echo -e "  - If backend doesn't start, try: pnpm --filter @fitvibe/backend dev"
+    echo -e "  - Check if ports are free: lsof -i :4000 -i :5173"
+    echo ""
     echo -e "${YELLOW}Press Ctrl+C to stop all servers${NC}"
     echo ""
     
     # Start both backend and frontend in parallel
-    pnpm dev
+    # Turbo will manage both processes
+    pnpm dev || {
+        echo ""
+        echo -e "${RED}✗ Failed to start development servers${NC}"
+        echo -e "${YELLOW}Try starting them individually:${NC}"
+        echo -e "  Terminal 1: pnpm --filter @fitvibe/backend dev"
+        echo -e "  Terminal 2: pnpm --filter @fitvibe/frontend dev"
+        exit 1
+    }
 }
 
 # Run main function

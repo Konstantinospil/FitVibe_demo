@@ -177,6 +177,7 @@
     "USER_DISPLAY_NAME_REQUIRED": "El nombre para mostrar es requerido",
     "USER_EMAIL_INVALID": "El correo electrónico es requerido",
     "USER_ROLE_INVALID": "El rol es requerido",
+    "DATABASE_CONFIGURATION_ERROR": "El registro no está disponible actualmente. Por favor, contacte con soporte.",
     "USER_NOT_FOUND": "Usuario no encontrado",
     "USER_EMAIL_TAKEN": "El correo electrónico ya está en uso",
     "USER_REFRESH_FAILED": "No se pudieron cargar los datos del usuario",

@@ -1,5 +1,6 @@
-import { render, screen } from "@testing-library/react";
-import { describe, expect, it, vi, beforeEach } from "vitest";
+import React from "react";
+import { render, screen, cleanup } from "@testing-library/react";
+import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
 import MaintenanceBanner from "../../src/components/MaintenanceBanner";
 import { I18nextProvider } from "react-i18next";
 import i18n from "i18next";
@@ -35,6 +36,10 @@ describe("MaintenanceBanner", () => {
     vi.clearAllMocks();
   });
 
+  afterEach(() => {
+    cleanup();
+  });
+
   it("renders nothing when read-only mode is disabled", () => {
     vi.mocked(useReadOnlyMode).mockReturnValue({
       readOnlyMode: false,
@@ -52,9 +57,11 @@ describe("MaintenanceBanner", () => {
       message: "System maintenance in progress",
     });
 
-    renderWithProviders(<MaintenanceBanner />);
+    const { container } = renderWithProviders(<MaintenanceBanner />);
 
-    expect(screen.getByRole("alert")).toBeInTheDocument();
+    const alerts = screen.getAllByRole("alert");
+    const alert = Array.from(alerts).find((el) => container.contains(el)) || alerts[0];
+    expect(alert).toBeInTheDocument();
     expect(screen.getByText("System maintenance in progress")).toBeInTheDocument();
   });
 
@@ -88,9 +95,10 @@ describe("MaintenanceBanner", () => {
       message: "Maintenance in progress",
     });
 
-    renderWithProviders(<MaintenanceBanner />);
+    const { container } = renderWithProviders(<MaintenanceBanner />);
 
-    const banner = screen.getByRole("alert");
+    const alerts = screen.getAllByRole("alert");
+    const banner = Array.from(alerts).find((el) => container.contains(el)) || alerts[0];
     expect(banner).toHaveAttribute("aria-live", "assertive");
   });
 
@@ -100,9 +108,10 @@ describe("MaintenanceBanner", () => {
       message: "Maintenance",
     });
 
-    renderWithProviders(<MaintenanceBanner />);
+    const { container } = renderWithProviders(<MaintenanceBanner />);
 
-    const banner = screen.getByRole("alert");
+    const alerts = screen.getAllByRole("alert");
+    const banner = Array.from(alerts).find((el) => container.contains(el)) || alerts[0];
     expect(banner.textContent).toContain("🛠️");
   });
 });

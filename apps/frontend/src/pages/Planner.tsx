@@ -321,7 +321,7 @@ const Planner: React.FC = () => {
                   onChange={(e) => setExerciseSearch(e.target.value)}
                   onFocus={() => exerciseResults.length > 0 && setShowSearchResults(true)}
                   placeholder={t("planner.exerciseSearchPlaceholder")}
-                  aria-label="Search exercises"
+                  aria-label={t("planner.searchExercises")}
                   style={{
                     width: "100%",
                     padding: "0.75rem 1rem 0.75rem 3rem",
@@ -437,7 +437,7 @@ const Planner: React.FC = () => {
                         <button
                           onClick={() => moveExercise(ex.tempId, "up")}
                           disabled={index === 0}
-                          aria-label="Move up"
+                          aria-label={t("planner.moveUp")}
                           style={{
                             background: "transparent",
                             border: "none",
@@ -455,7 +455,7 @@ const Planner: React.FC = () => {
                         <button
                           onClick={() => moveExercise(ex.tempId, "down")}
                           disabled={index === exercises.length - 1}
-                          aria-label="Move down"
+                          aria-label={t("planner.moveDown")}
                           style={{
                             background: "transparent",
                             border: "none",
@@ -491,7 +491,7 @@ const Planner: React.FC = () => {
 
                       <button
                         onClick={() => removeExercise(ex.tempId)}
-                        aria-label="Remove exercise"
+                        aria-label={t("planner.removeExercise")}
                         style={{
                           background: "transparent",
                           border: "1px solid var(--color-border)",

@@ -52,11 +52,13 @@ const VerifyEmail: React.FC = () => {
             );
           } else {
             setStatus("error");
-            setErrorMessage(axiosError.response?.data?.error?.message || "Verification failed");
+            setErrorMessage(
+              axiosError.response?.data?.error?.message || t("verifyEmail.descFailed"),
+            );
           }
         } else {
           setStatus("error");
-          setErrorMessage("Verification failed");
+          setErrorMessage(t("verifyEmail.descFailed"));
         }
       }
     };

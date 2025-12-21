@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { Power, PowerOff, Activity, Clock, AlertCircle } from "lucide-react";
 import {
@@ -40,6 +40,23 @@ const SystemControls: React.FC = () => {
   // Confirmation dialog state
   const [showDisableConfirm, setShowDisableConfirm] = useState(false);
 
+  const loadSystemStatus = useCallback(async () => {
+    try {
+      const [readOnly, health] = await Promise.all([getSystemReadOnlyStatus(), getHealthStatus()]);
+      setReadOnlyStatus(readOnly);
+      setHealthStatus(health);
+    } catch (error) {
+      logger.apiError(
+        t("admin.systemControls.loadStatusError"),
+        error,
+        "/api/v1/admin/system/status",
+        "GET",
+      );
+    } finally {
+      setLoading(false);
+    }
+  }, [t]);
+
   useEffect(() => {
     void loadSystemStatus();
     // Poll every 30 seconds
@@ -47,19 +64,7 @@ const SystemControls: React.FC = () => {
       void loadSystemStatus();
     }, 30000);
     return () => clearInterval(interval);
-  }, []);
-
-  const loadSystemStatus = async () => {
-    try {
-      const [readOnly, health] = await Promise.all([getSystemReadOnlyStatus(), getHealthStatus()]);
-      setReadOnlyStatus(readOnly);
-      setHealthStatus(health);
-    } catch (error) {
-      logger.apiError("Failed to load system status", error, "/api/v1/admin/system/status", "GET");
-    } finally {
-      setLoading(false);
-    }
-  };
+  }, [loadSystemStatus]);
 
   const handleEnableReadOnly = async () => {
     setActionLoading(true);
@@ -75,15 +80,15 @@ const SystemControls: React.FC = () => {
       setShowEnableConfirm(false);
       setEnableReason("");
       setEnableDuration("");
-      toast.success("Read-only mode enabled successfully");
+      toast.success(t("admin.systemControls.readOnlyEnabled"));
     } catch (error) {
       logger.apiError(
-        "Failed to enable read-only mode",
+        t("admin.systemControls.readOnlyEnableError"),
         error,
         "/api/v1/admin/system/readonly",
         "POST",
       );
-      setActionError("Failed to enable read-only mode. Please try again.");
+      setActionError(t("admin.systemControls.readOnlyEnableError"));
     } finally {
       setActionLoading(false);
     }
@@ -105,15 +110,15 @@ const SystemControls: React.FC = () => {
 
       await loadSystemStatus();
       setDisableNotes("");
-      toast.success("Read-only mode disabled successfully");
+      toast.success(t("admin.systemControls.readOnlyDisabled"));
     } catch (error) {
       logger.apiError(
-        "Failed to disable read-only mode",
+        t("admin.systemControls.readOnlyDisableError"),
         error,
         "/api/v1/admin/system/readonly",
         "DELETE",
       );
-      setActionError("Failed to disable read-only mode. Please try again.");
+      setActionError(t("admin.systemControls.readOnlyDisableError"));
     } finally {
       setActionLoading(false);
     }

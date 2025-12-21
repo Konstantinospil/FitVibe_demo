@@ -49,7 +49,7 @@ describe("auth store", () => {
   });
 
   describe("signOut", () => {
-    it("should clear user and authentication state", () => {
+    it("should clear user and authentication state", async () => {
       const { signIn, signOut } = useAuthStore.getState();
 
       // First sign in
@@ -57,17 +57,17 @@ describe("auth store", () => {
       expect(useAuthStore.getState().isAuthenticated).toBe(true);
 
       // Then sign out
-      signOut();
+      await signOut();
 
       const state = useAuthStore.getState();
       expect(state.isAuthenticated).toBe(false);
       expect(state.user).toBeNull();
     });
 
-    it("should be safe to call signOut when not authenticated", () => {
+    it("should be safe to call signOut when not authenticated", async () => {
       const { signOut } = useAuthStore.getState();
 
-      expect(() => signOut()).not.toThrow();
+      await expect(signOut()).resolves.not.toThrow();
 
       const state = useAuthStore.getState();
       expect(state.isAuthenticated).toBe(false);
@@ -133,7 +133,7 @@ describe("auth store", () => {
   });
 
   describe("authentication state", () => {
-    it("should properly track authentication state", () => {
+    it("should properly track authentication state", async () => {
       const { signIn, signOut } = useAuthStore.getState();
 
       // Initially not authenticated
@@ -144,17 +144,17 @@ describe("auth store", () => {
       expect(useAuthStore.getState().isAuthenticated).toBe(true);
 
       // Sign out
-      signOut();
+      await signOut();
       expect(useAuthStore.getState().isAuthenticated).toBe(false);
     });
 
-    it("should maintain user data consistency with authentication state", () => {
+    it("should maintain user data consistency with authentication state", async () => {
       const { signIn, signOut } = useAuthStore.getState();
 
       signIn(mockUser);
       expect(useAuthStore.getState().user).toEqual(mockUser);
 
-      signOut();
+      await signOut();
       expect(useAuthStore.getState().user).toBeNull();
     });
   });

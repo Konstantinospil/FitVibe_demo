@@ -659,5 +659,164 @@ describe("API Service Functions", () => {
       expect(result).toHaveProperty("aggregates");
       expect(result).toHaveProperty("meta");
     });
+
+    it("should handle 8w range with monthly grain", async () => {
+      const summaryResponse = {
+        totalSessions: 20,
+        totalVolume: 2000,
+        currentStreak: 10,
+      };
+      const trendsResponse = [
+        { label: "Month 1", date: "2025-01-01", volume: 200, sessions: 6, avgIntensity: 8 },
+      ];
+
+      apiMock
+        .onGet("/api/v1/progress/summary", { params: { period: 60 } })
+        .reply(200, summaryResponse);
+      apiMock
+        .onGet("/api/v1/progress/trends", { params: { period: 60, group_by: "day" } })
+        .reply(200, trendsResponse);
+
+      const result = await getDashboardAnalytics({ range: "8w", grain: "monthly" });
+
+      expect(result.meta.range).toBe("8w");
+      expect(result.meta.grain).toBe("monthly");
+    });
+
+    it("should handle null/undefined summary values", async () => {
+      const summaryResponse = {
+        totalSessions: null,
+        totalVolume: null,
+        currentStreak: null,
+        streakChange: null,
+        sessionsChange: null,
+        volumeChange: null,
+        personalRecords: null,
+      };
+      const trendsResponse: unknown[] = null;
+
+      apiMock
+        .onGet("/api/v1/progress/summary", { params: { period: 30 } })
+        .reply(200, summaryResponse);
+      apiMock
+        .onGet("/api/v1/progress/trends", { params: { period: 30, group_by: "week" } })
+        .reply(200, trendsResponse);
+
+      const result = await getDashboardAnalytics({ range: "4w", grain: "weekly" });
+
+      expect(result.summary[0].value).toBe("0 days");
+      expect(result.summary[1].value).toBe("0");
+      expect(result.summary[2].value).toBe("0 kg");
+      expect(result.personalRecords).toEqual([]);
+      expect(result.aggregates).toEqual([]);
+      expect(result.meta.totalRows).toBe(0);
+      expect(result.meta.truncated).toBe(false);
+    });
+
+    it("should handle negative streakChange and sessionsChange", async () => {
+      const summaryResponse = {
+        totalSessions: 10,
+        totalVolume: 1000,
+        currentStreak: 5,
+        streakChange: -2,
+        sessionsChange: -3,
+        volumeChange: -500,
+      };
+      const trendsResponse: unknown[] = [];
+
+      apiMock
+        .onGet("/api/v1/progress/summary", { params: { period: 30 } })
+        .reply(200, summaryResponse);
+      apiMock
+        .onGet("/api/v1/progress/trends", { params: { period: 30, group_by: "week" } })
+        .reply(200, trendsResponse);
+
+      const result = await getDashboardAnalytics({ range: "4w", grain: "weekly" });
+
+      expect(result.summary[0].trend).toContain("-2 vs last period");
+      expect(result.summary[1].trend).toContain("-3 vs last period");
+      expect(result.summary[2].trend).toContain("-0.5k kg vs last period");
+    });
+
+    it("should handle personal records with missing fields", async () => {
+      const summaryResponse = {
+        totalSessions: 10,
+        totalVolume: 1000,
+        currentStreak: 5,
+        personalRecords: [
+          { exerciseName: null, value: null, unit: null, achievedAt: null, visibility: null },
+          { exerciseName: "Bench Press", value: 100, unit: "kg", achievedAt: "2025-01-01" },
+        ],
+      };
+      const trendsResponse: unknown[] = [];
+
+      apiMock
+        .onGet("/api/v1/progress/summary", { params: { period: 30 } })
+        .reply(200, summaryResponse);
+      apiMock
+        .onGet("/api/v1/progress/trends", { params: { period: 30, group_by: "week" } })
+        .reply(200, trendsResponse);
+
+      const result = await getDashboardAnalytics({ range: "4w", grain: "weekly" });
+
+      expect(result.personalRecords[0].lift).toBe("Unknown");
+      expect(result.personalRecords[0].value).toBe("-");
+      expect(result.personalRecords[0].achieved).toBe("Unknown");
+      expect(result.personalRecords[0].visibility).toBe("private");
+      expect(result.personalRecords[1].lift).toBe("Bench Press");
+      expect(result.personalRecords[1].value).toBe("100 kg");
+    });
+
+    it("should truncate trends when exceeding MAX_ANALYTIC_ROWS", async () => {
+      const summaryResponse = {
+        totalSessions: 10,
+        totalVolume: 1000,
+        currentStreak: 5,
+      };
+      const trendsResponse = Array.from({ length: 10 }, (_, i) => ({
+        label: `Week ${i + 1}`,
+        date: `2025-01-${i + 1}`,
+        volume: 100,
+        sessions: 3,
+        avgIntensity: 7,
+      }));
+
+      apiMock
+        .onGet("/api/v1/progress/summary", { params: { period: 30 } })
+        .reply(200, summaryResponse);
+      apiMock
+        .onGet("/api/v1/progress/trends", { params: { period: 30, group_by: "week" } })
+        .reply(200, trendsResponse);
+
+      const result = await getDashboardAnalytics({ range: "4w", grain: "weekly" });
+
+      expect(result.aggregates).toHaveLength(5); // MAX_ANALYTIC_ROWS
+      expect(result.meta.truncated).toBe(true);
+      expect(result.meta.totalRows).toBe(10);
+    });
+
+    it("should handle trends with missing labels", async () => {
+      const summaryResponse = {
+        totalSessions: 10,
+        totalVolume: 1000,
+        currentStreak: 5,
+      };
+      const trendsResponse = [
+        { label: null, date: "2025-01-01", volume: 100, sessions: 3, avgIntensity: 7 },
+        { date: "2025-01-02", volume: 200, sessions: 4, avgIntensity: 8 },
+      ];
+
+      apiMock
+        .onGet("/api/v1/progress/summary", { params: { period: 30 } })
+        .reply(200, summaryResponse);
+      apiMock
+        .onGet("/api/v1/progress/trends", { params: { period: 30, group_by: "week" } })
+        .reply(200, trendsResponse);
+
+      const result = await getDashboardAnalytics({ range: "4w", grain: "weekly" });
+
+      expect(result.aggregates[0].period).toBe("Week 1");
+      expect(result.aggregates[1].period).toBe("Week 2");
+    });
   });
 });

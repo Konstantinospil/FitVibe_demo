@@ -25,8 +25,10 @@ import { progressRouter } from "./api/progress.routes.js";
 import { pointsRouter } from "./api/points.routes.js";
 import { feedRouter } from "./api/feed.routes.js";
 import { adminRouter } from "./api/admin.routes.js";
+import { contactRouter } from "./api/contact.routes.js";
 import healthRouter from "./modules/health/health.router.js";
 import systemRouter from "./modules/system/system.routes.js";
+import { consentRouter } from "./modules/consent/consent.routes.js";
 import { jwksHandler } from "./modules/auth/auth.controller.js";
 
 const app = express();
@@ -172,8 +174,10 @@ apiRouter.use("/progress", progressRouter);
 apiRouter.use("/points", pointsRouter);
 apiRouter.use("/feed", feedRouter);
 apiRouter.use("/admin", adminRouter);
+apiRouter.use("/contact", contactRouter);
 
 apiRouter.use("/system", systemRouter);
+apiRouter.use("/consent", consentRouter);
 
 app.use("/api/v1", apiRouter);
 app.use("/health", healthRouter);

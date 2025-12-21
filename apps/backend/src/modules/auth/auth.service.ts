@@ -213,6 +213,14 @@ function toSafeUser(record: AuthUserRecord): UserSafe {
   };
 }
 
+function isForeignKeyViolation(error: unknown): boolean {
+  if (!error || typeof error !== "object") {
+    return false;
+  }
+  const maybeCode = (error as { code?: unknown }).code;
+  return typeof maybeCode === "string" && maybeCode === "23503";
+}
+
 export async function register(
   dto: RegisterDTO,
 ): Promise<{ verificationToken?: string; user?: UserSafe }> {
@@ -236,17 +244,25 @@ export async function register(
 
         // Resend verification email
         if (env.email.enabled) {
-          const verificationUrl = `${env.frontendUrl}/verify?token=${token}`;
-          const expiresInMinutes = Math.floor(EMAIL_VERIFICATION_TTL / 60);
-          const locale = existingByEmail.locale;
-          const t = getEmailTranslations(locale);
+          try {
+            const verificationUrl = `${env.frontendUrl}/verify?token=${token}`;
+            const expiresInMinutes = Math.floor(EMAIL_VERIFICATION_TTL / 60);
+            const locale = existingByEmail.locale;
+            const t = getEmailTranslations(locale);
 
-          await mailerService.send({
-            to: email,
-            subject: t.resend.subject,
-            html: generateResendVerificationEmailHtml(verificationUrl, expiresInMinutes, locale),
-            text: generateResendVerificationEmailText(verificationUrl, expiresInMinutes, locale),
-          });
+            await mailerService.send({
+              to: email,
+              subject: t.resend.subject,
+              html: generateResendVerificationEmailHtml(verificationUrl, expiresInMinutes, locale),
+              text: generateResendVerificationEmailText(verificationUrl, expiresInMinutes, locale),
+            });
+          } catch (emailError) {
+            // Log error but don't fail registration - user still gets token in response
+            logger.error(
+              { err: emailError, userId: existingByEmail.id, email },
+              "[auth] Failed to send verification email during registration resend",
+            );
+          }
         }
 
         return { verificationToken: token, user: toSafeUser(existingByEmail) };
@@ -264,18 +280,29 @@ export async function register(
     const now = new Date().toISOString();
     const termsVersion = getCurrentTermsVersion();
 
-    await createUser({
-      id,
-      username,
-      display_name: dto.profile?.display_name ?? username,
-      status: "pending_verification",
-      role_code: "athlete",
-      password_hash,
-      primaryEmail: email,
-      terms_accepted: true,
-      terms_accepted_at: now,
-      terms_version: termsVersion,
-    });
+    try {
+      await createUser({
+        id,
+        username,
+        display_name: dto.profile?.display_name ?? username,
+        status: "pending_verification",
+        role_code: "athlete",
+        password_hash,
+        primaryEmail: email,
+        terms_accepted: true,
+        terms_accepted_at: now,
+        terms_version: termsVersion,
+      });
+    } catch (error) {
+      if (isForeignKeyViolation(error)) {
+        throw new HttpError(
+          500,
+          "DATABASE_CONFIGURATION_ERROR",
+          "Database configuration error: required data is missing. Please contact support.",
+        );
+      }
+      throw error;
+    }
 
     const verificationToken = await issueAuthToken(
       id,
@@ -285,20 +312,28 @@ export async function register(
 
     // Send verification email
     if (env.email.enabled) {
-      const verificationUrl = `${env.frontendUrl}/verify?token=${verificationToken}`;
-      const expiresInMinutes = Math.floor(EMAIL_VERIFICATION_TTL / 60);
+      try {
+        const verificationUrl = `${env.frontendUrl}/verify?token=${verificationToken}`;
+        const expiresInMinutes = Math.floor(EMAIL_VERIFICATION_TTL / 60);
 
-      // Get user's locale if available (for new users, use default)
-      const user = await findUserById(id);
-      const locale = user?.locale;
-      const t = getEmailTranslations(locale);
+        // Get user's locale if available (for new users, use default)
+        const user = await findUserById(id);
+        const locale = user?.locale;
+        const t = getEmailTranslations(locale);
 
-      await mailerService.send({
-        to: email,
-        subject: t.verification.subject,
-        html: generateVerificationEmailHtml(verificationUrl, expiresInMinutes, locale),
-        text: generateVerificationEmailText(verificationUrl, expiresInMinutes, locale),
-      });
+        await mailerService.send({
+          to: email,
+          subject: t.verification.subject,
+          html: generateVerificationEmailHtml(verificationUrl, expiresInMinutes, locale),
+          text: generateVerificationEmailText(verificationUrl, expiresInMinutes, locale),
+        });
+      } catch (emailError) {
+        // Log error but don't fail registration - user still gets token in response (for dev)
+        logger.error(
+          { err: emailError, userId: id, email },
+          "[auth] Failed to send verification email during registration",
+        );
+      }
     }
 
     const user = await findUserById(id);
@@ -329,17 +364,25 @@ export async function resendVerificationEmail(email: string): Promise<void> {
 
       // Send verification email
       if (env.email.enabled) {
-        const verificationUrl = `${env.frontendUrl}/verify?token=${token}`;
-        const expiresInMinutes = Math.floor(EMAIL_VERIFICATION_TTL / 60);
-        const locale = user.locale;
-        const t = getEmailTranslations(locale);
+        try {
+          const verificationUrl = `${env.frontendUrl}/verify?token=${token}`;
+          const expiresInMinutes = Math.floor(EMAIL_VERIFICATION_TTL / 60);
+          const locale = user.locale;
+          const t = getEmailTranslations(locale);
 
-        await mailerService.send({
-          to: normalizedEmail,
-          subject: t.resend.subject,
-          html: generateResendVerificationEmailHtml(verificationUrl, expiresInMinutes, locale),
-          text: generateResendVerificationEmailText(verificationUrl, expiresInMinutes, locale),
-        });
+          await mailerService.send({
+            to: normalizedEmail,
+            subject: t.resend.subject,
+            html: generateResendVerificationEmailHtml(verificationUrl, expiresInMinutes, locale),
+            text: generateResendVerificationEmailText(verificationUrl, expiresInMinutes, locale),
+          });
+        } catch (emailError) {
+          // Log error but don't fail - function always returns success to prevent user enumeration
+          logger.error(
+            { err: emailError, userId: user.id, email: normalizedEmail },
+            "[auth] Failed to send verification email during resend",
+          );
+        }
       }
     }
 
@@ -965,11 +1008,12 @@ export async function requestPasswordReset(email: string): Promise<{ resetToken?
 
     // Send password reset email
     if (env.email.enabled) {
-      const resetUrl = `${env.frontendUrl}/reset-password?token=${resetToken}`;
-      await mailerService.send({
-        to: email,
-        subject: "Reset your FitVibe password",
-        html: `
+      try {
+        const resetUrl = `${env.frontendUrl}/reset-password?token=${resetToken}`;
+        await mailerService.send({
+          to: email,
+          subject: "Reset your FitVibe password",
+          html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
           <h2>Password Reset Request</h2>
           <p>We received a request to reset your password. Click the link below to create a new password:</p>
@@ -988,8 +1032,15 @@ export async function requestPasswordReset(email: string): Promise<{ resetToken?
           </p>
         </div>
       `,
-        text: `Password Reset Request\n\nWe received a request to reset your password. Please visit the following link to create a new password:\n\n${resetUrl}\n\nThis link will expire in ${Math.floor(PASSWORD_RESET_TTL / 60)} minutes.\n\nIf you didn't request this password reset, you can safely ignore this email.`,
-      });
+          text: `Password Reset Request\n\nWe received a request to reset your password. Please visit the following link to create a new password:\n\n${resetUrl}\n\nThis link will expire in ${Math.floor(PASSWORD_RESET_TTL / 60)} minutes.\n\nIf you didn't request this password reset, you can safely ignore this email.`,
+        });
+      } catch (emailError) {
+        // Log error but don't fail - function always returns success to prevent user enumeration
+        logger.error(
+          { err: emailError, userId: user.id, email: normalized },
+          "[auth] Failed to send password reset email",
+        );
+      }
     }
 
     return { resetToken };

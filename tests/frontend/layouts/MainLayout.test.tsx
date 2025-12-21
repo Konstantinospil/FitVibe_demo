@@ -1,5 +1,5 @@
 import React from "react";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { MemoryRouter } from "react-router-dom";
 import MainLayout from "../../src/layouts/MainLayout";
@@ -80,7 +80,9 @@ describe("MainLayout", () => {
     expect(skipLink).toHaveAttribute("href", "#main-content");
   });
 
-  it("should handle sign out", () => {
+  it("should handle sign out", async () => {
+    mockSignOut.mockResolvedValue(undefined);
+
     render(
       <MemoryRouter>
         <MainLayout />
@@ -90,7 +92,9 @@ describe("MainLayout", () => {
     const signOutButton = screen.getByLabelText("Sign out");
     fireEvent.click(signOutButton);
 
-    expect(mockSignOut).toHaveBeenCalled();
+    await waitFor(() => {
+      expect(mockSignOut).toHaveBeenCalled();
+    });
     expect(mockNavigate).toHaveBeenCalledWith("/login", { replace: true });
   });
 

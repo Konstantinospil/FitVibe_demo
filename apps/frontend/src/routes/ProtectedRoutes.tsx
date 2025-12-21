@@ -21,6 +21,9 @@ const SystemControls = lazy(() => import("../pages/admin/SystemControls"));
 const NotFound = lazy(() => import("../pages/NotFound"));
 const Terms = lazy(() => import("../pages/Terms"));
 const Privacy = lazy(() => import("../pages/Privacy"));
+const Cookie = lazy(() => import("../pages/Cookie"));
+const Impressum = lazy(() => import("../pages/Impressum"));
+const Contact = lazy(() => import("../pages/Contact"));
 const TermsReacceptance = lazy(() => import("../pages/TermsReacceptance"));
 
 const fallback = (
@@ -53,6 +56,9 @@ const ProtectedRoutes: React.FC = () => {
               <Route path="settings" element={<Settings />} />
               <Route path="terms" element={<Terms />} />
               <Route path="privacy" element={<Privacy />} />
+              <Route path="cookie" element={<Cookie />} />
+              <Route path="impressum" element={<Impressum />} />
+              <Route path="contact" element={<Contact />} />
               <Route path="terms-reacceptance" element={<TermsReacceptance />} />
               <Route path="admin" element={<AdminRoute />}>
                 <Route index element={<AdminDashboard />} />

@@ -209,12 +209,12 @@ const Insights: React.FC = () => {
       document.body.removeChild(a);
     } catch (error) {
       logger.apiError(
-        "Export failed",
+        t("progress.exportFailed"),
         error instanceof Error ? error : new Error(String(error)),
         "/api/v1/progress/export",
         "GET",
       );
-      toast.error(t("progress.exportError") || t("progress.exportFailed"));
+      toast.error(t("progress.exportFailed"));
     } finally {
       setIsExporting(false);
     }
@@ -553,7 +553,7 @@ const Insights: React.FC = () => {
                 {rangeMode === "preset" ? (
                   <label style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
                     <span style={{ fontSize: "0.9rem", color: "var(--color-text-secondary)" }}>
-                      {t("progress.period") || "Period"}:
+                      {t("progress.period")}:
                     </span>
                     <select
                       style={selectStyle}
@@ -570,7 +570,7 @@ const Insights: React.FC = () => {
                 )}
                 <label style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
                   <span style={{ fontSize: "0.9rem", color: "var(--color-text-secondary)" }}>
-                    {t("progress.groupBy") || "Group by"}:
+                    {t("progress.groupBy")}:
                   </span>
                   <select
                     style={selectStyle}
@@ -578,7 +578,7 @@ const Insights: React.FC = () => {
                     onChange={(e) => setGroupBy(e.target.value as "day" | "week")}
                   >
                     <option value="day">{t("progress.daily") || t("progress.daily")}</option>
-                    <option value="week">{t("progress.weekly") || "Weekly"}</option>
+                    <option value="week">{t("progress.weekly")}</option>
                   </select>
                 </label>
               </div>
@@ -747,7 +747,7 @@ const Insights: React.FC = () => {
                 </Button>
               </div>
             ) : intensityChartData.length > 0 ? (
-              <ErrorBoundary fallback={chartErrorFallback("Intensity Trend")}>
+              <ErrorBoundary fallback={chartErrorFallback(t("progress.intensityTrend"))}>
                 <Chart
                   data={intensityChartData}
                   type="area"
@@ -817,10 +817,10 @@ const Insights: React.FC = () => {
                       }}
                     >
                       <th style={{ padding: "0.75rem 0", color: "var(--color-text-secondary)" }}>
-                        {t("progress.exercise") || "Exercise"}
+                        {t("progress.exercise")}
                       </th>
                       <th style={{ padding: "0.75rem 0", color: "var(--color-text-secondary)" }}>
-                        {t("progress.sessions") || "Sessions"}
+                        {t("progress.sessions")}
                       </th>
                       <th style={{ padding: "0.75rem 0", color: "var(--color-text-secondary)" }}>
                         {t("progress.totalVolume") || t("progress.totalVolume")}
