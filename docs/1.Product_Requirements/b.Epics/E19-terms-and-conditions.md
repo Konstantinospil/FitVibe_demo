@@ -5,12 +5,12 @@
 **Epic ID**: E19  
 **Requirement ID**: [REQ-2025-01-20-001](../a.Requirements/REQ-2025-01-20-001-terms-and-conditions.md)  
 **Title**: Terms and Conditions  
-**Status**: Open  
+**Status**: Progressing  
 **Priority**: High  
 **Gate**: GOLD  
 **Estimated Total Effort**: 3-5 story points  
 **Created**: 2025-01-21  
-**Updated**: 2025-01-21
+**Updated**: 2025-12-21
 
 ---
 
@@ -53,5 +53,7 @@ Ensures legal compliance and protects the platform by requiring explicit user co
 
 ---
 
-**Last Updated**: 2025-01-21  
-**Next Review**: 2025-02-21
+**Last Updated**: 2025-12-21  
+**Next Review**: 2026-01-21
+
+**Implementation Status**: Terms acceptance integrated into registration flow with version tracking. Full terms management UI and version update notifications in progress.
