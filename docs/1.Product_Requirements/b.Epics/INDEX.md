@@ -1,6 +1,6 @@
 # Epics Index
 
-**Last Updated**: 2025-01-21
+**Last Updated**: 2025-12-21
 
 This index provides a comprehensive list of all epics in the FitVibe project.
 
@@ -29,6 +29,7 @@ This index provides a comprehensive list of all epics in the FitVibe project.
 | [E17](./E17-security.md)                        | Security                       | [NFR-001](../a.Requirements/NFR-001-security.md)                                                                                                                 | Done        | High     | GOLD   | 10-15 SP |
 | [E18](./E18-internationalization.md)            | Internationalization           | [NFR-006](../a.Requirements/NFR-006-i18n.md)                                                                                                                     | Done        | Medium   | SILVER | 8-12 SP  |
 | [E19](./E19-terms-and-conditions.md)            | Terms and Conditions           | [REQ-2025-01-20-001](../a.Requirements/REQ-2025-01-20-001-terms-and-conditions.md)                                                                               | Open        | High     | GOLD   | 3-5 SP   |
+| [E20](./E20-database-encryption.md)             | Database Encryption            | [NFR-008](../a.Requirements/NFR-008-database-encryption.md)                                                                                                      | Open        | High     | GOLD   | 8-12 SP  |
 
 ---
 
@@ -42,6 +43,7 @@ This index provides a comprehensive list of all epics in the FitVibe project.
 - E9: Observability
 - E12: Coach Training Unit Assignment
 - E19: Terms and Conditions
+- E20: Database Encryption
 
 ### Progressing
 
@@ -74,6 +76,7 @@ This index provides a comprehensive list of all epics in the FitVibe project.
 - E10: Availability & Backups
 - E12: Coach Training Unit Assignment
 - E13: WCAG 2.2 Compliance Update
+- E20: Database Encryption
 
 ### Medium
 
@@ -94,6 +97,7 @@ This index provides a comprehensive list of all epics in the FitVibe project.
 - E7: Performance Optimization
 - E8: Accessibility
 - E13: WCAG 2.2 Compliance Update
+- E20: Database Encryption
 
 ### SILVER (Should-have)
 
@@ -110,11 +114,7 @@ This index provides a comprehensive list of all epics in the FitVibe project.
 
 ## Total Epic Count
 
-- **Total Epics**: 19
-- **Open**: 6
+- **Total Epics**: 20
+- **Open**: 7
 - **Progressing**: 7
 - **Done**: 6
-
----
-
-**Note**: Epic E11 is not currently defined. If needed, it will be added to this index when created.

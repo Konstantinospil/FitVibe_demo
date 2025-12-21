@@ -93,16 +93,31 @@ Located in [`2.Technical_Design_Document/2.f.Architectural_Decision_Documentatio
 - [`5.a.Ops/`](5.Policies/5.a.Ops/) - Operational policies
 - [`5.b.Security/`](5.Policies/5.b.Security/) - Security policies and procedures
 
-#### Implementation (`Implementation/`)
+#### Implementation (`6.Implementation/`)
 
-**Note**: This folder contains project planning, implementation reports, and review documents. These files are excluded from version control (see `.gitignore`).
+**Note**: This folder contains project planning, implementation reports, and review documents.
+
+**Directory Structure**:
+
+- `plans/` - Implementation plans for epics and features
+- `reports/` - Verification and review reports
+- `archive/` - Archived documents
+
+**Naming Convention**:
+
+- Implementation plans: `{EPIC-ID}-{epic-name}-implementation-plans.md`
+- Verification reports: `{EPIC-ID}-{epic-name}-verification-report.md`
+- Review reports: `{EPIC-ID}-{epic-name}-review-report.md`
+
+**Key Documents**:
 
 - `PROJECT_EPICS_AND_ACTIVITIES.md` - Epic definitions and activity breakdowns
 - `GITHUB_ISSUES_SETUP.md` - GitHub issues setup and tracking
-- `WCAG_2.2_IMPLEMENTATION_PLAN.md` - WCAG 2.2 compliance implementation plan
-- `WCAG_2.2_UPDATE_PLAN.md` - WCAG 2.2 update planning
-- `EPIC_13_GITHUB_ISSUE.md` - Epic 13 GitHub issue details
+- `6.Implementation/plans/E13-wcag-2-2-compliance-update-implementation-plans.md` - WCAG 2.2 compliance implementation plan
+- `6.Implementation/plans/E13-wcag-2-2-compliance-update-plan.md` - WCAG 2.2 update planning
 - `Bug_Fixer_*.md` - Bug fixing agent reports and reviews
+
+See [Implementation Documentation](6.Implementation/README.md) for details.
 
 ## Working With the Documentation
 

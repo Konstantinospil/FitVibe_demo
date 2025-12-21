@@ -75,5 +75,12 @@ Ensures FitVibe remains compliant with the latest accessibility standards, impro
 
 ---
 
+## Implementation Documents
+
+- [Implementation Plans](../../6.Implementation/plans/E13-wcag-2-2-compliance-update-implementation-plans.md)
+- [Update Plan](../../6.Implementation/plans/E13-wcag-2-2-compliance-update-plan.md)
+
+---
+
 **Last Updated**: 2025-01-21  
 **Next Review**: 2025-02-21

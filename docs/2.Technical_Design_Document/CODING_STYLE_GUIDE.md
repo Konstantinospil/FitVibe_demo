@@ -1903,6 +1903,296 @@ logger.info(
 
 ---
 
+## Database Encryption Implementation Plan
+
+### Overview
+
+This section provides implementation guidance for database encryption (in transit and at rest) as defined in [ADR-023](../2.f.Architectural_Decision_Documentation/ADR-023-database-encryption.md) and [E20](../1.Product_Requirements/b.Epics/E20-database-encryption.md).
+
+### Encryption in Transit
+
+#### Configuration Pattern
+
+```typescript
+// ✅ Good: Environment-specific SSL configuration
+import * as dotenv from "dotenv";
+
+dotenv.config();
+
+export const DB_CONFIG = {
+  host: process.env.PGHOST ?? "localhost",
+  port: Number(process.env.PGPORT ?? 5432),
+  database: process.env.PGDATABASE ?? "fitvibe",
+  user: process.env.PGUSER ?? "fitvibe",
+  password: process.env.PGPASSWORD ?? "fitvibe",
+  // Secure SSL configuration
+  ssl:
+    process.env.NODE_ENV === "production"
+      ? {
+          rejectUnauthorized: true, // Verify certificates in production
+          ca: process.env.PGSSL_CA, // CA certificate path (optional)
+          cert: process.env.PGSSL_CERT, // Client certificate (optional, for mutual TLS)
+          key: process.env.PGSSL_KEY, // Client key (optional, for mutual TLS)
+        }
+      : process.env.PGSSL === "true"
+        ? { rejectUnauthorized: false } // Dev/staging can use self-signed
+        : undefined,
+} as const;
+```
+
+#### Environment Variables
+
+```bash
+# Production (required)
+PGSSL=true
+PGSSLMODE=require  # or verify-full for stricter verification
+NODE_ENV=production
+
+# Optional (for custom certificates)
+PGSSL_CA=/path/to/ca-cert.pem
+PGSSL_CERT=/path/to/client-cert.pem
+PGSSL_KEY=/path/to/client-key.pem
+
+# Development (optional, allows self-signed certificates)
+PGSSL=true  # Enables SSL but allows self-signed
+```
+
+#### Knex Configuration
+
+```typescript
+// ✅ Good: Knex SSL configuration
+const config: { [key: string]: Knex.Config } = {
+  development: {
+    ...shared,
+    connection: {
+      host: process.env.PGHOST || "localhost",
+      port: parseInt(process.env.PGPORT || "5432", 10),
+      database: process.env.PGDATABASE || "fitvibe",
+      user: process.env.PGUSER || "fitvibe",
+      password: process.env.PGPASSWORD || "fitvibe",
+      // SSL optional in development
+      ssl: process.env.PGSSL === "true" ? { rejectUnauthorized: false } : undefined,
+    },
+  },
+  production: {
+    ...shared,
+    connection: {
+      host: process.env.PGHOST,
+      port: parseInt(process.env.PGPORT || "5432", 10),
+      database: process.env.PGDATABASE,
+      user: process.env.PGUSER,
+      password: process.env.PGPASSWORD,
+      // SSL required in production
+      ssl: {
+        rejectUnauthorized: true,
+        ca: process.env.PGSSL_CA,
+        cert: process.env.PGSSL_CERT,
+        key: process.env.PGSSL_KEY,
+      },
+    },
+  },
+};
+```
+
+#### Error Handling
+
+```typescript
+// ✅ Good: SSL connection error handling
+import { logger } from "../config/logger.js";
+
+try {
+  await db.raw("SELECT 1");
+  logger.info("Database SSL connection established");
+} catch (error) {
+  if (error instanceof Error && error.message.includes("SSL")) {
+    logger.error(
+      { error: error.message, sslConfig: !!DB_CONFIG.ssl },
+      "Database SSL connection failed",
+    );
+    // Alert monitoring system
+  }
+  throw error;
+}
+```
+
+### Encryption at Rest
+
+#### Docker Configuration
+
+```yaml
+# ✅ Good: Encrypted volume in Docker Compose
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: fitvibe
+      POSTGRES_PASSWORD: fitvibe
+      POSTGRES_DB: fitvibe
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    # Note: Volume encryption depends on Docker host configuration
+    # For cloud providers, use encrypted EBS/disk volumes
+
+volumes:
+  db_data:
+    driver: local
+    # Encryption handled at infrastructure level
+```
+
+#### Kubernetes Configuration
+
+```yaml
+# ✅ Good: Encrypted PersistentVolume in Kubernetes
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: postgres-data
+  namespace: fitvibe
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 50Gi
+  storageClassName: encrypted-ssd # Use encrypted storage class
+---
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: encrypted-ssd
+provisioner: kubernetes.io/gce-pd # or aws-ebs, etc.
+parameters:
+  type: pd-ssd
+  encrypted: "true" # Enable encryption
+```
+
+#### Backup Encryption
+
+```typescript
+// ✅ Good: Encrypted backup script
+import { exec } from "node:child_process";
+import { promisify } from "node:util";
+import { createWriteStream } from "node:fs";
+import { pipeline } from "node:stream/promises";
+import { createGzip } from "node:zlib";
+import { createCipheriv, randomBytes } from "node:crypto";
+
+const execAsync = promisify(exec);
+
+export async function createEncryptedBackup(
+  dbConfig: DatabaseConfig,
+  outputPath: string,
+  encryptionKey: string,
+): Promise<void> {
+  const iv = randomBytes(16);
+  const cipher = createCipheriv("aes-256-gcm", Buffer.from(encryptionKey, "hex"), iv);
+
+  // Create pg_dump process
+  const pgDump = exec(
+    `PGPASSWORD=${dbConfig.password} pg_dump -h ${dbConfig.host} -U ${dbConfig.user} -d ${dbConfig.database} -F c`,
+  );
+
+  // Pipe through compression and encryption
+  await pipeline(pgDump.stdout!, createGzip(), cipher, createWriteStream(outputPath));
+
+  // Save IV separately (required for decryption)
+  await writeFile(`${outputPath}.iv`, iv);
+}
+```
+
+### Testing SSL Configuration
+
+```typescript
+// ✅ Good: SSL configuration test
+import { describe, it, expect, beforeEach } from "@jest/globals";
+import { db } from "../db/index.js";
+
+describe("Database SSL Configuration", () => {
+  it("should use SSL in production", async () => {
+    if (process.env.NODE_ENV === "production") {
+      // Verify SSL is enabled
+      const result = await db.raw("SHOW ssl");
+      expect(result.rows[0].ssl).toBe("on");
+
+      // Verify certificate verification is enabled
+      // This would require checking connection parameters
+    }
+  });
+
+  it("should handle SSL connection failures gracefully", async () => {
+    // Test with invalid certificate
+    const invalidConfig = {
+      ...DB_CONFIG,
+      ssl: { rejectUnauthorized: true, ca: "invalid" },
+    };
+
+    await expect(connectWithConfig(invalidConfig)).rejects.toThrow();
+  });
+});
+```
+
+### Performance Monitoring
+
+```typescript
+// ✅ Good: Performance monitoring for encryption overhead
+import { performance } from "node:perf_hooks";
+import { logger } from "../config/logger.js";
+
+export async function benchmarkEncryptionOverhead(): Promise<void> {
+  const iterations = 1000;
+  const start = performance.now();
+
+  for (let i = 0; i < iterations; i++) {
+    await db.raw("SELECT 1");
+  }
+
+  const duration = performance.now() - start;
+  const avgLatency = duration / iterations;
+
+  logger.info(
+    {
+      avgLatency,
+      iterations,
+      totalDuration: duration,
+    },
+    "Database query performance benchmark",
+  );
+
+  // Alert if overhead > 5%
+  const baseline = 10; // ms (example baseline)
+  const overhead = ((avgLatency - baseline) / baseline) * 100;
+
+  if (overhead > 5) {
+    logger.warn({ overhead, avgLatency, baseline }, "Encryption overhead exceeds 5% threshold");
+  }
+}
+```
+
+### Implementation Checklist
+
+- [ ] Update `apps/backend/src/db/db.config.ts` with SSL configuration
+- [ ] Update `apps/backend/src/db/knexfile.ts` with environment-specific SSL
+- [ ] Configure PostgreSQL server to accept SSL connections
+- [ ] Generate or obtain SSL certificates (CA, server cert, server key)
+- [ ] Update Docker Compose with encrypted volumes (or use encrypted EBS/disk)
+- [ ] Update Kubernetes PersistentVolume with encrypted storage class
+- [ ] Implement backup encryption in backup scripts
+- [ ] Add environment variables for SSL configuration
+- [ ] Write integration tests for SSL connections
+- [ ] Document SSL setup in deployment guides
+- [ ] Benchmark performance before and after encryption
+- [ ] Configure monitoring for SSL connection failures
+- [ ] Update KEY_MANAGEMENT_POLICY.md with encryption key rotation procedures
+
+### Related Documentation
+
+- [ADR-023: Database Encryption](../2.f.Architectural_Decision_Documentation/ADR-023-database-encryption.md)
+- [E20: Database Encryption Epic](../1.Product_Requirements/b.Epics/E20-database-encryption.md)
+- [NFR-008: Database Encryption](../1.Product_Requirements/a.Requirements/NFR-008-database-encryption.md)
+- [KEY_MANAGEMENT_POLICY.md](../../5.Policies/5.a.Ops/KEY_MANAGEMENT_POLICY.md)
+
+---
+
 ## Additional Resources
 
 - [TypeScript Handbook](https://www.typescriptlang.org/docs/handbook/intro.html)

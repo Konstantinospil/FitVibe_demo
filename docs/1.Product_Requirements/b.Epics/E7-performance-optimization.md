@@ -76,5 +76,12 @@ Performance directly impacts user satisfaction and retention. Fast, responsive a
 
 ---
 
+## Implementation Documents
+
+- [Server-Side Rendering Implementation Plans](../../6.Implementation/plans/E7-server-side-rendering-implementation-plans.md)
+- [Lighthouse Optimization Report](../../6.Implementation/reports/E7-performance-optimization-lighthouse-report.md)
+
+---
+
 **Last Updated**: 2025-01-21  
 **Next Review**: 2025-02-21

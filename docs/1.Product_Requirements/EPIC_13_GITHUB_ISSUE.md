@@ -118,7 +118,7 @@ Update FitVibe's accessibility compliance from WCAG 2.1 AA to WCAG 2.2 AA by imp
 - [WCAG 2.2 Release Notes](https://www.w3.org/WAI/standards-guidelines/wcag/new-in-22/)
 - [WCAG 2.2 Success Criteria](https://www.w3.org/WAI/WCAG22/quickref/)
 - Epic documentation: `docs/PROJECT_EPICS_AND_ACTIVITIES.md`
-- Implementation plan: `docs/3.Sensory_Design_System/WCAG_2.2_IMPLEMENTATION_PLAN.md`
+- Implementation plan: `docs/6.Implementation/plans/E13-wcag-2-2-compliance-update-implementation-plans.md`
 
 ## Current Status
 

@@ -53,5 +53,11 @@ Increases user engagement and retention by providing rewards and recognition for
 
 ---
 
+## Implementation Documents
+
+- [Rating System Implementation Plans](../../6.Implementation/plans/E14-gamification-rating-system-implementation-plans.md)
+
+---
+
 **Last Updated**: 2025-01-21  
 **Next Review**: 2025-02-21
