@@ -4,20 +4,48 @@ This directory contains utility scripts used for development, maintenance, and q
 
 ## Scripts Overview
 
-| Script                      | Purpose                                                                          | Usage                                                                        |
-| --------------------------- | -------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
-| `git-push-branch.sh`        | Pushes commits to specified branch based on commit message                       | `./scripts/git-push-branch.sh`                                               |
-| `git-commit-and-push.sh`    | Commits and pushes to specified branch in one command                            | `./scripts/git-commit-and-push.sh "msg" dev`                                 |
-| `dependency-audit.sh`       | Audits dependencies for known vulnerabilities                                    | `./scripts/dependency-audit.sh`                                              |
-| `gdpr-compliance-check.sh`  | Validates GDPR compliance requirements                                           | `./scripts/gdpr-compliance-check.sh`                                         |
-| `generate_requirements.py`  | Generates requirement documents from structured data                             | `python scripts/generate_requirements.py`                                    |
-| `organize_requirements.py`  | Organizes requirement documents by implementation status                         | `python scripts/organize_requirements.py`                                    |
-| `project_planning_agent.py` | Automatically generates epics, stories, ACs, and GitHub issues from requirements | `python scripts/project_planning_agent.py --mode <mode> --git-token <token>` |
-| `generate_github_issues.py` | Generates GitHub issue files from user stories                                   | `python scripts/generate_github_issues.py`                                   |
-| `upload_missing_issues.py`  | Uploads only missing GitHub issues                                               | `python scripts/upload_missing_issues.py`                                    |
-| `verify_github_issues.py`   | Verifies which GitHub issues have been created                                   | `python scripts/verify_github_issues.py`                                     |
-| `secrets-scan.sh`           | Scans the codebase for potential secrets and credentials                         | `./scripts/secrets-scan.sh`                                                  |
-| `security-scan.sh`          | Runs comprehensive security scans                                                | `./scripts/security-scan.sh`                                                 |
+| Script                               | Purpose                                                                          | Usage                                                                        |
+| ------------------------------------ | -------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| **Git Management**                   |                                                                                  |                                                                              |
+| `git-push-branch.sh`                 | Pushes commits to specified branch based on commit message                       | `./scripts/git-push-branch.sh`                                               |
+| `git-commit-and-push.sh`             | Commits and pushes to specified branch in one command                            | `./scripts/git-commit-and-push.sh "msg" dev`                                 |
+| **Security & Compliance**            |                                                                                  |                                                                              |
+| `dependency-audit.sh`                | Audits dependencies for known vulnerabilities                                    | `./scripts/dependency-audit.sh`                                              |
+| `gdpr-compliance-check.sh`           | Validates GDPR compliance requirements                                           | `./scripts/gdpr-compliance-check.sh`                                         |
+| `secrets-scan.sh`                    | Scans the codebase for potential secrets and credentials                         | `./scripts/secrets-scan.sh`                                                  |
+| `security-scan.sh`                   | Runs comprehensive security scans                                                | `./scripts/security-scan.sh`                                                 |
+| **Requirements Management**          |                                                                                  |                                                                              |
+| `generate_requirements.py`           | Generates requirement documents from structured data                             | `python scripts/generate_requirements.py`                                    |
+| `organize_requirements.py`           | Organizes requirement documents by implementation status                         | `python scripts/organize_requirements.py`                                    |
+| `project_planning_agent.py`          | Automatically generates epics, stories, ACs, and GitHub issues from requirements | `python scripts/project_planning_agent.py --mode <mode> --git-token <token>` |
+| `requirements_to_issues_pipeline.py` | Complete pipeline from requirements to GitHub issues                             | `python scripts/requirements_to_issues_pipeline.py --git-token <token>`      |
+| `generate_acceptance_criteria.py`    | Generates acceptance criteria from requirements                                  | `python scripts/generate_acceptance_criteria.py`                             |
+| `update_ac_master.py`                | Updates AC_Master.md with all acceptance criteria                                | `python scripts/update_ac_master.py`                                         |
+| `update_user_stories_with_ac.py`     | Updates USER_STORIES.md with acceptance criteria                                 | `python scripts/update_user_stories_with_ac.py`                              |
+| `update_requirement_docs_with_ac.py` | Updates requirement documents with acceptance criteria                           | `python scripts/update_requirement_docs_with_ac.py`                          |
+| **GitHub Issues Management**         |                                                                                  |                                                                              |
+| `generate_github_issues.py`          | Generates GitHub issue files from user stories                                   | `python scripts/generate_github_issues.py`                                   |
+| `upload_missing_issues.py`           | Uploads only missing GitHub issues                                               | `python scripts/upload_missing_issues.py`                                    |
+| `verify_github_issues.py`            | Verifies which GitHub issues have been created                                   | `python scripts/verify_github_issues.py`                                     |
+| `update_issues_with_ac.py`           | Updates GitHub issues with acceptance criteria                                   | `python scripts/update_issues_with_ac.py`                                    |
+| `update_issue_statuses.py`           | Updates issue statuses based on implementation                                   | `python scripts/update_issue_statuses.py`                                    |
+| `create_issues_via_api.py`           | Creates GitHub issues via API                                                    | `python scripts/create_issues_via_api.py`                                    |
+| `create_issues.sh`                   | Creates GitHub issues via GitHub CLI                                             | `./scripts/create_issues.sh`                                                 |
+| **Code Quality & Maintenance**       |                                                                                  |                                                                              |
+| `fix-all-test-imports.mjs`           | Fixes import paths in test files                                                 | `node scripts/fix-all-test-imports.mjs`                                      |
+| `add_return_types.py`                | Adds explicit return types to functions                                          | `python scripts/add_return_types.py`                                         |
+| `fix_controller_returns.py`          | Fixes return statements in controllers                                           | `python scripts/fix_controller_returns.py`                                   |
+| `check_story_implementation.py`      | Checks implementation status of user stories                                     | `python scripts/check_story_implementation.py`                               |
+| `check_cursor_rules_compliance.py`   | Checks compliance with Cursor rules                                              | `python scripts/check_cursor_rules_compliance.py`                            |
+| `analyze_cursor_chats.py`            | Analyzes Cursor chat history                                                     | `python scripts/analyze_cursor_chats.py`                                     |
+| `analyze-coverage.mjs`               | Analyzes test coverage                                                           | `node scripts/analyze-coverage.mjs`                                          |
+| `cleanup-visual-artifacts.mjs`       | Cleans up visual test artifacts                                                  | `node scripts/cleanup-visual-artifacts.mjs`                                  |
+| **Testing & Validation**             |                                                                                  |                                                                              |
+| `check-frontend.sh`                  | Checks frontend code quality                                                     | `./scripts/check-frontend.sh`                                                |
+| `run-integration-tests.sh`           | Runs integration tests                                                           | `./scripts/run-integration-tests.sh`                                         |
+| `run-integration-tests.bat`          | Runs integration tests (Windows)                                                 | `.\scripts\run-integration-tests.bat`                                        |
+| `run-local.sh`                       | Runs local development environment                                               | `./scripts/run-local.sh`                                                     |
+| `validate_setup.py`                  | Validates development environment setup                                          | `python scripts/validate_setup.py`                                           |
 
 ## Prerequisites
 
@@ -253,6 +281,170 @@ Runs multiple security checks including:
 - Secrets detection
 - Code security analysis
 - Configuration security review
+
+### Code Quality & Maintenance
+
+#### Fix Test Imports
+
+```bash
+node scripts/fix-all-test-imports.mjs
+```
+
+Fixes import paths in test files after moving tests to `tests/backend/` directory. Updates relative imports to point to `apps/backend/src/`.
+
+#### Add Return Types
+
+```bash
+python scripts/add_return_types.py
+```
+
+Adds explicit return types to functions missing them. Focuses on service and repository functions.
+
+#### Fix Controller Returns
+
+```bash
+python scripts/fix_controller_returns.py
+```
+
+Fixes return statements in controller files to comply with `Promise<void>` return type. Changes `return res.status().json()` to `res.status().json(); return;`.
+
+#### Check Story Implementation
+
+```bash
+python scripts/check_story_implementation.py
+```
+
+Checks implementation status of user stories by analyzing the codebase. Verifies if backend/frontend code exists for each story.
+
+#### Check Cursor Rules Compliance
+
+```bash
+python scripts/check_cursor_rules_compliance.py
+```
+
+Validates that code follows Cursor rules and coding standards defined in `.cursorrules`.
+
+#### Analyze Cursor Chats
+
+```bash
+python scripts/analyze_cursor_chats.py [--chat-dir <path>] [--output <output.md>]
+```
+
+Analyzes Cursor chat history to identify patterns and improve `.cursorrules`. Generates insights about common issues and solutions.
+
+#### Analyze Coverage
+
+```bash
+node scripts/analyze-coverage.mjs
+```
+
+Analyzes test coverage reports and generates summaries.
+
+#### Cleanup Visual Artifacts
+
+```bash
+node scripts/cleanup-visual-artifacts.mjs
+```
+
+Cleans up visual test artifacts and snapshots.
+
+### Testing & Validation
+
+#### Check Frontend
+
+```bash
+./scripts/check-frontend.sh
+```
+
+Runs frontend code quality checks including linting, type checking, and tests.
+
+#### Run Integration Tests
+
+```bash
+# Unix/Linux/Mac
+./scripts/run-integration-tests.sh
+
+# Windows
+.\scripts\run-integration-tests.bat
+```
+
+Runs integration tests for the entire application.
+
+#### Run Local Environment
+
+```bash
+./scripts/run-local.sh
+```
+
+Sets up and runs the local development environment with all required services.
+
+#### Validate Setup
+
+```bash
+python scripts/validate_setup.py
+```
+
+Validates that the development environment is properly configured with all required dependencies and services.
+
+### Acceptance Criteria Management
+
+#### Update AC Master
+
+```bash
+python scripts/update_ac_master.py
+```
+
+Updates `AC_Master.md` with all acceptance criteria from user stories.
+
+#### Update User Stories with AC
+
+```bash
+python scripts/update_user_stories_with_ac.py
+```
+
+Updates `USER_STORIES.md` with acceptance criteria from `AC_ALL_STORIES.md`.
+
+#### Update Requirement Docs with AC
+
+```bash
+python scripts/update_requirement_docs_with_ac.py
+```
+
+Updates requirement documents with acceptance criteria.
+
+#### Update Issues with AC
+
+```bash
+python scripts/update_issues_with_ac.py
+```
+
+Updates GitHub issues with acceptance criteria from user stories.
+
+#### Update Issue Statuses
+
+```bash
+python scripts/update_issue_statuses.py
+```
+
+Updates GitHub issue statuses based on implementation progress.
+
+### GitHub Issues
+
+#### Create Issues via API
+
+```bash
+python scripts/create_issues_via_api.py
+```
+
+Creates GitHub issues using the GitHub API.
+
+#### Create Issues via CLI
+
+```bash
+./scripts/create_issues.sh
+```
+
+Creates GitHub issues using GitHub CLI (`gh`).
 
 ## Output Locations
 
