@@ -22,13 +22,9 @@ spec:
         runAsNonRoot: true
         runAsUser: 999
         fsGroup: 999
-        allowPrivilegeEscalation: false
-        capabilities:
-          drop:
-            - ALL
       containers:
         - name: postgres
-          image: postgres:15-alpine
+          image: postgres:16-alpine
           imagePullPolicy: IfNotPresent
           securityContext:
             allowPrivilegeEscalation: false
@@ -91,7 +87,13 @@ spec:
         resources:
           requests:
             storage: 50Gi
-        storageClassName: standard
+        # Use encrypted storage class for encryption at rest
+        # For AWS EKS: Use storage class with encryption enabled
+        # For GCP GKE: Use storage class with encryption enabled
+        # For Azure AKS: Use storage class with encryption enabled
+        # For Docker Desktop: Use hostpath (default) storage class
+        # Example: storageClassName: encrypted-ssd
+        storageClassName: hostpath
 ---
 apiVersion: v1
 kind: Service

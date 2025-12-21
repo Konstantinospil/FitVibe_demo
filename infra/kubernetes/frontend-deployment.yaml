@@ -26,14 +26,10 @@ spec:
         runAsNonRoot: true
         runAsUser: 65534
         fsGroup: 65534
-        allowPrivilegeEscalation: false
-        capabilities:
-          drop:
-            - ALL
       containers:
         - name: frontend
           image: ghcr.io/konstantinospil/fitvibe-frontend:latest
-          imagePullPolicy: Always
+          imagePullPolicy: Never
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: false

@@ -26,7 +26,14 @@ services:
       POSTGRES_PASSWORD: fitvibe
       POSTGRES_DB: fitvibe
     volumes:
+      # Note: Volume encryption depends on Docker host configuration
+      # For cloud providers, use encrypted EBS/disk volumes
+      # For local development, encryption can be enabled via Docker volume drivers
       - db_data:/var/lib/postgresql/data
 
 volumes:
   db_data:
+    # Encryption is handled at the infrastructure level
+    # For AWS: Use encrypted EBS volumes
+    # For GCP: Use encrypted persistent disks
+    # For Azure: Use encrypted managed disks

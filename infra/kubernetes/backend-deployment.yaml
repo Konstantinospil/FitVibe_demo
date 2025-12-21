@@ -30,14 +30,10 @@ spec:
         runAsNonRoot: true
         runAsUser: 1000
         fsGroup: 1000
-        allowPrivilegeEscalation: false
-        capabilities:
-          drop:
-            - ALL
       containers:
         - name: backend
           image: ghcr.io/konstantinospil/fitvibe-backend:latest
-          imagePullPolicy: Always
+          imagePullPolicy: Never
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: false
@@ -58,6 +54,23 @@ spec:
                 secretKeyRef:
                   name: fitvibe-secrets
                   key: database-url
+            - name: REDIS_ENABLED
+              value: "true"
+            - name: REDIS_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: fitvibe-config
+                  key: redis-host
+            - name: REDIS_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: fitvibe-config
+                  key: redis-port
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: fitvibe-secrets
+                  key: redis-password
             - name: REDIS_URL
               valueFrom:
                 secretKeyRef:
@@ -78,6 +91,37 @@ spec:
               value: "true"
             - name: LOG_LEVEL
               value: "info"
+            - name: EMAIL_ENABLED
+              value: "true"
+            - name: SMTP_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: fitvibe-secrets
+                  key: smtp-host
+            - name: SMTP_PORT
+              valueFrom:
+                secretKeyRef:
+                  name: fitvibe-secrets
+                  key: smtp-port
+            - name: SMTP_USER
+              valueFrom:
+                secretKeyRef:
+                  name: fitvibe-secrets
+                  key: smtp-user
+            - name: SMTP_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: fitvibe-secrets
+                  key: smtp-password
+            - name: SMTP_FROM_EMAIL
+              valueFrom:
+                secretKeyRef:
+                  name: fitvibe-secrets
+                  key: smtp-from-email
+            - name: SMTP_FROM_NAME
+              value: "FitVibe"
+            - name: SMTP_SECURE
+              value: "false"
           volumeMounts:
             - name: jwt-keys
               mountPath: /app/secrets
@@ -110,9 +154,9 @@ spec:
           secret:
             secretName: jwt-keys
             items:
-              - key: private-key
+              - key: jwt_private.pem
                 path: jwt_private.pem
-              - key: public-key
+              - key: jwt_public.pem
                 path: jwt_public.pem
       imagePullSecrets:
         - name: ghcr-secret

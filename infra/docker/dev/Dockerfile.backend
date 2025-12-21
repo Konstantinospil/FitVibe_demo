@@ -14,41 +14,42 @@ RUN pnpm fetch --prod=false
 
 COPY . .
 
-RUN pnpm install --frozen-lockfile --prod=false --offline
+RUN pnpm install --frozen-lockfile --prod=false --offline || \
+    pnpm install --prod=false
 RUN pnpm --filter @fitvibe/backend run build
 RUN pnpm deploy --filter @fitvibe/backend --prod /app/backend-deploy
 
 FROM node:20-alpine AS runtime
 WORKDIR /app
 
-# Copy deployed backend
-COPY --from=builder /app/backend-deploy/ ./
+# Copy built backend dist files
+COPY --from=builder /app/apps/backend/dist ./dist
 
-# Override package.json with backend's version (which has type: commonjs)
+# Copy SQL files needed for migrations (types, functions, triggers, views, schema)
+COPY --from=builder /app/apps/backend/src/db/types ./dist/db/types
+COPY --from=builder /app/apps/backend/src/db/functions ./dist/db/functions
+COPY --from=builder /app/apps/backend/src/db/triggers ./dist/db/triggers
+COPY --from=builder /app/apps/backend/src/db/views ./dist/db/views
+COPY --from=builder /app/apps/backend/src/db/schema ./dist/db/schema
+
+# Copy package.json and workspace files needed for pnpm
 COPY --from=builder /app/apps/backend/package.json ./package.json
-
-# Copy workspace files needed for pnpm to resolve the glob override
 COPY --from=builder /app/pnpm-workspace.yaml ./pnpm-workspace.yaml
 COPY --from=builder /app/pnpm-lock.yaml ./pnpm-lock.yaml
-COPY --from=builder /app/packages/patched-glob ./packages/patched-glob
 
-# Install production dependencies to ensure workspace overrides are resolved
-# This will install minimatch and other dependencies needed by patched-glob
+# Copy packages needed (patched-glob for workspace override)
+COPY --from=builder /app/packages/patched-glob ./packages/patched-glob
+COPY --from=builder /app/packages/patched-glob/package.json ./packages/patched-glob/package.json
+
+# Install production dependencies using pnpm (maintains proper module resolution)
+# This approach preserves pnpm's structure so all dependencies resolve correctly
 RUN corepack enable && corepack prepare pnpm@9.0.0 --activate && \
-    # Install minimatch first (required by patched-glob)
-    pnpm add minimatch@^9.0.4 --prod --frozen-lockfile || \
-    npm install minimatch@^9.0.4 --save-prod || true && \
-    # Install all production dependencies
-    pnpm install --prod --frozen-lockfile --offline --no-optional || \
-    pnpm install --prod --frozen-lockfile --no-optional || true && \
-    # Ensure glob resolves to patched-glob by creating symlink if needed
-    if [ ! -L node_modules/glob ] && [ -d packages/patched-glob ]; then \
+    pnpm install --prod --frozen-lockfile --offline || \
+    pnpm install --prod --no-frozen-lockfile || true && \
+    # Ensure glob resolves to patched-glob if it exists
+    if [ -d packages/patched-glob ] && [ -d node_modules/glob ] && [ ! -L node_modules/glob ]; then \
+      rm -rf node_modules/glob && \
       ln -sf ../packages/patched-glob node_modules/glob; \
-    fi && \
-    # Verify minimatch is available (final check)
-    if [ ! -d node_modules/minimatch ]; then \
-      echo "Warning: minimatch not found, installing..." && \
-      npm install minimatch@^9.0.4 --save-prod || true; \
     fi
 
 RUN addgroup -S nodeapp && adduser -S nodeapp -G nodeapp

@@ -1,0 +1,20 @@
+FROM nginx:stable-alpine
+
+# Install su-exec for user switching
+RUN apk add --no-cache su-exec
+
+# Create necessary directories
+RUN mkdir -p /tmp/nginx \
+         /var/cache/nginx/client_temp \
+         /var/cache/nginx/proxy_temp \
+         /var/cache/nginx/fastcgi_temp \
+         /var/cache/nginx/uwsgi_temp \
+         /var/cache/nginx/scgi_temp
+
+# Copy entrypoint script
+COPY nginx-entrypoint.sh /usr/local/bin/nginx-entrypoint.sh
+RUN chmod +x /usr/local/bin/nginx-entrypoint.sh
+
+ENTRYPOINT ["/usr/local/bin/nginx-entrypoint.sh"]
+
+

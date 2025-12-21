@@ -18,7 +18,7 @@ services:
       context: ../../..
       dockerfile: infra/docker/dev/Dockerfile.backend
     container_name: fitvibe_backend
-    env_file: ../../.env.example
+    env_file: ../../.env
     security_opt:
       - no-new-privileges:true
     depends_on:
@@ -27,8 +27,8 @@ services:
       - "4000:4000"
     volumes:
       - ../keys:/app/keys:ro
-      - ../../apps/backend/src:/app/apps/backend/src:ro
-      - ../../packages:/app/packages:ro
+      - ../../../apps/backend/src:/app/apps/backend/src:ro
+      - ../../../packages:/app/packages:ro
     networks:
       default:
         aliases:
@@ -47,11 +47,12 @@ services:
       - "5173:80"
 
   nginx:
-    image: nginx:stable-alpine
+    build:
+      context: .
+      dockerfile: Dockerfile.nginx
     container_name: fitvibe_nginx
     security_opt:
       - no-new-privileges:true
-    user: "65534:65534" # nobody user
     ports:
       - "80:80"
     volumes:
@@ -59,6 +60,23 @@ services:
     depends_on:
       - frontend
       - backend
+
+  clamav:
+    image: clamav/clamav:latest
+    container_name: fitvibe_clamav
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    ports:
+      - "3310:3310"
+    environment:
+      - CLAMD_STARTUP_TIMEOUT=120
+      - FRESHCLAM_CHECKS=0
+    healthcheck:
+      test: ["CMD-SHELL", "clamdscan --version >/dev/null 2>&1"]
+      interval: 10s
+      timeout: 2s
+      retries: 12
 
 volumes:
   db_data:

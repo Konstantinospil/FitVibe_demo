@@ -24,15 +24,55 @@ This directory contains Kubernetes manifests for deploying FitVibe to a Kubernet
 
 ## Quick Start
 
-### 1. Create Namespace
+### Automated Setup (Recommended)
+
+Use the provided setup script for automated deployment:
+
+```bash
+cd infra/kubernetes
+
+# 1. Generate secrets (creates secrets.yaml with secure random values)
+./generate-secrets.sh
+
+# 2. Review and edit secrets.yaml if needed (especially SMTP settings)
+
+# 3. Run the setup script (deploys everything in the correct order)
+./setup.sh
+```
+
+The setup script will:
+
+- Create namespace
+- Create storage class
+- Create secrets (from secrets.yaml)
+- Create ConfigMap
+- Deploy PostgreSQL
+- Optionally deploy Redis (recommended for production)
+- Deploy Backend
+- Deploy Frontend
+- Create Ingress
+
+### Manual Setup
+
+If you prefer manual setup:
+
+#### 1. Create Namespace
 
 ```bash
 kubectl apply -f infra/kubernetes/namespace.yaml
 ```
 
-### 2. Create Secrets
+#### 2. Create Secrets
 
-Copy the secrets template and fill in values:
+**Option A: Use the generator script (recommended):**
+
+```bash
+cd infra/kubernetes
+./generate-secrets.sh
+kubectl apply -f secrets.yaml
+```
+
+**Option B: Manual creation:**
 
 ```bash
 cp infra/kubernetes/secrets-template.yaml infra/kubernetes/secrets.yaml
@@ -42,17 +82,26 @@ kubectl apply -f infra/kubernetes/secrets.yaml
 
 **Important**: Never commit `secrets.yaml` to the repository. Use a secrets management system in production.
 
-### 3. Create ConfigMap
+#### 3. Create Storage Class
+
+```bash
+kubectl apply -f infra/kubernetes/storage-class-encrypted.yaml
+```
+
+#### 4. Create ConfigMap
 
 ```bash
 kubectl apply -f infra/kubernetes/configmap.yaml
 ```
 
-### 4. Deploy Services
+#### 5. Deploy Services
 
 ```bash
 # Database (for development/staging)
 kubectl apply -f infra/kubernetes/postgres-deployment.yaml
+
+# Redis (optional but recommended - see Redis section below)
+kubectl apply -f infra/kubernetes/redis-deployment.yaml
 
 # Backend
 kubectl apply -f infra/kubernetes/backend-deployment.yaml
@@ -63,6 +112,29 @@ kubectl apply -f infra/kubernetes/frontend-deployment.yaml
 # Ingress
 kubectl apply -f infra/kubernetes/ingress.yaml
 ```
+
+## Redis Setup
+
+**Is Redis required?** No, Redis is **optional** but **highly recommended** for production.
+
+- **Without Redis**: Backend uses in-memory cache and in-memory queues. This works fine for development and small deployments, but:
+  - Cache is not shared between backend replicas
+  - Background jobs are lost on pod restart
+  - No distributed caching benefits
+
+- **With Redis**:
+  - Distributed caching across all backend replicas
+  - Persistent background job queues (BullMQ)
+  - Better performance and scalability
+  - Required for multi-replica deployments
+
+**To enable Redis:**
+
+1. Deploy Redis: `kubectl apply -f redis-deployment.yaml`
+2. Set `REDIS_ENABLED=true` in your backend environment (or ConfigMap)
+3. Backend will automatically connect to Redis at `redis:6379`
+
+The backend gracefully falls back to in-memory if Redis is unavailable.
 
 ## Configuration
 
