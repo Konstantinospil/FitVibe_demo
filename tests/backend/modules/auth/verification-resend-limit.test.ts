@@ -16,7 +16,7 @@ import type { AuthUserRecord } from "../../../../apps/backend/src/modules/auth/a
 jest.mock("../../../../apps/backend/src/modules/auth/auth.repository");
 jest.mock("bcryptjs");
 jest.mock("../../../../apps/backend/src/services/mailer.service.js");
-jest.mock("../../../../apps/backend/src/users/dsr.service.js", () => ({
+jest.mock("../../../../apps/backend/src/modules/users/dsr.service.js", () => ({
   processDueAccountDeletions: jest.fn<() => Promise<number>>().mockResolvedValue(0),
 }));
 jest.mock("../../../../apps/backend/src/db/connection.js", () => {
