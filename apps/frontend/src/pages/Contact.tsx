@@ -1,16 +1,20 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useTranslation } from "react-i18next";
+import { useNavigate } from "react-router-dom";
+import { Home } from "lucide-react";
 import { useAuthStore } from "../store/auth.store";
 import PageIntro from "../components/PageIntro";
-import { Card, CardContent } from "../components/ui";
+import { Card, CardContent, Button } from "../components/ui";
 import { rawHttpClient, type SubmitContactResponse } from "../services/api";
 import { useToast } from "../contexts/ToastContext";
 import { useRequiredFieldValidation } from "../hooks/useRequiredFieldValidation";
 
 const Contact: React.FC = () => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const toast = useToast();
   const user = useAuthStore((state) => state.user);
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const formRef = useRef<HTMLFormElement>(null);
   useRequiredFieldValidation(formRef, t);
 
@@ -212,6 +216,20 @@ const Contact: React.FC = () => {
     >
       <Card className="contact-form-container">
         <CardContent className="contact-form-content" style={contentStyle}>
+          <div style={{ marginBottom: "1.5rem" }}>
+            <Button
+              variant="secondary"
+              size="sm"
+              leftIcon={<Home size={16} />}
+              onClick={() => {
+                void navigate(isAuthenticated ? "/" : "/login");
+              }}
+            >
+              {isAuthenticated
+                ? t("navigation.home", { defaultValue: "Home" })
+                : t("auth.login.title", { defaultValue: "Login" })}
+            </Button>
+          </div>
           <form
             ref={formRef}
             onSubmit={(e) => {

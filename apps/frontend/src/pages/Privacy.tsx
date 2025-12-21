@@ -1,7 +1,10 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
+import { useNavigate } from "react-router-dom";
+import { Home } from "lucide-react";
 import PageIntro from "../components/PageIntro";
-import { Card, CardContent } from "../components/ui";
+import { Card, CardContent, Button } from "../components/ui";
+import { useAuthStore } from "../store/auth.store";
 
 // Helper function to safely get array from translation
 const getTranslationArray = <T,>(translation: unknown, fallback: T[] = []): T[] => {
@@ -13,6 +16,8 @@ const getTranslationArray = <T,>(translation: unknown, fallback: T[] = []): T[] 
 
 const Privacy: React.FC = () => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
 
   return (
     <PageIntro
@@ -33,6 +38,20 @@ const Privacy: React.FC = () => {
           className="text-095 text-primary"
           style={{ maxWidth: "900px", margin: "0 auto", padding: "2rem", lineHeight: 1.8 }}
         >
+          <div style={{ marginBottom: "1.5rem" }}>
+            <Button
+              variant="secondary"
+              size="sm"
+              leftIcon={<Home size={16} />}
+              onClick={() => {
+                void navigate(isAuthenticated ? "/" : "/login");
+              }}
+            >
+              {isAuthenticated
+                ? t("navigation.home", { defaultValue: "Home" })
+                : t("auth.login.title", { defaultValue: "Login" })}
+            </Button>
+          </div>
           <div className="mb-1 text-muted text-09">
             <strong>{t("privacy.effectiveDate")}:</strong> {t("privacy.effectiveDateValue")}
           </div>

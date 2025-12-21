@@ -66,7 +66,8 @@
       "glob": "link:packages/patched-glob",
       "esbuild": "^0.25.0",
       "js-yaml": "^4.1.1",
-      "jws": "^4.0.1",
+      "jws": "4.0.1",
+      "nodemailer": "7.0.11",
       "@smithy/core": "^3.18.7"
     }
   },

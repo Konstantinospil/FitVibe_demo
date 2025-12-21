@@ -1,8 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useNavigate } from "react-router-dom";
+import { Home } from "lucide-react";
 import i18n, { translationsLoadingPromise } from "../i18n/config";
 import PageIntro from "../components/PageIntro";
-import { Card, CardContent } from "../components/ui";
+import { Card, CardContent, Button } from "../components/ui";
+import { useAuthStore } from "../store/auth.store";
 
 const contentStyle: React.CSSProperties = {
   maxWidth: "900px",
@@ -15,6 +18,8 @@ const contentStyle: React.CSSProperties = {
 
 const Cookie: React.FC = () => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const [translationsReady, setTranslationsReady] = useState(false);
 
   // Helper function to safely get array translations
@@ -92,6 +97,20 @@ const Cookie: React.FC = () => {
         }}
       >
         <CardContent style={contentStyle}>
+          <div style={{ marginBottom: "1.5rem" }}>
+            <Button
+              variant="secondary"
+              size="sm"
+              leftIcon={<Home size={16} />}
+              onClick={() => {
+                void navigate(isAuthenticated ? "/" : "/login");
+              }}
+            >
+              {isAuthenticated
+                ? t("navigation.home", { defaultValue: "Home" })
+                : t("auth.login.title", { defaultValue: "Login" })}
+            </Button>
+          </div>
           <div
             style={{ marginBottom: "1rem", color: "var(--color-text-muted)", fontSize: "0.9rem" }}
           >
