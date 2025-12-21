@@ -296,10 +296,30 @@ export async function down(knex: Knex): Promise<void> {
   });
 
   await knex.raw(`ALTER TABLE ${SHARE_LINKS} DROP CONSTRAINT IF EXISTS share_links_target_check`);
-  await knex.schema.alterTable(SHARE_LINKS, (table) => {
-    table.dropColumn("feed_item_id");
-    table.uuid("session_id").notNullable().alter();
-  });
+
+  // Check if share_links table exists before trying to alter it
+  // This handles the case where the table was dropped/recreated during rollback
+  const shareLinksExists = await knex.schema.hasTable(SHARE_LINKS);
+  if (shareLinksExists) {
+    // Use raw SQL to drop column only if it exists (handles case where table was recreated without it)
+    await knex.raw(`
+      DO $$
+      BEGIN
+        IF EXISTS (
+          SELECT 1 FROM information_schema.columns 
+          WHERE table_name = '${SHARE_LINKS}' AND column_name = 'feed_item_id'
+        ) THEN
+          ALTER TABLE "${SHARE_LINKS}" DROP COLUMN feed_item_id;
+        END IF;
+      END $$;
+    `);
+
+    // Restore session_id to not nullable (original state from migration 202510260104)
+    // This is safe even if the column is already not nullable
+    await knex.schema.alterTable(SHARE_LINKS, (table) => {
+      table.uuid("session_id").notNullable().alter();
+    });
+  }
 
   await knex.schema.dropTableIfExists(FEED_COMMENTS);
   await knex.schema.dropTableIfExists(SESSION_BOOKMARKS);
