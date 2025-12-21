@@ -239,7 +239,7 @@ export default defineConfig(() => {
       },
       // Chunk size warnings threshold - reduce to catch large chunks
       chunkSizeWarningLimit: 300, // Warn if chunks exceed 300KB
-      // Enable tree shaking
+      // Enable tree shaking with aggressive optimization
       treeshake: {
         moduleSideEffects: (id: string) => {
           // Allow side effects for CSS and JSON imports
@@ -248,13 +248,18 @@ export default defineConfig(() => {
           }
           return false;
         },
+        preset: "recommended",
       },
-      // Enable compression
+      // Enable compression reporting
       reportCompressedSize: true,
       // Optimize asset inlining threshold - inline more small assets
-      assetsInlineLimit: 8192, // Inline assets smaller than 8KB (was 4KB)
+      assetsInlineLimit: 8192, // Inline assets smaller than 8KB
       // Reduce CSS code splitting to minimize initial bundle
       cssCodeSplit: true,
+      // esbuild minification options (esbuild is faster than terser)
+      esbuild: {
+        drop: process.env.NODE_ENV === "production" ? ["console", "debugger"] : [],
+      },
     },
   };
 });

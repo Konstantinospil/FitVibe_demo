@@ -8,7 +8,7 @@ docker compose -f docker-compose.dev.yml down -v
 
 echo "Removing existing images..."
 # Remove images by container name patterns
-docker images | grep -E "fitvibe|postgres:16-alpine|nginx:stable-alpine|clamav/clamav:1.3" | awk '{print $3}' | xargs -r docker rmi -f 2>/dev/null || true
+docker images | grep -E "fitvibe|postgres:16-alpine|nginx:stable-alpine|clamav/clamav:latest" | awk '{print $3}' | xargs -r docker rmi -f 2>/dev/null || true
 
 # Remove images built from docker-compose
 docker compose -f docker-compose.dev.yml rm -f 2>/dev/null || true

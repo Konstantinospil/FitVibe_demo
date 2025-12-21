@@ -1,28 +1,31 @@
 /* Inter Variable Font - supports weights 100-900 */
+/* Using font-display: swap to prevent render blocking and improve LCP */
 @font-face {
   font-family: "Inter";
   font-style: normal;
   font-weight: 100 900;
-  font-display: optional;
+  font-display: swap;
   src: url("/fonts/Inter/Inter-VariableFont_opsz,wght.ttf") format("truetype");
 }
 
 /* Inter Variable Font Italic - supports weights 100-900 */
+/* Lazy load italic variant - only load when needed */
 @font-face {
   font-family: "Inter";
   font-style: italic;
   font-weight: 100 900;
-  font-display: optional;
+  font-display: swap;
   src: url("/fonts/Inter/Inter-Italic-VariableFont_opsz,wght.ttf") format("truetype");
 }
 
 /* Roboto Flex Variable Font - supports weights 100-900, variable width and optical size */
+/* Lazy load heading font - only used for h1-h6 elements */
 @font-face {
   font-family: "Roboto Flex";
   font-style: normal;
   font-weight: 100 900;
   font-stretch: 75% 100%;
-  font-display: optional;
+  font-display: swap;
   src: url("/fonts/Roboto_Flex/RobotoFlex-VariableFont_GRAD,XOPQ,XTRA,YOPQ,YTAS,YTDE,YTFI,YTLC,YTUC,opsz,slnt,wdth,wght.ttf")
     format("truetype");
 }
