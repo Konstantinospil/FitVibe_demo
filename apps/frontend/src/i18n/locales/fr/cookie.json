@@ -1,0 +1,77 @@
+{
+  "title": "Préférences de Cookies",
+  "description": "Nous utilisons des cookies pour améliorer votre expérience et nous conformer aux réglementations sur la confidentialité.",
+  "intro": "Choisissez les cookies que vous souhaitez autoriser. Les cookies essentiels sont nécessaires au fonctionnement du site et ne peuvent pas être désactivés.",
+  "required": "Requis",
+  "enabled": "activé",
+  "disabled": "désactivé",
+  "categories": {
+    "essential": {
+      "label": "Cookies Essentiels",
+      "description": "Nécessaires au fonctionnement du site. Ne peuvent pas être désactivés."
+    },
+    "preferences": {
+      "label": "Cookies de Préférences et de Fonctionnalité",
+      "description": "Mémorisent vos paramètres, votre langue et vos vues d'entraînement enregistrées."
+    },
+    "analytics": {
+      "label": "Cookies de Performance et d'Analyse",
+      "description": "Nous aident à comprendre l'utilisation, améliorer les fonctionnalités et diagnostiquer les problèmes."
+    },
+    "marketing": {
+      "label": "Cookies Publicitaires et Marketing",
+      "description": "Soutiennent le remarketing et les insights d'audience. Ne sont définis qu'avec votre consentement."
+    }
+  },
+  "actions": {
+    "acceptAll": "Tout Accepter",
+    "rejectAll": "Tout Refuser",
+    "savePreferences": "Enregistrer les Préférences"
+  },
+  "policy": {
+    "title": "Politique de Cookies",
+    "description": "En savoir plus sur la façon dont nous utilisons les cookies dans notre",
+    "link": "Politique de Cookies"
+  },
+  "eyebrow": "Juridique",
+  "effectiveDate": "Date d'entrée en vigueur",
+  "effectiveDateValue": "2024-06-01",
+  "section1": {
+    "title": "Qu'est-ce qu'un cookie ?",
+    "content": "Les cookies sont de petits fichiers stockés sur votre appareil lorsque vous visitez un site Web ou utilisez une application Web. Ils nous permettent de reconnaître votre navigateur ou appareil, de mémoriser les préférences et de mesurer les interactions. Les technologies similaires incluent le stockage local, la journalisation des événements SDK, les pixels et les balises."
+  },
+  "section2": {
+    "title": "Comment nous utilisons les cookies",
+    "items": [
+      "**Cookies essentiels :** activent les fonctionnalités principales telles que l'authentification, la sécurité du compte, l'équilibrage de charge et la gestion des sessions.",
+      "**Cookies de préférences et de fonctionnalité :** mémorisent vos paramètres, votre langue et vos vues d'entraînement enregistrées pour offrir une expérience cohérente.",
+      "**Cookies de performance et d'analyse :** nous aident à comprendre l'utilisation, à améliorer les fonctionnalités, à diagnostiquer les problèmes et à mesurer l'efficacité des campagnes.",
+      "**Cookies publicitaires et marketing :** s'ils sont utilisés, prennent en charge le remarketing, la mesure des conversions et les insights d'audience. Lorsque requis, ces cookies ne sont définis qu'avec votre consentement."
+    ]
+  },
+  "section3": {
+    "title": "Cookies et SDK tiers",
+    "content": "Nous pouvons utiliser des fournisseurs tiers pour l'analyse, la surveillance des performances et le marketing. Ces fournisseurs peuvent définir des cookies ou collecter des identifiants d'appareil lorsque vous utilisez les Services. Leur utilisation est soumise à leurs politiques de confidentialité. Les catégories actuelles incluent les performances d'hébergement/CDN, l'analyse de produits et les diagnostics de crash."
+  },
+  "section4": {
+    "title": "Gestion des cookies et préférences",
+    "items": [
+      "**Gestion du consentement :** Lorsque requis par la loi, nous demanderons le consentement avant de définir des cookies non essentiels et fournirons des contrôles pour mettre à jour les préférences.",
+      "**Contrôles du navigateur :** La plupart des navigateurs vous permettent de bloquer ou supprimer les cookies. Cela peut affecter la funcionalité du site, y compris la possibilité de rester connecté.",
+      "**Ne pas suivre (DNT) :** Les Services ne répondent actuellement pas aux signaux DNT. Nous respectons les signaux d'exclusion légalement requis (par exemple, Global Privacy Control) le cas échéant.",
+      "**Paramètres mobiles :** Les paramètres de l'appareil peuvent vous permettre de limiter le suivi publicitaire ou de réinitialiser les identifiants publicitaires."
+    ]
+  },
+  "section5": {
+    "title": "Conservation des données",
+    "content": "Les durées de vie des cookies varient. Les cookies de session expirent lorsque vous fermez votre navigateur. Les cookies persistants durent plus longtemps et ne sont conservés que dans la mesure nécessaire à leurs objectifs déclarés."
+  },
+  "section6": {
+    "title": "Modifications de cette politique",
+    "content": "Nous pouvons mettre à jour cette Politique relative aux cookies pour refléter les changements dans la technologie, la loi ou nos pratiques. Les modifications importantes seront communiquées via les Services ou d'autres moyens raisonnables. La \"Date d'entrée en vigueur\" ci-dessus sera mise à jour pour chaque révision."
+  },
+  "section7": {
+    "title": "Contact",
+    "content": "Les questions concernant cette Politique relative aux cookies peuvent être envoyées à kpilpilidis@gmail.com."
+  }
+}

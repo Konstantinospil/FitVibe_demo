@@ -3,16 +3,26 @@ import { initReactI18next } from "react-i18next";
 // Load English translations eagerly (needed for login page)
 // Use dynamic imports to allow Vite to code-split properly
 const loadEnglishTranslations = async () => {
-  const [enCommon, enAuth, enTerms, enPrivacy] = await Promise.all([
+  const [enCommon, enAuth, enTerms, enPrivacy, enCookie] = await Promise.all([
     import("./locales/en/common.json") as Promise<{ default: Record<string, unknown> }>,
     import("./locales/en/auth.json") as Promise<{ default: Record<string, unknown> }>,
     import("./locales/en/terms.json") as Promise<{ default: Record<string, unknown> }>,
     import("./locales/en/privacy.json") as Promise<{ default: Record<string, unknown> }>,
+    import("./locales/en/cookie.json") as Promise<{ default: Record<string, unknown> }>,
   ]);
 
+  // Wrap terms, privacy, and cookie translations under their respective keys
+  // so components can access them as t("terms.title"), t("privacy.title"), and t("cookie.title")
+  const wrappedTerms = { terms: enTerms.default };
+  const wrappedPrivacy = { privacy: enPrivacy.default };
+  const wrappedCookie = { cookie: enCookie.default };
+
   return mergeTranslations(
-    mergeTranslations(mergeTranslations(enCommon.default, enAuth.default), enTerms.default),
-    enPrivacy.default,
+    mergeTranslations(
+      mergeTranslations(mergeTranslations(enCommon.default, enAuth.default), wrappedTerms),
+      wrappedPrivacy,
+    ),
+    wrappedCookie,
   );
 };
 
@@ -57,16 +67,26 @@ const loadLanguage = async (lng: SupportedLanguage): Promise<void> => {
   try {
     // Dynamically import translation files only when needed
     // This includes English to allow proper code-splitting
-    const [common, auth, terms, privacy] = await Promise.all([
+    const [common, auth, terms, privacy, cookie] = await Promise.all([
       import(`./locales/${lng}/common.json`) as Promise<{ default: Record<string, unknown> }>,
       import(`./locales/${lng}/auth.json`) as Promise<{ default: Record<string, unknown> }>,
       import(`./locales/${lng}/terms.json`) as Promise<{ default: Record<string, unknown> }>,
       import(`./locales/${lng}/privacy.json`) as Promise<{ default: Record<string, unknown> }>,
+      import(`./locales/${lng}/cookie.json`) as Promise<{ default: Record<string, unknown> }>,
     ]);
 
+    // Wrap terms, privacy, and cookie translations under their respective keys
+    // so components can access them as t("terms.title"), t("privacy.title"), and t("cookie.title")
+    const wrappedTerms = { terms: terms.default };
+    const wrappedPrivacy = { privacy: privacy.default };
+    const wrappedCookie = { cookie: cookie.default };
+
     const translations = mergeTranslations(
-      mergeTranslations(mergeTranslations(common.default, auth.default), terms.default),
-      privacy.default,
+      mergeTranslations(
+        mergeTranslations(mergeTranslations(common.default, auth.default), wrappedTerms),
+        wrappedPrivacy,
+      ),
+      wrappedCookie,
     );
 
     i18n.addResourceBundle(lng, "translation", translations, true, true);
@@ -93,13 +113,13 @@ void i18n.use(initReactI18next).init({
 
 // Load English translations immediately (needed for login page)
 // This is done asynchronously but eagerly to allow code-splitting
-void loadEnglishTranslations().then((enTranslations) => {
+export const translationsLoadingPromise = loadEnglishTranslations().then((enTranslations) => {
   i18n.addResourceBundle("en", "translation", enTranslations, true, true);
   resources.en = { translation: enTranslations };
 
   // If initial language is not English, load it too
   if (initialLanguage !== "en") {
-    void loadLanguage(initialLanguage).then(() => {
+    return loadLanguage(initialLanguage).then(() => {
       void i18n.changeLanguage(initialLanguage);
     });
   } else {

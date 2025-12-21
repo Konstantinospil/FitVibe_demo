@@ -1,0 +1,77 @@
+{
+  "title": "Cookie Preferences",
+  "description": "We use cookies to enhance your experience and comply with privacy regulations.",
+  "intro": "Choose which cookies you want to allow. Essential cookies are required for the site to function and cannot be disabled.",
+  "required": "Required",
+  "enabled": "enabled",
+  "disabled": "disabled",
+  "categories": {
+    "essential": {
+      "label": "Essential Cookies",
+      "description": "Required for site functionality. Cannot be disabled."
+    },
+    "preferences": {
+      "label": "Preferences & Functionality Cookies",
+      "description": "Remember your settings, language, and saved training views."
+    },
+    "analytics": {
+      "label": "Performance & Analytics Cookies",
+      "description": "Help us understand usage, improve features, and diagnose issues."
+    },
+    "marketing": {
+      "label": "Advertising & Marketing Cookies",
+      "description": "Support remarketing and audience insights. Only set with your consent."
+    }
+  },
+  "actions": {
+    "acceptAll": "Accept All",
+    "rejectAll": "Reject All",
+    "savePreferences": "Save Preferences"
+  },
+  "policy": {
+    "title": "Cookie Policy",
+    "description": "Learn more about how we use cookies in our",
+    "link": "Cookie Policy"
+  },
+  "eyebrow": "Legal",
+  "effectiveDate": "Effective Date",
+  "effectiveDateValue": "2024-06-01",
+  "section1": {
+    "title": "What are cookies?",
+    "content": "Cookies are small files stored on your device when you visit a website or use a web-based application. They allow us to recognize your browser or device, remember preferences, and measure interactions. Similar technologies include local storage, SDK event logging, pixels, and beacons."
+  },
+  "section2": {
+    "title": "How we use cookies",
+    "items": [
+      "**Essential cookies:** enable core features such as authentication, account security, load balancing, and session management.",
+      "**Preferences and functionality cookies:** remember your settings, language, and saved training views to provide a consistent experience.",
+      "**Performance and analytics cookies:** help us understand usage, improve features, diagnose issues, and measure campaign effectiveness.",
+      "**Advertising and marketing cookies:** if used, support remarketing, conversion measurement, and audience insights. Where required, these cookies are set only with your consent."
+    ]
+  },
+  "section3": {
+    "title": "Third-party cookies and SDKs",
+    "content": "We may use third-party providers for analytics, performance monitoring, and marketing. These providers may set cookies or collect device identifiers when you use the Services. Their use is subject to their privacy policies. Current categories include hosting/CDN performance, product analytics, and crash diagnostics."
+  },
+  "section4": {
+    "title": "Managing cookies and preferences",
+    "items": [
+      "**Consent management:** Where required by law, we will request consent before setting non-essential cookies and provide controls to update preferences.",
+      "**Browser controls:** Most browsers allow you to block or delete cookies. Doing so may impact site functionality, including the ability to stay logged in.",
+      "**Do Not Track (DNT):** The Services currently do not respond to DNT signals. We honor legally required opt-out signals (e.g., Global Privacy Control) where applicable.",
+      "**Mobile settings:** Device settings may allow you to limit ad tracking or reset advertising identifiers."
+    ]
+  },
+  "section5": {
+    "title": "Data retention",
+    "content": "Cookie lifespans vary. Session cookies expire when you close your browser. Persistent cookies last longer and are retained only as necessary for their stated purposes."
+  },
+  "section6": {
+    "title": "Changes to this policy",
+    "content": "We may update this Cookie Policy to reflect changes in technology, law, or our practices. Material changes will be communicated through the Services or other reasonable means. The \"Effective Date\" above will be updated for each revision."
+  },
+  "section7": {
+    "title": "Contact",
+    "content": "Questions about this Cookie Policy can be sent to kpilpilidis@gmail.com."
+  }
+}

@@ -7,16 +7,16 @@
   "intro1": "FitVibe helps athletes and active individuals plan training sessions, log workouts, and understand their progress. This Privacy Policy explains what personal data we collect when you use the Services, why we collect it, how we use and share it, and the rights available to you under the General Data Protection Regulation (\"GDPR\"), the UK GDPR, and other applicable data protection laws.",
   "intro2": "By using the Services, you acknowledge that your personal data will be processed as described in this Privacy Policy.",
   "section1": {
-    "title": "1. Scope",
+    "title": "Scope",
     "subtitle": "This Privacy Policy:",
     "items": [
       "Applies to anyone who visits our sites or apps, creates an account, uses the Services, participates in communities, or otherwise interacts with FitVibe.",
-      "Covers all personal data processed by FitVibe acting as controller. When we process data strictly on behalf of organizations (for example, a club or employer using FitVibe for their members), those organizations are controllers and we act as processor in accordance with our data processing agreements.",
-      "Does not apply to third‑party services, websites, or devices that you choose to connect to FitVibe; their privacy practices are governed by their own policies."
+      "Covers all personal data processed by FitVibe acting as **controller**. When we process data strictly on behalf of organizations (for example, a club or employer using FitVibe for their members), those organizations are controllers and we act as **processor** in accordance with our data processing agreements.",
+      "Does **not** apply to third‑party services, websites, or devices that you choose to connect to FitVibe; their privacy practices are governed by their own policies."
     ]
   },
   "section2": {
-    "title": "2. Who we are and how to contact us",
+    "title": "Who we are and how to contact us",
     "controller": "Controller:",
     "controllerValue": "FitVibe",
     "privacyInquiries": "Data protection and privacy inquiries:",
@@ -28,7 +28,7 @@
     "contactNote": "You may contact us at these addresses for any questions about this Policy or our handling of your personal data."
   },
   "section3": {
-    "title": "3. Information we collect",
+    "title": "Information we collect",
     "subtitle": "We group the personal data we process into the following categories.",
     "table": {
       "headers": {
@@ -84,20 +84,20 @@
         }
       }
     },
-    "specialCategoriesNote": "We do not intend to collect special categories of data (such as medical diagnoses) unless clearly necessary for a feature and permitted by law. Where applicable, we will seek your explicit consent."
+    "specialCategoriesNote": "We do **not** intend to collect special categories of data (such as medical diagnoses) unless clearly necessary for a feature and permitted by law. Where applicable, we will seek your explicit consent."
   },
   "section4": {
-    "title": "4. Sources of information",
+    "title": "Sources of information",
     "subtitle": "We obtain personal data from:",
     "items": [
-      "You, when you create an account, update your profile, log workouts, participate in social features, or contact support.",
-      "Your devices and browsers, through cookies, SDKs, and similar technologies.",
-      "Organizations (such as clubs or employers) that provision accounts or integrate FitVibe with their internal systems.",
-      "Third‑party services (for example, wearables or calendar providers) that you connect to FitVibe, strictly according to your permissions."
+      "**You**, when you create an account, update your profile, log workouts, participate in social features, or contact support.",
+      "**Your devices and browsers**, through cookies, SDKs, and similar technologies.",
+      "**Organizations** (such as clubs or employers) that provision accounts or integrate FitVibe with their internal systems.",
+      "**Third‑party services** (for example, wearables or calendar providers) that you connect to FitVibe, strictly according to your permissions."
     ]
   },
   "section5": {
-    "title": "5. How we use your information",
+    "title": "How we use your information",
     "subtitle": "We use the personal data described above to:",
     "items": [
       "Provide, operate, and maintain the Services, including planning tools, training logs, and analytics dashboards.",
@@ -111,7 +111,7 @@
     ]
   },
   "section6": {
-    "title": "6. Legal bases for processing (EEA, UK, and similar jurisdictions)",
+    "title": "Legal bases for processing (EEA, UK, and similar jurisdictions)",
     "subtitle": "Where the GDPR, UK GDPR, or comparable laws apply, we rely on one or more of the following legal bases:",
     "items": [
       {
@@ -120,7 +120,7 @@
       },
       {
         "title": "Consent:",
-        "content": "For example, when you opt‑in to marketing emails or push notifications, you make certain content publicly visible, or you connect third‑party integrations or enable optional analytics and cookies where required by law. You may withdraw consent at any time, without affecting the lawfulness of processing before withdrawal."
+        "content": "For example, when: - you opt‑in to marketing emails or push notifications, - you make certain content publicly visible, - you connect third‑party integrations or enable optional analytics and cookies where required by law. You may withdraw consent at any time, without affecting the lawfulness of processing before withdrawal."
       },
       {
         "title": "Legitimate interests:",
@@ -137,7 +137,7 @@
     ]
   },
   "section7": {
-    "title": "7. Cookies and similar technologies",
+    "title": "Cookies and similar technologies",
     "subtitle": "We use cookies and similar technologies to:",
     "items": [
       "keep you signed in and maintain session security;",
@@ -148,49 +148,49 @@
     "cookieNote": "Where required by law, we will present you with a cookie banner or settings to obtain your consent for non‑essential cookies and allow you to manage your preferences. For more information, please refer to our Cookie Policy (if available in your region)."
   },
   "section8": {
-    "title": "8. How we share information",
-    "notSold": "We do not sell your personal data.",
+    "title": "How we share information",
+    "notSold": "We do **not** sell your personal data.",
     "subtitle": "We may share your personal data with:",
     "items": [
       {
         "title": "Service providers and sub‑processors",
-        "content": "— For example, providers of cloud infrastructure, email/SMS delivery, analytics, error reporting, and customer support tools. Each provider is bound by a data processing agreement requiring confidentiality, appropriate security measures, and, where applicable, Standard Contractual Clauses (\"SCCs\")."
+        "content": "For example, providers of cloud infrastructure, email/SMS delivery, analytics, error reporting, and customer support tools. Each provider is bound by a data processing agreement requiring confidentiality, appropriate security measures, and, where applicable, Standard Contractual Clauses (\"SCCs\")."
       },
       {
         "title": "Integrations and partners you choose",
-        "content": "— For example, if you connect a wearable device or calendar provider, we share only the data needed to enable that integration and only according to your configuration and the partner's terms."
+        "content": "For example, if you connect a wearable device or calendar provider, we share only the data needed to enable that integration and only according to your configuration and the partner's terms."
       },
       {
         "title": "Organizations that provision your account",
-        "content": "— If your account is created or managed by a coach, club, or employer, certain profile and activity data may be visible to designated administrators in accordance with their policies and our contracts with them."
+        "content": "If your account is created or managed by a coach, club, or employer, certain profile and activity data may be visible to designated administrators in accordance with their policies and our contracts with them."
       },
       {
         "title": "Business transfers",
-        "content": "— In connection with a merger, acquisition, reorganization, or sale of assets, where your data may be transferred as part of the transaction, subject to confidentiality and, where required, notice to you."
+        "content": "In connection with a merger, acquisition, reorganization, or sale of assets, where your data may be transferred as part of the transaction, subject to confidentiality and, where required, notice to you."
       },
       {
         "title": "Legal and safety",
-        "content": "— When necessary to comply with legal obligations, court orders, or lawful requests, or to enforce our terms and protect the rights, property, and safety of FitVibe, our users, or the public."
+        "content": "When necessary to comply with legal obligations, court orders, or lawful requests, or to enforce our terms and protect the rights, property, and safety of FitVibe, our users, or the public."
       },
       {
         "title": "Aggregated or de‑identified data",
-        "content": "— We may use or share aggregated or de‑identified information for analytics, research, or product improvement, provided it does not identify any individual."
+        "content": "We may use or share aggregated or de‑identified information for analytics, research, or product improvement, provided it does not identify any individual."
       }
     ]
   },
   "section9": {
-    "title": "9. International data transfers",
+    "title": "International data transfers",
     "paragraph1": "FitVibe may process and store your personal data in countries other than the one in which you reside. These countries may have data protection laws that differ from those in your jurisdiction.",
     "paragraph2": "Where we transfer personal data from the EEA, UK, or Switzerland to countries that are not recognized as providing an adequate level of protection, we implement appropriate safeguards, such as:",
     "items": [
       "Standard Contractual Clauses approved by the European Commission or UK authorities, and",
       "additional technical and organizational measures based on transfer impact assessments, where required."
     ],
-    "paragraph3": "You may request more information about these safeguards by contacting privacy@fitvibe.example.com."
+    "paragraph3": "You may request more information about these safeguards by contacting `privacy@fitvibe.example.com`."
   },
   "section10": {
-    "title": "10. Data retention",
-    "paragraph1": "We retain personal data only for as long as reasonably necessary to provide the Services and features you have requested, fulfil the purposes described in this Policy, comply with our legal and contractual obligations, and resolve disputes and enforce our agreements.",
+    "title": "Data retention",
+    "paragraph1": "We retain personal data only for as long as reasonably necessary to: provide the Services and features you have requested; fulfil the purposes described in this Policy; comply with our legal and contractual obligations; and resolve disputes and enforce our agreements.",
     "paragraph2": "In particular, subject to change as our services evolve:",
     "items": [
       {
@@ -213,7 +213,7 @@
     "paragraph3": "When data is no longer required for these purposes, we either securely delete it or de‑identify it so that it can no longer be linked to you."
   },
   "section11": {
-    "title": "11. Security",
+    "title": "Security",
     "subtitle": "We implement appropriate technical and organizational measures to protect personal data, including:",
     "items": [
       "TLS (HTTPS) encryption in transit, with modern protocols and strict transport security;",
@@ -224,7 +224,7 @@
     "note": "No system can be completely secure. You remain responsible for choosing strong passwords, keeping them confidential, enabling multi‑factor authentication where available, and promptly notifying us of any suspected unauthorized access to your account."
   },
   "section12": {
-    "title": "12. Your rights",
+    "title": "Your rights",
     "subtitle": "Depending on your place of residence and applicable law, you may have some or all of the following rights:",
     "items": [
       {
@@ -261,25 +261,25 @@
       }
     ],
     "additionalRights": "Residents of certain jurisdictions (for example, some U.S. states, Brazil, Canada) may have additional rights, such as rights to know, delete, or limit the use or disclosure of certain categories of information. These will be honored in accordance with the relevant statute.",
-    "exerciseRights": "You can exercise these rights by using any self‑service tools provided in the app or account settings (for example, download or delete account functions), and/or contacting us at privacy@fitvibe.example.com.",
+    "exerciseRights": "You can exercise these rights by: using any self‑service tools provided in the app or account settings (for example, download or delete account functions), and/or contacting us at `privacy@fitvibe.example.com`.",
     "verification": "We may need to verify your identity before acting on your request and may decline requests that are manifestly unfounded, excessive, or otherwise not required or permitted by law."
   },
   "section13": {
-    "title": "13. Children's data",
-    "subtitle": "The Services are not directed to children under 16, or any higher age set by applicable law in your jurisdiction for online consent.",
+    "title": "Children's data",
+    "subtitle": "The Services are **not directed to children under 16**, or any higher age set by applicable law in your jurisdiction for online consent.",
     "items": [
       "We do not knowingly collect personal data from children under the applicable minimum age.",
       "If we learn that we have collected personal data from such a child without appropriate consent, we will delete it as soon as reasonably possible."
     ],
-    "contact": "If you believe that a child has provided personal data to FitVibe in breach of this Policy, please contact us at privacy@fitvibe.example.com."
+    "contact": "If you believe that a child has provided personal data to FitVibe in breach of this Policy, please contact us at `privacy@fitvibe.example.com`."
   },
   "section14": {
-    "title": "14. Health and fitness considerations",
-    "paragraph1": "FitVibe provides training and wellness tooling. It is not a medical device and is not intended to diagnose, treat, cure, or prevent any disease.",
+    "title": "Health and fitness considerations",
+    "paragraph1": "FitVibe provides training and wellness tooling. It is **not** a medical device and is **not** intended to diagnose, treat, cure, or prevent any disease.",
     "paragraph2": "Nothing in the Services constitutes medical advice. You should consult qualified healthcare professionals before starting or modifying any training program, especially if you have existing health conditions."
   },
   "section15": {
-    "title": "15. Changes to this Policy",
+    "title": "Changes to this Policy",
     "paragraph1": "We may update this Privacy Policy from time to time, for example when we introduce new features, use new providers, or when laws or regulatory guidance change.",
     "items": [
       "The \"Effective date\" at the top of this Policy indicates when it last changed.",
@@ -289,7 +289,7 @@
     "paragraph2": "Your continued use of the Services after changes take effect constitutes your acknowledgment of the updated Policy."
   },
   "section16": {
-    "title": "16. How to contact us or exercise your rights",
+    "title": "How to contact us or exercise your rights",
     "subtitle": "If you have questions about this Privacy Policy, our use of your personal data, or if you wish to exercise your rights, please contact:",
     "email": "Email:",
     "emailValue": "kpilpilidis@gmail.com",

@@ -3,6 +3,14 @@ import { useTranslation } from "react-i18next";
 import PageIntro from "../components/PageIntro";
 import { Card, CardContent } from "../components/ui";
 
+// Helper function to safely get array from translation
+const getTranslationArray = <T,>(translation: unknown, fallback: T[] = []): T[] => {
+  if (Array.isArray(translation)) {
+    return translation as T[];
+  }
+  return fallback;
+};
+
 const Privacy: React.FC = () => {
   const { t } = useTranslation();
 
@@ -37,15 +45,11 @@ const Privacy: React.FC = () => {
             <h2 className="section-title">{t("privacy.section1.title")}</h2>
             <p className="section-text">{t("privacy.section1.subtitle")}</p>
             <ul className="list">
-              {(t("privacy.section1.items", { returnObjects: true }) as string[]).map(
-                (item: string, index: number) => (
-                  <li
-                    key={index}
-                    className="list-item"
-                    dangerouslySetInnerHTML={{ __html: item }}
-                  />
-                ),
-              )}
+              {getTranslationArray<string>(
+                t("privacy.section1.items", { returnObjects: true }),
+              ).map((item: string, index: number) => (
+                <li key={index} className="list-item" dangerouslySetInnerHTML={{ __html: item }} />
+              ))}
             </ul>
           </section>
 
@@ -386,15 +390,11 @@ const Privacy: React.FC = () => {
             <h2 className="section-title">{t("privacy.section4.title")}</h2>
             <p className="section-text">{t("privacy.section4.subtitle")}</p>
             <ul className="list">
-              {(t("privacy.section4.items", { returnObjects: true }) as string[]).map(
-                (item: string, index: number) => (
-                  <li
-                    key={index}
-                    className="list-item"
-                    dangerouslySetInnerHTML={{ __html: item }}
-                  />
-                ),
-              )}
+              {getTranslationArray<string>(
+                t("privacy.section4.items", { returnObjects: true }),
+              ).map((item: string, index: number) => (
+                <li key={index} className="list-item" dangerouslySetInnerHTML={{ __html: item }} />
+              ))}
             </ul>
           </section>
 
@@ -402,13 +402,13 @@ const Privacy: React.FC = () => {
             <h2 className="section-title">{t("privacy.section5.title")}</h2>
             <p className="section-text">{t("privacy.section5.subtitle")}</p>
             <ul className="list">
-              {(t("privacy.section5.items", { returnObjects: true }) as string[]).map(
-                (item: string, index: number) => (
-                  <li key={index} className="list-item">
-                    {item}
-                  </li>
-                ),
-              )}
+              {getTranslationArray<string>(
+                t("privacy.section5.items", { returnObjects: true }),
+              ).map((item: string, index: number) => (
+                <li key={index} className="list-item">
+                  {item}
+                </li>
+              ))}
             </ul>
           </section>
 
@@ -416,11 +416,8 @@ const Privacy: React.FC = () => {
             <h2 className="section-title">{t("privacy.section6.title")}</h2>
             <p className="section-text">{t("privacy.section6.subtitle")}</p>
             <ul className="list">
-              {(
-                t("privacy.section6.items", { returnObjects: true }) as Array<{
-                  title: string;
-                  content: string;
-                }>
+              {getTranslationArray<{ title: string; content: string }>(
+                t("privacy.section6.items", { returnObjects: true }),
               ).map((item: { title: string; content: string }, index: number) => (
                 <li key={index} className="list-item">
                   <strong>{item.title}</strong> {item.content}
@@ -433,13 +430,13 @@ const Privacy: React.FC = () => {
             <h2 className="section-title">{t("privacy.section7.title")}</h2>
             <p className="section-text">{t("privacy.section7.subtitle")}</p>
             <ul className="list">
-              {(t("privacy.section7.items", { returnObjects: true }) as string[]).map(
-                (item: string, index: number) => (
-                  <li key={index} className="list-item">
-                    {item}
-                  </li>
-                ),
-              )}
+              {getTranslationArray<string>(
+                t("privacy.section7.items", { returnObjects: true }),
+              ).map((item: string, index: number) => (
+                <li key={index} className="list-item">
+                  {item}
+                </li>
+              ))}
             </ul>
             <p className="section-text">{t("privacy.section7.cookieNote")}</p>
           </section>
@@ -452,11 +449,8 @@ const Privacy: React.FC = () => {
             />
             <p className="section-text">{t("privacy.section8.subtitle")}</p>
             <ul className="list">
-              {(
-                t("privacy.section8.items", { returnObjects: true }) as Array<{
-                  title: string;
-                  content: string;
-                }>
+              {getTranslationArray<{ title: string; content: string }>(
+                t("privacy.section8.items", { returnObjects: true }),
               ).map((item: { title: string; content: string }, index: number) => (
                 <li key={index} className="list-item">
                   <strong>{item.title}</strong> {item.content}
@@ -470,13 +464,13 @@ const Privacy: React.FC = () => {
             <p className="section-text">{t("privacy.section9.paragraph1")}</p>
             <p className="section-text">{t("privacy.section9.paragraph2")}</p>
             <ul className="list">
-              {(t("privacy.section9.items", { returnObjects: true }) as string[]).map(
-                (item: string, index: number) => (
-                  <li key={index} className="list-item">
-                    {item}
-                  </li>
-                ),
-              )}
+              {getTranslationArray<string>(
+                t("privacy.section9.items", { returnObjects: true }),
+              ).map((item: string, index: number) => (
+                <li key={index} className="list-item">
+                  {item}
+                </li>
+              ))}
             </ul>
             <p className="section-text">{t("privacy.section9.paragraph3")}</p>
           </section>
@@ -486,11 +480,8 @@ const Privacy: React.FC = () => {
             <p className="section-text">{t("privacy.section10.paragraph1")}</p>
             <p className="section-text">{t("privacy.section10.paragraph2")}</p>
             <ul className="list">
-              {(
-                t("privacy.section10.items", { returnObjects: true }) as Array<{
-                  title: string;
-                  content: string;
-                }>
+              {getTranslationArray<{ title: string; content: string }>(
+                t("privacy.section10.items", { returnObjects: true }),
               ).map((item: { title: string; content: string }, index: number) => (
                 <li key={index} className="list-item">
                   <strong>{item.title}</strong> {item.content}
@@ -504,13 +495,13 @@ const Privacy: React.FC = () => {
             <h2 className="section-title">{t("privacy.section11.title")}</h2>
             <p className="section-text">{t("privacy.section11.subtitle")}</p>
             <ul className="list">
-              {(t("privacy.section11.items", { returnObjects: true }) as string[]).map(
-                (item: string, index: number) => (
-                  <li key={index} className="list-item">
-                    {item}
-                  </li>
-                ),
-              )}
+              {getTranslationArray<string>(
+                t("privacy.section11.items", { returnObjects: true }),
+              ).map((item: string, index: number) => (
+                <li key={index} className="list-item">
+                  {item}
+                </li>
+              ))}
             </ul>
             <p className="section-text">{t("privacy.section11.note")}</p>
           </section>
@@ -519,11 +510,8 @@ const Privacy: React.FC = () => {
             <h2 className="section-title">{t("privacy.section12.title")}</h2>
             <p className="section-text">{t("privacy.section12.subtitle")}</p>
             <ul className="list">
-              {(
-                t("privacy.section12.items", { returnObjects: true }) as Array<{
-                  title: string;
-                  content: string;
-                }>
+              {getTranslationArray<{ title: string; content: string }>(
+                t("privacy.section12.items", { returnObjects: true }),
               ).map((item: { title: string; content: string }, index: number) => (
                 <li key={index} className="list-item">
                   <strong>{item.title}</strong> {item.content}
@@ -542,13 +530,13 @@ const Privacy: React.FC = () => {
               dangerouslySetInnerHTML={{ __html: t("privacy.section13.subtitle") }}
             />
             <ul className="list">
-              {(t("privacy.section13.items", { returnObjects: true }) as string[]).map(
-                (item: string, index: number) => (
-                  <li key={index} className="list-item">
-                    {item}
-                  </li>
-                ),
-              )}
+              {getTranslationArray<string>(
+                t("privacy.section13.items", { returnObjects: true }),
+              ).map((item: string, index: number) => (
+                <li key={index} className="list-item">
+                  {item}
+                </li>
+              ))}
             </ul>
             <p className="section-text">{t("privacy.section13.contact")}</p>
           </section>
@@ -566,13 +554,13 @@ const Privacy: React.FC = () => {
             <h2 className="section-title">{t("privacy.section15.title")}</h2>
             <p className="section-text">{t("privacy.section15.paragraph1")}</p>
             <ul className="list">
-              {(t("privacy.section15.items", { returnObjects: true }) as string[]).map(
-                (item: string, index: number) => (
-                  <li key={index} className="list-item">
-                    {item}
-                  </li>
-                ),
-              )}
+              {getTranslationArray<string>(
+                t("privacy.section15.items", { returnObjects: true }),
+              ).map((item: string, index: number) => (
+                <li key={index} className="list-item">
+                  {item}
+                </li>
+              ))}
             </ul>
             <p className="section-text">{t("privacy.section15.paragraph2")}</p>
           </section>

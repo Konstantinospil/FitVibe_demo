@@ -1,5 +1,6 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
+import i18n, { translationsLoadingPromise } from "../i18n/config";
 import PageIntro from "../components/PageIntro";
 import { Card, CardContent } from "../components/ui";
 
@@ -14,6 +15,66 @@ const contentStyle: React.CSSProperties = {
 
 const Terms: React.FC = () => {
   const { t } = useTranslation();
+  const [translationsReady, setTranslationsReady] = useState(false);
+
+  // Helper function to safely get array translations
+  const getArrayTranslation = (key: string): string[] => {
+    const result = t(key, { returnObjects: true });
+    // If result is an array of strings, return it; otherwise return empty array
+    if (Array.isArray(result)) {
+      return (result as unknown[]).filter((item): item is string => typeof item === "string");
+    }
+    return [];
+  };
+
+  // Wait for translations to load
+  useEffect(() => {
+    const loadTranslations = async () => {
+      try {
+        // Wait for the translation loading promise to complete
+        await translationsLoadingPromise;
+
+        // Verify translations are actually loaded
+        const testTranslation = i18n.t("terms.title");
+        if (testTranslation && testTranslation !== "terms.title") {
+          setTranslationsReady(true);
+        } else {
+          // If still not ready, poll for a bit
+          let attempts = 0;
+          const checkInterval = setInterval(() => {
+            attempts++;
+            const translation = i18n.t("terms.title");
+            if (translation && translation !== "terms.title") {
+              clearInterval(checkInterval);
+              setTranslationsReady(true);
+            } else if (attempts >= 20) {
+              // After 2 seconds, render anyway
+              clearInterval(checkInterval);
+              setTranslationsReady(true);
+            }
+          }, 100);
+        }
+      } catch (error) {
+        console.error("Failed to load translations:", error);
+        // Render anyway on error
+        setTranslationsReady(true);
+      }
+    };
+
+    void loadTranslations();
+  }, []);
+
+  if (!translationsReady) {
+    return (
+      <div
+        className="flex h-screen w-full items-center justify-center text-primary-500"
+        role="status"
+        aria-live="polite"
+      >
+        Loading...
+      </div>
+    );
+  }
 
   return (
     <PageIntro
@@ -42,26 +103,22 @@ const Terms: React.FC = () => {
           <section className="section">
             <h2 className="section-title">{t("terms.section1.title")}</h2>
             <ul className="list">
-              {(t("terms.section1.items", { returnObjects: true }) as string[]).map(
-                (item: string, index: number) => (
-                  <li key={index} className="list-item">
-                    {item}
-                  </li>
-                ),
-              )}
+              {getArrayTranslation("terms.section1.items").map((item: string, index: number) => (
+                <li key={index} className="list-item">
+                  {item}
+                </li>
+              ))}
             </ul>
           </section>
 
           <section className="section">
             <h2 className="section-title">{t("terms.section2.title")}</h2>
             <ul className="list">
-              {(t("terms.section2.items", { returnObjects: true }) as string[]).map(
-                (item: string, index: number) => (
-                  <li key={index} className="list-item">
-                    {item}
-                  </li>
-                ),
-              )}
+              {getArrayTranslation("terms.section2.items").map((item: string, index: number) => (
+                <li key={index} className="list-item">
+                  {item}
+                </li>
+              ))}
             </ul>
           </section>
 
@@ -69,26 +126,22 @@ const Terms: React.FC = () => {
             <h2 className="section-title">{t("terms.section3.title")}</h2>
             <p className="section-text">{t("terms.section3.subtitle")}</p>
             <ul className="list">
-              {(t("terms.section3.items", { returnObjects: true }) as string[]).map(
-                (item: string, index: number) => (
-                  <li key={index} className="list-item">
-                    {item}
-                  </li>
-                ),
-              )}
+              {getArrayTranslation("terms.section3.items").map((item: string, index: number) => (
+                <li key={index} className="list-item">
+                  {item}
+                </li>
+              ))}
             </ul>
           </section>
 
           <section className="section">
             <h2 className="section-title">{t("terms.section4.title")}</h2>
             <ul className="list">
-              {(t("terms.section4.items", { returnObjects: true }) as string[]).map(
-                (item: string, index: number) => (
-                  <li key={index} className="list-item">
-                    {item}
-                  </li>
-                ),
-              )}
+              {getArrayTranslation("terms.section4.items").map((item: string, index: number) => (
+                <li key={index} className="list-item">
+                  {item}
+                </li>
+              ))}
             </ul>
           </section>
 
@@ -105,26 +158,22 @@ const Terms: React.FC = () => {
           <section className="section">
             <h2 className="section-title">{t("terms.section7.title")}</h2>
             <ul className="list">
-              {(t("terms.section7.items", { returnObjects: true }) as string[]).map(
-                (item: string, index: number) => (
-                  <li key={index} className="list-item">
-                    {item}
-                  </li>
-                ),
-              )}
+              {getArrayTranslation("terms.section7.items").map((item: string, index: number) => (
+                <li key={index} className="list-item">
+                  {item}
+                </li>
+              ))}
             </ul>
           </section>
 
           <section className="section">
             <h2 className="section-title">{t("terms.section8.title")}</h2>
             <ul className="list">
-              {(t("terms.section8.items", { returnObjects: true }) as string[]).map(
-                (item: string, index: number) => (
-                  <li key={index} className="list-item">
-                    {item}
-                  </li>
-                ),
-              )}
+              {getArrayTranslation("terms.section8.items").map((item: string, index: number) => (
+                <li key={index} className="list-item">
+                  {item}
+                </li>
+              ))}
             </ul>
           </section>
 
@@ -156,26 +205,22 @@ const Terms: React.FC = () => {
           <section className="section">
             <h2 className="section-title">{t("terms.section14.title")}</h2>
             <ul className="list">
-              {(t("terms.section14.items", { returnObjects: true }) as string[]).map(
-                (item: string, index: number) => (
-                  <li key={index} className="list-item">
-                    {item}
-                  </li>
-                ),
-              )}
+              {getArrayTranslation("terms.section14.items").map((item: string, index: number) => (
+                <li key={index} className="list-item">
+                  {item}
+                </li>
+              ))}
             </ul>
           </section>
 
           <section className="section">
             <h2 className="section-title">{t("terms.section15.title")}</h2>
             <ul className="list">
-              {(t("terms.section15.items", { returnObjects: true }) as string[]).map(
-                (item: string, index: number) => (
-                  <li key={index} className="list-item">
-                    {item}
-                  </li>
-                ),
-              )}
+              {getArrayTranslation("terms.section15.items").map((item: string, index: number) => (
+                <li key={index} className="list-item">
+                  {item}
+                </li>
+              ))}
             </ul>
           </section>
 
