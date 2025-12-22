@@ -18,6 +18,7 @@ const AdminDashboard = lazy(() => import("../pages/admin/AdminDashboard"));
 const ContentReports = lazy(() => import("../pages/admin/ContentReports"));
 const UserManagement = lazy(() => import("../pages/admin/UserManagement"));
 const SystemControls = lazy(() => import("../pages/admin/SystemControls"));
+const Translations = lazy(() => import("../pages/admin/Translations"));
 const NotFound = lazy(() => import("../pages/NotFound"));
 const Terms = lazy(() => import("../pages/Terms"));
 const Privacy = lazy(() => import("../pages/Privacy"));
@@ -65,6 +66,7 @@ const ProtectedRoutes: React.FC = () => {
                 <Route path="reports" element={<ContentReports />} />
                 <Route path="users" element={<UserManagement />} />
                 <Route path="system" element={<SystemControls />} />
+                <Route path="translations" element={<Translations />} />
               </Route>
               <Route path="*" element={<NotFound />} />
             </Route>

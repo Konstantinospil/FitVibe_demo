@@ -3,6 +3,7 @@
  */
 
 import { HttpError } from "../../utils/http.js";
+import { getCurrentCookiePolicyVersion } from "../../config/legal-version.js";
 import type {
   CookieConsent,
   CookieConsentResponse,
@@ -10,12 +11,6 @@ import type {
 } from "./consent.types.js";
 import { getConsentByIp, upsertConsent } from "./consent.repository.js";
 import { insertAudit } from "../common/audit.util.js";
-
-/**
- * Current cookie policy version
- * Must match the effective date in docs/5.Policies/Cookie-policy.md
- */
-const CURRENT_CONSENT_VERSION = "2024-06-01";
 
 /**
  * Get consent status for an IP address
@@ -63,7 +58,7 @@ export async function saveCookiePreferences(
 
   const input: CreateCookieConsentInput = {
     ipAddress,
-    consentVersion: CURRENT_CONSENT_VERSION,
+    consentVersion: await getCurrentCookiePolicyVersion(),
     essentialCookies: preferences.essential,
     preferencesCookies: preferences.preferences,
     analyticsCookies: preferences.analytics,

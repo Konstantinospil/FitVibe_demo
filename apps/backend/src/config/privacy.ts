@@ -1,24 +1,12 @@
 /**
  * Privacy Policy version management
  *
- * When updating the Privacy Policy document, increment this version.
- * Users with older versions will be required to re-accept the new policy on login.
+ * Version is automatically calculated from the latest effectiveDateValue
+ * across all language translations. When ANY language version is updated,
+ * ALL languages are considered changed, ensuring users don't need to
+ * re-accept based on which language they originally accepted in.
+ *
+ * @see apps/backend/src/config/legal-version.ts for implementation
  */
-export const CURRENT_PRIVACY_POLICY_VERSION = "2024-06-01";
 
-/**
- * Get the current Privacy Policy version
- */
-export function getCurrentPrivacyPolicyVersion(): string {
-  return CURRENT_PRIVACY_POLICY_VERSION;
-}
-
-/**
- * Check if a user's accepted privacy policy version is outdated
- */
-export function isPrivacyPolicyVersionOutdated(userVersion: string | null | undefined): boolean {
-  if (!userVersion) {
-    return true; // No version means not accepted
-  }
-  return userVersion !== CURRENT_PRIVACY_POLICY_VERSION;
-}
+export { getCurrentPrivacyPolicyVersion, isPrivacyPolicyVersionOutdated } from "./legal-version.js";

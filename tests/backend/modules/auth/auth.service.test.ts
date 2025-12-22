@@ -20,6 +20,9 @@ import { getCurrentTermsVersion } from "../../../../apps/backend/src/config/term
 import { getCurrentPrivacyPolicyVersion } from "../../../../apps/backend/src/config/privacy.js";
 
 // Helper function to create complete AuthUserRecord
+// Note: For tests that check terms/privacy policy versions, set them explicitly using:
+// terms_version: await getCurrentTermsVersion()
+// privacy_policy_version: await getCurrentPrivacyPolicyVersion()
 function createMockUser(overrides: Partial<AuthUserRecord> = {}): AuthUserRecord {
   return {
     id: "user-123",
@@ -36,8 +39,11 @@ function createMockUser(overrides: Partial<AuthUserRecord> = {}): AuthUserRecord
     password_hash: "hashed-password",
     terms_accepted: true,
     terms_accepted_at: "2024-01-01T00:00:00Z",
-    terms_version: getCurrentTermsVersion(),
-    privacy_policy_version: getCurrentPrivacyPolicyVersion(),
+    // Default to a placeholder version - tests that check versions should override these
+    terms_version: "2024-06-01",
+    privacy_policy_accepted: true,
+    privacy_policy_accepted_at: "2024-01-01T00:00:00Z",
+    privacy_policy_version: "2024-06-01",
     ...overrides,
   };
 }
@@ -547,7 +553,8 @@ describe("Auth Service", () => {
         primary_email: "test@example.com",
         role_code: "athlete",
         status: "active",
-        privacy_policy_version: getCurrentPrivacyPolicyVersion(),
+        terms_version: await getCurrentTermsVersion(),
+        privacy_policy_version: await getCurrentPrivacyPolicyVersion(),
       });
 
       mockJwt.verify.mockReturnValue(mockPayload as never);

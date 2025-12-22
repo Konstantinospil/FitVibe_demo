@@ -76,9 +76,9 @@ You must comply with applicable export control and sanctions laws. You may not u
 
 ## 15. Notices
 
-- Notices to FitVibe: legal@fitvibe.example.com.
+- Notices to FitVibe: kpilpilidis@gmail.com.
 - Notices to you: via email, in-product messages, or other reasonable means. You are responsible for keeping contact details current.
 
 ## 16. Contact
 
-Questions about these Terms can be sent to legal@fitvibe.example.com.
+Questions about these Terms can be sent to kpilpilidis@gmail.com.

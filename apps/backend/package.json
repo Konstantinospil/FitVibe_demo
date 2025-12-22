@@ -15,7 +15,8 @@
     "db:retention": "tsx src/db/scripts/run-retention.ts",
     "db:rotate-secrets": "tsx src/db/scripts/rotate-secrets.ts",
     "db:migrate": "tsx src/db/scripts/migrate.ts",
-    "db:seed": "tsx src/db/utils/seedAll.ts"
+    "db:seed": "tsx src/db/utils/seedAll.ts",
+    "db:check-i18n": "tsx src/db/scripts/check-i18n-db.ts"
   },
   "dependencies": {
     "@aws-sdk/client-secrets-manager": "^3.918.0",

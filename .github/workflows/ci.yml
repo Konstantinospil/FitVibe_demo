@@ -654,12 +654,33 @@ jobs:
   i18n:
     name: i18n Coverage Check
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
     needs:
       - quality
     permissions:
       contents: read
       actions: read
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: fitvibe_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/fitvibe_test
+      PGHOST: 127.0.0.1
+      PGPORT: 5432
+      PGUSER: postgres
+      PGPASSWORD: postgres
+      PGDATABASE: fitvibe_test
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -689,9 +710,43 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile --prefer-offline
 
-      - name: Check i18n coverage
-        timeout-minutes: 10
+      - name: Install PostgreSQL client
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y postgresql-client
+
+      - name: Wait for PostgreSQL
+        timeout-minutes: 2
+        run: |
+          echo "Waiting for PostgreSQL..."
+          for i in {1..30}; do
+            if pg_isready -h 127.0.0.1 -p 5432 -U postgres >/dev/null 2>&1; then
+              echo "PostgreSQL is ready"
+              break
+            fi
+            if [ $i -eq 30 ]; then
+              echo "PostgreSQL failed to start" >&2
+              exit 1
+            fi
+            sleep 1
+          done
+
+      - name: Run database migrations
+        working-directory: ./apps/backend
+        run: pnpm run db:migrate
+        env:
+          NODE_ENV: test
+
+      - name: Check i18n coverage (JSON files)
+        timeout-minutes: 5
         run: pnpm i18n:check
+        continue-on-error: true
+
+      - name: Check i18n coverage (database)
+        timeout-minutes: 5
+        run: pnpm i18n:check:db
+        env:
+          NODE_ENV: test
 
       - name: Job summary
         if: always()

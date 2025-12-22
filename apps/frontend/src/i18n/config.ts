@@ -1,30 +1,5 @@
 import i18n from "i18next";
 import { initReactI18next } from "react-i18next";
-// Load English translations eagerly (needed for login page)
-// Use dynamic imports to allow Vite to code-split properly
-const loadEnglishTranslations = async () => {
-  const [enCommon, enAuth, enTerms, enPrivacy, enCookie] = await Promise.all([
-    import("./locales/en/common.json") as Promise<{ default: Record<string, unknown> }>,
-    import("./locales/en/auth.json") as Promise<{ default: Record<string, unknown> }>,
-    import("./locales/en/terms.json") as Promise<{ default: Record<string, unknown> }>,
-    import("./locales/en/privacy.json") as Promise<{ default: Record<string, unknown> }>,
-    import("./locales/en/cookie.json") as Promise<{ default: Record<string, unknown> }>,
-  ]);
-
-  // Wrap terms, privacy, and cookie translations under their respective keys
-  // so components can access them as t("terms.title"), t("privacy.title"), and t("cookie.title")
-  const wrappedTerms = { terms: enTerms.default };
-  const wrappedPrivacy = { privacy: enPrivacy.default };
-  const wrappedCookie = { cookie: enCookie.default };
-
-  return mergeTranslations(
-    mergeTranslations(
-      mergeTranslations(mergeTranslations(enCommon.default, enAuth.default), wrappedTerms),
-      wrappedPrivacy,
-    ),
-    wrappedCookie,
-  );
-};
 
 type SupportedLanguage = "en" | "de" | "fr" | "es" | "el";
 
@@ -33,10 +8,169 @@ const mergeTranslations = <T extends Record<string, unknown>, U extends Record<s
   extra: U,
 ) => ({ ...base, ...extra });
 
-// Resources will be populated after loading translations
 const resources: Partial<Record<SupportedLanguage, { translation: Record<string, unknown> }>> = {};
 
 const FALLBACK_LANGUAGE: SupportedLanguage = "en";
+// Use relative URL in development (Vite proxy handles /api -> localhost:4000)
+// Use full URL in production or when VITE_API_URL is explicitly set
+const API_BASE_URL =
+  import.meta.env.VITE_API_URL || (import.meta.env.DEV ? "" : "http://localhost:4000");
+const TRANSLATIONS_CACHE_KEY = "fitvibe:translations:cache";
+const CACHE_DURATION_MS = 60 * 60 * 1000; // 1 hour
+
+interface CachedTranslations {
+  data: Record<string, unknown>;
+  timestamp: number;
+  language: SupportedLanguage;
+}
+
+/**
+ * Load translations from API
+ */
+async function loadTranslationsFromAPI(
+  lng: SupportedLanguage,
+): Promise<Record<string, unknown> | null> {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/v1/translations/${lng}`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      credentials: "include", // Include cookies for CSRF if needed
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+
+    return (await response.json()) as Record<string, unknown>;
+  } catch (error) {
+    console.warn(`Failed to load translations from API for ${lng}:`, error);
+    return null;
+  }
+}
+
+/**
+ * Load translations from JSON files (fallback)
+ */
+async function loadTranslationsFromJSON(lng: SupportedLanguage): Promise<Record<string, unknown>> {
+  try {
+    const [common, auth, terms, privacy, cookie] = await Promise.all([
+      import(`./locales/${lng}/common.json`) as Promise<{ default: Record<string, unknown> }>,
+      import(`./locales/${lng}/auth.json`) as Promise<{ default: Record<string, unknown> }>,
+      import(`./locales/${lng}/terms.json`) as Promise<{ default: Record<string, unknown> }>,
+      import(`./locales/${lng}/privacy.json`) as Promise<{ default: Record<string, unknown> }>,
+      import(`./locales/${lng}/cookie.json`) as Promise<{ default: Record<string, unknown> }>,
+    ]);
+
+    const wrappedTerms = { terms: terms.default };
+    const wrappedPrivacy = { privacy: privacy.default };
+    const wrappedCookie = { cookie: cookie.default };
+
+    return mergeTranslations(
+      mergeTranslations(
+        mergeTranslations(mergeTranslations(common.default, auth.default), wrappedTerms),
+        wrappedPrivacy,
+      ),
+      wrappedCookie,
+    );
+  } catch (error) {
+    console.warn(`Failed to load JSON translations for ${lng}:`, error);
+    throw error;
+  }
+}
+
+/**
+ * Get cached translations from localStorage
+ */
+function getCachedTranslations(lng: SupportedLanguage): CachedTranslations | null {
+  if (typeof window === "undefined") {
+    return null;
+  }
+
+  try {
+    const cacheKey = `${TRANSLATIONS_CACHE_KEY}:${lng}`;
+    const cached = window.localStorage.getItem(cacheKey);
+    if (!cached) {
+      return null;
+    }
+
+    const parsed = JSON.parse(cached) as CachedTranslations;
+    const now = Date.now();
+
+    // Check if cache is still valid
+    if (now - parsed.timestamp > CACHE_DURATION_MS || parsed.language !== lng) {
+      window.localStorage.removeItem(cacheKey);
+      return null;
+    }
+
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Cache translations in localStorage
+ */
+function cacheTranslations(lng: SupportedLanguage, data: Record<string, unknown>): void {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  try {
+    const cacheKey = `${TRANSLATIONS_CACHE_KEY}:${lng}`;
+    const cached: CachedTranslations = {
+      data,
+      timestamp: Date.now(),
+      language: lng,
+    };
+    window.localStorage.setItem(cacheKey, JSON.stringify(cached));
+  } catch (error) {
+    console.warn("Failed to cache translations:", error);
+  }
+}
+
+/**
+ * Load translations (API first, then JSON fallback)
+ */
+async function loadLanguage(lng: SupportedLanguage): Promise<void> {
+  if (resources[lng]) {
+    return; // Already loaded
+  }
+
+  try {
+    // Try cached translations first
+    const cached = getCachedTranslations(lng);
+    if (cached) {
+      console.warn(`Using cached translations for ${lng}`);
+      i18n.addResourceBundle(lng, "translation", cached.data, true, true);
+      resources[lng] = { translation: cached.data };
+      return;
+    }
+
+    // Try API first
+    let translations = await loadTranslationsFromAPI(lng);
+
+    // Fallback to JSON if API fails
+    if (!translations) {
+      console.warn(`Falling back to JSON translations for ${lng}`);
+      translations = await loadTranslationsFromJSON(lng);
+    } else {
+      // Cache successful API responses
+      cacheTranslations(lng, translations);
+    }
+
+    i18n.addResourceBundle(lng, "translation", translations, true, true);
+    resources[lng] = { translation: translations };
+  } catch (error) {
+    console.warn(`Failed to load language ${lng}:`, error);
+    // Fallback to English if language loading fails
+    if (lng !== "en") {
+      await loadLanguage("en");
+    }
+  }
+}
 
 const detectLanguage = (): SupportedLanguage => {
   if (typeof window === "undefined") {
@@ -58,50 +192,7 @@ const detectLanguage = (): SupportedLanguage => {
 
 const initialLanguage = detectLanguage();
 
-// Load translations on-demand (including English) to reduce initial bundle size
-const loadLanguage = async (lng: SupportedLanguage): Promise<void> => {
-  if (resources[lng]) {
-    return; // Already loaded
-  }
-
-  try {
-    // Dynamically import translation files only when needed
-    // This includes English to allow proper code-splitting
-    const [common, auth, terms, privacy, cookie] = await Promise.all([
-      import(`./locales/${lng}/common.json`) as Promise<{ default: Record<string, unknown> }>,
-      import(`./locales/${lng}/auth.json`) as Promise<{ default: Record<string, unknown> }>,
-      import(`./locales/${lng}/terms.json`) as Promise<{ default: Record<string, unknown> }>,
-      import(`./locales/${lng}/privacy.json`) as Promise<{ default: Record<string, unknown> }>,
-      import(`./locales/${lng}/cookie.json`) as Promise<{ default: Record<string, unknown> }>,
-    ]);
-
-    // Wrap terms, privacy, and cookie translations under their respective keys
-    // so components can access them as t("terms.title"), t("privacy.title"), and t("cookie.title")
-    const wrappedTerms = { terms: terms.default };
-    const wrappedPrivacy = { privacy: privacy.default };
-    const wrappedCookie = { cookie: cookie.default };
-
-    const translations = mergeTranslations(
-      mergeTranslations(
-        mergeTranslations(mergeTranslations(common.default, auth.default), wrappedTerms),
-        wrappedPrivacy,
-      ),
-      wrappedCookie,
-    );
-
-    i18n.addResourceBundle(lng, "translation", translations, true, true);
-    resources[lng] = { translation: translations };
-  } catch (error) {
-    console.warn(`Failed to load language ${lng}:`, error);
-    // Fallback to English if language loading fails
-    if (lng !== "en") {
-      // Try to load English as fallback
-      await loadLanguage("en");
-    }
-  }
-};
-
-// Initialize i18n with empty resources, then load English immediately
+// Initialize i18n
 void i18n.use(initReactI18next).init({
   resources: {},
   lng: FALLBACK_LANGUAGE,
@@ -111,8 +202,7 @@ void i18n.use(initReactI18next).init({
   },
 });
 
-// Defer English translations loading to improve initial bundle size and LCP
-// Only load minimal translations needed for login page initially
+// Load minimal translations for login page (use JSON for speed)
 const loadMinimalLoginTranslations = async () => {
   const [enCommon, enAuth] = await Promise.all([
     import("./locales/en/common.json") as Promise<{ default: Record<string, unknown> }>,
@@ -125,23 +215,17 @@ const loadMinimalLoginTranslations = async () => {
   void i18n.changeLanguage("en");
 };
 
-// Load full English translations after initial render to improve LCP
+// Load full translations after initial render
 export const translationsLoadingPromise = Promise.resolve()
   .then(() => {
-    // Load minimal translations for login page first
     return loadMinimalLoginTranslations();
   })
   .then(() => {
-    // Defer full translation loading until after initial render
     if (typeof window !== "undefined" && window.requestIdleCallback) {
       return new Promise<void>((resolve) => {
         window.requestIdleCallback(
           () => {
-            void loadEnglishTranslations().then((enTranslations) => {
-              i18n.addResourceBundle("en", "translation", enTranslations, true, true);
-              resources.en = { translation: enTranslations };
-
-              // If initial language is not English, load it too
+            void loadLanguage("en").then(() => {
               if (initialLanguage !== "en") {
                 return loadLanguage(initialLanguage).then(() => {
                   void i18n.changeLanguage(initialLanguage);
@@ -157,13 +241,9 @@ export const translationsLoadingPromise = Promise.resolve()
         );
       });
     } else {
-      // Fallback: use setTimeout
       return new Promise<void>((resolve) => {
         setTimeout(() => {
-          void loadEnglishTranslations().then((enTranslations) => {
-            i18n.addResourceBundle("en", "translation", enTranslations, true, true);
-            resources.en = { translation: enTranslations };
-
+          void loadLanguage("en").then(() => {
             if (initialLanguage !== "en") {
               return loadLanguage(initialLanguage).then(() => {
                 void i18n.changeLanguage(initialLanguage);
@@ -179,18 +259,18 @@ export const translationsLoadingPromise = Promise.resolve()
     }
   });
 
-// Export function to load languages on-demand
 export const loadLanguageTranslations = loadLanguage;
 
 export const ensurePrivateTranslationsLoaded = async () => {
-  // All known bundles are eagerly loaded, but keep the API asynchronous-friendly
-  // so routes that call this function do not need to change once new bundles appear.
   return Promise.resolve();
 };
 
 if (typeof window !== "undefined") {
   i18n.on("languageChanged", (lng) => {
     window.localStorage.setItem("fitvibe:language", lng);
+    // Clear translation cache when language changes to force fresh load
+    const cacheKey = `${TRANSLATIONS_CACHE_KEY}:${lng}`;
+    window.localStorage.removeItem(cacheKey);
   });
 }
 

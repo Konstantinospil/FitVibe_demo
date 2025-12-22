@@ -143,7 +143,7 @@ Where we transfer personal data from the EEA, UK, or Switzerland to countries th
 - Standard Contractual Clauses approved by the European Commission or UK authorities, and
 - additional technical and organizational measures based on transfer impact assessments, where required.
 
-You may request more information about these safeguards by contacting `privacy@fitvibe.example.com`.
+You may request more information about these safeguards by contacting `kpilpilidis@gmail.com`.
 
 ---
 
@@ -198,7 +198,7 @@ Residents of certain jurisdictions (for example, some U.S. states, Brazil, Canad
 You can exercise these rights by:
 
 - using any self‑service tools provided in the app or account settings (for example, download or delete account functions), and/or
-- contacting us at `privacy@fitvibe.example.com`.
+- contacting us at `kpilpilidis@gmail.com`.
 
 We may need to verify your identity before acting on your request and may decline requests that are manifestly unfounded, excessive, or otherwise not required or permitted by law.
 
@@ -211,7 +211,7 @@ The Services are **not directed to children under 16**, or any higher age set by
 - We do not knowingly collect personal data from children under the applicable minimum age.
 - If we learn that we have collected personal data from such a child without appropriate consent, we will delete it as soon as reasonably possible.
 
-If you believe that a child has provided personal data to FitVibe in breach of this Policy, please contact us at `privacy@fitvibe.example.com`.
+If you believe that a child has provided personal data to FitVibe in breach of this Policy, please contact us at `kpilpilidis@gmail.com`.
 
 ---
 

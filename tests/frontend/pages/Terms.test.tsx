@@ -75,12 +75,11 @@ const mockTranslations: Record<string, string | string[]> = {
   ],
   "terms.section15.title": "15. Notices",
   "terms.section15.items": [
-    "Notices to FitVibe: legal@fitvibe.example.com.",
+    "Notices to FitVibe: kpilpilidis@gmail.com.",
     "Notices to you: via email, in-product messages, or other reasonable means. You are responsible for keeping contact details current.",
   ],
   "terms.section16.title": "16. Contact",
-  "terms.section16.content":
-    "Questions about these Terms can be sent to legal@fitvibe.example.com.",
+  "terms.section16.content": "Questions about these Terms can be sent to kpilpilidis@gmail.com.",
   "navigation.home": "Home",
   "auth.login.title": "Login",
 };
@@ -190,7 +189,7 @@ describe("Terms page", () => {
     );
 
     // Wait for email elements to render (component loads translations asynchronously)
-    const emailElements = await waitFor(() => screen.getAllByText(/legal@fitvibe.example.com/i), {
+    const emailElements = await waitFor(() => screen.getAllByText(/kpilpilidis@gmail.com/i), {
       timeout: 5000,
     });
     expect(emailElements.length).toBeGreaterThan(0);

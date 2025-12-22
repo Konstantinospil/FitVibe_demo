@@ -1,24 +1,12 @@
 /**
  * Terms and Conditions version management
  *
- * When updating the Terms and Conditions document, increment this version.
- * Users with older versions will be required to re-accept the new terms on login.
+ * Version is automatically calculated from the latest effectiveDateValue
+ * across all language translations. When ANY language version is updated,
+ * ALL languages are considered changed, ensuring users don't need to
+ * re-accept based on which language they originally accepted in.
+ *
+ * @see apps/backend/src/config/legal-version.ts for implementation
  */
-export const CURRENT_TERMS_VERSION = "2024-06-01";
 
-/**
- * Get the current Terms and Conditions version
- */
-export function getCurrentTermsVersion(): string {
-  return CURRENT_TERMS_VERSION;
-}
-
-/**
- * Check if a user's accepted terms version is outdated
- */
-export function isTermsVersionOutdated(userVersion: string | null | undefined): boolean {
-  if (!userVersion) {
-    return true; // No version means not accepted
-  }
-  return userVersion !== CURRENT_TERMS_VERSION;
-}
+export { getCurrentTermsVersion, isTermsVersionOutdated } from "./legal-version.js";

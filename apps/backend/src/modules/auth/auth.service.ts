@@ -282,7 +282,7 @@ export async function register(
     const id = uuidv4();
     const password_hash = await bcrypt.hash(dto.password, 12);
     const now = new Date().toISOString();
-    const termsVersion = getCurrentTermsVersion();
+    const termsVersion = await getCurrentTermsVersion();
 
     try {
       await createUser({
@@ -686,8 +686,8 @@ export async function login(
     });
 
     // Check if user has accepted current terms and privacy policy versions
-    const termsOutdated = isTermsVersionOutdated(user.terms_version);
-    const privacyPolicyOutdated = isPrivacyPolicyVersionOutdated(user.privacy_policy_version);
+    const termsOutdated = await isTermsVersionOutdated(user.terms_version);
+    const privacyPolicyOutdated = await isPrivacyPolicyVersionOutdated(user.privacy_policy_version);
 
     return {
       requires2FA: false,
@@ -816,8 +816,8 @@ export async function verify2FALogin(
   await deletePending2FASession(pendingSessionId);
 
   // Check if user has accepted current terms and privacy policy versions (after tokens are created)
-  const termsOutdated = isTermsVersionOutdated(user.terms_version);
-  const privacyPolicyOutdated = isPrivacyPolicyVersionOutdated(user.privacy_policy_version);
+  const termsOutdated = await isTermsVersionOutdated(user.terms_version);
+  const privacyPolicyOutdated = await isPrivacyPolicyVersionOutdated(user.privacy_policy_version);
 
   return {
     user: toSafeUser(user),
@@ -907,10 +907,10 @@ export async function refresh(
     }
 
     // Check if user has accepted current terms and privacy policy versions
-    if (isTermsVersionOutdated(user.terms_version)) {
+    if (await isTermsVersionOutdated(user.terms_version)) {
       throw new HttpError(403, "TERMS_VERSION_OUTDATED", "TERMS_VERSION_OUTDATED");
     }
-    if (isPrivacyPolicyVersionOutdated(user.privacy_policy_version)) {
+    if (await isPrivacyPolicyVersionOutdated(user.privacy_policy_version)) {
       throw new HttpError(
         403,
         "PRIVACY_POLICY_VERSION_OUTDATED",
@@ -1188,7 +1188,7 @@ export async function revokeSessions(
 
 export async function acceptTerms(userId: string): Promise<void> {
   const now = new Date().toISOString();
-  const termsVersion = getCurrentTermsVersion();
+  const termsVersion = await getCurrentTermsVersion();
 
   await db("users").where({ id: userId }).update({
     terms_accepted: true,
@@ -1224,7 +1224,7 @@ export async function revokeTerms(userId: string): Promise<void> {
 
 export async function acceptPrivacyPolicy(userId: string): Promise<void> {
   const now = new Date().toISOString();
-  const privacyPolicyVersion = getCurrentPrivacyPolicyVersion();
+  const privacyPolicyVersion = await getCurrentPrivacyPolicyVersion();
 
   await db("users").where({ id: userId }).update({
     privacy_policy_accepted: true,
@@ -1281,12 +1281,14 @@ export async function getLegalDocumentsStatus(userId: string): Promise<LegalDocu
     throw new HttpError(404, "USER_NOT_FOUND", "USER_NOT_FOUND");
   }
 
-  const currentTermsVersion = getCurrentTermsVersion();
-  const currentPrivacyVersion = getCurrentPrivacyPolicyVersion();
+  const currentTermsVersion = await getCurrentTermsVersion();
+  const currentPrivacyVersion = await getCurrentPrivacyPolicyVersion();
 
-  const termsNeedsAcceptance = !user.terms_accepted || isTermsVersionOutdated(user.terms_version);
+  const termsNeedsAcceptance =
+    !user.terms_accepted || (await isTermsVersionOutdated(user.terms_version));
   const privacyNeedsAcceptance =
-    !user.privacy_policy_accepted || isPrivacyPolicyVersionOutdated(user.privacy_policy_version);
+    !user.privacy_policy_accepted ||
+    (await isPrivacyPolicyVersionOutdated(user.privacy_policy_version));
 
   return {
     terms: {

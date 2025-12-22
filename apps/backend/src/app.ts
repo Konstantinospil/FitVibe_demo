@@ -26,6 +26,7 @@ import { pointsRouter } from "./api/points.routes.js";
 import { feedRouter } from "./api/feed.routes.js";
 import { adminRouter } from "./api/admin.routes.js";
 import { contactRouter } from "./api/contact.routes.js";
+import { translationsRouter } from "./api/translations.routes.js";
 import healthRouter from "./modules/health/health.router.js";
 import systemRouter from "./modules/system/system.routes.js";
 import { consentRouter } from "./modules/consent/consent.routes.js";
@@ -178,6 +179,7 @@ apiRouter.use("/contact", contactRouter);
 
 apiRouter.use("/system", systemRouter);
 apiRouter.use("/consent", consentRouter);
+apiRouter.use("/translations", translationsRouter);
 
 app.use("/api/v1", apiRouter);
 app.use("/health", healthRouter);

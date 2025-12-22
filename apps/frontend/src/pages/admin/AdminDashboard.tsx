@@ -1,6 +1,6 @@
 import React from "react";
 import { useNavigate, Outlet, useLocation } from "react-router-dom";
-import { Users, Settings as SettingsIcon, AlertTriangle } from "lucide-react";
+import { Users, Settings as SettingsIcon, AlertTriangle, Languages } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import PageIntro from "../../components/PageIntro";
 import { Card, CardContent } from "../../components/ui/Card";
@@ -30,6 +30,12 @@ const AdminDashboard: React.FC = () => {
       label: t("admin.systemControls.title"),
       icon: <SettingsIcon size={20} />,
       description: t("admin.systemControls.description"),
+    },
+    {
+      path: "/admin/translations",
+      label: "Translation Management",
+      icon: <Languages size={20} />,
+      description: "Manage application translations across all languages",
     },
   ];
 
