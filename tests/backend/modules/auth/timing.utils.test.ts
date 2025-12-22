@@ -49,7 +49,7 @@ describe("timing.utils", () => {
 
       await delayPromise;
 
-      expect(mockedCrypto.randomInt).toHaveBeenCalledWith(-10, 11);
+      expect(mockedCrypto.randomInt).toHaveBeenCalledWith(-5, 6);
     });
 
     it("should add random jitter to delay", async () => {
@@ -62,7 +62,7 @@ describe("timing.utils", () => {
 
       await delayPromise;
 
-      expect(mockedCrypto.randomInt).toHaveBeenCalledWith(-10, 11);
+      expect(mockedCrypto.randomInt).toHaveBeenCalledWith(-5, 6);
     });
 
     it("should use default minimum time when not specified", async () => {
@@ -81,27 +81,27 @@ describe("timing.utils", () => {
     it("should handle negative jitter correctly", async () => {
       const startTime = Date.now() - 100;
       const minTime = 300;
-      (mockedCrypto.randomInt as unknown as jest.Mock<number>).mockReturnValue(-10); // Maximum negative jitter
+      (mockedCrypto.randomInt as unknown as jest.Mock<number>).mockReturnValue(-5); // Maximum negative jitter
 
       const delayPromise = normalizeAuthTiming(startTime, minTime);
-      jest.advanceTimersByTime(190); // 200ms - 10ms jitter
+      jest.advanceTimersByTime(195); // 200ms - 5ms jitter
 
       await delayPromise;
 
-      expect(mockedCrypto.randomInt).toHaveBeenCalledWith(-10, 11);
+      expect(mockedCrypto.randomInt).toHaveBeenCalledWith(-5, 6);
     });
 
     it("should handle positive jitter correctly", async () => {
       const startTime = Date.now() - 100;
       const minTime = 300;
-      (mockedCrypto.randomInt as unknown as jest.Mock<number>).mockReturnValue(10); // Maximum positive jitter
+      (mockedCrypto.randomInt as unknown as jest.Mock<number>).mockReturnValue(5); // Maximum positive jitter
 
       const delayPromise = normalizeAuthTiming(startTime, minTime);
-      jest.advanceTimersByTime(210); // 200ms + 10ms jitter
+      jest.advanceTimersByTime(205); // 200ms + 5ms jitter
 
       await delayPromise;
 
-      expect(mockedCrypto.randomInt).toHaveBeenCalledWith(-10, 11);
+      expect(mockedCrypto.randomInt).toHaveBeenCalledWith(-5, 6);
     });
 
     it("should ensure delay is never negative", async () => {
