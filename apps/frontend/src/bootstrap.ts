@@ -40,8 +40,9 @@ if (!hasSessionFlag && !PUBLIC_ROUTES.has(currentPath)) {
   // Redirect to login if not authenticated and not on a public route
   window.location.replace("/login");
 } else {
-  // Remove static login shell and load React app for all routes
-  removeLoginShell();
+  // Don't remove login shell immediately - let React remove it after rendering
+  // This keeps the static HTML visible while React loads, improving LCP
+  // React will remove it in main.tsx after it has rendered
   void import("./main");
 }
 

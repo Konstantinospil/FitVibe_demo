@@ -341,6 +341,13 @@ small {
 
 #root {
   min-height: 100vh;
+  /* Priority 2: Lock container height to prevent layout shift */
+  position: relative;
+}
+
+#login-shell {
+  /* Priority 2: Reserve space to prevent CLS when React renders */
+  min-height: 100vh;
 }
 
 .login-fallback {
@@ -353,6 +360,8 @@ small {
   color: var(--color-text-primary);
   font-family: var(--font-family-base);
   line-height: 1.5;
+  /* Priority 3: CSS containment to isolate layout recalculations */
+  contain: layout paint;
 }
 
 .login-fallback__card {
@@ -363,6 +372,10 @@ small {
   padding: clamp(1.5rem, 4vw, 3rem);
   background: rgba(11, 12, 16, 0.9);
   box-shadow: 0 20px 50px rgba(0, 0, 0, 0.35);
+  /* Priority 2: Reserve min-height to prevent layout shift */
+  min-height: 420px;
+  /* Priority 3: CSS containment for better layout isolation */
+  contain: layout;
 }
 
 .login-fallback__eyebrow {

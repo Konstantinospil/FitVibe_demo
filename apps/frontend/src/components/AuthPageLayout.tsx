@@ -1,31 +1,34 @@
-import React, { useEffect, useState, lazy, Suspense } from "react";
+import React, { useEffect, useState } from "react";
 import PageIntro from "./PageIntro";
+import Footer from "./Footer";
 import { scheduleIdleTask } from "../utils/idleScheduler";
 
 // Lazy load header utilities to reduce initial bundle size and TBT
-const ThemeToggle = lazy(() => import("./ThemeToggle"));
-const LanguageSwitcher = lazy(() => import("./LanguageSwitcher"));
-const Footer = lazy(() => import("./Footer"));
+const ThemeToggle = React.lazy(() => import("./ThemeToggle"));
+const LanguageSwitcher = React.lazy(() => import("./LanguageSwitcher"));
 
 const HeaderUtilities: React.FC = () => {
   const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
     // Defer loading header utilities until after initial render to improve LCP
-    const { cancel } = scheduleIdleTask(() => setIsReady(true), { timeout: 1000 });
+    const { cancel } = scheduleIdleTask(() => setIsReady(true), { timeout: 500 });
     return () => cancel();
   }, []);
 
   if (!isReady) {
-    // Show nothing during initial render to avoid blocking
     return null;
   }
 
   return (
-    <Suspense fallback={null}>
-      <ThemeToggle />
-      <LanguageSwitcher />
-    </Suspense>
+    <>
+      <React.Suspense fallback={null}>
+        <ThemeToggle />
+      </React.Suspense>
+      <React.Suspense fallback={null}>
+        <LanguageSwitcher />
+      </React.Suspense>
+    </>
   );
 };
 
@@ -34,6 +37,10 @@ interface AuthPageLayoutProps {
   title: string;
   description: string;
   children?: React.ReactNode;
+  /** Custom padding for PageIntro section (Solution 4: match shell dimensions) */
+  sectionPadding?: string;
+  /** Custom max width for PageIntro card (Solution 4: match shell dimensions) */
+  cardMaxWidth?: string;
 }
 
 const AuthPageLayout: React.FC<AuthPageLayoutProps> = ({
@@ -41,10 +48,18 @@ const AuthPageLayout: React.FC<AuthPageLayoutProps> = ({
   title,
   description,
   children,
+  sectionPadding,
+  cardMaxWidth,
 }) => {
   return (
     <div
-      style={{ position: "relative", minHeight: "100vh", display: "flex", flexDirection: "column" }}
+      style={{
+        position: "relative",
+        minHeight: "100vh",
+        display: "flex",
+        flexDirection: "column",
+        zIndex: 2, // Ensure React content renders above absolutely positioned shell (Solution 2)
+      }}
     >
       <div
         style={{
@@ -60,13 +75,17 @@ const AuthPageLayout: React.FC<AuthPageLayoutProps> = ({
         <HeaderUtilities />
       </div>
       <div style={{ flex: 1 }}>
-        <PageIntro eyebrow={eyebrow} title={title} description={description}>
+        <PageIntro
+          eyebrow={eyebrow}
+          title={title}
+          description={description}
+          sectionPadding={sectionPadding}
+          cardMaxWidth={cardMaxWidth}
+        >
           {children}
         </PageIntro>
       </div>
-      <Suspense fallback={null}>
-        <Footer />
-      </Suspense>
+      <Footer />
     </div>
   );
 };

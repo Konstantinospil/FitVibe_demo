@@ -1,12 +1,16 @@
-import React from "react";
+import React, { lazy, Suspense } from "react";
 import AppRouter from "./routes/AppRouter";
 import { ToastProvider } from "./contexts/ToastContext";
-import CookieConsent from "./components/CookieConsent";
+
+// Lazy load CookieConsent since it only shows conditionally and requires cookie translations
+const CookieConsent = lazy(() => import("./components/CookieConsent"));
 
 const App: React.FC = () => (
   <ToastProvider>
     <AppRouter />
-    <CookieConsent />
+    <Suspense fallback={null}>
+      <CookieConsent />
+    </Suspense>
   </ToastProvider>
 );
 

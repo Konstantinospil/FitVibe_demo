@@ -6,6 +6,10 @@ interface PageIntroProps {
   title: string;
   description: string;
   children?: React.ReactNode;
+  /** Custom padding for the section container (default: "5rem 1.5rem") */
+  sectionPadding?: string;
+  /** Custom max width for the card (default: "900px") */
+  cardMaxWidth?: string;
 }
 
 // Separate concerns: layout container vs typography
@@ -29,20 +33,27 @@ const accentLineStyle: React.CSSProperties = {
   background: "var(--color-accent)",
 };
 
-const PageIntro: React.FC<PageIntroProps> = ({ eyebrow, title, description, children }) => (
+const PageIntro: React.FC<PageIntroProps> = ({
+  eyebrow,
+  title,
+  description,
+  children,
+  sectionPadding = "5rem 1.5rem",
+  cardMaxWidth = "900px",
+}) => (
   <section
     style={{
       flex: 1,
       display: "flex",
       alignItems: "center",
       justifyContent: "center",
-      padding: "5rem 1.5rem",
+      padding: sectionPadding,
     }}
   >
     <Card
       as="article"
       style={{
-        maxWidth: "900px",
+        maxWidth: cardMaxWidth,
         width: "100%",
         padding: "0",
         gap: "0",

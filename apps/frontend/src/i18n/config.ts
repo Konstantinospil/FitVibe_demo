@@ -111,22 +111,73 @@ void i18n.use(initReactI18next).init({
   },
 });
 
-// Load English translations immediately (needed for login page)
-// This is done asynchronously but eagerly to allow code-splitting
-export const translationsLoadingPromise = loadEnglishTranslations().then((enTranslations) => {
-  i18n.addResourceBundle("en", "translation", enTranslations, true, true);
-  resources.en = { translation: enTranslations };
+// Defer English translations loading to improve initial bundle size and LCP
+// Only load minimal translations needed for login page initially
+const loadMinimalLoginTranslations = async () => {
+  const [enCommon, enAuth] = await Promise.all([
+    import("./locales/en/common.json") as Promise<{ default: Record<string, unknown> }>,
+    import("./locales/en/auth.json") as Promise<{ default: Record<string, unknown> }>,
+  ]);
 
-  // If initial language is not English, load it too
-  if (initialLanguage !== "en") {
-    return loadLanguage(initialLanguage).then(() => {
-      void i18n.changeLanguage(initialLanguage);
-    });
-  } else {
-    // Ensure English is set as the language
-    void i18n.changeLanguage("en");
-  }
-});
+  const minimalTranslations = mergeTranslations(enCommon.default, enAuth.default);
+  i18n.addResourceBundle("en", "translation", minimalTranslations, true, true);
+  resources.en = { translation: minimalTranslations };
+  void i18n.changeLanguage("en");
+};
+
+// Load full English translations after initial render to improve LCP
+export const translationsLoadingPromise = Promise.resolve()
+  .then(() => {
+    // Load minimal translations for login page first
+    return loadMinimalLoginTranslations();
+  })
+  .then(() => {
+    // Defer full translation loading until after initial render
+    if (typeof window !== "undefined" && window.requestIdleCallback) {
+      return new Promise<void>((resolve) => {
+        window.requestIdleCallback(
+          () => {
+            void loadEnglishTranslations().then((enTranslations) => {
+              i18n.addResourceBundle("en", "translation", enTranslations, true, true);
+              resources.en = { translation: enTranslations };
+
+              // If initial language is not English, load it too
+              if (initialLanguage !== "en") {
+                return loadLanguage(initialLanguage).then(() => {
+                  void i18n.changeLanguage(initialLanguage);
+                  resolve();
+                });
+              } else {
+                void i18n.changeLanguage("en");
+                resolve();
+              }
+            });
+          },
+          { timeout: 2000 },
+        );
+      });
+    } else {
+      // Fallback: use setTimeout
+      return new Promise<void>((resolve) => {
+        setTimeout(() => {
+          void loadEnglishTranslations().then((enTranslations) => {
+            i18n.addResourceBundle("en", "translation", enTranslations, true, true);
+            resources.en = { translation: enTranslations };
+
+            if (initialLanguage !== "en") {
+              return loadLanguage(initialLanguage).then(() => {
+                void i18n.changeLanguage(initialLanguage);
+                resolve();
+              });
+            } else {
+              void i18n.changeLanguage("en");
+              resolve();
+            }
+          });
+        }, 100);
+      });
+    }
+  });
 
 // Export function to load languages on-demand
 export const loadLanguageTranslations = loadLanguage;
