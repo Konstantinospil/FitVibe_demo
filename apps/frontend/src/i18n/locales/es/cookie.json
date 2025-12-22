@@ -26,7 +26,8 @@
   "actions": {
     "acceptAll": "Aceptar Todas",
     "rejectAll": "Rechazar Todas",
-    "savePreferences": "Guardar Preferencias"
+    "savePreferences": "Guardar Preferencias",
+    "saveError": "Error al guardar las preferencias de cookies. Por favor, inténtelo de nuevo."
   },
   "policy": {
     "title": "Política de Cookies",
@@ -73,5 +74,12 @@
   "section7": {
     "title": "Contacto",
     "content": "Las preguntas sobre esta Política de cookies pueden enviarse a kpilpilidis@gmail.com."
+  },
+  "revokeConsent": "Revocar Consentimiento",
+  "revokeConfirm": {
+    "title": "Revocar Consentimiento",
+    "message": "Revocar su consentimiento significa que ya no podrá usar FitVibe. Será desconectado y deberá aceptar los términos y la política de privacidad nuevamente para continuar usando el servicio.",
+    "confirm": "Revocar Consentimiento y Cerrar Sesión",
+    "cancel": "Atrás"
   }
 }

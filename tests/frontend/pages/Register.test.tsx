@@ -1,6 +1,6 @@
-import { render, screen, fireEvent, waitFor, act } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor, act, cleanup } from "@testing-library/react";
 import { BrowserRouter, MemoryRouter } from "react-router-dom";
-import { describe, expect, it, vi, beforeEach } from "vitest";
+import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
 import Register from "../../src/pages/Register";
 import { I18nextProvider } from "react-i18next";
 import i18n from "i18next";
@@ -93,6 +93,10 @@ const renderWithProviders = (ui: React.ReactElement, initialEntries?: string[]) 
 describe("Register", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+  });
+
+  afterEach(() => {
+    cleanup();
   });
 
   it("renders registration form", () => {

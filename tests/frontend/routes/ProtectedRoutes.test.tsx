@@ -1,6 +1,6 @@
 import React from "react";
-import { render, screen, waitFor } from "@testing-library/react";
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { render, screen, waitFor, cleanup } from "@testing-library/react";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { MemoryRouter, Outlet } from "react-router-dom";
 import ProtectedRoutes from "../../../apps/frontend/src/routes/ProtectedRoutes";
 import { useAuth } from "../../../apps/frontend/src/contexts/AuthContext";
@@ -110,6 +110,10 @@ describe("ProtectedRoutes", () => {
       isAuthenticated: true,
       signOut: vi.fn(),
     });
+  });
+
+  afterEach(() => {
+    cleanup();
   });
 
   it("should render without crashing", () => {

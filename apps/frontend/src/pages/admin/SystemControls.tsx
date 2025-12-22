@@ -382,7 +382,7 @@ const SystemControls: React.FC = () => {
                   }}
                   disabled={actionLoading}
                 >
-                  Cancel
+                  {t("admin.systemControls.cancel")}
                 </Button>
                 <Button
                   variant="danger"
@@ -390,7 +390,9 @@ const SystemControls: React.FC = () => {
                   isLoading={actionLoading}
                   leftIcon={<PowerOff size={18} />}
                 >
-                  {actionLoading ? "Enabling..." : "Confirm Enable"}
+                  {actionLoading
+                    ? t("admin.systemControls.enabling")
+                    : t("admin.systemControls.confirmEnable")}
                 </Button>
               </div>
             </div>
@@ -492,7 +494,7 @@ const SystemControls: React.FC = () => {
         title="Disable Read-Only Mode"
         message="Are you sure you want to disable read-only mode and restore normal operations?"
         confirmLabel="Yes, Disable"
-        cancelLabel="Cancel"
+        cancelLabel={t("common.cancel")}
         variant="warning"
         onConfirm={() => void confirmDisableReadOnly()}
         onCancel={() => setShowDisableConfirm(false)}

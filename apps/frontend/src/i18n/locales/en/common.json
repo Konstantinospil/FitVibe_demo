@@ -119,13 +119,27 @@
     "eyebrow": "Legal",
     "title": "Terms and Conditions",
     "description": "Please read our Terms and Conditions carefully before using FitVibe.",
-    "effectiveDate": "Effective Date"
+    "effectiveDate": "Effective Date",
+    "revokeConsent": "Revoke Consent",
+    "revokeConfirm": {
+      "title": "Revoke Consent",
+      "message": "Revoking your consent means you will no longer be able to use FitVibe. You will be logged out and will need to accept the Terms and Conditions again to continue using the service.",
+      "confirm": "Revoke Consent and Log Out",
+      "cancel": "Back"
+    }
   },
   "privacy": {
     "eyebrow": "Legal",
     "title": "Privacy Policy",
     "description": "Learn how we collect, use, and protect your personal data.",
-    "effectiveDate": "Effective date"
+    "effectiveDate": "Effective date",
+    "revokeConsent": "Revoke Consent",
+    "revokeConfirm": {
+      "title": "Revoke Consent",
+      "message": "Revoking your consent means you will no longer be able to use FitVibe. You will be logged out and will need to accept the Privacy Policy again to continue using the service.",
+      "confirm": "Revoke Consent and Log Out",
+      "cancel": "Back"
+    }
   },
   "impressum": {
     "eyebrow": "Legal",
@@ -164,7 +178,7 @@
     "AUTH_TOO_MANY_REQUESTS": "Verification limit reached. Please try again later",
     "AUTH_CONFLICT": "Unable to complete registration",
     "AUTH_USER_NOT_FOUND": "User not found",
-    "AUTH_INVALID_CREDENTIALS": "Invalid credentials",
+    "AUTH_INVALID_CREDENTIALS": "The email or password you entered is incorrect. Please check your credentials and try again.",
     "AUTH_INVALID_REFRESH": "Invalid refresh token",
     "AUTH_SESSION_REVOKED": "Session revoked",
     "AUTH_REFRESH_EXPIRED": "Refresh token expired",
@@ -384,7 +398,17 @@
     "expand": "Expand",
     "collapse": "Collapse",
     "markComplete": "Mark complete",
-    "markIncomplete": "Mark incomplete"
+    "markIncomplete": "Mark incomplete",
+    "workoutSession": "Workout Session",
+    "customExercise": "Custom Exercise",
+    "sessionTime": "Session Time",
+    "restTimer": "Rest Timer",
+    "stopRest": "Stop Rest",
+    "startRest": "Start Rest",
+    "completeSession": "Complete Session",
+    "completing": "Completing...",
+    "exercises": "exercises",
+    "setsCompleted": "sets completed"
   },
   "planner": {
     "eyebrow": "Session architecture",
@@ -694,7 +718,10 @@
       "readOnlyDisabled": "Read-only mode disabled successfully",
       "readOnlyEnableError": "Failed to enable read-only mode. Please try again.",
       "readOnlyDisableError": "Failed to disable read-only mode. Please try again.",
-      "loadStatusError": "Failed to load system status"
+      "loadStatusError": "Failed to load system status",
+      "enabling": "Enabling...",
+      "confirmEnable": "Confirm Enable",
+      "cancel": "Cancel"
     }
   },
   "twoFactor": {

@@ -6,10 +6,10 @@ import { Card, CardContent } from "../components/ui";
 const contentStyle: React.CSSProperties = {
   maxWidth: "900px",
   margin: "0 auto",
-  padding: "2rem",
+  padding: "var(--space-xl)",
   lineHeight: 1.8,
   color: "var(--color-text-primary)",
-  fontSize: "0.95rem",
+  fontSize: "var(--font-size-md)",
 };
 
 const Impressum: React.FC = () => {

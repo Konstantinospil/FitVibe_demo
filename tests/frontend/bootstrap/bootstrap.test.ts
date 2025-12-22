@@ -70,6 +70,9 @@ describe("bootstrap entrypoint", () => {
 
     await importBootstrap();
 
+    // Wait a bit for the redirect to execute (bootstrap runs synchronously but module import is async)
+    await new Promise((resolve) => setTimeout(resolve, 10));
+
     // Verify the important behavior: redirect to login
     expect(mockReplace).toHaveBeenCalledWith("/login");
   });

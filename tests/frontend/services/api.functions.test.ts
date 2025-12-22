@@ -545,7 +545,10 @@ describe("API Service Functions", () => {
   describe("suspendUser", () => {
     it("should suspend user", async () => {
       const mockResponse = { success: true, message: "User suspended" };
-      apiMock.onPost("/api/v1/admin/users/user-1/suspend").reply(200, mockResponse);
+      // Match any body (empty object or any payload)
+      apiMock.onPost("/api/v1/admin/users/user-1/suspend").reply((config) => {
+        return [200, mockResponse];
+      });
 
       const result = await suspendUser("user-1");
 

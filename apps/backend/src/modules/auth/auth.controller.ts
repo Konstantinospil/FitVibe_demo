@@ -12,6 +12,10 @@ import {
   listSessions as doListSessions,
   revokeSessions as doRevokeSessions,
   acceptTerms as doAcceptTerms,
+  revokeTerms as doRevokeTerms,
+  acceptPrivacyPolicy as doAcceptPrivacyPolicy,
+  revokePrivacyPolicy as doRevokePrivacyPolicy,
+  getLegalDocumentsStatus as doGetLegalDocumentsStatus,
 } from "./auth.service.js";
 import { env, JWKS } from "../../config/env.js";
 import {
@@ -22,6 +26,7 @@ import {
   ResetPasswordSchema,
   RevokeSessionsSchema,
   AcceptTermsSchema,
+  AcceptPrivacyPolicySchema,
   ResendVerificationSchema,
 } from "./auth.schemas.js";
 import type { z } from "zod";
@@ -235,6 +240,27 @@ export async function login(req: Request, res: Response, next: NextFunction): Pr
     setAccessCookie(res, result.tokens.accessToken);
     setRefreshCookie(res, result.tokens.refreshToken);
 
+    // If terms or privacy policy are outdated, return 403 with user data so frontend can authenticate
+    if (result.termsOutdated || result.privacyPolicyOutdated) {
+      const errorCode =
+        result.termsOutdated && result.privacyPolicyOutdated
+          ? "LEGAL_DOCUMENTS_VERSION_OUTDATED"
+          : result.termsOutdated
+            ? "TERMS_VERSION_OUTDATED"
+            : "PRIVACY_POLICY_VERSION_OUTDATED";
+      res.status(403).json({
+        error: {
+          code: errorCode,
+          message: errorCode,
+        },
+        user: result.user,
+        session: result.session,
+        termsOutdated: result.termsOutdated,
+        privacyPolicyOutdated: result.privacyPolicyOutdated,
+      });
+      return;
+    }
+
     // In non-production environments, also return tokens in JSON for testing/debugging
     const response: {
       requires2FA: false;
@@ -266,28 +292,45 @@ export async function verify2FALogin(
   try {
     const payload = Verify2FALoginSchema.parse(req.body);
     const context = buildAuthContext(req, res);
-    const { user, tokens, session } = await doVerify2FALogin(
-      payload.pendingSessionId,
-      payload.code,
-      context,
-    );
+    const result = await doVerify2FALogin(payload.pendingSessionId, payload.code, context);
 
     // SECURITY: Tokens are ONLY set in HttpOnly cookies, never exposed to JavaScript
-    setAccessCookie(res, tokens.accessToken);
-    setRefreshCookie(res, tokens.refreshToken);
+    setAccessCookie(res, result.tokens.accessToken);
+    setRefreshCookie(res, result.tokens.refreshToken);
+
+    // If terms or privacy policy are outdated, return 403 with user data so frontend can authenticate
+    if (result.termsOutdated || result.privacyPolicyOutdated) {
+      const errorCode =
+        result.termsOutdated && result.privacyPolicyOutdated
+          ? "LEGAL_DOCUMENTS_VERSION_OUTDATED"
+          : result.termsOutdated
+            ? "TERMS_VERSION_OUTDATED"
+            : "PRIVACY_POLICY_VERSION_OUTDATED";
+      res.status(403).json({
+        error: {
+          code: errorCode,
+          message: errorCode,
+        },
+        user: result.user,
+        session: result.session,
+        termsOutdated: result.termsOutdated,
+        privacyPolicyOutdated: result.privacyPolicyOutdated,
+      });
+      return;
+    }
 
     // In non-production environments, also return tokens in JSON for testing/debugging
     const response: {
-      user: typeof user;
-      session: typeof session;
-      tokens?: typeof tokens;
+      user: typeof result.user;
+      session: typeof result.session;
+      tokens?: typeof result.tokens;
     } = {
-      user,
-      session,
+      user: result.user,
+      session: result.session,
     };
 
     if (!env.isProduction) {
-      response.tokens = tokens;
+      response.tokens = result.tokens;
     }
 
     res.json(response);
@@ -500,6 +543,83 @@ export async function acceptTerms(req: Request, res: Response, next: NextFunctio
     AcceptTermsSchema.parse(req.body); // Validate payload
     await doAcceptTerms(userId);
     res.status(200).json({ message: "Terms accepted successfully" });
+    return;
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function revokeTerms(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    const authUser = getAuthenticatedUser(req);
+    const userId = authUser?.sub;
+    if (!userId) {
+      throw new HttpError(401, "UNAUTHENTICATED", "UNAUTHENTICATED");
+    }
+    await doRevokeTerms(userId);
+    // Clear auth cookies to log out the user
+    clearAuthCookies(res);
+    res.status(200).json({ message: "Terms consent revoked successfully" });
+    return;
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function acceptPrivacyPolicy(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> {
+  try {
+    const authUser = getAuthenticatedUser(req);
+    const userId = authUser?.sub;
+    if (!userId) {
+      throw new HttpError(401, "UNAUTHENTICATED", "UNAUTHENTICATED");
+    }
+    AcceptPrivacyPolicySchema.parse(req.body); // Validate payload
+    await doAcceptPrivacyPolicy(userId);
+    res.status(200).json({ message: "Privacy policy accepted successfully" });
+    return;
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function revokePrivacyPolicy(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> {
+  try {
+    const authUser = getAuthenticatedUser(req);
+    const userId = authUser?.sub;
+    if (!userId) {
+      throw new HttpError(401, "UNAUTHENTICATED", "UNAUTHENTICATED");
+    }
+    await doRevokePrivacyPolicy(userId);
+    // Clear auth cookies to log out the user
+    clearAuthCookies(res);
+    res.status(200).json({ message: "Privacy policy consent revoked successfully" });
+    return;
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function getLegalDocumentsStatus(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> {
+  try {
+    const authUser = getAuthenticatedUser(req);
+    const userId = authUser?.sub;
+    if (!userId) {
+      throw new HttpError(401, "UNAUTHENTICATED", "UNAUTHENTICATED");
+    }
+    const status = await doGetLegalDocumentsStatus(userId);
+    res.status(200).json(status);
     return;
   } catch (error) {
     next(error);

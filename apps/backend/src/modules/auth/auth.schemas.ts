@@ -77,6 +77,15 @@ export const AcceptTermsSchema = z
     path: ["terms_accepted"],
   });
 
+export const AcceptPrivacyPolicySchema = z
+  .object({
+    privacy_policy_accepted: z.boolean(),
+  })
+  .refine((data) => data.privacy_policy_accepted === true, {
+    message: "PRIVACY_POLICY_ACCEPTANCE_REQUIRED",
+    path: ["privacy_policy_accepted"],
+  });
+
 export const ResendVerificationSchema = z.object({
   email: z.string().email(),
 });

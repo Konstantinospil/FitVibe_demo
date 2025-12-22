@@ -1,10 +1,13 @@
-import React from "react";
+import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { Home } from "lucide-react";
 import PageIntro from "../components/PageIntro";
 import { Card, CardContent, Button } from "../components/ui";
 import { useAuthStore } from "../store/auth.store";
+import { ConfirmDialog } from "../components/ConfirmDialog";
+import { revokePrivacyPolicy } from "../services/api";
+import { useAuth } from "../contexts/AuthContext";
 
 // Helper function to safely get array from translation
 const getTranslationArray = <T,>(translation: unknown, fallback: T[] = []): T[] => {
@@ -18,6 +21,24 @@ const Privacy: React.FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const { signOut } = useAuth();
+  const [showRevokeConfirm, setShowRevokeConfirm] = useState(false);
+  const [isRevoking, setIsRevoking] = useState(false);
+
+  const handleRevokeConsent = async () => {
+    setIsRevoking(true);
+    try {
+      await revokePrivacyPolicy();
+      // User will be logged out by the backend, redirect to login
+      await signOut();
+      void navigate("/login", { replace: true });
+    } catch (error) {
+      console.error("Failed to revoke consent:", error);
+      setIsRevoking(false);
+      setShowRevokeConfirm(false);
+      // TODO: Show error toast
+    }
+  };
 
   return (
     <PageIntro
@@ -36,9 +57,14 @@ const Privacy: React.FC = () => {
       >
         <CardContent
           className="text-095 text-primary"
-          style={{ maxWidth: "900px", margin: "0 auto", padding: "2rem", lineHeight: 1.8 }}
+          style={{
+            maxWidth: "900px",
+            margin: "0 auto",
+            padding: "var(--space-xl)",
+            lineHeight: 1.8,
+          }}
         >
-          <div style={{ marginBottom: "1.5rem" }}>
+          <div style={{ marginBottom: "var(--space-lg)" }}>
             <Button
               variant="secondary"
               size="sm"
@@ -97,7 +123,9 @@ const Privacy: React.FC = () => {
           <section className="section">
             <h2 className="section-title">{t("privacy.section3.title")}</h2>
             <p className="section-text">{t("privacy.section3.subtitle")}</p>
-            <table style={{ width: "100%", borderCollapse: "collapse", marginBottom: "1rem" }}>
+            <table
+              style={{ width: "100%", borderCollapse: "collapse", marginBottom: "var(--space-md)" }}
+            >
               <thead>
                 <tr>
                   <th
@@ -597,8 +625,38 @@ const Privacy: React.FC = () => {
             </ul>
             <p className="section-text">{t("privacy.section16.responseTime")}</p>
           </section>
+
+          {isAuthenticated && (
+            <div
+              className="flex flex--center"
+              style={{
+                marginTop: "var(--space-xl)",
+                paddingTop: "var(--space-xl)",
+                borderTop: "1px solid var(--color-border)",
+              }}
+            >
+              <Button
+                variant="secondary"
+                onClick={() => setShowRevokeConfirm(true)}
+                disabled={isRevoking}
+              >
+                {t("privacy.revokeConsent")}
+              </Button>
+            </div>
+          )}
         </CardContent>
       </Card>
+
+      <ConfirmDialog
+        isOpen={showRevokeConfirm}
+        title={t("privacy.revokeConfirm.title")}
+        message={t("privacy.revokeConfirm.message")}
+        confirmLabel={t("privacy.revokeConfirm.confirm")}
+        cancelLabel={t("privacy.revokeConfirm.cancel")}
+        variant="warning"
+        onConfirm={() => void handleRevokeConsent()}
+        onCancel={() => setShowRevokeConfirm(false)}
+      />
     </PageIntro>
   );
 };

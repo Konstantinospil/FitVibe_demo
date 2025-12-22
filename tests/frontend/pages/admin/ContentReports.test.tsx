@@ -1,6 +1,6 @@
 import React from "react";
-import { render, screen, waitFor, fireEvent } from "@testing-library/react";
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { render, screen, waitFor, fireEvent, cleanup } from "@testing-library/react";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { MemoryRouter } from "react-router-dom";
 import ContentReports from "../../../../apps/frontend/src/pages/admin/ContentReports";
 import * as api from "../../../../apps/frontend/src/services/api";
@@ -23,6 +23,10 @@ describe("ContentReports", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(useToast).mockReturnValue(mockToast);
+  });
+
+  afterEach(() => {
+    cleanup();
   });
 
   const mockReport: api.FeedReport = {
@@ -222,7 +226,7 @@ describe("ContentReports", () => {
       { timeout: 5000 },
     );
 
-    const dismissButton = screen.getByText("Dismiss");
+    const dismissButton = screen.getByRole("button", { name: /Dismiss/i });
     fireEvent.click(dismissButton);
 
     await waitFor(
@@ -259,7 +263,7 @@ describe("ContentReports", () => {
       { timeout: 5000 },
     );
 
-    const dismissButton = screen.getByText("Dismiss");
+    const dismissButton = screen.getByRole("button", { name: /Dismiss/i });
     fireEvent.click(dismissButton);
 
     await waitFor(
@@ -269,7 +273,7 @@ describe("ContentReports", () => {
       { timeout: 5000 },
     );
 
-    const confirmButton = screen.getByText("Yes, Dismiss");
+    const confirmButton = screen.getByRole("button", { name: /Yes, Dismiss/i });
     fireEvent.click(confirmButton);
 
     await waitFor(
@@ -410,7 +414,7 @@ describe("ContentReports", () => {
       { timeout: 5000 },
     );
 
-    const dismissButton = screen.getByText("Dismiss");
+    const dismissButton = screen.getByRole("button", { name: /Dismiss/i });
     fireEvent.click(dismissButton);
 
     await waitFor(
@@ -420,7 +424,7 @@ describe("ContentReports", () => {
       { timeout: 5000 },
     );
 
-    const confirmButton = screen.getByText("Yes, Dismiss");
+    const confirmButton = screen.getByRole("button", { name: /Yes, Dismiss/i });
     fireEvent.click(confirmButton);
 
     await waitFor(
@@ -473,7 +477,7 @@ describe("ContentReports", () => {
       { timeout: 5000 },
     );
 
-    const dismissButton = screen.getByText("Dismiss");
+    const dismissButton = screen.getByRole("button", { name: /Dismiss/i });
     fireEvent.click(dismissButton);
 
     await waitFor(

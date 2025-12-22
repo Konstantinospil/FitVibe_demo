@@ -1,6 +1,6 @@
 import React from "react";
-import { render, screen } from "@testing-library/react";
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { render, screen, cleanup } from "@testing-library/react";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { MemoryRouter } from "react-router-dom";
 import PublicRoutes from "../../src/routes/PublicRoutes";
 
@@ -58,6 +58,10 @@ describe("PublicRoutes", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockNavigate.mockClear();
+  });
+
+  afterEach(() => {
+    cleanup();
   });
 
   it("should render Login page at /login", async () => {

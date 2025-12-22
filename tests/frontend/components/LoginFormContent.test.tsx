@@ -1,6 +1,6 @@
 import React from "react";
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { render, screen, fireEvent, waitFor, cleanup } from "@testing-library/react";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { MemoryRouter } from "react-router-dom";
 import LoginFormContent from "../../src/pages/LoginFormContent";
 import * as api from "../../src/services/api";
@@ -60,6 +60,10 @@ describe("LoginFormContent", () => {
       isAuthenticated: false,
       updateUser: vi.fn(),
     });
+  });
+
+  afterEach(() => {
+    cleanup();
   });
 
   it("should render login form", () => {

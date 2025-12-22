@@ -174,7 +174,7 @@ describe("API client interceptors", () => {
 
   it("handles refresh error without response object", async () => {
     const originalState = useAuthStore.getState();
-    const signOut = vi.fn();
+    const signOut = vi.fn().mockResolvedValue(undefined);
     useAuthStore.setState({ ...originalState, signOut });
 
     rawMock.onPost("/api/v1/auth/refresh").reply(() => {
@@ -184,6 +184,9 @@ describe("API client interceptors", () => {
     apiMock.onGet("/secure").reply(401);
 
     await expect(apiClient.get("/secure")).rejects.toThrow();
+
+    // Wait for async signOut to be called (it's called in a catch block)
+    await new Promise((resolve) => setTimeout(resolve, 50));
 
     expect(signOut).toHaveBeenCalled();
 

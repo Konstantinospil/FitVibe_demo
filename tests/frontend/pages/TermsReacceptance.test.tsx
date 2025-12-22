@@ -1,6 +1,6 @@
 import React from "react";
-import { render, screen, fireEvent, waitFor, act } from "@testing-library/react";
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { render, screen, fireEvent, waitFor, act, cleanup } from "@testing-library/react";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { MemoryRouter } from "react-router-dom";
 import TermsReacceptance from "../../src/pages/TermsReacceptance";
 import * as api from "../../src/services/api";
@@ -76,6 +76,10 @@ describe("TermsReacceptance page", () => {
       writable: true,
       configurable: true,
     });
+  });
+
+  afterEach(() => {
+    cleanup();
   });
 
   it("should render terms reacceptance form", () => {

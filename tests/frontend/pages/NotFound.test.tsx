@@ -1,5 +1,5 @@
 import React from "react";
-import { render, screen, cleanup } from "@testing-library/react";
+import { render, screen, cleanup, waitFor } from "@testing-library/react";
 import { BrowserRouter } from "react-router-dom";
 import { describe, expect, it, afterEach } from "vitest";
 import NotFound from "../../src/pages/NotFound";
@@ -34,12 +34,21 @@ const renderWithRouter = (ui: React.ReactElement) => {
 };
 
 describe("NotFound", () => {
-  it("renders 404 error message", () => {
+  afterEach(() => {
+    cleanup();
+  });
+
+  it("renders 404 error message", async () => {
     renderWithRouter(<NotFound />);
 
-    expect(screen.getByText("404 Error")).toBeInTheDocument();
-    expect(screen.getByText("Page Not Found")).toBeInTheDocument();
-    expect(screen.getByText("The page you're looking for doesn't exist.")).toBeInTheDocument();
+    await waitFor(
+      () => {
+        expect(screen.getByText("404 Error")).toBeInTheDocument();
+        expect(screen.getByText("Page Not Found")).toBeInTheDocument();
+        expect(screen.getByText("The page you're looking for doesn't exist.")).toBeInTheDocument();
+      },
+      { timeout: 3000 },
+    );
   });
 
   it("renders navigation links", () => {
@@ -55,11 +64,16 @@ describe("NotFound", () => {
     expect(homeLink).toHaveAttribute("href", "/");
   });
 
-  it("renders PageIntro component with correct props", () => {
+  it("renders PageIntro component with correct props", async () => {
     renderWithRouter(<NotFound />);
 
     // PageIntro should render the eyebrow, title, and description
-    expect(screen.getByText("404 Error")).toBeInTheDocument();
-    expect(screen.getByText("Page Not Found")).toBeInTheDocument();
+    await waitFor(
+      () => {
+        expect(screen.getByText("404 Error")).toBeInTheDocument();
+        expect(screen.getByText("Page Not Found")).toBeInTheDocument();
+      },
+      { timeout: 3000 },
+    );
   });
 });

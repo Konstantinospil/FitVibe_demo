@@ -124,27 +124,28 @@
   --color-link-form-hover: #4FD1A5; /* Slightly darker variant for hover state */
 
   /* === STATUS COLORS === */
+  /* Dark Mode Variants - Inverted from light theme for visibility */
 
-  /* Success */
-  --color-success-bg: #E7F6ED;
-  --color-success-text: #1C6E47;
-  --color-success-border: #A8D8BF;
+  /* Success - Dark Mode */
+  --color-success-bg: rgba(34, 197, 94, 0.16);  /* Light green background with transparency */
+  --color-success-text: #86efac;                /* Light green text for dark backgrounds */
+  --color-success-border: rgba(34, 197, 94, 0.4); /* Semi-transparent green border */
 
-  /* Info */
-  --color-info-bg: #E8F1FD;
-  --color-info-text: #0E4E95;
-  --color-info-border: #B8D0F7;
+  /* Info - Dark Mode */
+  --color-info-bg: rgba(99, 102, 241, 0.16);    /* Light indigo background with transparency */
+  --color-info-text: #a5b4fc;                    /* Light indigo text for dark backgrounds */
+  --color-info-border: rgba(99, 102, 241, 0.4);  /* Semi-transparent indigo border */
 
-  /* Warning */
-  --color-warning-bg: #FFF8E7;
-  --color-warning-text: #7A4E00;
-  --color-warning-border: #F3D08C;
+  /* Warning - Dark Mode */
+  --color-warning-bg: rgba(251, 191, 36, 0.16); /* Light amber background with transparency */
+  --color-warning-text: #fcd34d;                 /* Light amber text for dark backgrounds */
+  --color-warning-border: rgba(251, 191, 36, 0.4); /* Semi-transparent amber border */
 
-  /* Danger */
-  --color-danger: #F87171;
-  --color-danger-bg: #FDEBEC;
-  --color-danger-text: #7D1E1E;
-  --color-danger-border: #F3B5B9;
+  /* Danger - Dark Mode */
+  --color-danger: #f87171;                       /* Light red for dark backgrounds */
+  --color-danger-bg: rgba(248, 113, 113, 0.16);  /* Light red background with transparency */
+  --color-danger-text: #fca5a5;                  /* Light red text for dark backgrounds */
+  --color-danger-border: rgba(248, 113, 113, 0.4); /* Semi-transparent red border */
 
   /* === PLANNER STATE COLORS === */
 
@@ -260,6 +261,30 @@
   /* Form Links - Light Mode (WCAG 2.2 AA compliant) */
   --color-link-form: #15523A;      /* Aether green for links on white backgrounds, ≥4.5:1 contrast */
   --color-link-form-hover: #1E6A4C; /* Secondary hover color for consistency */
+
+  /* === STATUS COLORS === */
+  /* Light Mode Variants - Original light theme colors */
+
+  /* Success - Light Mode */
+  --color-success-bg: #E7F6ED;
+  --color-success-text: #1C6E47;
+  --color-success-border: #A8D8BF;
+
+  /* Info - Light Mode */
+  --color-info-bg: #E8F1FD;
+  --color-info-text: #0E4E95;
+  --color-info-border: #B8D0F7;
+
+  /* Warning - Light Mode */
+  --color-warning-bg: #FFF8E7;
+  --color-warning-text: #7A4E00;
+  --color-warning-border: #F3D08C;
+
+  /* Danger - Light Mode */
+  --color-danger: #F87171;
+  --color-danger-bg: #FDEBEC;
+  --color-danger-text: #7D1E1E;
+  --color-danger-border: #F3B5B9;
 
   /* Background Gradients (Light Mode) */
   --gradient-primary: radial-gradient(circle at top left, rgba(250, 249, 246, 0.9), rgba(255, 255, 255, 0.95) 55%);
@@ -647,16 +672,18 @@ small {
 }
 
 .form-error {
-  background: rgba(248, 113, 113, 0.16);
-  color: var(--color-text-primary);
+  background: var(--color-danger-bg);
+  color: var(--color-danger-text);
+  border: 1px solid var(--color-danger-border);
   border-radius: var(--radius-md);
   padding: 0.75rem 1rem;
   font-size: 0.95rem;
 }
 
 .form-success {
-  background: rgba(34, 197, 94, 0.16);
-  color: #86efac;
+  background: var(--color-success-bg);
+  color: var(--color-success-text);
+  border: 1px solid var(--color-success-border);
   border-radius: var(--radius-md);
   padding: 0.75rem 1rem;
   font-size: 0.95rem;
@@ -904,7 +931,7 @@ small {
 }
 
 .icon--orange {
-  color: orange;
+  color: var(--element-fire-base);
 }
 
 /* Card/Container Styles */
@@ -933,24 +960,27 @@ small {
 }
 
 .alert--error {
-  background: rgba(248, 113, 113, 0.16);
-  color: var(--color-text-primary);
+  background: var(--color-danger-bg);
+  color: var(--color-danger-text);
+  border: 1px solid var(--color-danger-border);
 }
 
 .alert--success {
-  background: rgba(34, 197, 94, 0.16);
-  color: #86efac;
+  background: var(--color-success-bg);
+  color: var(--color-success-text);
+  border: 1px solid var(--color-success-border);
 }
 
 .alert--info {
-  background: rgba(99, 102, 241, 0.16);
-  color: var(--color-text-primary);
+  background: var(--color-info-bg);
+  color: var(--color-info-text);
+  border: 1px solid var(--color-info-border);
 }
 
 .alert--warning {
-  background: rgba(251, 191, 36, 0.1);
-  border: 1px solid rgba(251, 191, 36, 0.3);
-  color: var(--color-text-secondary);
+  background: var(--color-warning-bg);
+  border: 1px solid var(--color-warning-border);
+  color: var(--color-warning-text);
 }
 
 /* List Styles */
@@ -1174,8 +1204,8 @@ small {
 }
 
 .status-badge--active {
-  background: rgba(34, 197, 94, 0.16);
-  color: #86efac;
+  background: var(--color-success-bg);
+  color: var(--color-success-text);
 }
 
 .status-badge--inactive {
@@ -1184,8 +1214,8 @@ small {
 }
 
 .status-badge--admin {
-  background: rgba(99, 102, 241, 0.16);
-  color: #a5b4fc;
+  background: var(--color-info-bg);
+  color: var(--color-info-text);
 }
 
 /* Card Styles */
@@ -1257,7 +1287,7 @@ small {
 
 .tab--active {
   background: var(--color-accent);
-  color: #0f172a;
+  color: var(--color-text-primary);
   font-weight: 600;
 }
 

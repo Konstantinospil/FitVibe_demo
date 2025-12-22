@@ -203,7 +203,7 @@ const Contact: React.FC = () => {
   const contentStyle: React.CSSProperties = {
     lineHeight: 1.8,
     color: "var(--color-text-primary)",
-    fontSize: "0.95rem",
+    fontSize: "var(--font-size-md)",
   };
 
   return (
@@ -216,7 +216,7 @@ const Contact: React.FC = () => {
     >
       <Card className="contact-form-container">
         <CardContent className="contact-form-content" style={contentStyle}>
-          <div style={{ marginBottom: "1.5rem" }}>
+          <div style={{ marginBottom: "var(--space-lg)" }}>
             <Button
               variant="secondary"
               size="sm"
@@ -236,7 +236,7 @@ const Contact: React.FC = () => {
               void handleSubmit(e);
             }}
             className="form"
-            style={{ gap: "1.5rem" }}
+            style={{ gap: "var(--space-lg)" }}
           >
             <div className="form-label">
               <label htmlFor="contact-email" className="form-label-text">

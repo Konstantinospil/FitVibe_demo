@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { Avatar, Button } from "../components/ui";
@@ -7,7 +7,9 @@ import ThemeToggle from "../components/ThemeToggle";
 import Footer from "../components/Footer";
 import { useTranslation } from "react-i18next";
 import { LogOut, Home, User, type LucideIcon } from "lucide-react";
-import logoFull from "../assets/logo_full.ico";
+import logoFull from "../assets/logo_full.png";
+import logoFullDark from "../assets/logo_full_dark.png";
+import { useThemeStore } from "../store/theme.store";
 
 type NavItem = {
   to: string;
@@ -27,6 +29,13 @@ const MainLayout: React.FC = () => {
   const { signOut } = useAuth();
   const navigate = useNavigate();
   const { t } = useTranslation();
+  // Get theme from store - selector ensures reactivity
+  const theme = useThemeStore((state) => state.theme);
+  // Memoize logo selection to prevent unnecessary recalculations
+  // Dark theme uses logoFullDark, light theme uses logoFull
+  const logo = useMemo(() => {
+    return theme === "dark" ? logoFullDark : logoFull;
+  }, [theme]);
 
   const handleSignOut = async () => {
     await signOut();
@@ -78,7 +87,8 @@ const MainLayout: React.FC = () => {
             }}
           >
             <img
-              src={logoFull}
+              key={theme}
+              src={logo}
               alt="FitVibe Logo"
               fetchPriority="high"
               loading="eager"

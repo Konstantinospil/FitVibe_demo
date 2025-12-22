@@ -15,12 +15,34 @@ export class MailerService {
 
   constructor() {
     if (env.email.enabled) {
+      logger.info("[mailer] Email is enabled, initializing SMTP transporter...");
       this.initializeTransporter();
+    } else {
+      logger.info(
+        {
+          emailEnabled: env.email.enabled,
+          smtpHost: env.email.smtp.host,
+          hasUser: !!env.email.smtp.user,
+          hasPass: !!env.email.smtp.pass,
+        },
+        "[mailer] Email is disabled or not configured",
+      );
     }
   }
 
   private initializeTransporter() {
     try {
+      // Validate required SMTP configuration
+      if (!env.email.smtp.host) {
+        throw new Error("SMTP_HOST is not configured");
+      }
+      if (!env.email.smtp.user) {
+        throw new Error("SMTP_USER is not configured");
+      }
+      if (!env.email.smtp.pass) {
+        throw new Error("SMTP_PASS is not configured");
+      }
+
       this.transporter = nodemailer.createTransport({
         host: env.email.smtp.host,
         port: env.email.smtp.port,
@@ -30,9 +52,25 @@ export class MailerService {
           pass: env.email.smtp.pass,
         },
       });
-      logger.info("[mailer] SMTP transporter initialized");
+      logger.info(
+        {
+          host: env.email.smtp.host,
+          port: env.email.smtp.port,
+          user: env.email.smtp.user,
+        },
+        "[mailer] SMTP transporter initialized",
+      );
     } catch (error) {
-      logger.error({ err: error }, "[mailer] Failed to initialize SMTP transporter");
+      logger.error(
+        {
+          err: error,
+          host: env.email.smtp.host,
+          port: env.email.smtp.port,
+          hasUser: !!env.email.smtp.user,
+          hasPass: !!env.email.smtp.pass,
+        },
+        "[mailer] Failed to initialize SMTP transporter",
+      );
       this.transporter = null;
     }
   }

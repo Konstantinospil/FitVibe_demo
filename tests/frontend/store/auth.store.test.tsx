@@ -155,6 +155,10 @@ describe("auth store", () => {
       expect(useAuthStore.getState().user).toEqual(mockUser);
 
       await signOut();
+
+      // Wait a bit for state to update after async signOut
+      await new Promise((resolve) => setTimeout(resolve, 10));
+
       expect(useAuthStore.getState().user).toBeNull();
     });
   });

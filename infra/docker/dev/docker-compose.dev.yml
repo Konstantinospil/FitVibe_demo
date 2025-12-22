@@ -78,5 +78,18 @@ services:
       timeout: 2s
       retries: 12
 
+  mailhog:
+    image: mailhog/mailhog:latest
+    container_name: fitvibe_mailhog
+    security_opt:
+      - no-new-privileges:true
+    ports:
+      - "1025:1025" # SMTP server
+      - "8025:8025" # Web UI
+    networks:
+      default:
+        aliases:
+          - mailhog
+
 volumes:
   db_data:

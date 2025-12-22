@@ -63,11 +63,49 @@ const TwoFactorVerificationLogin: React.FC = () => {
     } catch (err) {
       // Handle specific error types
       if (err && typeof err === "object" && "response" in err) {
-        const axiosError = err as { response?: { data?: { error?: { code?: string } } } };
+        const axiosError = err as {
+          response?: {
+            data?: {
+              error?: { code?: string };
+              user?: {
+                id: string;
+                username: string;
+                email: string;
+                role?: string;
+              };
+              termsOutdated?: boolean;
+              privacyPolicyOutdated?: boolean;
+            };
+          };
+        };
         const errorCode = axiosError.response?.data?.error?.code;
+        const userData = axiosError.response?.data?.user;
 
-        if (errorCode === "TERMS_VERSION_OUTDATED") {
-          void navigate("/terms-reacceptance", { replace: true });
+        if (
+          errorCode === "TERMS_VERSION_OUTDATED" ||
+          errorCode === "PRIVACY_POLICY_VERSION_OUTDATED" ||
+          errorCode === "LEGAL_DOCUMENTS_VERSION_OUTDATED"
+        ) {
+          // User is authenticated (cookies are set), sign in to update frontend state
+          if (userData) {
+            signIn({
+              id: userData.id,
+              username: userData.username,
+              email: userData.email,
+              role: userData.role,
+            });
+          }
+          // Determine which documents need acceptance from error response
+          const termsOutdated = axiosError.response?.data?.termsOutdated ?? true;
+          const privacyOutdated = axiosError.response?.data?.privacyPolicyOutdated ?? false;
+          const params = new URLSearchParams();
+          if (termsOutdated) {
+            params.set("terms", "true");
+          }
+          if (privacyOutdated) {
+            params.set("privacy", "true");
+          }
+          void navigate(`/terms-reacceptance?${params.toString()}`, { replace: true });
           return;
         }
 

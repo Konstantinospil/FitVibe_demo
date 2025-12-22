@@ -54,6 +54,10 @@ import type {
 import type { AuthUserRecord } from "./auth.repository.js";
 import { env, RSA_KEYS } from "../../config/env.js";
 import { getCurrentTermsVersion, isTermsVersionOutdated } from "../../config/terms.js";
+import {
+  getCurrentPrivacyPolicyVersion,
+  isPrivacyPolicyVersionOutdated,
+} from "../../config/privacy.js";
 import { HttpError } from "../../utils/http.js";
 import { assertPasswordPolicy } from "./passwordPolicy.js";
 import { incrementRefreshReuse } from "../../observability/metrics.js";
@@ -439,6 +443,8 @@ export async function login(
       user: UserSafe;
       tokens: TokenPair;
       session: { id: string; expiresAt: string };
+      termsOutdated?: boolean;
+      privacyPolicyOutdated?: boolean;
     }
   | {
       requires2FA: true;
@@ -611,11 +617,6 @@ export async function login(
     // Also reset IP-based attempts (legitimate user from this IP)
     await resetFailedAttemptsByIP(ipAddress);
 
-    // Check if user has accepted current terms version
-    if (isTermsVersionOutdated(user.terms_version)) {
-      throw new HttpError(403, "TERMS_VERSION_OUTDATED", "TERMS_VERSION_OUTDATED");
-    }
-
     // Check if user has 2FA enabled
     const has2FA = await is2FAEnabled(user.id);
     if (has2FA) {
@@ -684,11 +685,17 @@ export async function login(
       requestId: context.requestId ?? null,
     });
 
+    // Check if user has accepted current terms and privacy policy versions
+    const termsOutdated = isTermsVersionOutdated(user.terms_version);
+    const privacyPolicyOutdated = isPrivacyPolicyVersionOutdated(user.privacy_policy_version);
+
     return {
       requires2FA: false,
       user: toSafeUser(user),
       tokens,
       session: { id: sessionId, expiresAt: sessionExpiresAt },
+      termsOutdated,
+      privacyPolicyOutdated,
     };
   } finally {
     // Normalize timing to prevent user enumeration (AC-1.12)
@@ -707,6 +714,8 @@ export async function verify2FALogin(
   user: UserSafe;
   tokens: TokenPair;
   session: { id: string; expiresAt: string };
+  termsOutdated?: boolean;
+  privacyPolicyOutdated?: boolean;
 }> {
   const ipAddress = context.ip ?? "unknown";
   const userAgent = sanitizeUserAgent(context.userAgent);
@@ -763,11 +772,6 @@ export async function verify2FALogin(
     throw new HttpError(401, "AUTH_INVALID_USER", "User not found or inactive");
   }
 
-  // Check if user has accepted current terms version
-  if (isTermsVersionOutdated(user.terms_version)) {
-    throw new HttpError(403, "TERMS_VERSION_OUTDATED", "TERMS_VERSION_OUTDATED");
-  }
-
   // Create full session and issue tokens
   const sessionId = uuidv4();
   const issuedAtIso = new Date().toISOString();
@@ -811,10 +815,16 @@ export async function verify2FALogin(
   // Clean up pending session
   await deletePending2FASession(pendingSessionId);
 
+  // Check if user has accepted current terms and privacy policy versions (after tokens are created)
+  const termsOutdated = isTermsVersionOutdated(user.terms_version);
+  const privacyPolicyOutdated = isPrivacyPolicyVersionOutdated(user.privacy_policy_version);
+
   return {
     user: toSafeUser(user),
     tokens,
     session: { id: sessionId, expiresAt: sessionExpiresAt },
+    termsOutdated,
+    privacyPolicyOutdated,
   };
 }
 
@@ -896,9 +906,16 @@ export async function refresh(
       throw new HttpError(401, "AUTH_USER_NOT_FOUND", "User not found");
     }
 
-    // Check if user has accepted current terms version
+    // Check if user has accepted current terms and privacy policy versions
     if (isTermsVersionOutdated(user.terms_version)) {
       throw new HttpError(403, "TERMS_VERSION_OUTDATED", "TERMS_VERSION_OUTDATED");
+    }
+    if (isPrivacyPolicyVersionOutdated(user.privacy_policy_version)) {
+      throw new HttpError(
+        403,
+        "PRIVACY_POLICY_VERSION_OUTDATED",
+        "PRIVACY_POLICY_VERSION_OUTDATED",
+      );
     }
 
     await revokeRefreshByHash(token_hash);
@@ -1184,4 +1201,107 @@ export async function acceptTerms(userId: string): Promise<void> {
     termsVersion,
     acceptedAt: now,
   });
+}
+
+export async function revokeTerms(userId: string): Promise<void> {
+  const now = new Date().toISOString();
+
+  await db("users").where({ id: userId }).update({
+    terms_accepted: false,
+    terms_accepted_at: null,
+    terms_version: null,
+    updated_at: now,
+  });
+
+  // Revoke all user sessions to log them out
+  await revokeSessionsByUserId(userId);
+  await revokeRefreshByUserId(userId);
+
+  await recordAuditEvent(userId, "auth.terms_revoked", {
+    revokedAt: now,
+  });
+}
+
+export async function acceptPrivacyPolicy(userId: string): Promise<void> {
+  const now = new Date().toISOString();
+  const privacyPolicyVersion = getCurrentPrivacyPolicyVersion();
+
+  await db("users").where({ id: userId }).update({
+    privacy_policy_accepted: true,
+    privacy_policy_accepted_at: now,
+    privacy_policy_version: privacyPolicyVersion,
+    updated_at: now,
+  });
+
+  await recordAuditEvent(userId, "auth.privacy_policy_accepted", {
+    privacyPolicyVersion,
+    acceptedAt: now,
+  });
+}
+
+export async function revokePrivacyPolicy(userId: string): Promise<void> {
+  const now = new Date().toISOString();
+
+  await db("users").where({ id: userId }).update({
+    privacy_policy_accepted: false,
+    privacy_policy_accepted_at: null,
+    privacy_policy_version: null,
+    updated_at: now,
+  });
+
+  // Revoke all user sessions to log them out
+  await revokeSessionsByUserId(userId);
+  await revokeRefreshByUserId(userId);
+
+  await recordAuditEvent(userId, "auth.privacy_policy_revoked", {
+    revokedAt: now,
+  });
+}
+
+export interface LegalDocumentsStatus {
+  terms: {
+    accepted: boolean;
+    acceptedAt: string | null;
+    acceptedVersion: string | null;
+    currentVersion: string;
+    needsAcceptance: boolean;
+  };
+  privacy: {
+    accepted: boolean;
+    acceptedAt: string | null;
+    acceptedVersion: string | null;
+    currentVersion: string;
+    needsAcceptance: boolean;
+  };
+}
+
+export async function getLegalDocumentsStatus(userId: string): Promise<LegalDocumentsStatus> {
+  const user = await findUserById(userId);
+  if (!user) {
+    throw new HttpError(404, "USER_NOT_FOUND", "USER_NOT_FOUND");
+  }
+
+  const currentTermsVersion = getCurrentTermsVersion();
+  const currentPrivacyVersion = getCurrentPrivacyPolicyVersion();
+
+  const termsNeedsAcceptance = !user.terms_accepted || isTermsVersionOutdated(user.terms_version);
+  const privacyNeedsAcceptance =
+    !user.privacy_policy_accepted || isPrivacyPolicyVersionOutdated(user.privacy_policy_version);
+
+  return {
+    terms: {
+      accepted: user.terms_accepted,
+      acceptedAt: user.terms_accepted_at,
+      acceptedVersion: user.terms_version,
+      currentVersion: currentTermsVersion,
+      needsAcceptance: termsNeedsAcceptance,
+    },
+    privacy: {
+      accepted: user.privacy_policy_accepted,
+      acceptedAt: user.privacy_policy_accepted_at,
+      acceptedVersion: user.privacy_policy_version,
+      currentVersion: currentPrivacyVersion,
+      needsAcceptance: privacyNeedsAcceptance,
+    },
+  };
 }

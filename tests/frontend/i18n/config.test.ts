@@ -82,7 +82,10 @@ describe("i18n config", () => {
   });
 
   it("handles browser language without slice method", () => {
-    window.localStorage.removeItem("fitvibe:language");
+    // Ensure localStorage is available
+    if (typeof window !== "undefined" && window.localStorage) {
+      window.localStorage.removeItem("fitvibe:language");
+    }
     Object.defineProperty(window.navigator, "language", {
       writable: true,
       value: null,

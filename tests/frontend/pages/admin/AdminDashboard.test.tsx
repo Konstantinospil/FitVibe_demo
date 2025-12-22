@@ -1,6 +1,6 @@
 import React from "react";
-import { render, screen, fireEvent } from "@testing-library/react";
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { render, screen, fireEvent, cleanup } from "@testing-library/react";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { MemoryRouter } from "react-router-dom";
 import AdminDashboard from "../../../../apps/frontend/src/pages/admin/AdminDashboard";
 
@@ -26,6 +26,10 @@ describe("AdminDashboard", () => {
     });
   });
 
+  afterEach(() => {
+    cleanup();
+  });
+
   it("should render admin dashboard with navigation items", () => {
     render(
       <MemoryRouter>
@@ -46,7 +50,7 @@ describe("AdminDashboard", () => {
       </MemoryRouter>,
     );
 
-    const reportsButton = screen.getByText("Content Reports").closest("button");
+    const reportsButton = screen.getByRole("button", { name: /Content Reports/i });
     fireEvent.click(reportsButton!);
 
     expect(mockNavigate).toHaveBeenCalledWith("/admin/reports");
@@ -59,7 +63,7 @@ describe("AdminDashboard", () => {
       </MemoryRouter>,
     );
 
-    const usersButton = screen.getByText("User Management").closest("button");
+    const usersButton = screen.getByRole("button", { name: /User Management/i });
     fireEvent.click(usersButton!);
 
     expect(mockNavigate).toHaveBeenCalledWith("/admin/users");
@@ -72,7 +76,7 @@ describe("AdminDashboard", () => {
       </MemoryRouter>,
     );
 
-    const systemButton = screen.getByText("System Controls").closest("button");
+    const systemButton = screen.getByRole("button", { name: /System Controls/i });
     fireEvent.click(systemButton!);
 
     expect(mockNavigate).toHaveBeenCalledWith("/admin/system");
@@ -102,7 +106,7 @@ describe("AdminDashboard", () => {
       </MemoryRouter>,
     );
 
-    const reportsButton = screen.getByText("Content Reports").closest("button");
+    const reportsButton = screen.getByRole("button", { name: /Content Reports/i });
     expect(reportsButton?.style.border).toContain("var(--color-accent)");
   });
 
@@ -117,7 +121,7 @@ describe("AdminDashboard", () => {
       </MemoryRouter>,
     );
 
-    const reportsButton = screen.getByText("Content Reports").closest("button");
+    const reportsButton = screen.getByRole("button", { name: /Content Reports/i });
     expect(reportsButton?.style.border).toContain("var(--color-border)");
   });
 
@@ -132,7 +136,7 @@ describe("AdminDashboard", () => {
       </MemoryRouter>,
     );
 
-    const reportsButton = screen.getByText("Content Reports").closest("button")!;
+    const reportsButton = screen.getByRole("button", { name: /Content Reports/i });
     const initialBackground = reportsButton.style.background;
 
     fireEvent.mouseEnter(reportsButton);
@@ -153,7 +157,7 @@ describe("AdminDashboard", () => {
       </MemoryRouter>,
     );
 
-    const reportsButton = screen.getByText("Content Reports").closest("button")!;
+    const reportsButton = screen.getByRole("button", { name: /Content Reports/i });
     const initialBackground = reportsButton.style.background;
 
     fireEvent.mouseEnter(reportsButton);
@@ -174,7 +178,7 @@ describe("AdminDashboard", () => {
       </MemoryRouter>,
     );
 
-    const usersButton = screen.getByText("User Management").closest("button");
+    const usersButton = screen.getByRole("button", { name: /User Management/i });
     expect(usersButton?.style.border).toContain("var(--color-accent)");
   });
 
@@ -189,7 +193,7 @@ describe("AdminDashboard", () => {
       </MemoryRouter>,
     );
 
-    const reportsButton = screen.getByText("Content Reports").closest("button");
+    const reportsButton = screen.getByRole("button", { name: /Content Reports/i });
     const iconContainer = reportsButton?.querySelector("div[style*='color']") as HTMLElement;
     expect(iconContainer?.style.color).toBe("var(--color-accent)");
   });
@@ -205,7 +209,7 @@ describe("AdminDashboard", () => {
       </MemoryRouter>,
     );
 
-    const reportsButton = screen.getByText("Content Reports").closest("button");
+    const reportsButton = screen.getByRole("button", { name: /Content Reports/i });
     const iconContainer = reportsButton?.querySelector("div[style*='color']") as HTMLElement;
     expect(iconContainer?.style.color).toBe("var(--color-text-secondary)");
   });

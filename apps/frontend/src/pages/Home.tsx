@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuthStore } from "../store/auth.store";
+import { useThemeStore } from "../store/theme.store";
 import { useRequiredFieldValidation } from "../hooks/useRequiredFieldValidation";
 import {
   listExercises,
@@ -38,8 +39,8 @@ type ExerciseHistoryItem = {
   date: string;
 };
 
-// Base VIBES configuration without icons (icons loaded dynamically)
-const VIBES_BASE: Omit<Vibe, "icon">[] = [
+// Base VIBES configuration for light theme
+const VIBES_BASE_LIGHT: Omit<Vibe, "icon">[] = [
   {
     key: "strength",
     colorBg: "#FB951D",
@@ -78,6 +79,46 @@ const VIBES_BASE: Omit<Vibe, "icon">[] = [
   },
 ];
 
+// VIBES configuration for dark theme - inverted/lightened colors for visibility
+const VIBES_BASE_DARK: Omit<Vibe, "icon">[] = [
+  {
+    key: "strength",
+    colorBg: "#FDC54D", // Lighter orange for dark theme
+    colorText: "#0B0C10",
+    colorBorder: "#FB951D",
+  },
+  {
+    key: "agility",
+    colorBg: "#FFE866", // Lighter yellow for dark theme
+    colorText: "#0B0C10",
+    colorBorder: "#FAE919",
+  },
+  {
+    key: "endurance",
+    colorBg: "#1A4A4B", // Lighter teal for dark theme
+    colorText: "#5CB2F5",
+    colorBorder: "#5CB2F5",
+  },
+  {
+    key: "explosivity",
+    colorBg: "#BF3A0F", // Lighter red for dark theme
+    colorText: "#FDC54D",
+    colorBorder: "#FDC54D",
+  },
+  {
+    key: "intelligence",
+    colorBg: "#1A2A2B", // Lighter dark for dark theme
+    colorText: "#5CB2F5",
+    colorBorder: "#5CB2F5",
+  },
+  {
+    key: "regeneration",
+    colorBg: "#1E6A4C", // Lighter green for dark theme
+    colorText: "#86EFAC",
+    colorBorder: "#4D7C62",
+  },
+];
+
 // Icon import map for lazy loading
 const ICON_IMPORTS: Record<VibeKey, () => Promise<{ default: string }>> = {
   strength: () => import("../assets/icons/earth-strength.svg"),
@@ -102,6 +143,7 @@ const Home: React.FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const theme = useThemeStore((state) => state.theme);
   const formRef = useRef<HTMLFormElement>(null);
   useRequiredFieldValidation(formRef, t);
 
@@ -118,11 +160,14 @@ const Home: React.FC = () => {
   const [vibes, setVibes] = useState<Vibe[]>([]);
   const queryClient = useQueryClient();
 
+  // Get theme-aware vibes configuration
+  const vibesBase = useMemo(() => (theme === "dark" ? VIBES_BASE_DARK : VIBES_BASE_LIGHT), [theme]);
+
   // Lazy load icons after component mount to reduce initial bundle size
   useEffect(() => {
     const loadIcons = async () => {
       const loadedVibes: Vibe[] = await Promise.all(
-        VIBES_BASE.map(async (vibeBase) => {
+        vibesBase.map(async (vibeBase) => {
           const iconModule = await ICON_IMPORTS[vibeBase.key]();
           return {
             ...vibeBase,
@@ -133,7 +178,7 @@ const Home: React.FC = () => {
       setVibes(loadedVibes);
     };
     void loadIcons();
-  }, []);
+  }, [vibesBase]);
 
   // Exercise detail form fields
   const [sets, setSets] = useState<string>("");
@@ -467,7 +512,10 @@ const Home: React.FC = () => {
                         width: "64px",
                         height: "64px",
                         filter:
-                          vibe.colorText === "#FFFFFF"
+                          vibe.colorText === "#FFFFFF" ||
+                          vibe.colorText === "#5CB2F5" ||
+                          vibe.colorText === "#FDC54D" ||
+                          vibe.colorText === "#86EFAC"
                             ? "brightness(0) invert(1)"
                             : "brightness(0)",
                       }}

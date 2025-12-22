@@ -1,6 +1,6 @@
-import { render, screen, waitFor, fireEvent } from "@testing-library/react";
+import { render, screen, waitFor, fireEvent, cleanup } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
-import { describe, expect, it, vi, beforeEach } from "vitest";
+import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
 import VerifyEmail from "../../src/pages/VerifyEmail";
 import { I18nextProvider } from "react-i18next";
 import i18n from "i18next";
@@ -76,6 +76,10 @@ describe("VerifyEmail", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockNavigate.mockClear();
+  });
+
+  afterEach(() => {
+    cleanup();
   });
 
   it("shows success state after successful verification", async () => {

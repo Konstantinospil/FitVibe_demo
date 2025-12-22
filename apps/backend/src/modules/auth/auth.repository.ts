@@ -65,6 +65,9 @@ export interface AuthUserRecord {
   terms_accepted: boolean;
   terms_accepted_at: string | null;
   terms_version: string | null;
+  privacy_policy_accepted: boolean;
+  privacy_policy_accepted_at: string | null;
+  privacy_policy_version: string | null;
 }
 
 function userQuery() {
@@ -88,6 +91,9 @@ function userQuery() {
       "u.terms_accepted",
       "u.terms_accepted_at",
       "u.terms_version",
+      "u.privacy_policy_accepted",
+      "u.privacy_policy_accepted_at",
+      "u.privacy_policy_version",
       db.raw("c.value as primary_email"),
       db.raw("COALESCE(c.is_verified, false) as email_verified"),
     ) satisfies Knex.QueryBuilder<AuthUserRecord, AuthUserRecord[]>;

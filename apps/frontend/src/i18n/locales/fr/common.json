@@ -119,13 +119,27 @@
     "eyebrow": "Légal",
     "title": "Conditions générales",
     "description": "Veuillez lire attentivement nos Conditions générales avant d'utiliser FitVibe.",
-    "effectiveDate": "Date d'entrée en vigueur"
+    "effectiveDate": "Date d'entrée en vigueur",
+    "revokeConsent": "Révoquer le consentement",
+    "revokeConfirm": {
+      "title": "Révoquer le consentement",
+      "message": "Révoquer votre consentement signifie que vous ne pourrez plus utiliser FitVibe. Vous serez déconnecté et devrez accepter à nouveau les Conditions générales pour continuer à utiliser le service.",
+      "confirm": "Révoquer le consentement et se déconnecter",
+      "cancel": "Retour"
+    }
   },
   "privacy": {
     "eyebrow": "Légal",
     "title": "Politique de confidentialité",
     "description": "Découvrez comment nous collectons, utilisons et protégeons vos données personnelles.",
-    "effectiveDate": "Date d'entrée en vigueur"
+    "effectiveDate": "Date d'entrée en vigueur",
+    "revokeConsent": "Révoquer le consentement",
+    "revokeConfirm": {
+      "title": "Révoquer le consentement",
+      "message": "Révoquer votre consentement signifie que vous ne pourrez plus utiliser FitVibe. Vous serez déconnecté et devrez accepter à nouveau la Politique de confidentialité pour continuer à utiliser le service.",
+      "confirm": "Révoquer le consentement et se déconnecter",
+      "cancel": "Retour"
+    }
   },
   "impressum": {
     "eyebrow": "Légal",
@@ -164,7 +178,7 @@
     "AUTH_TOO_MANY_REQUESTS": "Limite de vérification atteinte. Veuillez réessayer plus tard",
     "AUTH_CONFLICT": "Impossible de terminer l'inscription",
     "AUTH_USER_NOT_FOUND": "Utilisateur introuvable",
-    "AUTH_INVALID_CREDENTIALS": "Identifiants invalides",
+    "AUTH_INVALID_CREDENTIALS": "L'e-mail ou le mot de passe que vous avez saisi est incorrect. Veuillez vérifier vos identifiants et réessayer.",
     "AUTH_INVALID_REFRESH": "Jeton de rafraîchissement invalide",
     "AUTH_SESSION_REVOKED": "Séance révoquée",
     "AUTH_REFRESH_EXPIRED": "Jeton de rafraîchissement expiré",
@@ -384,7 +398,17 @@
     "expand": "Développer",
     "collapse": "Réduire",
     "markComplete": "Marquer comme terminé",
-    "markIncomplete": "Marquer comme incomplet"
+    "markIncomplete": "Marquer comme incomplet",
+    "workoutSession": "Séance d'Entraînement",
+    "customExercise": "Exercice Personnalisé",
+    "sessionTime": "Temps de Séance",
+    "restTimer": "Minuteur de Repos",
+    "stopRest": "Arrêter le Repos",
+    "startRest": "Démarrer le Repos",
+    "completeSession": "Terminer la Séance",
+    "completing": "Terminaison...",
+    "exercises": "exercices",
+    "setsCompleted": "séries terminées"
   },
   "planner": {
     "eyebrow": "Architecture de séance",
@@ -694,7 +718,10 @@
       "readOnlyDisabled": "Mode lecture seule désactivé avec succès",
       "readOnlyEnableError": "Échec de l'activation du mode lecture seule. Veuillez réessayer.",
       "readOnlyDisableError": "Échec de la désactivation du mode lecture seule. Veuillez réessayer.",
-      "loadStatusError": "Échec du chargement du statut système"
+      "loadStatusError": "Échec du chargement du statut système",
+      "enabling": "Activation...",
+      "confirmEnable": "Confirmer l'Activation",
+      "cancel": "Annuler"
     }
   },
   "twoFactor": {

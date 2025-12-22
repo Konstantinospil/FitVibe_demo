@@ -1,5 +1,5 @@
 import React, { useState, useRef } from "react";
-import { useNavigate, useLocation, NavLink } from "react-router-dom";
+import { useNavigate, useLocation, NavLink, useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { Eye, EyeOff } from "lucide-react";
 import { Button } from "../components/ui";
@@ -15,7 +15,12 @@ const LoginFormContent: React.FC = () => {
   const formRef = useRef<HTMLFormElement>(null);
   useRequiredFieldValidation(formRef, t);
   const location = useLocation();
-  const requestedPath = (location.state as { from?: { pathname?: string } })?.from?.pathname;
+  const [searchParams] = useSearchParams();
+
+  // Check for returnUrl in query params first, then location.state
+  const returnUrl = searchParams.get("returnUrl");
+  const requestedPath =
+    returnUrl || (location.state as { from?: { pathname?: string } })?.from?.pathname;
   const from =
     typeof requestedPath === "string" &&
     requestedPath.startsWith("/") &&
@@ -99,15 +104,47 @@ const LoginFormContent: React.FC = () => {
                   ipDistinctEmailCount?: number;
                 };
               };
+              user?: {
+                id: string;
+                username: string;
+                email: string;
+                role?: string;
+              };
+              termsOutdated?: boolean;
+              privacyPolicyOutdated?: boolean;
             };
           };
         };
         const errorCode = axiosError.response?.data?.error?.code;
         const errorMessage = axiosError.response?.data?.error?.message;
         const errorDetails = axiosError.response?.data?.error?.details;
+        const userData = axiosError.response?.data?.user;
 
-        if (errorCode === "TERMS_VERSION_OUTDATED") {
-          void navigate("/terms-reacceptance", { replace: true });
+        if (
+          errorCode === "TERMS_VERSION_OUTDATED" ||
+          errorCode === "PRIVACY_POLICY_VERSION_OUTDATED" ||
+          errorCode === "LEGAL_DOCUMENTS_VERSION_OUTDATED"
+        ) {
+          // User is authenticated (cookies are set), sign in to update frontend state
+          if (userData) {
+            signIn({
+              id: userData.id,
+              username: userData.username,
+              email: userData.email,
+              role: userData.role,
+            });
+          }
+          // Determine which documents need acceptance from error response
+          const termsOutdated = axiosError.response?.data?.termsOutdated ?? true;
+          const privacyOutdated = axiosError.response?.data?.privacyPolicyOutdated ?? false;
+          const params = new URLSearchParams();
+          if (termsOutdated) {
+            params.set("terms", "true");
+          }
+          if (privacyOutdated) {
+            params.set("privacy", "true");
+          }
+          void navigate(`/terms-reacceptance?${params.toString()}`, { replace: true });
           return;
         }
 
@@ -133,13 +170,21 @@ const LoginFormContent: React.FC = () => {
         }
 
         // Show specific error message if available
-        if (errorMessage) {
-          setError(errorMessage);
-        } else if (errorCode) {
+        // Prioritize errorCode translation, but also check if errorMessage is an error code
+        if (errorCode) {
           const translatedError = t(`errors.${errorCode}`);
           setError(
             translatedError !== `errors.${errorCode}` ? translatedError : t("auth.login.error"),
           );
+        } else if (errorMessage) {
+          // Check if errorMessage looks like an error code (e.g., "AUTH_INVALID_CREDENTIALS")
+          // If so, try to translate it
+          if (errorMessage.includes("_") && errorMessage === errorMessage.toUpperCase()) {
+            const translatedError = t(`errors.${errorMessage}`);
+            setError(translatedError !== `errors.${errorMessage}` ? translatedError : errorMessage);
+          } else {
+            setError(errorMessage);
+          }
         } else {
           setError(t("auth.login.error") || "Login failed. Please check your credentials.");
         }

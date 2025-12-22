@@ -1,5 +1,5 @@
-import { render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { render, screen, cleanup, waitFor } from "@testing-library/react";
+import { describe, expect, it, afterEach } from "vitest";
 import Profile from "../../src/pages/Profile";
 import { I18nextProvider } from "react-i18next";
 import i18n from "i18next";
@@ -33,6 +33,10 @@ const renderWithProviders = (ui: React.ReactElement) => {
 };
 
 describe("Profile", () => {
+  afterEach(() => {
+    cleanup();
+  });
+
   it("renders profile page with title and description", () => {
     renderWithProviders(<Profile />);
 
@@ -57,10 +61,13 @@ describe("Profile", () => {
     expect(screen.getByText("Track your fitness milestones")).toBeInTheDocument();
   });
 
-  it("renders edit button", () => {
+  it("renders edit button", async () => {
     renderWithProviders(<Profile />);
 
-    const editButton = screen.getByRole("button", { name: /edit profile/i });
+    // Wait for button to be rendered (component might render asynchronously)
+    const editButton = await waitFor(() => screen.getByRole("button", { name: /edit profile/i }), {
+      timeout: 3000,
+    });
     expect(editButton).toBeInTheDocument();
   });
 });

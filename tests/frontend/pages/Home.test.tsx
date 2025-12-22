@@ -1,5 +1,5 @@
 import React from "react";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, cleanup } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { MemoryRouter } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -230,6 +230,7 @@ describe("Home page", () => {
   });
 
   afterEach(() => {
+    cleanup();
     useAuthStore.setState(originalState);
     vi.clearAllMocks();
     queryClient.clear();

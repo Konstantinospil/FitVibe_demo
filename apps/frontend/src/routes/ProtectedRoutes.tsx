@@ -24,7 +24,7 @@ const Privacy = lazy(() => import("../pages/Privacy"));
 const Cookie = lazy(() => import("../pages/Cookie"));
 const Impressum = lazy(() => import("../pages/Impressum"));
 const Contact = lazy(() => import("../pages/Contact"));
-const TermsReacceptance = lazy(() => import("../pages/TermsReacceptance"));
+const LegalDocumentsReacceptance = lazy(() => import("../pages/LegalDocumentsReacceptance"));
 
 const fallback = (
   <div
@@ -59,7 +59,7 @@ const ProtectedRoutes: React.FC = () => {
               <Route path="cookie" element={<Cookie />} />
               <Route path="impressum" element={<Impressum />} />
               <Route path="contact" element={<Contact />} />
-              <Route path="terms-reacceptance" element={<TermsReacceptance />} />
+              <Route path="terms-reacceptance" element={<LegalDocumentsReacceptance />} />
               <Route path="admin" element={<AdminRoute />}>
                 <Route index element={<AdminDashboard />} />
                 <Route path="reports" element={<ContentReports />} />

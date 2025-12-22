@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, cleanup } from "@testing-library/react";
 import type { QueryClient } from "@tanstack/react-query";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
@@ -49,6 +49,7 @@ describe("Dashboard analytics", () => {
   });
 
   afterEach(() => {
+    cleanup();
     cleanupQueryClient(queryClient);
   });
 

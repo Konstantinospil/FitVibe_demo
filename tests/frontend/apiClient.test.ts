@@ -107,7 +107,6 @@ describe("apiClient authentication flow", () => {
     useAuthStore.getState().signIn(mockUser);
 
     let apiCallCount = 0;
-    let refreshCallCount = 0;
 
     apiMock.onGet("/api/protected").reply(() => {
       apiCallCount += 1;
@@ -119,10 +118,7 @@ describe("apiClient authentication flow", () => {
       return [200, { ok: true, call: apiCallCount }];
     });
 
-    rawMock.onPost("/api/v1/auth/refresh").reply(() => {
-      refreshCallCount += 1;
-      return [200];
-    });
+    rawMock.onPost("/api/v1/auth/refresh").reply(200);
 
     // Make 3 concurrent requests that will all trigger 401
     const promises = [
@@ -139,6 +135,8 @@ describe("apiClient authentication flow", () => {
     });
 
     // Refresh should only be called once (not 3 times)
-    expect(refreshCallCount).toBe(1);
+    // Check the mock history instead of a closure variable
+    const refreshCalls = rawMock.history.post.filter((req) => req.url === "/api/v1/auth/refresh");
+    expect(refreshCalls.length).toBe(1);
   });
 });

@@ -6,21 +6,42 @@ import i18n, { translationsLoadingPromise } from "../i18n/config";
 import PageIntro from "../components/PageIntro";
 import { Card, CardContent, Button } from "../components/ui";
 import { useAuthStore } from "../store/auth.store";
+import { ConfirmDialog } from "../components/ConfirmDialog";
+import { revokeTerms } from "../services/api";
+import { useAuth } from "../contexts/AuthContext";
 
 const contentStyle: React.CSSProperties = {
   maxWidth: "900px",
   margin: "0 auto",
-  padding: "2rem",
+  padding: "var(--space-xl)",
   lineHeight: 1.8,
   color: "var(--color-text-primary)",
-  fontSize: "0.95rem",
+  fontSize: "var(--font-size-md)",
 };
 
 const Terms: React.FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const { signOut } = useAuth();
   const [translationsReady, setTranslationsReady] = useState(false);
+  const [showRevokeConfirm, setShowRevokeConfirm] = useState(false);
+  const [isRevoking, setIsRevoking] = useState(false);
+
+  const handleRevokeConsent = async () => {
+    setIsRevoking(true);
+    try {
+      await revokeTerms();
+      // User will be logged out by the backend, redirect to login
+      await signOut();
+      void navigate("/login", { replace: true });
+    } catch (error) {
+      console.error("Failed to revoke consent:", error);
+      setIsRevoking(false);
+      setShowRevokeConfirm(false);
+      // TODO: Show error toast
+    }
+  };
 
   // Helper function to safely get array translations
   const getArrayTranslation = (key: string): string[] => {
@@ -76,7 +97,7 @@ const Terms: React.FC = () => {
         role="status"
         aria-live="polite"
       >
-        Loading...
+        {t("common.loading", { defaultValue: "Loading..." })}
       </div>
     );
   }
@@ -97,7 +118,7 @@ const Terms: React.FC = () => {
         }}
       >
         <CardContent style={contentStyle}>
-          <div style={{ marginBottom: "1.5rem" }}>
+          <div style={{ marginBottom: "var(--space-lg)" }}>
             <Button
               variant="secondary"
               size="sm"
@@ -112,7 +133,11 @@ const Terms: React.FC = () => {
             </Button>
           </div>
           <div
-            style={{ marginBottom: "1rem", color: "var(--color-text-muted)", fontSize: "0.9rem" }}
+            style={{
+              marginBottom: "var(--space-md)",
+              color: "var(--color-text-muted)",
+              fontSize: "var(--font-size-sm)",
+            }}
           >
             <strong>{t("terms.effectiveDate")}:</strong> {t("terms.effectiveDateValue")}
           </div>
@@ -247,8 +272,38 @@ const Terms: React.FC = () => {
             <h2 className="section-title">{t("terms.section16.title")}</h2>
             <p className="section-text">{t("terms.section16.content")}</p>
           </section>
+
+          {isAuthenticated && (
+            <div
+              className="flex flex--center"
+              style={{
+                marginTop: "var(--space-xl)",
+                paddingTop: "var(--space-xl)",
+                borderTop: "1px solid var(--color-border)",
+              }}
+            >
+              <Button
+                variant="secondary"
+                onClick={() => setShowRevokeConfirm(true)}
+                disabled={isRevoking}
+              >
+                {t("terms.revokeConsent")}
+              </Button>
+            </div>
+          )}
         </CardContent>
       </Card>
+
+      <ConfirmDialog
+        isOpen={showRevokeConfirm}
+        title={t("terms.revokeConfirm.title")}
+        message={t("terms.revokeConfirm.message")}
+        confirmLabel={t("terms.revokeConfirm.confirm")}
+        cancelLabel={t("terms.revokeConfirm.cancel")}
+        variant="warning"
+        onConfirm={() => void handleRevokeConsent()}
+        onCancel={() => setShowRevokeConfirm(false)}
+      />
     </PageIntro>
   );
 };

@@ -47,3 +47,4 @@ echo "  - SMTP credentials are correct (Gmail app password)"
 echo "  - Gmail account has 'Less secure app access' or uses App Passwords"
 echo "  - Check backend logs for '[mailer]' entries"
 
+

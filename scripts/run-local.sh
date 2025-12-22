@@ -12,6 +12,7 @@ echo "🚀 Starting FitVibe locally (without Docker)..."
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 # Function to check if a port is in use
@@ -36,26 +37,21 @@ free_port() {
     local service_name=$2
     
     if check_port $port; then
-        local pid=$(get_port_process $port)
-        if [ -n "$pid" ]; then
-            local process_name=$(ps -p $pid -o comm= 2>/dev/null || echo "unknown")
-            echo -e "${YELLOW}⚠ Port $port ($service_name) is in use by process $pid ($process_name)${NC}"
+        # Get all PIDs using the port (there might be multiple)
+        local pids=$(lsof -ti :$port 2>/dev/null || true)
+        
+        if [ -n "$pids" ]; then
+            echo -e "${YELLOW}⚠ Port $port ($service_name) is in use${NC}"
             echo -e "${YELLOW}Attempting to free port $port...${NC}"
             
-            # Try graceful kill first
-            kill $pid 2>/dev/null || true
-            sleep 1
-            
-            # Check if still running, force kill if needed
-            if check_port $port; then
-                echo -e "${YELLOW}Process still running, forcing termination...${NC}"
-                kill -9 $pid 2>/dev/null || true
-                sleep 1
-            fi
+            # Kill all processes using the port
+            echo "$pids" | xargs kill -9 2>/dev/null || true
+            sleep 2
             
             # Verify port is now free
             if check_port $port; then
                 echo -e "${RED}✗ Failed to free port $port. Please manually stop the process.${NC}"
+                echo -e "${YELLOW}Try: lsof -ti :$port | xargs kill -9${NC}"
                 return 1
             else
                 echo -e "${GREEN}✓ Port $port freed successfully${NC}"
@@ -63,6 +59,13 @@ free_port() {
             fi
         else
             echo -e "${YELLOW}⚠ Port $port is in use but couldn't identify the process${NC}"
+            # Try to kill any process on the port anyway
+            lsof -ti :$port 2>/dev/null | xargs kill -9 2>/dev/null || true
+            sleep 1
+            if ! check_port $port; then
+                echo -e "${GREEN}✓ Port $port freed successfully${NC}"
+                return 0
+            fi
             return 1
         fi
     else
@@ -245,6 +248,42 @@ wait_for_service() {
     return 1
 }
 
+# Function to cleanup development servers
+cleanup_servers() {
+    echo ""
+    echo -e "${YELLOW}Stopping development servers...${NC}"
+    # Kill any processes on our ports (pnpm/turbo will handle cleanup of child processes)
+    lsof -ti :4000 2>/dev/null | xargs kill -9 2>/dev/null || true
+    lsof -ti :5173 2>/dev/null | xargs kill -9 2>/dev/null || true
+    # Also kill any pnpm/turbo processes
+    pkill -f "pnpm.*dev" 2>/dev/null || true
+    pkill -f "turbo.*dev" 2>/dev/null || true
+    echo -e "${GREEN}✓ Servers stopped${NC}"
+}
+
+# Function to start services and show logs
+start_and_verify_services() {
+    echo -e "${YELLOW}🚀 Starting development servers...${NC}"
+    echo ""
+    echo -e "${BLUE}Services are starting. Logs will be displayed below in real-time.${NC}"
+    echo -e "${BLUE}Logs are also being saved to: /tmp/fitvibe-dev.log${NC}"
+    echo ""
+    echo -e "${GREEN}Backend will run on: http://localhost:4000${NC}"
+    echo -e "${GREEN}Frontend will run on: http://localhost:5173${NC}"
+    echo ""
+    echo -e "${YELLOW}Press Ctrl+C to stop all servers${NC}"
+    echo ""
+    echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    echo ""
+    
+    # Set up cleanup handler for signals
+    trap "cleanup_servers; exit 0" INT TERM
+    
+    # Start pnpm dev with output to both console and log file
+    # This runs in foreground so logs are visible in real-time
+    pnpm dev 2>&1 | tee /tmp/fitvibe-dev.log
+}
+
 # Main execution
 main() {
     # Stop Docker containers
@@ -278,31 +317,9 @@ main() {
     
     echo -e "${GREEN}✅ Setup complete!${NC}"
     echo ""
-    echo -e "${YELLOW}Starting development servers...${NC}"
-    echo -e "${GREEN}Backend will run on: http://localhost:4000${NC}"
-    echo -e "${GREEN}Frontend will run on: http://localhost:5173${NC}"
-    echo ""
-    echo -e "${YELLOW}Note: Servers may take a few seconds to start.${NC}"
-    echo -e "${YELLOW}If you see connection errors, wait 10-15 seconds and refresh.${NC}"
-    echo ""
-    echo -e "${YELLOW}Troubleshooting:${NC}"
-    echo -e "  - If frontend doesn't start, try: pnpm --filter @fitvibe/frontend dev"
-    echo -e "  - If backend doesn't start, try: pnpm --filter @fitvibe/backend dev"
-    echo -e "  - Check if ports are free: lsof -i :4000 -i :5173"
-    echo ""
-    echo -e "${YELLOW}Press Ctrl+C to stop all servers${NC}"
-    echo ""
     
-    # Start both backend and frontend in parallel
-    # Turbo will manage both processes
-    pnpm dev || {
-        echo ""
-        echo -e "${RED}✗ Failed to start development servers${NC}"
-        echo -e "${YELLOW}Try starting them individually:${NC}"
-        echo -e "  Terminal 1: pnpm --filter @fitvibe/backend dev"
-        echo -e "  Terminal 2: pnpm --filter @fitvibe/frontend dev"
-        exit 1
-    }
+    # Start and verify services
+    start_and_verify_services
 }
 
 # Run main function

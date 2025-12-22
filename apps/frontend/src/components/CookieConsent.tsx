@@ -2,7 +2,8 @@ import React, { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { Modal, ModalFooter } from "./ui/Modal";
 import { Button } from "./ui/Button";
-import { useCookieConsent, shouldShowCookieBanner } from "../hooks/useCookieConsent";
+import { useCookieConsent } from "../hooks/useCookieConsent";
+import { useToast } from "../contexts/ToastContext";
 
 interface CookieCategory {
   id: "essential" | "preferences" | "analytics" | "marketing";
@@ -14,6 +15,7 @@ interface CookieCategory {
 
 const CookieConsent: React.FC = () => {
   const { t } = useTranslation();
+  const toast = useToast();
   const { consentStatus, isLoading, savePreferences } = useCookieConsent();
   const [isOpen, setIsOpen] = useState(false);
   const [categoryStates, setCategoryStates] = useState<{
@@ -67,9 +69,10 @@ const CookieConsent: React.FC = () => {
       return;
     }
 
-    // Show banner if no consent exists or banner hasn't been shown before
-    const shouldShow =
-      shouldShowCookieBanner() && (!consentStatus?.hasConsent || !consentStatus?.consent);
+    // Show banner if no consent exists from API
+    // The localStorage flag is just an optimization - if API says no consent, show banner regardless
+    const hasNoConsent = !consentStatus?.hasConsent || !consentStatus?.consent;
+    const shouldShow = hasNoConsent;
     setIsOpen(shouldShow);
 
     // If consent exists, update category states from API
@@ -123,9 +126,8 @@ const CookieConsent: React.FC = () => {
         marketing: categoryStates.marketing,
       });
       setIsOpen(false);
-    } catch (error) {
-      console.error("Failed to save cookie preferences:", error);
-      // TODO: Show error toast
+    } catch {
+      toast.error(t("cookie.actions.saveError"));
     } finally {
       setIsSaving(false);
     }
@@ -158,7 +160,7 @@ const CookieConsent: React.FC = () => {
     bottom: 0,
     backgroundColor: enabled ? "var(--color-primary)" : "var(--color-surface-muted)",
     transition: "0.3s",
-    borderRadius: "24px",
+    borderRadius: "var(--radius-full)",
     opacity: disabled ? 0.5 : 1,
   });
 
@@ -169,10 +171,10 @@ const CookieConsent: React.FC = () => {
     width: "18px",
     left: enabled ? "22px" : "3px",
     bottom: "3px",
-    backgroundColor: "white",
+    backgroundColor: "var(--color-surface)",
     transition: "0.3s",
     borderRadius: "50%",
-    boxShadow: "0 2px 4px rgba(0, 0, 0, 0.2)",
+    boxShadow: "var(--shadow-e1)",
   });
 
   return (
@@ -243,7 +245,7 @@ const CookieConsent: React.FC = () => {
                         style={{
                           fontSize: "var(--font-size-xs)",
                           color: "var(--color-text-muted)",
-                          padding: "0.125rem 0.5rem",
+                          padding: "0.125rem var(--space-xs)",
                           backgroundColor: "var(--color-surface-muted)",
                           borderRadius: "var(--radius-sm)",
                         }}
@@ -320,7 +322,7 @@ const CookieConsent: React.FC = () => {
             justifyContent: "flex-end",
           }}
         >
-          <Button variant="ghost" onClick={handleRejectAll} disabled={isSaving}>
+          <Button variant="secondary" onClick={handleRejectAll} disabled={isSaving}>
             {t("cookie.actions.rejectAll")}
           </Button>
           <Button variant="secondary" onClick={handleAcceptAll} disabled={isSaving}>

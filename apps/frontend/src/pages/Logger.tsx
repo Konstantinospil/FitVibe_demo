@@ -319,8 +319,8 @@ const Logger: React.FC = () => {
   return (
     <PageIntro
       eyebrow={t("logger.eyebrow")}
-      title={session.title || "Workout Session"}
-      description={`${exerciseLogs.length} exercises • ${completedSetsCount}/${totalSetsCount} sets completed`}
+      title={session.title || t("logger.workoutSession")}
+      description={`${exerciseLogs.length} ${t("logger.exercises")} • ${completedSetsCount}/${totalSetsCount} ${t("logger.setsCompleted")}`}
     >
       <div className="grid grid--gap-15">
         {/* Session Info Bar */}
@@ -329,7 +329,7 @@ const Logger: React.FC = () => {
             <div className="flex flex--align-center flex--justify-between flex--gap-md">
               <div className="flex flex--align-center flex--gap-15">
                 <div>
-                  <div className="text-085 text-secondary mb-025">Session Time</div>
+                  <div className="text-085 text-secondary mb-025">{t("logger.sessionTime")}</div>
                   <div className="text-xl font-weight-600" style={{ fontFamily: "monospace" }}>
                     {formatTime(sessionElapsedSeconds)}
                   </div>
@@ -337,7 +337,7 @@ const Logger: React.FC = () => {
 
                 {restTimerActive && (
                   <div>
-                    <div className="text-085 text-secondary mb-025">Rest Timer</div>
+                    <div className="text-085 text-secondary mb-025">{t("logger.restTimer")}</div>
                     <div
                       className="text-xl font-weight-600 text-accent"
                       style={{ fontFamily: "monospace" }}
@@ -356,7 +356,7 @@ const Logger: React.FC = () => {
                     onClick={stopRestTimer}
                     leftIcon={<Pause size={16} />}
                   >
-                    Stop Rest
+                    {t("logger.stopRest")}
                   </Button>
                 ) : (
                   <Button
@@ -365,7 +365,7 @@ const Logger: React.FC = () => {
                     onClick={() => startRestTimer()}
                     leftIcon={<Clock size={16} />}
                   >
-                    Start Rest ({restDuration}s)
+                    {t("logger.startRest")} ({restDuration}s)
                   </Button>
                 )}
 
@@ -377,7 +377,7 @@ const Logger: React.FC = () => {
                   leftIcon={<Check size={16} />}
                   disabled={completedSetsCount === 0}
                 >
-                  Complete Session
+                  {isSaving ? t("logger.completing") : t("logger.completeSession")}
                 </Button>
               </div>
             </div>
@@ -397,10 +397,10 @@ const Logger: React.FC = () => {
                 <div className="flex flex--align-center flex--justify-between">
                   <div className="flex-1">
                     <CardTitle>
-                      {exerciseIndex + 1}. {exerciseLog.exercise_id || "Custom Exercise"}
+                      {exerciseIndex + 1}. {exerciseLog.exercise_id || t("logger.customExercise")}
                     </CardTitle>
                     <div className="text-085 text-secondary mt-025">
-                      {completedSets} / {totalSets} sets completed
+                      {completedSets} / {totalSets} {t("logger.setsCompleted")}
                     </div>
                   </div>
 
@@ -580,7 +580,7 @@ const Logger: React.FC = () => {
                 leftIcon={<Check size={18} />}
                 disabled={completedSetsCount === 0}
               >
-                {isSaving ? "Completing..." : "Complete Session"}
+                {isSaving ? t("logger.completing") : t("logger.completeSession")}
               </Button>
             </div>
           </CardContent>

@@ -17,6 +17,7 @@ import type {
   RefreshTokenRecord,
 } from "../../../../apps/backend/src/modules/auth/auth.repository.js";
 import { getCurrentTermsVersion } from "../../../../apps/backend/src/config/terms.js";
+import { getCurrentPrivacyPolicyVersion } from "../../../../apps/backend/src/config/privacy.js";
 
 // Helper function to create complete AuthUserRecord
 function createMockUser(overrides: Partial<AuthUserRecord> = {}): AuthUserRecord {
@@ -36,6 +37,7 @@ function createMockUser(overrides: Partial<AuthUserRecord> = {}): AuthUserRecord
     terms_accepted: true,
     terms_accepted_at: "2024-01-01T00:00:00Z",
     terms_version: getCurrentTermsVersion(),
+    privacy_policy_version: getCurrentPrivacyPolicyVersion(),
     ...overrides,
   };
 }
@@ -439,7 +441,7 @@ describe("Auth Service", () => {
       expect(mockAuthRepo.insertRefreshToken).toHaveBeenCalled();
     });
 
-    it("should reject login if terms version is outdated", async () => {
+    it("should flag outdated terms version on login", async () => {
       const mockUser = createMockUser({
         id: "user-123",
         username: "testuser",
@@ -453,12 +455,14 @@ describe("Auth Service", () => {
 
       mockAuthRepo.findUserByEmail.mockResolvedValue(mockUser);
       mockBcrypt.compare.mockResolvedValue(true as never);
+      mockAuthRepo.createAuthSession.mockResolvedValue([]);
+      mockAuthRepo.insertRefreshToken.mockResolvedValue([]);
 
-      await expect(authService.login(validLoginDto, loginContext)).rejects.toThrow(HttpError);
-      await expect(authService.login(validLoginDto, loginContext)).rejects.toThrow(
-        "TERMS_VERSION_OUTDATED",
-      );
-      expect(mockAuthRepo.createAuthSession).not.toHaveBeenCalled();
+      const result = await authService.login(validLoginDto, loginContext);
+
+      expect(result).toHaveProperty("termsOutdated", true);
+      expect(result).toHaveProperty("requires2FA", false);
+      expect(mockAuthRepo.createAuthSession).toHaveBeenCalled();
     });
 
     it("should throw error if user not found", async () => {
@@ -543,6 +547,7 @@ describe("Auth Service", () => {
         primary_email: "test@example.com",
         role_code: "athlete",
         status: "active",
+        privacy_policy_version: getCurrentPrivacyPolicyVersion(),
       });
 
       mockJwt.verify.mockReturnValue(mockPayload as never);

@@ -1,5 +1,5 @@
 import React from "react";
-import { render, screen, waitFor, fireEvent } from "@testing-library/react";
+import { render, screen, waitFor, fireEvent, cleanup } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { MemoryRouter } from "react-router-dom";
 import SystemControls from "../../../../apps/frontend/src/pages/admin/SystemControls";
@@ -27,6 +27,10 @@ describe("SystemControls", () => {
     vi.mocked(useToast).mockReturnValue(mockToast);
     // Default mock for getRecentActivity
     vi.mocked(adminApi.getRecentActivity).mockResolvedValue([]);
+  });
+
+  afterEach(() => {
+    cleanup();
   });
 
   const mockReadOnlyStatus: api.SystemReadOnlyStatus = {
@@ -155,7 +159,7 @@ describe("SystemControls", () => {
 
     await waitFor(
       () => {
-        expect(screen.getByText("Enable Read-Only Mode")).toBeInTheDocument();
+        expect(screen.getByRole("button", { name: /Enable Read-Only Mode/i })).toBeInTheDocument();
       },
       { timeout: 5000 },
     );
@@ -173,12 +177,12 @@ describe("SystemControls", () => {
 
     await waitFor(
       () => {
-        expect(screen.getByText("Enable Read-Only Mode")).toBeInTheDocument();
+        expect(screen.getByRole("button", { name: /Enable Read-Only Mode/i })).toBeInTheDocument();
       },
       { timeout: 5000 },
     );
 
-    const enableButton = screen.getByText("Enable Read-Only Mode");
+    const enableButton = screen.getByRole("button", { name: /Enable Read-Only Mode/i });
     fireEvent.click(enableButton);
 
     await waitFor(
@@ -210,12 +214,12 @@ describe("SystemControls", () => {
 
     await waitFor(
       () => {
-        expect(screen.getByText("Enable Read-Only Mode")).toBeInTheDocument();
+        expect(screen.getByRole("button", { name: /Enable Read-Only Mode/i })).toBeInTheDocument();
       },
       { timeout: 5000 },
     );
 
-    const enableButton = screen.getByText("Enable Read-Only Mode");
+    const enableButton = screen.getByRole("button", { name: /Enable Read-Only Mode/i });
     fireEvent.click(enableButton);
 
     await waitFor(
@@ -256,12 +260,12 @@ describe("SystemControls", () => {
 
     await waitFor(
       () => {
-        expect(screen.getByText("Enable Read-Only Mode")).toBeInTheDocument();
+        expect(screen.getByRole("button", { name: /Enable Read-Only Mode/i })).toBeInTheDocument();
       },
       { timeout: 5000 },
     );
 
-    const enableButton = screen.getByText("Enable Read-Only Mode");
+    const enableButton = screen.getByRole("button", { name: /Enable Read-Only Mode/i });
     fireEvent.click(enableButton);
 
     await waitFor(
@@ -332,9 +336,8 @@ describe("SystemControls", () => {
       { timeout: 5000 },
     );
 
-    const disableButtons = screen.getAllByText("Disable Read-Only Mode");
-    // Click the button (first one should be the actual button)
-    fireEvent.click(disableButtons[0]);
+    const disableButton = screen.getByRole("button", { name: /Disable Read-Only Mode/i });
+    fireEvent.click(disableButton);
 
     await waitFor(
       () => {
@@ -412,12 +415,12 @@ describe("SystemControls", () => {
 
     await waitFor(
       () => {
-        expect(screen.getByText("Enable Read-Only Mode")).toBeInTheDocument();
+        expect(screen.getByRole("button", { name: /Enable Read-Only Mode/i })).toBeInTheDocument();
       },
       { timeout: 5000 },
     );
 
-    const enableButton = screen.getByText("Enable Read-Only Mode");
+    const enableButton = screen.getByRole("button", { name: /Enable Read-Only Mode/i });
     fireEvent.click(enableButton);
 
     await waitFor(

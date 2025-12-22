@@ -18,3 +18,4 @@ RUN chmod +x /usr/local/bin/nginx-entrypoint.sh
 ENTRYPOINT ["/usr/local/bin/nginx-entrypoint.sh"]
 
 
+

@@ -5,7 +5,79 @@ import path from "node:path";
 import { createHash, generateKeyPairSync, createPublicKey } from "node:crypto";
 import { logger } from "./logger.js";
 
-loadEnv();
+// Find project root by looking for pnpm-workspace.yaml or package.json
+function findProjectRoot(startDir: string): string {
+  let current = path.resolve(startDir);
+  const maxDepth = 10; // Prevent infinite loops
+  let depth = 0;
+
+  while (current !== path.dirname(current) && depth < maxDepth) {
+    if (
+      fs.existsSync(path.join(current, "pnpm-workspace.yaml")) ||
+      (fs.existsSync(path.join(current, "package.json")) &&
+        fs.existsSync(path.join(current, "apps", "backend")))
+    ) {
+      return current;
+    }
+    current = path.dirname(current);
+    depth++;
+  }
+  // Fallback: try process.cwd() (where the command was run from)
+  const cwd = process.cwd();
+  if (fs.existsSync(path.join(cwd, "pnpm-workspace.yaml"))) {
+    return cwd;
+  }
+  return startDir; // Last fallback
+}
+
+// Load .env from project root
+// In development, __dirname is apps/backend/src/config
+// In compiled code, __dirname is apps/backend/dist/config
+const projectRoot = findProjectRoot(__dirname);
+const envPath = path.join(projectRoot, ".env");
+
+// Try loading from project root first, then fallback to process.cwd()
+let envResult = loadEnv({ path: envPath });
+if (!envResult || !envResult.parsed) {
+  // Fallback: try loading from current working directory
+  const cwdEnvPath = path.join(process.cwd(), ".env");
+  if (fs.existsSync(cwdEnvPath)) {
+    const fallbackResult = loadEnv({ path: cwdEnvPath });
+    if (fallbackResult) {
+      envResult = fallbackResult;
+    }
+  }
+  // Ensure envResult is defined even if loading failed
+  if (!envResult) {
+    envResult = { parsed: {}, error: undefined };
+  }
+}
+
+// Log for debugging (only in development, and only if logger is available)
+if (process.env.NODE_ENV !== "production" && typeof logger !== "undefined") {
+  if (envResult && envResult.parsed) {
+    logger.info(
+      {
+        projectRoot,
+        envPath,
+        envExists: fs.existsSync(envPath),
+        loaded: true,
+      },
+      "[env] Environment configuration loaded",
+    );
+  } else {
+    logger.warn(
+      {
+        projectRoot,
+        envPath,
+        envExists: fs.existsSync(envPath),
+        cwd: process.cwd(),
+        error: envResult?.error,
+      },
+      "[env] Failed to load .env file",
+    );
+  }
+}
 
 const TRUE_VALUES = new Set(["true", "1", "yes", "y", "on"]);
 

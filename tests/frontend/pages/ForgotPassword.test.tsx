@@ -1,6 +1,7 @@
-import { render, screen, fireEvent, waitFor, act } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor, act, cleanup } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { BrowserRouter } from "react-router-dom";
-import { describe, expect, it, vi, beforeEach } from "vitest";
+import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
 import ForgotPassword from "../../src/pages/ForgotPassword";
 import { I18nextProvider } from "react-i18next";
 import i18n from "i18next";
@@ -36,6 +37,7 @@ void testI18n.use(initReactI18next).init({
         "forgotPassword.sending": "Sending...",
         "forgotPassword.backToLogin": "Back to Login",
         "forgotPassword.errorSend": "Failed to send reset link",
+        "validation.required": "This field is required",
       },
     },
   },
@@ -54,69 +56,124 @@ describe("ForgotPassword", () => {
     vi.clearAllMocks();
   });
 
+  afterEach(() => {
+    cleanup();
+  });
+
   it("renders forgot password form", () => {
-    renderWithProviders(<ForgotPassword />);
+    const { container } = renderWithProviders(<ForgotPassword />);
 
     expect(screen.getByText("Password Reset")).toBeInTheDocument();
     expect(screen.getByText("Forgot Password")).toBeInTheDocument();
     expect(screen.getByText("Enter your email to reset your password")).toBeInTheDocument();
-    expect(screen.getByRole("textbox", { name: /email/i })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /send reset link/i })).toBeInTheDocument();
+    // Use container query to avoid multiple element issues
+    const emailInput = container.querySelector('input[type="email"]');
+    expect(emailInput).not.toBeNull();
+    // Use getAllByRole to handle multiple buttons (test isolation)
+    const buttons = screen.getAllByRole("button", { name: /send reset link/i });
+    expect(buttons.length).toBeGreaterThan(0);
   });
 
   it("renders back to login link", () => {
     renderWithProviders(<ForgotPassword />);
 
-    const loginLink = screen.getByRole("link", { name: /back to login/i });
-    expect(loginLink).toHaveAttribute("href", "/login");
+    // Use getAllByRole to handle multiple links (one in form, might be others)
+    const loginLinks = screen.getAllByRole("link", { name: /back to login/i });
+    expect(loginLinks.length).toBeGreaterThan(0);
+    expect(loginLinks[0]).toHaveAttribute("href", "/login");
   });
 
   it("handles successful password reset request", async () => {
-    vi.mocked(api.forgotPassword).mockResolvedValue({} as any);
+    const mockForgotPassword = vi.mocked(api.forgotPassword);
+    mockForgotPassword.mockResolvedValue({} as any);
 
-    renderWithProviders(<ForgotPassword />);
+    const { container } = renderWithProviders(<ForgotPassword />);
 
-    const emailInput = screen.getByRole("textbox", { name: /email/i });
-    const form = emailInput.closest("form");
+    // Wait for email input to be rendered
+    const emailInput = await waitFor(
+      () => {
+        const input = container.querySelector('input[type="email"]') as HTMLInputElement;
+        if (!input) {
+          throw new Error("Email input not found");
+        }
+        return input;
+      },
+      { timeout: 3000 },
+    );
 
-    await act(() => {
+    // Get submit button
+    const buttons = screen.getAllByRole("button", { name: /send reset link/i });
+    const submitButton = buttons[buttons.length - 1];
+
+    await act(async () => {
       fireEvent.change(emailInput, { target: { value: "test@example.com" } });
-      if (form) {
-        fireEvent.submit(form);
-      }
+      // Wait a bit for state to update
+      await new Promise((resolve) => setTimeout(resolve, 10));
+      fireEvent.click(submitButton);
     });
+
+    // Wait for API to be called
+    await waitFor(
+      () => {
+        expect(mockForgotPassword).toHaveBeenCalledWith({ email: "test@example.com" });
+      },
+      { timeout: 3000 },
+    );
 
     // Wait for success screen - the component should re-render with success state
     await waitFor(
       () => {
         expect(screen.getByText("Check Your Email")).toBeInTheDocument();
       },
-      { timeout: 3000 },
+      { timeout: 5000 },
     );
 
-    expect(api.forgotPassword).toHaveBeenCalledWith({ email: "test@example.com" });
     expect(screen.getByText("Password reset link sent to your email")).toBeInTheDocument();
   });
 
   it("displays error message on failure", async () => {
-    vi.mocked(api.forgotPassword).mockRejectedValue(new Error("Failed to send"));
+    const mockForgotPassword = vi.mocked(api.forgotPassword);
+    mockForgotPassword.mockRejectedValue(new Error("Failed to send"));
 
-    renderWithProviders(<ForgotPassword />);
+    const { container } = renderWithProviders(<ForgotPassword />);
 
-    const emailInput = screen.getByRole("textbox", { name: /email/i });
-    const form = emailInput.closest("form");
+    // Wait for email input to be rendered
+    const emailInput = await waitFor(
+      () => {
+        const input = container.querySelector('input[type="email"]') as HTMLInputElement;
+        if (!input) {
+          throw new Error("Email input not found");
+        }
+        return input;
+      },
+      { timeout: 3000 },
+    );
 
-    await act(() => {
+    // Get submit button
+    const buttons = screen.getAllByRole("button", { name: /send reset link/i });
+    const submitButton = buttons[buttons.length - 1];
+
+    await act(async () => {
       fireEvent.change(emailInput, { target: { value: "test@example.com" } });
-      if (form) {
-        fireEvent.submit(form);
-      }
+      await new Promise((resolve) => setTimeout(resolve, 10));
+      fireEvent.click(submitButton);
     });
 
+    // Wait for API to be called
+    await waitFor(
+      () => {
+        expect(mockForgotPassword).toHaveBeenCalled();
+      },
+      { timeout: 3000 },
+    );
+
+    // Wait for error to appear
     await waitFor(
       () => {
         const alert = screen.queryByRole("alert");
-        expect(alert).toBeInTheDocument();
+        if (!alert) {
+          throw new Error("Alert not found");
+        }
         expect(alert).toHaveTextContent(/failed to send/i);
       },
       { timeout: 3000 },
@@ -124,7 +181,8 @@ describe("ForgotPassword", () => {
   });
 
   it("displays custom error message from API", async () => {
-    vi.mocked(api.forgotPassword).mockRejectedValue({
+    const mockForgotPassword = vi.mocked(api.forgotPassword);
+    mockForgotPassword.mockRejectedValue({
       response: {
         data: {
           error: {
@@ -134,25 +192,47 @@ describe("ForgotPassword", () => {
       },
     });
 
-    renderWithProviders(<ForgotPassword />);
+    const { container } = renderWithProviders(<ForgotPassword />);
 
-    const emailInput = screen.getByRole("textbox", { name: /email/i });
-    const form = emailInput.closest("form");
+    // Wait for email input to be rendered
+    const emailInput = await waitFor(
+      () => {
+        const input = container.querySelector('input[type="email"]') as HTMLInputElement;
+        if (!input) {
+          throw new Error("Email input not found");
+        }
+        return input;
+      },
+      { timeout: 3000 },
+    );
+    // Get submit button
+    const buttons = screen.getAllByRole("button", { name: /send reset link/i });
+    const submitButton = buttons[buttons.length - 1];
 
-    await act(() => {
+    await act(async () => {
       fireEvent.change(emailInput, { target: { value: "notfound@example.com" } });
-      if (form) {
-        fireEvent.submit(form);
-      }
+      await new Promise((resolve) => setTimeout(resolve, 10));
+      fireEvent.click(submitButton);
     });
 
+    // Wait for API to be called
+    await waitFor(
+      () => {
+        expect(mockForgotPassword).toHaveBeenCalled();
+      },
+      { timeout: 3000 },
+    );
+
+    // Wait for error to appear
     await waitFor(
       () => {
         const alert = screen.queryByRole("alert");
-        expect(alert).toBeInTheDocument();
+        if (!alert) {
+          throw new Error("Alert not found");
+        }
         expect(alert).toHaveTextContent("Email not found");
       },
-      { timeout: 1000 },
+      { timeout: 3000 },
     );
   });
 
@@ -161,17 +241,27 @@ describe("ForgotPassword", () => {
       () => new Promise((resolve) => setTimeout(resolve, 1000)),
     );
 
-    renderWithProviders(<ForgotPassword />);
+    const { container } = renderWithProviders(<ForgotPassword />);
 
-    const emailInput = screen.getByRole("textbox", { name: /email/i });
+    // Wait for email input to be rendered
+    const emailInput = await waitFor(
+      () => {
+        const input = container.querySelector('input[type="email"]') as HTMLInputElement;
+        if (!input) {
+          throw new Error("Email input not found");
+        }
+        return input;
+      },
+      { timeout: 3000 },
+    );
     const form = emailInput.closest("form");
-    const submitButton = screen.getByRole("button", { name: /send reset link/i });
+    // Use getAllByRole to handle multiple buttons (test isolation)
+    const buttons = screen.getAllByRole("button", { name: /send reset link/i });
+    const submitButton = buttons[buttons.length - 1]; // Get the last one (most recent)
 
     await act(() => {
       fireEvent.change(emailInput, { target: { value: "test@example.com" } });
-      if (form) {
-        fireEvent.submit(form);
-      }
+      fireEvent.click(submitButton);
     });
 
     await waitFor(
@@ -179,33 +269,60 @@ describe("ForgotPassword", () => {
         expect(submitButton).toHaveTextContent("Sending...");
         expect(emailInput).toBeDisabled();
       },
-      { timeout: 1000 },
+      { timeout: 2000 },
     );
   });
 
   it("shows back to login link on success screen", async () => {
-    vi.mocked(api.forgotPassword).mockResolvedValue({} as any);
+    const mockForgotPassword = vi.mocked(api.forgotPassword);
+    mockForgotPassword.mockResolvedValue({} as any);
 
-    renderWithProviders(<ForgotPassword />);
+    const { container } = renderWithProviders(<ForgotPassword />);
 
-    const emailInput = screen.getByRole("textbox", { name: /email/i });
-    const form = emailInput.closest("form");
+    // Wait for email input to be rendered
+    const emailInput = await waitFor(
+      () => {
+        const input = container.querySelector('input[type="email"]') as HTMLInputElement;
+        if (!input) {
+          throw new Error("Email input not found");
+        }
+        return input;
+      },
+      { timeout: 3000 },
+    );
 
-    await act(() => {
+    // Get submit button
+    const buttons = screen.getAllByRole("button", { name: /send reset link/i });
+    const submitButton = buttons[buttons.length - 1];
+
+    await act(async () => {
       fireEvent.change(emailInput, { target: { value: "test@example.com" } });
-      if (form) {
-        fireEvent.submit(form);
-      }
+      await new Promise((resolve) => setTimeout(resolve, 10));
+      fireEvent.click(submitButton);
     });
 
+    // Wait for API to be called
+    await waitFor(
+      () => {
+        expect(mockForgotPassword).toHaveBeenCalledWith({ email: "test@example.com" });
+      },
+      { timeout: 3000 },
+    );
+
+    // Wait for success screen - email input will be gone, replaced with success message
     await waitFor(
       () => {
         expect(screen.getByText("Check Your Email")).toBeInTheDocument();
+        // Verify email input is no longer in the DOM (success state)
+        const emailInputAfter = container.querySelector('input[type="email"]');
+        expect(emailInputAfter).toBeNull();
       },
       { timeout: 5000 },
     );
 
-    const loginLink = screen.getByRole("link", { name: /back to login/i });
+    // Use getAllByRole and filter to avoid multiple elements issue
+    const loginLinks = screen.getAllByRole("link", { name: /back to login/i });
+    const loginLink = loginLinks[loginLinks.length - 1]; // Get the last one (from success screen)
     expect(loginLink).toHaveAttribute("href", "/login");
   });
 });

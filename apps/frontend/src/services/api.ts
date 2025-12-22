@@ -209,10 +209,28 @@ apiClient.interceptors.response.use(
         };
         const errorCode = axiosError.response?.data?.error?.code;
 
-        if (errorCode === "TERMS_VERSION_OUTDATED") {
-          // Redirect to terms re-acceptance page
+        if (
+          errorCode === "TERMS_VERSION_OUTDATED" ||
+          errorCode === "PRIVACY_POLICY_VERSION_OUTDATED" ||
+          errorCode === "LEGAL_DOCUMENTS_VERSION_OUTDATED"
+        ) {
+          // Redirect to terms re-acceptance page (will handle both documents)
           processQueue(refreshError);
-          window.location.href = "/terms-reacceptance";
+          // Try to get document status from error response
+          const termsOutdated =
+            (refreshError as { response?: { data?: { termsOutdated?: boolean } } })?.response?.data
+              ?.termsOutdated ?? true;
+          const privacyOutdated =
+            (refreshError as { response?: { data?: { privacyPolicyOutdated?: boolean } } })
+              ?.response?.data?.privacyPolicyOutdated ?? false;
+          const params = new URLSearchParams();
+          if (termsOutdated) {
+            params.set("terms", "true");
+          }
+          if (privacyOutdated) {
+            params.set("privacy", "true");
+          }
+          window.location.href = `/terms-reacceptance?${params.toString()}`;
           const error =
             refreshError instanceof Error
               ? refreshError
@@ -457,6 +475,64 @@ export type AcceptTermsResponse = {
 
 export async function acceptTerms(payload: AcceptTermsRequest): Promise<AcceptTermsResponse> {
   const res = await apiClient.post<AcceptTermsResponse>("/api/v1/auth/terms/accept", payload);
+  return res.data;
+}
+
+export type RevokeTermsResponse = {
+  message: string;
+};
+
+export async function revokeTerms(): Promise<RevokeTermsResponse> {
+  const res = await apiClient.post<RevokeTermsResponse>("/api/v1/auth/terms/revoke");
+  return res.data;
+}
+
+export type AcceptPrivacyPolicyRequest = {
+  privacy_policy_accepted: boolean;
+};
+
+export type AcceptPrivacyPolicyResponse = {
+  message: string;
+};
+
+export async function acceptPrivacyPolicy(
+  payload: AcceptPrivacyPolicyRequest,
+): Promise<AcceptPrivacyPolicyResponse> {
+  const res = await apiClient.post<AcceptPrivacyPolicyResponse>(
+    "/api/v1/auth/privacy/accept",
+    payload,
+  );
+  return res.data;
+}
+
+export type RevokePrivacyPolicyResponse = {
+  message: string;
+};
+
+export async function revokePrivacyPolicy(): Promise<RevokePrivacyPolicyResponse> {
+  const res = await apiClient.post<RevokePrivacyPolicyResponse>("/api/v1/auth/privacy/revoke");
+  return res.data;
+}
+
+export interface LegalDocumentsStatus {
+  terms: {
+    accepted: boolean;
+    acceptedAt: string | null;
+    acceptedVersion: string | null;
+    currentVersion: string;
+    needsAcceptance: boolean;
+  };
+  privacy: {
+    accepted: boolean;
+    acceptedAt: string | null;
+    acceptedVersion: string | null;
+    currentVersion: string;
+    needsAcceptance: boolean;
+  };
+}
+
+export async function getLegalDocumentsStatus(): Promise<LegalDocumentsStatus> {
+  const res = await apiClient.get<LegalDocumentsStatus>("/api/v1/auth/legal-documents/status");
   return res.data;
 }
 

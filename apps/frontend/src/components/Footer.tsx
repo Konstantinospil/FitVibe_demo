@@ -3,6 +3,8 @@ import { NavLink } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { FileText, Shield, Building2, Mail, Cookie } from "lucide-react";
 import logoFull from "../assets/logo_full.png";
+import logoFullDark from "../assets/logo_full_dark.png";
+import { useThemeStore } from "../store/theme.store";
 
 /**
  * Footer component that appears on all pages.
@@ -11,6 +13,8 @@ import logoFull from "../assets/logo_full.png";
  */
 export const Footer: React.FC = () => {
   const { t } = useTranslation();
+  const theme = useThemeStore((state) => state.theme);
+  const logo = theme === "dark" ? logoFullDark : logoFull;
 
   const footerStyle: React.CSSProperties = {
     padding: "2rem 0",
@@ -141,11 +145,7 @@ export const Footer: React.FC = () => {
     <footer role="contentinfo" style={footerStyle}>
       <div style={containerStyle}>
         <div style={logoContainerStyle}>
-          <img
-            src={logoFull}
-            alt={t("footer.brand", { defaultValue: "FitVibe" })}
-            style={logoStyle}
-          />
+          <img src={logo} alt={t("footer.brand", { defaultValue: "FitVibe" })} style={logoStyle} />
         </div>
         <nav aria-label={t("footer.navigationLabel", { defaultValue: "Footer navigation" })}>
           <div style={linksContainerStyle}>

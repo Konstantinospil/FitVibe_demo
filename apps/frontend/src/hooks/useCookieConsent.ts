@@ -48,9 +48,28 @@ export function useCookieConsent(): UseCookieConsentReturn {
       );
       setConsentStatus(response.data.data);
     } catch (err) {
-      const error = err instanceof Error ? err : new Error("Failed to fetch consent status");
-      setError(error);
-      // If API fails, default to no consent (show banner)
+      // Check if it's a connection error (backend not running)
+      const errMessage =
+        err instanceof Error
+          ? err.message
+          : err && typeof err === "object" && "message" in err
+            ? String(err.message)
+            : String(err);
+      const isConnectionError =
+        err &&
+        typeof err === "object" &&
+        ("code" in err || "message" in err) &&
+        (errMessage.includes("ECONNREFUSED") ||
+          errMessage.includes("Network Error") ||
+          errMessage.includes("ERR_NETWORK"));
+
+      // Only set error state for non-connection errors (silently handle backend being down)
+      if (!isConnectionError) {
+        const error = err instanceof Error ? err : new Error("Failed to fetch consent status");
+        setError(error);
+      }
+
+      // If API fails (including connection errors), default to no consent (show banner)
       setConsentStatus({ hasConsent: false });
     } finally {
       setIsLoading(false);

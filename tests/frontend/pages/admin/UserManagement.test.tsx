@@ -1,6 +1,6 @@
 import React from "react";
-import { render, screen, waitFor, fireEvent } from "@testing-library/react";
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { render, screen, waitFor, fireEvent, cleanup } from "@testing-library/react";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { MemoryRouter } from "react-router-dom";
 import UserManagement from "../../../../apps/frontend/src/pages/admin/UserManagement";
 import * as api from "../../../../apps/frontend/src/services/api";
@@ -23,6 +23,10 @@ describe("UserManagement", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(useToast).mockReturnValue(mockToast);
+  });
+
+  afterEach(() => {
+    cleanup();
   });
 
   const mockUser: api.UserRecord = {
@@ -248,7 +252,7 @@ describe("UserManagement", () => {
 
     await waitFor(
       () => {
-        expect(screen.getAllByText("Suspend")[0]).toBeInTheDocument();
+        expect(screen.getByRole("button", { name: /Suspend/i })).toBeInTheDocument();
         expect(screen.getAllByText("Ban")[0]).toBeInTheDocument();
       },
       { timeout: 5000 },
@@ -275,13 +279,7 @@ describe("UserManagement", () => {
 
     await waitFor(
       () => {
-        expect(screen.getAllByText("Activate")[0]).toBeInTheDocument();
-        // Use queryAllByText to check for absence - if found, should be empty array
-        const suspendButtons = screen.queryAllByText("Suspend");
-        const banButtons = screen.queryAllByText("Ban");
-        // Check that these buttons are not in the current test's rendered component
-        // Since we can't reliably scope, we check that at least one "Activate" exists
-        expect(screen.getAllByText("Activate").length).toBeGreaterThan(0);
+        expect(screen.getByRole("button", { name: /Activate/i })).toBeInTheDocument();
       },
       { timeout: 5000 },
     );
@@ -307,12 +305,12 @@ describe("UserManagement", () => {
 
     await waitFor(
       () => {
-        expect(screen.getAllByText("Suspend")[0]).toBeInTheDocument();
+        expect(screen.getByRole("button", { name: /Suspend/i })).toBeInTheDocument();
       },
       { timeout: 5000 },
     );
 
-    const suspendButton = screen.getAllByText("Suspend")[0];
+    const suspendButton = screen.getByRole("button", { name: /Suspend/i });
     fireEvent.click(suspendButton);
 
     await waitFor(
@@ -352,22 +350,22 @@ describe("UserManagement", () => {
 
     await waitFor(
       () => {
-        expect(screen.getAllByText("Suspend")[0]).toBeInTheDocument();
+        expect(screen.getByRole("button", { name: /Suspend/i })).toBeInTheDocument();
       },
       { timeout: 5000 },
     );
 
-    const suspendButton = screen.getAllByText("Suspend")[0];
+    const suspendButton = screen.getByRole("button", { name: /Suspend/i });
     fireEvent.click(suspendButton);
 
     await waitFor(
       () => {
-        expect(screen.getAllByText("Yes, Suspend User")[0]).toBeInTheDocument();
+        expect(screen.getByRole("button", { name: /Yes, Suspend User/i })).toBeInTheDocument();
       },
       { timeout: 5000 },
     );
 
-    const confirmButton = screen.getAllByText("Yes, Suspend User")[0];
+    const confirmButton = screen.getByRole("button", { name: /Yes, Suspend User/i });
     fireEvent.click(confirmButton);
 
     await waitFor(
@@ -419,12 +417,12 @@ describe("UserManagement", () => {
 
     await waitFor(
       () => {
-        expect(screen.getAllByText("Yes, Ban User")[0]).toBeInTheDocument();
+        expect(screen.getByRole("button", { name: /Yes, Ban User/i })).toBeInTheDocument();
       },
       { timeout: 5000 },
     );
 
-    const confirmButton = screen.getAllByText("Yes, Ban User")[0];
+    const confirmButton = screen.getByRole("button", { name: /Yes, Ban User/i });
     fireEvent.click(confirmButton);
 
     await waitFor(
@@ -467,22 +465,22 @@ describe("UserManagement", () => {
 
     await waitFor(
       () => {
-        expect(screen.getAllByText("Activate")[0]).toBeInTheDocument();
+        expect(screen.getByRole("button", { name: /Activate/i })).toBeInTheDocument();
       },
       { timeout: 5000 },
     );
 
-    const activateButton = screen.getAllByText("Activate")[0];
+    const activateButton = screen.getByRole("button", { name: /Activate/i });
     fireEvent.click(activateButton);
 
     await waitFor(
       () => {
-        expect(screen.getAllByText("Yes, Activate User")[0]).toBeInTheDocument();
+        expect(screen.getByRole("button", { name: /Yes, Activate User/i })).toBeInTheDocument();
       },
       { timeout: 5000 },
     );
 
-    const confirmButton = screen.getAllByText("Yes, Activate User")[0];
+    const confirmButton = screen.getByRole("button", { name: /Yes, Activate User/i });
     fireEvent.click(confirmButton);
 
     await waitFor(
@@ -534,12 +532,12 @@ describe("UserManagement", () => {
 
     await waitFor(
       () => {
-        expect(screen.getAllByText("Yes, Delete User")[0]).toBeInTheDocument();
+        expect(screen.getByRole("button", { name: /Yes, Delete User/i })).toBeInTheDocument();
       },
       { timeout: 5000 },
     );
 
-    const confirmButton = screen.getAllByText("Yes, Delete User")[0];
+    const confirmButton = screen.getByRole("button", { name: /Yes, Delete User/i });
     fireEvent.click(confirmButton);
 
     await waitFor(
@@ -577,22 +575,22 @@ describe("UserManagement", () => {
 
     await waitFor(
       () => {
-        expect(screen.getAllByText("Suspend")[0]).toBeInTheDocument();
+        expect(screen.getByRole("button", { name: /Suspend/i })).toBeInTheDocument();
       },
       { timeout: 5000 },
     );
 
-    const suspendButton = screen.getAllByText("Suspend")[0];
+    const suspendButton = screen.getByRole("button", { name: /Suspend/i });
     fireEvent.click(suspendButton);
 
     await waitFor(
       () => {
-        expect(screen.getAllByText("Yes, Suspend User")[0]).toBeInTheDocument();
+        expect(screen.getByRole("button", { name: /Yes, Suspend User/i })).toBeInTheDocument();
       },
       { timeout: 5000 },
     );
 
-    const confirmButton = screen.getAllByText("Yes, Suspend User")[0];
+    const confirmButton = screen.getByRole("button", { name: /Yes, Suspend User/i });
     fireEvent.click(confirmButton);
 
     await waitFor(
@@ -622,12 +620,12 @@ describe("UserManagement", () => {
 
     await waitFor(
       () => {
-        expect(screen.getAllByText("Suspend")[0]).toBeInTheDocument();
+        expect(screen.getByRole("button", { name: /Suspend/i })).toBeInTheDocument();
       },
       { timeout: 5000 },
     );
 
-    const suspendButton = screen.getAllByText("Suspend")[0];
+    const suspendButton = screen.getByRole("button", { name: /Suspend/i });
     fireEvent.click(suspendButton);
 
     await waitFor(

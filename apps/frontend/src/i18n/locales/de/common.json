@@ -119,13 +119,27 @@
     "eyebrow": "Rechtliches",
     "title": "Allgemeine Geschäftsbedingungen",
     "description": "Bitte lesen Sie unsere Allgemeinen Geschäftsbedingungen sorgfältig, bevor Sie FitVibe verwenden.",
-    "effectiveDate": "Gültigkeitsdatum"
+    "effectiveDate": "Gültigkeitsdatum",
+    "revokeConsent": "Zustimmung widerrufen",
+    "revokeConfirm": {
+      "title": "Zustimmung widerrufen",
+      "message": "Wenn Sie Ihre Zustimmung widerrufen, können Sie FitVibe nicht mehr verwenden. Sie werden abgemeldet und müssen die Allgemeinen Geschäftsbedingungen erneut akzeptieren, um den Dienst weiterhin nutzen zu können.",
+      "confirm": "Zustimmung widerrufen und abmelden",
+      "cancel": "Zurück"
+    }
   },
   "privacy": {
     "eyebrow": "Rechtliches",
     "title": "Datenschutzerklärung",
     "description": "Erfahren Sie, wie wir Ihre persönlichen Daten sammeln, verwenden und schützen.",
-    "effectiveDate": "Gültigkeitsdatum"
+    "effectiveDate": "Gültigkeitsdatum",
+    "revokeConsent": "Zustimmung widerrufen",
+    "revokeConfirm": {
+      "title": "Zustimmung widerrufen",
+      "message": "Wenn Sie Ihre Zustimmung widerrufen, können Sie FitVibe nicht mehr verwenden. Sie werden abgemeldet und müssen die Datenschutzerklärung erneut akzeptieren, um den Dienst weiterhin nutzen zu können.",
+      "confirm": "Zustimmung widerrufen und abmelden",
+      "cancel": "Zurück"
+    }
   },
   "impressum": {
     "eyebrow": "Rechtliches",
@@ -164,7 +178,7 @@
     "AUTH_TOO_MANY_REQUESTS": "Verifizierungslimit erreicht. Bitte versuche es später erneut",
     "AUTH_CONFLICT": "Registrierung konnte nicht abgeschlossen werden",
     "AUTH_USER_NOT_FOUND": "Benutzer nicht gefunden",
-    "AUTH_INVALID_CREDENTIALS": "Ungültige Zugangsdaten",
+    "AUTH_INVALID_CREDENTIALS": "Die eingegebene E-Mail-Adresse oder das Passwort ist falsch. Bitte überprüfe deine Zugangsdaten und versuche es erneut.",
     "AUTH_INVALID_REFRESH": "Ungültiger Refresh-Token",
     "AUTH_SESSION_REVOKED": "Sitzung widerrufen",
     "AUTH_REFRESH_EXPIRED": "Refresh-Token abgelaufen",
@@ -667,7 +681,17 @@
     "expand": "Erweitern",
     "collapse": "Einklappen",
     "markComplete": "Als abgeschlossen markieren",
-    "markIncomplete": "Als unvollständig markieren"
+    "markIncomplete": "Als unvollständig markieren",
+    "workoutSession": "Trainingssession",
+    "customExercise": "Benutzerdefinierte Übung",
+    "sessionTime": "Session-Zeit",
+    "restTimer": "Ruhetimer",
+    "stopRest": "Ruhe stoppen",
+    "startRest": "Ruhe starten",
+    "completeSession": "Session abschließen",
+    "completing": "Wird abgeschlossen...",
+    "exercises": "Übungen",
+    "setsCompleted": "Sätze abgeschlossen"
   },
   "admin": {
     "dashboard": {
@@ -694,7 +718,10 @@
       "readOnlyDisabled": "Nur-Lese-Modus erfolgreich deaktiviert",
       "readOnlyEnableError": "Nur-Lese-Modus konnte nicht aktiviert werden. Bitte versuche es erneut.",
       "readOnlyDisableError": "Nur-Lese-Modus konnte nicht deaktiviert werden. Bitte versuche es erneut.",
-      "loadStatusError": "Systemstatus konnte nicht geladen werden"
+      "loadStatusError": "Systemstatus konnte nicht geladen werden",
+      "enabling": "Wird aktiviert...",
+      "confirmEnable": "Aktivierung bestätigen",
+      "cancel": "Abbrechen"
     }
   },
   "twoFactor": {

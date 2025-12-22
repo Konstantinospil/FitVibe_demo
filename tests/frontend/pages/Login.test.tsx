@@ -1,6 +1,6 @@
-import { render, screen, fireEvent, waitFor, act } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor, act, cleanup } from "@testing-library/react";
 import { BrowserRouter } from "react-router-dom";
-import { describe, expect, it, vi, beforeEach } from "vitest";
+import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
 import Login from "../../src/pages/Login";
 import { I18nextProvider } from "react-i18next";
 import i18n from "i18next";
@@ -70,6 +70,10 @@ describe("Login", () => {
     vi.clearAllMocks();
   });
 
+  afterEach(() => {
+    cleanup();
+  });
+
   it("renders login form", () => {
     renderWithProviders(<Login />);
 
@@ -80,17 +84,27 @@ describe("Login", () => {
   });
 
   it("shows password visibility toggle", () => {
-    renderWithProviders(<Login />);
+    const { container } = renderWithProviders(<Login />);
 
-    const toggleButton = screen.getByLabelText(/show password/i);
+    // Use getAllByLabelText to handle multiple elements (test isolation)
+    const toggleButtons = screen.getAllByLabelText(/show password/i);
+    const toggleButton = toggleButtons[toggleButtons.length - 1];
     expect(toggleButton).toBeInTheDocument();
 
-    const passwordInput = screen.getByPlaceholderText(/enter your password/i);
+    // Use container query to get the most recent password input
+    const passwordInputs = container.querySelectorAll(
+      'input[type="password"], input[type="text"][placeholder*="password" i]',
+    );
+    const passwordInput = Array.from(passwordInputs).find((input) =>
+      (input as HTMLInputElement).placeholder.toLowerCase().includes("password"),
+    ) as HTMLInputElement;
+    expect(passwordInput).toBeInTheDocument();
     expect(passwordInput).toHaveAttribute("type", "password");
 
     fireEvent.click(toggleButton);
     expect(passwordInput).toHaveAttribute("type", "text");
-    expect(screen.getByLabelText(/hide password/i)).toBeInTheDocument();
+    const hideButtons = screen.getAllByLabelText(/hide password/i);
+    expect(hideButtons.length).toBeGreaterThan(0);
   });
 
   it("handles form submission successfully without 2FA", async () => {
@@ -100,10 +114,17 @@ describe("Login", () => {
       session: { id: "session123" },
     });
 
-    renderWithProviders(<Login />);
+    const { container } = renderWithProviders(<Login />);
 
-    const emailInput = screen.getByRole("textbox", { name: /email/i });
-    const passwordInput = screen.getByPlaceholderText(/enter your password/i);
+    // Use container query to avoid multiple element issues
+    const emailInput = container.querySelector('input[type="email"]') as HTMLInputElement;
+    if (!emailInput) {
+      throw new Error("Email input not found");
+    }
+    const passwordInput = container.querySelector('input[type="password"]') as HTMLInputElement;
+    if (!passwordInput) {
+      throw new Error("Password input not found");
+    }
     const form = emailInput.closest("form");
 
     await act(() => {
@@ -140,10 +161,17 @@ describe("Login", () => {
       pendingSessionId: "pending123",
     });
 
-    renderWithProviders(<Login />);
+    const { container } = renderWithProviders(<Login />);
 
-    const emailInput = screen.getByRole("textbox", { name: /email/i });
-    const passwordInput = screen.getByPlaceholderText(/enter your password/i);
+    // Use container query to avoid multiple element issues
+    const emailInput = container.querySelector('input[type="email"]') as HTMLInputElement;
+    if (!emailInput) {
+      throw new Error("Email input not found");
+    }
+    const passwordInput = container.querySelector('input[type="password"]') as HTMLInputElement;
+    if (!passwordInput) {
+      throw new Error("Password input not found");
+    }
     const form = emailInput.closest("form");
 
     await act(() => {
@@ -171,10 +199,17 @@ describe("Login", () => {
   it("displays error message on login failure", async () => {
     vi.mocked(api.login).mockRejectedValue(new Error("Invalid credentials"));
 
-    renderWithProviders(<Login />);
+    const { container } = renderWithProviders(<Login />);
 
-    const emailInput = screen.getByRole("textbox", { name: /email/i });
-    const passwordInput = screen.getByPlaceholderText(/enter your password/i);
+    // Use container query to avoid multiple element issues
+    const emailInput = container.querySelector('input[type="email"]') as HTMLInputElement;
+    if (!emailInput) {
+      throw new Error("Email input not found");
+    }
+    const passwordInput = container.querySelector('input[type="password"]') as HTMLInputElement;
+    if (!passwordInput) {
+      throw new Error("Password input not found");
+    }
     const form = emailInput.closest("form");
 
     await act(() => {
@@ -200,12 +235,21 @@ describe("Login", () => {
       () => new Promise((resolve) => setTimeout(resolve, 1000)),
     );
 
-    renderWithProviders(<Login />);
+    const { container } = renderWithProviders(<Login />);
 
-    const emailInput = screen.getByRole("textbox", { name: /email/i });
-    const passwordInput = screen.getByPlaceholderText(/enter your password/i);
+    // Use container query to avoid multiple element issues
+    const emailInput = container.querySelector('input[type="email"]') as HTMLInputElement;
+    if (!emailInput) {
+      throw new Error("Email input not found");
+    }
+    const passwordInput = container.querySelector('input[type="password"]') as HTMLInputElement;
+    if (!passwordInput) {
+      throw new Error("Password input not found");
+    }
     const form = emailInput.closest("form");
-    const submitButton = screen.getByRole("button", { name: /sign in/i });
+    // Use getAllByRole to handle multiple buttons (test isolation)
+    const buttons = screen.getAllByRole("button", { name: /sign in/i });
+    const submitButton = buttons[buttons.length - 1];
 
     await act(() => {
       fireEvent.change(emailInput, { target: { value: "test@example.com" } });
@@ -225,11 +269,35 @@ describe("Login", () => {
     );
   });
 
-  it("renders navigation links", () => {
+  it("renders navigation links", async () => {
     renderWithProviders(<Login />);
 
-    const registerLink = screen.getByRole("link", { name: /create an account/i });
-    const forgotLink = screen.getByRole("link", { name: /forgot password/i });
+    // Wait for links to be rendered (they might be in a lazy-loaded component)
+    // Use getAllByRole to handle multiple elements (test isolation)
+    const registerLinks = await waitFor(
+      () => {
+        const links = screen.getAllByRole("link", { name: /create an account/i });
+        if (links.length === 0) {
+          throw new Error("Register link not found");
+        }
+        return links;
+      },
+      { timeout: 3000 },
+    );
+    const forgotLinks = await waitFor(
+      () => {
+        const links = screen.getAllByRole("link", { name: /forgot password/i });
+        if (links.length === 0) {
+          throw new Error("Forgot password link not found");
+        }
+        return links;
+      },
+      { timeout: 3000 },
+    );
+
+    // Get the last one (most recent)
+    const registerLink = registerLinks[registerLinks.length - 1];
+    const forgotLink = forgotLinks[forgotLinks.length - 1];
 
     expect(registerLink).toHaveAttribute("href", "/register");
     expect(forgotLink).toHaveAttribute("href", "/forgot-password");

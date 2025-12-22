@@ -1,6 +1,6 @@
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor, cleanup } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
-import { describe, expect, it, vi, beforeEach } from "vitest";
+import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
 import Logger from "../../src/pages/Logger";
 import { I18nextProvider } from "react-i18next";
 import i18n from "i18next";
@@ -87,6 +87,10 @@ describe("Logger", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockNavigate.mockClear();
+  });
+
+  afterEach(() => {
+    cleanup();
   });
 
   it("renders logger page and loads session", async () => {

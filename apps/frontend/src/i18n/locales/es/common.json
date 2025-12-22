@@ -119,13 +119,27 @@
     "eyebrow": "Legal",
     "title": "Términos y Condiciones",
     "description": "Por favor, lee nuestros Términos y Condiciones cuidadosamente antes de usar FitVibe.",
-    "effectiveDate": "Fecha de vigencia"
+    "effectiveDate": "Fecha de vigencia",
+    "revokeConsent": "Revocar Consentimiento",
+    "revokeConfirm": {
+      "title": "Revocar Consentimiento",
+      "message": "Revocar su consentimiento significa que ya no podrá usar FitVibe. Será desconectado y deberá aceptar los Términos y Condiciones nuevamente para continuar usando el servicio.",
+      "confirm": "Revocar Consentimiento y Cerrar Sesión",
+      "cancel": "Atrás"
+    }
   },
   "privacy": {
     "eyebrow": "Legal",
     "title": "Política de Privacidad",
     "description": "Aprende cómo recopilamos, usamos y protegemos tus datos personales.",
-    "effectiveDate": "Fecha de vigencia"
+    "effectiveDate": "Fecha de vigencia",
+    "revokeConsent": "Revocar Consentimiento",
+    "revokeConfirm": {
+      "title": "Revocar Consentimiento",
+      "message": "Revocar su consentimiento significa que ya no podrá usar FitVibe. Será desconectado y deberá aceptar la Política de Privacidad nuevamente para continuar usando el servicio.",
+      "confirm": "Revocar Consentimiento y Cerrar Sesión",
+      "cancel": "Atrás"
+    }
   },
   "impressum": {
     "eyebrow": "Legal",
@@ -164,7 +178,7 @@
     "AUTH_TOO_MANY_REQUESTS": "Límite de verificación alcanzado. Por favor intenta más tarde",
     "AUTH_CONFLICT": "No se pudo completar el registro",
     "AUTH_USER_NOT_FOUND": "Usuario no encontrado",
-    "AUTH_INVALID_CREDENTIALS": "Credenciales inválidas",
+    "AUTH_INVALID_CREDENTIALS": "El correo electrónico o la contraseña que ingresaste es incorrecto. Por favor, verifica tus credenciales e inténtalo de nuevo.",
     "AUTH_INVALID_REFRESH": "Token de actualización inválido",
     "AUTH_SESSION_REVOKED": "Sesión revocada",
     "AUTH_REFRESH_EXPIRED": "Token de actualización expirado",
@@ -384,7 +398,17 @@
     "expand": "Expandir",
     "collapse": "Contraer",
     "markComplete": "Marcar como completado",
-    "markIncomplete": "Marcar como incompleto"
+    "markIncomplete": "Marcar como incompleto",
+    "workoutSession": "Sesión de Entrenamiento",
+    "customExercise": "Ejercicio Personalizado",
+    "sessionTime": "Tiempo de Sesión",
+    "restTimer": "Temporizador de Descanso",
+    "stopRest": "Detener Descanso",
+    "startRest": "Iniciar Descanso",
+    "completeSession": "Completar Sesión",
+    "completing": "Completando...",
+    "exercises": "ejercicios",
+    "setsCompleted": "series completadas"
   },
   "planner": {
     "eyebrow": "Arquitectura de sesión",
@@ -694,7 +718,10 @@
       "readOnlyDisabled": "Modo de solo lectura desactivado con éxito",
       "readOnlyEnableError": "Error al activar el modo de solo lectura. Por favor, inténtalo de nuevo.",
       "readOnlyDisableError": "Error al desactivar el modo de solo lectura. Por favor, inténtalo de nuevo.",
-      "loadStatusError": "Error al cargar el estado del sistema"
+      "loadStatusError": "Error al cargar el estado del sistema",
+      "enabling": "Activando...",
+      "confirmEnable": "Confirmar Activación",
+      "cancel": "Cancelar"
     }
   },
   "twoFactor": {
