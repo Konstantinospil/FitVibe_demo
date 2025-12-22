@@ -75,7 +75,7 @@ export const FollowButton: React.FC<FollowButtonProps> = ({
         logger.apiError(
           `Failed to ${newFollowingState ? "follow" : "unfollow"} user`,
           error,
-          `/api/v1/users/${userAlias}/${newFollowingState ? "follow" : "follow"}`,
+          `/api/v1/users/${userAlias}/${newFollowingState ? "follow" : "unfollow"}`,
           newFollowingState ? "POST" : "DELETE",
         );
 
