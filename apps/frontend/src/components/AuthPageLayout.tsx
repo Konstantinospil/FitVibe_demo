@@ -1,41 +1,31 @@
-import React, { useEffect, useState } from "react";
-import ThemeToggle from "./ThemeToggle";
-import LanguageSwitcher from "./LanguageSwitcher";
+import React, { useEffect, useState, lazy, Suspense } from "react";
 import PageIntro from "./PageIntro";
-import Footer from "./Footer";
 import { scheduleIdleTask } from "../utils/idleScheduler";
 
-const headerSkeletonStyle: React.CSSProperties = {
-  width: "48px",
-  height: "40px",
-  borderRadius: "999px",
-  background: "var(--color-surface-muted)",
-  border: "1px solid var(--color-border)",
-  animation: "pulse 1.4s ease-in-out infinite",
-};
+// Lazy load header utilities to reduce initial bundle size and TBT
+const ThemeToggle = lazy(() => import("./ThemeToggle"));
+const LanguageSwitcher = lazy(() => import("./LanguageSwitcher"));
+const Footer = lazy(() => import("./Footer"));
 
 const HeaderUtilities: React.FC = () => {
   const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
-    const { cancel } = scheduleIdleTask(() => setIsReady(true), { timeout: 300 }); // Reduced from 1600ms for faster initial render
+    // Defer loading header utilities until after initial render to improve LCP
+    const { cancel } = scheduleIdleTask(() => setIsReady(true), { timeout: 1000 });
     return () => cancel();
   }, []);
 
   if (!isReady) {
-    return (
-      <>
-        <span aria-hidden="true" style={headerSkeletonStyle} />
-        <span aria-hidden="true" style={headerSkeletonStyle} />
-      </>
-    );
+    // Show nothing during initial render to avoid blocking
+    return null;
   }
 
   return (
-    <>
+    <Suspense fallback={null}>
       <ThemeToggle />
       <LanguageSwitcher />
-    </>
+    </Suspense>
   );
 };
 
@@ -74,7 +64,9 @@ const AuthPageLayout: React.FC<AuthPageLayoutProps> = ({
           {children}
         </PageIntro>
       </div>
-      <Footer />
+      <Suspense fallback={null}>
+        <Footer />
+      </Suspense>
     </div>
   );
 };
