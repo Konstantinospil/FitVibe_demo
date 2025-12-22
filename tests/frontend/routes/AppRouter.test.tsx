@@ -1,5 +1,5 @@
-import { render, screen, waitFor } from "@testing-library/react";
-import { describe, expect, it, vi, beforeEach } from "vitest";
+import { render, screen, waitFor, cleanup } from "@testing-library/react";
+import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
 
 // Mock Router before importing AppRouter to avoid import issues
 // We need to mock it to use BrowserRouter and handle the routes
@@ -144,6 +144,10 @@ describe("AppRouter", () => {
     mockUseAuth.mockReturnValue({
       isAuthenticated: false,
     });
+  });
+
+  afterEach(() => {
+    cleanup();
   });
 
   it("renders without crashing", () => {

@@ -20,13 +20,6 @@ const normalizePath = (path: string) => {
 
 const currentPath = normalizePath(window.location.pathname.toLowerCase());
 
-const removeLoginShell = () => {
-  const shell = document.getElementById("login-shell");
-  if (shell) {
-    shell.remove();
-  }
-};
-
 const hasSessionFlag = (() => {
   if (typeof window === "undefined" || !window.sessionStorage) {
     return false;
