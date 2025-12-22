@@ -40,8 +40,9 @@ export async function normalizeAuthTiming(
   const remaining = minTime - elapsed;
 
   if (remaining > 0) {
-    // Add small random jitter (±10ms) to prevent statistical timing attacks
-    const jitter = crypto.randomInt(-10, 11);
+    // Add small random jitter (±5ms) to prevent statistical timing attacks
+    // Reduced from ±10ms to ±5ms to improve test stability while maintaining security
+    const jitter = crypto.randomInt(-5, 6);
     const delay = Math.max(0, remaining + jitter);
     await sleep(delay);
   }

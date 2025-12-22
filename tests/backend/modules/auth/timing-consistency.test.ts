@@ -157,7 +157,7 @@ describe("AC-1.12: Timing Consistency for User Enumeration Protection", () => {
 
       const invalidUserTime = await getAverageTiming(
         () => authService.login(loginDto).catch(() => {}),
-        3,
+        10, // Increased from 3 to 10 to reduce jitter variance impact
       );
 
       // Mock for valid user
@@ -170,7 +170,7 @@ describe("AC-1.12: Timing Consistency for User Enumeration Protection", () => {
 
       const validUserTime = await getAverageTiming(
         () => authService.login(loginDto).catch(() => {}),
-        3,
+        10, // Increased from 3 to 10 to reduce jitter variance impact
       );
 
       const variance = calculateVariance(invalidUserTime, validUserTime);
@@ -204,7 +204,7 @@ describe("AC-1.12: Timing Consistency for User Enumeration Protection", () => {
 
       const nonExistentTime = await getAverageTiming(
         () => authService.login(loginDto).catch(() => {}),
-        3,
+        10, // Increased from 3 to 10 to reduce jitter variance impact
       );
 
       // Existing user with wrong password
@@ -212,7 +212,7 @@ describe("AC-1.12: Timing Consistency for User Enumeration Protection", () => {
 
       const wrongPasswordTime = await getAverageTiming(
         () => authService.login(loginDto).catch(() => {}),
-        3,
+        10, // Increased from 3 to 10 to reduce jitter variance impact
       );
 
       const variance = calculateVariance(nonExistentTime, wrongPasswordTime);
@@ -251,7 +251,7 @@ describe("AC-1.12: Timing Consistency for User Enumeration Protection", () => {
       mockAuthRepo.countAuthTokensSince.mockResolvedValue(0);
       mockAuthRepo.purgeAuthTokensOlderThan.mockResolvedValue(0);
 
-      const newUserTime = await getAverageTiming(() => authService.register(registerDto), 3);
+      const newUserTime = await getAverageTiming(() => authService.register(registerDto), 10); // Increased from 3 to 10 to reduce jitter variance impact
 
       // Existing user with pending_verification
       const existingUser: AuthUserRecord = {
@@ -260,7 +260,7 @@ describe("AC-1.12: Timing Consistency for User Enumeration Protection", () => {
       } as AuthUserRecord;
       mockAuthRepo.findUserByEmail.mockResolvedValue(existingUser);
 
-      const existingUserTime = await getAverageTiming(() => authService.register(registerDto), 3);
+      const existingUserTime = await getAverageTiming(() => authService.register(registerDto), 10); // Increased from 3 to 10 to reduce jitter variance impact
 
       const variance = calculateVariance(newUserTime, existingUserTime);
 
@@ -282,7 +282,7 @@ describe("AC-1.12: Timing Consistency for User Enumeration Protection", () => {
 
       const invalidEmailTime = await getAverageTiming(
         () => authService.requestPasswordReset("nonexistent@example.com"),
-        3,
+        10, // Increased from 3 to 10 to reduce jitter variance impact
       );
 
       // Valid email (user exists)
@@ -293,7 +293,7 @@ describe("AC-1.12: Timing Consistency for User Enumeration Protection", () => {
 
       const validEmailTime = await getAverageTiming(
         () => authService.requestPasswordReset("test@example.com"),
-        3,
+        10, // Increased from 3 to 10 to reduce jitter variance impact
       );
 
       const variance = calculateVariance(invalidEmailTime, validEmailTime);
@@ -311,7 +311,7 @@ describe("AC-1.12: Timing Consistency for User Enumeration Protection", () => {
 
       const invalidTokenTime = await getAverageTiming(
         () => authService.verifyEmail("invalid-token").catch(() => {}),
-        3,
+        10, // Increased from 3 to 10 to reduce jitter variance impact
       );
 
       // Valid token
@@ -332,7 +332,7 @@ describe("AC-1.12: Timing Consistency for User Enumeration Protection", () => {
 
       const validTokenTime = await getAverageTiming(
         () => authService.verifyEmail("valid-token"),
-        3,
+        10, // Increased from 3 to 10 to reduce jitter variance impact
       );
 
       const variance = calculateVariance(invalidTokenTime, validTokenTime);
@@ -419,7 +419,7 @@ describe("AC-1.12: Timing Consistency for User Enumeration Protection", () => {
 
       // Timings should vary slightly due to jitter (not all identical)
       // Use smaller rounding divisor (5ms) to be more sensitive to jitter variance
-      // With ±10ms jitter, we should see variance when rounding by 5ms
+      // With ±5ms jitter, we should see variance when rounding by 5ms
       const uniqueTimings = new Set(timings.map((t) => Math.floor(t / 5)));
 
       // If we still don't see variance with 5ms rounding, check standard deviation
