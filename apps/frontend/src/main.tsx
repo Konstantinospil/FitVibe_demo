@@ -34,29 +34,41 @@ const root = document.getElementById("root");
 const loginShell = document.getElementById("login-shell");
 
 if (root) {
-  // Render React app
-  ReactDOM.createRoot(root).render(
-    <React.StrictMode>
-      <App />
-    </React.StrictMode>,
-  );
+  // Defer React rendering slightly to allow browser to yield to other tasks
+  // This reduces TBT on slower devices (like CI runners) by breaking up initial work
+  // Use requestIdleCallback with short timeout to minimize delay while still yielding
+  const renderApp = () => {
+    ReactDOM.createRoot(root).render(
+      <React.StrictMode>
+        <App />
+      </React.StrictMode>,
+    );
 
-  // Fade out login shell after React has rendered (Priority 1: prevent CLS)
-  // Using opacity transition instead of immediate removal prevents layout shift
-  if (loginShell) {
-    setTimeout(() => {
-      const shell = loginShell;
-      // Fade out smoothly
-      shell.style.opacity = "0";
-      shell.style.transition = "opacity 150ms ease";
-      shell.style.pointerEvents = "none";
-
-      // Remove from DOM after transition completes
+    // Fade out login shell after React has rendered (Priority 1: prevent CLS)
+    // Using opacity transition instead of immediate removal prevents layout shift
+    if (loginShell) {
       setTimeout(() => {
-        if (shell.parentNode) {
-          shell.remove();
-        }
-      }, 200);
-    }, 0);
+        const shell = loginShell;
+        // Fade out smoothly
+        shell.style.opacity = "0";
+        shell.style.transition = "opacity 150ms ease";
+        shell.style.pointerEvents = "none";
+
+        // Remove from DOM after transition completes
+        setTimeout(() => {
+          if (shell.parentNode) {
+            shell.remove();
+          }
+        }, 200);
+      }, 0);
+    }
+  };
+
+  // Use requestIdleCallback to defer rendering slightly, reducing main thread blocking
+  if (typeof window !== "undefined" && window.requestIdleCallback) {
+    window.requestIdleCallback(renderApp, { timeout: 50 });
+  } else {
+    // Fallback: use setTimeout(0) to defer to next tick
+    setTimeout(renderApp, 0);
   }
 }
