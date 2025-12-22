@@ -620,7 +620,7 @@ jobs:
         timeout-minutes: 10
         env:
           LHCI_PORT: "4173"
-        run: pnpm exec lhci autorun --config=tests/perf/lighthouserc.json --exit-on-error
+        run: pnpm exec lhci autorun --config=tests/perf/lighthouserc.ci.json --exit-on-error
 
       - name: Upload Lighthouse artifacts
         if: always()
