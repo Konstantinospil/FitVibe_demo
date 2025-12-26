@@ -53,7 +53,7 @@ export async function saveCookiePreferences(
 ): Promise<CookieConsent> {
   // Validate that essential cookies are always true
   if (!preferences.essential) {
-    throw new HttpError(400, "Essential cookies must be enabled", "CONSENT_ESSENTIAL_REQUIRED");
+    throw new HttpError(400, "CONSENT_ESSENTIAL_REQUIRED", "Essential cookies must be enabled");
   }
 
   const input: CreateCookieConsentInput = {

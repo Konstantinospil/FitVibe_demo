@@ -4,7 +4,7 @@
 
 import { Router } from "express";
 import { asyncHandler } from "../../utils/async-handler.js";
-import { requireAuth } from "../users/users.middleware.js";
+import { requireAccessToken } from "../auth/auth.middleware.js";
 import { requireRole } from "../common/rbac.middleware.js";
 import { rateLimit } from "../common/rateLimiter.js";
 import {
@@ -12,12 +12,16 @@ import {
   moderateReportHandler,
   searchUsersHandler,
   userActionHandler,
+  changeUserRoleHandler,
+  sendVerificationEmailHandler,
+  sendPasswordResetHandler,
+  deleteUserAvatarHandler,
 } from "./admin.controller.js";
 
 export const adminRouter = Router();
 
 // All admin routes require authentication and admin role
-adminRouter.use(requireAuth);
+adminRouter.use(requireAccessToken);
 adminRouter.use(requireRole("admin"));
 
 // Content Reports Management
@@ -47,30 +51,49 @@ adminRouter.post(
   asyncHandler(userActionHandler),
 );
 
+// Change user role
+adminRouter.post(
+  "/users/:userId/role",
+  rateLimit("admin_users_role", 30, 60),
+  asyncHandler(changeUserRoleHandler),
+);
+
+// Send verification email
+adminRouter.post(
+  "/users/:userId/send-verification-email",
+  rateLimit("admin_users_email", 30, 60),
+  asyncHandler(sendVerificationEmailHandler),
+);
+
+// Send password reset email
+adminRouter.post(
+  "/users/:userId/send-password-reset",
+  rateLimit("admin_users_email", 30, 60),
+  asyncHandler(sendPasswordResetHandler),
+);
+
+// Delete user avatar
+adminRouter.delete(
+  "/users/:userId/avatar",
+  rateLimit("admin_users_avatar", 30, 60),
+  asyncHandler(deleteUserAvatarHandler),
+);
+
 // Specific user action endpoints for RESTful compatibility
 adminRouter.post(
-  "/users/:userId/suspend",
-  rateLimit("admin_users_suspend", 30, 60),
+  "/users/:userId/blacklist",
+  rateLimit("admin_users_blacklist", 30, 60),
   asyncHandler((req, res) => {
-    req.body = { ...(req.body as object), action: "suspend" };
+    req.body = { ...(req.body as object), action: "blacklist" };
     return userActionHandler(req, res);
   }),
 );
 
 adminRouter.post(
-  "/users/:userId/ban",
-  rateLimit("admin_users_ban", 30, 60),
+  "/users/:userId/unblacklist",
+  rateLimit("admin_users_unblacklist", 30, 60),
   asyncHandler((req, res) => {
-    req.body = { ...(req.body as object), action: "ban" };
-    return userActionHandler(req, res);
-  }),
-);
-
-adminRouter.post(
-  "/users/:userId/activate",
-  rateLimit("admin_users_activate", 30, 60),
-  asyncHandler((req, res) => {
-    req.body = { ...(req.body as object), action: "activate" };
+    req.body = { ...(req.body as object), action: "unblacklist" };
     return userActionHandler(req, res);
   }),
 );

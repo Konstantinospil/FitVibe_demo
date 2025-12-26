@@ -223,14 +223,12 @@ apiClient.interceptors.response.use(
           const privacyOutdated =
             (refreshError as { response?: { data?: { privacyPolicyOutdated?: boolean } } })
               ?.response?.data?.privacyPolicyOutdated ?? false;
-          const params = new URLSearchParams();
+          // Redirect to the appropriate page - Terms takes priority if both need acceptance
           if (termsOutdated) {
-            params.set("terms", "true");
+            window.location.href = `/terms`;
+          } else if (privacyOutdated) {
+            window.location.href = `/privacy`;
           }
-          if (privacyOutdated) {
-            params.set("privacy", "true");
-          }
-          window.location.href = `/terms-reacceptance?${params.toString()}`;
           const error =
             refreshError instanceof Error
               ? refreshError
@@ -1268,6 +1266,7 @@ export interface UserRecord {
   roleCode: string;
   status: "active" | "suspended" | "banned";
   createdAt: string;
+  deactivatedAt: string | null;
   lastLoginAt: string | null;
   sessionCount: number;
   reportCount: number;
@@ -1277,6 +1276,7 @@ export interface UserSearchQuery {
   q: string;
   limit?: number;
   offset?: number;
+  blacklisted?: boolean;
 }
 
 export interface UserSearchResponse {
@@ -1291,40 +1291,31 @@ export interface UserActionRequest {
   notes?: string;
 }
 
-export async function searchUsers(params: UserSearchQuery): Promise<UserSearchResponse> {
-  const res = await apiClient.get<UserSearchResponse>("/api/v1/admin/users/search", { params });
-  return res.data;
+export async function searchUsers(params: UserSearchQuery): Promise<{ data: UserRecord[] }> {
+  const res = await apiClient.get<{ users: UserRecord[] }>("/api/v1/admin/users/search", {
+    params,
+  });
+  return { data: res.data.users };
 }
 
-export async function suspendUser(
+export async function blacklistUser(
   userId: string,
   payload?: UserActionRequest,
 ): Promise<{ success: boolean; message: string }> {
   const res = await apiClient.post<{ success: boolean; message: string }>(
-    `/api/v1/admin/users/${userId}/suspend`,
-    payload ?? {},
+    `/api/v1/admin/users/${userId}/action`,
+    { action: "blacklist", ...payload },
   );
   return res.data;
 }
 
-export async function banUser(
+export async function unblacklistUser(
   userId: string,
   payload?: UserActionRequest,
 ): Promise<{ success: boolean; message: string }> {
   const res = await apiClient.post<{ success: boolean; message: string }>(
-    `/api/v1/admin/users/${userId}/ban`,
-    payload ?? {},
-  );
-  return res.data;
-}
-
-export async function activateUser(
-  userId: string,
-  payload?: UserActionRequest,
-): Promise<{ success: boolean; message: string }> {
-  const res = await apiClient.post<{ success: boolean; message: string }>(
-    `/api/v1/admin/users/${userId}/activate`,
-    payload ?? {},
+    `/api/v1/admin/users/${userId}/action`,
+    { action: "unblacklist", ...payload },
   );
   return res.data;
 }
@@ -1376,6 +1367,26 @@ export async function disable2FA(password: string): Promise<{ success: boolean; 
 
 export async function get2FAStatus(): Promise<TwoFactorStatusResponse> {
   const res = await apiClient.get<TwoFactorStatusResponse>("/api/v1/auth/2fa/status");
+  return res.data;
+}
+
+// Avatar Upload API
+export interface AvatarUploadResponse {
+  success: boolean;
+  fileUrl: string;
+  bytes: number;
+  mimeType: string;
+  updatedAt: string;
+  preview?: string;
+}
+
+export async function uploadAvatar(file: File): Promise<AvatarUploadResponse> {
+  const formData = new FormData();
+  formData.append("avatar", file);
+
+  // Don't set Content-Type header - let the browser set it with the correct boundary
+  // Route is /api/v1/users/avatar (not /me/avatar) - the backend uses req.user to identify the user
+  const res = await apiClient.post<AvatarUploadResponse>("/api/v1/users/avatar", formData);
   return res.data;
 }
 

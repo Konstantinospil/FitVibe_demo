@@ -14,7 +14,6 @@ interface AvatarMeta {
   media_type: string | null;
   bytes: number | null;
   created_at: string;
-  updated_at: string | null;
 }
 
 export async function saveUserAvatarMetadata(
@@ -37,7 +36,6 @@ export async function saveUserAvatarMetadata(
       file_url: meta.fileUrl,
       mime_type: meta.mimeType,
       bytes: meta.bytes,
-      updated_at: now,
     });
 
     const updated = await db<AvatarMeta>(MEDIA_TABLE).where({ id: existing.id }).first();
@@ -58,7 +56,6 @@ export async function saveUserAvatarMetadata(
       media_type: "image",
       bytes: meta.bytes,
       created_at: now,
-      updated_at: now,
     })
     .returning("*");
 

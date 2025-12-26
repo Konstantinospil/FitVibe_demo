@@ -50,6 +50,9 @@ function createMockUser(overrides: Partial<AuthUserRecord> = {}): AuthUserRecord
 
 // Mock dependencies
 jest.mock("../../../../apps/backend/src/modules/auth/auth.repository.js");
+jest.mock("../../../../apps/backend/src/modules/admin/admin.repository.js", () => ({
+  isEmailBlacklisted: jest.fn().mockResolvedValue(false),
+}));
 jest.mock("../../../../apps/backend/src/modules/auth/pending-2fa.repository.js", () => ({
   createPending2FASession: jest.fn().mockResolvedValue(undefined),
   getPending2FASession: jest.fn().mockResolvedValue(undefined),

@@ -14,7 +14,6 @@ const Privacy = lazy(() => import("../pages/Privacy"));
 const Cookie = lazy(() => import("../pages/Cookie"));
 const Impressum = lazy(() => import("../pages/Impressum"));
 const Contact = lazy(() => import("../pages/Contact"));
-const LegalDocumentsReacceptance = lazy(() => import("../pages/LegalDocumentsReacceptance"));
 
 const fallback = (
   <div
@@ -75,7 +74,6 @@ const PublicRoutes: React.FC = () => (
           </PublicPageLayout>
         }
       />
-      <Route path="/terms-reacceptance" element={<LegalDocumentsReacceptance />} />
       <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>
   </Suspense>

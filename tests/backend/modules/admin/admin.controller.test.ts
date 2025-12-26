@@ -279,12 +279,12 @@ describe("Admin Controller", () => {
   });
 
   describe("userActionHandler", () => {
-    it("should suspend user successfully", async () => {
+    it("should blacklist user successfully", async () => {
       jest.mocked(service.performUserAction).mockResolvedValue(undefined);
 
       mockReq = {
         params: { userId: "user-1" },
-        body: { action: "suspend", reason: "Violation" },
+        body: { action: "blacklist", reason: "Violation" },
         user: createMockJwtPayload({ sub: "admin-1" }),
       };
 
@@ -292,20 +292,20 @@ describe("Admin Controller", () => {
 
       expect(service.performUserAction).toHaveBeenCalledWith({
         userId: "user-1",
-        action: "suspend",
+        action: "blacklist",
         adminId: "admin-1",
         reason: "Violation",
       });
       expect(jsonMock).toHaveBeenCalledWith({
         success: true,
-        message: "User suspended successfully",
+        message: "User blacklisted successfully",
       });
     });
 
     it("should throw error if user not authenticated", async () => {
       mockReq = {
         params: { userId: "user-1" },
-        body: { action: "suspend" },
+        body: { action: "blacklist" },
         user: undefined,
       };
 
@@ -330,12 +330,12 @@ describe("Admin Controller", () => {
       expect(service.performUserAction).not.toHaveBeenCalled();
     });
 
-    it("should handle ban action", async () => {
+    it("should handle unblacklist action", async () => {
       jest.mocked(service.performUserAction).mockResolvedValue(undefined);
 
       mockReq = {
         params: { userId: "user-1" },
-        body: { action: "ban" },
+        body: { action: "unblacklist" },
         user: createMockJwtPayload({ sub: "admin-1" }),
       };
 
@@ -343,26 +343,7 @@ describe("Admin Controller", () => {
 
       expect(service.performUserAction).toHaveBeenCalledWith({
         userId: "user-1",
-        action: "ban",
-        adminId: "admin-1",
-        reason: undefined,
-      });
-    });
-
-    it("should handle activate action", async () => {
-      jest.mocked(service.performUserAction).mockResolvedValue(undefined);
-
-      mockReq = {
-        params: { userId: "user-1" },
-        body: { action: "activate" },
-        user: createMockJwtPayload({ sub: "admin-1" }),
-      };
-
-      await controller.userActionHandler(mockReq as Request, mockRes as Response);
-
-      expect(service.performUserAction).toHaveBeenCalledWith({
-        userId: "user-1",
-        action: "activate",
+        action: "unblacklist",
         adminId: "admin-1",
         reason: undefined,
       });

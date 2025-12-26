@@ -25,9 +25,11 @@ export interface UserSearchResult {
   roleCode: string;
   status: "active" | "suspended" | "banned";
   createdAt: string;
+  deactivatedAt: string | null;
   lastLoginAt: string | null;
   sessionCount: number;
   reportCount: number;
+  avatarUrl: string | null;
 }
 
 export interface ModerateReportInput {
@@ -38,7 +40,7 @@ export interface ModerateReportInput {
 
 export interface UserActionInput {
   userId: string;
-  action: "suspend" | "ban" | "activate" | "delete";
+  action: "blacklist" | "unblacklist" | "delete";
   adminId: string;
   reason?: string;
 }
@@ -53,4 +55,5 @@ export interface SearchUsersQuery {
   query: string;
   limit?: number;
   offset?: number;
+  blacklisted?: boolean;
 }

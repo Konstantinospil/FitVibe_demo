@@ -5,8 +5,9 @@ import { Avatar, Button } from "../components/ui";
 import LanguageSwitcher from "../components/LanguageSwitcher";
 import ThemeToggle from "../components/ThemeToggle";
 import Footer from "../components/Footer";
+import Breadcrumb from "../components/Breadcrumb";
 import { useTranslation } from "react-i18next";
-import { LogOut, Home, User, type LucideIcon } from "lucide-react";
+import { LogOut, Home, User, Settings as SettingsIcon, type LucideIcon } from "lucide-react";
 import logoFull from "../assets/logo_full.png";
 import logoFullDark from "../assets/logo_full_dark.png";
 import { useThemeStore } from "../store/theme.store";
@@ -23,6 +24,7 @@ const NAV_ITEMS: NavItem[] = [
   // { to: "/sessions", labelKey: "navigation.sessions", icon: CalendarDays },
   // { to: "/insights", labelKey: "navigation.insights", icon: BarChart3 },
   { to: "/profile", labelKey: "navigation.profile", icon: User },
+  { to: "/settings", labelKey: "navigation.settings", icon: SettingsIcon },
 ];
 
 const MainLayout: React.FC = () => {
@@ -78,27 +80,36 @@ const MainLayout: React.FC = () => {
           <div
             style={{
               display: "flex",
-              alignItems: "center",
-              gap: "0.75rem",
-              fontWeight: 600,
-              letterSpacing: "var(--letter-spacing-wide)",
-              textTransform: "uppercase",
-              fontSize: "var(--font-size-sm)",
+              flexDirection: "column",
+              gap: "0.5rem",
             }}
           >
-            <img
-              key={theme}
-              src={logo}
-              alt="FitVibe Logo"
-              fetchPriority="high"
-              loading="eager"
-              width="36"
-              height="36"
+            <div
               style={{
-                height: "36px",
-                width: "auto",
+                display: "flex",
+                alignItems: "center",
+                gap: "0.75rem",
+                fontWeight: 600,
+                letterSpacing: "var(--letter-spacing-wide)",
+                textTransform: "uppercase",
+                fontSize: "var(--font-size-sm)",
               }}
-            />
+            >
+              <img
+                key={theme}
+                src={logo}
+                alt="FitVibe Logo"
+                fetchPriority="high"
+                loading="eager"
+                width="36"
+                height="36"
+                style={{
+                  height: "36px",
+                  width: "auto",
+                }}
+              />
+            </div>
+            <Breadcrumb />
           </div>
           <div
             style={{

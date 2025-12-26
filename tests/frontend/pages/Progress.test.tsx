@@ -86,6 +86,11 @@ vi.mock("react-i18next", async () => {
 describe("Progress page", () => {
   let queryClient: QueryClient;
 
+  const getCustomToggle = () => screen.getAllByRole("button", { name: "Custom" })[0];
+  const getPresetToggle = () => screen.getAllByRole("button", { name: "Preset" })[0];
+  const getPeriodSelect = () => screen.getAllByLabelText(/Period/i)[0];
+  const getGroupBySelect = () => screen.getAllByLabelText(/Group by/i)[0];
+
   beforeEach(() => {
     queryClient = createTestQueryClient();
     vi.clearAllMocks();
@@ -152,25 +157,36 @@ describe("Progress page", () => {
     vi.mocked(api.getProgressTrends).mockResolvedValue([]);
     vi.mocked(api.getExerciseBreakdown).mockResolvedValue({ exercises: [], period: 30 });
 
-    // Mock window.URL.createObjectURL (the code uses window.URL, not global.URL)
-    const createObjectURLSpy = vi.fn(() => "blob:test");
+    const originalCreateObjectURL = window.URL?.createObjectURL;
+    const originalRevokeObjectURL = window.URL?.revokeObjectURL;
 
-    // Ensure window.URL exists and save original
-    let originalCreateObjectURL: ((blob: Blob) => string) | undefined;
-    if (!window.URL) {
-      (window as { URL: typeof URL }).URL = {
-        createObjectURL: createObjectURLSpy,
-        revokeObjectURL: vi.fn(),
-      } as typeof URL;
-    } else {
-      // Save original if it exists (may be undefined in jsdom)
-      originalCreateObjectURL =
-        "createObjectURL" in window.URL && typeof window.URL.createObjectURL === "function"
-          ? window.URL.createObjectURL
-          : undefined;
-      // Set the mock
-      window.URL.createObjectURL = createObjectURLSpy;
+    if (!window.URL.createObjectURL) {
+      Object.defineProperty(window.URL, "createObjectURL", {
+        value: () => "",
+        writable: true,
+      });
     }
+
+    if (!window.URL.revokeObjectURL) {
+      Object.defineProperty(window.URL, "revokeObjectURL", {
+        value: () => undefined,
+        writable: true,
+      });
+    }
+
+    const createObjectURLSpy = vi
+      .spyOn(window.URL, "createObjectURL")
+      .mockImplementation(() => "blob:test");
+    const revokeObjectURLSpy = vi.spyOn(window.URL, "revokeObjectURL").mockImplementation(() => {});
+    const appendChildSpy = vi
+      .spyOn(document.body, "appendChild")
+      .mockImplementation((node: Node) => node);
+    const removeChildSpy = vi
+      .spyOn(document.body, "removeChild")
+      .mockImplementation((node: Node) => node);
+    const anchorClickSpy = vi
+      .spyOn(HTMLAnchorElement.prototype, "click")
+      .mockImplementation(() => {});
 
     // Mock document.createElement for anchor elements
     // Ensure document is available
@@ -182,23 +198,11 @@ describe("Progress page", () => {
       throw new Error("document.createElement is not available in test environment");
     }
 
-    const clickSpy = vi.fn();
-    const removeSpy = vi.fn();
-
-    // Create anchor element - document should be available in jsdom
-    const anchorElement = document.createElement("a");
-    anchorElement.click = clickSpy;
-    anchorElement.remove = removeSpy;
-
     // Save original implementation before spying
     const originalCreateElement = document.createElement;
     // Spy on createElement
     const createElementSpy = vi.spyOn(document, "createElement");
     createElementSpy.mockImplementation((tagName: string) => {
-      if (tagName === "a") {
-        return anchorElement;
-      }
-      // For other elements, use the original implementation
       return originalCreateElement.call(document, tagName);
     });
 
@@ -222,7 +226,18 @@ describe("Progress page", () => {
     );
 
     createElementSpy.mockRestore();
-    // Note: URL.createObjectURL mock will be cleaned up by vi.restoreAllMocks in beforeEach
+    createObjectURLSpy.mockRestore();
+    revokeObjectURLSpy.mockRestore();
+    appendChildSpy.mockRestore();
+    removeChildSpy.mockRestore();
+    anchorClickSpy.mockRestore();
+
+    if (originalCreateObjectURL) {
+      window.URL.createObjectURL = originalCreateObjectURL;
+    }
+    if (originalRevokeObjectURL) {
+      window.URL.revokeObjectURL = originalRevokeObjectURL;
+    }
   });
 
   it("should switch between preset and custom range", () => {
@@ -231,7 +246,7 @@ describe("Progress page", () => {
 
     renderProgress();
 
-    const customButton = screen.getByText("Custom");
+    const customButton = getCustomToggle();
     fireEvent.click(customButton);
 
     // DateRangePicker should be visible
@@ -244,7 +259,7 @@ describe("Progress page", () => {
 
     renderProgress();
 
-    const periodSelect = screen.getByLabelText(/Period/i);
+    const periodSelect = getPeriodSelect();
     fireEvent.change(periodSelect, { target: { value: "90" } });
 
     expect(periodSelect).toHaveValue("90");
@@ -336,7 +351,7 @@ describe("Progress page", () => {
 
     renderProgress();
 
-    const customButton = screen.getByText("Custom");
+    const customButton = getCustomToggle();
     fireEvent.click(customButton);
 
     // Should show custom range picker
@@ -349,7 +364,7 @@ describe("Progress page", () => {
 
     renderProgress();
 
-    const groupBySelect = screen.getByLabelText(/Group by/i);
+    const groupBySelect = getGroupBySelect();
     fireEvent.change(groupBySelect, { target: { value: "day" } });
 
     expect(groupBySelect).toHaveValue("day");
@@ -417,7 +432,7 @@ describe("Progress page", () => {
 
     renderProgress();
 
-    const periodSelect = screen.getByLabelText(/Period/i);
+    const periodSelect = getPeriodSelect();
 
     // Test 7 days
     fireEvent.change(periodSelect, { target: { value: "7" } });
@@ -797,7 +812,7 @@ describe("Progress page", () => {
     renderProgress();
 
     // Switch to custom mode
-    const customButton = screen.getByText("Custom");
+    const customButton = getCustomToggle();
     fireEvent.click(customButton);
 
     // DateRangePicker should be visible (custom mode)
@@ -825,8 +840,7 @@ describe("Progress page", () => {
   });
 
   it("should handle trendsData as undefined in chart data transformations", async () => {
-    // Mock to return undefined
-    vi.mocked(api.getProgressTrends).mockResolvedValue(undefined as any);
+    vi.mocked(api.getProgressTrends).mockImplementation(() => new Promise(() => {}));
     vi.mocked(api.getExerciseBreakdown).mockResolvedValue({ exercises: [], period: 30 });
 
     renderProgress();
@@ -1029,15 +1043,15 @@ describe("Progress page", () => {
     renderProgress();
 
     // Switch to custom
-    const customButton = screen.getByText("Custom");
+    const customButton = getCustomToggle();
     fireEvent.click(customButton);
 
     // Switch back to preset
-    const presetButton = screen.getByText("Preset");
+    const presetButton = getPresetToggle();
     fireEvent.click(presetButton);
 
     // Period select should be visible again
-    expect(screen.getByLabelText(/Period/i)).toBeInTheDocument();
+    expect(getPeriodSelect()).toBeInTheDocument();
   });
 
   it("should handle custom range change", () => {
@@ -1047,7 +1061,7 @@ describe("Progress page", () => {
     renderProgress();
 
     // Switch to custom mode
-    const customButton = screen.getByText("Custom");
+    const customButton = getCustomToggle();
     fireEvent.click(customButton);
 
     // DateRangePicker should be rendered (we can't easily test its internal behavior)

@@ -1,36 +1,64 @@
 import { Router } from "express";
 import { asyncHandler } from "../../utils/async-handler.js";
-import { requireAuth } from "../users/users.middleware.js";
+import { requireAccessToken } from "../auth/auth.middleware.js";
 import { requireRole } from "../common/rbac.middleware.js";
-import { rateLimit } from "../common/rateLimiter.js";
+import { rateLimit, rateLimitByIPAndEmail } from "../common/rateLimiter.js";
 import {
   submitContactHandler,
   listContactMessagesHandler,
   getContactMessageHandler,
+  markMessageAsReadHandler,
+  markMessageAsRespondedHandler,
+  saveMessageResponseHandler,
 } from "./contact.controller.js";
 
 export const contactRouter = Router();
 
 // Public endpoint - submit contact form
+// Rate limit: 5 messages per hour per IP and per email address
 contactRouter.post(
   "/",
-  rateLimit("contact_submit", 10, 3600), // 10 requests per hour
+  rateLimitByIPAndEmail("contact_submit", 5, 3600), // 5 requests per hour per IP and per email
   asyncHandler(submitContactHandler),
 );
 
 // Admin endpoints - require authentication and admin role
 contactRouter.get(
-  "/",
-  requireAuth,
+  "/messages",
+  requireAccessToken,
   requireRole("admin"),
   rateLimit("contact_list", 60, 60),
   asyncHandler(listContactMessagesHandler),
 );
 
 contactRouter.get(
-  "/:id",
-  requireAuth,
+  "/messages/:id",
+  requireAccessToken,
   requireRole("admin"),
   rateLimit("contact_get", 60, 60),
   asyncHandler(getContactMessageHandler),
+);
+
+contactRouter.post(
+  "/messages/:id/read",
+  requireAccessToken,
+  requireRole("admin"),
+  rateLimit("contact_mark_read", 60, 60),
+  asyncHandler(markMessageAsReadHandler),
+);
+
+contactRouter.post(
+  "/messages/:id/responded",
+  requireAccessToken,
+  requireRole("admin"),
+  rateLimit("contact_mark_responded", 60, 60),
+  asyncHandler(markMessageAsRespondedHandler),
+);
+
+contactRouter.post(
+  "/messages/:id/response",
+  requireAccessToken,
+  requireRole("admin"),
+  rateLimit("contact_save_response", 60, 60),
+  asyncHandler(saveMessageResponseHandler),
 );

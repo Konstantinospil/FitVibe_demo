@@ -151,3 +151,6 @@ docs/6.Implementation/
 *.pub
 infra/keys/*.key
 infra/docker/keys/*.key
+
+# Admin user creation script (contains credentials)
+scripts/create-admin-user.mjs

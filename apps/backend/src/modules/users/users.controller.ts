@@ -36,6 +36,8 @@ const updateProfileSchema = z.object({
   displayName: z.string().min(1).max(120).optional(),
   locale: z.string().max(10).optional(),
   preferredLang: z.string().max(5).optional(),
+  defaultVisibility: z.enum(["private", "followers", "link", "public"]).optional(),
+  units: z.enum(["metric", "imperial"]).optional(),
   alias: z
     .string()
     .min(3)

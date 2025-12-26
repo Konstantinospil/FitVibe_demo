@@ -105,3 +105,5 @@ echo "   ./scripts/check-email-config.sh"
 echo ""
 echo -e "${GREEN}Done!${NC}"
 
+
+

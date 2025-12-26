@@ -205,3 +205,5 @@ echo -e "${BLUE}To verify configuration, run:${NC}"
 echo "   ./scripts/check-email-config.sh"
 echo ""
 
+
+

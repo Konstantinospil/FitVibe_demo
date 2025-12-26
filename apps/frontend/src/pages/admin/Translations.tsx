@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { Search, Edit, Trash2, Plus, Save, X } from "lucide-react";
+import { Search, Edit, Plus, Save, X } from "lucide-react";
 import {
   Card,
   CardHeader,
@@ -12,13 +12,11 @@ import {
   listTranslations,
   createTranslation,
   updateTranslation,
-  deleteTranslation,
   type TranslationRecord,
   type SupportedLanguage,
   type TranslationNamespace,
 } from "../../services/translations.api";
 import { useToast } from "../../contexts/ToastContext";
-import { ConfirmDialog } from "../../components/ConfirmDialog";
 
 const SUPPORTED_LANGUAGES: SupportedLanguage[] = ["en", "de", "fr", "es", "el"];
 const LANGUAGE_NAMES: Record<SupportedLanguage, string> = {
@@ -34,8 +32,10 @@ const NAMESPACES: TranslationNamespace[] = ["common", "auth", "terms", "privacy"
 const Translations: React.FC = () => {
   const toast = useToast();
   const [searchQuery, setSearchQuery] = useState("");
+  const [keyPath, setKeyPath] = useState("");
   const [selectedNamespace, setSelectedNamespace] = useState<TranslationNamespace | "all">("all");
   const [selectedLanguage, setSelectedLanguage] = useState<SupportedLanguage>("en");
+  const [activeOnly, setActiveOnly] = useState(false);
   const [loading, setLoading] = useState(false);
   const [translations, setTranslations] = useState<TranslationRecord[]>([]);
   const [total, setTotal] = useState(0);
@@ -49,8 +49,6 @@ const Translations: React.FC = () => {
     keyPath: string;
   } | null>(null);
   const [editValue, setEditValue] = useState("");
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [deleteTarget, setDeleteTarget] = useState<TranslationRecord | null>(null);
 
   // Create new translation state
   const [showCreateForm, setShowCreateForm] = useState(false);
@@ -73,6 +71,8 @@ const Translations: React.FC = () => {
         language: selectedLanguage,
         namespace: selectedNamespace !== "all" ? selectedNamespace : undefined,
         search: searchQuery.trim() || undefined,
+        keyPath: keyPath.trim() || undefined,
+        activeOnly: activeOnly ? undefined : false, // false shows all, undefined shows only active
         limit: pageSize,
         offset: page * pageSize,
       };
@@ -87,7 +87,7 @@ const Translations: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [selectedLanguage, selectedNamespace, searchQuery, page, toast]);
+  }, [selectedLanguage, selectedNamespace, searchQuery, keyPath, activeOnly, page, toast]);
 
   useEffect(() => {
     void loadTranslations();
@@ -126,28 +126,6 @@ const Translations: React.FC = () => {
     }
   };
 
-  const handleDeleteClick = (translation: TranslationRecord) => {
-    setDeleteTarget(translation);
-    setShowDeleteConfirm(true);
-  };
-
-  const handleConfirmDelete = async () => {
-    if (!deleteTarget) {
-      return;
-    }
-
-    try {
-      await deleteTranslation(deleteTarget.language, deleteTarget.namespace, deleteTarget.key_path);
-      toast.success("Translation deleted successfully");
-      setShowDeleteConfirm(false);
-      setDeleteTarget(null);
-      void loadTranslations();
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : "Failed to delete translation";
-      toast.error(errorMessage);
-    }
-  };
-
   const handleCreate = async () => {
     if (!newTranslation.key_path.trim() || !newTranslation.value.trim()) {
       toast.error("Key path and value are required");
@@ -170,16 +148,6 @@ const Translations: React.FC = () => {
       toast.error(errorMessage);
     }
   };
-
-  const filteredTranslations = translations.filter((t) => {
-    if (searchQuery.trim()) {
-      return (
-        t.key_path.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        t.value.toLowerCase().includes(searchQuery.toLowerCase())
-      );
-    }
-    return true;
-  });
 
   return (
     <div className="grid grid--gap-15">
@@ -237,6 +205,29 @@ const Translations: React.FC = () => {
               </div>
             </div>
 
+            <div style={{ flex: "1", minWidth: "200px" }}>
+              <label
+                style={{
+                  display: "block",
+                  marginBottom: "0.5rem",
+                  fontSize: "0.875rem",
+                  fontWeight: 500,
+                }}
+              >
+                Key Path
+              </label>
+              <input
+                type="text"
+                value={keyPath}
+                onChange={(e) => {
+                  setKeyPath(e.target.value);
+                  setPage(0);
+                }}
+                placeholder="Filter by key path..."
+                className="form-input"
+              />
+            </div>
+
             <div style={{ minWidth: "150px" }}>
               <label
                 style={{
@@ -290,6 +281,30 @@ const Translations: React.FC = () => {
                   </option>
                 ))}
               </select>
+            </div>
+
+            <div style={{ display: "flex", alignItems: "flex-end" }}>
+              <label
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "0.5rem",
+                  cursor: "pointer",
+                  fontSize: "0.875rem",
+                  fontWeight: 500,
+                }}
+              >
+                <input
+                  type="checkbox"
+                  checked={activeOnly}
+                  onChange={(e) => {
+                    setActiveOnly(e.target.checked);
+                    setPage(0);
+                  }}
+                  style={{ cursor: "pointer" }}
+                />
+                Show only active
+              </label>
             </div>
 
             <Button onClick={() => setShowCreateForm(true)} style={{ whiteSpace: "nowrap" }}>
@@ -398,7 +413,7 @@ const Translations: React.FC = () => {
           {/* Translations List */}
           {loading ? (
             <div style={{ textAlign: "center", padding: "2rem" }}>Loading translations...</div>
-          ) : filteredTranslations.length === 0 ? (
+          ) : translations.length === 0 ? (
             <div
               style={{ textAlign: "center", padding: "2rem", color: "var(--color-text-secondary)" }}
             >
@@ -407,41 +422,122 @@ const Translations: React.FC = () => {
           ) : (
             <>
               <div style={{ marginBottom: "1rem", color: "var(--color-text-secondary)" }}>
-                Showing {filteredTranslations.length} of {total} translations
+                Showing {translations.length} of {total} translations
               </div>
-              <div style={{ overflowX: "auto" }}>
-                <table style={{ width: "100%", borderCollapse: "collapse" }}>
+              <div style={{ overflowX: "auto", WebkitOverflowScrolling: "touch" }}>
+                <table style={{ width: "100%", borderCollapse: "collapse", minWidth: "1400px" }}>
                   <thead>
                     <tr style={{ borderBottom: "1px solid var(--color-border)" }}>
-                      <th style={{ padding: "0.75rem", textAlign: "left", fontWeight: 600 }}>
-                        Namespace
-                      </th>
-                      <th style={{ padding: "0.75rem", textAlign: "left", fontWeight: 600 }}>
-                        Key Path
-                      </th>
-                      <th style={{ padding: "0.75rem", textAlign: "left", fontWeight: 600 }}>
+                      <th
+                        style={{
+                          padding: "0.75rem",
+                          textAlign: "left",
+                          fontWeight: 600,
+                          width: "100px",
+                        }}
+                      >
                         Language
                       </th>
-                      <th style={{ padding: "0.75rem", textAlign: "left", fontWeight: 600 }}>
-                        Value
+                      <th
+                        style={{
+                          padding: "0.75rem",
+                          textAlign: "left",
+                          fontWeight: 600,
+                          width: "120px",
+                        }}
+                      >
+                        Namespace
                       </th>
-                      <th style={{ padding: "0.75rem", textAlign: "right", fontWeight: 600 }}>
+                      <th
+                        style={{
+                          padding: "0.75rem",
+                          textAlign: "left",
+                          fontWeight: 600,
+                          minWidth: "150px",
+                        }}
+                      >
+                        Key Path
+                      </th>
+                      <th
+                        style={{
+                          padding: "0.75rem",
+                          textAlign: "left",
+                          fontWeight: 600,
+                          minWidth: "200px",
+                        }}
+                      >
+                        Term
+                      </th>
+                      <th
+                        style={{
+                          padding: "0.75rem",
+                          textAlign: "left",
+                          fontWeight: 600,
+                          whiteSpace: "nowrap",
+                          width: "160px",
+                        }}
+                      >
+                        Created At
+                      </th>
+                      <th
+                        style={{
+                          padding: "0.75rem",
+                          textAlign: "left",
+                          fontWeight: 600,
+                          whiteSpace: "nowrap",
+                          width: "160px",
+                        }}
+                      >
+                        Updated At
+                      </th>
+                      <th
+                        style={{
+                          padding: "0.75rem",
+                          textAlign: "left",
+                          fontWeight: 600,
+                          whiteSpace: "nowrap",
+                          width: "160px",
+                        }}
+                      >
+                        Deleted At
+                      </th>
+                      <th
+                        style={{
+                          padding: "0.75rem",
+                          textAlign: "right",
+                          fontWeight: 600,
+                          position: "sticky",
+                          right: 0,
+                          background: "var(--color-background)",
+                          zIndex: 10,
+                          minWidth: "150px",
+                          width: "150px",
+                        }}
+                      >
                         Actions
                       </th>
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredTranslations.map((translation) => {
+                    {translations.map((translation) => {
                       const isEditing =
                         editingKey?.language === translation.language &&
                         editingKey?.namespace === translation.namespace &&
                         editingKey?.keyPath === translation.key_path;
+                      const isDeleted = !!translation.deleted_at;
 
                       return (
                         <tr
                           key={`${translation.namespace}-${translation.key_path}-${translation.language}`}
-                          style={{ borderBottom: "1px solid var(--color-border)" }}
+                          style={{
+                            borderBottom: "1px solid var(--color-border)",
+                            opacity: isDeleted ? 0.7 : 1,
+                            background: isDeleted ? "rgba(159, 36, 6, 0.05)" : "transparent",
+                          }}
                         >
+                          <td style={{ padding: "0.75rem" }}>
+                            {LANGUAGE_NAMES[translation.language]}
+                          </td>
                           <td style={{ padding: "0.75rem" }}>{translation.namespace}</td>
                           <td
                             style={{
@@ -451,9 +547,6 @@ const Translations: React.FC = () => {
                             }}
                           >
                             {translation.key_path}
-                          </td>
-                          <td style={{ padding: "0.75rem" }}>
-                            {LANGUAGE_NAMES[translation.language]}
                           </td>
                           <td style={{ padding: "0.75rem", maxWidth: "400px" }}>
                             {isEditing ? (
@@ -470,7 +563,76 @@ const Translations: React.FC = () => {
                               </div>
                             )}
                           </td>
-                          <td style={{ padding: "0.75rem", textAlign: "right" }}>
+                          <td
+                            style={{
+                              padding: "0.75rem",
+                              fontSize: "0.8rem",
+                              color: "var(--color-text-secondary)",
+                              whiteSpace: "nowrap",
+                            }}
+                          >
+                            {translation.created_at
+                              ? new Date(translation.created_at).toLocaleString("en-US", {
+                                  month: "short",
+                                  day: "numeric",
+                                  year: "numeric",
+                                  hour: "2-digit",
+                                  minute: "2-digit",
+                                })
+                              : "-"}
+                          </td>
+                          <td
+                            style={{
+                              padding: "0.75rem",
+                              fontSize: "0.8rem",
+                              color: "var(--color-text-secondary)",
+                              whiteSpace: "nowrap",
+                            }}
+                          >
+                            {translation.updated_at
+                              ? new Date(translation.updated_at).toLocaleString("en-US", {
+                                  month: "short",
+                                  day: "numeric",
+                                  year: "numeric",
+                                  hour: "2-digit",
+                                  minute: "2-digit",
+                                })
+                              : "-"}
+                          </td>
+                          <td
+                            style={{
+                              padding: "0.75rem",
+                              fontSize: "0.8rem",
+                              color: isDeleted
+                                ? "var(--color-error)"
+                                : "var(--color-text-secondary)",
+                              whiteSpace: "nowrap",
+                            }}
+                          >
+                            {translation.deleted_at
+                              ? new Date(translation.deleted_at).toLocaleString("en-US", {
+                                  month: "short",
+                                  day: "numeric",
+                                  year: "numeric",
+                                  hour: "2-digit",
+                                  minute: "2-digit",
+                                })
+                              : "-"}
+                          </td>
+                          <td
+                            style={{
+                              padding: "0.75rem",
+                              textAlign: "right",
+                              position: "sticky",
+                              right: 0,
+                              background: isDeleted
+                                ? "rgba(159, 36, 6, 0.05)"
+                                : "var(--color-background)",
+                              zIndex: 5,
+                              minWidth: "150px",
+                              width: "150px",
+                            }}
+                          >
                             {isEditing ? (
                               <div
                                 style={{
@@ -501,14 +663,6 @@ const Translations: React.FC = () => {
                                   title="Edit"
                                 >
                                   <Edit size={16} />
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant="secondary"
-                                  onClick={() => handleDeleteClick(translation)}
-                                  title="Delete"
-                                >
-                                  <Trash2 size={16} />
                                 </Button>
                               </div>
                             )}
@@ -555,24 +709,6 @@ const Translations: React.FC = () => {
           )}
         </CardContent>
       </Card>
-
-      {/* Delete Confirmation Dialog */}
-      <ConfirmDialog
-        isOpen={showDeleteConfirm}
-        onCancel={() => {
-          setShowDeleteConfirm(false);
-          setDeleteTarget(null);
-        }}
-        onConfirm={() => void handleConfirmDelete()}
-        title="Delete Translation"
-        message={
-          deleteTarget
-            ? `Are you sure you want to delete the translation for "${deleteTarget.key_path}" in ${LANGUAGE_NAMES[deleteTarget.language]}?`
-            : ""
-        }
-        confirmLabel="Delete"
-        variant="danger"
-      />
     </div>
   );
 };

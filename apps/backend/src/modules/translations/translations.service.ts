@@ -71,6 +71,7 @@ export async function createTranslationService(
 
 /**
  * Update an existing translation
+ * Creates a new version: marks old record as deleted and creates a new one
  */
 export async function updateTranslationService(
   language: SupportedLanguage,
@@ -79,15 +80,20 @@ export async function updateTranslationService(
   dto: UpdateTranslationDTO,
   userId?: string,
 ): Promise<TranslationRecord> {
-  const existing = await getTranslation(language, namespace, keyPath);
+  const existing = await getTranslation(language, namespace, keyPath, false);
   if (!existing) {
     throw new HttpError(404, "TRANSLATION_NOT_FOUND", "Translation not found");
   }
 
-  const updated = await updateTranslation(language, namespace, keyPath, {
-    value: dto.value,
-    updated_by: userId ?? null,
-  });
+  const updated = await updateTranslation(
+    language,
+    namespace,
+    keyPath,
+    {
+      value: dto.value,
+    },
+    userId,
+  );
 
   if (!updated) {
     throw new HttpError(500, "TRANSLATION_UPDATE_FAILED", "Failed to update translation");
@@ -140,6 +146,8 @@ export async function listTranslationsService(params?: {
   language?: SupportedLanguage;
   namespace?: TranslationNamespace;
   search?: string;
+  keyPath?: string;
+  activeOnly?: boolean;
   limit?: number;
   offset?: number;
 }): Promise<{ translations: TranslationRecord[]; total: number }> {
@@ -148,6 +156,8 @@ export async function listTranslationsService(params?: {
       language: params?.language,
       namespace: params?.namespace,
       search: params?.search,
+      keyPath: params?.keyPath,
+      activeOnly: params?.activeOnly,
     },
     {
       limit: params?.limit ?? 100,

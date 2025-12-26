@@ -71,6 +71,7 @@ export async function searchUsersHandler(req: Request, res: Response): Promise<v
   const query = req.query.q as string;
   const limit = req.query.limit ? parseInt(req.query.limit as string, 10) : 20;
   const offset = req.query.offset ? parseInt(req.query.offset as string, 10) : 0;
+  const blacklisted = req.query.blacklisted ? req.query.blacklisted === "true" : undefined;
 
   if (!query) {
     throw new HttpError(400, "MISSING_QUERY", "Query parameter 'q' is required");
@@ -80,6 +81,7 @@ export async function searchUsersHandler(req: Request, res: Response): Promise<v
     query,
     limit: Math.min(limit, 50), // Cap at 50
     offset,
+    blacklisted,
   };
 
   const users = await service.searchUsersService(searchQuery);
@@ -87,7 +89,7 @@ export async function searchUsersHandler(req: Request, res: Response): Promise<v
 }
 
 /**
- * Perform user action (suspend, ban, activate, delete)
+ * Perform user action (blacklist, unblacklist, delete)
  * POST /api/v1/admin/users/:userId/action
  */
 export async function userActionHandler(req: Request, res: Response): Promise<void> {
@@ -100,29 +102,101 @@ export async function userActionHandler(req: Request, res: Response): Promise<vo
     throw new HttpError(401, "UNAUTHENTICATED", "User not authenticated");
   }
 
-  if (!action || !["suspend", "ban", "activate", "delete"].includes(action)) {
+  if (!action || !["blacklist", "unblacklist", "delete"].includes(action)) {
     throw new HttpError(
       400,
       "INVALID_ACTION",
-      "Invalid action. Must be 'suspend', 'ban', 'activate', or 'delete'",
+      "Invalid action. Must be 'blacklist', 'unblacklist', or 'delete'",
     );
   }
 
   await service.performUserAction({
     userId,
-    action: action as "suspend" | "ban" | "activate" | "delete",
+    action: action as "blacklist" | "unblacklist" | "delete",
     adminId: req.user.sub,
     reason,
   });
 
   // Handle past tense for actions
   const actionPastTense: Record<string, string> = {
-    suspend: "suspended",
-    ban: "banned",
-    activate: "activated",
+    blacklist: "blacklisted",
+    unblacklist: "unblacklisted",
     delete: "deleted",
   };
-  const pastTense = actionPastTense[action] || `${action}d`;
+  const pastTense = actionPastTense[action] || `${action}ed`;
 
   res.json({ success: true, message: `User ${pastTense} successfully` });
+}
+
+/**
+ * Change user role
+ * POST /api/v1/admin/users/:userId/role
+ */
+export async function changeUserRoleHandler(req: Request, res: Response): Promise<void> {
+  const { userId } = req.params;
+  const body = req.body as { role?: string; reason?: string };
+  const role = body.role;
+  const reason = body.reason;
+
+  if (!req.user?.sub) {
+    throw new HttpError(401, "UNAUTHENTICATED", "User not authenticated");
+  }
+
+  if (!role) {
+    throw new HttpError(400, "MISSING_ROLE", "Role is required");
+  }
+
+  await service.changeUserRole(userId, role, req.user.sub, reason);
+
+  res.json({ success: true, message: `User role changed to ${role} successfully` });
+}
+
+/**
+ * Send verification email to user
+ * POST /api/v1/admin/users/:userId/send-verification-email
+ */
+export async function sendVerificationEmailHandler(req: Request, res: Response): Promise<void> {
+  const { userId } = req.params;
+
+  if (!req.user?.sub) {
+    throw new HttpError(401, "UNAUTHENTICATED", "User not authenticated");
+  }
+
+  await service.sendVerificationEmail(userId, req.user.sub);
+
+  res.json({ success: true, message: "Verification email sent successfully" });
+}
+
+/**
+ * Send password reset email to user
+ * POST /api/v1/admin/users/:userId/send-password-reset
+ */
+export async function sendPasswordResetHandler(req: Request, res: Response): Promise<void> {
+  const { userId } = req.params;
+
+  if (!req.user?.sub) {
+    throw new HttpError(401, "UNAUTHENTICATED", "User not authenticated");
+  }
+
+  await service.sendPasswordResetEmail(userId, req.user.sub);
+
+  res.json({ success: true, message: "Password reset email sent successfully" });
+}
+
+/**
+ * Delete user avatar
+ * DELETE /api/v1/admin/users/:userId/avatar
+ */
+export async function deleteUserAvatarHandler(req: Request, res: Response): Promise<void> {
+  const { userId } = req.params;
+  const body = req.body as { reason?: string };
+  const reason = body.reason;
+
+  if (!req.user?.sub) {
+    throw new HttpError(401, "UNAUTHENTICATED", "User not authenticated");
+  }
+
+  await service.deleteUserAvatar(userId, req.user.sub, reason);
+
+  res.json({ success: true, message: "User avatar deleted successfully" });
 }

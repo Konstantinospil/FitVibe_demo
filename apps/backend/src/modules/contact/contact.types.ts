@@ -11,6 +11,8 @@ export interface ContactMessage {
   createdAt: string;
   readAt: string | null;
   readByUserId: string | null;
+  respondedAt: string | null;
+  response: string | null;
 }
 
 export interface CreateContactMessageInput {
@@ -29,4 +31,6 @@ export interface ContactMessageRow {
   created_at: string;
   read_at: string | null;
   read_by_user_id: string | null;
+  responded_at: string | null;
+  response: string | null;
 }

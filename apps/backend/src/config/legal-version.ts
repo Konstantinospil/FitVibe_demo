@@ -42,24 +42,20 @@ const getCommonJSDirname = (): string | undefined => {
 };
 
 // Determine file path based on environment
-// In test mode, always use CommonJS variables to avoid import.meta compilation issues
-const isTestEnv = process.env.NODE_ENV === "test";
+// Since TypeScript compiles to CommonJS, __dirname and __filename should always be available
+// Check CommonJS variables first, fallback to import.meta.url only if not available
 const commonJSFilename = getCommonJSFilename();
 const commonJSDirname = getCommonJSDirname();
 
 let currentFilename: string;
 let currentDirname: string;
 
-if (
-  isTestEnv &&
-  typeof commonJSFilename !== "undefined" &&
-  typeof commonJSDirname !== "undefined"
-) {
-  // Jest/CommonJS environment - use local variables
+if (typeof commonJSFilename !== "undefined" && typeof commonJSDirname !== "undefined") {
+  // CommonJS environment (Jest tests, tsx dev, compiled code) - use local variables
   currentFilename = commonJSFilename;
   currentDirname = commonJSDirname;
-} else if (!isTestEnv) {
-  // ES module environment - use dynamic evaluation to avoid compilation issues in Jest
+} else {
+  // ES module environment - use dynamic evaluation to avoid compilation issues
   // This string-based approach prevents ts-jest from trying to compile import.meta
   try {
     // eslint-disable-next-line @typescript-eslint/no-implied-eval
@@ -73,11 +69,6 @@ if (
     // Fallback if dynamic evaluation fails
     throw new Error("Unable to determine file path: import.meta.url is not available");
   }
-} else {
-  // Fallback for test environment if variables aren't available
-  throw new Error(
-    "Unable to determine file path in test environment. __filename and __dirname should be available.",
-  );
 }
 // Go from apps/backend/src/config to workspace root
 const WORKSPACE_ROOT = resolve(currentDirname, "..", "..", "..", "..");

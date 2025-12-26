@@ -1,7 +1,7 @@
 import express from "express";
 import cookieParser from "cookie-parser";
-import request from "supertest";
 import { z } from "zod";
+import { invokeExpress } from "../test-helpers/express-request";
 import {
   csrfProtection,
   csrfTokenRoute,
@@ -33,41 +33,57 @@ const forbiddenSchema = z.object({ error: z.object({ code: z.string() }) });
 
 describe("csrfProtection integration", () => {
   it("issues CSRF tokens via the token route", async () => {
-    const app = buildCsrfApp();
-
-    const res = await request(app).get("/csrf-token").expect(200);
-    const body = csrfResponseSchema.parse(res.body);
+    const res = await invokeExpress(buildCsrfApp(), { method: "GET", url: "/csrf-token" });
+    expect(res.statusCode).toBe(200);
+    const body = csrfResponseSchema.parse(res.json);
     expect(body.csrfToken).toEqual(expect.any(String));
     // Cookie name is environment-dependent: __Host-fitvibe-csrf (production) or fitvibe-csrf (development/test)
-    const cookies = res.headers["set-cookie"] ?? [];
-    const hasCsrfCookie = cookies.some(
-      (cookie: string) => cookie.includes("__Host-fitvibe-csrf") || cookie.includes("fitvibe-csrf"),
-    );
+    const setCookieHeader = res.headers["set-cookie"];
+    const cookies = Array.isArray(setCookieHeader)
+      ? setCookieHeader
+      : setCookieHeader
+        ? [setCookieHeader]
+        : [];
+    const hasCsrfCookie = cookies.some((cookie) => {
+      return cookie.includes("__Host-fitvibe-csrf") || cookie.includes("fitvibe-csrf");
+    });
     expect(hasCsrfCookie).toBe(true);
   });
 
   it("blocks unsafe requests without a token", async () => {
-    const app = buildCsrfApp();
-
-    const res = await request(app).post("/protected").send({}).expect(403);
-    const body = forbiddenSchema.parse(res.body);
+    const res = await invokeExpress(buildCsrfApp(), {
+      method: "POST",
+      url: "/protected",
+      body: {},
+    });
+    expect(res.statusCode).toBe(403);
+    const body = forbiddenSchema.parse(res.json);
     expect(body.error.code).toBe("CSRF_TOKEN_INVALID");
   });
 
   it("accepts unsafe requests when a valid token and cookie are provided", async () => {
-    const app = buildCsrfApp();
-    const tokenResponse = await request(app).get("/csrf-token").expect(200);
-    const csrfCookie = tokenResponse.headers["set-cookie"]?.[0];
-    const csrfToken = csrfResponseSchema.parse(tokenResponse.body).csrfToken;
+    const tokenResponse = await invokeExpress(buildCsrfApp(), {
+      method: "GET",
+      url: "/csrf-token",
+    });
+    const setCookieHeader = tokenResponse.headers["set-cookie"];
+    const csrfCookie = Array.isArray(setCookieHeader)
+      ? setCookieHeader[0]
+      : (setCookieHeader ?? "");
+    const csrfToken = csrfResponseSchema.parse(tokenResponse.json).csrfToken;
 
-    const res = await request(app)
-      .post("/protected")
-      .set("Cookie", csrfCookie ?? "")
-      .set("x-csrf-token", csrfToken)
-      .send({});
+    const res = await invokeExpress(buildCsrfApp(), {
+      method: "POST",
+      url: "/protected",
+      headers: {
+        cookie: csrfCookie,
+        "x-csrf-token": csrfToken,
+      },
+      body: {},
+    });
 
-    expect(res.status).toBe(200);
-    expect(res.body).toEqual({ success: true });
+    expect(res.statusCode).toBe(200);
+    expect(res.json).toEqual({ success: true });
   });
 });
 
@@ -80,23 +96,25 @@ const buildOriginApp = () => {
 
 describe("validateOrigin middleware", () => {
   it("allows requests when the Origin header is whitelisted", async () => {
-    const app = buildOriginApp();
-
-    await request(app)
-      .post("/action")
-      .set("Origin", "https://app.fitvibe.test")
-      .expect(200)
-      .expect({ ok: true });
+    const res = await invokeExpress(buildOriginApp(), {
+      method: "POST",
+      url: "/action",
+      headers: { origin: "https://app.fitvibe.test" },
+      body: {},
+    });
+    expect(res.statusCode).toBe(200);
+    expect(res.json).toEqual({ ok: true });
   });
 
   it("rejects requests with an invalid Referer header", async () => {
-    const app = buildOriginApp();
+    const res = await invokeExpress(buildOriginApp(), {
+      method: "POST",
+      url: "/action",
+      headers: { referer: "https://evil.example.com/page" },
+      body: {},
+    });
 
-    const res = await request(app)
-      .post("/action")
-      .set("Referer", "https://evil.example.com/page")
-      .expect(403);
-
-    expect(forbiddenSchema.parse(res.body).error.code).toBe("FORBIDDEN");
+    expect(res.statusCode).toBe(403);
+    expect(forbiddenSchema.parse(res.json).error.code).toBe("FORBIDDEN");
   });
 });

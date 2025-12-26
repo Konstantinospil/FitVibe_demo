@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Users, Search, Ban, UserX, Trash2, Shield } from "lucide-react";
+import { Users, Search, Ban, Trash2, Shield } from "lucide-react";
 import {
   Card,
   CardHeader,
@@ -11,9 +11,8 @@ import {
 import { Button } from "../../components/ui/Button";
 import {
   searchUsers,
-  suspendUser,
-  banUser,
-  activateUser,
+  blacklistUser,
+  unblacklistUser,
   deleteUser,
   type UserRecord,
 } from "../../services/api";
@@ -29,11 +28,14 @@ const UserManagement: React.FC = () => {
   const [users, setUsers] = useState<UserRecord[]>([]);
   const [error, setError] = useState<string | null>(null);
 
+  // Filter state
+  const [showBlacklistedOnly, setShowBlacklistedOnly] = useState(false);
+
   // Confirmation dialog state
   const [showActionConfirm, setShowActionConfirm] = useState(false);
   const [pendingAction, setPendingAction] = useState<{
     userId: string;
-    action: "suspend" | "ban" | "delete" | "activate";
+    action: "blacklist" | "unblacklist" | "delete";
   } | null>(null);
 
   const getStatusColor = (status: string) => {
@@ -62,7 +64,7 @@ const UserManagement: React.FC = () => {
     }
   };
 
-  const handleUserAction = (userId: string, action: "suspend" | "ban" | "delete" | "activate") => {
+  const handleUserAction = (userId: string, action: "blacklist" | "unblacklist" | "delete") => {
     setPendingAction({ userId, action });
     setShowActionConfirm(true);
   };
@@ -77,14 +79,11 @@ const UserManagement: React.FC = () => {
 
     try {
       switch (action) {
-        case "suspend":
-          await suspendUser(userId);
+        case "blacklist":
+          await blacklistUser(userId);
           break;
-        case "ban":
-          await banUser(userId);
-          break;
-        case "activate":
-          await activateUser(userId);
+        case "unblacklist":
+          await unblacklistUser(userId);
           break;
         case "delete":
           await deleteUser(userId);
@@ -92,12 +91,15 @@ const UserManagement: React.FC = () => {
       }
 
       toast.success(
-        `User ${action}${action === "suspend" ? "ed" : action === "activate" ? "d" : action === "delete" ? "d" : "ned"} successfully`,
+        `User ${action === "blacklist" ? "blacklisted" : action === "unblacklist" ? "unblacklisted" : "deleted"} successfully`,
       );
 
       // Refresh search results after action
       if (searchQuery.trim()) {
-        const response = await searchUsers({ q: searchQuery.trim() });
+        const response = await searchUsers({
+          q: searchQuery.trim(),
+          blacklisted: showBlacklistedOnly ? true : undefined,
+        });
         setUsers(response.data);
       } else {
         // If no search query, just remove the user from the list
@@ -106,7 +108,12 @@ const UserManagement: React.FC = () => {
 
       setPendingAction(null);
     } catch (err) {
-      logger.apiError(`Failed to ${action} user`, err, `/api/v1/admin/users/${userId}`, "PATCH");
+      logger.apiError(
+        `Failed to ${action} user`,
+        err,
+        `/api/v1/admin/users/${userId}/action`,
+        "POST",
+      );
       toast.error(`Failed to ${action} user. Please try again.`);
       setPendingAction(null);
     }
@@ -120,7 +127,10 @@ const UserManagement: React.FC = () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await searchUsers({ q: searchQuery.trim() });
+      const response = await searchUsers({
+        q: searchQuery.trim(),
+        blacklisted: showBlacklistedOnly ? true : undefined,
+      });
       setUsers(response.data);
     } catch (err) {
       logger.apiError("Failed to search users", err, "/api/v1/admin/users/search", "GET");
@@ -158,7 +168,7 @@ const UserManagement: React.FC = () => {
           )}
           {/* Search Bar */}
           <div style={{ marginBottom: "1.5rem" }}>
-            <div style={{ display: "flex", gap: "0.75rem" }}>
+            <div style={{ display: "flex", gap: "0.75rem", marginBottom: "0.75rem" }}>
               <div style={{ position: "relative", flex: 1 }}>
                 <Search
                   size={20}
@@ -199,6 +209,35 @@ const UserManagement: React.FC = () => {
               >
                 Search
               </Button>
+            </div>
+            {/* Filter for blacklisted users */}
+            <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+              <input
+                type="checkbox"
+                id="blacklisted-filter"
+                checked={showBlacklistedOnly}
+                onChange={(e) => {
+                  setShowBlacklistedOnly(e.target.checked);
+                  if (searchQuery.trim()) {
+                    void handleSearch();
+                  }
+                }}
+                style={{
+                  width: "1rem",
+                  height: "1rem",
+                  cursor: "pointer",
+                }}
+              />
+              <label
+                htmlFor="blacklisted-filter"
+                style={{
+                  cursor: "pointer",
+                  color: "var(--color-text-primary)",
+                  fontSize: "0.9rem",
+                }}
+              >
+                Show blacklisted users only
+              </label>
             </div>
           </div>
 
@@ -285,11 +324,22 @@ const UserManagement: React.FC = () => {
                         style={{
                           fontSize: "0.9rem",
                           color: "var(--color-text-secondary)",
-                          marginBottom: "0.75rem",
+                          marginBottom: "0.5rem",
                         }}
                       >
                         {user.email}
                       </div>
+                      {user.deactivatedAt && (
+                        <div
+                          style={{
+                            fontSize: "0.85rem",
+                            color: "var(--color-danger)",
+                            marginBottom: "0.75rem",
+                          }}
+                        >
+                          Blacklisted: {new Date(user.deactivatedAt).toLocaleDateString()}
+                        </div>
+                      )}
 
                       <div
                         style={{
@@ -338,37 +388,25 @@ const UserManagement: React.FC = () => {
                         marginLeft: "1rem",
                       }}
                     >
-                      {user.status === "active" && (
-                        <>
-                          <Button
-                            variant="secondary"
-                            size="sm"
-                            onClick={() => void handleUserAction(user.id, "suspend")}
-                            leftIcon={<UserX size={16} />}
-                            disabled={loading}
-                          >
-                            Suspend
-                          </Button>
-                          <Button
-                            variant="danger"
-                            size="sm"
-                            onClick={() => void handleUserAction(user.id, "ban")}
-                            leftIcon={<Ban size={16} />}
-                            disabled={loading}
-                          >
-                            Ban
-                          </Button>
-                        </>
-                      )}
-                      {user.status !== "active" && (
+                      {!user.deactivatedAt ? (
+                        <Button
+                          variant="danger"
+                          size="sm"
+                          onClick={() => void handleUserAction(user.id, "blacklist")}
+                          leftIcon={<Ban size={16} />}
+                          disabled={loading}
+                        >
+                          Blacklist
+                        </Button>
+                      ) : (
                         <Button
                           variant="primary"
                           size="sm"
-                          onClick={() => void handleUserAction(user.id, "activate")}
+                          onClick={() => void handleUserAction(user.id, "unblacklist")}
                           leftIcon={<Shield size={16} />}
                           disabled={loading}
                         >
-                          Activate
+                          Unblacklist
                         </Button>
                       )}
                       <Button
@@ -395,33 +433,27 @@ const UserManagement: React.FC = () => {
         title={
           pendingAction?.action === "delete"
             ? "Delete User"
-            : pendingAction?.action === "ban"
-              ? "Ban User"
-              : pendingAction?.action === "suspend"
-                ? "Suspend User"
-                : "Activate User"
+            : pendingAction?.action === "blacklist"
+              ? "Blacklist User"
+              : "Unblacklist User"
         }
         message={
           pendingAction?.action === "delete"
             ? "Are you sure you want to delete this user and all their data? This action cannot be undone."
-            : pendingAction?.action === "ban"
-              ? "Are you sure you want to ban this user permanently? This action may be irreversible."
-              : pendingAction?.action === "suspend"
-                ? "Are you sure you want to suspend this user? They will not be able to access their account."
-                : "Are you sure you want to activate this user? They will regain full access to their account."
+            : pendingAction?.action === "blacklist"
+              ? "Are you sure you want to blacklist this user? Their email will be banned and they will not be able to create a new account. This action can be reversed."
+              : "Are you sure you want to unblacklist this user? They will be able to create a new account with this email."
         }
         confirmLabel={
           pendingAction?.action === "delete"
             ? "Yes, Delete User"
-            : pendingAction?.action === "ban"
-              ? "Yes, Ban User"
-              : pendingAction?.action === "suspend"
-                ? "Yes, Suspend User"
-                : "Yes, Activate User"
+            : pendingAction?.action === "blacklist"
+              ? "Yes, Blacklist User"
+              : "Yes, Unblacklist User"
         }
         cancelLabel="Cancel"
         variant={
-          pendingAction?.action === "delete" || pendingAction?.action === "ban"
+          pendingAction?.action === "delete" || pendingAction?.action === "blacklist"
             ? "danger"
             : "warning"
         }

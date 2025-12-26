@@ -557,8 +557,7 @@ export async function revokeTerms(req: Request, res: Response, next: NextFunctio
       throw new HttpError(401, "UNAUTHENTICATED", "UNAUTHENTICATED");
     }
     await doRevokeTerms(userId);
-    // Clear auth cookies to log out the user
-    clearAuthCookies(res);
+    // Don't clear auth cookies - keep user logged in so they can accept again
     res.status(200).json({ message: "Terms consent revoked successfully" });
     return;
   } catch (error) {
@@ -598,8 +597,7 @@ export async function revokePrivacyPolicy(
       throw new HttpError(401, "UNAUTHENTICATED", "UNAUTHENTICATED");
     }
     await doRevokePrivacyPolicy(userId);
-    // Clear auth cookies to log out the user
-    clearAuthCookies(res);
+    // Don't clear auth cookies - keep user logged in so they can accept again
     res.status(200).json({ message: "Privacy policy consent revoked successfully" });
     return;
   } catch (error) {

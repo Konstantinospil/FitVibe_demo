@@ -98,14 +98,12 @@ const TwoFactorVerificationLogin: React.FC = () => {
           // Determine which documents need acceptance from error response
           const termsOutdated = axiosError.response?.data?.termsOutdated ?? true;
           const privacyOutdated = axiosError.response?.data?.privacyPolicyOutdated ?? false;
-          const params = new URLSearchParams();
+          // Redirect to the appropriate page - Terms takes priority if both need acceptance
           if (termsOutdated) {
-            params.set("terms", "true");
+            void navigate("/terms", { replace: true });
+          } else if (privacyOutdated) {
+            void navigate("/privacy", { replace: true });
           }
-          if (privacyOutdated) {
-            params.set("privacy", "true");
-          }
-          void navigate(`/terms-reacceptance?${params.toString()}`, { replace: true });
           return;
         }
 

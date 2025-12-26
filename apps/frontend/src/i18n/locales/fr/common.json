@@ -4,10 +4,12 @@
     "sessions": "Séances",
     "insights": "Analyses",
     "profile": "Profil",
+    "settings": "Paramètres",
     "signOut": "Déconnexion",
     "you": "Vous",
     "activeSession": "Séance active",
-    "skipToContent": "Aller au contenu principal"
+    "skipToContent": "Aller au contenu principal",
+    "breadcrumb": "Navigation fil d'Ariane"
   },
   "language": {
     "label": "Langue",
@@ -164,6 +166,8 @@
       "submitting": "Envoi en cours...",
       "success": "Votre message a été envoyé avec succès !",
       "error": "Échec de l'envoi du message. Veuillez réessayer.",
+      "networkError": "Impossible de se connecter au serveur. Veuillez vérifier votre connexion et réessayer.",
+      "csrfError": "Erreur de jeton de sécurité. Veuillez actualiser la page et réessayer. Si le problème persiste, vérifiez les paramètres de cookies de votre navigateur.",
       "characters": "caractères"
     }
   },

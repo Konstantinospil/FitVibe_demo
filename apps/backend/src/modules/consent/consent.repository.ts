@@ -69,6 +69,8 @@ export async function upsertConsent(
     user_agent: input.userAgent ?? null,
     consent_given_at: now,
     last_updated_at: now,
+    created_at: now,
+    updated_at: now,
   };
 
   // Use PostgreSQL's INSERT ... ON CONFLICT for upsert

@@ -1,11 +1,6 @@
 import type { Knex } from "knex";
 import * as fs from "fs";
 import * as path from "path";
-import { fileURLToPath } from "url";
-
-// @ts-expect-error - import.meta is valid at runtime (ES modules) but tsconfig uses commonjs
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 const TRANSLATIONS_TABLE = "translations";
 const SUPPORTED_LANGUAGES = ["en", "de", "fr", "es", "el"];
@@ -107,15 +102,67 @@ export async function up(knex: Knex): Promise<void> {
     return;
   }
 
-  // Batch insert translations (PostgreSQL limit is ~32767 parameters per query)
+  // Upsert translations: restore deleted ones, update active ones, or insert new ones
+  // This works with the partial unique index (idx_translations_namespace_key_lang_unique_active)
   const batchSize = 1000;
   for (let i = 0; i < translations.length; i += batchSize) {
     const batch = translations.slice(i, i + batchSize);
-    await knex(TRANSLATIONS_TABLE)
-      .insert(batch)
-      .onConflict(["namespace", "key_path", "language"])
-      .ignore();
-    console.warn(`Inserted batch ${Math.floor(i / batchSize) + 1} (${batch.length} translations)`);
+
+    for (const translation of batch) {
+      // Check if there's a deleted translation that should be restored
+      const deleted = (await knex(TRANSLATIONS_TABLE)
+        .where({
+          language: translation.language,
+          namespace: translation.namespace,
+          key_path: translation.key_path,
+        })
+        .whereNotNull("deleted_at")
+        .orderBy("deleted_at", "desc")
+        .first()) as { id: string } | undefined;
+
+      if (deleted) {
+        // Restore the deleted translation
+        await knex(TRANSLATIONS_TABLE)
+          .where({ id: deleted.id })
+          .update({
+            value: translation.value,
+            deleted_at: null,
+            updated_at: knex.raw("NOW()"),
+          });
+        continue;
+      }
+
+      // Check if there's an active translation
+      const active = (await knex(TRANSLATIONS_TABLE)
+        .where({
+          language: translation.language,
+          namespace: translation.namespace,
+          key_path: translation.key_path,
+        })
+        .whereNull("deleted_at")
+        .first()) as { id: string } | undefined;
+
+      if (active) {
+        // Update the existing active translation
+        await knex(TRANSLATIONS_TABLE)
+          .where({ id: active.id })
+          .update({
+            value: translation.value,
+            updated_at: knex.raw("NOW()"),
+            deleted_at: null,
+          });
+        continue;
+      }
+
+      // No existing translation - insert new one
+      await knex(TRANSLATIONS_TABLE).insert({
+        ...translation,
+        created_at: knex.raw("NOW()"),
+        updated_at: knex.raw("NOW()"),
+      });
+    }
+
+    console.warn(`Processed batch ${Math.floor(i / batchSize) + 1} (${batch.length} translations)`);
   }
 
   console.warn(`Successfully imported ${translations.length} translations.`);

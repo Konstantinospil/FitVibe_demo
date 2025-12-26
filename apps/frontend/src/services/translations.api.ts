@@ -11,6 +11,7 @@ export interface TranslationRecord {
   value: string;
   created_at: string;
   updated_at: string;
+  deleted_at: string | null;
   created_by: string | null;
   updated_by: string | null;
 }
@@ -23,6 +24,8 @@ export interface ListTranslationsParams {
   language?: SupportedLanguage;
   namespace?: TranslationNamespace;
   search?: string;
+  keyPath?: string;
+  activeOnly?: boolean;
   limit?: number;
   offset?: number;
 }

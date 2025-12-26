@@ -1,1 +1,1 @@
-export { rateLimit, rateLimitByUser } from "../../middlewares/rate-limit.js";
+export { rateLimit, rateLimitByUser, rateLimitByIPAndEmail } from "../../middlewares/rate-limit.js";

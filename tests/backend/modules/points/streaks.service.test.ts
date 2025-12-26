@@ -14,17 +14,12 @@ import {
 import * as pointsRepository from "../../../../apps/backend/src/modules/points/points.repository.js";
 
 // Mock the db module
-const mockTrx = {} as Knex.Transaction;
-const mockTransaction = jest.fn(async (callback: (trx: Knex.Transaction) => Promise<unknown>) => {
-  return await callback(mockTrx);
-});
-
-jest.mock("../../../../apps/backend/src/db/index.js", () => ({
-  default: {
-    transaction: mockTransaction,
-  },
+jest.mock("../../../../apps/backend/src/db/connection.js", () => ({
   db: {
-    transaction: mockTransaction,
+    transaction: jest.fn(async (callback: (trx: Knex.Transaction) => Promise<unknown>) => {
+      const mockTrx = {} as Knex.Transaction;
+      return await callback(mockTrx);
+    }),
   },
 }));
 

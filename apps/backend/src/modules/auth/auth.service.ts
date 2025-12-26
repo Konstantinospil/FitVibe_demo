@@ -235,6 +235,19 @@ export async function register(
     const email = dto.email.toLowerCase();
     const username = dto.username.trim();
     assertPasswordPolicy(dto.password, { email, username });
+
+    // Check if email is blacklisted
+    const { isEmailBlacklisted } = await import("../admin/admin.repository.js");
+    const isBlacklisted = await isEmailBlacklisted(email);
+    if (isBlacklisted) {
+      // Return generic error to prevent user enumeration
+      throw new HttpError(
+        403,
+        "AUTH_FORBIDDEN",
+        "Your account has been permanently disabled due to violations of our Terms of Service. If you believe this action was taken in error, please contact our support team for assistance.",
+      );
+    }
+
     const existingByEmail = await findUserByEmail(email);
     const existingByUsername = await findUserByUsername(username);
 
@@ -685,9 +698,13 @@ export async function login(
       requestId: context.requestId ?? null,
     });
 
-    // Check if user has accepted current terms and privacy policy versions
-    const termsOutdated = await isTermsVersionOutdated(user.terms_version);
-    const privacyPolicyOutdated = await isPrivacyPolicyVersionOutdated(user.privacy_policy_version);
+    // Skip legal document check for admin users (backoffice access)
+    // Admin users should always be able to log in regardless of legal document versions
+    const isAdmin = user.role_code === "admin";
+    const termsOutdated = isAdmin ? false : await isTermsVersionOutdated(user.terms_version);
+    const privacyPolicyOutdated = isAdmin
+      ? false
+      : await isPrivacyPolicyVersionOutdated(user.privacy_policy_version);
 
     return {
       requires2FA: false,
@@ -815,9 +832,13 @@ export async function verify2FALogin(
   // Clean up pending session
   await deletePending2FASession(pendingSessionId);
 
-  // Check if user has accepted current terms and privacy policy versions (after tokens are created)
-  const termsOutdated = await isTermsVersionOutdated(user.terms_version);
-  const privacyPolicyOutdated = await isPrivacyPolicyVersionOutdated(user.privacy_policy_version);
+  // Skip legal document check for admin users (backoffice access)
+  // Admin users should always be able to log in regardless of legal document versions
+  const isAdmin = user.role_code === "admin";
+  const termsOutdated = isAdmin ? false : await isTermsVersionOutdated(user.terms_version);
+  const privacyPolicyOutdated = isAdmin
+    ? false
+    : await isPrivacyPolicyVersionOutdated(user.privacy_policy_version);
 
   return {
     user: toSafeUser(user),

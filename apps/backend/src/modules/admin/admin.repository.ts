@@ -142,32 +142,48 @@ export async function hideComment(commentId: string): Promise<void> {
 }
 
 /**
+ * Validates if a string is a valid UUID format
+ */
+function isValidUUID(str: string): boolean {
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  return uuidRegex.test(str);
+}
+
+/**
  * Search users by email, username, or ID
  */
 export async function searchUsers(query: SearchUsersQuery): Promise<UserSearchResult[]> {
-  const { query: searchQuery, limit = 20, offset = 0 } = query;
+  const { query: searchQuery, limit = 20, offset = 0, blacklisted } = query;
 
-  const rows = await db("users as u")
+  let queryBuilder = db("users as u")
     .select(
       "u.id",
       "u.username",
-      "u.email",
+      db.raw(`(
+        SELECT value
+        FROM user_contacts uc
+        WHERE uc.user_id = u.id
+        AND uc.type = 'email'
+        AND uc.is_primary IS TRUE
+        LIMIT 1
+      ) as email`),
       "u.role_code as roleCode",
       "u.status",
       "u.created_at as createdAt",
+      "u.deactivated_at as deactivatedAt",
     )
     .select(
       db.raw(`(
-        SELECT MAX(us.created_at)
-        FROM user_sessions us
-        WHERE us.user_id = u.id
+        SELECT MAX(auth_sess.created_at)
+        FROM auth_sessions auth_sess
+        WHERE auth_sess.user_id = u.id
       ) as "lastLoginAt"`),
     )
     .select(
       db.raw(`(
         SELECT COUNT(*)
         FROM sessions s
-        WHERE s.user_id = u.id
+        WHERE s.owner_id = u.id
       ) as "sessionCount"`),
     )
     .select(
@@ -175,23 +191,53 @@ export async function searchUsers(query: SearchUsersQuery): Promise<UserSearchRe
         SELECT COUNT(*)
         FROM feed_reports fr
         WHERE fr.feed_item_id IN (
-          SELECT id FROM feed_items WHERE user_id = u.id
+          SELECT id FROM feed_items WHERE owner_id = u.id
         )
         OR fr.comment_id IN (
           SELECT id FROM feed_comments WHERE user_id = u.id
         )
       ) as "reportCount"`),
     )
+    .select(
+      db.raw(`(
+        SELECT file_url
+        FROM media m
+        WHERE m.owner_id = u.id
+        AND m.target_type = 'user_avatar'
+        AND m.target_id = u.id
+        ORDER BY m.created_at DESC
+        LIMIT 1
+      ) as "avatarUrl"`),
+    )
     .where(function () {
-      this.where("u.email", "ilike", `%${searchQuery}%`)
-        .orWhere("u.username", "ilike", `%${searchQuery}%`)
-        .orWhere("u.id", "=", searchQuery);
-    })
-    .whereNull("u.deleted_at")
-    .orderBy("u.created_at", "desc")
-    .limit(limit)
-    .offset(offset);
+      this.whereRaw(
+        `EXISTS (
+          SELECT 1
+          FROM user_contacts uc
+          WHERE uc.user_id = u.id
+          AND uc.type = 'email'
+          AND uc.value ILIKE ?
+        )`,
+        [`%${searchQuery}%`],
+      ).orWhere("u.username", "ilike", `%${searchQuery}%`);
 
+      // Only check ID if the search query is a valid UUID
+      if (isValidUUID(searchQuery)) {
+        this.orWhere("u.id", "=", searchQuery);
+      }
+    })
+    .whereNull("u.deleted_at");
+
+  // Filter by blacklisted status
+  if (blacklisted === true) {
+    queryBuilder = queryBuilder.whereNotNull("u.deactivated_at");
+  } else if (blacklisted === false) {
+    queryBuilder = queryBuilder.whereNull("u.deactivated_at");
+  }
+
+  queryBuilder = queryBuilder.orderBy("u.created_at", "desc").limit(limit).offset(offset);
+
+  const rows = await queryBuilder;
   return rows as UserSearchResult[];
 }
 
@@ -203,6 +249,13 @@ export async function updateUserStatus(
   status: "active" | "suspended" | "banned",
 ): Promise<void> {
   await db("users").where("id", userId).update({ status });
+}
+
+/**
+ * Update user role
+ */
+export async function updateUserRole(userId: string, roleCode: string): Promise<void> {
+  await db("users").where("id", userId).update({ role_code: roleCode });
 }
 
 /**
@@ -223,23 +276,31 @@ export async function getUserForAdmin(userId: string): Promise<UserSearchResult 
     .select(
       "u.id",
       "u.username",
-      "u.email",
+      db.raw(`(
+        SELECT value
+        FROM user_contacts uc
+        WHERE uc.user_id = u.id
+        AND uc.type = 'email'
+        AND uc.is_primary IS TRUE
+        LIMIT 1
+      ) as email`),
       "u.role_code as roleCode",
       "u.status",
       "u.created_at as createdAt",
+      "u.deactivated_at as deactivatedAt",
     )
     .select(
       db.raw(`(
-        SELECT MAX(us.created_at)
-        FROM user_sessions us
-        WHERE us.user_id = u.id
+        SELECT MAX(auth_sess.created_at)
+        FROM auth_sessions auth_sess
+        WHERE auth_sess.user_id = u.id
       ) as "lastLoginAt"`),
     )
     .select(
       db.raw(`(
         SELECT COUNT(*)
         FROM sessions s
-        WHERE s.user_id = u.id
+        WHERE s.owner_id = u.id
       ) as "sessionCount"`),
     )
     .select(
@@ -247,7 +308,7 @@ export async function getUserForAdmin(userId: string): Promise<UserSearchResult 
         SELECT COUNT(*)
         FROM feed_reports fr
         WHERE fr.feed_item_id IN (
-          SELECT id FROM feed_items WHERE user_id = u.id
+          SELECT id FROM feed_items WHERE owner_id = u.id
         )
         OR fr.comment_id IN (
           SELECT id FROM feed_comments WHERE user_id = u.id
@@ -259,4 +320,74 @@ export async function getUserForAdmin(userId: string): Promise<UserSearchResult 
     .first()) as UserSearchResult | undefined;
 
   return row ?? null;
+}
+
+/**
+ * Check if an email is currently blacklisted
+ */
+export async function isEmailBlacklisted(email: string): Promise<boolean> {
+  const normalizedEmail = email.toLowerCase();
+  const now = new Date();
+
+  const row = await db<{ id: string }>("blacklist")
+    .where("email", normalizedEmail)
+    .where(function () {
+      this.whereNull("active_to").orWhere("active_to", ">", now);
+    })
+    .where("active_from", "<=", now)
+    .first();
+
+  return !!row;
+}
+
+/**
+ * Add email to blacklist
+ */
+export async function addToBlacklist(
+  email: string,
+  adminId: string,
+  activeTo?: Date | null,
+): Promise<void> {
+  const normalizedEmail = email.toLowerCase();
+  const now = new Date();
+
+  await db("blacklist").insert({
+    email: normalizedEmail,
+    active_from: now,
+    active_to: activeTo || null,
+    created_by: adminId,
+    created_at: now,
+    updated_at: now,
+  });
+}
+
+/**
+ * Remove email from blacklist (set active_to to now)
+ */
+export async function removeFromBlacklist(email: string): Promise<void> {
+  const normalizedEmail = email.toLowerCase();
+  const now = new Date();
+
+  await db("blacklist")
+    .where("email", normalizedEmail)
+    .where(function () {
+      this.whereNull("active_to").orWhere("active_to", ">", now);
+    })
+    .update({
+      active_to: now,
+      updated_at: now,
+    });
+}
+
+/**
+ * Update user deactivated_at timestamp
+ */
+export async function updateUserDeactivatedAt(
+  userId: string,
+  deactivatedAt: Date | null,
+): Promise<void> {
+  await db("users").where("id", userId).update({
+    deactivated_at: deactivatedAt,
+    updated_at: db.fn.now(),
+  });
 }

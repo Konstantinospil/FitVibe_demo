@@ -301,18 +301,32 @@ export async function down(knex: Knex): Promise<void> {
   // This handles the case where the table was dropped/recreated during rollback
   const shareLinksExists = await knex.schema.hasTable(SHARE_LINKS);
   if (shareLinksExists) {
-    // Use raw SQL to drop column only if it exists (handles case where table was recreated without it)
-    await knex.raw(`
-      DO $$
-      BEGIN
-        IF EXISTS (
-          SELECT 1 FROM information_schema.columns 
-          WHERE table_name = '${SHARE_LINKS}' AND column_name = 'feed_item_id'
-        ) THEN
-          ALTER TABLE "${SHARE_LINKS}" DROP COLUMN feed_item_id;
-        END IF;
-      END $$;
-    `);
+    // Check if column exists using parameterized query to prevent SQL injection
+    const columnExistsResult = await knex.raw<{ rows: Array<{ exists: boolean }> }>(
+      `
+      SELECT EXISTS (
+        SELECT 1 FROM information_schema.columns 
+        WHERE table_name = ? AND column_name = ?
+      ) as exists
+    `,
+      [SHARE_LINKS, "feed_item_id"],
+    );
+    const columnExists = (columnExistsResult as { rows: Array<{ exists: boolean }> }).rows[0]
+      ?.exists;
+
+    if (columnExists) {
+      // Use PostgreSQL's format() function to construct the DO block with safely escaped values
+      // %L safely escapes literal values, %I safely quotes identifiers
+      // This prevents SQL injection by using proper escaping instead of string interpolation
+      const doBlockResult = await knex.raw<{ rows: Array<{ sql: string }> }>(
+        `SELECT format($sql$DO $$ BEGIN EXECUTE format('ALTER TABLE %%I DROP COLUMN %%I', %L, %L); END $$;$sql$, ?, ?) as sql`,
+        [SHARE_LINKS, "feed_item_id"],
+      );
+      const doBlockSql = (doBlockResult as { rows: Array<{ sql: string }> }).rows[0]?.sql;
+      if (doBlockSql) {
+        await knex.raw(doBlockSql);
+      }
+    }
 
     // Restore session_id to not nullable (original state from migration 202510260104)
     // This is safe even if the column is already not nullable

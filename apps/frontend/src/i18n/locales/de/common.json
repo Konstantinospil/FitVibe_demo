@@ -4,10 +4,12 @@
     "sessions": "Einheiten",
     "insights": "Einblicke",
     "profile": "Profil",
+    "settings": "Einstellungen",
     "signOut": "Abmelden",
     "you": "Du",
     "activeSession": "Aktive Einheit",
-    "skipToContent": "Zum Hauptinhalt springen"
+    "skipToContent": "Zum Hauptinhalt springen",
+    "breadcrumb": "Brotkrümmelnavigation"
   },
   "language": {
     "label": "Sprache",
@@ -164,6 +166,8 @@
       "submitting": "Wird gesendet...",
       "success": "Ihre Nachricht wurde erfolgreich gesendet!",
       "error": "Nachricht konnte nicht gesendet werden. Bitte versuchen Sie es erneut.",
+      "networkError": "Verbindung zum Server nicht möglich. Bitte überprüfen Sie Ihre Verbindung und versuchen Sie es erneut.",
+      "csrfError": "Sicherheitstoken-Fehler. Bitte aktualisieren Sie die Seite und versuchen Sie es erneut. Wenn das Problem weiterhin besteht, überprüfen Sie die Cookie-Einstellungen Ihres Browsers.",
       "characters": "Zeichen"
     }
   },

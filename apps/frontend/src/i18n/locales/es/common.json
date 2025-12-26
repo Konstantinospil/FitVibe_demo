@@ -4,10 +4,12 @@
     "sessions": "Sesiones",
     "insights": "Perspectivas",
     "profile": "Perfil",
+    "settings": "Configuración",
     "signOut": "Cerrar sesión",
     "you": "Tú",
     "activeSession": "Sesión activa",
-    "skipToContent": "Saltar al contenido principal"
+    "skipToContent": "Saltar al contenido principal",
+    "breadcrumb": "Navegación de migas de pan"
   },
   "language": {
     "label": "Idioma",
@@ -164,6 +166,8 @@
       "submitting": "Enviando...",
       "success": "¡Su mensaje ha sido enviado con éxito!",
       "error": "No se pudo enviar el mensaje. Por favor, inténtelo de nuevo.",
+      "networkError": "No se puede conectar al servidor. Por favor, verifique su conexión e inténtelo de nuevo.",
+      "csrfError": "Error de token de seguridad. Por favor, actualice la página e inténtelo de nuevo. Si el problema persiste, verifique la configuración de cookies de su navegador.",
       "characters": "caracteres"
     }
   },

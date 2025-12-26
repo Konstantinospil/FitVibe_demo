@@ -135,8 +135,21 @@ function cacheTranslations(lng: SupportedLanguage, data: Record<string, unknown>
  * Load translations (API first, then JSON fallback)
  */
 async function loadLanguage(lng: SupportedLanguage): Promise<void> {
+  // Check if translations are already loaded with all required namespaces
+  // For English, we may have minimal translations loaded first, so we need to check
   if (resources[lng]) {
-    return; // Already loaded
+    const existingTranslations = resources[lng].translation;
+    // Check if we have all required namespaces (terms, privacy, cookie indicate full load)
+    if (
+      existingTranslations &&
+      typeof existingTranslations === "object" &&
+      "terms" in existingTranslations &&
+      "privacy" in existingTranslations &&
+      "cookie" in existingTranslations
+    ) {
+      return; // Already loaded with full translations
+    }
+    // If we only have minimal translations, continue to load full translations
   }
 
   try {
@@ -152,9 +165,22 @@ async function loadLanguage(lng: SupportedLanguage): Promise<void> {
     // Try API first
     let translations = await loadTranslationsFromAPI(lng);
 
-    // Fallback to JSON if API fails
-    if (!translations) {
-      console.warn(`Falling back to JSON translations for ${lng}`);
+    // Check if translations are empty (e.g., {terms:{}, privacy:{}, cookie:{}})
+    const isEmpty =
+      !translations ||
+      (typeof translations === "object" &&
+        "terms" in translations &&
+        "privacy" in translations &&
+        "cookie" in translations &&
+        Object.keys(translations.terms as Record<string, unknown>).length === 0 &&
+        Object.keys(translations.privacy as Record<string, unknown>).length === 0 &&
+        Object.keys(translations.cookie as Record<string, unknown>).length === 0);
+
+    // Fallback to JSON if API fails or returns empty translations
+    if (!translations || isEmpty) {
+      console.warn(
+        `Falling back to JSON translations for ${lng}${isEmpty ? " (API returned empty translations)" : ""}`,
+      );
       translations = await loadTranslationsFromJSON(lng);
     } else {
       // Cache successful API responses

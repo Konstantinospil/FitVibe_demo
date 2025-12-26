@@ -1,11 +1,11 @@
 import express from "express";
-import request from "supertest";
 import type { RequestHandler } from "express";
 import { z } from "zod";
 import systemRouter from "../../../../apps/backend/src/modules/system/system.routes.js";
 import { env } from "../../../../apps/backend/src/config/env.js";
 import { insertAudit } from "../../../../apps/backend/src/modules/common/audit.util.js";
 import type { AuditLogPayload } from "../../../../apps/backend/src/modules/common/audit.util.js";
+import { invokeExpress } from "../../test-helpers/express-request";
 
 jest.mock("../../../../apps/backend/src/modules/common/audit.util.js", () => ({
   insertAudit: jest.fn().mockResolvedValue(undefined),
@@ -84,27 +84,24 @@ describe("system.routes", () => {
     mutableEnv.readOnlyMode = true;
     mutableEnv.maintenanceMessage = "Database upgrades";
 
-    await request(app)
-      .get("/system/read-only/status")
-      .expect(200)
-      .expect(({ body }: { body: unknown }) => {
-        const parsed = parseStatusResponse(body);
-        expect(parsed.readOnlyMode).toBe(true);
-        expect(parsed.message).toBe("Database upgrades");
-        expect(typeof parsed.timestamp).toBe("string");
-      });
+    const response = await invokeExpress(app, { method: "GET", url: "/system/read-only/status" });
+    expect(response.statusCode).toBe(200);
+    const parsed = parseStatusResponse(response.json);
+    expect(parsed.readOnlyMode).toBe(true);
+    expect(parsed.message).toBe("Database upgrades");
+    expect(typeof parsed.timestamp).toBe("string");
   });
 
   it("enables read-only mode and writes an audit entry", async () => {
     mutableEnv.readOnlyMode = false;
-    await request(app)
-      .post("/system/read-only/enable")
-      .send({ reason: "emergency", estimatedDuration: "15m" })
-      .expect(200)
-      .expect(({ body }: { body: unknown }) => {
-        const parsed = parseMutationResponse(body);
-        expect(parsed.readOnlyMode).toBe(true);
-      });
+    const response = await invokeExpress(app, {
+      method: "POST",
+      url: "/system/read-only/enable",
+      body: { reason: "emergency", estimatedDuration: "15m" },
+    });
+    expect(response.statusCode).toBe(200);
+    const parsed = parseMutationResponse(response.json);
+    expect(parsed.readOnlyMode).toBe(true);
     expect(mutableEnv.readOnlyMode).toBe(true);
 
     const audit = latestAuditPayload();
@@ -118,14 +115,14 @@ describe("system.routes", () => {
 
   it("disables read-only mode and logs audit metadata", async () => {
     mutableEnv.readOnlyMode = true;
-    await request(app)
-      .post("/system/read-only/disable")
-      .send({ notes: "maintenance completed" })
-      .expect(200)
-      .expect(({ body }: { body: unknown }) => {
-        const parsed = parseMutationResponse(body);
-        expect(parsed.readOnlyMode).toBe(false);
-      });
+    const response = await invokeExpress(app, {
+      method: "POST",
+      url: "/system/read-only/disable",
+      body: { notes: "maintenance completed" },
+    });
+    expect(response.statusCode).toBe(200);
+    const parsed = parseMutationResponse(response.json);
+    expect(parsed.readOnlyMode).toBe(false);
     expect(mutableEnv.readOnlyMode).toBe(false);
 
     const audit = latestAuditPayload();

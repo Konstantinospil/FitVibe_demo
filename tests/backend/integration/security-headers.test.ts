@@ -1,11 +1,11 @@
-import request from "supertest";
 import app from "../../../apps/backend/src/app.js";
+import { invokeExpress } from "../test-helpers/express-request";
 
 describe("Q-15 security headers", () => {
   it("applies strict HTTP response headers on health endpoint", async () => {
-    const response = await request(app).get("/health");
+    const response = await invokeExpress(app, { method: "GET", url: "/health" });
 
-    expect(response.status).toBe(200);
+    expect(response.statusCode).toBe(200);
     expect(response.headers["content-security-policy"]).toContain("default-src 'self'");
     expect(response.headers["x-content-type-options"]).toBe("nosniff");
     expect(response.headers["x-frame-options"]).toBe("SAMEORIGIN");

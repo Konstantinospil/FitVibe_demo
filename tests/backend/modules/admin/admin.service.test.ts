@@ -312,26 +312,30 @@ describe("Admin Service", () => {
       reportCount: 0,
     };
 
-    it("should suspend user successfully", async () => {
+    it("should blacklist user successfully", async () => {
       jest.mocked(repo.getUserForAdmin).mockResolvedValue(mockUser);
+      jest.mocked(repo.addToBlacklist).mockResolvedValue();
       jest.mocked(repo.updateUserStatus).mockResolvedValue();
+      jest.mocked(repo.updateUserDeactivatedAt).mockResolvedValue();
 
       const input: UserActionInput = {
         userId: "user-1",
-        action: "suspend",
+        action: "blacklist",
         adminId: "admin-1",
         reason: "Violation",
       };
 
       await service.performUserAction(input);
 
-      expect(repo.updateUserStatus).toHaveBeenCalledWith("user-1", "suspended");
+      expect(repo.addToBlacklist).toHaveBeenCalledWith("test@example.com", "admin-1");
+      expect(repo.updateUserStatus).toHaveBeenCalledWith("user-1", "banned");
+      expect(repo.updateUserDeactivatedAt).toHaveBeenCalledWith("user-1", expect.any(Date));
       expect(audit.logAudit).toHaveBeenCalledWith({
-        action: "user_suspended",
+        action: "user_blacklisted",
         entityType: "user",
         entityId: "user-1",
         userId: "admin-1",
-        metadata: { username: "testuser", reason: "Violation" },
+        metadata: { username: "testuser", email: "test@example.com", reason: "Violation" },
       });
     });
 
@@ -340,7 +344,7 @@ describe("Admin Service", () => {
 
       const input: UserActionInput = {
         userId: "user-1",
-        action: "suspend",
+        action: "blacklist",
         adminId: "admin-1",
       };
 
@@ -353,7 +357,7 @@ describe("Admin Service", () => {
 
       const input: UserActionInput = {
         userId: "admin-1",
-        action: "suspend",
+        action: "blacklist",
         adminId: "admin-1",
       };
 
@@ -361,65 +365,50 @@ describe("Admin Service", () => {
       expect(repo.updateUserStatus).not.toHaveBeenCalled();
     });
 
-    it("should throw error if trying to modify another admin", async () => {
+    it("should allow actions against another admin user", async () => {
       const adminUser: UserSearchResult = {
         ...mockUser,
         roleCode: "admin",
       };
 
       jest.mocked(repo.getUserForAdmin).mockResolvedValue(adminUser);
+      jest.mocked(repo.addToBlacklist).mockResolvedValue();
+      jest.mocked(repo.updateUserStatus).mockResolvedValue();
+      jest.mocked(repo.updateUserDeactivatedAt).mockResolvedValue();
 
       const input: UserActionInput = {
         userId: "user-1",
-        action: "suspend",
+        action: "blacklist",
         adminId: "admin-2",
       };
 
-      await expect(service.performUserAction(input)).rejects.toThrow(HttpError);
-      expect(repo.updateUserStatus).not.toHaveBeenCalled();
-    });
-
-    it("should ban user successfully", async () => {
-      jest.mocked(repo.getUserForAdmin).mockResolvedValue(mockUser);
-      jest.mocked(repo.updateUserStatus).mockResolvedValue();
-
-      const input: UserActionInput = {
-        userId: "user-1",
-        action: "ban",
-        adminId: "admin-1",
-      };
-
-      await service.performUserAction(input);
-
+      await expect(service.performUserAction(input)).resolves.toBeUndefined();
       expect(repo.updateUserStatus).toHaveBeenCalledWith("user-1", "banned");
-      expect(audit.logAudit).toHaveBeenCalledWith({
-        action: "user_banned",
-        entityType: "user",
-        entityId: "user-1",
-        userId: "admin-1",
-        metadata: { username: "testuser", reason: undefined },
-      });
     });
 
-    it("should activate user successfully", async () => {
+    it("should unblacklist user successfully", async () => {
       jest.mocked(repo.getUserForAdmin).mockResolvedValue(mockUser);
+      jest.mocked(repo.removeFromBlacklist).mockResolvedValue();
       jest.mocked(repo.updateUserStatus).mockResolvedValue();
+      jest.mocked(repo.updateUserDeactivatedAt).mockResolvedValue();
 
       const input: UserActionInput = {
         userId: "user-1",
-        action: "activate",
+        action: "unblacklist",
         adminId: "admin-1",
       };
 
       await service.performUserAction(input);
 
+      expect(repo.removeFromBlacklist).toHaveBeenCalledWith("test@example.com");
       expect(repo.updateUserStatus).toHaveBeenCalledWith("user-1", "active");
+      expect(repo.updateUserDeactivatedAt).toHaveBeenCalledWith("user-1", null);
       expect(audit.logAudit).toHaveBeenCalledWith({
-        action: "user_activated",
+        action: "user_unblacklisted",
         entityType: "user",
         entityId: "user-1",
         userId: "admin-1",
-        metadata: { username: "testuser", reason: undefined },
+        metadata: { username: "testuser", email: "test@example.com", reason: undefined },
       });
     });
 

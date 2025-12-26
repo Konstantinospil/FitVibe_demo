@@ -219,6 +219,7 @@ if (!privateKey || !publicKey) {
 const defaultOrigins = [
   normalizeOrigin(raw.FRONTEND_URL),
   normalizeOrigin(raw.APP_BASE_URL),
+  normalizeOrigin("http://localhost:5174"), // Backoffice
 ].filter(Boolean) as string[];
 
 const allowedOrigins = (() => {

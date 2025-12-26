@@ -4,10 +4,12 @@
     "sessions": "Sessions",
     "insights": "Insights",
     "profile": "Profile",
+    "settings": "Settings",
     "signOut": "Sign out",
     "you": "You",
     "activeSession": "Active session",
-    "skipToContent": "Skip to main content"
+    "skipToContent": "Skip to main content",
+    "breadcrumb": "Breadcrumb navigation"
   },
   "language": {
     "label": "Language",
@@ -164,6 +166,8 @@
       "submitting": "Sending...",
       "success": "Your message has been sent successfully!",
       "error": "Failed to send message. Please try again.",
+      "networkError": "Cannot connect to server. Please check your connection and try again.",
+      "csrfError": "Security token error. Please refresh the page and try again. If the problem persists, check your browser's cookie settings.",
       "characters": "characters"
     }
   },
@@ -177,6 +181,7 @@
     "AUTH_TOKEN_EXPIRED": "Your verification link has expired. Please request a new one",
     "AUTH_TOO_MANY_REQUESTS": "Verification limit reached. Please try again later",
     "AUTH_CONFLICT": "Unable to complete registration",
+    "AUTH_FORBIDDEN": "Your account has been permanently disabled due to violations of our Terms of Service. If you believe this action was taken in error, please contact our support team for assistance.",
     "AUTH_USER_NOT_FOUND": "User not found",
     "AUTH_INVALID_CREDENTIALS": "The email or password you entered is incorrect. Please check your credentials and try again.",
     "AUTH_INVALID_REFRESH": "Invalid refresh token",
@@ -501,6 +506,16 @@
     "profile": {
       "title": "Profile Settings",
       "description": "Update your display name and basic information",
+      "avatar": "Profile Picture",
+      "avatarUpload": "Upload Avatar",
+      "avatarChange": "Change Avatar",
+      "avatarRemove": "Remove Avatar",
+      "avatarUploading": "Uploading...",
+      "avatarUploadSuccess": "Avatar uploaded successfully!",
+      "avatarUploadError": "Failed to upload avatar. Please try again.",
+      "avatarInvalidFormat": "Please upload an image file (JPEG, PNG, or WebP)",
+      "avatarFileTooLarge": "File size must be less than 5MB",
+      "avatarInvalidFile": "Invalid file type. Please upload an image file.",
       "displayName": "Display Name",
       "displayNamePlaceholder": "Your display name",
       "alias": "Alias",

@@ -200,12 +200,6 @@ const Contact: React.FC = () => {
     }
   };
 
-  const contentStyle: React.CSSProperties = {
-    lineHeight: 1.8,
-    color: "var(--color-text-primary)",
-    fontSize: "var(--font-size-md)",
-  };
-
   return (
     <PageIntro
       eyebrow={t("contact.eyebrow", { defaultValue: "Contact" })}
@@ -215,8 +209,8 @@ const Contact: React.FC = () => {
       })}
     >
       <Card className="contact-form-container">
-        <CardContent className="contact-form-content" style={contentStyle}>
-          <div style={{ marginBottom: "var(--space-lg)" }}>
+        <CardContent className="contact-form-content line-height-15 text-primary text-md">
+          <div className="mb-15">
             <Button
               variant="secondary"
               size="sm"
@@ -235,8 +229,7 @@ const Contact: React.FC = () => {
             onSubmit={(e) => {
               void handleSubmit(e);
             }}
-            className="form"
-            style={{ gap: "var(--space-lg)" }}
+            className="form form--gap-lg"
           >
             <div className="form-label">
               <label htmlFor="contact-email" className="form-label-text">
@@ -291,13 +284,12 @@ const Contact: React.FC = () => {
                 style={{
                   resize: "vertical",
                   minHeight: "120px",
-                  fontFamily: "var(--font-family-base)",
                 }}
                 aria-required="true"
                 aria-invalid={error ? "true" : "false"}
                 aria-describedby={error ? "contact-error" : undefined}
               />
-              <small className="text-muted" style={{ marginTop: "0.25rem" }}>
+              <small className="text-muted mt-075">
                 {message.length} / 5000{" "}
                 {t("contact.form.characters", { defaultValue: "characters" })}
               </small>
@@ -311,12 +303,8 @@ const Contact: React.FC = () => {
 
             <button
               type="submit"
-              className="login-fallback__button"
+              className="login-fallback__button w-full mt-075"
               disabled={isSubmitting}
-              style={{
-                width: "100%",
-                marginTop: "0.5rem",
-              }}
             >
               {isSubmitting
                 ? t("contact.form.submitting", { defaultValue: "Sending..." })

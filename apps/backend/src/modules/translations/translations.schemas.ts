@@ -35,6 +35,24 @@ export const ListTranslationsQuerySchema = z.object({
   language: SupportedLanguageSchema.optional(),
   namespace: TranslationNamespaceSchema.optional(),
   search: z.string().optional(),
+  keyPath: z.string().optional(),
+  activeOnly: z.preprocess((val) => {
+    if (val === undefined || val === null || val === "") {
+      return undefined;
+    }
+    if (typeof val === "boolean") {
+      return val;
+    }
+    if (typeof val === "string") {
+      const lower = val.toLowerCase();
+      // "false" means show all (including deleted), anything else means show only active
+      if (lower === "false" || lower === "0") {
+        return false;
+      }
+      return true;
+    }
+    return undefined;
+  }, z.boolean().optional()),
   limit: z.coerce.number().int().min(1).max(1000).optional(),
   offset: z.coerce.number().int().min(0).optional(),
 });

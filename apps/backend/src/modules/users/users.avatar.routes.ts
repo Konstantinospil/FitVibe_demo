@@ -1,6 +1,6 @@
 import { Router } from "express";
 import multer from "multer";
-import { requireAuth } from "./users.middleware.js";
+import { requireAccessToken } from "../auth/auth.middleware.js";
 import { rateLimit } from "../common/rateLimiter.js";
 import { asyncHandler } from "../../utils/async-handler.js";
 import {
@@ -19,7 +19,7 @@ export const usersAvatarRouter = Router();
 usersAvatarRouter.post(
   "/avatar",
   rateLimit("user_avatar_upload", 5, 60),
-  requireAuth,
+  requireAccessToken,
   upload.single("avatar"),
   asyncHandler(uploadAvatarHandler),
 );
@@ -33,6 +33,6 @@ usersAvatarRouter.get(
 usersAvatarRouter.delete(
   "/avatar",
   rateLimit("user_avatar_delete", 10, 60),
-  requireAuth,
+  requireAccessToken,
   asyncHandler(deleteAvatarHandler),
 );

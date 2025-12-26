@@ -2,6 +2,10 @@ import { register } from "../../../../apps/backend/src/modules/auth/auth.service
 import type { AuthUserRecord } from "../../../../apps/backend/src/modules/auth/auth.repository.js";
 import type * as AuthRepositoryModule from "../../../../apps/backend/src/modules/auth/auth.repository.js";
 
+jest.mock("../../../../apps/backend/src/modules/admin/admin.repository.js", () => ({
+  isEmailBlacklisted: jest.fn().mockResolvedValue(false),
+}));
+
 jest.mock("../../../../apps/backend/src/modules/auth/auth.repository.js", () => {
   const actual = jest.requireActual<typeof AuthRepositoryModule>(
     "../../../../apps/backend/src/modules/auth/auth.repository.js",

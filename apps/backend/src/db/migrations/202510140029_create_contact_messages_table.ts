@@ -22,11 +22,14 @@ export async function up(knex: Knex): Promise<void> {
       .inTable("users")
       .onUpdate("CASCADE")
       .onDelete("SET NULL");
+    table.timestamp("responded_at", { useTz: true }).nullable();
+    table.text("response").nullable();
 
     table.index(["user_id"], "contact_messages_user_id_idx");
     table.index(["email"], "contact_messages_email_idx");
     table.index(["created_at"], "contact_messages_created_at_idx");
     table.index(["read_at"], "contact_messages_read_at_idx");
+    table.index(["responded_at"], "contact_messages_responded_at_idx");
   });
 }
 
