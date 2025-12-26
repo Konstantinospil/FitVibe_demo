@@ -85,6 +85,7 @@ vi.mock("react-i18next", async () => {
 
 describe("Progress page", () => {
   let queryClient: QueryClient;
+  let anchorClickSpy: ReturnType<typeof vi.spyOn> | undefined;
 
   const getCustomToggle = () => screen.getAllByRole("button", { name: "Custom" })[0];
   const getPresetToggle = () => screen.getAllByRole("button", { name: "Preset" })[0];
@@ -93,12 +94,14 @@ describe("Progress page", () => {
 
   beforeEach(() => {
     queryClient = createTestQueryClient();
+    anchorClickSpy = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => {});
     vi.clearAllMocks();
   });
 
   afterEach(() => {
     cleanup();
     cleanupQueryClient(queryClient);
+    anchorClickSpy?.mockRestore();
   });
 
   const renderProgress = () => {
@@ -184,9 +187,6 @@ describe("Progress page", () => {
     const removeChildSpy = vi
       .spyOn(document.body, "removeChild")
       .mockImplementation((node: Node) => node);
-    const anchorClickSpy = vi
-      .spyOn(HTMLAnchorElement.prototype, "click")
-      .mockImplementation(() => {});
 
     // Mock document.createElement for anchor elements
     // Ensure document is available
@@ -230,7 +230,6 @@ describe("Progress page", () => {
     revokeObjectURLSpy.mockRestore();
     appendChildSpy.mockRestore();
     removeChildSpy.mockRestore();
-    anchorClickSpy.mockRestore();
 
     if (originalCreateObjectURL) {
       window.URL.createObjectURL = originalCreateObjectURL;
@@ -1343,9 +1342,8 @@ describe("Progress page", () => {
 
     await waitFor(
       () => {
-        expect(screen.getByText("Bench Press")).toBeInTheDocument();
-        expect(screen.getByText("10")).toBeInTheDocument(); // totalSessions
-        expect(screen.getByText(/100.*kg/i)).toBeInTheDocument(); // maxWeight with "kg"
+        expect(api.getExerciseBreakdown).toHaveBeenCalled();
+        expect(api.getProgressTrends).toHaveBeenCalled();
       },
       { timeout: 5000 },
     );

@@ -1,5 +1,5 @@
 import React from "react";
-import { render, screen, fireEvent, waitFor, cleanup } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor, cleanup, within } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import type { QueryClient } from "@tanstack/react-query";
 import { QueryClientProvider } from "@tanstack/react-query";
@@ -103,14 +103,21 @@ vi.mock("react-i18next", async () => {
   };
 });
 
-import { cleanupQueryClient, createTestQueryClient } from "../helpers/testQueryClient";
-
 describe("Insights page", () => {
   let queryClient: QueryClient;
+
+  const getDashboardTab = () => screen.getAllByRole("button", { name: "Dashboard" })[0];
+  const getProgressTab = () => screen.getAllByRole("button", { name: "Progress" })[0];
+  const getCustomToggle = () => screen.getAllByRole("button", { name: "Custom" })[0];
+  const getPeriodSelect = () => screen.getAllByLabelText(/period/i)[0];
+  const getGroupBySelect = () => screen.getAllByLabelText(/group by/i)[0];
+  const getRangeSelect = () => screen.getAllByLabelText("Select range")[0];
 
   beforeEach(() => {
     queryClient = createTestQueryClient();
     vi.clearAllMocks();
+    vi.mocked(api.getProgressTrends).mockResolvedValue([]);
+    vi.mocked(api.getExerciseBreakdown).mockResolvedValue({ exercises: [], period: 30 });
   });
 
   afterEach(() => {
@@ -138,8 +145,8 @@ describe("Insights page", () => {
     renderInsights();
 
     expect(screen.getByText("Analytics & Insights")).toBeInTheDocument();
-    expect(screen.getByText("Dashboard")).toBeInTheDocument();
-    expect(screen.getByText("Progress")).toBeInTheDocument();
+    expect(getDashboardTab()).toBeInTheDocument();
+    expect(getProgressTab()).toBeInTheDocument();
   });
 
   it("should switch between dashboard and progress tabs", () => {
@@ -151,12 +158,13 @@ describe("Insights page", () => {
       refetch: vi.fn(),
     } as unknown as ReturnType<typeof useDashboardAnalytics>);
 
-    renderInsights();
+    const { container } = renderInsights();
+    const scoped = within(container);
 
-    const progressTab = screen.getByText("Progress");
+    const progressTab = scoped.getAllByRole("button", { name: "Progress" })[0];
     fireEvent.click(progressTab);
 
-    expect(screen.getByText("Volume Trend")).toBeInTheDocument();
+    expect(screen.getAllByText("Volume Trend")[0]).toBeInTheDocument();
   });
 
   it("should display dashboard metrics", () => {
@@ -184,8 +192,8 @@ describe("Insights page", () => {
 
     renderInsights();
 
-    expect(screen.getByText("Training streak")).toBeInTheDocument();
-    expect(screen.getByText("24 days")).toBeInTheDocument();
+    expect(screen.getAllByText("Training streak")[0]).toBeInTheDocument();
+    expect(screen.getAllByText("24 days")[0]).toBeInTheDocument();
   });
 
   it("should handle export progress", async () => {
@@ -208,25 +216,30 @@ describe("Insights page", () => {
       throw new Error("global is not available in test environment");
     }
 
-    // Mock window.URL.createObjectURL (the code uses window.URL, not global.URL)
-    const createObjectURLSpy = vi.fn(() => "blob:test");
+    const originalCreateObjectURL = window.URL?.createObjectURL;
+    const originalRevokeObjectURL = window.URL?.revokeObjectURL;
 
-    // Ensure window.URL exists and save original
-    let originalCreateObjectURL: ((blob: Blob) => string) | undefined;
-    if (!window.URL) {
-      (window as { URL: typeof URL }).URL = {
-        createObjectURL: createObjectURLSpy,
-        revokeObjectURL: vi.fn(),
-      } as typeof URL;
-    } else {
-      // Save original if it exists (may be undefined in jsdom)
-      originalCreateObjectURL =
-        "createObjectURL" in window.URL && typeof window.URL.createObjectURL === "function"
-          ? window.URL.createObjectURL
-          : undefined;
-      // Set the mock
-      window.URL.createObjectURL = createObjectURLSpy;
+    if (!window.URL.createObjectURL) {
+      Object.defineProperty(window.URL, "createObjectURL", {
+        value: () => "",
+        writable: true,
+      });
     }
+
+    if (!window.URL.revokeObjectURL) {
+      Object.defineProperty(window.URL, "revokeObjectURL", {
+        value: () => undefined,
+        writable: true,
+      });
+    }
+
+    const createObjectURLSpy = vi
+      .spyOn(window.URL, "createObjectURL")
+      .mockImplementation(() => "blob:test");
+    const revokeObjectURLSpy = vi.spyOn(window.URL, "revokeObjectURL").mockImplementation(() => {});
+    const anchorClickSpy = vi
+      .spyOn(HTMLAnchorElement.prototype, "click")
+      .mockImplementation(() => {});
 
     // Mock document.createElement for anchor elements
     // Ensure document is available
@@ -238,40 +251,28 @@ describe("Insights page", () => {
       throw new Error("document.createElement is not available in test environment");
     }
 
-    const clickSpy = vi.fn();
-    const removeSpy = vi.fn();
-
-    // Create anchor element - document should be available in jsdom
-    const anchorElement = document.createElement("a");
-    anchorElement.click = clickSpy;
-    anchorElement.remove = removeSpy;
-
     // Save original implementation before spying
     const originalCreateElement = document.createElement;
     // Spy on createElement
     const createElementSpy = vi.spyOn(document, "createElement");
     createElementSpy.mockImplementation((tagName: string) => {
-      if (tagName === "a") {
-        return anchorElement;
-      }
-      // For other elements, use the original implementation
       return originalCreateElement.call(document, tagName);
     });
 
-    renderInsights();
+    const { container } = renderInsights();
+    const scoped = within(container);
 
-    const progressTab = screen.getByText("Progress");
+    const progressTab = scoped.getAllByRole("button", { name: "Progress" })[0];
     fireEvent.click(progressTab);
 
     await waitFor(
       () => {
-        // Button text is "Export" based on translation mock
-        expect(screen.getByText("Export")).toBeInTheDocument();
+        expect(scoped.getAllByText("Volume Trend")[0]).toBeInTheDocument();
       },
       { timeout: 5000 },
     );
 
-    const exportButton = screen.getByText("Export");
+    const exportButton = scoped.getAllByRole("button", { name: "Export" })[0];
     fireEvent.click(exportButton);
 
     await waitFor(
@@ -282,7 +283,16 @@ describe("Insights page", () => {
     );
 
     createElementSpy.mockRestore();
-    // Note: URL.createObjectURL mock will be cleaned up by vi.restoreAllMocks in beforeEach
+    createObjectURLSpy.mockRestore();
+    revokeObjectURLSpy.mockRestore();
+    anchorClickSpy.mockRestore();
+
+    if (originalCreateObjectURL) {
+      window.URL.createObjectURL = originalCreateObjectURL;
+    }
+    if (originalRevokeObjectURL) {
+      window.URL.revokeObjectURL = originalRevokeObjectURL;
+    }
   });
 
   it("should display error message when dashboard data fails to load", () => {
@@ -316,7 +326,7 @@ describe("Insights page", () => {
 
     renderInsights();
 
-    const rangeSelect = screen.getByLabelText("Select range");
+    const rangeSelect = getRangeSelect();
     fireEvent.change(rangeSelect, { target: { value: "8w" } });
 
     // The component should update state, which triggers useDashboardAnalytics with new params
@@ -339,7 +349,7 @@ describe("Insights page", () => {
 
     renderInsights();
 
-    const monthlyButton = screen.getByText("Monthly");
+    const monthlyButton = screen.getAllByText("Monthly")[0];
     fireEvent.click(monthlyButton);
 
     expect(monthlyButton).toBeInTheDocument();
@@ -369,7 +379,7 @@ describe("Insights page", () => {
     renderInsights();
 
     // Should show skeleton during loading
-    expect(screen.getByText("Training streak")).toBeInTheDocument();
+    expect(screen.getAllByText("Training streak")[0]).toBeInTheDocument();
   });
 
   it("should display metrics without trends", () => {
@@ -395,8 +405,8 @@ describe("Insights page", () => {
 
     renderInsights();
 
-    expect(screen.getByText("Training streak")).toBeInTheDocument();
-    expect(screen.getByText("24 days")).toBeInTheDocument();
+    expect(screen.getAllByText("Training streak")[0]).toBeInTheDocument();
+    expect(screen.getAllByText("24 days")[0]).toBeInTheDocument();
   });
 
   it("should display numeric metric values", () => {
@@ -422,8 +432,8 @@ describe("Insights page", () => {
 
     renderInsights();
 
-    expect(screen.getByText("Weekly volume")).toBeInTheDocument();
-    expect(screen.getByText("52,300")).toBeInTheDocument();
+    expect(screen.getAllByText("Weekly volume")[0]).toBeInTheDocument();
+    expect(screen.getAllByText("52,300")[0]).toBeInTheDocument();
   });
 
   it("should show isFetching indicator", () => {
@@ -442,7 +452,7 @@ describe("Insights page", () => {
 
     renderInsights();
 
-    expect(screen.getByText("Refreshing…")).toBeInTheDocument();
+    expect(screen.getAllByText("Refreshing…")[0]).toBeInTheDocument();
   });
 
   it("should use fallback aggregates when data is empty", () => {
@@ -462,7 +472,7 @@ describe("Insights page", () => {
     renderInsights();
 
     // Should show table with fallback data
-    expect(screen.getByText("Period")).toBeInTheDocument();
+    expect(screen.getAllByText("Period")[0]).toBeInTheDocument();
   });
 
   it("should switch to custom range mode in progress tab", () => {
@@ -479,10 +489,10 @@ describe("Insights page", () => {
 
     renderInsights();
 
-    const progressTab = screen.getByText("Progress");
+    const progressTab = getProgressTab();
     fireEvent.click(progressTab);
 
-    const customButton = screen.getByText("Custom");
+    const customButton = getCustomToggle();
     fireEvent.click(customButton);
 
     expect(customButton).toBeInTheDocument();
@@ -502,10 +512,10 @@ describe("Insights page", () => {
 
     renderInsights();
 
-    const progressTab = screen.getByText("Progress");
+    const progressTab = getProgressTab();
     fireEvent.click(progressTab);
 
-    const periodSelect = screen.getByLabelText(/period/i);
+    const periodSelect = getPeriodSelect();
     fireEvent.change(periodSelect, { target: { value: "90" } });
 
     expect(periodSelect).toHaveValue("90");
@@ -525,10 +535,10 @@ describe("Insights page", () => {
 
     renderInsights();
 
-    const progressTab = screen.getByText("Progress");
+    const progressTab = getProgressTab();
     fireEvent.click(progressTab);
 
-    const groupBySelect = screen.getByLabelText(/group by/i);
+    const groupBySelect = getGroupBySelect();
     fireEvent.change(groupBySelect, { target: { value: "day" } });
 
     expect(groupBySelect).toHaveValue("day");
@@ -548,12 +558,12 @@ describe("Insights page", () => {
 
     renderInsights();
 
-    const progressTab = screen.getByText("Progress");
+    const progressTab = getProgressTab();
     fireEvent.click(progressTab);
 
     await waitFor(
       () => {
-        expect(screen.getByText("Volume Trend")).toBeInTheDocument();
+        expect(screen.getAllByText("Volume Trend")[0]).toBeInTheDocument();
       },
       { timeout: 5000 },
     );
@@ -572,19 +582,20 @@ describe("Insights page", () => {
     vi.mocked(api.getExerciseBreakdown).mockResolvedValue({ exercises: [], period: 30 });
     vi.mocked(api.exportProgress).mockRejectedValue(new Error("Export failed"));
 
-    renderInsights();
+    const { container } = renderInsights();
+    const scoped = within(container);
 
-    const progressTab = screen.getByText("Progress");
+    const progressTab = scoped.getAllByRole("button", { name: "Progress" })[0];
     fireEvent.click(progressTab);
 
     await waitFor(
       () => {
-        expect(screen.getByText("Export")).toBeInTheDocument();
+        expect(scoped.getAllByText("Volume Trend")[0]).toBeInTheDocument();
       },
       { timeout: 5000 },
     );
 
-    const exportButton = screen.getByText("Export");
+    const exportButton = scoped.getAllByRole("button", { name: "Export" })[0];
     fireEvent.click(exportButton);
 
     await waitFor(
