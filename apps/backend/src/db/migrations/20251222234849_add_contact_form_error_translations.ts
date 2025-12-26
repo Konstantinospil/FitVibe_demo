@@ -60,6 +60,7 @@ export async function up(knex: Knex): Promise<void> {
       `Table ${TRANSLATIONS_TABLE} does not exist. Run the create_translations_table migration first.`,
     );
   }
+  const hasDeletedAt = await knex.schema.hasColumn(TRANSLATIONS_TABLE, "deleted_at");
 
   console.warn("Starting import of new contact form error translations...");
 
@@ -100,15 +101,18 @@ export async function up(knex: Knex): Promise<void> {
   // This works with the partial unique index (idx_translations_namespace_key_lang_unique_active)
   for (const translation of translations) {
     // Check if there's a deleted translation that should be restored
-    const deleted = (await knex(TRANSLATIONS_TABLE)
-      .where({
-        language: translation.language,
-        namespace: translation.namespace,
-        key_path: translation.key_path,
-      })
-      .whereNotNull("deleted_at")
-      .orderBy("deleted_at", "desc")
-      .first()) as { id: string } | undefined;
+    let deleted: { id: string } | undefined;
+    if (hasDeletedAt) {
+      deleted = (await knex(TRANSLATIONS_TABLE)
+        .where({
+          language: translation.language,
+          namespace: translation.namespace,
+          key_path: translation.key_path,
+        })
+        .whereNotNull("deleted_at")
+        .orderBy("deleted_at", "desc")
+        .first()) as { id: string } | undefined;
+    }
 
     if (deleted) {
       // Restore the deleted translation
@@ -123,24 +127,26 @@ export async function up(knex: Knex): Promise<void> {
     }
 
     // Check if there's an active translation
-    const active = (await knex(TRANSLATIONS_TABLE)
-      .where({
-        language: translation.language,
-        namespace: translation.namespace,
-        key_path: translation.key_path,
-      })
-      .whereNull("deleted_at")
-      .first()) as { id: string } | undefined;
+    const activeQuery = knex(TRANSLATIONS_TABLE).where({
+      language: translation.language,
+      namespace: translation.namespace,
+      key_path: translation.key_path,
+    });
+    if (hasDeletedAt) {
+      activeQuery.whereNull("deleted_at");
+    }
+    const active = (await activeQuery.first()) as { id: string } | undefined;
 
     if (active) {
       // Update the existing active translation
-      await knex(TRANSLATIONS_TABLE)
-        .where({ id: active.id })
-        .update({
-          value: translation.value,
-          updated_at: knex.raw("NOW()"),
-          deleted_at: null,
-        });
+      const updatePayload: Record<string, unknown> = {
+        value: translation.value,
+        updated_at: knex.raw("NOW()"),
+      };
+      if (hasDeletedAt) {
+        updatePayload.deleted_at = null;
+      }
+      await knex(TRANSLATIONS_TABLE).where({ id: active.id }).update(updatePayload);
       continue;
     }
 
