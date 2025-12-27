@@ -202,12 +202,13 @@ export async function insertStateHistory(
   newValue: unknown,
   trx?: Knex.Transaction,
 ) {
+  const toJsonb = (value: unknown) => (value === undefined ? null : JSON.stringify(value));
   return withDb(trx)(STATE_TABLE).insert({
     id: crypto.randomUUID(),
     user_id: userId,
     field,
-    old_value: oldValue ?? null,
-    new_value: newValue ?? null,
+    old_value: oldValue === null ? null : toJsonb(oldValue),
+    new_value: newValue === null ? null : toJsonb(newValue),
     changed_at: new Date().toISOString(),
   });
 }

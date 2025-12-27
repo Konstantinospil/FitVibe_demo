@@ -19,34 +19,34 @@ import {
 export async function submitContactMessage(
   input: CreateContactMessageInput,
 ): Promise<ContactMessage> {
+  // Sanitize input (trim whitespace) before validation
+  const sanitizedInput: CreateContactMessageInput = {
+    userId: input.userId || null,
+    email: input.email?.trim() ?? "",
+    topic: input.topic?.trim() ?? "",
+    message: input.message?.trim() ?? "",
+  };
+
   // Validate input
-  if (!input.email || !input.topic || !input.message) {
+  if (!sanitizedInput.email || !sanitizedInput.topic || !sanitizedInput.message) {
     throw new HttpError(400, "E.CONTACT.INVALID_INPUT", "CONTACT_INVALID_INPUT");
   }
 
   // Validate email format
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if (!emailRegex.test(input.email)) {
+  if (!emailRegex.test(sanitizedInput.email)) {
     throw new HttpError(400, "E.CONTACT.INVALID_EMAIL", "CONTACT_INVALID_EMAIL");
   }
 
   // Validate topic length
-  if (input.topic.length > 200) {
+  if (sanitizedInput.topic.length > 200) {
     throw new HttpError(400, "E.CONTACT.TOPIC_TOO_LONG", "CONTACT_TOPIC_TOO_LONG");
   }
 
   // Validate message length
-  if (input.message.length > 5000) {
+  if (sanitizedInput.message.length > 5000) {
     throw new HttpError(400, "E.CONTACT.MESSAGE_TOO_LONG", "CONTACT_MESSAGE_TOO_LONG");
   }
-
-  // Sanitize input (trim whitespace)
-  const sanitizedInput: CreateContactMessageInput = {
-    userId: input.userId || null,
-    email: input.email.trim(),
-    topic: input.topic.trim(),
-    message: input.message.trim(),
-  };
 
   return await createContactMessage(sanitizedInput);
 }

@@ -23,6 +23,15 @@ const EICAR_TEST_STRING = "X5O!P%@AP[4\\PZX54(P^)7CC)7}$EICAR-STANDARD-ANTIVIRUS
 
 const DISABLED_CLAMAV_CONFIG = {
   enabled: false as const,
+  devScan: false as const,
+  host: "localhost",
+  port: 3310,
+  timeout: 60000,
+};
+
+const DEV_SCAN_CLAMAV_CONFIG = {
+  enabled: false as const,
+  devScan: true as const,
   host: "localhost",
   port: 3310,
   timeout: 60000,
@@ -30,6 +39,7 @@ const DISABLED_CLAMAV_CONFIG = {
 
 const ENABLED_CLAMAV_CONFIG = {
   enabled: true as const,
+  devScan: false as const,
   host: "localhost",
   port: 3310,
   timeout: 60000,
@@ -59,6 +69,30 @@ describe("Antivirus Service (B-USR-5)", () => {
 
       // When disabled, it should NOT detect malware (dev mode)
       expect(result.isInfected).toBe(false);
+    });
+  });
+
+  describe("when dev scan is enabled without ClamAV", () => {
+    beforeEach(() => {
+      setClamavConfig(DEV_SCAN_CLAMAV_CONFIG);
+    });
+
+    it("should detect EICAR test file as malware", async () => {
+      const eicarFile = Buffer.from(EICAR_TEST_STRING);
+
+      const result = await scanBuffer(eicarFile, "eicar.txt");
+
+      expect(result.isInfected).toBe(true);
+      expect(result.viruses).toEqual(["EICAR-Test-File"]);
+    });
+
+    it("should pass clean files", async () => {
+      const cleanFile = Buffer.from("This is a clean file");
+
+      const result = await scanBuffer(cleanFile, "clean.txt");
+
+      expect(result.isInfected).toBe(false);
+      expect(result.viruses).toEqual([]);
     });
   });
 

@@ -1,5 +1,3 @@
-import * as translationsRepository from "../../../../apps/backend/src/modules/translations/translations.repository.js";
-
 const builderQueue: any[] = [];
 
 type MockBuilder = ReturnType<typeof createMockQueryBuilder>;
@@ -30,22 +28,25 @@ function createMockQueryBuilder(
   return builder;
 }
 
-const mockDb = jest.fn((table: string) => {
-  const builder = builderQueue.shift() ?? createMockQueryBuilder();
-  return builder;
-}) as jest.Mock & {
-  fn: { now: jest.Mock };
-  transaction: jest.Mock;
-};
+let mockDb: (jest.Mock & { fn: { now: jest.Mock }; transaction: jest.Mock }) | undefined;
 
-mockDb.fn = { now: jest.fn(() => "now") };
-mockDb.transaction = jest.fn(async (callback: (trx: typeof mockDb) => Promise<unknown>) => {
-  return callback(mockDb);
+jest.mock("../../../../apps/backend/src/db/connection.js", () => {
+  const db = jest.fn((table: string) => {
+    const builder = builderQueue.shift() ?? createMockQueryBuilder();
+    return builder;
+  }) as jest.Mock & { fn: { now: jest.Mock }; transaction: jest.Mock };
+
+  db.fn = { now: jest.fn(() => "now") };
+  db.transaction = jest.fn(async (callback: (trx: typeof db) => Promise<unknown>) => {
+    return callback(db);
+  });
+
+  mockDb = db;
+
+  return { db };
 });
 
-jest.mock("../../../../apps/backend/src/db/connection.js", () => ({
-  db: mockDb,
-}));
+import * as translationsRepository from "../../../../apps/backend/src/modules/translations/translations.repository.js";
 
 describe("Translations Repository", () => {
   beforeEach(() => {
@@ -109,32 +110,48 @@ describe("Translations Repository", () => {
       updated_by: null,
     };
 
-    builderQueue.push(createMockQueryBuilder([], activeRecord));
+    const newRecord = {
+      ...activeRecord,
+      id: "t-2",
+      value: "Hello updated",
+      created_by: "admin-1",
+      updated_by: "admin-1",
+    };
 
-    const updateSpy = jest
-      .spyOn(translationsRepository, "updateTranslation")
-      .mockResolvedValue(activeRecord);
+    const activeCheck = createMockQueryBuilder([], activeRecord);
+    const existingCheck = createMockQueryBuilder([], activeRecord);
+    const updateBuilder = createMockQueryBuilder();
+    const insertBuilder = createMockQueryBuilder([], null, [newRecord]);
+
+    builderQueue.push(activeCheck, existingCheck, updateBuilder, insertBuilder);
 
     const result = await translationsRepository.createTranslation({
       namespace: "common",
       key_path: "hello",
       language: "en",
-      value: "Hello",
-      updated_by: null,
-      created_by: null,
+      value: "Hello updated",
+      updated_by: "admin-1",
+      created_by: "admin-1",
     });
 
-    expect(updateSpy).toHaveBeenCalledWith(
-      "en",
-      "common",
-      "hello",
-      { value: "Hello" },
-      null,
-      undefined,
+    expect(updateBuilder.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        updated_by: "admin-1",
+        deleted_at: expect.any(String),
+      }),
     );
-    expect(result).toEqual(activeRecord);
-
-    updateSpy.mockRestore();
+    expect(insertBuilder.insert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        namespace: "common",
+        key_path: "hello",
+        language: "en",
+        value: "Hello updated",
+        created_by: "admin-1",
+        created_at: expect.any(String),
+        updated_at: expect.any(String),
+      }),
+    );
+    expect(result).toEqual(newRecord);
   });
 
   it("restores deleted translation when found", async () => {

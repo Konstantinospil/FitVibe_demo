@@ -25,15 +25,33 @@ const REDACT_PATHS = [
   "*.email",
 ];
 
+const env = process.env.NODE_ENV ?? "development";
+const level = process.env.LOG_LEVEL ?? (env === "production" ? "info" : "debug");
+
+const base: Record<string, string> = {
+  service: "backend",
+  env,
+};
+if (process.env.APP_VERSION) {
+  base.version = process.env.APP_VERSION;
+}
+if (process.env.GIT_SHA) {
+  base.commit = process.env.GIT_SHA;
+}
+
 const baseConfig: LoggerOptions = {
-  level: process.env.NODE_ENV === "production" ? "info" : "debug",
+  level,
+  base,
   redact: {
     paths: REDACT_PATHS,
     censor: "[REDACTED]",
   },
 };
 
-if (process.env.NODE_ENV !== "development" && process.env.NODE_ENV !== "test") {
+const prettyEnabled =
+  env === "development" || process.env.LOG_PRETTY === "1" || process.env.LOG_PRETTY === "true";
+
+if (prettyEnabled) {
   baseConfig.transport = {
     target: "pino-pretty",
     options: {

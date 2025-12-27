@@ -87,6 +87,7 @@ import {
   getMaxIPDistinctEmails,
 } from "./bruteforce.repository.js";
 import { logger } from "../../config/logger.js";
+import { toErrorPayload } from "../../utils/error.utils.js";
 
 const ACCESS_TTL = env.ACCESS_TOKEN_TTL;
 const REFRESH_TTL = env.REFRESH_TOKEN_TTL;
@@ -103,12 +104,6 @@ const TOKEN_TYPES = {
 } as const;
 
 const SESSION_EXPIRY_MS = REFRESH_TTL * 1000;
-
-function asError(err: unknown): Error {
-  return err instanceof Error
-    ? err
-    : new Error(typeof err === "string" ? err : JSON.stringify(err));
-}
 
 function nextSessionExpiry(): string {
   return new Date(Date.now() + SESSION_EXPIRY_MS).toISOString();
@@ -137,11 +132,11 @@ async function recordAuditEvent(
   action: string,
   metadata: Record<string, unknown> = {},
 ) {
+  const validUserId = userId && isValidUUID(userId) ? userId : null;
+
   try {
     // Validate userId is a valid UUID or null
     // Test IDs like "user-123" are not valid UUIDs and will cause database errors
-    const validUserId = userId && isValidUUID(userId) ? userId : null;
-
     await db("audit_log").insert({
       id: uuidv4(),
       actor_user_id: validUserId,
@@ -151,8 +146,11 @@ async function recordAuditEvent(
       created_at: new Date().toISOString(),
     });
   } catch (error: unknown) {
-    const err = asError(error);
-    logger.error({ err, action }, "[audit] failed to record audit event");
+    const metadataKeys = Object.keys(metadata ?? {});
+    logger.error(
+      { ...toErrorPayload(error), action, userId: validUserId, metadataKeys },
+      "[audit] failed to record audit event",
+    );
   }
 }
 

@@ -77,6 +77,7 @@ describeFn("Brute Force Protection Repository", () => {
     // Run migrations to ensure tables exist
     // Migrations should be idempotent - safe to run multiple times
     try {
+      await import("ts-node/register");
       await db.migrate.latest();
     } catch (error) {
       // If migrations fail due to connection issues, log and skip tests

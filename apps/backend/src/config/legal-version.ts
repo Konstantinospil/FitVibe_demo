@@ -2,14 +2,14 @@
  * Legal document version calculation
  *
  * Calculates the version of legal documents (terms, privacy, cookie) by finding
- * the latest effectiveDateValue across all language translations.
+ * the latest created_at timestamp across all translations in a namespace.
  *
  * This ensures that when ANY language version is updated, ALL languages are
  * considered changed, so users don't need to re-accept based on which language
  * they originally accepted in.
  */
 
-import { readFileSync } from "node:fs";
+import { statSync } from "node:fs";
 import { join, dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { logger } from "./logger.js";
@@ -77,41 +77,7 @@ const TRANSLATIONS_BASE_PATH = join(WORKSPACE_ROOT, "apps", "frontend", "src", "
 // Cache for calculated versions to avoid reading files on every call
 // Cache is invalidated on server restart, which is acceptable since versions change infrequently
 const versionCache = new Map<LegalNamespace, { version: string; timestamp: number }>();
-const CACHE_TTL_MS = 10 * 60 * 1000; // 5 minutes cache TTL
-
-/**
- * Parse a date string that can be in ISO format (YYYY-MM-DD) or human-readable format
- * Returns null if parsing fails
- */
-function parseDate(dateStr: string): Date | null {
-  if (!dateStr || typeof dateStr !== "string") {
-    return null;
-  }
-
-  // Try ISO format first (YYYY-MM-DD)
-  const isoMatch = dateStr.match(/^(\d{4})-(\d{2})-(\d{2})$/);
-  if (isoMatch) {
-    const [, year, month, day] = isoMatch;
-    const date = new Date(parseInt(year, 10), parseInt(month, 10) - 1, parseInt(day, 10));
-    if (!isNaN(date.getTime())) {
-      return date;
-    }
-  }
-
-  // Try human-readable formats (e.g., "26 October 2025", "26. Oktober 2025")
-  // JavaScript's Date constructor can parse many formats, but we validate the result
-  const date = new Date(dateStr);
-  if (!isNaN(date.getTime())) {
-    // Additional validation: ensure the parsed date makes sense
-    // Check if the year is reasonable (between 2000 and 2100)
-    const year = date.getFullYear();
-    if (year >= 2000 && year <= 2100) {
-      return date;
-    }
-  }
-
-  return null;
-}
+const CACHE_TTL_MS = 10 * 60 * 1000; // 10 minutes cache TTL
 
 /**
  * Format a date as YYYY-MM-DD for version string
@@ -124,54 +90,21 @@ function formatVersionDate(date: Date): string {
 }
 
 /**
- * Get the effective date value from a translation file
+ * Get the latest created_at timestamp from the translations database table
  */
-function getEffectiveDateFromFile(
-  namespace: LegalNamespace,
-  language: SupportedLanguage,
-): string | null {
-  try {
-    const filePath = join(TRANSLATIONS_BASE_PATH, language, `${namespace}.json`);
-    const fileContent = readFileSync(filePath, "utf-8");
-    const translation = JSON.parse(fileContent) as { effectiveDateValue?: string };
-
-    if (translation.effectiveDateValue) {
-      return translation.effectiveDateValue;
-    }
-
-    logger.warn(
-      { namespace, language },
-      "[legal-version] No effectiveDateValue found in translation file",
-    );
-    return null;
-  } catch (error) {
-    logger.error(
-      { err: error, namespace, language },
-      "[legal-version] Failed to read translation file",
-    );
-    return null;
-  }
-}
-
-/**
- * Get the effective date value from the translations database table
- */
-async function getEffectiveDateFromDatabase(
-  namespace: LegalNamespace,
-  language: SupportedLanguage,
-): Promise<string | null> {
+async function getLatestCreatedAtFromDatabase(namespace: LegalNamespace): Promise<Date | null> {
   try {
     const result = (await db("translations")
-      .where({
-        namespace,
-        key_path: "effectiveDateValue",
-        language,
-      })
-      .select("value")
-      .first()) as { value: string } | undefined;
+      .where({ namespace })
+      .whereNull("deleted_at")
+      .max("created_at as latest")
+      .first()) as { latest?: string | Date } | undefined;
 
-    if (result?.value && typeof result.value === "string") {
-      return result.value;
+    if (result?.latest) {
+      const date = result.latest instanceof Date ? result.latest : new Date(result.latest);
+      if (!isNaN(date.getTime())) {
+        return date;
+      }
     }
 
     return null;
@@ -179,7 +112,7 @@ async function getEffectiveDateFromDatabase(
     // If table doesn't exist or query fails, log and return null
     // This allows the system to work even if the translations table isn't set up yet
     logger.debug(
-      { err: error, namespace, language },
+      { err: error, namespace },
       "[legal-version] Failed to read from database (table may not exist)",
     );
     return null;
@@ -187,9 +120,38 @@ async function getEffectiveDateFromDatabase(
 }
 
 /**
+ * Get the latest modified timestamp across translation files for a namespace
+ */
+function getLatestModifiedAtFromFiles(
+  namespace: LegalNamespace,
+  languages: SupportedLanguage[],
+): Date | null {
+  const dates: Date[] = [];
+
+  for (const language of languages) {
+    const filePath = join(TRANSLATIONS_BASE_PATH, language, `${namespace}.json`);
+    try {
+      const stats = statSync(filePath);
+      dates.push(stats.mtime);
+    } catch (error) {
+      logger.debug(
+        { err: error, namespace, language },
+        "[legal-version] Failed to stat translation file",
+      );
+    }
+  }
+
+  if (dates.length === 0) {
+    return null;
+  }
+
+  return dates.reduce((latest, current) => (current > latest ? current : latest));
+}
+
+/**
  * Calculate the latest version for a legal document namespace
- * by finding the maximum effectiveDateValue across all languages
- * Checks both translation files and the translations database table
+ * by finding the maximum created_at across all translations
+ * Checks the translations database table first, then falls back to file timestamps
  *
  * @param namespace - The legal document namespace (terms, privacy, or cookie)
  * @returns The latest date in YYYY-MM-DD format, or a fallback date if parsing fails
@@ -204,27 +166,17 @@ export async function calculateLegalDocumentVersion(namespace: LegalNamespace): 
 
   const languages: SupportedLanguage[] = ["en", "de", "es", "fr", "el"];
   const dates: Date[] = [];
+  let source: "database" | "files" | "fallback" = "fallback";
 
-  // Check both files and database for each language
-  for (const language of languages) {
-    // Try database first (more up-to-date if translations are managed via API)
-    let dateValue = await getEffectiveDateFromDatabase(namespace, language);
-
-    // Fallback to file if database doesn't have it
-    if (!dateValue) {
-      dateValue = getEffectiveDateFromFile(namespace, language);
-    }
-
-    if (dateValue) {
-      const parsedDate = parseDate(dateValue);
-      if (parsedDate) {
-        dates.push(parsedDate);
-      } else {
-        logger.warn(
-          { namespace, language, dateValue },
-          "[legal-version] Failed to parse date value, skipping",
-        );
-      }
+  const latestDatabaseDate = await getLatestCreatedAtFromDatabase(namespace);
+  if (latestDatabaseDate) {
+    dates.push(latestDatabaseDate);
+    source = "database";
+  } else {
+    const latestFileDate = getLatestModifiedAtFromFiles(namespace, languages);
+    if (latestFileDate) {
+      dates.push(latestFileDate);
+      source = "files";
     }
   }
 
@@ -242,10 +194,7 @@ export async function calculateLegalDocumentVersion(namespace: LegalNamespace): 
   });
 
   const version = formatVersionDate(latestDate);
-  logger.debug(
-    { namespace, version, dateCount: dates.length },
-    "[legal-version] Calculated version",
-  );
+  logger.debug({ namespace, version, source }, "[legal-version] Calculated version");
 
   // Update cache
   versionCache.set(namespace, { version, timestamp: now });
@@ -254,8 +203,8 @@ export async function calculateLegalDocumentVersion(namespace: LegalNamespace): 
 
 /**
  * Get the current Terms and Conditions version
- * Calculated from the latest effectiveDateValue across all language translations
- * Checks both translation files and the translations database table
+ * Calculated from the latest created_at across all translations in the namespace
+ * Checks the translations database table first, then falls back to file timestamps
  */
 export async function getCurrentTermsVersion(): Promise<string> {
   return calculateLegalDocumentVersion("terms");
@@ -263,8 +212,8 @@ export async function getCurrentTermsVersion(): Promise<string> {
 
 /**
  * Get the current Privacy Policy version
- * Calculated from the latest effectiveDateValue across all language translations
- * Checks both translation files and the translations database table
+ * Calculated from the latest created_at across all translations in the namespace
+ * Checks the translations database table first, then falls back to file timestamps
  */
 export async function getCurrentPrivacyPolicyVersion(): Promise<string> {
   return calculateLegalDocumentVersion("privacy");
@@ -272,8 +221,8 @@ export async function getCurrentPrivacyPolicyVersion(): Promise<string> {
 
 /**
  * Get the current Cookie Policy version
- * Calculated from the latest effectiveDateValue across all language translations
- * Checks both translation files and the translations database table
+ * Calculated from the latest created_at across all translations in the namespace
+ * Checks the translations database table first, then falls back to file timestamps
  */
 export async function getCurrentCookiePolicyVersion(): Promise<string> {
   return calculateLegalDocumentVersion("cookie");

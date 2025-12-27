@@ -26,14 +26,29 @@ var REDACT_PATHS = [
   "*.secret",
   "*.email",
 ];
+var env = process.env.NODE_ENV || "development";
+var level = process.env.LOG_LEVEL || (env === "production" ? "info" : "debug");
+var base = {
+  service: "backend",
+  env: env,
+};
+if (process.env.APP_VERSION) {
+  base.version = process.env.APP_VERSION;
+}
+if (process.env.GIT_SHA) {
+  base.commit = process.env.GIT_SHA;
+}
 var baseConfig = {
-  level: process.env.NODE_ENV === "production" ? "info" : "debug",
+  level: level,
+  base: base,
   redact: {
     paths: REDACT_PATHS,
     censor: "[REDACTED]",
   },
 };
-if (process.env.NODE_ENV !== "development" && process.env.NODE_ENV !== "test") {
+var prettyEnabled =
+  env === "development" || process.env.LOG_PRETTY === "1" || process.env.LOG_PRETTY === "true";
+if (prettyEnabled) {
   baseConfig.transport = {
     target: "pino-pretty",
     options: {

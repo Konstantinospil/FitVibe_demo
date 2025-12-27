@@ -120,6 +120,7 @@ const EnvSchema = z.object({
     .string()
     .default("System is temporarily in read-only mode for maintenance"),
   CLAMAV_ENABLED: z.string().optional(),
+  CLAMAV_DEV_SCAN: z.string().optional(),
   CLAMAV_HOST: z.string().default("localhost"),
   CLAMAV_PORT: z.coerce.number().default(3310),
   CLAMAV_TIMEOUT: z.coerce.number().default(60000),
@@ -281,6 +282,7 @@ export const env = {
   maintenanceMessage: raw.MAINTENANCE_MESSAGE,
   clamav: {
     enabled: parseBoolean(raw.CLAMAV_ENABLED, false),
+    devScan: parseBoolean(raw.CLAMAV_DEV_SCAN, false),
     host: raw.CLAMAV_HOST,
     port: raw.CLAMAV_PORT,
     timeout: raw.CLAMAV_TIMEOUT,

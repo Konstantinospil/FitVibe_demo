@@ -74,6 +74,8 @@ export interface ScanResult {
   scannedAt: Date;
 }
 
+const EICAR_SIGNATURE = "X5O!P%@AP[4\\PZX54(P^)7CC)7}$EICAR-STANDARD-ANTIVIRUS-TEST-FILE!$H+H*";
+
 /**
  * Scan a file buffer for malware.
  *
@@ -92,6 +94,28 @@ export async function scanBuffer(buffer: Buffer, filename: string = "upload"): P
 
   // If AV scanning is disabled (dev mode), return clean result
   if (!env.clamav.enabled) {
+    if (env.clamav.devScan) {
+      const isInfected = buffer.includes(EICAR_SIGNATURE);
+      const scanDuration = Date.now() - startTime;
+      const viruses = isInfected ? ["EICAR-Test-File"] : [];
+
+      logger.warn(
+        {
+          filename,
+          size: buffer.length,
+          scanDurationMs: scanDuration,
+          isInfected,
+        },
+        "[antivirus] Dev scan active - using EICAR signature check",
+      );
+
+      return {
+        isInfected,
+        viruses,
+        scannedAt: new Date(),
+      };
+    }
+
     logger.warn(
       { filename },
       "[antivirus] Scanning disabled - skipping malware check (DEVELOPMENT ONLY)",

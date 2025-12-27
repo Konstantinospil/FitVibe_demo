@@ -1,6 +1,10 @@
 import crypto from "crypto";
 import { db } from "../../db/connection.js";
 import { logger } from "../../config/logger.js";
+import { toErrorPayload } from "../../utils/error.utils.js";
+
+const auditLogger =
+  typeof logger.child === "function" ? logger.child({ component: "audit" }) : logger;
 
 export interface AuditLogPayload {
   actorUserId?: string | null;
@@ -28,7 +32,7 @@ export async function insertAudit({
 }: AuditLogPayload) {
   const resolvedEntityType = entityType ?? entity;
   if (!resolvedEntityType) {
-    logger.warn({ action }, "[AUDIT] missing entityType");
+    auditLogger.warn({ action, actorUserId, entityId, requestId }, "[AUDIT] missing entityType");
     return;
   }
 
@@ -45,7 +49,20 @@ export async function insertAudit({
       created_at: new Date().toISOString(),
     });
   } catch (error) {
-    logger.error({ err: error, action }, "[AUDIT] insert failed");
+    const metadataKeys = Object.keys(metadata ?? {});
+    auditLogger.error(
+      {
+        ...toErrorPayload(error),
+        action,
+        entityType: resolvedEntityType,
+        actorUserId,
+        entityId,
+        outcome,
+        requestId,
+        metadataKeys,
+      },
+      "[AUDIT] insert failed",
+    );
   }
 }
 

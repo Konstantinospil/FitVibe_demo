@@ -12,6 +12,8 @@ describe("Q-11 login enumeration protections", () => {
   >;
   const getFailedAttemptSpy = jest.spyOn(bruteforceRepository, "getFailedAttempt");
   const recordFailedAttemptSpy = jest.spyOn(bruteforceRepository, "recordFailedAttempt");
+  const getFailedAttemptByIPSpy = jest.spyOn(bruteforceRepository, "getFailedAttemptByIP");
+  const recordFailedAttemptByIPSpy = jest.spyOn(bruteforceRepository, "recordFailedAttemptByIP");
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -24,6 +26,18 @@ describe("Q-11 login enumeration protections", () => {
       ip_address: "127.0.0.1",
       user_agent: null,
       attempt_count: 1,
+      locked_until: null,
+      last_attempt_at: new Date().toISOString(),
+      first_attempt_at: new Date().toISOString(),
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    });
+    getFailedAttemptByIPSpy.mockResolvedValue(null);
+    recordFailedAttemptByIPSpy.mockResolvedValue({
+      id: "ip-attempt-123",
+      ip_address: "127.0.0.1",
+      total_attempt_count: 1,
+      distinct_email_count: 1,
       locked_until: null,
       last_attempt_at: new Date().toISOString(),
       first_attempt_at: new Date().toISOString(),

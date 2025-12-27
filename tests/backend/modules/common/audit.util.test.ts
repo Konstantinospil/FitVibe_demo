@@ -109,7 +109,7 @@ describe("audit.util", () => {
       });
 
       expect(logger.warn).toHaveBeenCalledWith(
-        { action: "test_action" },
+        expect.objectContaining({ action: "test_action" }),
         "[AUDIT] missing entityType",
       );
       expect(db).not.toHaveBeenCalled();
@@ -246,7 +246,7 @@ describe("audit.util", () => {
       });
 
       expect(logger.error).toHaveBeenCalledWith(
-        { err: dbError, action: "error_test" },
+        expect.objectContaining({ err: dbError, action: "error_test" }),
         "[AUDIT] insert failed",
       );
     });
