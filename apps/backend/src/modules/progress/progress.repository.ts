@@ -45,6 +45,17 @@ type WeeklyAggregateRow = {
   total_volume: number | string;
 };
 
+type VibePointsRow = {
+  type_code: string;
+  month_key: string;
+  points: number | string;
+};
+
+type OverallPointsRow = {
+  month_key: string;
+  points: number | string;
+};
+
 function cutoffISO(periodDays: number): string {
   const d = new Date();
   d.setUTCDate(d.getUTCDate() - periodDays);
@@ -58,6 +69,12 @@ function cutoffWeekISO(periodDays: number): string {
   const diff = (weekStart.getUTCDay() + 6) % 7;
   weekStart.setUTCDate(weekStart.getUTCDate() - diff);
   return weekStart.toISOString();
+}
+
+function cutoffMonthISO(months: number): string {
+  const now = new Date();
+  const start = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - (months - 1), 1));
+  return start.toISOString();
 }
 
 export async function fetchSummary(userId: string, period: number): Promise<ProgressSummary> {
@@ -181,4 +198,57 @@ export async function fetchPlansProgress(userId: string): Promise<PlanProgress[]
     session_count: Number(row.session_count ?? 0),
     completed_count: Number(row.completed_count ?? 0),
   }));
+}
+
+export async function fetchVibePointsTrends(
+  userId: string,
+  months: number,
+): Promise<{ vibeRows: VibePointsRow[]; overallRows: OverallPointsRow[] }> {
+  const cutoff = cutoffMonthISO(months);
+
+  const sessionExercisePoints = db("sessions as sess")
+    .join("session_exercises as se", "se.session_id", "sess.id")
+    .join("exercises as e", "e.id", "se.exercise_id")
+    .join(
+      db("session_exercises as se_count")
+        .select("se_count.session_id")
+        .count("* as exercise_count")
+        .groupBy("se_count.session_id")
+        .as("sec"),
+      "sec.session_id",
+      "sess.id",
+    )
+    .where({ "sess.owner_id": userId, "sess.status": "completed" })
+    .whereNotNull("sess.completed_at")
+    .andWhere("sess.completed_at", ">=", cutoff)
+    .whereNotNull("e.type_code")
+    .select(
+      "e.type_code",
+      db.raw("to_char(date_trunc('month', sess.completed_at), 'YYYY-MM') as month_key"),
+      db.raw("COALESCE(sess.points, 0) as session_points"),
+      "sec.exercise_count",
+    )
+    .as("sep");
+
+  const vibeRows = (await db(sessionExercisePoints)
+    .groupBy("type_code", "month_key")
+    .select(
+      "type_code",
+      "month_key",
+      db.raw("SUM(session_points / NULLIF(exercise_count, 0)) as points"),
+    )
+    .orderBy("month_key", "asc")) as VibePointsRow[];
+
+  const overallRows = (await db("sessions as sess")
+    .where({ "sess.owner_id": userId, "sess.status": "completed" })
+    .whereNotNull("sess.completed_at")
+    .andWhere("sess.completed_at", ">=", cutoff)
+    .groupByRaw("to_char(date_trunc('month', sess.completed_at), 'YYYY-MM')")
+    .select(
+      db.raw("to_char(date_trunc('month', sess.completed_at), 'YYYY-MM') as month_key"),
+      db.raw("SUM(COALESCE(sess.points, 0)) as points"),
+    )
+    .orderBy("month_key", "asc")) as OverallPointsRow[];
+
+  return { vibeRows, overallRows };
 }

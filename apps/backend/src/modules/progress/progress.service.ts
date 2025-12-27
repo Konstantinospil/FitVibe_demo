@@ -7,12 +7,14 @@ import type {
   ProgressSummary,
   TrendGroupBy,
   TrendsPayload,
+  VibePointsPayload,
 } from "./progress.types.js";
 import {
   fetchExerciseBreakdown,
   fetchPlansProgress,
   fetchSummary,
   fetchTrends,
+  fetchVibePointsTrends,
 } from "./progress.repository.js";
 
 const cache = new NodeCache({ stdTTL: 60 });
@@ -99,6 +101,87 @@ export async function getPlans(userId: string): Promise<PlanProgress[]> {
     entityId: userId,
   });
   return data;
+}
+
+function formatMonthKey(date: Date): string {
+  const year = date.getUTCFullYear();
+  const month = `${date.getUTCMonth() + 1}`.padStart(2, "0");
+  return `${year}-${month}`;
+}
+
+function buildMonthSeries(months: number): string[] {
+  const now = new Date();
+  return Array.from({ length: months }, (_, index) => {
+    const monthIndex = now.getUTCMonth() - (months - 1 - index);
+    const date = new Date(Date.UTC(now.getUTCFullYear(), monthIndex, 1));
+    return formatMonthKey(date);
+  });
+}
+
+export async function getVibePoints(userId: string, months: number): Promise<VibePointsPayload> {
+  const key = `vibe_points:${userId}:${months}`;
+  const cached = cache.get<VibePointsPayload>(key);
+  if (cached) {
+    return cached;
+  }
+
+  const { vibeRows, overallRows } = await fetchVibePointsTrends(userId, months);
+  const monthSeries = buildMonthSeries(months);
+  const monthIndex = new Map(monthSeries.map((month, index) => [month, index]));
+
+  const overallTrend = Array(months).fill(0) as number[];
+  overallRows.forEach((row) => {
+    const index = monthIndex.get(row.month_key);
+    if (index !== undefined) {
+      overallTrend[index] = Number(row.points ?? 0);
+    }
+  });
+
+  const vibeMap = new Map<string, number[]>();
+  vibeRows.forEach((row) => {
+    const index = monthIndex.get(row.month_key);
+    if (index === undefined) {
+      return;
+    }
+    const current = vibeMap.get(row.type_code) ?? Array.from({ length: months }, () => 0);
+    current[index] = Number(row.points ?? 0);
+    vibeMap.set(row.type_code, current);
+  });
+
+  const vibes = Array.from(vibeMap.entries()).map(([type_code, trend]) => ({
+    type_code,
+    trend: monthSeries.map((month, index) => ({
+      month,
+      points: trend[index],
+    })),
+    points: trend.reduce((sum, value) => sum + value, 0),
+  }));
+
+  const overall = {
+    trend: monthSeries.map((month, index) => ({
+      month,
+      points: overallTrend[index],
+    })),
+    points: overallTrend.reduce((sum, value) => sum + value, 0),
+  };
+
+  const result = {
+    period_months: months,
+    months: monthSeries,
+    overall,
+    vibes,
+  };
+
+  cache.set(key, result);
+  await insertAudit({
+    actorUserId: userId,
+    entity: "progress",
+    action: "vibe_points",
+    entityId: userId,
+    metadata: { months },
+  });
+
+  return result;
 }
 
 function escapeCsvValue(value: unknown): string {

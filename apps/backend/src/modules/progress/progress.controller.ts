@@ -6,6 +6,7 @@ import {
   getPlans,
   getSummary,
   getTrends,
+  getVibePoints,
   renderProgressReportCsv,
 } from "./progress.service.js";
 
@@ -14,6 +15,10 @@ const periodEnum = z.preprocess(
   z.enum(["7", "30", "90"]).transform((v) => parseInt(v, 10)),
 );
 const groupByEnum = z.enum(["day", "week"]);
+const monthsEnum = z.preprocess(
+  (val) => val ?? "12",
+  z.enum(["3", "6", "12", "18", "24"]).transform((v) => parseInt(v, 10)),
+);
 
 function requireUserId(req: Request, res: Response): string | null {
   const userId = req.user?.sub;
@@ -81,6 +86,20 @@ export async function plansHandler(req: Request, res: Response): Promise<void> {
     return;
   }
   const result = await getPlans(userId);
+  res.json(result);
+}
+
+export async function vibePointsHandler(req: Request, res: Response): Promise<void> {
+  const parsed = z.object({ months: monthsEnum }).safeParse(req.query);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.flatten() });
+    return;
+  }
+  const userId = requireUserId(req, res);
+  if (!userId) {
+    return;
+  }
+  const result = await getVibePoints(userId, parsed.data.months);
   res.json(result);
 }
 

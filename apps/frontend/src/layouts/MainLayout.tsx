@@ -11,6 +11,7 @@ import { LogOut, Home, User, Settings as SettingsIcon, type LucideIcon } from "l
 import logoFull from "../assets/logo_full.png";
 import logoFullDark from "../assets/logo_full_dark.png";
 import { useThemeStore } from "../store/theme.store";
+import VibeSidebar from "../components/layout/VibeSidebar";
 
 type NavItem = {
   to: string;
@@ -183,8 +184,18 @@ const MainLayout: React.FC = () => {
           </div>
         </nav>
       </header>
-      <main id="main-content" style={{ flex: 1, display: "flex", flexDirection: "column" }}>
-        <Outlet />
+      <main
+        id="main-content"
+        style={{
+          flex: 1,
+          display: "flex",
+          background: "var(--color-bg)",
+        }}
+      >
+        <VibeSidebar />
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <Outlet />
+        </div>
       </main>
       <Footer />
     </div>

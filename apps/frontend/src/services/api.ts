@@ -875,6 +875,27 @@ export interface ExerciseBreakdown {
   period: number;
 }
 
+export interface VibePointsTrendPoint {
+  month: string;
+  points: number;
+}
+
+export interface VibePointsSeries {
+  type_code: string;
+  points: number;
+  trend: VibePointsTrendPoint[];
+}
+
+export interface VibePointsResponse {
+  period_months: number;
+  months: string[];
+  overall: {
+    points: number;
+    trend: VibePointsTrendPoint[];
+  };
+  vibes: VibePointsSeries[];
+}
+
 export async function getProgressSummary(period: number = 30): Promise<ProgressSummary> {
   const res = await apiClient.get<ProgressSummary>("/api/v1/progress/summary", {
     params: { period },
@@ -898,6 +919,13 @@ export async function getExerciseBreakdown(params: {
   to?: string; // ISO date string
 }): Promise<ExerciseBreakdown> {
   const res = await apiClient.get<ExerciseBreakdown>("/api/v1/progress/exercises", { params });
+  return res.data;
+}
+
+export async function getVibePoints(periodMonths: number = 12): Promise<VibePointsResponse> {
+  const res = await apiClient.get<VibePointsResponse>("/api/v1/progress/vibes", {
+    params: { months: periodMonths },
+  });
   return res.data;
 }
 
@@ -1293,11 +1321,42 @@ export interface UserActionRequest {
   notes?: string;
 }
 
-export async function searchUsers(params: UserSearchQuery): Promise<{ data: UserRecord[] }> {
-  const res = await apiClient.get<{ users: UserRecord[] }>("/api/v1/admin/users/search", {
-    params,
-  });
-  return { data: res.data.users };
+export async function searchUsers(params: UserSearchQuery): Promise<UserSearchResponse> {
+  const res = await apiClient.get<UserSearchResponse>("/api/v1/admin/users/search", { params });
+  return res.data;
+}
+
+export async function suspendUser(
+  userId: string,
+  payload?: UserActionRequest,
+): Promise<{ success: boolean; message: string }> {
+  const res = await apiClient.post<{ success: boolean; message: string }>(
+    `/api/v1/admin/users/${userId}/suspend`,
+    payload ?? {},
+  );
+  return res.data;
+}
+
+export async function banUser(
+  userId: string,
+  payload?: UserActionRequest,
+): Promise<{ success: boolean; message: string }> {
+  const res = await apiClient.post<{ success: boolean; message: string }>(
+    `/api/v1/admin/users/${userId}/ban`,
+    payload ?? {},
+  );
+  return res.data;
+}
+
+export async function activateUser(
+  userId: string,
+  payload?: UserActionRequest,
+): Promise<{ success: boolean; message: string }> {
+  const res = await apiClient.post<{ success: boolean; message: string }>(
+    `/api/v1/admin/users/${userId}/activate`,
+    payload ?? {},
+  );
+  return res.data;
 }
 
 export async function blacklistUser(

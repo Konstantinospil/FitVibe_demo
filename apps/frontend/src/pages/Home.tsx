@@ -5,6 +5,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuthStore } from "../store/auth.store";
 import { useThemeStore } from "../store/theme.store";
 import { useRequiredFieldValidation } from "../hooks/useRequiredFieldValidation";
+import { VIBE_TYPE_CODE_MAP, type VibeKey } from "../constants/vibes";
 import {
   listExercises,
   createExercise,
@@ -13,14 +14,6 @@ import {
   type Exercise,
 } from "../services/api";
 import { logger } from "../utils/logger";
-
-type VibeKey =
-  | "strength"
-  | "agility"
-  | "endurance"
-  | "explosivity"
-  | "intelligence"
-  | "regeneration";
 
 type Vibe = {
   key: VibeKey;
@@ -130,15 +123,6 @@ const ICON_IMPORTS: Record<VibeKey, () => Promise<{ default: string }>> = {
 };
 
 // Map vibe names to type_code used by backend
-const VIBE_TO_TYPE_CODE: Record<VibeKey, string> = {
-  strength: "strength",
-  agility: "balance",
-  endurance: "endurance",
-  explosivity: "plyometrics",
-  intelligence: "skill",
-  regeneration: "recovery",
-};
-
 const Home: React.FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -254,7 +238,7 @@ const Home: React.FC = () => {
     queryKey: ["exercises", "filtered", selectedVibe],
     queryFn: () =>
       listExercises({
-        type_code: selectedVibe ? VIBE_TO_TYPE_CODE[selectedVibe] : undefined,
+        type_code: selectedVibe ? VIBE_TYPE_CODE_MAP[selectedVibe] : undefined,
         limit: 100,
       }),
     enabled: showModal && exerciseMode === "select" && !!selectedVibe,
@@ -283,8 +267,8 @@ const Home: React.FC = () => {
         const exercise = exerciseCache.get(sessionExercise.exercise_id);
         if (exercise?.type_code) {
           // Direct lookup instead of Object.entries().find()
-          const vibeKey = Object.keys(VIBE_TO_TYPE_CODE).find(
-            (key) => VIBE_TO_TYPE_CODE[key as VibeKey] === exercise.type_code,
+          const vibeKey = Object.keys(VIBE_TYPE_CODE_MAP).find(
+            (key) => VIBE_TYPE_CODE_MAP[key as VibeKey] === exercise.type_code,
           ) as VibeKey | undefined;
 
           if (vibeKey) {
@@ -397,7 +381,7 @@ const Home: React.FC = () => {
       // Create new exercise
       const newExercise = await createExerciseMutation.mutateAsync({
         name: exerciseName,
-        type_code: VIBE_TO_TYPE_CODE[selectedVibe],
+        type_code: VIBE_TYPE_CODE_MAP[selectedVibe],
         is_public: false,
       });
       exerciseId = newExercise.id;
