@@ -1,9 +1,36 @@
 import db from "../index.js";
 import { logger } from "../../config/logger.js";
 import { toErrorPayload } from "../../utils/error.utils.js";
+import { up as ensureExtensions } from "../migrations/202510140001_enable_extensions.js";
+import { up as ensureUsernameColumnExists } from "../migrations/202511170000_ensure_username_column_exists.js";
 
 async function main(): Promise<void> {
   try {
+    logger.info("[db] Applying migrations before seeding...");
+    await db.migrate.latest();
+    logger.info("[db] Migrations applied.");
+
+    const hasUsersTable = await db.schema.hasTable("users");
+    if (hasUsersTable) {
+      const hasUsernameColumn = await db.schema.hasColumn("users", "username");
+      if (!hasUsernameColumn) {
+        logger.warn("[db] users.username missing; applying corrective migration.");
+
+        const typeCheck = await db.raw<{ rows?: Array<Record<string, unknown>> }>(`
+          SELECT 1
+          FROM pg_type
+          WHERE typname = 'citext'
+        `);
+        const typeRows = typeCheck.rows ?? [];
+        if (typeRows.length === 0) {
+          logger.warn("[db] citext type missing; enabling extensions.");
+          await ensureExtensions(db);
+        }
+
+        await ensureUsernameColumnExists(db);
+      }
+    }
+
     logger.info("[db] Running database seeds...");
 
     const result = await db.seed.run();

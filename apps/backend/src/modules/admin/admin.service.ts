@@ -32,6 +32,7 @@ import type {
   UserActionInput,
   ListReportsQuery,
   SearchUsersQuery,
+  ActionUiMapping,
 } from "./admin.types.js";
 
 /**
@@ -134,6 +135,23 @@ export async function searchUsersService(query: SearchUsersQuery): Promise<UserS
   }
 
   return await repo.searchUsers(query);
+}
+
+export async function listActionUiMappings(): Promise<ActionUiMapping[]> {
+  return await repo.listActionUiMappings();
+}
+
+export async function upsertActionUiMapping(
+  action: string,
+  uiName: string,
+): Promise<ActionUiMapping> {
+  if (!action.trim()) {
+    throw new HttpError(400, "INVALID_ACTION", "Action is required");
+  }
+  if (!uiName.trim()) {
+    throw new HttpError(400, "INVALID_UI_NAME", "UI name is required");
+  }
+  return await repo.upsertActionUiMapping(action.trim(), uiName.trim());
 }
 
 /**
@@ -402,5 +420,26 @@ export async function deleteUserAvatar(
     entityId: userId,
     userId: adminId,
     metadata: { username: user.username, reason },
+  });
+}
+
+export async function deleteUserDisplayName(
+  userId: string,
+  adminId: string,
+  reason?: string,
+): Promise<void> {
+  const user = await repo.getUserForAdmin(userId);
+  if (!user) {
+    throw new HttpError(404, "USER_NOT_FOUND", "User not found");
+  }
+
+  await repo.resetUserDisplayNameToUsername(userId);
+
+  await logAudit({
+    action: "admin_deleted_display_name",
+    entityType: "user",
+    entityId: userId,
+    userId: adminId,
+    metadata: { username: user.username, previousDisplayName: user.displayName, reason },
   });
 }

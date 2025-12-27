@@ -132,11 +132,11 @@ const ICON_IMPORTS: Record<VibeKey, () => Promise<{ default: string }>> = {
 // Map vibe names to type_code used by backend
 const VIBE_TO_TYPE_CODE: Record<VibeKey, string> = {
   strength: "strength",
-  agility: "agility",
+  agility: "balance",
   endurance: "endurance",
-  explosivity: "explosivity",
-  intelligence: "intelligence",
-  regeneration: "regeneration",
+  explosivity: "plyometrics",
+  intelligence: "skill",
+  regeneration: "recovery",
 };
 
 const Home: React.FC = () => {

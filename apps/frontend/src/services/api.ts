@@ -343,6 +343,7 @@ export type RegisterRequest = {
 export type UserResponse = {
   id: string;
   username: string;
+  displayName?: string;
   email: string;
   role?: string;
 };
@@ -1262,6 +1263,7 @@ export async function moderateContent(
 export interface UserRecord {
   id: string;
   username: string;
+  displayName?: string | null;
   email: string;
   roleCode: string;
   status: "active" | "suspended" | "banned";

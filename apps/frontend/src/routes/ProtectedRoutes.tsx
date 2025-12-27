@@ -5,7 +5,6 @@ import { queryClient } from "../lib/queryClient";
 import { ensurePrivateTranslationsLoaded } from "../i18n/config";
 
 const ProtectedRoute = lazy(() => import("../components/ProtectedRoute"));
-const AdminRoute = lazy(() => import("../components/AdminRoute"));
 const MainLayout = lazy(() => import("../layouts/MainLayout"));
 const Home = lazy(() => import("../pages/Home"));
 const Sessions = lazy(() => import("../pages/Sessions"));
@@ -14,11 +13,6 @@ const Logger = lazy(() => import("../pages/Logger"));
 const Insights = lazy(() => import("../pages/Insights"));
 const Profile = lazy(() => import("../pages/Profile"));
 const Settings = lazy(() => import("../pages/Settings"));
-const AdminDashboard = lazy(() => import("../pages/admin/AdminDashboard"));
-const ContentReports = lazy(() => import("../pages/admin/ContentReports"));
-const UserManagement = lazy(() => import("../pages/admin/UserManagement"));
-const SystemControls = lazy(() => import("../pages/admin/SystemControls"));
-const Translations = lazy(() => import("../pages/admin/Translations"));
 const NotFound = lazy(() => import("../pages/NotFound"));
 const Terms = lazy(() => import("../pages/Terms"));
 const Privacy = lazy(() => import("../pages/Privacy"));
@@ -59,13 +53,6 @@ const ProtectedRoutes: React.FC = () => {
               <Route path="cookie" element={<Cookie />} />
               <Route path="impressum" element={<Impressum />} />
               <Route path="contact" element={<Contact />} />
-              <Route path="admin" element={<AdminRoute />}>
-                <Route index element={<AdminDashboard />} />
-                <Route path="reports" element={<ContentReports />} />
-                <Route path="users" element={<UserManagement />} />
-                <Route path="system" element={<SystemControls />} />
-                <Route path="translations" element={<Translations />} />
-              </Route>
               <Route path="*" element={<NotFound />} />
             </Route>
           </Route>

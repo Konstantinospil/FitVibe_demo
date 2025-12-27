@@ -40,6 +40,7 @@ const dbMock = Object.assign(
     raw: jest.fn(),
     schema: {
       hasTable: jest.fn(),
+      hasColumn: jest.fn(),
     },
     destroy: jest.fn(),
   },
@@ -90,6 +91,7 @@ beforeEach(() => {
   dbMock.seed.run.mockReset().mockResolvedValue(undefined);
   dbMock.raw.mockReset().mockResolvedValue(undefined);
   dbMock.schema.hasTable.mockReset().mockResolvedValue(true);
+  dbMock.schema.hasColumn.mockReset().mockResolvedValue(true);
   dbMock.destroy.mockReset().mockResolvedValue(undefined);
   queryBuilderMock.mockReset().mockReturnValue({
     count: jest.fn().mockReturnValue({
@@ -197,6 +199,7 @@ describe("migration & seed scripts", () => {
       await flushPromises();
     });
 
+    expect(dbMock.migrate.latest).toHaveBeenCalledTimes(1);
     expect(dbMock.seed.run).toHaveBeenCalled();
     expect(dbMock.destroy).toHaveBeenCalled();
   });

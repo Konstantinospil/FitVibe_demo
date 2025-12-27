@@ -4,6 +4,8 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import Login from "./pages/Login";
 import TranslationsPage from "./pages/Translations";
 import MessagesPage from "./pages/Messages";
+import AuditLogsPage from "./pages/AuditLogs";
+import SettingsPage from "./pages/Settings";
 import UsersPage from "./pages/Users";
 import Layout from "./components/Layout";
 import { useAuthStore } from "./store/auth.store";
@@ -97,6 +99,7 @@ const App: React.FC = () => {
             signIn({
               id: user.id,
               username: user.username,
+              displayName: user.displayName,
               email: user.email,
               role: user.role,
             });
@@ -146,6 +149,8 @@ const App: React.FC = () => {
               <Route index element={<Navigate to="/translations" replace />} />
               <Route path="translations" element={<TranslationsPage />} />
               <Route path="messages" element={<MessagesPage />} />
+              <Route path="audit-logs" element={<AuditLogsPage />} />
+              <Route path="settings" element={<SettingsPage />} />
               <Route path="users" element={<UsersPage />} />
             </Route>
           </Routes>

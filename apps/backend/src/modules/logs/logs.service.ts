@@ -18,3 +18,14 @@ export async function listLogs(query: ListAuditLogsQuery): Promise<AuditLogEntry
 export async function getRecentActivity(limit?: number): Promise<AuditLogEntry[]> {
   return await repo.getRecentAdminActivity(limit);
 }
+
+export async function updateLog(
+  id: string,
+  updates: {
+    severity?: string;
+    resolvedAt?: string | null;
+    resolvedByUserId?: string | null;
+  },
+): Promise<AuditLogEntry | null> {
+  return await repo.updateAuditLog(id, updates);
+}

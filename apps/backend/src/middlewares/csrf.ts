@@ -6,6 +6,7 @@
 
 import type { Request, Response, NextFunction } from "express";
 import Tokens from "csrf";
+import { createCipheriv, createDecipheriv, randomBytes } from "node:crypto";
 import { env } from "../config/env.js";
 import { HttpError } from "../utils/http.js";
 
@@ -14,29 +15,59 @@ const tokens = new Tokens();
 // In development, use regular cookie name since Secure=false
 const CSRF_COOKIE_NAME = env.isProduction ? "__Host-fitvibe-csrf" : "fitvibe-csrf";
 const SAFE_METHODS = new Set(["GET", "HEAD", "OPTIONS"]);
+const CSRF_COOKIE_VERSION = "v1";
 
 type CsrfRequest = Request & {
   csrfToken?: () => string;
   _csrfSecret?: string;
 };
 
+function encryptSecret(secret: string): string {
+  const iv = randomBytes(12);
+  const cipher = createCipheriv("aes-256-gcm", env.csrf.cookieKey, iv);
+  const encrypted = Buffer.concat([cipher.update(secret, "utf8"), cipher.final()]);
+  const tag = cipher.getAuthTag();
+  return [
+    CSRF_COOKIE_VERSION,
+    iv.toString("base64url"),
+    tag.toString("base64url"),
+    encrypted.toString("base64url"),
+  ].join(".");
+}
+
+function decryptSecret(payload: string): string | null {
+  const parts = payload.split(".");
+  if (parts.length !== 4 || parts[0] !== CSRF_COOKIE_VERSION) {
+    return null;
+  }
+  try {
+    const iv = Buffer.from(parts[1], "base64url");
+    const tag = Buffer.from(parts[2], "base64url");
+    const encrypted = Buffer.from(parts[3], "base64url");
+    const decipher = createDecipheriv("aes-256-gcm", env.csrf.cookieKey, iv);
+    decipher.setAuthTag(tag);
+    const decrypted = Buffer.concat([decipher.update(encrypted), decipher.final()]);
+    return decrypted.toString("utf8");
+  } catch {
+    return null;
+  }
+}
+
 function ensureSecret(req: CsrfRequest, res: Response): string {
   if (req._csrfSecret) {
     return req._csrfSecret;
   }
 
-  const existing =
+  const rawCookie =
     typeof req.cookies?.[CSRF_COOKIE_NAME] === "string" ? req.cookies[CSRF_COOKIE_NAME] : null;
-  const secret = existing || tokens.secretSync();
+  const existing = rawCookie ? decryptSecret(rawCookie) : null;
+  const secret = existing ?? tokens.secretSync();
 
   if (!existing) {
     // SECURITY: Double-submit cookie pattern for CSRF protection
-    // The secret is stored in an HttpOnly cookie (not accessible to JavaScript),
+    // The secret is stored encrypted in an HttpOnly cookie (not accessible to JavaScript),
     // sent only over HTTPS in production (secure flag), and uses SameSite to prevent CSRF.
-    // This is the standard OWASP-recommended pattern and is NOT clear-text storage.
-    // codeql[js/clear-text-storage-of-sensitive-data] - HttpOnly + Secure + SameSite cookie is secure
-    // lgtm[js/clear-text-storage-of-sensitive-data] - HttpOnly + Secure + SameSite cookie is secure
-    res.cookie(CSRF_COOKIE_NAME, secret, {
+    res.cookie(CSRF_COOKIE_NAME, encryptSecret(secret), {
       httpOnly: true, // Prevents JavaScript access (XSS protection)
       sameSite: "lax", // CSRF protection
       secure: env.isProduction, // HTTPS-only in production

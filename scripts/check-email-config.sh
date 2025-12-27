@@ -38,7 +38,7 @@ echo "=== Quick Test ==="
 echo ""
 echo "To test email configuration, try registering a new user and check:"
 echo "1. Backend startup logs for '[mailer] SMTP transporter initialized'"
-echo "2. Registration response should include debugVerificationToken (in non-production)"
+echo "2. Registration response should include debugVerificationToken (only if DEBUG_AUTH_TOKENS=true)"
 echo "3. Check your email inbox (and spam folder)"
 echo ""
 echo "If emails aren't sending, check:"
@@ -46,7 +46,6 @@ echo "  - Backend was restarted after setting EMAIL_ENABLED=true"
 echo "  - SMTP credentials are correct (Gmail app password)"
 echo "  - Gmail account has 'Less secure app access' or uses App Passwords"
 echo "  - Check backend logs for '[mailer]' entries"
-
 
 
 

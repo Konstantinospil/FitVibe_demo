@@ -47,6 +47,7 @@ export interface UserSafe {
   id: string;
   email: string;
   username: string;
+  displayName: string;
   role: string;
   status: string;
   created_at: string;

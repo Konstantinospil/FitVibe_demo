@@ -773,6 +773,13 @@ describe("Users Controller", () => {
       mockRequest.user = createMockJwtPayload();
       mockRequest.params = { contactId: "550e8400-e29b-41d4-a716-446655440002" };
 
+      mockUsersRepository.getContactById.mockResolvedValue({
+        id: "550e8400-e29b-41d4-a716-446655440002",
+        user_id: "user-123",
+        contact_type: "email",
+        contact_value: "test@example.com",
+        is_verified: true,
+      } as never);
       mockUsersService.removeContact.mockResolvedValue();
 
       await usersController.removeContactHandler(mockRequest as Request, mockResponse as Response);

@@ -22,6 +22,7 @@ export interface FeedReport {
 export interface UserRecord {
   id: string;
   username: string;
+  displayName?: string;
   email: string;
   roleCode: string;
   status: "active" | "suspended" | "banned";

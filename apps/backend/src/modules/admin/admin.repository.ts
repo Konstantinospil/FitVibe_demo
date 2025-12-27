@@ -8,6 +8,7 @@ import type {
   UserSearchResult,
   ListReportsQuery,
   SearchUsersQuery,
+  ActionUiMapping,
 } from "./admin.types.js";
 
 /**
@@ -159,6 +160,7 @@ export async function searchUsers(query: SearchUsersQuery): Promise<UserSearchRe
     .select(
       "u.id",
       "u.username",
+      "u.display_name as displayName",
       db.raw(`(
         SELECT value
         FROM user_contacts uc
@@ -241,6 +243,37 @@ export async function searchUsers(query: SearchUsersQuery): Promise<UserSearchRe
   return rows as UserSearchResult[];
 }
 
+export async function listActionUiMappings(): Promise<ActionUiMapping[]> {
+  const rows = await db
+    .select(db.raw(`COALESCE(al.action, m.action) as action`), "m.ui_name as uiName")
+    .from(db("audit_log").distinct("action").as("al"))
+    .fullOuterJoin("action_ui_mappings as m", "m.action", "al.action")
+    .orderBy("action", "asc");
+
+  return rows as ActionUiMapping[];
+}
+
+export async function upsertActionUiMapping(
+  action: string,
+  uiName: string,
+): Promise<ActionUiMapping> {
+  const rows = await db("action_ui_mappings")
+    .insert({
+      action,
+      ui_name: uiName,
+      created_at: db.fn.now(),
+      updated_at: db.fn.now(),
+    })
+    .onConflict("action")
+    .merge({
+      ui_name: uiName,
+      updated_at: db.fn.now(),
+    })
+    .returning(["action", "ui_name as uiName"]);
+
+  return rows[0] as ActionUiMapping;
+}
+
 /**
  * Update user status (active, suspended, banned)
  */
@@ -256,6 +289,12 @@ export async function updateUserStatus(
  */
 export async function updateUserRole(userId: string, roleCode: string): Promise<void> {
   await db("users").where("id", userId).update({ role_code: roleCode });
+}
+
+export async function resetUserDisplayNameToUsername(userId: string): Promise<void> {
+  await db("users")
+    .where("id", userId)
+    .update({ display_name: db.raw("username"), updated_at: db.fn.now() });
 }
 
 /**
@@ -276,6 +315,7 @@ export async function getUserForAdmin(userId: string): Promise<UserSearchResult 
     .select(
       "u.id",
       "u.username",
+      "u.display_name as displayName",
       db.raw(`(
         SELECT value
         FROM user_contacts uc

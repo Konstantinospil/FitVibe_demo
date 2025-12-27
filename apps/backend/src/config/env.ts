@@ -2,7 +2,7 @@ import { config as loadEnv } from "dotenv";
 import { z } from "zod";
 import fs from "node:fs";
 import path from "node:path";
-import { createHash, generateKeyPairSync, createPublicKey } from "node:crypto";
+import { createHash, generateKeyPairSync, createPublicKey, randomBytes } from "node:crypto";
 import { logger } from "./logger.js";
 
 // Find project root by looking for pnpm-workspace.yaml or package.json
@@ -98,6 +98,8 @@ const EnvSchema = z.object({
   ALLOWED_ORIGINS: z.string().optional(),
   CSRF_ALLOWED_ORIGINS: z.string().optional(),
   CSRF_ENABLED: z.string().optional(),
+  CSRF_COOKIE_KEY: z.string().optional(),
+  DEBUG_AUTH_TOKENS: z.string().optional(),
   GLOBAL_RATE_LIMIT_POINTS: z.coerce.number().default(120),
   GLOBAL_RATE_LIMIT_DURATION: z.coerce.number().default(60),
   METRICS_ENABLED: z.string().optional(),
@@ -238,6 +240,30 @@ const csrfAllowedOrigins = (() => {
   return configured.length ? configured : allowedOrigins;
 })();
 
+function parseCsrfCookieKey(value: string | undefined, isProduction: boolean): Buffer {
+  if (!value) {
+    if (isProduction) {
+      throw new Error("CSRF_COOKIE_KEY must be set in production.");
+    }
+    logger.warn("[env] CSRF_COOKIE_KEY not set; generating ephemeral key for development.");
+    return randomBytes(32);
+  }
+
+  const trimmed = value.trim();
+  if (/^[0-9a-fA-F]{64}$/.test(trimmed)) {
+    return Buffer.from(trimmed, "hex");
+  }
+
+  const decoded = Buffer.from(trimmed, "base64");
+  if (decoded.length !== 32) {
+    throw new Error("CSRF_COOKIE_KEY must be 32 bytes (hex or base64-encoded).");
+  }
+
+  return decoded;
+}
+
+const csrfCookieKey = parseCsrfCookieKey(raw.CSRF_COOKIE_KEY, raw.NODE_ENV === "production");
+
 export const env = {
   NODE_ENV: raw.NODE_ENV,
   isProduction: raw.NODE_ENV === "production",
@@ -263,6 +289,7 @@ export const env = {
   csrf: {
     enabled: parseBoolean(raw.CSRF_ENABLED, defaultCsrfEnabled),
     allowedOrigins: csrfAllowedOrigins,
+    cookieKey: csrfCookieKey,
   },
   metricsEnabled: parseBoolean(raw.METRICS_ENABLED, true),
   globalRateLimit: {
@@ -308,6 +335,7 @@ export const env = {
       email: raw.SMTP_FROM_EMAIL || raw.SMTP_USER,
     },
   },
+  debugAuthTokens: parseBoolean(raw.DEBUG_AUTH_TOKENS, false),
   // Trust X-Forwarded-For header when behind a reverse proxy (default: true in production)
   // Set to false if not behind a proxy to prevent IP spoofing attacks
   trustProxy: parseBoolean(raw.TRUST_PROXY, raw.NODE_ENV === "production"),

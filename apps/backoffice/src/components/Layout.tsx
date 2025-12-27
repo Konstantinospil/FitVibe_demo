@@ -33,6 +33,8 @@ const Layout: React.FC = () => {
   const navItems = [
     { path: "/translations", label: "Translations" },
     { path: "/messages", label: "Messages" },
+    { path: "/audit-logs", label: "Audit Logs" },
+    { path: "/settings", label: "Settings" },
     { path: "/users", label: "Users" },
   ];
 
@@ -74,7 +76,7 @@ const Layout: React.FC = () => {
           style={{ marginTop: "2rem", paddingTop: "2rem", borderTop: `1px solid ${colors.border}` }}
         >
           <div style={{ color: colors.textSecondary, marginBottom: "1rem", fontSize: "0.875rem" }}>
-            Logged in as: {user?.username}
+            Logged in as: {user?.displayName || user?.username}
           </div>
           <div style={{ marginBottom: "1rem" }}>
             <ThemeToggle />

@@ -2,27 +2,20 @@ import { useThemeStore } from "../store/theme.store";
 
 export const useThemeColors = () => {
   const theme = useThemeStore((state) => state.theme);
+  void theme;
 
-  if (theme === "light") {
-    return {
-      bg: "#FFFFFF",
-      surface: "#F5F5F5",
-      text: "#000000",
-      textSecondary: "#333333",
-      border: "#CCCCCC",
-      accent: "#FB951D",
-      error: "#9F2406",
-    };
-  }
-
-  // Dark theme
   return {
-    bg: "#000000",
-    surface: "#1A1A1A",
-    text: "#FFFFFF",
-    textSecondary: "#CCCCCC",
-    border: "#333333",
-    accent: "#FB951D",
-    error: "#9F2406",
+    bg: "var(--color-bg)",
+    surface: "var(--color-surface)",
+    surfaceMuted: "var(--color-surface-muted)",
+    text: "var(--color-text-primary)",
+    textSecondary: "var(--color-text-secondary)",
+    textMuted: "var(--color-text-muted)",
+    border: "var(--color-border)",
+    borderStrong: "var(--color-border-strong)",
+    accent: "var(--color-primary)",
+    error: "var(--color-danger)",
+    success: "var(--color-success-text)",
+    warning: "var(--color-warning-text)",
   };
 };

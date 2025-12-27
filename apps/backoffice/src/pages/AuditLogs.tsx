@@ -1,0 +1,813 @@
+import React, { useMemo, useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  auditLogsApi,
+  actionMappingsApi,
+  type AuditLogEntry,
+  type AuditLogSeverity,
+} from "../services/api";
+import { useAuthStore } from "../store/auth.store";
+import { useThemeColors } from "../hooks/useThemeColors";
+
+const severityOptions: AuditLogSeverity[] = ["info", "warning", "error", "critical"];
+
+const severityColors: Record<AuditLogSeverity, string> = {
+  info: "var(--color-info-text)",
+  warning: "var(--color-warning-text)",
+  error: "var(--color-danger)",
+  critical: "var(--vibe-explosivity)",
+};
+
+function toIsoDate(value: string): string | undefined {
+  if (!value) {
+    return undefined;
+  }
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) {
+    return undefined;
+  }
+  return parsed.toISOString();
+}
+
+function formatAction(action: string): string {
+  return action
+    .replace(/[_-]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .replace(/\b\w/g, (char) => char.toUpperCase());
+}
+
+const actionLabelMap: Record<string, string> = {
+  "auth.login": "User login",
+  "auth.refresh": "Session refresh",
+  profile_update: "Profile updated",
+};
+
+const entityLabelMap: Record<string, string> = {
+  auth: "Authentication",
+  users: "Users",
+};
+
+const fieldLabelMap: Record<string, string> = {
+  display_name: "Display name",
+  fitness_level: "Fitness level",
+  training_frequency: "Training frequency",
+  weight: "Weight",
+  alias: "Alias",
+};
+
+const metadataLabelMap: Record<string, string> = {
+  ip: "IP Address",
+  requestId: "Request ID",
+  sessionId: "Session ID",
+  userAgent: "User agent",
+  previousTokenId: "Previous token ID",
+};
+
+function formatMetadataValue(value: unknown): string {
+  if (value === null) {
+    return "null";
+  }
+  if (value === undefined) {
+    return "—";
+  }
+  if (typeof value === "string") {
+    return value;
+  }
+  if (typeof value === "number" || typeof value === "boolean") {
+    return String(value);
+  }
+  try {
+    return JSON.stringify(value);
+  } catch {
+    return "[Unserializable]";
+  }
+}
+
+function formatLabel(value: string, map: Record<string, string>): string {
+  return map[value] ?? formatAction(value);
+}
+
+function getChangeList(metadata: Record<string, unknown> | null): Array<{
+  field: string;
+  oldValue: unknown;
+  nextValue: unknown;
+}> {
+  if (!metadata || typeof metadata !== "object") {
+    return [];
+  }
+  const changes = metadata.changes;
+  if (!changes || typeof changes !== "object") {
+    return [];
+  }
+  return Object.entries(changes as Record<string, unknown>)
+    .map(([field, value]) => {
+      if (!value || typeof value !== "object") {
+        return null;
+      }
+      const record = value as { old?: unknown; next?: unknown };
+      return {
+        field,
+        oldValue: record.old,
+        nextValue: record.next,
+      };
+    })
+    .filter((item): item is { field: string; oldValue: unknown; nextValue: unknown } => !!item);
+}
+
+function buildSummary(log: AuditLogEntry, getActionLabel: (action: string) => string): string {
+  if (log.action === "profile_update") {
+    const changes = getChangeList(log.metadata);
+    if (changes.length) {
+      const fields = changes.map((change) => formatLabel(change.field, fieldLabelMap)).join(", ");
+      return `Profile updated: ${fields}`;
+    }
+    return "Profile updated";
+  }
+  if (log.action === "auth.login") {
+    return "User signed in";
+  }
+  if (log.action === "auth.refresh") {
+    return "Session refreshed";
+  }
+  return getActionLabel(log.action);
+}
+
+const AuditLogsPage: React.FC = () => {
+  const colors = useThemeColors();
+  const [page, setPage] = useState(0);
+  const [severityFilter, setSeverityFilter] = useState<AuditLogSeverity | "all">("all");
+  const [resolvedFilter, setResolvedFilter] = useState<"all" | "resolved" | "unresolved">("all");
+  const [createdFrom, setCreatedFrom] = useState("");
+  const [createdTo, setCreatedTo] = useState("");
+  const [selectedLog, setSelectedLog] = useState<AuditLogEntry | null>(null);
+  const limit = 50;
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+
+  const createdFromIso = useMemo(() => toIsoDate(createdFrom), [createdFrom]);
+  const createdToIso = useMemo(() => toIsoDate(createdTo), [createdTo]);
+
+  const resolvedValue =
+    resolvedFilter === "resolved" ? true : resolvedFilter === "unresolved" ? false : undefined;
+
+  const { data, isLoading, error } = useQuery({
+    queryKey: ["audit-logs", page, severityFilter, resolvedFilter, createdFromIso, createdToIso],
+    queryFn: () =>
+      auditLogsApi.list({
+        limit,
+        offset: page * limit,
+        severity: severityFilter === "all" ? undefined : severityFilter,
+        resolved: resolvedValue,
+        createdFrom: createdFromIso,
+        createdTo: createdToIso,
+      }),
+    enabled: isAuthenticated,
+  });
+
+  const { data: actionMappingsData } = useQuery({
+    queryKey: ["action-mappings"],
+    queryFn: () => actionMappingsApi.list(),
+    enabled: isAuthenticated,
+  });
+
+  const actionUiNameMap = useMemo(() => {
+    const map: Record<string, string> = {};
+    for (const mapping of actionMappingsData?.mappings ?? []) {
+      if (mapping.uiName) {
+        map[mapping.action] = mapping.uiName;
+      }
+    }
+    return map;
+  }, [actionMappingsData]);
+
+  const getActionLabel = (action: string) =>
+    actionUiNameMap[action] ?? actionLabelMap[action] ?? formatAction(action);
+
+  const queryClient = useQueryClient();
+
+  const updateLogMutation = useMutation({
+    mutationFn: ({
+      logId,
+      updates,
+    }: {
+      logId: string;
+      updates: { severity?: AuditLogSeverity; resolved?: boolean };
+    }) => auditLogsApi.update(logId, updates),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["audit-logs"] });
+    },
+  });
+
+  const handleUpdateSeverity = (logId: string, severity: AuditLogSeverity) => {
+    updateLogMutation.mutate({ logId, updates: { severity } });
+  };
+
+  const handleToggleResolved = (log: AuditLogEntry) => {
+    updateLogMutation.mutate({ logId: log.id, updates: { resolved: !log.resolvedAt } });
+  };
+
+  const handleCloseModal = () => {
+    setSelectedLog(null);
+  };
+
+  return (
+    <div>
+      <h1 style={{ color: colors.text, marginBottom: "2rem", fontSize: "2rem" }}>Audit Logs</h1>
+
+      <div style={{ marginBottom: "2rem", display: "flex", gap: "1.5rem", flexWrap: "wrap" }}>
+        <label
+          style={{ color: colors.text, display: "flex", flexDirection: "column", gap: "0.35rem" }}
+        >
+          Severity
+          <select
+            value={severityFilter}
+            onChange={(e) => {
+              setSeverityFilter(e.target.value as AuditLogSeverity | "all");
+              setPage(0);
+            }}
+            style={{
+              padding: "0.5rem",
+              borderRadius: "4px",
+              border: `1px solid ${colors.border}`,
+              background: colors.surface,
+              color: colors.text,
+            }}
+          >
+            <option value="all">All</option>
+            {severityOptions.map((severity) => (
+              <option key={severity} value={severity}>
+                {severity}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        <label
+          style={{ color: colors.text, display: "flex", flexDirection: "column", gap: "0.35rem" }}
+        >
+          Resolved
+          <select
+            value={resolvedFilter}
+            onChange={(e) => {
+              setResolvedFilter(e.target.value as "all" | "resolved" | "unresolved");
+              setPage(0);
+            }}
+            style={{
+              padding: "0.5rem",
+              borderRadius: "4px",
+              border: `1px solid ${colors.border}`,
+              background: colors.surface,
+              color: colors.text,
+            }}
+          >
+            <option value="all">All</option>
+            <option value="resolved">Resolved</option>
+            <option value="unresolved">Unresolved</option>
+          </select>
+        </label>
+
+        <label
+          style={{ color: colors.text, display: "flex", flexDirection: "column", gap: "0.35rem" }}
+        >
+          From
+          <input
+            type="datetime-local"
+            value={createdFrom}
+            onChange={(e) => {
+              setCreatedFrom(e.target.value);
+              setPage(0);
+            }}
+            style={{
+              padding: "0.5rem",
+              borderRadius: "4px",
+              border: `1px solid ${colors.border}`,
+              background: colors.surface,
+              color: colors.text,
+            }}
+          />
+        </label>
+
+        <label
+          style={{ color: colors.text, display: "flex", flexDirection: "column", gap: "0.35rem" }}
+        >
+          To
+          <input
+            type="datetime-local"
+            value={createdTo}
+            onChange={(e) => {
+              setCreatedTo(e.target.value);
+              setPage(0);
+            }}
+            style={{
+              padding: "0.5rem",
+              borderRadius: "4px",
+              border: `1px solid ${colors.border}`,
+              background: colors.surface,
+              color: colors.text,
+            }}
+          />
+        </label>
+      </div>
+
+      {isLoading ? (
+        <div style={{ color: colors.text }}>Loading...</div>
+      ) : error ? (
+        <div style={{ color: "#9F2406", padding: "2rem" }}>
+          Error loading audit logs: {error instanceof Error ? error.message : String(error)}
+        </div>
+      ) : !data || !data.logs || data.logs.length === 0 ? (
+        <div style={{ color: colors.text, textAlign: "center", padding: "2rem" }}>
+          No audit logs found
+        </div>
+      ) : (
+        <>
+          <div
+            style={{
+              background: colors.surface,
+              borderRadius: "8px",
+              overflowX: "auto",
+              overflowY: "visible",
+              border: `1px solid ${colors.border}`,
+            }}
+          >
+            <table style={{ width: "100%", borderCollapse: "collapse", minWidth: "1200px" }}>
+              <thead>
+                <tr style={{ background: colors.surfaceMuted }}>
+                  <th
+                    style={{
+                      padding: "1rem",
+                      textAlign: "left",
+                      color: colors.text,
+                      borderBottom: `1px solid ${colors.border}`,
+                    }}
+                  >
+                    Created
+                  </th>
+                  <th
+                    style={{
+                      padding: "1rem",
+                      textAlign: "left",
+                      color: colors.text,
+                      borderBottom: `1px solid ${colors.border}`,
+                    }}
+                  >
+                    Action
+                  </th>
+                  <th
+                    style={{
+                      padding: "1rem",
+                      textAlign: "left",
+                      color: colors.text,
+                      borderBottom: `1px solid ${colors.border}`,
+                    }}
+                  >
+                    Entity
+                  </th>
+                  <th
+                    style={{
+                      padding: "1rem",
+                      textAlign: "left",
+                      color: colors.text,
+                      borderBottom: `1px solid ${colors.border}`,
+                    }}
+                  >
+                    Actor
+                  </th>
+                  <th
+                    style={{
+                      padding: "1rem",
+                      textAlign: "left",
+                      color: colors.text,
+                      borderBottom: `1px solid ${colors.border}`,
+                    }}
+                  >
+                    Severity
+                  </th>
+                  <th
+                    style={{
+                      padding: "1rem",
+                      textAlign: "left",
+                      color: colors.text,
+                      borderBottom: `1px solid ${colors.border}`,
+                    }}
+                  >
+                    Outcome
+                  </th>
+                  <th
+                    style={{
+                      padding: "1rem",
+                      textAlign: "left",
+                      color: colors.text,
+                      borderBottom: `1px solid ${colors.border}`,
+                    }}
+                  >
+                    Summary
+                  </th>
+                  <th
+                    style={{
+                      padding: "1rem",
+                      textAlign: "left",
+                      color: colors.text,
+                      borderBottom: `1px solid ${colors.border}`,
+                    }}
+                  >
+                    Resolved
+                  </th>
+                  <th
+                    style={{
+                      padding: "1rem",
+                      textAlign: "left",
+                      color: colors.text,
+                      borderBottom: `1px solid ${colors.border}`,
+                    }}
+                  >
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.logs.map((log) => (
+                  <tr key={log.id} style={{ borderBottom: `1px solid ${colors.border}` }}>
+                    <td style={{ padding: "1rem", color: colors.text }}>
+                      {new Date(log.createdAt).toLocaleString()}
+                    </td>
+                    <td style={{ padding: "1rem", color: colors.text }}>
+                      {getActionLabel(log.action)}
+                    </td>
+                    <td style={{ padding: "1rem", color: colors.text }}>
+                      {formatLabel(log.entityType, entityLabelMap)}
+                    </td>
+                    <td style={{ padding: "1rem", color: colors.text }}>
+                      {log.actorDisplayName || log.actorUsername || log.actorUserId || "-"}
+                    </td>
+                    <td style={{ padding: "1rem" }}>
+                      <select
+                        value={log.severity}
+                        onChange={(e) =>
+                          handleUpdateSeverity(log.id, e.target.value as AuditLogSeverity)
+                        }
+                        disabled={updateLogMutation.isPending}
+                        style={{
+                          padding: "0.4rem 0.6rem",
+                          borderRadius: "4px",
+                          border: `1px solid ${colors.border}`,
+                          background: colors.surface,
+                          color: severityColors[log.severity],
+                          fontWeight: 600,
+                          textTransform: "uppercase",
+                          fontSize: "0.75rem",
+                        }}
+                      >
+                        {severityOptions.map((severity) => (
+                          <option key={severity} value={severity}>
+                            {severity}
+                          </option>
+                        ))}
+                      </select>
+                    </td>
+                    <td style={{ padding: "1rem", color: colors.text }}>
+                      {formatAction(log.outcome)}
+                    </td>
+                    <td style={{ padding: "1rem", color: colors.textSecondary }}>
+                      {buildSummary(log, getActionLabel)}
+                    </td>
+                    <td style={{ padding: "1rem", color: colors.text }}>
+                      {log.resolvedAt ? (
+                        <span style={{ color: colors.success }}>Resolved</span>
+                      ) : (
+                        <span style={{ color: colors.warning }}>Open</span>
+                      )}
+                    </td>
+                    <td style={{ padding: "1rem" }}>
+                      <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
+                        <button
+                          onClick={() => setSelectedLog(log)}
+                          style={{
+                            padding: "0.5rem 1rem",
+                            background: colors.border,
+                            color: colors.text,
+                            border: "none",
+                            borderRadius: "4px",
+                            cursor: "pointer",
+                            fontSize: "0.875rem",
+                            whiteSpace: "nowrap",
+                          }}
+                        >
+                          View
+                        </button>
+                        <button
+                          onClick={() => handleToggleResolved(log)}
+                          disabled={updateLogMutation.isPending}
+                          style={{
+                            padding: "0.5rem 1rem",
+                            background: log.resolvedAt
+                              ? "var(--color-primary)"
+                              : "var(--color-secondary)",
+                            color: colors.text,
+                            border: "none",
+                            borderRadius: "4px",
+                            cursor: "pointer",
+                            fontSize: "0.875rem",
+                            whiteSpace: "nowrap",
+                          }}
+                        >
+                          {log.resolvedAt ? "Reopen" : "Mark Resolved"}
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {data.logs.length >= limit && (
+            <div style={{ marginTop: "2rem", display: "flex", gap: "1rem", alignItems: "center" }}>
+              <button
+                onClick={() => setPage((p) => Math.max(0, p - 1))}
+                disabled={page === 0}
+                style={{
+                  padding: "0.75rem 1.5rem",
+                  background: page === 0 ? colors.border : colors.accent,
+                  color: colors.text,
+                  border: "none",
+                  borderRadius: "4px",
+                  cursor: page === 0 ? "not-allowed" : "pointer",
+                }}
+              >
+                Previous
+              </button>
+              <span style={{ color: colors.text }}>Page {page + 1}</span>
+              <button
+                onClick={() => setPage((p) => p + 1)}
+                disabled={data.logs.length < limit}
+                style={{
+                  padding: "0.75rem 1.5rem",
+                  background: data.logs.length < limit ? colors.border : colors.accent,
+                  color: colors.text,
+                  border: "none",
+                  borderRadius: "4px",
+                  cursor: data.logs.length < limit ? "not-allowed" : "pointer",
+                }}
+              >
+                Next
+              </button>
+            </div>
+          )}
+        </>
+      )}
+
+      {selectedLog && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: "rgba(0, 0, 0, 0.8)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 1000,
+            padding: "2rem",
+          }}
+          onClick={handleCloseModal}
+        >
+          <div
+            style={{
+              background: colors.surface,
+              borderRadius: "8px",
+              border: `1px solid ${colors.border}`,
+              maxWidth: "800px",
+              width: "100%",
+              maxHeight: "90vh",
+              overflow: "auto",
+              padding: "2rem",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "flex-start",
+                marginBottom: "1.5rem",
+              }}
+            >
+              <h2 style={{ color: colors.text, fontSize: "1.5rem", margin: 0 }}>
+                Audit Log Details
+              </h2>
+              <button
+                onClick={handleCloseModal}
+                style={{
+                  background: "transparent",
+                  border: "none",
+                  color: colors.text,
+                  fontSize: "1.5rem",
+                  cursor: "pointer",
+                  padding: "0.25rem 0.5rem",
+                }}
+              >
+                ×
+              </button>
+            </div>
+
+            <div style={{ marginBottom: "1rem" }}>
+              <div style={{ color: colors.textMuted, fontSize: "0.875rem" }}>Created</div>
+              <div style={{ color: colors.text, fontSize: "1rem" }}>
+                {new Date(selectedLog.createdAt).toLocaleString()}
+              </div>
+            </div>
+
+            <div style={{ marginBottom: "1rem" }}>
+              <div style={{ color: colors.textMuted, fontSize: "0.875rem" }}>Action</div>
+              <div style={{ color: colors.text, fontSize: "1rem" }}>
+                {getActionLabel(selectedLog.action)}
+              </div>
+            </div>
+
+            <div style={{ marginBottom: "1rem" }}>
+              <div style={{ color: colors.textMuted, fontSize: "0.875rem" }}>Entity</div>
+              <div style={{ color: colors.text, fontSize: "1rem" }}>
+                {formatLabel(selectedLog.entityType, entityLabelMap)}
+              </div>
+            </div>
+
+            <div style={{ marginBottom: "1rem" }}>
+              <div style={{ color: colors.textMuted, fontSize: "0.875rem" }}>Actor</div>
+              <div style={{ color: colors.text, fontSize: "1rem" }}>
+                {selectedLog.actorUsername || selectedLog.actorUserId || "-"}
+              </div>
+            </div>
+
+            <div style={{ marginBottom: "1rem" }}>
+              <div style={{ color: colors.textMuted, fontSize: "0.875rem" }}>Severity</div>
+              <div
+                style={{
+                  color: severityColors[selectedLog.severity],
+                  fontSize: "1rem",
+                  fontWeight: 600,
+                }}
+              >
+                {selectedLog.severity.toUpperCase()}
+              </div>
+            </div>
+
+            <div style={{ marginBottom: "1rem" }}>
+              <div style={{ color: colors.textMuted, fontSize: "0.875rem" }}>Outcome</div>
+              <div style={{ color: colors.text, fontSize: "1rem" }}>
+                {formatAction(selectedLog.outcome)}
+              </div>
+            </div>
+
+            <div style={{ marginBottom: "1rem" }}>
+              <div style={{ color: colors.textMuted, fontSize: "0.875rem" }}>Resolved</div>
+              <div style={{ color: colors.text, fontSize: "1rem" }}>
+                {selectedLog.resolvedAt
+                  ? new Date(selectedLog.resolvedAt).toLocaleString()
+                  : "Open"}
+              </div>
+            </div>
+
+            <div style={{ marginBottom: "1.5rem" }}>
+              <div
+                style={{
+                  color: colors.textMuted,
+                  fontSize: "0.875rem",
+                  marginBottom: "0.5rem",
+                }}
+              >
+                Summary
+              </div>
+              <div style={{ color: colors.text, fontSize: "1rem" }}>
+                {buildSummary(selectedLog, getActionLabel)}
+              </div>
+            </div>
+
+            <div style={{ marginBottom: "1.5rem" }}>
+              <div
+                style={{
+                  color: colors.textMuted,
+                  fontSize: "0.875rem",
+                  marginBottom: "0.5rem",
+                }}
+              >
+                Metadata
+              </div>
+              {selectedLog.metadata && Object.keys(selectedLog.metadata).length > 0 ? (
+                <div
+                  style={{
+                    background: colors.surfaceMuted,
+                    padding: "1rem",
+                    borderRadius: "4px",
+                    border: `1px solid ${colors.border}`,
+                    maxHeight: "300px",
+                    overflow: "auto",
+                  }}
+                >
+                  {getChangeList(selectedLog.metadata).length > 0 && (
+                    <div style={{ marginBottom: "1rem" }}>
+                      <div style={{ color: colors.textMuted, marginBottom: "0.5rem" }}>Changes</div>
+                      <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                        <thead>
+                          <tr>
+                            <th
+                              style={{ textAlign: "left", padding: "0.5rem", color: colors.text }}
+                            >
+                              Field
+                            </th>
+                            <th
+                              style={{ textAlign: "left", padding: "0.5rem", color: colors.text }}
+                            >
+                              From
+                            </th>
+                            <th
+                              style={{ textAlign: "left", padding: "0.5rem", color: colors.text }}
+                            >
+                              To
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {getChangeList(selectedLog.metadata).map((change) => (
+                            <tr
+                              key={change.field}
+                              style={{ borderBottom: `1px solid ${colors.border}` }}
+                            >
+                              <td
+                                style={{ padding: "0.5rem", color: colors.text, fontWeight: 600 }}
+                              >
+                                {formatLabel(change.field, fieldLabelMap)}
+                              </td>
+                              <td style={{ padding: "0.5rem", color: colors.text }}>
+                                {formatMetadataValue(change.oldValue)}
+                              </td>
+                              <td style={{ padding: "0.5rem", color: colors.text }}>
+                                {formatMetadataValue(change.nextValue)}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                  {Object.entries(selectedLog.metadata).filter(([key]) => key !== "changes")
+                    .length > 0 && (
+                    <div>
+                      <div style={{ color: colors.textMuted, marginBottom: "0.5rem" }}>Context</div>
+                      <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                        <tbody>
+                          {Object.entries(selectedLog.metadata)
+                            .filter(([key]) => key !== "changes")
+                            .map(([key, value]) => (
+                              <tr key={key} style={{ borderBottom: `1px solid ${colors.border}` }}>
+                                <td
+                                  style={{
+                                    padding: "0.5rem",
+                                    color: colors.text,
+                                    fontWeight: 600,
+                                    width: "35%",
+                                  }}
+                                >
+                                  {formatLabel(key, metadataLabelMap)}
+                                </td>
+                                <td style={{ padding: "0.5rem", color: colors.text }}>
+                                  {formatMetadataValue(value)}
+                                </td>
+                              </tr>
+                            ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div style={{ color: colors.textMuted }}>No metadata available.</div>
+              )}
+            </div>
+
+            <div style={{ display: "flex", justifyContent: "flex-end" }}>
+              <button
+                onClick={handleCloseModal}
+                style={{
+                  padding: "0.75rem 1.5rem",
+                  background: "transparent",
+                  color: colors.text,
+                  border: `1px solid ${colors.border}`,
+                  borderRadius: "4px",
+                  cursor: "pointer",
+                  fontSize: "1rem",
+                }}
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default AuditLogsPage;

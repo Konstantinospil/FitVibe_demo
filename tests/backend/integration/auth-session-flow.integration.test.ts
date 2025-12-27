@@ -25,6 +25,7 @@ describe("Integration: Auth → Session Flow", () => {
     // Ensure read-only mode is disabled for tests
     const { env } = await import("../../../apps/backend/src/config/env.js");
     (env as { readOnlyMode: boolean }).readOnlyMode = false;
+    (env as { debugAuthTokens: boolean }).debugAuthTokens = true;
 
     // Clean up any existing test data
     await truncateAll();

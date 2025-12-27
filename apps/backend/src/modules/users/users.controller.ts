@@ -565,6 +565,17 @@ export async function removeContactHandler(req: Request, res: Response): Promise
     return;
   }
 
+  const existingContact = await getContactById(parsed.data.contactId);
+  if (!existingContact || existingContact.user_id !== userId) {
+    res.status(403).json({
+      error: {
+        code: "FORBIDDEN",
+        message: "Contact not found or access denied",
+      },
+    });
+    return;
+  }
+
   // Idempotency support
   const idempotencyKey = getIdempotencyKey(req);
   if (idempotencyKey) {

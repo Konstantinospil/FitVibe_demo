@@ -148,7 +148,7 @@ export async function register(req: Request, res: Response, next: NextFunction):
       const response: Record<string, unknown> = {
         message: "If the email is valid, a verification link will be sent shortly.",
       };
-      if (!env.isProduction && verificationToken) {
+      if (env.debugAuthTokens && verificationToken) {
         response.debugVerificationToken = verificationToken;
         response.verificationUrl = `${env.frontendUrl}/verify?token=${verificationToken}`;
       }
@@ -169,7 +169,7 @@ export async function register(req: Request, res: Response, next: NextFunction):
     const response: Record<string, unknown> = {
       message: "If the email is valid, a verification link will be sent shortly.",
     };
-    if (!env.isProduction && verificationToken) {
+    if (env.debugAuthTokens && verificationToken) {
       response.debugVerificationToken = verificationToken;
       response.verificationUrl = `${env.frontendUrl}/verify?token=${verificationToken}`;
     }
@@ -182,12 +182,7 @@ export async function register(req: Request, res: Response, next: NextFunction):
 
 export async function verifyEmail(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
-    const queryToken = typeof req.query.token === "string" ? req.query.token : undefined;
-    const bodyToken =
-      req.body && typeof req.body === "object" && "token" in req.body
-        ? (req.body as Record<string, unknown>).token
-        : undefined;
-    const token = typeof bodyToken === "string" ? bodyToken : queryToken;
+    const token = typeof req.query.token === "string" ? req.query.token.trim() : "";
     if (!token) {
       throw new HttpError(400, "AUTH_INVALID_TOKEN", "AUTH_INVALID_TOKEN");
     }
@@ -273,7 +268,7 @@ export async function login(req: Request, res: Response, next: NextFunction): Pr
       session: result.session,
     };
 
-    if (!env.isProduction) {
+    if (env.debugAuthTokens) {
       response.tokens = result.tokens;
     }
 
@@ -329,7 +324,7 @@ export async function verify2FALogin(
       session: result.session,
     };
 
-    if (!env.isProduction) {
+    if (env.debugAuthTokens) {
       response.tokens = result.tokens;
     }
 
@@ -410,7 +405,7 @@ export async function forgotPassword(
       const response: Record<string, unknown> = {
         message: "If the email is registered, a reset link will be sent shortly.",
       };
-      if (!env.isProduction && resetToken) {
+      if (env.debugAuthTokens && resetToken) {
         response.debugResetToken = resetToken;
         response.resetUrl = `${env.appBaseUrl}/auth/password/reset?token=${resetToken}`;
       }
@@ -430,7 +425,7 @@ export async function forgotPassword(
     const response: Record<string, unknown> = {
       message: "If the email is registered, a reset link will be sent shortly.",
     };
-    if (!env.isProduction && resetToken) {
+    if (env.debugAuthTokens && resetToken) {
       response.debugResetToken = resetToken;
       response.resetUrl = `${env.appBaseUrl}/auth/password/reset?token=${resetToken}`;
     }

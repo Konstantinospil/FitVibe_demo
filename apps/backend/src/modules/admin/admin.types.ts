@@ -21,6 +21,7 @@ export interface FeedReport {
 export interface UserSearchResult {
   id: string;
   username: string;
+  displayName: string;
   email: string;
   roleCode: string;
   status: "active" | "suspended" | "banned";
@@ -56,4 +57,9 @@ export interface SearchUsersQuery {
   limit?: number;
   offset?: number;
   blacklisted?: boolean;
+}
+
+export interface ActionUiMapping {
+  action: string;
+  uiName: string | null;
 }

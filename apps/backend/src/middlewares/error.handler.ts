@@ -9,12 +9,22 @@ type GenericError = Error & {
   details?: Record<string, unknown>;
 };
 
+function isZodError(err: unknown): err is ZodError {
+  if (err instanceof ZodError) {
+    return true;
+  }
+  if (!err || typeof err !== "object") {
+    return false;
+  }
+  return "issues" in err && "flatten" in err;
+}
+
 function normalizeError(err: unknown): HttpError {
   if (err instanceof HttpError) {
     return err;
   }
 
-  if (err instanceof ZodError) {
+  if (isZodError(err)) {
     return new HttpError(400, "VALIDATION_ERROR", "VALIDATION_ERROR", err.flatten());
   }
 

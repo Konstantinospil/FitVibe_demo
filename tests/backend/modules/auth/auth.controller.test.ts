@@ -3,6 +3,7 @@ import * as authController from "../../../../apps/backend/src/modules/auth/auth.
 import * as authService from "../../../../apps/backend/src/modules/auth/auth.service.js";
 import type { JwtPayload } from "../../../../apps/backend/src/modules/auth/auth.types.js";
 import { HttpError } from "../../../../apps/backend/src/utils/http.js";
+import { env } from "../../../../apps/backend/src/config/env.js";
 
 // Mock dependencies
 jest.mock("../../../../apps/backend/src/modules/auth/auth.service.js");
@@ -37,8 +38,11 @@ describe("Auth Controller", () => {
   let mockRequest: Partial<Request>;
   let mockResponse: Partial<Response>;
   let mockNext: jest.MockedFunction<NextFunction>;
+  let originalDebugAuthTokens: boolean;
 
   beforeEach(() => {
+    originalDebugAuthTokens = env.debugAuthTokens;
+    env.debugAuthTokens = true;
     mockRequest = {
       body: {},
       headers: {},
@@ -74,6 +78,10 @@ describe("Auth Controller", () => {
     mockGetRouteTemplate.mockReturnValue("/api/v1/auth/register");
     mockResolveIdempotency.mockResolvedValue({ type: "new", recordId: "rec-1" });
     mockPersistIdempotencyResult.mockResolvedValue();
+  });
+
+  afterEach(() => {
+    env.debugAuthTokens = originalDebugAuthTokens;
   });
 
   describe("register", () => {

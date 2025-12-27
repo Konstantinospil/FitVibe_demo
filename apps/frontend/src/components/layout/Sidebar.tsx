@@ -59,7 +59,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ items, isOpen, onClose, logo }
           borderRight: "1px solid var(--color-border)",
           boxShadow: "var(--shadow-e3)",
           zIndex: 1000,
-          transform: isOpen ? "translateX(0)" : "translateX(-100%)",
+          transform: "translateX(0)",
           transition: "transform 150ms ease",
         }}
         role="navigation"

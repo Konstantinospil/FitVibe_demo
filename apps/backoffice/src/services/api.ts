@@ -165,6 +165,29 @@ export interface ContactMessageListResponse {
   messages: ContactMessage[];
 }
 
+export type AuditLogSeverity = "info" | "warning" | "error" | "critical";
+
+export interface AuditLogEntry {
+  id: string;
+  actorUserId: string | null;
+  actorUsername: string | null;
+  actorDisplayName: string | null;
+  entityType: string;
+  action: string;
+  entityId: string | null;
+  outcome: string;
+  requestId: string | null;
+  metadata: Record<string, unknown> | null;
+  severity: AuditLogSeverity;
+  resolvedAt: string | null;
+  resolvedByUserId: string | null;
+  createdAt: string;
+}
+
+export interface AuditLogListResponse {
+  logs: AuditLogEntry[];
+}
+
 // User types
 export interface User {
   id: string;
@@ -180,6 +203,15 @@ export interface User {
 
 export interface UserListResponse {
   users: User[];
+}
+
+export interface ActionUiMapping {
+  action: string;
+  uiName: string | null;
+}
+
+export interface ActionUiMappingListResponse {
+  mappings: ActionUiMapping[];
 }
 
 // API functions
@@ -259,12 +291,53 @@ export const messagesApi = {
   },
 };
 
+export const auditLogsApi = {
+  list: async (params?: {
+    action?: string;
+    entityType?: string;
+    actorUserId?: string;
+    outcome?: string;
+    severity?: AuditLogSeverity;
+    resolved?: boolean;
+    createdFrom?: string;
+    createdTo?: string;
+    limit?: number;
+    offset?: number;
+  }) => {
+    const queryParams = params
+      ? {
+          ...params,
+          resolved:
+            typeof params.resolved === "boolean" ? (params.resolved ? "true" : "false") : undefined,
+        }
+      : undefined;
+    const response = await apiClient.get<AuditLogListResponse>("/api/v1/logs", {
+      params: queryParams,
+    });
+    return response.data;
+  },
+  update: async (
+    logId: string,
+    updates: {
+      severity?: AuditLogSeverity;
+      resolved?: boolean;
+    },
+  ) => {
+    const response = await apiClient.patch<{ log: AuditLogEntry }>(
+      `/api/v1/logs/${logId}`,
+      updates,
+    );
+    return response.data.log;
+  },
+};
+
 export const usersApi = {
   search: async (query: string, limit = 20, blacklisted?: boolean) => {
     const response = await apiClient.get<{
       users: Array<{
         id: string;
         username: string;
+        displayName: string;
         email: string;
         roleCode: string;
         status: string;
@@ -285,7 +358,7 @@ export const usersApi = {
         id: user.id,
         username: user.username,
         email: user.email,
-        display_name: user.username, // Fallback since backend doesn't return display_name
+        display_name: user.displayName || user.username,
         role_code: user.roleCode,
         status: user.status,
         created_at: user.createdAt,
@@ -313,12 +386,15 @@ export const usersApi = {
   deleteAvatar: async (userId: string, reason?: string) => {
     await apiClient.delete(`/api/v1/admin/users/${userId}/avatar`, { data: { reason } });
   },
+  deleteDisplayName: async (userId: string, reason?: string) => {
+    await apiClient.delete(`/api/v1/admin/users/${userId}/display-name`, { data: { reason } });
+  },
 };
 
 export const authApi = {
   login: async (email: string, password: string) => {
     const response = await apiClient.post<{
-      user: { id: string; username: string; email: string; role: string };
+      user: { id: string; username: string; displayName: string; email: string; role: string };
     }>("/api/v1/auth/login", { email, password });
     return response.data;
   },
@@ -330,6 +406,7 @@ export const authApi = {
     const response = await apiClient.get<{
       id: string;
       username: string;
+      displayName: string;
       primaryEmail: string | null;
       role: string;
     }>("/api/v1/users/me");
@@ -338,9 +415,26 @@ export const authApi = {
       user: {
         id: response.data.id,
         username: response.data.username,
+        displayName: response.data.displayName,
         email: response.data.primaryEmail || "",
         role: response.data.role,
       },
     };
+  },
+};
+
+export const actionMappingsApi = {
+  list: async () => {
+    const response = await apiClient.get<ActionUiMappingListResponse>(
+      "/api/v1/admin/action-mappings",
+    );
+    return response.data;
+  },
+  upsert: async (mapping: { action: string; uiName: string }) => {
+    const response = await apiClient.post<{ mapping: ActionUiMapping }>(
+      "/api/v1/admin/action-mappings",
+      mapping,
+    );
+    return response.data.mapping;
   },
 };

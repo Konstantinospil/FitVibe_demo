@@ -184,6 +184,37 @@ export async function sendPasswordResetHandler(req: Request, res: Response): Pro
 }
 
 /**
+ * List action UI mappings
+ * GET /api/v1/admin/action-mappings
+ */
+export async function listActionMappingsHandler(req: Request, res: Response): Promise<void> {
+  const mappings = await service.listActionUiMappings();
+  res.json({ mappings });
+}
+
+/**
+ * Upsert action UI mapping
+ * POST /api/v1/admin/action-mappings
+ */
+export async function upsertActionMappingHandler(req: Request, res: Response): Promise<void> {
+  const body = req.body as { action?: string; uiName?: string };
+  const action = body.action;
+  const uiName = body.uiName;
+
+  if (!req.user?.sub) {
+    throw new HttpError(401, "UNAUTHENTICATED", "User not authenticated");
+  }
+
+  if (!action || !uiName) {
+    throw new HttpError(400, "MISSING_FIELDS", "Action and UI name are required");
+  }
+
+  const mapping = await service.upsertActionUiMapping(action, uiName);
+
+  res.json({ mapping });
+}
+
+/**
  * Delete user avatar
  * DELETE /api/v1/admin/users/:userId/avatar
  */
@@ -199,4 +230,22 @@ export async function deleteUserAvatarHandler(req: Request, res: Response): Prom
   await service.deleteUserAvatar(userId, req.user.sub, reason);
 
   res.json({ success: true, message: "User avatar deleted successfully" });
+}
+
+/**
+ * Delete user display name
+ * DELETE /api/v1/admin/users/:userId/display-name
+ */
+export async function deleteUserDisplayNameHandler(req: Request, res: Response): Promise<void> {
+  const { userId } = req.params;
+  const body = req.body as { reason?: string };
+  const reason = body.reason;
+
+  if (!req.user?.sub) {
+    throw new HttpError(401, "UNAUTHENTICATED", "User not authenticated");
+  }
+
+  await service.deleteUserDisplayName(userId, req.user.sub, reason);
+
+  res.json({ success: true, message: "User display name deleted successfully" });
 }

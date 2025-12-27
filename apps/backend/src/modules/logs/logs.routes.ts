@@ -7,21 +7,21 @@
 
 import { Router } from "express";
 import { asyncHandler } from "../../utils/async-handler.js";
-import { requireAuth } from "../users/users.middleware.js";
+import { requireAccessToken } from "../auth/auth.middleware.js";
 import { requireRole } from "../common/rbac.middleware.js";
 import { rateLimit } from "../common/rateLimiter.js";
-import { listLogsHandler, recentActivityHandler } from "./logs.controller.js";
+import { listLogsHandler, recentActivityHandler, updateLogHandler } from "./logs.controller.js";
 
 export const logsRouter = Router();
 
 // All logs routes require authentication and admin role
-logsRouter.use(requireAuth);
+logsRouter.use(requireAccessToken);
 logsRouter.use(requireRole("admin"));
 
 /**
  * GET /api/v1/logs
  * List audit logs with optional filtering
- * Query params: action, entityType, actorUserId, outcome, limit, offset
+ * Query params: action, entityType, actorUserId, outcome, severity, resolved, createdFrom, createdTo, limit, offset
  */
 logsRouter.get("/", rateLimit("logs_list", 60, 60), asyncHandler(listLogsHandler));
 
@@ -35,5 +35,11 @@ logsRouter.get(
   rateLimit("logs_recent_activity", 60, 60),
   asyncHandler(recentActivityHandler),
 );
+
+/**
+ * PATCH /api/v1/logs/:id
+ * Update audit log severity or resolution status
+ */
+logsRouter.patch("/:id", rateLimit("logs_update", 30, 60), asyncHandler(updateLogHandler));
 
 export default logsRouter;

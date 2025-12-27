@@ -209,6 +209,7 @@ function toSafeUser(record: AuthUserRecord): UserSafe {
     id: record.id,
     email: record.primary_email ?? "",
     username: record.username,
+    displayName: record.display_name,
     role: record.role_code,
     status: record.status,
     created_at: record.created_at,

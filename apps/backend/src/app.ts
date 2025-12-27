@@ -30,6 +30,7 @@ import { translationsRouter } from "./api/translations.routes.js";
 import healthRouter from "./modules/health/health.router.js";
 import systemRouter from "./modules/system/system.routes.js";
 import { consentRouter } from "./modules/consent/consent.routes.js";
+import { logsRouter } from "./modules/logs/logs.routes.js";
 import { jwksHandler } from "./modules/auth/auth.controller.js";
 
 const app = express();
@@ -176,6 +177,7 @@ apiRouter.use("/points", pointsRouter);
 apiRouter.use("/feed", feedRouter);
 apiRouter.use("/admin", adminRouter);
 apiRouter.use("/contact", contactRouter);
+apiRouter.use("/logs", logsRouter);
 
 apiRouter.use("/system", systemRouter);
 apiRouter.use("/consent", consentRouter);

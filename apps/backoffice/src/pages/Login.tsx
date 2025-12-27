@@ -34,6 +34,7 @@ const Login: React.FC = () => {
         signIn({
           id: user.id,
           username: user.username,
+          displayName: user.displayName,
           email: user.email,
           role: user.role,
         });

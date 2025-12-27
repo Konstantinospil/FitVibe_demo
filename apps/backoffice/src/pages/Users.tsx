@@ -2,13 +2,11 @@ import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { usersApi, type User } from "../services/api";
 import { useAuthStore } from "../store/auth.store";
-import { useThemeStore } from "../store/theme.store";
 import { useThemeColors } from "../hooks/useThemeColors";
 
 type UserFilter = "all" | "registered" | "unverified" | "blacklisted";
 
 const UsersPage: React.FC = () => {
-  const theme = useThemeStore((state) => state.theme);
   const colors = useThemeColors();
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<UserFilter>("all");
@@ -140,11 +138,30 @@ const UsersPage: React.FC = () => {
     },
   });
 
+  const deleteDisplayNameMutation = useMutation({
+    mutationFn: ({ userId, reason }: { userId: string; reason?: string }) =>
+      usersApi.deleteDisplayName(userId, reason),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["users"] });
+      setSelectedUser(null);
+      setActionReason("");
+      setErrorMessage(null);
+      alert("Display name deleted successfully");
+      void refetch();
+    },
+    onError: (error: unknown) => {
+      const message = extractErrorMessage(error);
+      setErrorMessage(message);
+      setTimeout(() => setErrorMessage(null), 5000);
+    },
+  });
+
   const handleAction = (user: User, action: "blacklist" | "unblacklist" | "delete") => {
     setSelectedUser(user);
     const actionText =
       action === "delete" ? "delete" : action === "blacklist" ? "blacklist" : "unblacklist";
-    if (confirm(`Are you sure you want to ${actionText} user ${user.username}?`)) {
+    const label = user.display_name || user.username;
+    if (confirm(`Are you sure you want to ${actionText} user ${label}?`)) {
       actionMutation.mutate({ userId: user.id, action });
     }
   };
@@ -166,34 +183,45 @@ const UsersPage: React.FC = () => {
   };
 
   const handleSendVerificationEmail = (user: User) => {
-    if (confirm(`Send verification email to ${user.username}?`)) {
+    const label = user.display_name || user.username;
+    if (confirm(`Send verification email to ${label}?`)) {
       sendVerificationEmailMutation.mutate(user.id);
     }
   };
 
   const handleSendPasswordReset = (user: User) => {
-    if (confirm(`Send password reset email to ${user.username}?`)) {
+    const label = user.display_name || user.username;
+    if (confirm(`Send password reset email to ${label}?`)) {
       sendPasswordResetMutation.mutate(user.id);
     }
   };
 
   const handleDeleteAvatar = (user: User) => {
-    const reason = prompt(`Delete avatar for ${user.username}? Enter reason (optional):`);
+    const label = user.display_name || user.username;
+    const reason = prompt(`Delete avatar for ${label}? Enter reason (optional):`);
     if (reason !== null) {
       deleteAvatarMutation.mutate({ userId: user.id, reason: reason || undefined });
+    }
+  };
+
+  const handleDeleteDisplayName = (user: User) => {
+    const label = user.display_name || user.username;
+    const reason = prompt(`Delete display name for ${label}? Enter reason (optional):`);
+    if (reason !== null) {
+      deleteDisplayNameMutation.mutate({ userId: user.id, reason: reason || undefined });
     }
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
       case "active":
-        return "#FB951D";
+        return "var(--color-success-text)";
       case "banned":
-        return "#9F2406";
+        return "var(--color-danger-text)";
       case "suspended":
-        return "#FAE919";
+        return "var(--color-warning-text)";
       case "pending_verification":
-        return "#4A90E2";
+        return "var(--color-info-text)";
       default:
         return colors.text;
     }
@@ -242,7 +270,7 @@ const UsersPage: React.FC = () => {
             onClick={() => setFilter("all")}
             style={{
               padding: "0.5rem 1rem",
-              background: filter === "all" ? colors.border : "transparent",
+              background: filter === "all" ? colors.surfaceMuted : "transparent",
               color: colors.text,
               border: `1px solid ${colors.border}`,
               borderRadius: "4px",
@@ -256,7 +284,7 @@ const UsersPage: React.FC = () => {
             onClick={() => setFilter("registered")}
             style={{
               padding: "0.5rem 1rem",
-              background: filter === "registered" ? colors.border : "transparent",
+              background: filter === "registered" ? colors.surfaceMuted : "transparent",
               color: colors.text,
               border: `1px solid ${colors.border}`,
               borderRadius: "4px",
@@ -270,7 +298,7 @@ const UsersPage: React.FC = () => {
             onClick={() => setFilter("unverified")}
             style={{
               padding: "0.5rem 1rem",
-              background: filter === "unverified" ? colors.border : "transparent",
+              background: filter === "unverified" ? colors.surfaceMuted : "transparent",
               color: colors.text,
               border: `1px solid ${colors.border}`,
               borderRadius: "4px",
@@ -284,7 +312,7 @@ const UsersPage: React.FC = () => {
             onClick={() => setFilter("blacklisted")}
             style={{
               padding: "0.5rem 1rem",
-              background: filter === "blacklisted" ? colors.border : "transparent",
+              background: filter === "blacklisted" ? colors.surfaceMuted : "transparent",
               color: colors.text,
               border: `1px solid ${colors.border}`,
               borderRadius: "4px",
@@ -306,7 +334,7 @@ const UsersPage: React.FC = () => {
             width: "100%",
             maxWidth: "500px",
             padding: "0.75rem",
-            background: theme === "light" ? "#F5F5F5" : "#1A1A1A",
+            background: "var(--color-input-bg)",
             border: `1px solid ${colors.border}`,
             borderRadius: "4px",
             color: colors.text,
@@ -318,8 +346,8 @@ const UsersPage: React.FC = () => {
       {errorMessage && (
         <div
           style={{
-            background: "#9F2406",
-            color: colors.text,
+            background: "var(--color-danger-bg)",
+            color: "var(--color-danger-text)",
             padding: "1rem",
             borderRadius: "4px",
             marginBottom: "1rem",
@@ -348,7 +376,7 @@ const UsersPage: React.FC = () => {
       {isLoading ? (
         <div style={{ color: colors.text }}>Loading...</div>
       ) : error ? (
-        <div style={{ color: "#9F2406", padding: "2rem" }}>
+        <div style={{ color: "var(--color-danger-text)", padding: "2rem" }}>
           Error loading users: {error instanceof Error ? error.message : String(error)}
         </div>
       ) : (
@@ -363,7 +391,7 @@ const UsersPage: React.FC = () => {
           >
             <table style={{ width: "100%", borderCollapse: "collapse" }}>
               <thead>
-                <tr style={{ background: theme === "light" ? "#F5F5F5" : "#1A1A1A" }}>
+                <tr style={{ background: colors.surfaceMuted }}>
                   <th
                     style={{
                       padding: "1rem",
@@ -464,12 +492,15 @@ const UsersPage: React.FC = () => {
                       avatarUrl = `${API_URL}${user.avatar_url}`;
                     }
                   }
-                  const initials = user.username
+                  const nameForInitials = user.display_name || user.username;
+                  const initials = nameForInitials
                     .split(" ")
                     .map((n) => n[0])
                     .join("")
                     .toUpperCase()
                     .slice(0, 2);
+                  const displayName = user.display_name || user.username;
+                  const showUsername = displayName !== user.username;
 
                   return (
                     <tr key={user.id} style={{ borderBottom: `1px solid ${colors.border}` }}>
@@ -528,7 +559,16 @@ const UsersPage: React.FC = () => {
                           </div>
                         )}
                       </td>
-                      <td style={{ padding: "1rem", color: colors.text }}>{user.username}</td>
+                      <td style={{ padding: "1rem", color: colors.text }}>
+                        <div style={{ display: "flex", flexDirection: "column" }}>
+                          <span>{displayName}</span>
+                          {showUsername && (
+                            <span style={{ color: colors.textSecondary, fontSize: "0.8rem" }}>
+                              @{user.username}
+                            </span>
+                          )}
+                        </div>
+                      </td>
                       <td style={{ padding: "1rem", color: colors.text }}>{user.email}</td>
                       <td style={{ padding: "1rem" }}>
                         <span style={{ color: getStatusColor(user.status) }}>
@@ -575,9 +615,9 @@ const UsersPage: React.FC = () => {
                               onClick={() => handleAction(user, "blacklist")}
                               style={{
                                 padding: "0.5rem 1rem",
-                                background: "#C41E3A",
-                                color: "#FFFFFF",
-                                border: "1px solid #C41E3A",
+                                background: "var(--color-primary)",
+                                color: "var(--color-primary-on)",
+                                border: "1px solid var(--color-primary)",
                                 borderRadius: "4px",
                                 cursor: "pointer",
                                 fontSize: "0.875rem",
@@ -591,8 +631,8 @@ const UsersPage: React.FC = () => {
                               onClick={() => handleAction(user, "unblacklist")}
                               style={{
                                 padding: "0.5rem 1rem",
-                                background: "#2563EB",
-                                color: "#FFFFFF",
+                                background: "var(--color-secondary)",
+                                color: "var(--color-secondary-on)",
                                 border: "none",
                                 borderRadius: "4px",
                                 cursor: "pointer",
@@ -607,7 +647,7 @@ const UsersPage: React.FC = () => {
                             onClick={() => handleChangeRole(user)}
                             style={{
                               padding: "0.5rem 1rem",
-                              background: theme === "light" ? "#E5E7EB" : "#374151",
+                              background: colors.surfaceMuted,
                               color: colors.text,
                               border: `1px solid ${colors.border}`,
                               borderRadius: "4px",
@@ -623,9 +663,9 @@ const UsersPage: React.FC = () => {
                             disabled={sendVerificationEmailMutation.isPending}
                             style={{
                               padding: "0.5rem 1rem",
-                              background: "#2563EB",
-                              color: "#FFFFFF",
-                              border: "1px solid #2563EB",
+                              background: "var(--color-info-text)",
+                              color: "var(--color-secondary-on)",
+                              border: "1px solid var(--color-info-text)",
                               borderRadius: "4px",
                               cursor: sendVerificationEmailMutation.isPending
                                 ? "not-allowed"
@@ -644,9 +684,9 @@ const UsersPage: React.FC = () => {
                             disabled={sendPasswordResetMutation.isPending}
                             style={{
                               padding: "0.5rem 1rem",
-                              background: "#F59E0B",
-                              color: "#FFFFFF",
-                              border: "1px solid #F59E0B",
+                              background: "var(--color-warning-text)",
+                              color: "var(--color-secondary-on)",
+                              border: "1px solid var(--color-warning-text)",
                               borderRadius: "4px",
                               cursor: sendPasswordResetMutation.isPending
                                 ? "not-allowed"
@@ -663,9 +703,9 @@ const UsersPage: React.FC = () => {
                             disabled={deleteAvatarMutation.isPending}
                             style={{
                               padding: "0.5rem 1rem",
-                              background: "#C41E3A",
-                              color: "#FFFFFF",
-                              border: "1px solid #C41E3A",
+                              background: "var(--color-primary)",
+                              color: "var(--color-primary-on)",
+                              border: "1px solid var(--color-primary)",
                               borderRadius: "4px",
                               cursor: deleteAvatarMutation.isPending ? "not-allowed" : "pointer",
                               fontSize: "0.875rem",
@@ -675,13 +715,36 @@ const UsersPage: React.FC = () => {
                           >
                             {deleteAvatarMutation.isPending ? "Deleting..." : "Delete Avatar"}
                           </button>
+                          {showUsername && (
+                            <button
+                              onClick={() => handleDeleteDisplayName(user)}
+                              disabled={deleteDisplayNameMutation.isPending}
+                              style={{
+                                padding: "0.5rem 1rem",
+                                background: "var(--color-primary)",
+                                color: "var(--color-primary-on)",
+                                border: "1px solid var(--color-primary)",
+                                borderRadius: "4px",
+                                cursor: deleteDisplayNameMutation.isPending
+                                  ? "not-allowed"
+                                  : "pointer",
+                                fontSize: "0.875rem",
+                                fontWeight: "500",
+                                opacity: deleteDisplayNameMutation.isPending ? 0.6 : 1,
+                              }}
+                            >
+                              {deleteDisplayNameMutation.isPending
+                                ? "Deleting..."
+                                : "Delete Display Name"}
+                            </button>
+                          )}
                           <button
                             onClick={() => handleDelete(user)}
                             style={{
                               padding: "0.5rem 1rem",
-                              background: "#C41E3A",
-                              color: "#FFFFFF",
-                              border: "1px solid #C41E3A",
+                              background: "var(--color-primary)",
+                              color: "var(--color-primary-on)",
+                              border: "1px solid var(--color-primary)",
                               borderRadius: "4px",
                               cursor: "pointer",
                               fontSize: "0.875rem",
@@ -741,7 +804,7 @@ const UsersPage: React.FC = () => {
             onClick={(e) => e.stopPropagation()}
           >
             <h2 style={{ color: colors.text, marginBottom: "1.5rem", fontSize: "1.5rem" }}>
-              Change Role for {selectedUser.username}
+              Change Role for {selectedUser.display_name || selectedUser.username}
             </h2>
             <div style={{ marginBottom: "1.5rem" }}>
               <label
@@ -760,7 +823,7 @@ const UsersPage: React.FC = () => {
                 style={{
                   width: "100%",
                   padding: "0.75rem",
-                  background: theme === "light" ? "#F5F5F5" : "#1A1A1A",
+                  background: "var(--color-input-bg)",
                   border: `1px solid ${colors.border}`,
                   borderRadius: "4px",
                   color: colors.text,
@@ -794,7 +857,7 @@ const UsersPage: React.FC = () => {
                 style={{
                   width: "100%",
                   padding: "0.75rem",
-                  background: theme === "light" ? "#F5F5F5" : "#1A1A1A",
+                  background: "var(--color-input-bg)",
                   border: `1px solid ${colors.border}`,
                   borderRadius: "4px",
                   color: colors.text,

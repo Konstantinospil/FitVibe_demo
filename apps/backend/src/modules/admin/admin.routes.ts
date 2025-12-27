@@ -16,6 +16,9 @@ import {
   sendVerificationEmailHandler,
   sendPasswordResetHandler,
   deleteUserAvatarHandler,
+  deleteUserDisplayNameHandler,
+  listActionMappingsHandler,
+  upsertActionMappingHandler,
 } from "./admin.controller.js";
 
 export const adminRouter = Router();
@@ -77,6 +80,26 @@ adminRouter.delete(
   "/users/:userId/avatar",
   rateLimit("admin_users_avatar", 30, 60),
   asyncHandler(deleteUserAvatarHandler),
+);
+
+// Delete user display name
+adminRouter.delete(
+  "/users/:userId/display-name",
+  rateLimit("admin_users_display_name", 30, 60),
+  asyncHandler(deleteUserDisplayNameHandler),
+);
+
+// Action UI Mappings
+adminRouter.get(
+  "/action-mappings",
+  rateLimit("admin_action_mappings_list", 60, 60),
+  asyncHandler(listActionMappingsHandler),
+);
+
+adminRouter.post(
+  "/action-mappings",
+  rateLimit("admin_action_mappings_upsert", 30, 60),
+  asyncHandler(upsertActionMappingHandler),
 );
 
 // Specific user action endpoints for RESTful compatibility

@@ -18,6 +18,7 @@ export interface AuditLogPayload {
   outcome?: string;
   requestId?: string | null;
   metadata?: Record<string, unknown>;
+  severity?: "info" | "warning" | "error" | "critical";
 }
 
 export async function insertAudit({
@@ -29,6 +30,7 @@ export async function insertAudit({
   outcome = "success",
   requestId = null,
   metadata = {},
+  severity = "info",
 }: AuditLogPayload) {
   const resolvedEntityType = entityType ?? entity;
   if (!resolvedEntityType) {
@@ -46,6 +48,7 @@ export async function insertAudit({
       outcome,
       request_id: requestId,
       metadata,
+      severity,
       created_at: new Date().toISOString(),
     });
   } catch (error) {
@@ -77,6 +80,7 @@ export async function logAudit(payload: {
   outcome?: string;
   requestId?: string | null;
   metadata?: Record<string, unknown>;
+  severity?: "info" | "warning" | "error" | "critical";
 }) {
   await insertAudit({
     actorUserId: payload.userId ?? null,
@@ -86,5 +90,6 @@ export async function logAudit(payload: {
     outcome: payload.outcome ?? "success",
     requestId: payload.requestId ?? null,
     metadata: payload.metadata ?? {},
+    severity: payload.severity ?? "info",
   });
 }
