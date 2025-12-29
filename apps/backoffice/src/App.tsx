@@ -7,6 +7,7 @@ import MessagesPage from "./pages/Messages";
 import AuditLogsPage from "./pages/AuditLogs";
 import SettingsPage from "./pages/Settings";
 import UsersPage from "./pages/Users";
+import ContentReportsV2 from "./pages/ContentReports_v2";
 import Layout from "./components/Layout";
 import { useAuthStore } from "./store/auth.store";
 import { useThemeStore } from "./store/theme.store";
@@ -152,6 +153,7 @@ const App: React.FC = () => {
               <Route path="audit-logs" element={<AuditLogsPage />} />
               <Route path="settings" element={<SettingsPage />} />
               <Route path="users" element={<UsersPage />} />
+              <Route path="admin/reports" element={<ContentReportsV2 />} />
             </Route>
           </Routes>
         </BrowserRouter>

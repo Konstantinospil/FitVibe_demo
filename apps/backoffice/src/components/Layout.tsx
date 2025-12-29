@@ -1,5 +1,5 @@
 import React, { useMemo } from "react";
-import { Outlet, Link, useLocation, useNavigate } from "react-router-dom";
+import { Outlet, useNavigate } from "react-router-dom";
 import { useAuthStore } from "../store/auth.store";
 import { useThemeStore } from "../store/theme.store";
 import { useThemeColors } from "../hooks/useThemeColors";
@@ -7,9 +7,9 @@ import ThemeToggle from "./ThemeToggle";
 import { authApi } from "../services/api";
 import logoFull from "../assets/logo_full.png";
 import logoFullDark from "../assets/logo_full_dark.png";
+import AdminDashboardV2 from "../pages/AdminDashboard_v2";
 
 const Layout: React.FC = () => {
-  const location = useLocation();
   const navigate = useNavigate();
   const user = useAuthStore((state) => state.user);
   const signOut = useAuthStore((state) => state.signOut);
@@ -30,22 +30,27 @@ const Layout: React.FC = () => {
     navigate("/login");
   };
 
-  const navItems = [
-    { path: "/translations", label: "Translations" },
-    { path: "/messages", label: "Messages" },
-    { path: "/audit-logs", label: "Audit Logs" },
-    { path: "/settings", label: "Settings" },
-    { path: "/users", label: "Users" },
-  ];
-
   return (
-    <div style={{ display: "flex", minHeight: "100vh", background: colors.bg, color: colors.text }}>
+    <div
+      style={{
+        display: "flex",
+        height: "100vh",
+        overflow: "hidden",
+        background: colors.bg,
+        color: colors.text,
+      }}
+    >
       <aside
         style={{
           width: "250px",
           background: colors.surface,
           padding: "1.5rem",
           borderRight: `1px solid ${colors.border}`,
+          display: "flex",
+          flexDirection: "column",
+          position: "sticky",
+          top: 0,
+          height: "100vh",
         }}
       >
         <div
@@ -53,27 +58,20 @@ const Layout: React.FC = () => {
         >
           <img src={logo} alt="FitVibe Logo" style={{ height: "40px" }} />
         </div>
-        <nav>
-          {navItems.map((item) => (
-            <Link
-              key={item.path}
-              to={item.path}
-              style={{
-                display: "block",
-                padding: "0.75rem 1rem",
-                color: location.pathname === item.path ? colors.accent : colors.text,
-                textDecoration: "none",
-                marginBottom: "0.5rem",
-                borderRadius: "4px",
-                background: location.pathname === item.path ? `${colors.accent}20` : "transparent",
-              }}
-            >
-              {item.label}
-            </Link>
-          ))}
-        </nav>
+        <div style={{ flex: 1, overflowY: "auto", paddingBottom: "9rem" }}>
+          <AdminDashboardV2 />
+        </div>
         <div
-          style={{ marginTop: "2rem", paddingTop: "2rem", borderTop: `1px solid ${colors.border}` }}
+          style={{
+            position: "fixed",
+            left: "1.5rem",
+            bottom: "0rem",
+            width: "calc(250px - 3rem)",
+            paddingTop: "0.5em",
+            paddingBottom: "1rem",
+            borderTop: `1px solid ${colors.border}`,
+            background: colors.surface,
+          }}
         >
           <div style={{ color: colors.textSecondary, marginBottom: "1rem", fontSize: "0.875rem" }}>
             Logged in as: {user?.displayName || user?.username}
