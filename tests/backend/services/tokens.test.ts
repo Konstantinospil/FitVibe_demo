@@ -121,6 +121,18 @@ describe("Tokens Service", () => {
 
       expect(() => verifyAccess(expiredToken)).toThrow();
     });
+
+    it("parses string payloads as JSON", () => {
+      const payload = { sub: "user-999", username: "stringy", role: "user" };
+      const token = jwt.sign(JSON.stringify(payload), privateKey.toString(), {
+        algorithm: "RS256",
+      });
+
+      const decoded = verifyAccess(token);
+
+      expect(decoded.sub).toBe("user-999");
+      expect(decoded.username).toBe("stringy");
+    });
   });
 
   describe("verifyRefresh", () => {
@@ -137,6 +149,18 @@ describe("Tokens Service", () => {
       const invalidToken = "invalid.token.here";
 
       expect(() => verifyRefresh(invalidToken)).toThrow();
+    });
+
+    it("parses string payloads as JSON", () => {
+      const payload = { sub: "user-321", jti: "jti-321", typ: "refresh" };
+      const token = jwt.sign(JSON.stringify(payload), privateKey.toString(), {
+        algorithm: "RS256",
+      });
+
+      const decoded = verifyRefresh(token);
+
+      expect(decoded.sub).toBe("user-321");
+      expect(decoded.jti).toBe("jti-321");
     });
   });
 

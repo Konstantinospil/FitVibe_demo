@@ -58,6 +58,12 @@ describe("Mailer Service", () => {
     };
 
     jest.mocked(nodemailer.createTransport).mockReturnValue(mockTransporter as never);
+    jest.mocked(env).email.enabled = true;
+    jest.mocked(env).email.smtp.host = "smtp.example.com";
+    jest.mocked(env).email.smtp.port = 587;
+    jest.mocked(env).email.smtp.secure = false;
+    jest.mocked(env).email.smtp.user = "test@example.com";
+    jest.mocked(env).email.smtp.pass = "password123";
   });
 
   describe("MailerService constructor", () => {
@@ -81,6 +87,24 @@ describe("Mailer Service", () => {
       new MailerService();
 
       expect(nodemailer.createTransport).not.toHaveBeenCalled();
+    });
+
+    it("logs error when SMTP configuration is missing", () => {
+      jest.mocked(env).email.enabled = true;
+      jest.mocked(env).email.smtp.host = "";
+      jest.mocked(env).email.smtp.user = "";
+
+      new MailerService();
+
+      expect(nodemailer.createTransport).not.toHaveBeenCalled();
+      expect(logger.error).toHaveBeenCalledWith(
+        expect.objectContaining({
+          host: "",
+          hasUser: false,
+          hasPass: true,
+        }),
+        "[mailer] Failed to initialize SMTP transporter",
+      );
     });
   });
 

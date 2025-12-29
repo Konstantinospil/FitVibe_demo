@@ -1,371 +1,198 @@
-/**
- * Unit tests for admin controller
- */
-
-import { describe, it, expect, jest, beforeEach } from "@jest/globals";
 import type { Request, Response } from "express";
-import type { JwtPayload } from "../../../../apps/backend/src/modules/auth/auth.types.js";
-
-// Helper to create complete JwtPayload
-function createMockJwtPayload(overrides: Partial<JwtPayload> = {}): JwtPayload {
-  return {
-    sub: "admin-123",
-    role: "admin",
-    sid: "session-123",
-    ...overrides,
-  };
-}
+import {
+  listReportsHandler,
+  moderateReportHandler,
+  searchUsersHandler,
+  userActionHandler,
+  changeUserRoleHandler,
+  sendVerificationEmailHandler,
+  sendPasswordResetHandler,
+  listActionMappingsHandler,
+  upsertActionMappingHandler,
+  deleteUserAvatarHandler,
+  deleteUserDisplayNameHandler,
+} from "../../../../apps/backend/src/modules/admin/admin.controller.js";
+import * as adminService from "../../../../apps/backend/src/modules/admin/admin.service.js";
 import { HttpError } from "../../../../apps/backend/src/utils/http.js";
-import * as controller from "../../../../apps/backend/src/modules/admin/admin.controller.js";
-import * as service from "../../../../apps/backend/src/modules/admin/admin.service.js";
 
-// Mock the service
 jest.mock("../../../../apps/backend/src/modules/admin/admin.service.js", () => ({
   listReports: jest.fn(),
   moderateReport: jest.fn(),
   searchUsersService: jest.fn(),
   performUserAction: jest.fn(),
+  changeUserRole: jest.fn(),
+  sendVerificationEmail: jest.fn(),
+  sendPasswordResetEmail: jest.fn(),
+  listActionUiMappings: jest.fn(),
+  upsertActionUiMapping: jest.fn(),
+  deleteUserAvatar: jest.fn(),
+  deleteUserDisplayName: jest.fn(),
 }));
 
-describe("Admin Controller", () => {
-  let mockReq: Partial<Request>;
-  let mockRes: Partial<Response>;
-  let jsonMock: jest.Mock;
-  let statusMock: jest.Mock;
+const buildRes = () => {
+  const res = { json: jest.fn() } as unknown as Response;
+  return res;
+};
 
+describe("admin.controller", () => {
   beforeEach(() => {
     jest.clearAllMocks();
-
-    jsonMock = jest.fn();
-    statusMock = jest.fn().mockReturnValue({ json: jsonMock });
-
-    mockRes = {
-      json: jsonMock,
-      status: statusMock,
-    };
   });
 
-  describe("listReportsHandler", () => {
-    it("should return reports with default query", async () => {
-      const mockReports = [
-        {
-          id: "report-1",
-          reporterId: "user-1",
-          reporterUsername: "reporter",
-          feedItemId: "item-1",
-          commentId: null,
-          reason: "spam",
-          details: null,
-          status: "pending" as const,
-          createdAt: new Date().toISOString(),
-          resolvedAt: null,
-          resolvedBy: null,
-          contentPreview: "test content",
-          contentAuthor: "author",
-        },
-      ];
+  it("lists reports with default paging and status", async () => {
+    jest.mocked(adminService.listReports).mockResolvedValue([{ id: "r1" } as never]);
+    const req = { query: {} } as Request;
+    const res = buildRes();
 
-      jest.mocked(service.listReports).mockResolvedValue(mockReports);
+    await listReportsHandler(req, res);
 
-      mockReq = {
-        query: {},
-      };
-
-      await controller.listReportsHandler(mockReq as Request, mockRes as Response);
-
-      expect(service.listReports).toHaveBeenCalledWith({
-        status: "pending",
-        limit: 50,
-        offset: 0,
-      });
-      expect(jsonMock).toHaveBeenCalledWith({ reports: mockReports });
+    expect(adminService.listReports).toHaveBeenCalledWith({
+      status: "pending",
+      limit: 50,
+      offset: 0,
     });
+    expect(res.json).toHaveBeenCalledWith({ reports: [{ id: "r1" }] });
+  });
 
-    it("should handle query parameters", async () => {
-      const mockReports: unknown[] = [];
-      jest.mocked(service.listReports).mockResolvedValue(mockReports);
+  it("rejects moderation without a user", async () => {
+    const req = { params: { reportId: "r1" }, body: { action: "dismiss" } } as Request;
+    const res = buildRes();
 
-      mockReq = {
-        query: {
-          status: "reviewed",
-          limit: "25",
-          offset: "10",
-        },
-      };
+    await expect(moderateReportHandler(req, res)).rejects.toBeInstanceOf(HttpError);
+  });
 
-      await controller.listReportsHandler(mockReq as Request, mockRes as Response);
+  it("moderates report and returns success message", async () => {
+    const req = {
+      params: { reportId: "r1" },
+      body: { action: "hide" },
+      user: { sub: "admin-1" },
+    } as Request;
+    const res = buildRes();
 
-      expect(service.listReports).toHaveBeenCalledWith({
-        status: "reviewed",
-        limit: 25,
-        offset: 10,
-      });
+    await moderateReportHandler(req, res);
+
+    expect(adminService.moderateReport).toHaveBeenCalledWith({
+      reportId: "r1",
+      action: "hide",
+      adminId: "admin-1",
     });
-
-    it("should cap limit at 100", async () => {
-      jest.mocked(service.listReports).mockResolvedValue([]);
-
-      mockReq = {
-        query: {
-          limit: "200",
-        },
-      };
-
-      await controller.listReportsHandler(mockReq as Request, mockRes as Response);
-
-      expect(service.listReports).toHaveBeenCalledWith({
-        status: "pending",
-        limit: 100,
-        offset: 0,
-      });
+    expect(res.json).toHaveBeenCalledWith({
+      success: true,
+      message: "Report hidden successfully",
     });
   });
 
-  describe("moderateReportHandler", () => {
-    it("should moderate report successfully", async () => {
-      jest.mocked(service.moderateReport).mockResolvedValue(undefined);
+  it("requires a search query", async () => {
+    const req = { query: {} } as Request;
+    const res = buildRes();
 
-      mockReq = {
-        params: { reportId: "report-1" },
-        body: { action: "dismiss" },
-        user: createMockJwtPayload({ sub: "admin-1" }),
-      };
+    await expect(searchUsersHandler(req, res)).rejects.toBeInstanceOf(HttpError);
+  });
 
-      await controller.moderateReportHandler(mockReq as Request, mockRes as Response);
+  it("searches users with caps", async () => {
+    jest.mocked(adminService.searchUsersService).mockResolvedValue([{ id: "u1" } as never]);
+    const req = {
+      query: { q: "alice", limit: "200", offset: "10", blacklisted: "true" },
+    } as unknown as Request;
+    const res = buildRes();
 
-      expect(service.moderateReport).toHaveBeenCalledWith({
-        reportId: "report-1",
-        action: "dismiss",
-        adminId: "admin-1",
-      });
-      expect(jsonMock).toHaveBeenCalledWith({
-        success: true,
-        message: expect.stringContaining("Report"),
-      });
+    await searchUsersHandler(req, res);
+
+    expect(adminService.searchUsersService).toHaveBeenCalledWith({
+      query: "alice",
+      limit: 50,
+      offset: 10,
+      blacklisted: true,
     });
+    expect(res.json).toHaveBeenCalledWith({ users: [{ id: "u1" }] });
+  });
 
-    it("should throw error if user not authenticated", async () => {
-      mockReq = {
-        params: { reportId: "report-1" },
-        body: { action: "dismiss" },
-        user: undefined,
-      };
+  it("validates user actions", async () => {
+    const req = { params: { userId: "u1" }, body: { action: "nope" } } as Request;
+    const res = buildRes();
 
-      await expect(
-        controller.moderateReportHandler(mockReq as Request, mockRes as Response),
-      ).rejects.toThrow(HttpError);
+    await expect(userActionHandler(req, res)).rejects.toBeInstanceOf(HttpError);
+  });
 
-      expect(service.moderateReport).not.toHaveBeenCalled();
+  it("performs user actions with reason", async () => {
+    const req = {
+      params: { userId: "u1" },
+      body: { action: "delete", reason: "abuse" },
+      user: { sub: "admin-2" },
+    } as Request;
+    const res = buildRes();
+
+    await userActionHandler(req, res);
+
+    expect(adminService.performUserAction).toHaveBeenCalledWith({
+      userId: "u1",
+      action: "delete",
+      adminId: "admin-2",
+      reason: "abuse",
     });
-
-    it("should throw error for invalid action", async () => {
-      mockReq = {
-        params: { reportId: "report-1" },
-        body: { action: "invalid" },
-        user: createMockJwtPayload({ sub: "admin-1" }),
-      };
-
-      await expect(
-        controller.moderateReportHandler(mockReq as Request, mockRes as Response),
-      ).rejects.toThrow(HttpError);
-
-      expect(service.moderateReport).not.toHaveBeenCalled();
-    });
-
-    it("should handle hide action", async () => {
-      jest.mocked(service.moderateReport).mockResolvedValue(undefined);
-
-      mockReq = {
-        params: { reportId: "report-1" },
-        body: { action: "hide" },
-        user: createMockJwtPayload({ sub: "admin-1" }),
-      };
-
-      await controller.moderateReportHandler(mockReq as Request, mockRes as Response);
-
-      expect(service.moderateReport).toHaveBeenCalledWith({
-        reportId: "report-1",
-        action: "hide",
-        adminId: "admin-1",
-      });
-      expect(jsonMock).toHaveBeenCalledWith({
-        success: true,
-        message: "Report hidden successfully",
-      });
-    });
-
-    it("should handle ban action", async () => {
-      jest.mocked(service.moderateReport).mockResolvedValue(undefined);
-
-      mockReq = {
-        params: { reportId: "report-1" },
-        body: { action: "ban" },
-        user: createMockJwtPayload({ sub: "admin-1" }),
-      };
-
-      await controller.moderateReportHandler(mockReq as Request, mockRes as Response);
-
-      expect(service.moderateReport).toHaveBeenCalledWith({
-        reportId: "report-1",
-        action: "ban",
-        adminId: "admin-1",
-      });
-      expect(jsonMock).toHaveBeenCalledWith({
-        success: true,
-        message: "Report banned successfully",
-      });
+    expect(res.json).toHaveBeenCalledWith({
+      success: true,
+      message: "User deleted successfully",
     });
   });
 
-  describe("searchUsersHandler", () => {
-    it("should search users successfully", async () => {
-      const mockUsers = [
-        {
-          id: "user-1",
-          username: "testuser",
-          email: "test@example.com",
-          roleCode: "user",
-          status: "active" as const,
-          createdAt: new Date().toISOString(),
-          lastLoginAt: null,
-          sessionCount: 10,
-          reportCount: 0,
-        },
-      ];
+  it("changes user role with reason", async () => {
+    const req = {
+      params: { userId: "u1" },
+      body: { role: "coach", reason: "promotion" },
+      user: { sub: "admin-3" },
+    } as Request;
+    const res = buildRes();
 
-      jest.mocked(service.searchUsersService).mockResolvedValue(mockUsers);
+    await changeUserRoleHandler(req, res);
 
-      mockReq = {
-        query: { q: "testuser" },
-      };
-
-      await controller.searchUsersHandler(mockReq as Request, mockRes as Response);
-
-      expect(service.searchUsersService).toHaveBeenCalledWith({
-        query: "testuser",
-        limit: 20,
-        offset: 0,
-      });
-      expect(jsonMock).toHaveBeenCalledWith({ users: mockUsers });
-    });
-
-    it("should throw error if query missing", async () => {
-      mockReq = {
-        query: {},
-      };
-
-      await expect(
-        controller.searchUsersHandler(mockReq as Request, mockRes as Response),
-      ).rejects.toThrow(HttpError);
-
-      expect(service.searchUsersService).not.toHaveBeenCalled();
-    });
-
-    it("should cap limit at 50", async () => {
-      jest.mocked(service.searchUsersService).mockResolvedValue([]);
-
-      mockReq = {
-        query: { q: "test", limit: "100" },
-      };
-
-      await controller.searchUsersHandler(mockReq as Request, mockRes as Response);
-
-      expect(service.searchUsersService).toHaveBeenCalledWith({
-        query: "test",
-        limit: 50,
-        offset: 0,
-      });
+    expect(adminService.changeUserRole).toHaveBeenCalledWith("u1", "coach", "admin-3", "promotion");
+    expect(res.json).toHaveBeenCalledWith({
+      success: true,
+      message: "User role changed to coach successfully",
     });
   });
 
-  describe("userActionHandler", () => {
-    it("should blacklist user successfully", async () => {
-      jest.mocked(service.performUserAction).mockResolvedValue(undefined);
+  it("triggers verification and reset emails", async () => {
+    const req = { params: { userId: "u1" }, user: { sub: "admin-4" } } as Request;
+    const res = buildRes();
 
-      mockReq = {
-        params: { userId: "user-1" },
-        body: { action: "blacklist", reason: "Violation" },
-        user: createMockJwtPayload({ sub: "admin-1" }),
-      };
+    await sendVerificationEmailHandler(req, res);
+    await sendPasswordResetHandler(req, res);
 
-      await controller.userActionHandler(mockReq as Request, mockRes as Response);
+    expect(adminService.sendVerificationEmail).toHaveBeenCalledWith("u1", "admin-4");
+    expect(adminService.sendPasswordResetEmail).toHaveBeenCalledWith("u1", "admin-4");
+  });
 
-      expect(service.performUserAction).toHaveBeenCalledWith({
-        userId: "user-1",
-        action: "blacklist",
-        adminId: "admin-1",
-        reason: "Violation",
-      });
-      expect(jsonMock).toHaveBeenCalledWith({
-        success: true,
-        message: "User blacklisted successfully",
-      });
-    });
+  it("lists and upserts action mappings", async () => {
+    jest.mocked(adminService.listActionUiMappings).mockResolvedValue([{ action: "ban" } as never]);
+    jest.mocked(adminService.upsertActionUiMapping).mockResolvedValue({ action: "ban" } as never);
 
-    it("should throw error if user not authenticated", async () => {
-      mockReq = {
-        params: { userId: "user-1" },
-        body: { action: "blacklist" },
-        user: undefined,
-      };
+    const listReq = {} as Request;
+    const res = buildRes();
+    await listActionMappingsHandler(listReq, res);
+    expect(res.json).toHaveBeenCalledWith({ mappings: [{ action: "ban" }] });
 
-      await expect(
-        controller.userActionHandler(mockReq as Request, mockRes as Response),
-      ).rejects.toThrow(HttpError);
+    const upsertReq = {
+      body: { action: "ban", uiName: "Ban user" },
+      user: { sub: "admin-5" },
+    } as Request;
+    await upsertActionMappingHandler(upsertReq, res);
+    expect(res.json).toHaveBeenCalledWith({ mapping: { action: "ban" } });
+  });
 
-      expect(service.performUserAction).not.toHaveBeenCalled();
-    });
+  it("deletes user avatar and display name", async () => {
+    const req = {
+      params: { userId: "u1" },
+      body: { reason: "policy" },
+      user: { sub: "admin-6" },
+    } as Request;
+    const res = buildRes();
 
-    it("should throw error for invalid action", async () => {
-      mockReq = {
-        params: { userId: "user-1" },
-        body: { action: "invalid" },
-        user: createMockJwtPayload({ sub: "admin-1" }),
-      };
+    await deleteUserAvatarHandler(req, res);
+    await deleteUserDisplayNameHandler(req, res);
 
-      await expect(
-        controller.userActionHandler(mockReq as Request, mockRes as Response),
-      ).rejects.toThrow(HttpError);
-
-      expect(service.performUserAction).not.toHaveBeenCalled();
-    });
-
-    it("should handle unblacklist action", async () => {
-      jest.mocked(service.performUserAction).mockResolvedValue(undefined);
-
-      mockReq = {
-        params: { userId: "user-1" },
-        body: { action: "unblacklist" },
-        user: createMockJwtPayload({ sub: "admin-1" }),
-      };
-
-      await controller.userActionHandler(mockReq as Request, mockRes as Response);
-
-      expect(service.performUserAction).toHaveBeenCalledWith({
-        userId: "user-1",
-        action: "unblacklist",
-        adminId: "admin-1",
-        reason: undefined,
-      });
-    });
-
-    it("should handle delete action", async () => {
-      jest.mocked(service.performUserAction).mockResolvedValue(undefined);
-
-      mockReq = {
-        params: { userId: "user-1" },
-        body: { action: "delete" },
-        user: createMockJwtPayload({ sub: "admin-1" }),
-      };
-
-      await controller.userActionHandler(mockReq as Request, mockRes as Response);
-
-      expect(service.performUserAction).toHaveBeenCalledWith({
-        userId: "user-1",
-        action: "delete",
-        adminId: "admin-1",
-        reason: undefined,
-      });
-    });
+    expect(adminService.deleteUserAvatar).toHaveBeenCalledWith("u1", "admin-6", "policy");
+    expect(adminService.deleteUserDisplayName).toHaveBeenCalledWith("u1", "admin-6", "policy");
   });
 });

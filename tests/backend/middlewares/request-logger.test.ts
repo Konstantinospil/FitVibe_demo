@@ -1,364 +1,88 @@
-import type { Request, Response } from "express";
-import type morgan from "morgan";
-import type { JwtPayload } from "../../../apps/backend/src/modules/auth/auth.types.js";
+import type { Request } from "express";
 
-// Mock the logger before importing httpLogger
-jest.mock("../../../apps/backend/src/config/logger", () => ({
+jest.mock("../../../apps/backend/src/config/logger.js", () => ({
   logger: {
     info: jest.fn(),
   },
 }));
 
-// Mock env before importing httpLogger
-jest.mock("../../../apps/backend/src/config/env", () => ({
+jest.mock("../../../apps/backend/src/config/env.js", () => ({
   env: {
-    NODE_ENV: "development",
+    NODE_ENV: "production",
   },
 }));
 
-import { logger } from "../../../apps/backend/src/config/logger.js";
-
-// Import after mocks are set up
-let httpLogger: ReturnType<typeof morgan>;
-
-describe("request-logger", () => {
-  let mockRequest: Partial<Request & { requestId?: string; user?: JwtPayload }>;
-  let mockResponse: Partial<Response>;
-
-  beforeAll(async () => {
-    // Import the module after mocks are set up
-    const module = await import("../../../apps/backend/src/middlewares/request-logger.js");
-    httpLogger = module.httpLogger;
-  });
-
+describe("httpLogger", () => {
   beforeEach(() => {
-    mockRequest = {
-      method: "GET",
-      originalUrl: "/api/v1/users",
-      requestId: "req-123",
-      user: undefined,
-      headers: {},
-      get: jest.fn(),
-    };
-
-    mockResponse = {
-      statusCode: 200,
-      getHeader: jest.fn(),
-    };
-
-    jest.clearAllMocks();
+    jest.resetModules();
   });
 
-  describe("httpLogger middleware", () => {
-    it("should be a morgan middleware function", () => {
-      expect(typeof httpLogger).toBe("function");
-      expect(httpLogger.length).toBe(3); // (req, res, next)
-    });
+  const loadLogger = async () => {
+    let lastOptions: {
+      stream: { write: (message: string) => void };
+      skip: (req: Request) => boolean;
+    } | null = null;
 
-    it("should export morgan middleware with correct configuration", () => {
-      // httpLogger should be the result of morgan() call
-      expect(httpLogger.name).toBe("logger");
-    });
-  });
-
-  describe("morgan tokens logic", () => {
-    it("should extract requestId from request object", () => {
-      mockRequest.requestId = "request-abc-123";
-
-      // Verify the request object has the expected property
-      expect(mockRequest.requestId).toBe("request-abc-123");
-    });
-
-    it("should handle missing requestId", () => {
-      mockRequest.requestId = undefined;
-
-      // Verify undefined requestId would be handled correctly
-      expect(mockRequest.requestId ?? "-").toBe("-");
-    });
-
-    it("should extract route from originalUrl without query parameters", () => {
-      mockRequest.originalUrl = "/api/v1/sessions?limit=10";
-
-      const route = mockRequest.originalUrl.split("?")[0];
-
-      expect(route).toBe("/api/v1/sessions");
-    });
-
-    it("should handle route without query parameters", () => {
-      mockRequest.originalUrl = "/health";
-
-      const route = mockRequest.originalUrl.split("?")[0];
-
-      expect(route).toBe("/health");
-    });
-
-    it("should extract user sub from request", () => {
-      mockRequest.user = { sub: "user-456", role: "user", sid: "session-123" };
-
-      expect(mockRequest.user?.sub).toBe("user-456");
-    });
-
-    it("should handle missing user", () => {
-      mockRequest.user = undefined;
-
-      const userSub = (mockRequest.user as JwtPayload | undefined)?.sub;
-      expect(userSub ?? "-").toBe("-");
-    });
-
-    it("should handle user without sub property", () => {
-      mockRequest.user = { sub: "user-123", role: "user", sid: "session-123" };
-
-      expect(mockRequest.user?.sub ?? "-").toBe("user-123");
-    });
-  });
-
-  describe("formatter", () => {
-    it("should format log as JSON string", () => {
-      // Access the private formatter by calling httpLogger with tokens
-      // We'll test the behavior indirectly through the logger
-      const formatted = JSON.stringify({
-        requestId: "req-789",
-        userId: "user-123",
-        method: "POST",
-        route: "/api/v1/plans",
-        status: 201,
-        remoteAddress: "192.168.1.100",
-        responseTimeMs: 45.2,
-        contentLength: 1234,
-        userAgent: "Mozilla/5.0",
+    jest.doMock("morgan", () => {
+      const fn = jest.fn((_formatter, options) => {
+        lastOptions = options;
+        return jest.fn();
       });
-
-      expect(formatted).toContain('"requestId":"req-789"');
-      expect(formatted).toContain('"userId":"user-123"');
-      expect(formatted).toContain('"method":"POST"');
+      (fn as typeof fn & { token: jest.Mock }).token = jest.fn();
+      return { __esModule: true, default: fn };
     });
 
-    it("should handle missing response time", () => {
-      const formatted = JSON.stringify({
-        requestId: "req-789",
-        userId: "user-123",
-        method: "POST",
-        route: "/api/v1/plans",
-        status: 201,
-        remoteAddress: "192.168.1.100",
-        responseTimeMs: undefined,
-        contentLength: 1234,
-        userAgent: "Mozilla/5.0",
-      });
+    await import("../../../apps/backend/src/middlewares/request-logger.js");
 
-      // When undefined, the field may be omitted or set to null
-      expect(formatted).toContain('"requestId":"req-789"');
-      expect(formatted).not.toContain('"responseTimeMs":45.2');
-    });
+    expect(lastOptions).not.toBeNull();
+    const { logger } = await import("../../../apps/backend/src/config/logger.js");
+    const { env } = await import("../../../apps/backend/src/config/env.js");
+    jest.mocked(logger.info).mockClear();
+    return { options: lastOptions!, logger, env };
+  };
 
-    it("should handle missing content-length", () => {
-      const formatted = JSON.stringify({
-        requestId: "req-789",
-        userId: "user-123",
-        method: "POST",
-        route: "/api/v1/plans",
-        status: 201,
-        remoteAddress: "192.168.1.100",
-        responseTimeMs: 45.2,
-        contentLength: undefined,
-        userAgent: "Mozilla/5.0",
-      });
+  it("logs structured payloads from JSON", async () => {
+    const { options, logger } = await loadLogger();
+    const { stream } = options;
 
-      // When undefined, the field may be omitted or set to null
-      expect(formatted).toContain('"requestId":"req-789"');
-      expect(formatted).not.toContain('"contentLength":1234');
-    });
+    stream.write(JSON.stringify({ status: 200, route: "/api" }));
 
-    it("should handle missing status", () => {
-      const formatted = JSON.stringify({
-        requestId: "req-789",
-        userId: "user-123",
-        method: "POST",
-        route: "/api/v1/plans",
-        status: undefined,
-        remoteAddress: "192.168.1.100",
-        responseTimeMs: 45.2,
-        contentLength: 1234,
-        userAgent: "Mozilla/5.0",
-      });
-
-      // When undefined, the field may be omitted or set to null
-      expect(formatted).toContain('"requestId":"req-789"');
-      expect(formatted).not.toContain('"status":201');
-    });
+    expect(logger.info).toHaveBeenCalledWith({ status: 200, route: "/api" }, "http_request");
   });
 
-  describe("stream", () => {
-    it("should log JSON messages to logger.info", () => {
-      // Get access to the stream write function
-      const message = JSON.stringify({ method: "GET", path: "/test", status: 200 });
+  it("logs primitive JSON payloads as message + raw", async () => {
+    const { options, logger } = await loadLogger();
+    const { stream } = options;
 
-      // Simulate what morgan does - call the stream write
-      const streamWrite = (httpLogger as unknown as { stream?: { write: (msg: string) => void } })
-        .stream?.write;
+    stream.write(JSON.stringify("simple"));
 
-      if (streamWrite) {
-        streamWrite(message + "\n");
-
-        expect(logger.info).toHaveBeenCalledWith(
-          { method: "GET", path: "/test", status: 200 },
-          "http_request",
-        );
-      }
-    });
-
-    it("should handle non-JSON messages", () => {
-      const message = "Plain text log message";
-
-      const streamWrite = (httpLogger as unknown as { stream?: { write: (msg: string) => void } })
-        .stream?.write;
-
-      if (streamWrite) {
-        streamWrite(message + "\n");
-
-        expect(logger.info).toHaveBeenCalledWith(
-          { message: "Plain text log message" },
-          "http_request",
-        );
-      }
-    });
-
-    it("should trim whitespace from messages", () => {
-      const message = "  \n  GET /test 200  \n  ";
-
-      const streamWrite = (httpLogger as unknown as { stream?: { write: (msg: string) => void } })
-        .stream?.write;
-
-      if (streamWrite) {
-        streamWrite(message);
-
-        expect(logger.info).toHaveBeenCalledWith({ message: "GET /test 200" }, "http_request");
-      }
-    });
-
-    it("should ignore empty messages", () => {
-      const message = "   \n   ";
-
-      const streamWrite = (httpLogger as unknown as { stream?: { write: (msg: string) => void } })
-        .stream?.write;
-
-      if (streamWrite) {
-        streamWrite(message);
-
-        expect(logger.info).not.toHaveBeenCalled();
-      }
-    });
-
-    it("should handle non-object JSON values", () => {
-      const message = JSON.stringify("string value");
-
-      const streamWrite = (httpLogger as unknown as { stream?: { write: (msg: string) => void } })
-        .stream?.write;
-
-      if (streamWrite) {
-        streamWrite(message + "\n");
-
-        expect(logger.info).toHaveBeenCalledWith(
-          { message: "string value", raw: "string value" },
-          "http_request",
-        );
-      }
-    });
-
-    it("should handle JSON arrays", () => {
-      const message = JSON.stringify([1, 2, 3]);
-
-      const streamWrite = (httpLogger as unknown as { stream?: { write: (msg: string) => void } })
-        .stream?.write;
-
-      if (streamWrite) {
-        streamWrite(message + "\n");
-
-        expect(logger.info).toHaveBeenCalledWith(
-          { message: [1, 2, 3], raw: [1, 2, 3] },
-          "http_request",
-        );
-      }
-    });
+    expect(logger.info).toHaveBeenCalledWith({ message: "simple", raw: "simple" }, "http_request");
   });
 
-  describe("skip function", () => {
-    beforeEach(() => {
-      // Reset env mock
-      jest.resetModules();
-    });
+  it("logs unstructured messages when JSON parsing fails", async () => {
+    const { options, logger } = await loadLogger();
+    const { stream } = options;
 
-    it("should skip /health endpoint in development", () => {
-      mockRequest.originalUrl = "/health";
+    stream.write("plain log");
 
-      // We can't directly test the skip function, but we can verify the behavior
-      // by checking if httpLogger would skip the request
-      expect(mockRequest.originalUrl.split("?")[0]).toBe("/health");
-    });
-
-    it("should skip /metrics endpoint in development", () => {
-      mockRequest.originalUrl = "/metrics";
-
-      expect(mockRequest.originalUrl.split("?")[0]).toBe("/metrics");
-    });
-
-    it("should not skip /health with query parameters", () => {
-      mockRequest.originalUrl = "/health?detailed=true";
-
-      // The skip function should extract the route without query params
-      expect(mockRequest.originalUrl.split("?")[0]).toBe("/health");
-    });
-
-    it("should not skip other endpoints", () => {
-      mockRequest.originalUrl = "/api/v1/users";
-
-      expect(mockRequest.originalUrl.split("?")[0]).toBe("/api/v1/users");
-    });
-
-    it("should extract route from complex URLs", () => {
-      mockRequest.originalUrl = "/api/v1/sessions?limit=10&offset=20";
-
-      expect(mockRequest.originalUrl.split("?")[0]).toBe("/api/v1/sessions");
-    });
-
-    it("should handle URLs without query params", () => {
-      mockRequest.originalUrl = "/api/v1/plans/123";
-
-      expect(mockRequest.originalUrl.split("?")[0]).toBe("/api/v1/plans/123");
-    });
+    expect(logger.info).toHaveBeenCalledWith({ message: "plain log" }, "http_request");
   });
 
-  describe("integration", () => {
-    it("should create middleware that can be used in Express", () => {
-      // httpLogger should be a function that can be used as middleware
-      expect(typeof httpLogger).toBe("function");
-      expect(httpLogger.length).toBe(3); // (req, res, next) signature
-    });
+  it("skips logging in test mode and for health/metrics routes", async () => {
+    const { options, env } = await loadLogger();
+    const { skip } = options;
 
-    it("should verify request structure for full logging", () => {
-      mockRequest.requestId = "full-req-123";
-      mockRequest.user = { sub: "full-user-456", role: "user", sid: "session-123" };
-      mockRequest.originalUrl = "/api/v1/users?page=1";
-      mockRequest.method = "GET";
-      mockResponse.statusCode = 200;
+    const req = { originalUrl: "/health" } as Request;
+    expect(skip(req, {} as never)).toBe(true);
 
-      // Verify the request has all the properties needed for logging
-      expect(mockRequest.requestId).toBe("full-req-123");
-      expect(mockRequest.user?.sub).toBe("full-user-456");
-      expect(mockRequest.originalUrl.split("?")[0]).toBe("/api/v1/users");
-      expect(mockRequest.method).toBe("GET");
-    });
+    const metricsReq = { originalUrl: "/metrics?prom=true" } as Request;
+    expect(skip(metricsReq, {} as never)).toBe(true);
 
-    it("should handle requests with minimal data", () => {
-      mockRequest.requestId = undefined;
-      mockRequest.user = undefined;
-      mockRequest.originalUrl = "/";
+    (env as { NODE_ENV: string }).NODE_ENV = "test";
+    const otherReq = { originalUrl: "/api" } as Request;
+    expect(skip(otherReq, {} as never)).toBe(true);
 
-      // Verify fallback values for missing data
-      expect(mockRequest.requestId ?? "-").toBe("-");
-      const userSub = (mockRequest.user as JwtPayload | undefined)?.sub;
-      expect(userSub ?? "-").toBe("-");
-      expect(mockRequest.originalUrl.split("?")[0]).toBe("/");
-    });
+    (env as { NODE_ENV: string }).NODE_ENV = "production";
+    expect(skip(otherReq, {} as never)).toBe(false);
   });
 });

@@ -94,6 +94,20 @@ describe("Retention Service", () => {
     expect(builder.del).toHaveBeenCalled();
   });
 
+  it("uses current time when no date is provided", async () => {
+    const builder = enqueueBuilder(0);
+    const now = new Date("2025-04-01T00:00:00.000Z");
+    jest.useFakeTimers().setSystemTime(now);
+
+    await retentionService.purgeExpiredRefreshTokens();
+
+    const revokedThresholdIso = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString();
+    expect(builder.where).toHaveBeenCalledWith("expires_at", "<", now.toISOString());
+    expect(builder.andWhere).toHaveBeenCalledWith("revoked_at", "<", revokedThresholdIso);
+
+    jest.useRealTimers();
+  });
+
   it("purges unverified accounts older than 7 days", async () => {
     const builder = enqueueBuilder(2);
     const now = new Date("2025-01-10T00:00:00.000Z");

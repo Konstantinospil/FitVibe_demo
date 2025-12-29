@@ -92,6 +92,19 @@ describe("system.routes", () => {
     expect(typeof parsed.timestamp).toBe("string");
   });
 
+  it("reports health with version metadata", async () => {
+    const response = await invokeExpress(app, { method: "GET", url: "/system/health" });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.json).toEqual(
+      expect.objectContaining({
+        status: "ok",
+        version: expect.any(String),
+        timestamp: expect.any(String),
+      }),
+    );
+  });
+
   it("enables read-only mode and writes an audit entry", async () => {
     mutableEnv.readOnlyMode = false;
     const response = await invokeExpress(app, {

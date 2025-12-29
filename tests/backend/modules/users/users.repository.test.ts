@@ -799,4 +799,66 @@ describe("Users Repository", () => {
       expect(result).toBeNull();
     });
   });
+
+  describe("user attributes", () => {
+    it("lists user attributes ordered by created_at", async () => {
+      mockQueryBuilder.select.mockReturnThis();
+      const attributes = [{ id: "attr-1" }, { id: "attr-2" }];
+      mockQueryBuilder.orderBy.mockResolvedValueOnce(attributes);
+
+      const result = await usersRepository.listUserAttributes();
+
+      expect(mockDb).toHaveBeenCalledWith("user_attributes");
+      expect(mockQueryBuilder.select).toHaveBeenCalledWith("*");
+      expect(mockQueryBuilder.orderBy).toHaveBeenCalledWith("created_at", "asc");
+      expect(result).toEqual(attributes);
+    });
+
+    it("returns a single attribute by id", async () => {
+      const row = { id: "attr-9", label: "Weight" };
+      mockQueryBuilder.first.mockResolvedValueOnce(row);
+
+      const result = await usersRepository.getUserAttributeById("attr-9");
+
+      expect(mockQueryBuilder.where).toHaveBeenCalledWith({ id: "attr-9" });
+      expect(result).toEqual(row);
+    });
+
+    it("lists latest attribute values per attribute", async () => {
+      const rows = [
+        {
+          id: "val-1",
+          user_id: "user-123",
+          attribute_id: "attr-1",
+          value_number: 70,
+        },
+      ];
+      (mockDb as unknown as { raw: jest.Mock }).raw.mockResolvedValueOnce({ rows });
+
+      const result = await usersRepository.listLatestUserAttributeValues("user-123");
+
+      expect(result).toEqual(rows);
+      expect((mockDb as unknown as { raw: jest.Mock }).raw).toHaveBeenCalled();
+    });
+
+    it("inserts attribute values and returns the id", async () => {
+      mockQueryBuilder.returning.mockResolvedValueOnce([{ id: "value-1" }]);
+
+      const id = await usersRepository.insertUserAttributeValue("user-123", "attr-1", {
+        value_number: 80,
+        value_text: null,
+      });
+
+      expect(mockQueryBuilder.insert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          user_id: "user-123",
+          attribute_id: "attr-1",
+          value_number: 80,
+          value_text: null,
+          value_date: null,
+        }),
+      );
+      expect(id).toBe("value-1");
+    });
+  });
 });

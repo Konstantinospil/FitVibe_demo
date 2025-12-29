@@ -67,7 +67,8 @@ describe("server bootstrap", () => {
   const loadServer = () => import("../../apps/backend/src/server.js");
 
   it("starts the HTTP server when vault is disabled", async () => {
-    await loadServer();
+    const { startServer } = await loadServer();
+    await startServer();
 
     expect(listenMock).toHaveBeenCalled();
     expect(loggerMock.info).toHaveBeenCalledWith(
@@ -78,7 +79,8 @@ describe("server bootstrap", () => {
   it("exits the process when vault is enabled without token", async () => {
     envMock.vault = { ...envMock.vault, enabled: true, token: "" };
 
-    await expect(loadServer()).rejects.toThrow("exit:1");
+    const { startServer } = await loadServer();
+    await expect(startServer()).rejects.toThrow("exit:1");
 
     expect(loggerMock.error).toHaveBeenCalledWith(
       "[server] VAULT_ENABLED=true but VAULT_TOKEN is not set",
@@ -93,7 +95,8 @@ describe("server bootstrap", () => {
       namespace: "devops",
     };
 
-    await loadServer();
+    const { startServer } = await loadServer();
+    await startServer();
 
     expect(initializeSecretsManagerMock).toHaveBeenCalledWith({
       provider: "vault",
