@@ -1,0 +1,116 @@
+FAIL  ../../tests/frontend/pages/TermsReacceptance.test.tsx [ ../../tests/frontend/pages/TermsReacceptance.test.tsx ]
+FAIL  ../../tests/frontend/utils/suppressConsole.test.ts [ ../../tests/frontend/utils/suppressConsole.test.ts ]
+FAIL  ../../tests/frontend/pages/admin/UserManagement.test.tsx [ ../../tests/frontend/pages/admin/UserManagement.test.tsx ]
+FAIL  ../../tests/frontend/accessibility/LanguageSwitcher.accessibility.test.tsx > LanguageSwitcher Accessibility > ARIA attributes > should update aria-checked when language changes
+FAIL  ../../tests/frontend/accessibility/LanguageSwitcher.accessibility.test.tsx > LanguageSwitcher Accessibility > Keyboard navigation > should close dropdown after selection
+FAIL  ../../tests/frontend/accessibility/LanguageSwitcher.accessibility.test.tsx > LanguageSwitcher Accessibility > Screen reader support > should update screen reader announcements when language changes
+FAIL  ../../tests/frontend/accessibility/LanguageSwitcher.accessibility.test.tsx > LanguageSwitcher Accessibility > Language switching > should change language when option is selected
+FAIL  ../../tests/frontend/accessibility/LanguageSwitcher.accessibility.test.tsx > LanguageSwitcher Accessibility > Language switching > should update UI text when language changes
+FAIL  ../../tests/frontend/accessibility/LanguageSwitcher.accessibility.test.tsx > LanguageSwitcher Accessibility > Language switching > should preserve aria-checked state after language switch
+FAIL  ../../tests/frontend/accessibility/PageIntro.accessibility.test.tsx > PageIntro Accessibility > Layout and spacing > should have adequate padding for content
+FAIL  ../../tests/frontend/bootstrap/bootstrap.test.ts > bootstrap entrypoint > redirects unauthenticated users away from private routes
+FAIL  ../../tests/frontend/bootstrap/bootstrap.test.ts > bootstrap entrypoint > initializes the SPA and removes the shell when a session is active
+FAIL  ../../tests/frontend/components/CookieConsent.test.tsx > CookieConsent > should not render when consent exists
+FAIL  ../../tests/frontend/components/CookieConsent.test.tsx > CookieConsent > should render when no consent exists
+FAIL  ../../tests/frontend/components/CookieConsent.test.tsx > CookieConsent > should not render when loading
+FAIL  ../../tests/frontend/components/LoginFormContent.test.tsx > LoginFormContent > should navigate to terms reacceptance when terms are outdated
+FAIL  ../../tests/frontend/components/MainLayout.test.tsx > MainLayout > should render footer
+FAIL  ../../tests/frontend/components/MainLayout.test.tsx > MainLayout > should render main content area
+FAIL  ../../tests/frontend/components/VibeSidebar.test.tsx > VibeSidebar > renders overall points and month labels from the API
+FAIL  ../../tests/frontend/i18n/config.test.ts > i18n config > should load full translations when not already loaded
+FAIL  ../../tests/frontend/i18n/config.test.ts > i18n config > should skip loading full translations when already loaded
+FAIL  ../../tests/frontend/layouts/MainLayout.test.tsx > MainLayout > should render main layout with navigation
+FAIL  ../../tests/frontend/layouts/MainLayout.test.tsx > MainLayout > should render skip to content link
+FAIL  ../../tests/frontend/layouts/MainLayout.test.tsx > MainLayout > should handle sign out
+FAIL  ../../tests/frontend/layouts/MainLayout.test.tsx > MainLayout > should render footer links
+FAIL  ../../tests/frontend/layouts/MainLayout.test.tsx > MainLayout > should render outlet for child routes
+FAIL  ../../tests/frontend/layouts/MainLayout.test.tsx > MainLayout > should render logo
+FAIL  ../../tests/frontend/layouts/MainLayout.test.tsx > MainLayout > should render theme toggle
+FAIL  ../../tests/frontend/layouts/MainLayout.test.tsx > MainLayout > should render language switcher
+FAIL  ../../tests/frontend/layouts/MainLayout.test.tsx > MainLayout > should render user avatar when authenticated
+FAIL  ../../tests/frontend/layouts/MainLayout.test.tsx > MainLayout > should navigate when nav link is clicked
+FAIL  ../../tests/frontend/pages/Cookie.test.tsx > Cookie page > should render cookie policy content
+FAIL  ../../tests/frontend/pages/Cookie.test.tsx > Cookie page > should display effective date
+FAIL  ../../tests/frontend/pages/Cookie.test.tsx > Cookie page > should render cookie sections
+FAIL  ../../tests/frontend/pages/Cookie.test.tsx > Cookie page > should render home/login button
+FAIL  ../../tests/frontend/pages/ForgotPassword.test.tsx > ForgotPassword > handles successful password reset request
+FAIL  ../../tests/frontend/pages/ForgotPassword.test.tsx > ForgotPassword > displays error message on failure
+FAIL  ../../tests/frontend/pages/ForgotPassword.test.tsx > ForgotPassword > displays custom error message from API
+FAIL  ../../tests/frontend/pages/ForgotPassword.test.tsx > ForgotPassword > disables form during submission
+FAIL  ../../tests/frontend/pages/ForgotPassword.test.tsx > ForgotPassword > shows back to login link on success screen
+FAIL  ../../tests/frontend/pages/Logger.test.tsx > Logger > displays complete session button
+FAIL  ../../tests/frontend/pages/Logger.test.tsx > Logger > shows confirmation dialog when completing session
+FAIL  ../../tests/frontend/pages/Logger.test.tsx > Logger > completes session when confirmed in dialog
+FAIL  ../../tests/frontend/pages/Logger.test.tsx > Logger > does not complete session when cancelled in dialog
+FAIL  ../../tests/frontend/pages/Logger.test.tsx > Logger > shows error message when session completion fails
+FAIL  ../../tests/frontend/pages/Login.test.tsx > Login > navigates to 2FA verification when 2FA is required
+FAIL  ../../tests/frontend/pages/Login.test.tsx > Login > displays error message on login failure
+FAIL  ../../tests/frontend/pages/Login.test.tsx > Login > disables form during submission
+FAIL  ../../tests/frontend/pages/Planner.test.tsx > Planner page > should search for exercises
+FAIL  ../../tests/frontend/pages/Planner.test.tsx > Planner page > should add exercise to session
+FAIL  ../../tests/frontend/pages/Planner.test.tsx > Planner page > should remove exercise from session
+FAIL  ../../tests/frontend/pages/Planner.test.tsx > Planner page > should save session with exercises
+FAIL  ../../tests/frontend/pages/Planner.test.tsx > Planner page > should update exercise parameters
+FAIL  ../../tests/frontend/pages/Planner.test.tsx > Planner page > should handle search error gracefully
+FAIL  ../../tests/frontend/pages/Planner.test.tsx > Planner page > should not search when query is less than 2 characters
+FAIL  ../../tests/frontend/pages/Planner.test.tsx > Planner page > should move exercise up
+FAIL  ../../tests/frontend/pages/Planner.test.tsx > Planner page > should move exercise down
+FAIL  ../../tests/frontend/pages/Planner.test.tsx > Planner page > should handle save error
+FAIL  ../../tests/frontend/pages/Planner.test.tsx > Planner page > should handle exercise with null id
+FAIL  ../../tests/frontend/pages/Privacy.test.tsx > Privacy page > should render privacy policy content
+FAIL  ../../tests/frontend/pages/Privacy.test.tsx > Privacy page > should render contact information
+FAIL  ../../tests/frontend/pages/Profile.test.tsx > Profile > displays all profile sections
+FAIL  ../../tests/frontend/pages/Profile.test.tsx > Profile > renders edit button
+FAIL  ../../tests/frontend/pages/Sessions.test.tsx > Sessions > displays empty state when no planned sessions
+FAIL  ../../tests/frontend/pages/Sessions.test.tsx > Sessions > displays planned sessions list
+FAIL  ../../tests/frontend/pages/Sessions.test.tsx > Sessions > displays empty state for active sessions
+FAIL  ../../tests/frontend/pages/Sessions.test.tsx > Sessions > displays active sessions in logger tab
+FAIL  ../../tests/frontend/pages/Sessions.test.tsx > Sessions > navigates to planner when create button clicked
+FAIL  ../../tests/frontend/pages/Sessions.test.tsx > Sessions > navigates to logger when start button clicked
+FAIL  ../../tests/frontend/pages/Sessions.test.tsx > Sessions > navigates to session detail when view button clicked
+FAIL  ../../tests/frontend/pages/Sessions.test.tsx > Sessions > deletes session when delete button clicked and confirmed
+FAIL  ../../tests/frontend/pages/Sessions.test.tsx > Sessions > does not delete session when delete is cancelled
+FAIL  ../../tests/frontend/pages/Sessions.test.tsx > Sessions > shows toast when delete fails
+FAIL  ../../tests/frontend/pages/Sessions.test.tsx > Sessions > displays exercise count for sessions
+FAIL  ../../tests/frontend/pages/Sessions.test.tsx > Sessions > shows up to 5 exercise names
+FAIL  ../../tests/frontend/pages/Settings.test.tsx > Settings > renders settings page
+FAIL  ../../tests/frontend/pages/Settings.test.tsx > Settings > displays user email after loading
+FAIL  ../../tests/frontend/pages/Settings.test.tsx > Settings > allows changing display name
+FAIL  ../../tests/frontend/pages/Settings.test.tsx > Settings > allows changing default visibility
+FAIL  ../../tests/frontend/pages/Settings.test.tsx > Settings > allows changing units preference
+FAIL  ../../tests/frontend/pages/Settings.test.tsx > Settings > allows changing language preference
+FAIL  ../../tests/frontend/pages/Settings.test.tsx > Settings > saves preferences when save button clicked
+FAIL  ../../tests/frontend/pages/Settings.test.tsx > Settings > shows success message after saving preferences
+FAIL  ../../tests/frontend/pages/Settings.test.tsx > Settings > shows error message when saving preferences fails
+FAIL  ../../tests/frontend/pages/Settings.test.tsx > Settings > shows enable 2FA button when 2FA is disabled
+FAIL  ../../tests/frontend/pages/Settings.test.tsx > Settings > shows 2FA setup when enable button clicked
+FAIL  ../../tests/frontend/pages/Settings.test.tsx > Settings > disables verify button when code is not 6 digits
+FAIL  ../../tests/frontend/pages/Settings.test.tsx > Settings > enables 2FA after successful verification
+FAIL  ../../tests/frontend/pages/Settings.test.tsx > Settings > shows delete account confirmation when delete button clicked
+FAIL  ../../tests/frontend/pages/Settings.test.tsx > Settings > allows cancelling account deletion
+FAIL  ../../tests/frontend/pages/Settings.test.tsx > Settings > disables delete button when no password entered
+FAIL  ../../tests/frontend/pages/Settings.test.tsx > Settings > deletes account when confirmed with password
+FAIL  ../../tests/frontend/pages/Settings.test.tsx > Settings > does not delete account when confirmation declined
+FAIL  ../../tests/frontend/pages/Settings.test.tsx > Settings > shows error when account deletion fails
+FAIL  ../../tests/frontend/pages/Settings.test.tsx > Settings > Profile Fields (FR-009) > loads profile data with new fields
+FAIL  ../../tests/frontend/pages/Settings.test.tsx > Settings > Profile Fields (FR-009) > allows changing alias
+FAIL  ../../tests/frontend/pages/Settings.test.tsx > Settings > Profile Fields (FR-009) > allows changing weight
+FAIL  ../../tests/frontend/pages/Settings.test.tsx > Settings > Profile Fields (FR-009) > allows changing weight unit
+FAIL  ../../tests/frontend/pages/Settings.test.tsx > Settings > Profile Fields (FR-009) > allows changing fitness level
+FAIL  ../../tests/frontend/pages/Settings.test.tsx > Settings > Profile Fields (FR-009) > allows changing training frequency
+FAIL  ../../tests/frontend/pages/Settings.test.tsx > Settings > Profile Fields (FR-009) > saves profile fields when save button clicked
+FAIL  ../../tests/frontend/pages/Settings.test.tsx > Settings > Profile Fields (FR-009) > saves weight with unit conversion (lb to kg)
+FAIL  ../../tests/frontend/pages/Settings.test.tsx > Settings > Profile Fields (FR-009) > reloads user data after successful save
+FAIL  ../../tests/frontend/pages/Settings.test.tsx > Settings > Profile Fields (FR-009) > handles profile data when profile is null
+FAIL  ../../tests/frontend/pages/Settings.test.tsx > Settings > Profile Fields (FR-009) > handles weight conversion display when loading from API
+FAIL  ../../tests/frontend/pages/Settings.test.tsx > Settings > Profile Fields (FR-009) > saves all new profile fields together
+FAIL  ../../tests/frontend/pages/Settings.test.tsx > Settings > Profile Fields (FR-009) > displays alias help text
+FAIL  ../../tests/frontend/pages/Terms.test.tsx > Terms page > should render terms and conditions content
+FAIL  ../../tests/frontend/pages/Terms.test.tsx > Terms page > should display effective date
+FAIL  ../../tests/frontend/pages/Terms.test.tsx > Terms page > should render terms sections
+FAIL  ../../tests/frontend/pages/Terms.test.tsx > Terms page > should render health and safety notice
+FAIL  ../../tests/frontend/pages/Terms.test.tsx > Terms page > should render contact information
+FAIL  ../../tests/frontend/public/login-shell.test.ts > login fallback shell > toggles password visibility with the toggle button
+FAIL  ../../tests/frontend/public/login-shell.test.ts > login fallback shell > redirects to the 2FA verification screen when required
+FAIL  ../../tests/frontend/public/login-shell.test.ts > login fallback shell > stores a session flag and navigates home after successful login
+FAIL  ../../tests/frontend/public/login-shell.test.ts > login fallback shell > shows an error message when authentication fails
