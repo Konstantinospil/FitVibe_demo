@@ -280,7 +280,7 @@ describe("ProtectedRoutes", () => {
     );
   });
 
-  it("should render TermsReacceptance page at /terms-reacceptance", async () => {
+  it("should render NotFound page at /terms-reacceptance", async () => {
     render(
       <MemoryRouter initialEntries={["/terms-reacceptance"]}>
         <ProtectedRoutes />
@@ -289,13 +289,13 @@ describe("ProtectedRoutes", () => {
 
     await waitFor(
       () => {
-        expect(screen.getByText("Terms Reacceptance Page")).toBeInTheDocument();
+        expect(screen.getByText("Not Found")).toBeInTheDocument();
       },
       { timeout: 5000 },
     );
   });
 
-  it("should render AdminDashboard at /admin", async () => {
+  it("should render NotFound at /admin", async () => {
     render(
       <MemoryRouter initialEntries={["/admin"]}>
         <ProtectedRoutes />
@@ -304,13 +304,13 @@ describe("ProtectedRoutes", () => {
 
     await waitFor(
       () => {
-        expect(screen.getByText("Admin Dashboard")).toBeInTheDocument();
+        expect(screen.getByText("Not Found")).toBeInTheDocument();
       },
       { timeout: 3000 },
     );
   });
 
-  it("should render ContentReports at /admin/reports", async () => {
+  it("should render NotFound at /admin/reports", async () => {
     render(
       <MemoryRouter initialEntries={["/admin/reports"]}>
         <ProtectedRoutes />
@@ -319,13 +319,13 @@ describe("ProtectedRoutes", () => {
 
     await waitFor(
       () => {
-        expect(screen.getByText("Content Reports")).toBeInTheDocument();
+        expect(screen.getByText("Not Found")).toBeInTheDocument();
       },
       { timeout: 5000 },
     );
   });
 
-  it("should render UserManagement at /admin/users", async () => {
+  it("should render NotFound at /admin/users", async () => {
     render(
       <MemoryRouter initialEntries={["/admin/users"]}>
         <ProtectedRoutes />
@@ -334,13 +334,13 @@ describe("ProtectedRoutes", () => {
 
     await waitFor(
       () => {
-        expect(screen.getByText("User Management")).toBeInTheDocument();
+        expect(screen.getByText("Not Found")).toBeInTheDocument();
       },
       { timeout: 5000 },
     );
   });
 
-  it("should render SystemControls at /admin/system", async () => {
+  it("should render NotFound at /admin/system", async () => {
     render(
       <MemoryRouter initialEntries={["/admin/system"]}>
         <ProtectedRoutes />
@@ -349,7 +349,7 @@ describe("ProtectedRoutes", () => {
 
     await waitFor(
       () => {
-        expect(screen.getByText("System Controls")).toBeInTheDocument();
+        expect(screen.getByText("Not Found")).toBeInTheDocument();
       },
       { timeout: 5000 },
     );

@@ -226,7 +226,7 @@ describe("ContentReports", () => {
       { timeout: 5000 },
     );
 
-    const dismissButton = screen.getByRole("button", { name: /Dismiss/i });
+    const dismissButton = screen.getByRole("button", { name: /^Dismiss$/i });
     fireEvent.click(dismissButton);
 
     await waitFor(
@@ -263,7 +263,7 @@ describe("ContentReports", () => {
       { timeout: 5000 },
     );
 
-    const dismissButton = screen.getByRole("button", { name: /Dismiss/i });
+    const dismissButton = screen.getByRole("button", { name: /^Dismiss$/i });
     fireEvent.click(dismissButton);
 
     await waitFor(
@@ -414,7 +414,7 @@ describe("ContentReports", () => {
       { timeout: 5000 },
     );
 
-    const dismissButton = screen.getByRole("button", { name: /Dismiss/i });
+    const dismissButton = screen.getByRole("button", { name: /^Dismiss$/i });
     fireEvent.click(dismissButton);
 
     await waitFor(
@@ -477,7 +477,7 @@ describe("ContentReports", () => {
       { timeout: 5000 },
     );
 
-    const dismissButton = screen.getByRole("button", { name: /Dismiss/i });
+    const dismissButton = screen.getByRole("button", { name: /^Dismiss$/i });
     fireEvent.click(dismissButton);
 
     await waitFor(

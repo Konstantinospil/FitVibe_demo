@@ -90,7 +90,7 @@ const renderWithProviders = (ui: React.ReactElement, initialEntries?: string[]) 
   );
 };
 
-describe("Register", () => {
+describe.sequential("Register", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });

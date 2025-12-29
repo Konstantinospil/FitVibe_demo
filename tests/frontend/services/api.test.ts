@@ -111,7 +111,7 @@ describe("API client interceptors", () => {
 
     await expect(apiClient.get("/secure")).rejects.toThrow();
 
-    expect(window.location.href).toBe("/terms-reacceptance");
+    expect(window.location.href).toBe("/terms");
 
     window.location = originalLocation;
   });

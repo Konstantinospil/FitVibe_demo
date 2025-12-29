@@ -45,7 +45,7 @@ import {
   getDashboardAnalytics,
 } from "../../src/services/api";
 
-describe("API Service Functions", () => {
+describe.sequential("API Service Functions", () => {
   let apiMock: MockAdapter;
   let rawMock: MockAdapter;
 

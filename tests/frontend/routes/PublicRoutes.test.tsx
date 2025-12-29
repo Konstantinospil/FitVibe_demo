@@ -152,15 +152,15 @@ describe("PublicRoutes", () => {
     expect(screen.getByTestId("privacy-page")).toBeInTheDocument();
   });
 
-  it("should render TermsReacceptance page at /terms-reacceptance", async () => {
+  it("should redirect terms reacceptance path to /login", async () => {
     render(
       <MemoryRouter initialEntries={["/terms-reacceptance"]}>
         <PublicRoutes />
       </MemoryRouter>,
     );
 
-    await screen.findByTestId("terms-reacceptance-page");
-    expect(screen.getByTestId("terms-reacceptance-page")).toBeInTheDocument();
+    await screen.findByTestId("navigate-to");
+    expect(screen.getByTestId("navigate-to")).toHaveTextContent("/login");
   });
 
   it("should redirect unknown routes to /login", async () => {

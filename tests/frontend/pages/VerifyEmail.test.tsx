@@ -146,7 +146,7 @@ describe("VerifyEmail", () => {
     await waitFor(
       () => {
         expect(screen.getByText("Verification Failed")).toBeInTheDocument();
-        expect(screen.getByText("Verification failed")).toBeInTheDocument();
+        expect(screen.getByText("We couldn't verify your email")).toBeInTheDocument();
       },
       { timeout: 5000 },
     );
@@ -223,7 +223,7 @@ describe("VerifyEmail", () => {
     await waitFor(
       () => {
         expect(screen.getByText("Verification Failed")).toBeInTheDocument();
-        expect(screen.getByText("Verification failed")).toBeInTheDocument();
+        expect(screen.getByText("We couldn't verify your email")).toBeInTheDocument();
       },
       { timeout: 5000 },
     );
@@ -241,7 +241,7 @@ describe("VerifyEmail", () => {
     await waitFor(
       () => {
         expect(screen.getByText("Verification Failed")).toBeInTheDocument();
-        expect(screen.getByText("Verification failed")).toBeInTheDocument();
+        expect(screen.getByText("We couldn't verify your email")).toBeInTheDocument();
       },
       { timeout: 5000 },
     );

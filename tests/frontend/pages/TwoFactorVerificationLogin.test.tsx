@@ -9,6 +9,13 @@ import { initReactI18next } from "react-i18next";
 import * as api from "../../src/services/api";
 import { AuthProvider } from "../../src/contexts/AuthContext";
 
+vi.mock("../../src/contexts/AuthContext", () => ({
+  useAuth: () => ({
+    signIn: vi.fn(),
+  }),
+  AuthProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+}));
+
 // Mock API
 vi.mock("../../src/services/api", async () => {
   const actual = await vi.importActual("../../src/services/api");

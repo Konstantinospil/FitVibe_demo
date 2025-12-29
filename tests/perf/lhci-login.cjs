@@ -1,0 +1,41 @@
+const EMAIL_SELECTOR = 'input[name="email"]';
+const PASSWORD_SELECTOR = 'input[name="password"]';
+const SUBMIT_SELECTOR = 'button[type="submit"]';
+
+function getCredentials() {
+  const email = process.env.LHCI_EMAIL || process.env.LHCI_USERNAME;
+  const password = process.env.LHCI_PASSWORD;
+
+  if (!email || !password) {
+    throw new Error("Missing LHCI_EMAIL (or LHCI_USERNAME) / LHCI_PASSWORD env vars.");
+  }
+
+  return { email, password };
+}
+
+module.exports = async (browser, context) => {
+  const { url } = context;
+  const { email, password } = getCredentials();
+  const page = await browser.newPage();
+  const loginUrl = new URL("/login", url).toString();
+
+  await page.goto(loginUrl, { waitUntil: "networkidle0" });
+  await page.waitForSelector(EMAIL_SELECTOR, { timeout: 10000 });
+  await page.type(EMAIL_SELECTOR, email, { delay: 20 });
+  await page.type(PASSWORD_SELECTOR, password, { delay: 20 });
+
+  await Promise.all([
+    page.waitForNavigation({ waitUntil: "networkidle0" }),
+    page.click(SUBMIT_SELECTOR),
+  ]);
+
+  const postLoginUrl = page.url();
+  if (postLoginUrl.includes("/login")) {
+    throw new Error(
+      `Login failed or requires 2FA; landed on ${postLoginUrl}. Ensure LHCI user has 2FA disabled.`,
+    );
+  }
+
+  await page.goto(url, { waitUntil: "networkidle0" });
+  return page;
+};

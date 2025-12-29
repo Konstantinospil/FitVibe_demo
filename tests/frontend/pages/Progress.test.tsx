@@ -181,12 +181,14 @@ describe("Progress page", () => {
       .spyOn(window.URL, "createObjectURL")
       .mockImplementation(() => "blob:test");
     const revokeObjectURLSpy = vi.spyOn(window.URL, "revokeObjectURL").mockImplementation(() => {});
+    const originalAppendChild = document.body.appendChild.bind(document.body);
+    const originalRemoveChild = document.body.removeChild.bind(document.body);
     const appendChildSpy = vi
       .spyOn(document.body, "appendChild")
-      .mockImplementation((node: Node) => node);
+      .mockImplementation((node: Node) => originalAppendChild(node));
     const removeChildSpy = vi
       .spyOn(document.body, "removeChild")
-      .mockImplementation((node: Node) => node);
+      .mockImplementation((node: Node) => originalRemoveChild(node));
 
     // Mock document.createElement for anchor elements
     // Ensure document is available
