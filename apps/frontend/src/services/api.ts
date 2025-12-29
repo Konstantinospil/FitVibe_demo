@@ -535,6 +535,17 @@ export async function getLegalDocumentsStatus(): Promise<LegalDocumentsStatus> {
   return res.data;
 }
 
+export interface LegalDocumentVersions {
+  terms: string;
+  privacy: string;
+  cookie: string;
+}
+
+export async function getLegalDocumentVersions(): Promise<LegalDocumentVersions> {
+  const res = await apiClient.get<LegalDocumentVersions>("/api/v1/auth/legal-documents/versions");
+  return res.data;
+}
+
 export type ResendVerificationRequest = {
   email: string;
 };
@@ -604,6 +615,58 @@ export async function getCurrentUser(): Promise<UserDetail> {
 
 export async function updateProfile(payload: UpdateProfileRequest): Promise<UserDetail> {
   const res = await apiClient.patch<UserDetail>("/api/v1/users/me", payload);
+  return res.data;
+}
+
+export type UserAttributeValueType = "number" | "text" | "date";
+
+export type UserAttributeLatestValue = {
+  attributeId: string;
+  valueNumber: number | null;
+  valueText: string | null;
+  valueDate: string | null;
+  createdAt: string;
+};
+
+export type UserAttribute = {
+  id: string;
+  key: string;
+  label: string;
+  unit: string | null;
+  valueType: UserAttributeValueType;
+  minValue: number | null;
+  maxValue: number | null;
+  minLength: number | null;
+  maxLength: number | null;
+  minDate: string | null;
+  maxDate: string | null;
+  createdAt: string;
+  latestValue: UserAttributeLatestValue | null;
+};
+
+export type UserAttributesResponse = {
+  attributes: UserAttribute[];
+};
+
+export type UpdateUserAttributeRequest = {
+  valueNumber?: number;
+  valueText?: string;
+  valueDate?: string;
+};
+
+export async function getUserAttributes(): Promise<UserAttributesResponse> {
+  const res = await apiClient.get<UserAttributesResponse>("/api/v1/users/me/attributes");
+  return res.data;
+}
+
+export async function addUserAttributeValue(
+  attributeId: string,
+  payload: UpdateUserAttributeRequest,
+): Promise<{ latestValue: UserAttributeLatestValue }> {
+  const res = await apiClient.post<{ latestValue: UserAttributeLatestValue }>(
+    `/api/v1/users/me/attributes/${attributeId}`,
+    payload,
+  );
   return res.data;
 }
 

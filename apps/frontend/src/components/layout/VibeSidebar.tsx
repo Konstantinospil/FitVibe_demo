@@ -16,6 +16,7 @@ type VibeConfig = {
   key: VibeKey;
   icon: string;
   colorVar: string;
+  textColorVar: string;
 };
 
 const VIBE_CONFIG: VibeConfig[] = [
@@ -23,31 +24,37 @@ const VIBE_CONFIG: VibeConfig[] = [
     key: "strength",
     icon: strengthIcon,
     colorVar: "--vibe-strength",
+    textColorVar: "--color-primary-on",
   },
   {
     key: "agility",
     icon: agilityIcon,
     colorVar: "--vibe-agility",
+    textColorVar: "--color-primary-on",
   },
   {
     key: "endurance",
     icon: enduranceIcon,
     colorVar: "--vibe-endurance",
+    textColorVar: "--color-secondary-on",
   },
   {
     key: "explosivity",
     icon: explosivityIcon,
     colorVar: "--vibe-explosivity",
+    textColorVar: "--color-secondary-on",
   },
   {
     key: "intelligence",
     icon: intelligenceIcon,
     colorVar: "--vibe-intelligence",
+    textColorVar: "--color-secondary-on",
   },
   {
     key: "regeneration",
     icon: regenerationIcon,
     colorVar: "--vibe-regeneration",
+    textColorVar: "--color-secondary-on",
   },
 ];
 
@@ -114,7 +121,7 @@ const SidebarTrendChart: React.FC<{
               y1={y}
               x2={width - padding}
               y2={y}
-              stroke="rgba(255, 255, 255, 0.08)"
+              stroke="var(--color-border-strong)"
               strokeWidth="1"
             />
           );
@@ -154,8 +161,9 @@ const VibeSidebar: React.FC = () => {
     queryFn: () => getVibePoints(12),
   });
 
-  const displayName = user?.username || t("navigation.you") || "You";
+  const displayName = user?.displayName || user?.username || t("navigation.you") || "You";
   const isExpanded = isPinned || isHovered;
+  const overallScore = vibePoints?.overall?.points ?? 0;
   const monthLabels = useMemo(() => {
     if (!vibePoints?.months?.length) {
       return Array.from({ length: 12 }, (_, index) => `M${index + 1}`);
@@ -205,40 +213,59 @@ const VibeSidebar: React.FC = () => {
         width: isExpanded ? "320px" : "72px",
         transition: "width 200ms ease",
         background: "var(--color-bg-card)",
-        borderRight: "1px solid var(--color-border)",
+        borderLeft: "1px solid var(--color-border)",
         boxShadow: isExpanded ? "var(--shadow-e2)" : "none",
         overflow: "hidden",
         display: "flex",
         flexDirection: "column",
       }}
     >
-      <div style={{ padding: "1.25rem 1rem 0.5rem", display: "grid", gap: "1rem" }}>
+      <div
+        style={{
+          padding: isExpanded ? "1.25rem 1rem 0.5rem" : "1rem 0.5rem 0.75rem",
+          display: "grid",
+          gap: isExpanded ? "1rem" : "0.75rem",
+        }}
+      >
         <button
           type="button"
           onClick={() => setActiveMetric("overall")}
+          aria-label={!isExpanded ? "Overall fitness score" : undefined}
           style={{
-            border: "1px solid var(--color-border)",
-            borderRadius: "18px",
-            padding: "0.85rem",
-            background: "var(--color-surface)",
-            textAlign: "left",
+            border: isExpanded ? "1px solid var(--color-border)" : "none",
+            borderRadius: isExpanded ? "var(--radius-lg)" : "var(--radius-xl)",
+            padding: isExpanded ? "0.85rem" : "0.35rem",
+            background: isExpanded ? "var(--color-surface)" : "var(--color-accent)",
+            textAlign: isExpanded ? "left" : "center",
             cursor: "pointer",
             display: "grid",
-            gap: "0.35rem",
-            color: "var(--color-text-primary)",
+            gap: isExpanded ? "0.35rem" : "0",
+            color: isExpanded ? "var(--color-text-primary)" : "var(--color-primary-on)",
+            height: isExpanded ? "auto" : "72px",
+            placeItems: isExpanded ? "initial" : "center",
+            fontWeight: isExpanded ? 600 : 700,
+            fontSize: isExpanded ? "inherit" : "1.6rem",
           }}
         >
-          <span style={{ fontSize: "0.75rem", color: "var(--color-text-muted)" }}>
-            {displayName}
-          </span>
-          <span
-            style={{ fontSize: "0.85rem", letterSpacing: "0.08em", textTransform: "uppercase" }}
-          >
-            Overall Fitness
-          </span>
-          <span style={{ fontSize: "2.1rem", fontWeight: 600 }}>
-            {vibePoints?.overall?.points ?? 0}
-          </span>
+          {isExpanded ? (
+            <>
+              <span style={{ fontSize: "0.75rem", color: "var(--color-text-muted)" }}>
+                {displayName}
+              </span>
+              <span
+                style={{
+                  fontSize: "0.85rem",
+                  letterSpacing: "var(--letter-spacing-wide)",
+                  textTransform: "uppercase",
+                }}
+              >
+                Overall Fitness
+              </span>
+              <span style={{ fontSize: "2.1rem", fontWeight: 600 }}>{overallScore}</span>
+            </>
+          ) : (
+            <span>{overallScore}</span>
+          )}
         </button>
         <div style={{ display: "grid", gap: "0.5rem" }}>
           {VIBE_CONFIG.map((vibe) => {
@@ -252,68 +279,99 @@ const VibeSidebar: React.FC = () => {
                 key={vibe.key}
                 type="button"
                 onClick={() => setActiveMetric(vibe.key)}
+                aria-label={!isExpanded ? `${t(`vibes.${vibe.key}.name`)} score` : undefined}
                 style={{
                   display: "grid",
-                  gridTemplateColumns: "40px 1fr",
+                  gridTemplateColumns: isExpanded ? "40px 1fr" : "1fr",
                   alignItems: "center",
-                  gap: "0.75rem",
-                  padding: "0.5rem 0.6rem",
-                  borderRadius: "14px",
-                  border: isActive ? `1px solid var(${vibe.colorVar})` : "1px solid transparent",
-                  background: isActive ? "rgba(255, 255, 255, 0.04)" : "transparent",
-                  color: "var(--color-text-primary)",
+                  gap: isExpanded ? "0.75rem" : "0",
+                  padding: isExpanded ? "0.5rem 0.6rem" : "0.3rem",
+                  borderRadius: isExpanded ? "var(--radius-md)" : "var(--radius-full)",
+                  border: isExpanded
+                    ? isActive
+                      ? `1px solid var(${vibe.colorVar})`
+                      : "1px solid transparent"
+                    : "none",
+                  background: isExpanded
+                    ? isActive
+                      ? "var(--color-surface-muted)"
+                      : "transparent"
+                    : `var(${vibe.colorVar})`,
+                  color: isExpanded ? "var(--color-text-primary)" : `var(${vibe.textColorVar})`,
                   cursor: "pointer",
+                  height: isExpanded ? "auto" : "48px",
+                  justifyItems: isExpanded ? "initial" : "center",
+                  fontWeight: isExpanded ? 600 : 700,
+                  fontSize: isExpanded ? "inherit" : "0.95rem",
+                  boxShadow:
+                    !isExpanded && isActive
+                      ? `0 0 0 2px var(--color-bg-card), 0 0 0 4px var(${vibe.colorVar})`
+                      : "none",
                 }}
               >
-                <span
-                  style={{
-                    width: "40px",
-                    height: "40px",
-                    borderRadius: "50%",
-                    display: "grid",
-                    placeItems: "center",
-                    background: `var(${vibe.colorVar})`,
-                    boxShadow: isActive ? `0 0 0 2px var(${vibe.colorVar})` : "none",
-                  }}
-                >
-                  <img src={vibe.icon} alt="" style={{ width: "22px", height: "22px" }} />
-                </span>
-                <span style={{ display: "grid", textAlign: "left" }}>
-                  <span style={{ fontSize: "0.9rem", fontWeight: 600 }}>
-                    {t(`vibes.${vibe.key}.name`)}
-                  </span>
-                  <span style={{ fontSize: "0.75rem", color: "var(--color-text-muted)" }}>
-                    {vibeSeries?.points ?? 0} pts
-                  </span>
-                </span>
+                {isExpanded ? (
+                  <>
+                    <span
+                      style={{
+                        width: "40px",
+                        height: "40px",
+                        borderRadius: "50%",
+                        display: "grid",
+                        placeItems: "center",
+                        background: `var(${vibe.colorVar})`,
+                        boxShadow: isActive ? `0 0 0 2px var(${vibe.colorVar})` : "none",
+                      }}
+                    >
+                      <img src={vibe.icon} alt="" style={{ width: "22px", height: "22px" }} />
+                    </span>
+                    <span style={{ display: "grid", textAlign: "left" }}>
+                      <span style={{ fontSize: "0.9rem", fontWeight: 600 }}>
+                        {t(`vibes.${vibe.key}.name`)}
+                      </span>
+                      <span style={{ fontSize: "0.75rem", color: "var(--color-text-muted)" }}>
+                        {vibeSeries?.points ?? 0} pts
+                      </span>
+                    </span>
+                  </>
+                ) : (
+                  <span>{vibeSeries?.points ?? 0}</span>
+                )}
               </button>
             );
           })}
         </div>
-        <div
-          style={{
-            padding: "0.75rem",
-            borderRadius: "16px",
-            border: "1px solid var(--color-border)",
-            background: "rgba(255, 255, 255, 0.02)",
-            display: "grid",
-            gap: "0.6rem",
-          }}
-        >
-          <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between" }}>
-            <span
-              style={{ fontSize: "0.85rem", textTransform: "uppercase", letterSpacing: "0.08em" }}
+        {isExpanded && (
+          <div
+            style={{
+              padding: "0.75rem",
+              borderRadius: "var(--radius-lg)",
+              border: "1px solid var(--color-border)",
+              background: "var(--color-surface-muted)",
+              display: "grid",
+              gap: "0.6rem",
+            }}
+          >
+            <div
+              style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between" }}
             >
-              Annual Development
-            </span>
-            <span style={{ fontSize: "1.1rem", fontWeight: 600 }}>{activeConfig.score}</span>
+              <span
+                style={{
+                  fontSize: "0.85rem",
+                  textTransform: "uppercase",
+                  letterSpacing: "var(--letter-spacing-wide)",
+                }}
+              >
+                Annual Development
+              </span>
+              <span style={{ fontSize: "1.1rem", fontWeight: 600 }}>{activeConfig.score}</span>
+            </div>
+            <SidebarTrendChart
+              values={activeConfig.trend}
+              strokeColor={activeConfig.color}
+              labels={monthLabels}
+            />
           </div>
-          <SidebarTrendChart
-            values={activeConfig.trend}
-            strokeColor={activeConfig.color}
-            labels={monthLabels}
-          />
-        </div>
+        )}
       </div>
       <div
         style={{ marginTop: "auto", padding: "0.75rem", display: "flex", justifyContent: "center" }}

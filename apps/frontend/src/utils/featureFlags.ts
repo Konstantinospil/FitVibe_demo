@@ -188,3 +188,12 @@ export function useReadOnlyMode() {
     message: config.maintenanceMessage,
   };
 }
+
+export function resetConfigCache(): void {
+  cachedConfig = {
+    ...DEFAULT_CONFIG,
+    features: { ...DEFAULT_CONFIG.features },
+    timestamp: new Date().toISOString(),
+  };
+  lastFetchTime = 0;
+}

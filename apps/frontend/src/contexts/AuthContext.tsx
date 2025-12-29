@@ -51,6 +51,7 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
             signIn({
               id: userData.id,
               username: userData.username,
+              displayName: userData.displayName,
               email: userData.primaryEmail || "",
               role: userData.role,
             });

@@ -556,7 +556,7 @@ const Settings: React.FC = () => {
                 id="weight"
                 type="number"
                 min="20"
-                max="500"
+                max="300"
                 step="0.1"
                 value={weight}
                 onChange={(e) => setWeight(e.target.value)}

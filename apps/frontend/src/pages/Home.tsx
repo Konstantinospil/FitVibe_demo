@@ -388,29 +388,33 @@ const Home: React.FC = () => {
     }
 
     // Create a session with the exercise data
-    await createSessionMutation.mutateAsync({
-      planned_at: new Date().toISOString(),
-      visibility: "private",
-      exercises: [
-        {
-          exercise_id: exerciseId,
-          order: 1,
-          notes: notes || null,
-          actual: {
-            sets: sets ? parseInt(sets, 10) : null,
-            reps: reps ? parseInt(reps, 10) : null,
-            load: weight ? parseFloat(weight) : null,
-            distance: distance ? parseFloat(distance) : null,
-            duration: duration ? `PT${duration}M` : null, // ISO 8601 duration format
-            rpe: rpe ? parseInt(rpe, 10) : null,
-            extras: {
-              resistance: resistance || null,
-              speed: speed || null,
+    try {
+      await createSessionMutation.mutateAsync({
+        planned_at: new Date().toISOString(),
+        visibility: "private",
+        exercises: [
+          {
+            exercise_id: exerciseId,
+            order: 1,
+            notes: notes || null,
+            actual: {
+              sets: sets ? parseInt(sets, 10) : null,
+              reps: reps ? parseInt(reps, 10) : null,
+              load: weight ? parseFloat(weight) : null,
+              distance: distance ? parseFloat(distance) : null,
+              duration: duration ? `PT${duration}M` : null, // ISO 8601 duration format
+              rpe: rpe ? parseInt(rpe, 10) : null,
+              extras: {
+                resistance: resistance || null,
+                speed: speed || null,
+              },
             },
           },
-        },
-      ],
-    });
+        ],
+      });
+    } catch {
+      // Errors are already handled in the mutation onError.
+    }
   };
 
   const handleCloseModal = () => {

@@ -47,13 +47,18 @@ const Register: React.FC = () => {
   const [resendError, setResendError] = useState<string | null>(null);
   const [retryAfter, setRetryAfter] = useState<number | null>(null);
   const [countdown, , resetCountdown] = useCountdown(0);
+  const termsError =
+    error === t("auth.register.termsRequired") && (!termsAccepted || !privacyAccepted);
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setError(null);
 
+    const trimmedName = name.trim();
+    const trimmedEmail = email.trim();
+
     // Validate required fields
-    if (!name.trim() || !email.trim() || !password || !confirmPassword) {
+    if (!trimmedName || !trimmedEmail || !password || !confirmPassword) {
       setError(t("auth.register.fillAllFields"));
       return;
     }
@@ -105,19 +110,27 @@ const Register: React.FC = () => {
       }
     }
 
+    if (name !== trimmedName) {
+      setName(trimmedName);
+    }
+    if (email !== trimmedEmail) {
+      setEmail(trimmedEmail);
+    }
+
     setIsSubmitting(true);
 
     try {
       // Use provided username or generate from email
-      const finalUsername = username.trim() || email.split("@")[0].replace(/[^a-zA-Z0-9_.-]/g, "_");
+      const finalUsername =
+        username.trim() || trimmedEmail.split("@")[0].replace(/[^a-zA-Z0-9_.-]/g, "_");
 
       await registerAccount({
-        email,
+        email: trimmedEmail,
         password,
         username: finalUsername,
         terms_accepted: termsAccepted && privacyAccepted,
         profile: {
-          display_name: name,
+          display_name: trimmedName,
         },
       });
 
@@ -130,7 +143,13 @@ const Register: React.FC = () => {
           response?: { data?: { error?: { code?: string; message?: string } } };
         };
         const errorCode = axiosError.response?.data?.error?.code;
-        setError(errorCode ? t(`errors.${errorCode}`) : t("auth.register.error"));
+        const errorMessage = axiosError.response?.data?.error?.message;
+        const translatedError = errorCode ? t(`errors.${errorCode}`) : "";
+        const resolvedError =
+          translatedError && translatedError !== `errors.${errorCode}`
+            ? translatedError
+            : errorMessage || t("auth.register.error");
+        setError(resolvedError);
       } else {
         setError(t("auth.register.error"));
       }
@@ -383,7 +402,18 @@ const Register: React.FC = () => {
           </div>
         </label>
         <div className="password-requirements">
-          <label className="checkbox-wrapper">
+          <label
+            className="checkbox-wrapper"
+            style={
+              termsError && !termsAccepted
+                ? {
+                    border: "1px solid var(--color-danger-border)",
+                    borderRadius: "var(--radius-sm)",
+                    padding: "0.25rem 0.5rem",
+                  }
+                : undefined
+            }
+          >
             <input
               type="checkbox"
               checked={termsAccepted}
@@ -406,7 +436,18 @@ const Register: React.FC = () => {
               </NavLink>
             </span>
           </label>
-          <label className="checkbox-wrapper">
+          <label
+            className="checkbox-wrapper"
+            style={
+              termsError && !privacyAccepted
+                ? {
+                    border: "1px solid var(--color-danger-border)",
+                    borderRadius: "var(--radius-sm)",
+                    padding: "0.25rem 0.5rem",
+                  }
+                : undefined
+            }
+          >
             <input
               type="checkbox"
               checked={privacyAccepted}

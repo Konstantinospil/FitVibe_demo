@@ -7,7 +7,7 @@ import PageIntro from "../components/PageIntro";
 import { Card, CardContent, Button } from "../components/ui";
 import { useAuthStore } from "../store/auth.store";
 import { ConfirmDialog } from "../components/ConfirmDialog";
-import { revokeTerms } from "../services/api";
+import { revokeTerms, getLegalDocumentVersions, type LegalDocumentVersions } from "../services/api";
 import { useAuth } from "../contexts/AuthContext";
 
 const contentStyle: React.CSSProperties = {
@@ -27,6 +27,7 @@ const Cookie: React.FC = () => {
   const [translationsReady, setTranslationsReady] = useState(false);
   const [showRevokeConfirm, setShowRevokeConfirm] = useState(false);
   const [isRevoking, setIsRevoking] = useState(false);
+  const [legalVersions, setLegalVersions] = useState<LegalDocumentVersions | null>(null);
 
   const handleRevokeConsent = async () => {
     setIsRevoking(true);
@@ -90,6 +91,19 @@ const Cookie: React.FC = () => {
     void loadTranslations();
   }, []);
 
+  useEffect(() => {
+    const fetchVersions = async () => {
+      try {
+        const versions = await getLegalDocumentVersions();
+        setLegalVersions(versions);
+      } catch (error) {
+        console.error("Failed to fetch legal document versions:", error);
+      }
+    };
+
+    void fetchVersions();
+  }, []);
+
   if (!translationsReady) {
     return (
       <div
@@ -139,7 +153,8 @@ const Cookie: React.FC = () => {
               fontSize: "var(--font-size-sm)",
             }}
           >
-            <strong>{t("cookie.effectiveDate")}:</strong> {t("cookie.effectiveDateValue")}
+            <strong>{t("cookie.effectiveDate")}:</strong>{" "}
+            {legalVersions?.cookie || t("cookie.effectiveDateValue")}
           </div>
 
           <section className="section">

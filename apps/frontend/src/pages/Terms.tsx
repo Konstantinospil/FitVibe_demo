@@ -12,6 +12,8 @@ import {
   acceptTerms,
   getLegalDocumentsStatus,
   type LegalDocumentsStatus,
+  getLegalDocumentVersions,
+  type LegalDocumentVersions,
 } from "../services/api";
 import { useAuth } from "../contexts/AuthContext";
 
@@ -33,6 +35,7 @@ const Terms: React.FC = () => {
   const [showRevokeConfirm, setShowRevokeConfirm] = useState(false);
   const [isRevoking, setIsRevoking] = useState(false);
   const [legalStatus, setLegalStatus] = useState<LegalDocumentsStatus | null>(null);
+  const [legalVersions, setLegalVersions] = useState<LegalDocumentVersions | null>(null);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -57,6 +60,19 @@ const Terms: React.FC = () => {
 
     void fetchStatus();
   }, [isAuthenticated, isInitializing]);
+
+  useEffect(() => {
+    const fetchVersions = async () => {
+      try {
+        const versions = await getLegalDocumentVersions();
+        setLegalVersions(versions);
+      } catch (err) {
+        console.error("Failed to fetch legal document versions:", err);
+      }
+    };
+
+    void fetchVersions();
+  }, []);
 
   const handleAcceptTerms = async () => {
     setError(null);
@@ -227,7 +243,10 @@ const Terms: React.FC = () => {
               fontSize: "var(--font-size-sm)",
             }}
           >
-            <strong>{t("terms.effectiveDate")}:</strong> {t("terms.effectiveDateValue")}
+            <strong>{t("terms.effectiveDate")}:</strong>{" "}
+            {legalStatus?.terms.currentVersion ||
+              legalVersions?.terms ||
+              t("terms.effectiveDateValue")}
           </div>
 
           <p className="section-text">{t("terms.intro")}</p>

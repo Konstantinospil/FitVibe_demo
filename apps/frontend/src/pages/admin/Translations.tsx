@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { Search, Edit, Plus, Save, X } from "lucide-react";
 import {
   Card,
@@ -12,29 +12,21 @@ import {
   listTranslations,
   createTranslation,
   updateTranslation,
+  getTranslationMetadata,
   type TranslationRecord,
   type SupportedLanguage,
   type TranslationNamespace,
 } from "../../services/translations.api";
 import { useToast } from "../../contexts/ToastContext";
 
-const SUPPORTED_LANGUAGES: SupportedLanguage[] = ["en", "de", "fr", "es", "el"];
-const LANGUAGE_NAMES: Record<SupportedLanguage, string> = {
-  en: "English",
-  de: "German",
-  fr: "French",
-  es: "Spanish",
-  el: "Greek",
-};
-
-const NAMESPACES: TranslationNamespace[] = ["common", "auth", "terms", "privacy", "cookie"];
-
 const Translations: React.FC = () => {
   const toast = useToast();
   const [searchQuery, setSearchQuery] = useState("");
   const [keyPath, setKeyPath] = useState("");
-  const [selectedNamespace, setSelectedNamespace] = useState<TranslationNamespace | "all">("all");
-  const [selectedLanguage, setSelectedLanguage] = useState<SupportedLanguage>("en");
+  const [selectedNamespace, setSelectedNamespace] = useState<TranslationNamespace>("all");
+  const [selectedLanguage, setSelectedLanguage] = useState<SupportedLanguage>("");
+  const [languages, setLanguages] = useState<SupportedLanguage[]>([]);
+  const [namespaces, setNamespaces] = useState<TranslationNamespace[]>([]);
   const [activeOnly, setActiveOnly] = useState(false);
   const [loading, setLoading] = useState(false);
   const [translations, setTranslations] = useState<TranslationRecord[]>([]);
@@ -58,17 +50,29 @@ const Translations: React.FC = () => {
     language: SupportedLanguage;
     value: string;
   }>({
-    namespace: "common",
+    namespace: "" as TranslationNamespace,
     key_path: "",
-    language: "en",
+    language: "" as SupportedLanguage,
     value: "",
   });
+
+  const languageDisplayNames = useMemo(() => {
+    if (typeof Intl !== "undefined" && "DisplayNames" in Intl) {
+      return new Intl.DisplayNames(["en"], { type: "language" });
+    }
+    return null;
+  }, []);
+
+  const getLanguageLabel = (code: string) => {
+    const label = languageDisplayNames?.of(code);
+    return label || code;
+  };
 
   const loadTranslations = useCallback(async () => {
     setLoading(true);
     try {
       const params = {
-        language: selectedLanguage,
+        language: selectedLanguage || undefined,
         namespace: selectedNamespace !== "all" ? selectedNamespace : undefined,
         search: searchQuery.trim() || undefined,
         keyPath: keyPath.trim() || undefined,
@@ -92,6 +96,36 @@ const Translations: React.FC = () => {
   useEffect(() => {
     void loadTranslations();
   }, [loadTranslations]);
+
+  useEffect(() => {
+    const fetchMetadata = async () => {
+      try {
+        const response = await getTranslationMetadata();
+        setLanguages(response.data.languages);
+        setNamespaces(response.data.namespaces);
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : "Failed to load metadata";
+        toast.error(errorMessage);
+      }
+    };
+
+    void fetchMetadata();
+  }, [toast]);
+
+  useEffect(() => {
+    if (languages.length > 0 && !selectedLanguage) {
+      setSelectedLanguage(languages[0]);
+    }
+    if (languages.length > 0 && !newTranslation.language) {
+      setNewTranslation((prev) => ({ ...prev, language: languages[0] }));
+    }
+  }, [languages, newTranslation.language, selectedLanguage]);
+
+  useEffect(() => {
+    if (namespaces.length > 0 && !newTranslation.namespace) {
+      setNewTranslation((prev) => ({ ...prev, namespace: namespaces[0] }));
+    }
+  }, [namespaces, newTranslation.namespace]);
 
   const handleEdit = (translation: TranslationRecord) => {
     setEditingKey({
@@ -137,9 +171,9 @@ const Translations: React.FC = () => {
       toast.success("Translation created successfully");
       setShowCreateForm(false);
       setNewTranslation({
-        namespace: "common",
+        namespace: namespaces[0] ?? ("" as TranslationNamespace),
         key_path: "",
-        language: "en",
+        language: languages[0] ?? ("" as SupportedLanguage),
         value: "",
       });
       void loadTranslations();
@@ -242,13 +276,13 @@ const Translations: React.FC = () => {
               <select
                 value={selectedNamespace}
                 onChange={(e) => {
-                  setSelectedNamespace(e.target.value as TranslationNamespace | "all");
+                  setSelectedNamespace(e.target.value);
                   setPage(0);
                 }}
                 className="form-input"
               >
                 <option value="all">All Namespaces</option>
-                {NAMESPACES.map((ns) => (
+                {namespaces.map((ns) => (
                   <option key={ns} value={ns}>
                     {ns}
                   </option>
@@ -270,14 +304,14 @@ const Translations: React.FC = () => {
               <select
                 value={selectedLanguage}
                 onChange={(e) => {
-                  setSelectedLanguage(e.target.value as SupportedLanguage);
+                  setSelectedLanguage(e.target.value);
                   setPage(0);
                 }}
                 className="form-input"
               >
-                {SUPPORTED_LANGUAGES.map((lang) => (
+                {languages.map((lang) => (
                   <option key={lang} value={lang}>
-                    {LANGUAGE_NAMES[lang]}
+                    {getLanguageLabel(lang)}
                   </option>
                 ))}
               </select>
@@ -336,12 +370,12 @@ const Translations: React.FC = () => {
                       onChange={(e) =>
                         setNewTranslation({
                           ...newTranslation,
-                          namespace: e.target.value as TranslationNamespace,
+                          namespace: e.target.value,
                         })
                       }
                       className="form-input"
                     >
-                      {NAMESPACES.map((ns) => (
+                      {namespaces.map((ns) => (
                         <option key={ns} value={ns}>
                           {ns}
                         </option>
@@ -359,14 +393,14 @@ const Translations: React.FC = () => {
                       onChange={(e) =>
                         setNewTranslation({
                           ...newTranslation,
-                          language: e.target.value as SupportedLanguage,
+                          language: e.target.value,
                         })
                       }
                       className="form-input"
                     >
-                      {SUPPORTED_LANGUAGES.map((lang) => (
+                      {languages.map((lang) => (
                         <option key={lang} value={lang}>
-                          {LANGUAGE_NAMES[lang]}
+                          {getLanguageLabel(lang)}
                         </option>
                       ))}
                     </select>
@@ -536,7 +570,7 @@ const Translations: React.FC = () => {
                           }}
                         >
                           <td style={{ padding: "0.75rem" }}>
-                            {LANGUAGE_NAMES[translation.language]}
+                            {getLanguageLabel(translation.language)}
                           </td>
                           <td style={{ padding: "0.75rem" }}>{translation.namespace}</td>
                           <td

@@ -11,6 +11,8 @@ import {
   acceptPrivacyPolicy,
   getLegalDocumentsStatus,
   type LegalDocumentsStatus,
+  getLegalDocumentVersions,
+  type LegalDocumentVersions,
 } from "../services/api";
 import { useAuth } from "../contexts/AuthContext";
 
@@ -30,6 +32,7 @@ const Privacy: React.FC = () => {
   const [showRevokeConfirm, setShowRevokeConfirm] = useState(false);
   const [isRevoking, setIsRevoking] = useState(false);
   const [legalStatus, setLegalStatus] = useState<LegalDocumentsStatus | null>(null);
+  const [legalVersions, setLegalVersions] = useState<LegalDocumentVersions | null>(null);
   const [acceptedPrivacy, setAcceptedPrivacy] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -54,6 +57,19 @@ const Privacy: React.FC = () => {
 
     void fetchStatus();
   }, [isAuthenticated, isInitializing]);
+
+  useEffect(() => {
+    const fetchVersions = async () => {
+      try {
+        const versions = await getLegalDocumentVersions();
+        setLegalVersions(versions);
+      } catch (err) {
+        console.error("Failed to fetch legal document versions:", err);
+      }
+    };
+
+    void fetchVersions();
+  }, []);
 
   const handleAcceptPrivacy = async () => {
     setError(null);
@@ -171,7 +187,10 @@ const Privacy: React.FC = () => {
             </Button>
           </div>
           <div className="mb-1 text-muted text-09">
-            <strong>{t("privacy.effectiveDate")}:</strong> {t("privacy.effectiveDateValue")}
+            <strong>{t("privacy.effectiveDate")}:</strong>{" "}
+            {legalStatus?.privacy.currentVersion ||
+              legalVersions?.privacy ||
+              t("privacy.effectiveDateValue")}
           </div>
 
           <p className="section-text">{t("privacy.intro1")}</p>

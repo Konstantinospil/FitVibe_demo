@@ -17,6 +17,7 @@ import {
   type SystemReadOnlyStatus,
   type HealthStatusResponse,
 } from "../../services/api";
+import { getRecentActivity, type AuditLogEntry } from "../../services/adminApi";
 import { logger } from "../../utils/logger";
 import { useToast } from "../../contexts/ToastContext";
 import { ConfirmDialog } from "../../components/ConfirmDialog";
@@ -27,6 +28,8 @@ const SystemControls: React.FC = () => {
   const [readOnlyStatus, setReadOnlyStatus] = useState<SystemReadOnlyStatus | null>(null);
   const [healthStatus, setHealthStatus] = useState<HealthStatusResponse | null>(null);
   const [loading, setLoading] = useState(true);
+  const [activityLoading, setActivityLoading] = useState(true);
+  const [recentActivity, setRecentActivity] = useState<AuditLogEntry[]>([]);
 
   // Read-only mode controls
   const [showEnableConfirm, setShowEnableConfirm] = useState(false);
@@ -57,14 +60,33 @@ const SystemControls: React.FC = () => {
     }
   }, [t]);
 
+  const loadRecentActivity = useCallback(async () => {
+    setActivityLoading(true);
+    try {
+      const activity = await getRecentActivity(10);
+      setRecentActivity(activity);
+    } catch (error) {
+      logger.apiError(
+        t("admin.systemControls.loadActivityError"),
+        error,
+        "/api/v1/logs/recent-activity",
+        "GET",
+      );
+      setRecentActivity([]);
+    } finally {
+      setActivityLoading(false);
+    }
+  }, [t]);
+
   useEffect(() => {
     void loadSystemStatus();
+    void loadRecentActivity();
     // Poll every 30 seconds
     const interval = setInterval(() => {
       void loadSystemStatus();
     }, 30000);
     return () => clearInterval(interval);
-  }, [loadSystemStatus]);
+  }, [loadRecentActivity, loadSystemStatus]);
 
   const handleEnableReadOnly = async () => {
     setActionLoading(true);
@@ -136,6 +158,43 @@ const SystemControls: React.FC = () => {
       return `${hours}h ${mins}m`;
     }
     return `${mins}m`;
+  };
+
+  const formatActivityTime = (timestamp: string): string => {
+    const createdAt = new Date(timestamp).getTime();
+    if (Number.isNaN(createdAt)) {
+      return "—";
+    }
+    const diffMs = Date.now() - createdAt;
+    const diffMinutes = Math.floor(diffMs / 60000);
+    if (diffMinutes < 1) {
+      return "Just now";
+    }
+    const diffHours = Math.floor(diffMinutes / 60);
+    const diffDays = Math.floor(diffHours / 24);
+    if (diffDays >= 7) {
+      return new Date(createdAt).toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+      });
+    }
+    if (diffDays >= 1) {
+      return `${diffDays}d ago`;
+    }
+    if (diffHours >= 1) {
+      return `${diffHours}h ago`;
+    }
+    return `${diffMinutes}m ago`;
+  };
+
+  const formatActionName = (action: string): string => {
+    const rawAction = action.split(".").pop() ?? action;
+    return rawAction
+      .replace(/[_-]+/g, " ")
+      .split(" ")
+      .filter(Boolean)
+      .map((segment) => segment[0]?.toUpperCase() + segment.slice(1))
+      .join(" ");
   };
 
   if (loading) {
@@ -470,7 +529,7 @@ const SystemControls: React.FC = () => {
         </CardContent>
       </Card>
 
-      {/* Recent Activity Placeholder */}
+      {/* Recent Activity */}
       <Card>
         <CardHeader>
           <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
@@ -480,11 +539,46 @@ const SystemControls: React.FC = () => {
           <CardDescription>Last 10 administrative actions</CardDescription>
         </CardHeader>
         <CardContent>
-          <div
-            style={{ padding: "2rem", textAlign: "center", color: "var(--color-text-secondary)" }}
-          >
-            Audit log integration pending
-          </div>
+          {activityLoading ? (
+            <div
+              style={{ padding: "2rem", textAlign: "center", color: "var(--color-text-secondary)" }}
+            >
+              Loading activity...
+            </div>
+          ) : recentActivity.length === 0 ? (
+            <div
+              style={{ padding: "2rem", textAlign: "center", color: "var(--color-text-secondary)" }}
+            >
+              No recent activity.
+            </div>
+          ) : (
+            <div style={{ display: "grid", gap: "0.75rem" }}>
+              {recentActivity.map((entry) => (
+                <div
+                  key={entry.id}
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    gap: "1rem",
+                    padding: "0.75rem 1rem",
+                    borderRadius: "12px",
+                    border: "1px solid var(--color-border)",
+                    background: "var(--color-surface)",
+                  }}
+                >
+                  <div style={{ display: "grid", gap: "0.25rem" }}>
+                    <span style={{ fontWeight: 600 }}>{formatActionName(entry.action)}</span>
+                    <span style={{ color: "var(--color-text-secondary)", fontSize: "0.85rem" }}>
+                      {entry.actorUsername || "System"}
+                    </span>
+                  </div>
+                  <span style={{ color: "var(--color-text-secondary)", fontSize: "0.85rem" }}>
+                    {formatActivityTime(entry.createdAt)}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
         </CardContent>
       </Card>
 

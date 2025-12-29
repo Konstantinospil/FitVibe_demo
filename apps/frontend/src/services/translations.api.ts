@@ -1,7 +1,7 @@
 import { apiClient } from "./api.js";
 
-export type SupportedLanguage = "en" | "de" | "fr" | "es" | "el";
-export type TranslationNamespace = "common" | "auth" | "terms" | "privacy" | "cookie";
+export type SupportedLanguage = string;
+export type TranslationNamespace = string;
 
 export interface TranslationRecord {
   id: string;
@@ -56,6 +56,13 @@ export interface BulkUpdateTranslationDTO {
   translations: Record<SupportedLanguage, string>;
 }
 
+export interface TranslationMetadataResponse {
+  data: {
+    languages: SupportedLanguage[];
+    namespaces: TranslationNamespace[];
+  };
+}
+
 /**
  * Get all translations for a language (public endpoint)
  */
@@ -77,6 +84,14 @@ export async function listTranslations(
   params?: ListTranslationsParams,
 ): Promise<ListTranslationsResponse> {
   const res = await apiClient.get<ListTranslationsResponse>("/api/v1/translations", { params });
+  return res.data;
+}
+
+/**
+ * Get available namespaces and languages (admin endpoint)
+ */
+export async function getTranslationMetadata(): Promise<TranslationMetadataResponse> {
+  const res = await apiClient.get<TranslationMetadataResponse>("/api/v1/translations/metadata");
   return res.data;
 }
 

@@ -107,6 +107,7 @@ const LoginFormContent: React.FC = () => {
               user?: {
                 id: string;
                 username: string;
+                displayName?: string | null;
                 email: string;
                 role?: string;
               };
@@ -130,6 +131,7 @@ const LoginFormContent: React.FC = () => {
             signIn({
               id: userData.id,
               username: userData.username,
+              displayName: userData.displayName,
               email: userData.email,
               role: userData.role,
             });

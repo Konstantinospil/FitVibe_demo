@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation, useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { Shield } from "lucide-react";
 import AuthPageLayout from "../components/AuthPageLayout";
@@ -20,10 +20,19 @@ const TwoFactorVerificationLogin: React.FC = () => {
   const formRef = useRef<HTMLFormElement>(null);
   useRequiredFieldValidation(formRef, t);
   const location = useLocation();
+  const [searchParams] = useSearchParams();
   const state = location.state as LocationState | null;
 
-  const pendingSessionId = state?.pendingSessionId;
-  const from = state?.from || "/";
+  const pendingSessionId = state?.pendingSessionId ?? searchParams.get("pendingSessionId") ?? "";
+  const returnUrl = searchParams.get("returnUrl");
+  const from =
+    state?.from ||
+    (typeof returnUrl === "string" &&
+    returnUrl.startsWith("/") &&
+    !returnUrl.startsWith("//") &&
+    !returnUrl.includes("://")
+      ? returnUrl
+      : "/");
 
   const [code, setCode] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -70,6 +79,7 @@ const TwoFactorVerificationLogin: React.FC = () => {
               user?: {
                 id: string;
                 username: string;
+                displayName?: string | null;
                 email: string;
                 role?: string;
               };
@@ -91,6 +101,7 @@ const TwoFactorVerificationLogin: React.FC = () => {
             signIn({
               id: userData.id,
               username: userData.username,
+              displayName: userData.displayName,
               email: userData.email,
               role: userData.role,
             });

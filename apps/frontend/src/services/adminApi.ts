@@ -85,7 +85,7 @@ export async function performUserAction(
 
 // Audit Logs
 export async function listAuditLogs(params?: {
-  action?: string;
+  action?: string | string[];
   entityType?: string;
   actorUserId?: string;
   outcome?: string;

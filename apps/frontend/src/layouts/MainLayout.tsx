@@ -192,10 +192,10 @@ const MainLayout: React.FC = () => {
           background: "var(--color-bg)",
         }}
       >
-        <VibeSidebar />
         <div style={{ flex: 1, minWidth: 0 }}>
           <Outlet />
         </div>
+        <VibeSidebar />
       </main>
       <Footer />
     </div>

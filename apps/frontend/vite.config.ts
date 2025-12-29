@@ -93,10 +93,10 @@ export default defineConfig(() => {
           isolate: true,
         },
       },
-      // Enable test-level parallelization within files (use with caution if tests share state)
       sequence: {
         shuffle: false,
-        concurrent: true, // Allow tests within the same file to run concurrently if they don't share state
+        // Disable test-level concurrency to avoid shared state collisions across tests.
+        concurrent: false,
       },
       testTimeout: 10000, // 10 second timeout per test
       hookTimeout: 10000, // 10 second timeout for hooks
