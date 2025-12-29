@@ -1,5 +1,5 @@
 import React, { Suspense, lazy } from "react";
-import { BrowserRouter } from "react-router-dom";
+import { BrowserRouter, useLocation } from "react-router-dom";
 import * as AuthContext from "../contexts/AuthContext";
 import { ErrorBoundary } from "../components/ErrorBoundary.js";
 import PublicRoutes from "./PublicRoutes";
@@ -17,6 +17,20 @@ const loadingFallback = (
 
 type AuthHook = () => { isAuthenticated: boolean; isInitializing?: boolean };
 
+const PUBLIC_PATHS = new Set([
+  "/login",
+  "/login/verify-2fa",
+  "/register",
+  "/verify",
+  "/forgot-password",
+  "/reset-password",
+  "/terms",
+  "/privacy",
+  "/cookie",
+  "/impressum",
+  "/contact",
+]);
+
 const useAuthOrFallback: AuthHook =
   typeof (AuthContext as { useAuth?: AuthHook }).useAuth === "function"
     ? (AuthContext as { useAuth: AuthHook }).useAuth
@@ -24,9 +38,14 @@ const useAuthOrFallback: AuthHook =
 
 const RouterContent: React.FC = () => {
   const { isAuthenticated, isInitializing } = useAuthOrFallback();
+  const location = useLocation();
+  const isPublicPath = PUBLIC_PATHS.has(location.pathname);
 
   // Wait for initialization to complete before deciding which routes to render
   if (isInitializing) {
+    if (isPublicPath) {
+      return <PublicRoutes />;
+    }
     return (
       <div
         className="flex h-screen w-full items-center justify-center text-primary-500"
