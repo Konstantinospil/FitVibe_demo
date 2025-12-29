@@ -117,6 +117,7 @@
   /* Accent & Highlights */
   --color-accent: #34d399;        /* Emerald accent for success cues */
   --color-accent-strong: #15523A; /* Aether for secondary emphasis */
+  --color-accent-muted: rgba(52, 211, 153, 0.2);
   --color-highlight: #6366F1;     /* Indigo for focus rings */
 
   /* Form Links - Dark Mode (WCAG 2.2 AA compliant) */
@@ -201,6 +202,8 @@
   /* === BORDER RADIUS === */
 
   --radius-sm: 8px;
+  --radius-2xs: 6px;
+  --radius-xs: 4px;
   --radius-md: 12px;
   --radius-lg: 16px;
   --radius-xl: 24px;
@@ -256,6 +259,7 @@
   /* Accent & Highlights */
   --color-accent: #34d399;
   --color-accent-strong: #15523A;
+  --color-accent-muted: rgba(52, 211, 153, 0.2);
   --color-highlight: #6366F1;
 
   /* Form Links - Light Mode (WCAG 2.2 AA compliant) */

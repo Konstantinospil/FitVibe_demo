@@ -1,23 +1,8 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { translationsApi, type Translation } from "../services/api";
-import { useThemeStore } from "../store/theme.store";
-import { useThemeColors } from "../hooks/useThemeColors";
-
-const SUPPORTED_LANGUAGES = ["en", "de", "fr", "es", "el"] as const;
-const LANGUAGE_NAMES: Record<string, string> = {
-  en: "English",
-  de: "German",
-  fr: "French",
-  es: "Spanish",
-  el: "Greek",
-};
-
-const NAMESPACES = ["common", "auth", "terms", "privacy", "cookie"] as const;
 
 const TranslationsPage: React.FC = () => {
-  const theme = useThemeStore((state) => state.theme);
-  const colors = useThemeColors();
   const [search, setSearch] = useState("");
   const [keyPath, setKeyPath] = useState("");
   const [language, setLanguage] = useState<string>("");
@@ -35,9 +20,9 @@ const TranslationsPage: React.FC = () => {
     language: string;
     value: string;
   }>({
-    namespace: "common",
+    namespace: "",
     key_path: "",
-    language: "en",
+    language: "",
     value: "",
   });
 
@@ -57,6 +42,62 @@ const TranslationsPage: React.FC = () => {
         offset: page * limit,
       }),
   });
+
+  const { data: translationMetadata } = useQuery({
+    queryKey: ["translations", "metadata"],
+    queryFn: () => translationsApi.metadata(),
+  });
+
+  const { data: namespaceUpdates } = useQuery({
+    queryKey: ["translations", "namespace-updates"],
+    queryFn: () => translationsApi.namespaceUpdates(),
+  });
+
+  const languages = useMemo(() => translationMetadata?.data.languages ?? [], [translationMetadata]);
+  const namespaces = useMemo(
+    () => translationMetadata?.data.namespaces ?? [],
+    [translationMetadata],
+  );
+  const primaryLanguage = languages[0];
+
+  useEffect(() => {
+    if (languages.length > 0 && !newTranslation.language) {
+      setNewTranslation((prev) => ({ ...prev, language: languages[0] }));
+    }
+  }, [languages, newTranslation.language]);
+
+  useEffect(() => {
+    if (namespaces.length > 0 && !newTranslation.namespace) {
+      setNewTranslation((prev) => ({ ...prev, namespace: namespaces[0] }));
+    }
+  }, [namespaces, newTranslation.namespace]);
+
+  const latestUpdateByNamespace = useMemo(() => {
+    const updates: Record<string, string | null> = {};
+    namespaceUpdates?.data.forEach((item) => {
+      updates[item.namespace] = item.updated_at;
+    });
+    return updates;
+  }, [namespaceUpdates]);
+
+  const namespacesForUpdates = useMemo(() => {
+    if (namespaces.length > 0) {
+      return namespaces;
+    }
+    return Object.keys(latestUpdateByNamespace);
+  }, [latestUpdateByNamespace, namespaces]);
+
+  const languageDisplayNames = useMemo(() => {
+    if (typeof Intl !== "undefined" && "DisplayNames" in Intl) {
+      return new Intl.DisplayNames(["en"], { type: "language" });
+    }
+    return null;
+  }, []);
+
+  const getLanguageLabel = (code: string) => {
+    const label = languageDisplayNames?.of(code);
+    return label || code;
+  };
 
   // Fetch all language versions when editing a key (including deleted ones)
   const { data: editingTranslations } = useQuery({
@@ -177,7 +218,52 @@ const TranslationsPage: React.FC = () => {
 
   return (
     <div>
-      <h1 style={{ color: colors.text, marginBottom: "2rem", fontSize: "2rem" }}>Translations</h1>
+      <h1 style={{ color: "var(--color-text-primary)", marginBottom: "2rem", fontSize: "2rem" }}>
+        Translations
+      </h1>
+
+      <div
+        style={{
+          marginBottom: "1.5rem",
+          padding: "0.75rem 1rem",
+          border: "1px solid var(--color-border)",
+          borderRadius: "var(--radius-2xs)",
+          background: "var(--color-surface)",
+        }}
+      >
+        <div
+          style={{
+            color: "var(--color-text-primary)",
+            fontWeight: 600,
+            marginBottom: "0.5rem",
+          }}
+        >
+          Latest namespace updates
+        </div>
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            gap: "0.5rem",
+            color: "var(--color-text-primary)",
+          }}
+        >
+          {namespacesForUpdates.map((ns) => (
+            <span key={ns} style={{ fontSize: "0.9rem" }}>
+              {ns}:{" "}
+              {latestUpdateByNamespace[ns]
+                ? new Date(latestUpdateByNamespace[ns]).toLocaleString("en-US", {
+                    month: "short",
+                    day: "numeric",
+                    year: "numeric",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })
+                : "-"}
+            </span>
+          ))}
+        </div>
+      </div>
 
       <div style={{ marginBottom: "2rem", display: "flex", gap: "1rem", flexWrap: "wrap" }}>
         <input
@@ -190,10 +276,10 @@ const TranslationsPage: React.FC = () => {
           }}
           style={{
             padding: "0.75rem",
-            background: theme === "light" ? "#F5F5F5" : "#1A1A1A",
-            border: `1px solid ${colors.border}`,
-            borderRadius: "4px",
-            color: colors.text,
+            background: "var(--color-input-bg)",
+            border: "1px solid var(--color-input-border)",
+            borderRadius: "var(--radius-xs)",
+            color: "var(--color-text-primary)",
             flex: "1",
             minWidth: "200px",
           }}
@@ -208,10 +294,10 @@ const TranslationsPage: React.FC = () => {
           }}
           style={{
             padding: "0.75rem",
-            background: theme === "light" ? "#F5F5F5" : "#1A1A1A",
-            border: `1px solid ${colors.border}`,
-            borderRadius: "4px",
-            color: colors.text,
+            background: "var(--color-input-bg)",
+            border: "1px solid var(--color-input-border)",
+            borderRadius: "var(--radius-xs)",
+            color: "var(--color-text-primary)",
             minWidth: "200px",
           }}
         />
@@ -223,18 +309,18 @@ const TranslationsPage: React.FC = () => {
           }}
           style={{
             padding: "0.75rem",
-            background: theme === "light" ? "#F5F5F5" : "#1A1A1A",
-            border: `1px solid ${colors.border}`,
-            borderRadius: "4px",
-            color: colors.text,
+            background: "var(--color-input-bg)",
+            border: "1px solid var(--color-input-border)",
+            borderRadius: "var(--radius-xs)",
+            color: "var(--color-text-primary)",
             width: "150px",
             cursor: "pointer",
           }}
         >
           <option value="">All Languages</option>
-          {SUPPORTED_LANGUAGES.map((lang) => (
+          {languages.map((lang) => (
             <option key={lang} value={lang}>
-              {LANGUAGE_NAMES[lang]}
+              {getLanguageLabel(lang)}
             </option>
           ))}
         </select>
@@ -246,16 +332,16 @@ const TranslationsPage: React.FC = () => {
           }}
           style={{
             padding: "0.75rem",
-            background: theme === "light" ? "#F5F5F5" : "#1A1A1A",
-            border: `1px solid ${colors.border}`,
-            borderRadius: "4px",
-            color: colors.text,
+            background: "var(--color-input-bg)",
+            border: "1px solid var(--color-input-border)",
+            borderRadius: "var(--radius-xs)",
+            color: "var(--color-text-primary)",
             width: "150px",
             cursor: "pointer",
           }}
         >
           <option value="">All Namespaces</option>
-          {NAMESPACES.map((ns) => (
+          {namespaces.map((ns) => (
             <option key={ns} value={ns}>
               {ns}
             </option>
@@ -266,7 +352,7 @@ const TranslationsPage: React.FC = () => {
             display: "flex",
             alignItems: "center",
             gap: "0.5rem",
-            color: colors.text,
+            color: "var(--color-text-primary)",
             cursor: "pointer",
           }}
         >
@@ -285,10 +371,10 @@ const TranslationsPage: React.FC = () => {
           onClick={() => setShowCreate(true)}
           style={{
             padding: "0.75rem 1.5rem",
-            background: "#FB951D",
-            color: colors.text,
+            background: "var(--color-primary)",
+            color: "var(--color-primary-on)",
             border: "none",
-            borderRadius: "4px",
+            borderRadius: "var(--radius-xs)",
             cursor: "pointer",
           }}
         >
@@ -299,14 +385,16 @@ const TranslationsPage: React.FC = () => {
       {showCreate && (
         <div
           style={{
-            background: colors.surface,
+            background: "var(--color-surface)",
             padding: "1.5rem",
-            borderRadius: "8px",
+            borderRadius: "var(--radius-sm)",
             marginBottom: "2rem",
-            border: `1px solid ${colors.border}`,
+            border: "1px solid var(--color-border)",
           }}
         >
-          <h3 style={{ color: colors.text, marginBottom: "1rem" }}>Create Translation</h3>
+          <h3 style={{ color: "var(--color-text-primary)", marginBottom: "1rem" }}>
+            Create Translation
+          </h3>
           <div
             style={{
               display: "grid",
@@ -320,7 +408,7 @@ const TranslationsPage: React.FC = () => {
                   display: "block",
                   marginBottom: "0.5rem",
                   fontSize: "0.875rem",
-                  color: colors.text,
+                  color: "var(--color-text-primary)",
                 }}
               >
                 Namespace
@@ -333,14 +421,14 @@ const TranslationsPage: React.FC = () => {
                 style={{
                   width: "100%",
                   padding: "0.75rem",
-                  background: "#0D1A15",
-                  border: "1px solid #2E5B49",
-                  borderRadius: "4px",
-                  color: colors.text,
+                  background: "var(--color-input-bg)",
+                  border: "1px solid var(--color-input-border)",
+                  borderRadius: "var(--radius-xs)",
+                  color: "var(--color-text-primary)",
                   cursor: "pointer",
                 }}
               >
-                {NAMESPACES.map((ns) => (
+                {namespaces.map((ns) => (
                   <option key={ns} value={ns}>
                     {ns}
                   </option>
@@ -353,7 +441,7 @@ const TranslationsPage: React.FC = () => {
                   display: "block",
                   marginBottom: "0.5rem",
                   fontSize: "0.875rem",
-                  color: colors.text,
+                  color: "var(--color-text-primary)",
                 }}
               >
                 Language
@@ -364,16 +452,16 @@ const TranslationsPage: React.FC = () => {
                 style={{
                   width: "100%",
                   padding: "0.75rem",
-                  background: "#0D1A15",
-                  border: "1px solid #2E5B49",
-                  borderRadius: "4px",
-                  color: colors.text,
+                  background: "var(--color-input-bg)",
+                  border: "1px solid var(--color-input-border)",
+                  borderRadius: "var(--radius-xs)",
+                  color: "var(--color-text-primary)",
                   cursor: "pointer",
                 }}
               >
-                {SUPPORTED_LANGUAGES.map((lang) => (
+                {languages.map((lang) => (
                   <option key={lang} value={lang}>
-                    {LANGUAGE_NAMES[lang]}
+                    {getLanguageLabel(lang)}
                   </option>
                 ))}
               </select>
@@ -385,7 +473,7 @@ const TranslationsPage: React.FC = () => {
                 display: "block",
                 marginBottom: "0.5rem",
                 fontSize: "0.875rem",
-                color: colors.text,
+                color: "var(--color-text-primary)",
               }}
             >
               Key Path
@@ -398,10 +486,10 @@ const TranslationsPage: React.FC = () => {
               style={{
                 width: "100%",
                 padding: "0.75rem",
-                background: "#0D1A15",
-                border: "1px solid #2E5B49",
-                borderRadius: "4px",
-                color: colors.text,
+                background: "var(--color-input-bg)",
+                border: "1px solid var(--color-input-border)",
+                borderRadius: "var(--radius-xs)",
+                color: "var(--color-text-primary)",
               }}
             />
           </div>
@@ -411,7 +499,7 @@ const TranslationsPage: React.FC = () => {
                 display: "block",
                 marginBottom: "0.5rem",
                 fontSize: "0.875rem",
-                color: colors.text,
+                color: "var(--color-text-primary)",
               }}
             >
               Value
@@ -424,10 +512,10 @@ const TranslationsPage: React.FC = () => {
               style={{
                 width: "100%",
                 padding: "0.75rem",
-                background: "#0D1A15",
-                border: "1px solid #2E5B49",
-                borderRadius: "4px",
-                color: colors.text,
+                background: "var(--color-input-bg)",
+                border: "1px solid var(--color-input-border)",
+                borderRadius: "var(--radius-xs)",
+                color: "var(--color-text-primary)",
               }}
             />
           </div>
@@ -437,10 +525,10 @@ const TranslationsPage: React.FC = () => {
               disabled={createMutation.isPending}
               style={{
                 padding: "0.75rem 1.5rem",
-                background: "#FB951D",
-                color: colors.text,
+                background: "var(--color-primary)",
+                color: "var(--color-primary-on)",
                 border: "none",
-                borderRadius: "4px",
+                borderRadius: "var(--radius-xs)",
                 cursor: "pointer",
               }}
             >
@@ -449,14 +537,19 @@ const TranslationsPage: React.FC = () => {
             <button
               onClick={() => {
                 setShowCreate(false);
-                setNewTranslation({ namespace: "common", key_path: "", language: "en", value: "" });
+                setNewTranslation({
+                  namespace: namespaces[0] ?? "",
+                  key_path: "",
+                  language: languages[0] ?? "",
+                  value: "",
+                });
               }}
               style={{
                 padding: "0.75rem 1.5rem",
                 background: "transparent",
-                color: colors.text,
-                border: "1px solid #2E5B49",
-                borderRadius: "4px",
+                color: "var(--color-text-primary)",
+                border: "1px solid var(--color-border)",
+                borderRadius: "var(--radius-xs)",
                 cursor: "pointer",
               }}
             >
@@ -470,18 +563,18 @@ const TranslationsPage: React.FC = () => {
       {editingKey && editingTranslations && (
         <div
           style={{
-            background: "#162C22",
+            background: "var(--color-surface)",
             padding: "1.5rem",
-            borderRadius: "8px",
+            borderRadius: "var(--radius-sm)",
             marginBottom: "2rem",
-            border: `2px solid ${colors.accent}`,
+            border: "2px solid var(--color-accent)",
           }}
         >
-          <h3 style={{ color: colors.text, marginBottom: "1rem" }}>
+          <h3 style={{ color: "var(--color-text-primary)", marginBottom: "1rem" }}>
             Editing: {editingKey.namespace}.{editingKey.key_path}
           </h3>
           <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-            {SUPPORTED_LANGUAGES.map((lang) => {
+            {languages.map((lang) => {
               //const existing = editingTranslations.data.find(
               //  (t) =>
               //    t.namespace === editingKey.namespace &&
@@ -495,24 +588,24 @@ const TranslationsPage: React.FC = () => {
                       display: "block",
                       marginBottom: "0.5rem",
                       fontSize: "0.875rem",
-                      color: colors.text,
+                      color: "var(--color-text-primary)",
                       fontWeight: 500,
                     }}
                   >
-                    {LANGUAGE_NAMES[lang]}
+                    {getLanguageLabel(lang)}
                   </label>
                   <textarea
                     value={editValues[lang] || ""}
                     onChange={(e) => setEditValues({ ...editValues, [lang]: e.target.value })}
-                    placeholder={`Translation for ${LANGUAGE_NAMES[lang]}...`}
+                    placeholder={`Translation for ${getLanguageLabel(lang)}...`}
                     rows={2}
                     style={{
                       width: "100%",
                       padding: "0.75rem",
-                      background: "#0D1A15",
-                      border: "1px solid #2E5B49",
-                      borderRadius: "4px",
-                      color: colors.text,
+                      background: "var(--color-input-bg)",
+                      border: "1px solid var(--color-input-border)",
+                      borderRadius: "var(--radius-xs)",
+                      color: "var(--color-text-primary)",
                     }}
                   />
                 </div>
@@ -524,10 +617,10 @@ const TranslationsPage: React.FC = () => {
                 disabled={bulkUpdateMutation.isPending}
                 style={{
                   padding: "0.75rem 1.5rem",
-                  background: "#FB951D",
-                  color: colors.text,
+                  background: "var(--color-primary)",
+                  color: "var(--color-primary-on)",
                   border: "none",
-                  borderRadius: "4px",
+                  borderRadius: "var(--radius-xs)",
                   cursor: bulkUpdateMutation.isPending ? "not-allowed" : "pointer",
                 }}
               >
@@ -538,9 +631,9 @@ const TranslationsPage: React.FC = () => {
                 style={{
                   padding: "0.75rem 1.5rem",
                   background: "transparent",
-                  color: colors.text,
-                  border: "1px solid #2E5B49",
-                  borderRadius: "4px",
+                  color: "var(--color-text-primary)",
+                  border: "1px solid var(--color-border)",
+                  borderRadius: "var(--radius-xs)",
                   cursor: "pointer",
                 }}
               >
@@ -552,27 +645,27 @@ const TranslationsPage: React.FC = () => {
       )}
 
       {isLoading ? (
-        <div style={{ color: colors.text }}>Loading...</div>
+        <div style={{ color: "var(--color-text-primary)" }}>Loading...</div>
       ) : (
         <>
           <div
             style={{
-              background: "#162C22",
-              borderRadius: "8px",
+              background: "var(--color-surface)",
+              borderRadius: "var(--radius-sm)",
               overflow: "hidden",
-              border: "1px solid #2E5B49",
+              border: "1px solid var(--color-border)",
               overflowX: "auto",
             }}
           >
             <table style={{ width: "100%", borderCollapse: "collapse", minWidth: "1400px" }}>
               <thead>
-                <tr style={{ background: theme === "light" ? "#F5F5F5" : "#1A1A1A" }}>
+                <tr style={{ background: "var(--color-surface-muted)" }}>
                   <th
                     style={{
                       padding: "0.75rem",
                       textAlign: "left",
-                      color: colors.text,
-                      borderBottom: `1px solid ${colors.border}`,
+                      color: "var(--color-text-primary)",
+                      borderBottom: "1px solid var(--color-border)",
                       width: "100px",
                     }}
                   >
@@ -582,8 +675,8 @@ const TranslationsPage: React.FC = () => {
                     style={{
                       padding: "0.75rem",
                       textAlign: "left",
-                      color: colors.text,
-                      borderBottom: `1px solid ${colors.border}`,
+                      color: "var(--color-text-primary)",
+                      borderBottom: "1px solid var(--color-border)",
                       width: "120px",
                     }}
                   >
@@ -593,8 +686,8 @@ const TranslationsPage: React.FC = () => {
                     style={{
                       padding: "0.75rem",
                       textAlign: "left",
-                      color: colors.text,
-                      borderBottom: `1px solid ${colors.border}`,
+                      color: "var(--color-text-primary)",
+                      borderBottom: "1px solid var(--color-border)",
                       minWidth: "150px",
                     }}
                   >
@@ -604,8 +697,8 @@ const TranslationsPage: React.FC = () => {
                     style={{
                       padding: "0.75rem",
                       textAlign: "left",
-                      color: colors.text,
-                      borderBottom: `1px solid ${colors.border}`,
+                      color: "var(--color-text-primary)",
+                      borderBottom: "1px solid var(--color-border)",
                       minWidth: "200px",
                     }}
                   >
@@ -615,8 +708,8 @@ const TranslationsPage: React.FC = () => {
                     style={{
                       padding: "0.75rem",
                       textAlign: "left",
-                      color: colors.text,
-                      borderBottom: `1px solid ${colors.border}`,
+                      color: "var(--color-text-primary)",
+                      borderBottom: "1px solid var(--color-border)",
                       whiteSpace: "nowrap",
                       width: "160px",
                     }}
@@ -627,8 +720,8 @@ const TranslationsPage: React.FC = () => {
                     style={{
                       padding: "0.75rem",
                       textAlign: "left",
-                      color: colors.text,
-                      borderBottom: `1px solid ${colors.border}`,
+                      color: "var(--color-text-primary)",
+                      borderBottom: "1px solid var(--color-border)",
                       whiteSpace: "nowrap",
                       width: "160px",
                     }}
@@ -639,8 +732,8 @@ const TranslationsPage: React.FC = () => {
                     style={{
                       padding: "0.75rem",
                       textAlign: "left",
-                      color: colors.text,
-                      borderBottom: `1px solid ${colors.border}`,
+                      color: "var(--color-text-primary)",
+                      borderBottom: "1px solid var(--color-border)",
                       whiteSpace: "nowrap",
                       width: "160px",
                     }}
@@ -651,11 +744,11 @@ const TranslationsPage: React.FC = () => {
                     style={{
                       padding: "0.75rem",
                       textAlign: "left",
-                      color: colors.text,
-                      borderBottom: `1px solid ${colors.border}`,
+                      color: "var(--color-text-primary)",
+                      borderBottom: "1px solid var(--color-border)",
                       position: "sticky",
                       right: 0,
-                      background: theme === "light" ? "#F5F5F5" : "#1A1A1A",
+                      background: "var(--color-surface-muted)",
                       zIndex: 10,
                       minWidth: "150px",
                       width: "150px",
@@ -675,30 +768,32 @@ const TranslationsPage: React.FC = () => {
                     <tr
                       key={trans.id}
                       style={{
-                        borderBottom: `1px solid ${colors.border}`,
+                        borderBottom: "1px solid var(--color-border)",
                         background: isEditingThisKey
-                          ? `${colors.accent}20`
+                          ? "var(--color-accent-muted)"
                           : isDeleted
-                            ? `${colors.error}20`
-                            : colors.surface,
+                            ? "var(--color-danger-bg)"
+                            : "var(--color-surface)",
                         opacity: isDeleted ? 0.7 : 1,
                       }}
                     >
-                      <td style={{ padding: "0.75rem", color: colors.text }}>
-                        {LANGUAGE_NAMES[trans.language] || trans.language}
+                      <td style={{ padding: "0.75rem", color: "var(--color-text-primary)" }}>
+                        {getLanguageLabel(trans.language)}
                       </td>
-                      <td style={{ padding: "0.75rem", color: colors.text }}>{trans.namespace}</td>
+                      <td style={{ padding: "0.75rem", color: "var(--color-text-primary)" }}>
+                        {trans.namespace}
+                      </td>
                       <td
                         style={{
                           padding: "0.75rem",
-                          color: colors.text,
+                          color: "var(--color-text-primary)",
                           fontFamily: "monospace",
                           fontSize: "0.875rem",
                         }}
                       >
                         {trans.key_path}
                       </td>
-                      <td style={{ padding: "0.75rem", color: colors.text }}>
+                      <td style={{ padding: "0.75rem", color: "var(--color-text-primary)" }}>
                         {isEditingThisKey ? (
                           <input
                             type="text"
@@ -709,10 +804,10 @@ const TranslationsPage: React.FC = () => {
                             style={{
                               width: "100%",
                               padding: "0.5rem",
-                              background: "#0D1A15",
-                              border: "1px solid #2E5B49",
-                              borderRadius: "4px",
-                              color: colors.text,
+                              background: "var(--color-input-bg)",
+                              border: "1px solid var(--color-input-border)",
+                              borderRadius: "var(--radius-xs)",
+                              color: "var(--color-text-primary)",
                             }}
                           />
                         ) : (
@@ -730,7 +825,7 @@ const TranslationsPage: React.FC = () => {
                       <td
                         style={{
                           padding: "0.75rem",
-                          color: colors.text,
+                          color: "var(--color-text-primary)",
                           fontSize: "0.8rem",
                           whiteSpace: "nowrap",
                         }}
@@ -748,7 +843,7 @@ const TranslationsPage: React.FC = () => {
                       <td
                         style={{
                           padding: "0.75rem",
-                          color: colors.text,
+                          color: "var(--color-text-primary)",
                           fontSize: "0.8rem",
                           whiteSpace: "nowrap",
                         }}
@@ -766,7 +861,9 @@ const TranslationsPage: React.FC = () => {
                       <td
                         style={{
                           padding: "0.75rem",
-                          color: isDeleted ? colors.error : colors.text,
+                          color: isDeleted
+                            ? "var(--color-danger-text)"
+                            : "var(--color-text-primary)",
                           fontSize: "0.8rem",
                           whiteSpace: "nowrap",
                         }}
@@ -787,27 +884,27 @@ const TranslationsPage: React.FC = () => {
                           position: "sticky",
                           right: 0,
                           background: isEditingThisKey
-                            ? `${colors.accent}20`
+                            ? "var(--color-accent-muted)"
                             : isDeleted
-                              ? `${colors.error}20`
-                              : colors.surface,
+                              ? "var(--color-danger-bg)"
+                              : "var(--color-surface)",
                           zIndex: 5,
                           minWidth: "150px",
                           width: "150px",
-                          boxShadow: "-2px 0 4px rgba(0, 0, 0, 0.1)",
+                          boxShadow: "var(--shadow-e1)",
                         }}
                       >
-                        {isEditingThisKey && trans.language === SUPPORTED_LANGUAGES[0] ? (
+                        {isEditingThisKey && trans.language === primaryLanguage ? (
                           <div style={{ display: "flex", gap: "0.5rem" }}>
                             <button
                               onClick={handleSave}
                               disabled={bulkUpdateMutation.isPending}
                               style={{
                                 padding: "0.5rem 1rem",
-                                background: "#FB951D",
-                                color: colors.text,
+                                background: "var(--color-primary)",
+                                color: "var(--color-primary-on)",
                                 border: "none",
-                                borderRadius: "4px",
+                                borderRadius: "var(--radius-xs)",
                                 cursor: "pointer",
                                 fontSize: "0.875rem",
                               }}
@@ -819,9 +916,9 @@ const TranslationsPage: React.FC = () => {
                               style={{
                                 padding: "0.5rem 1rem",
                                 background: "transparent",
-                                color: colors.text,
-                                border: "1px solid #2E5B49",
-                                borderRadius: "4px",
+                                color: "var(--color-text-primary)",
+                                border: "1px solid var(--color-border)",
+                                borderRadius: "var(--radius-xs)",
                                 cursor: "pointer",
                                 fontSize: "0.875rem",
                               }}
@@ -830,7 +927,7 @@ const TranslationsPage: React.FC = () => {
                             </button>
                           </div>
                         ) : isEditingThisKey ? (
-                          <div style={{ color: colors.accent, fontSize: "0.875rem" }}>
+                          <div style={{ color: "var(--color-accent)", fontSize: "0.875rem" }}>
                             Editing...
                           </div>
                         ) : (
@@ -840,9 +937,9 @@ const TranslationsPage: React.FC = () => {
                               style={{
                                 padding: "0.5rem 1rem",
                                 background: "transparent",
-                                color: colors.text,
-                                border: "1px solid #2E5B49",
-                                borderRadius: "4px",
+                                color: "var(--color-text-primary)",
+                                border: "1px solid var(--color-border)",
+                                borderRadius: "var(--radius-xs)",
                                 cursor: "pointer",
                                 fontSize: "0.875rem",
                               }}
@@ -866,16 +963,16 @@ const TranslationsPage: React.FC = () => {
                 disabled={page === 0}
                 style={{
                   padding: "0.75rem 1.5rem",
-                  background: page === 0 ? colors.border : colors.accent,
-                  color: colors.text,
+                  background: page === 0 ? "var(--color-border)" : "var(--color-accent)",
+                  color: "var(--color-text-primary)",
                   border: "none",
-                  borderRadius: "4px",
+                  borderRadius: "var(--radius-xs)",
                   cursor: page === 0 ? "not-allowed" : "pointer",
                 }}
               >
                 Previous
               </button>
-              <span style={{ color: colors.text }}>
+              <span style={{ color: "var(--color-text-primary)" }}>
                 Page {page + 1} of {Math.ceil(data.pagination.total / limit)}
               </span>
               <button
@@ -884,10 +981,12 @@ const TranslationsPage: React.FC = () => {
                 style={{
                   padding: "0.75rem 1.5rem",
                   background:
-                    (page + 1) * limit >= data.pagination.total ? colors.border : colors.accent,
-                  color: colors.text,
+                    (page + 1) * limit >= data.pagination.total
+                      ? "var(--color-border)"
+                      : "var(--color-accent)",
+                  color: "var(--color-text-primary)",
                   border: "none",
-                  borderRadius: "4px",
+                  borderRadius: "var(--radius-xs)",
                   cursor: (page + 1) * limit >= data.pagination.total ? "not-allowed" : "pointer",
                 }}
               >

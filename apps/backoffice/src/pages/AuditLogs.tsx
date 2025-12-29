@@ -140,22 +140,33 @@ const AuditLogsPage: React.FC = () => {
   const [resolvedFilter, setResolvedFilter] = useState<"all" | "resolved" | "unresolved">("all");
   const [createdFrom, setCreatedFrom] = useState("");
   const [createdTo, setCreatedTo] = useState("");
+  const [actionFilter, setActionFilter] = useState<string[]>([]);
   const [selectedLog, setSelectedLog] = useState<AuditLogEntry | null>(null);
   const limit = 50;
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
 
   const createdFromIso = useMemo(() => toIsoDate(createdFrom), [createdFrom]);
   const createdToIso = useMemo(() => toIsoDate(createdTo), [createdTo]);
+  const normalizedActionFilter = useMemo(() => [...actionFilter].sort(), [actionFilter]);
 
   const resolvedValue =
     resolvedFilter === "resolved" ? true : resolvedFilter === "unresolved" ? false : undefined;
 
   const { data, isLoading, error } = useQuery({
-    queryKey: ["audit-logs", page, severityFilter, resolvedFilter, createdFromIso, createdToIso],
+    queryKey: [
+      "audit-logs",
+      page,
+      severityFilter,
+      resolvedFilter,
+      createdFromIso,
+      createdToIso,
+      normalizedActionFilter,
+    ],
     queryFn: () =>
       auditLogsApi.list({
         limit,
         offset: page * limit,
+        action: normalizedActionFilter.length > 0 ? normalizedActionFilter : undefined,
         severity: severityFilter === "all" ? undefined : severityFilter,
         resolved: resolvedValue,
         createdFrom: createdFromIso,
@@ -183,6 +194,29 @@ const AuditLogsPage: React.FC = () => {
   const getActionLabel = (action: string) =>
     actionUiNameMap[action] ?? actionLabelMap[action] ?? formatAction(action);
 
+  const actionOptions = useMemo(() => {
+    const actionSet = new Set<string>();
+    for (const mapping of actionMappingsData?.mappings ?? []) {
+      actionSet.add(mapping.action);
+    }
+    for (const action of Object.keys(actionLabelMap)) {
+      actionSet.add(action);
+    }
+    for (const log of data?.logs ?? []) {
+      actionSet.add(log.action);
+    }
+    const actions = Array.from(actionSet);
+    actions.sort((left, right) => {
+      const leftLabel = actionUiNameMap[left] ?? actionLabelMap[left] ?? formatAction(left);
+      const rightLabel = actionUiNameMap[right] ?? actionLabelMap[right] ?? formatAction(right);
+      return leftLabel.localeCompare(rightLabel);
+    });
+    return actions.map((action) => ({
+      value: action,
+      label: actionUiNameMap[action] ?? actionLabelMap[action] ?? formatAction(action),
+    }));
+  }, [actionMappingsData, actionUiNameMap, data?.logs]);
+
   const queryClient = useQueryClient();
 
   const updateLogMutation = useMutation({
@@ -208,6 +242,13 @@ const AuditLogsPage: React.FC = () => {
 
   const handleCloseModal = () => {
     setSelectedLog(null);
+  };
+
+  const handleToggleAction = (action: string) => {
+    setActionFilter((current) =>
+      current.includes(action) ? current.filter((item) => item !== action) : [...current, action],
+    );
+    setPage(0);
   };
 
   return (
@@ -265,6 +306,114 @@ const AuditLogsPage: React.FC = () => {
             <option value="unresolved">Unresolved</option>
           </select>
         </label>
+
+        <div
+          style={{
+            color: colors.text,
+            display: "flex",
+            flexDirection: "column",
+            gap: "0.35rem",
+            minWidth: "220px",
+          }}
+        >
+          <span>Action</span>
+          <details style={{ position: "relative" }}>
+            <summary
+              style={{
+                cursor: "pointer",
+                padding: "0.5rem",
+                borderRadius: "4px",
+                border: `1px solid ${colors.border}`,
+                background: colors.surface,
+                color: colors.text,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                gap: "0.5rem",
+              }}
+            >
+              {actionFilter.length > 0 ? `${actionFilter.length} selected` : "All"}
+            </summary>
+            <div
+              style={{
+                position: "absolute",
+                top: "calc(100% + 0.35rem)",
+                left: 0,
+                zIndex: 10,
+                minWidth: "260px",
+                background: colors.surface,
+                border: `1px solid ${colors.border}`,
+                borderRadius: "6px",
+                padding: "0.75rem",
+                boxShadow: "0 12px 24px rgba(0, 0, 0, 0.18)",
+              }}
+            >
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  marginBottom: "0.5rem",
+                }}
+              >
+                <span style={{ color: colors.textMuted, fontSize: "0.75rem" }}>Select actions</span>
+                <button
+                  type="button"
+                  onClick={(event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    setActionFilter([]);
+                    setPage(0);
+                  }}
+                  style={{
+                    border: "none",
+                    background: "transparent",
+                    color: colors.textMuted,
+                    cursor: "pointer",
+                    fontSize: "0.75rem",
+                    padding: 0,
+                  }}
+                >
+                  Clear
+                </button>
+              </div>
+              {actionOptions.length === 0 ? (
+                <div style={{ color: colors.textMuted, fontSize: "0.875rem" }}>
+                  No actions available
+                </div>
+              ) : (
+                <div
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "0.4rem",
+                    maxHeight: "240px",
+                    overflowY: "auto",
+                  }}
+                >
+                  {actionOptions.map((option) => (
+                    <label
+                      key={option.value}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "0.5rem",
+                        color: colors.text,
+                      }}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={actionFilter.includes(option.value)}
+                        onChange={() => handleToggleAction(option.value)}
+                      />
+                      <span style={{ fontSize: "0.875rem" }}>{option.label}</span>
+                    </label>
+                  ))}
+                </div>
+              )}
+            </div>
+          </details>
+        </div>
 
         <label
           style={{ color: colors.text, display: "flex", flexDirection: "column", gap: "0.35rem" }}

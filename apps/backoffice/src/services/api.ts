@@ -147,6 +147,22 @@ export interface TranslationListResponse {
   };
 }
 
+export interface NamespaceUpdate {
+  namespace: string;
+  updated_at: string | null;
+}
+
+export interface NamespaceUpdateResponse {
+  data: NamespaceUpdate[];
+}
+
+export interface TranslationMetadataResponse {
+  data: {
+    languages: string[];
+    namespaces: string[];
+  };
+}
+
 // Contact message types
 export interface ContactMessage {
   id: string;
@@ -251,6 +267,18 @@ export const translationsApi = {
     const encodedKeyPath = encodeURIComponent(keyPath.replace(/\./g, "%2E"));
     await apiClient.delete(`/api/v1/translations/${language}/${namespace}/${encodedKeyPath}`);
   },
+  namespaceUpdates: async () => {
+    const response = await apiClient.get<NamespaceUpdateResponse>(
+      "/api/v1/translations/namespace-updates",
+    );
+    return response.data;
+  },
+  metadata: async () => {
+    const response = await apiClient.get<TranslationMetadataResponse>(
+      "/api/v1/translations/metadata",
+    );
+    return response.data;
+  },
 };
 
 export const messagesApi = {
@@ -293,7 +321,7 @@ export const messagesApi = {
 
 export const auditLogsApi = {
   list: async (params?: {
-    action?: string;
+    action?: string | string[];
     entityType?: string;
     actorUserId?: string;
     outcome?: string;
