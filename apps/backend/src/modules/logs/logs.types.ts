@@ -22,7 +22,7 @@ export interface AuditLogEntry {
 }
 
 export interface ListAuditLogsQuery {
-  action?: string;
+  action?: string | string[];
   entityType?: string;
   actorUserId?: string;
   outcome?: string;

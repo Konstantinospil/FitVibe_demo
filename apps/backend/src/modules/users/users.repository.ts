@@ -352,6 +352,31 @@ export type UserMetricRow = {
   created_at: string;
 };
 
+export type UserAttributeRow = {
+  id: string;
+  key: string;
+  label: string;
+  unit: string | null;
+  value_type: string;
+  min_value: number | null;
+  max_value: number | null;
+  min_length: number | null;
+  max_length: number | null;
+  min_date: string | null;
+  max_date: string | null;
+  created_at: string;
+};
+
+export type UserAttributeValueRow = {
+  id: string;
+  user_id: string;
+  attribute_id: string;
+  value_number: number | null;
+  value_text: string | null;
+  value_date: string | null;
+  created_at: string;
+};
+
 export interface UserMetrics {
   follower_count: number;
   following_count: number;
@@ -556,4 +581,63 @@ export async function getLatestUserMetrics(
         training_frequency: row.training_frequency,
       }
     : null;
+}
+
+export async function listUserAttributes(trx?: Knex.Transaction): Promise<UserAttributeRow[]> {
+  return withDb(trx)<UserAttributeRow>("user_attributes").select("*").orderBy("created_at", "asc");
+}
+
+export async function getUserAttributeById(
+  attributeId: string,
+  trx?: Knex.Transaction,
+): Promise<UserAttributeRow | null> {
+  const row = await withDb(trx)<UserAttributeRow>("user_attributes")
+    .where({ id: attributeId })
+    .first();
+  return row ?? null;
+}
+
+export async function listLatestUserAttributeValues(
+  userId: string,
+  trx?: Knex.Transaction,
+): Promise<UserAttributeValueRow[]> {
+  const result = await withDb(trx).raw<{ rows: UserAttributeValueRow[] }>(
+    `
+      SELECT DISTINCT ON (attribute_id)
+        id,
+        user_id,
+        attribute_id,
+        value_number,
+        value_text,
+        value_date,
+        created_at
+      FROM user_attribute_values
+      WHERE user_id = ?
+      ORDER BY attribute_id, created_at DESC
+    `,
+    [userId],
+  );
+  return result.rows ?? [];
+}
+
+export async function insertUserAttributeValue(
+  userId: string,
+  attributeId: string,
+  value: { value_number?: number | null; value_text?: string | null; value_date?: string | null },
+  trx?: Knex.Transaction,
+): Promise<string> {
+  const exec = withDb(trx);
+  const now = new Date().toISOString();
+  const [record] = (await exec("user_attribute_values")
+    .insert({
+      id: crypto.randomUUID(),
+      user_id: userId,
+      attribute_id: attributeId,
+      value_number: value.value_number ?? null,
+      value_text: value.value_text ?? null,
+      value_date: value.value_date ?? null,
+      created_at: now,
+    })
+    .returning("id")) as Array<{ id: string }>;
+  return record.id;
 }

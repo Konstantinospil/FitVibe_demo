@@ -16,6 +16,8 @@ import {
   removeContact,
   changeStatus,
   createUser,
+  listAttributesWithLatest,
+  addUserAttributeValue,
 } from "./users.service.js";
 import { getContactById, getUserMetrics } from "./users.repository.js";
 import { passwordPolicy } from "../auth/auth.schemas.js";
@@ -95,6 +97,22 @@ const statusSchema = z.object({
 const deleteAccountSchema = z.object({
   password: z.string().min(12).max(128),
 });
+
+const attributeValueSchema = z
+  .object({
+    valueNumber: z.number().optional(),
+    valueText: z.string().optional(),
+    valueDate: z.string().optional(),
+  })
+  .refine(
+    (payload) =>
+      [payload.valueNumber, payload.valueText, payload.valueDate].filter(
+        (value) => value !== undefined,
+      ).length === 1,
+    {
+      message: "Exactly one value type must be provided",
+    },
+  );
 
 export async function me(req: Request, res: Response): Promise<void> {
   const userId = req.user?.sub;
@@ -245,6 +263,42 @@ export async function changePassword(req: Request, res: Response): Promise<void>
 
   await updatePassword(userId, parsed.data);
   res.status(204).send();
+  return;
+}
+
+export async function listUserAttributes(req: Request, res: Response): Promise<void> {
+  const userId = req.user?.sub;
+  if (!userId) {
+    res.status(401).json({ error: "Unauthorized" });
+    return;
+  }
+
+  const attributes = await listAttributesWithLatest(userId);
+  res.json({ attributes });
+  return;
+}
+
+export async function addUserAttribute(req: Request, res: Response): Promise<void> {
+  const userId = req.user?.sub;
+  if (!userId) {
+    res.status(401).json({ error: "Unauthorized" });
+    return;
+  }
+
+  const attributeId = req.params.attributeId;
+  if (!attributeId) {
+    res.status(400).json({ error: "Attribute ID is required" });
+    return;
+  }
+
+  const parsed = attributeValueSchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.flatten() });
+    return;
+  }
+
+  const latestValue = await addUserAttributeValue(userId, attributeId, parsed.data);
+  res.status(201).json({ latestValue });
   return;
 }
 

@@ -16,6 +16,8 @@ import {
   adminChangeStatus,
   adminCreateUser,
   getMetrics,
+  listUserAttributes,
+  addUserAttribute,
 } from "./users.controller.js";
 import { requireAccessToken } from "../auth/auth.middleware.js";
 import { requireRole } from "../common/rbac.middleware.js";
@@ -34,6 +36,18 @@ export const usersRouter = Router();
 usersRouter.use(usersAvatarRouter);
 
 usersRouter.get("/me", rateLimit("user_me", 60, 60), requireAccessToken, asyncHandler(me));
+usersRouter.get(
+  "/me/attributes",
+  rateLimit("user_attributes", 60, 60),
+  requireAccessToken,
+  asyncHandler(listUserAttributes),
+);
+usersRouter.post(
+  "/me/attributes/:attributeId",
+  rateLimit("user_attributes_write", 20, 60),
+  requireAccessToken,
+  asyncHandler(addUserAttribute),
+);
 usersRouter.patch(
   "/me",
   rateLimit("user_update", 20, 60),

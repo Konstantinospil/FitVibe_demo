@@ -21,8 +21,13 @@ import {
   updateProfileAlias,
   insertUserMetric,
   getLatestUserMetrics,
+  listUserAttributes,
+  listLatestUserAttributeValues,
+  insertUserAttributeValue,
+  getUserAttributeById,
   type ProfileRow,
   type UserMetricRow,
+  type UserAttributeRow,
 } from "./users.repository.js";
 import type {
   UpdateProfileDTO,
@@ -34,6 +39,9 @@ import type {
   UserContact,
   UserAvatar,
   UserDataExportBundle,
+  UserAttributeWithLatestValue,
+  UserAttributeLatestValue,
+  UserAttributeValueType,
 } from "./users.types.js";
 import {
   revokeRefreshByUserId,
@@ -534,6 +542,133 @@ export async function updatePassword(userId: string, dto: ChangePasswordDTO): Pr
     entityId: userId,
     metadata: { rotatedSessions: true },
   });
+}
+
+function toAttributeValueType(valueType: string): UserAttributeValueType {
+  if (valueType === "number" || valueType === "text" || valueType === "date") {
+    return valueType;
+  }
+  return "text";
+}
+
+function toUserAttribute(row: UserAttributeRow): UserAttributeWithLatestValue {
+  return {
+    id: row.id,
+    key: row.key,
+    label: row.label,
+    unit: row.unit,
+    valueType: toAttributeValueType(row.value_type),
+    minValue: row.min_value === null ? null : Number(row.min_value),
+    maxValue: row.max_value === null ? null : Number(row.max_value),
+    minLength: row.min_length ?? null,
+    maxLength: row.max_length ?? null,
+    minDate: row.min_date ?? null,
+    maxDate: row.max_date ?? null,
+    createdAt: row.created_at,
+    latestValue: null,
+  };
+}
+
+export async function listAttributesWithLatest(
+  userId: string,
+): Promise<UserAttributeWithLatestValue[]> {
+  const [attributes, latestValues] = await Promise.all([
+    listUserAttributes(),
+    listLatestUserAttributeValues(userId),
+  ]);
+  const latestMap = new Map<string, UserAttributeLatestValue>();
+  for (const value of latestValues) {
+    latestMap.set(value.attribute_id, {
+      attributeId: value.attribute_id,
+      valueNumber: value.value_number === null ? null : Number(value.value_number),
+      valueText: value.value_text ?? null,
+      valueDate: value.value_date ?? null,
+      createdAt: value.created_at,
+    });
+  }
+
+  return attributes.map((attribute) => {
+    const mapped = toUserAttribute(attribute);
+    mapped.latestValue = latestMap.get(attribute.id) ?? null;
+    return mapped;
+  });
+}
+
+function assertAttributeValue(
+  attribute: UserAttributeRow,
+  value: { valueNumber?: number; valueText?: string; valueDate?: string },
+) {
+  const valueType = toAttributeValueType(attribute.value_type);
+  if (valueType === "number") {
+    if (typeof value.valueNumber !== "number" || Number.isNaN(value.valueNumber)) {
+      throw new HttpError(400, "USER_ATTRIBUTE_INVALID", "Numeric value required");
+    }
+    const min = attribute.min_value === null ? null : Number(attribute.min_value);
+    const max = attribute.max_value === null ? null : Number(attribute.max_value);
+    if (min !== null && value.valueNumber < min) {
+      throw new HttpError(400, "USER_ATTRIBUTE_OUT_OF_RANGE", "Value below minimum");
+    }
+    if (max !== null && value.valueNumber > max) {
+      throw new HttpError(400, "USER_ATTRIBUTE_OUT_OF_RANGE", "Value above maximum");
+    }
+  } else if (valueType === "text") {
+    if (typeof value.valueText !== "string") {
+      throw new HttpError(400, "USER_ATTRIBUTE_INVALID", "Text value required");
+    }
+    const length = value.valueText.trim().length;
+    const minLength = attribute.min_length ?? null;
+    const maxLength = attribute.max_length ?? null;
+    if (minLength !== null && length < minLength) {
+      throw new HttpError(400, "USER_ATTRIBUTE_OUT_OF_RANGE", "Value too short");
+    }
+    if (maxLength !== null && length > maxLength) {
+      throw new HttpError(400, "USER_ATTRIBUTE_OUT_OF_RANGE", "Value too long");
+    }
+  } else {
+    if (typeof value.valueDate !== "string") {
+      throw new HttpError(400, "USER_ATTRIBUTE_INVALID", "Date value required");
+    }
+    const parsed = new Date(value.valueDate);
+    if (Number.isNaN(parsed.getTime())) {
+      throw new HttpError(400, "USER_ATTRIBUTE_INVALID", "Invalid date");
+    }
+    const minDate = attribute.min_date ? new Date(attribute.min_date) : null;
+    const maxDate = attribute.max_date
+      ? new Date(attribute.max_date)
+      : new Date(new Date().toDateString());
+    if (minDate && parsed < minDate) {
+      throw new HttpError(400, "USER_ATTRIBUTE_OUT_OF_RANGE", "Date before minimum");
+    }
+    if (maxDate && parsed > maxDate) {
+      throw new HttpError(400, "USER_ATTRIBUTE_OUT_OF_RANGE", "Date after maximum");
+    }
+  }
+}
+
+export async function addUserAttributeValue(
+  userId: string,
+  attributeId: string,
+  value: { valueNumber?: number; valueText?: string; valueDate?: string },
+): Promise<UserAttributeLatestValue> {
+  const attribute = await getUserAttributeById(attributeId);
+  if (!attribute) {
+    throw new HttpError(404, "USER_ATTRIBUTE_NOT_FOUND", "USER_ATTRIBUTE_NOT_FOUND");
+  }
+  assertAttributeValue(attribute, value);
+
+  await insertUserAttributeValue(userId, attributeId, {
+    value_number: value.valueNumber ?? null,
+    value_text: value.valueText ?? null,
+    value_date: value.valueDate ?? null,
+  });
+
+  return {
+    attributeId,
+    valueNumber: value.valueNumber ?? null,
+    valueText: value.valueText ?? null,
+    valueDate: value.valueDate ?? null,
+    createdAt: new Date().toISOString(),
+  };
 }
 
 export async function changeStatus(

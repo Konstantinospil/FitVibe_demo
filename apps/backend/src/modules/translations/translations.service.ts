@@ -6,6 +6,9 @@ import {
   upsertTranslation,
   deleteTranslation,
   listTranslations,
+  getLatestNamespaceUpdates,
+  getTranslationMetadata,
+  getNamespacesForLanguage,
 } from "./translations.repository.js";
 import type {
   SupportedLanguage,
@@ -34,7 +37,7 @@ export async function getLanguageTranslations(
 export async function getAllTranslationsForLanguage(
   language: SupportedLanguage,
 ): Promise<Record<string, unknown>> {
-  const namespaces: TranslationNamespace[] = ["common", "auth", "terms", "privacy", "cookie"];
+  const namespaces = await getNamespacesForLanguage(language);
 
   const allTranslations: Record<string, unknown> = {};
 
@@ -112,10 +115,13 @@ export async function bulkUpdateTranslationService(
   const results: TranslationRecord[] = [];
 
   for (const [language, value] of Object.entries(dto.translations)) {
+    if (value === undefined) {
+      continue;
+    }
     const result = await upsertTranslation({
       namespace: dto.namespace,
       key_path: dto.key_path,
-      language: language as SupportedLanguage,
+      language: language,
       value,
       updated_by: userId ?? null,
     });
@@ -164,4 +170,17 @@ export async function listTranslationsService(params?: {
       offset: params?.offset ?? 0,
     },
   );
+}
+
+export async function getLatestNamespaceUpdatesService(): Promise<
+  Array<{ namespace: TranslationNamespace; updated_at: string | null }>
+> {
+  return getLatestNamespaceUpdates();
+}
+
+export async function getTranslationMetadataService(): Promise<{
+  languages: SupportedLanguage[];
+  namespaces: TranslationNamespace[];
+}> {
+  return getTranslationMetadata();
 }

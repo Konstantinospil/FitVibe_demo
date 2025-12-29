@@ -7,6 +7,8 @@ import {
   bulkUpdateTranslationService,
   deleteTranslationService,
   listTranslationsService,
+  getLatestNamespaceUpdatesService,
+  getTranslationMetadataService,
 } from "./translations.service.js";
 import type { SupportedLanguage, TranslationNamespace } from "./translations.types.js";
 import {
@@ -51,6 +53,24 @@ export async function listTranslations(req: Request, res: Response): Promise<voi
       offset: params.offset ?? 0,
     },
   });
+}
+
+/**
+ * GET /translations/namespace-updates
+ * Get latest created_at per namespace (admin endpoint)
+ */
+export async function getNamespaceUpdates(req: Request, res: Response): Promise<void> {
+  const updates = await getLatestNamespaceUpdatesService();
+  res.json({ data: updates });
+}
+
+/**
+ * GET /translations/metadata
+ * Get available languages and namespaces (admin endpoint)
+ */
+export async function getTranslationMetadata(req: Request, res: Response): Promise<void> {
+  const metadata = await getTranslationMetadataService();
+  res.json({ data: metadata });
 }
 
 /**

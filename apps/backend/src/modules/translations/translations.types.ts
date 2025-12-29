@@ -1,5 +1,5 @@
-export type SupportedLanguage = "en" | "de" | "fr" | "es" | "el";
-export type TranslationNamespace = "common" | "auth" | "terms" | "privacy" | "cookie";
+export type SupportedLanguage = string;
+export type TranslationNamespace = string;
 
 export interface TranslationRecord {
   id: string;

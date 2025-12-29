@@ -436,3 +436,51 @@ export async function listTranslations(
     total: totalCount,
   };
 }
+
+export async function getLatestNamespaceUpdates(): Promise<
+  Array<{ namespace: TranslationNamespace; updated_at: string | null }>
+> {
+  const rows = (await db(TRANSLATIONS_TABLE)
+    .select("namespace")
+    .max("created_at as updated_at")
+    .whereNull("deleted_at")
+    .groupBy("namespace")) as Array<{ namespace: TranslationNamespace; updated_at: Date | string }>;
+
+  return rows.map((row) => ({
+    namespace: row.namespace,
+    updated_at:
+      row.updated_at instanceof Date ? row.updated_at.toISOString() : (row.updated_at ?? null),
+  }));
+}
+
+export async function getTranslationMetadata(): Promise<{
+  languages: SupportedLanguage[];
+  namespaces: TranslationNamespace[];
+}> {
+  const languageRows = (await db(TRANSLATIONS_TABLE)
+    .distinct("language")
+    .whereNull("deleted_at")
+    .orderBy("language")) as Array<{ language: SupportedLanguage }>;
+
+  const namespaceRows = (await db(TRANSLATIONS_TABLE)
+    .distinct("namespace")
+    .whereNull("deleted_at")
+    .orderBy("namespace")) as Array<{ namespace: TranslationNamespace }>;
+
+  return {
+    languages: languageRows.map((row) => row.language),
+    namespaces: namespaceRows.map((row) => row.namespace),
+  };
+}
+
+export async function getNamespacesForLanguage(
+  language: SupportedLanguage,
+): Promise<TranslationNamespace[]> {
+  const rows = (await db(TRANSLATIONS_TABLE)
+    .distinct("namespace")
+    .where({ language })
+    .whereNull("deleted_at")
+    .orderBy("namespace")) as Array<{ namespace: TranslationNamespace }>;
+
+  return rows.map((row) => row.namespace);
+}

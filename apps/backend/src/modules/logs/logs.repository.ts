@@ -44,7 +44,11 @@ export async function listAuditLogs(query: ListAuditLogsQuery): Promise<AuditLog
     .limit(Math.min(limit, 500)) // Cap at 500
     .offset(offset);
 
-  if (action) {
+  if (Array.isArray(action)) {
+    if (action.length > 0) {
+      queryBuilder = queryBuilder.whereIn("al.action", action);
+    }
+  } else if (action) {
     queryBuilder = queryBuilder.where("al.action", action);
   }
 

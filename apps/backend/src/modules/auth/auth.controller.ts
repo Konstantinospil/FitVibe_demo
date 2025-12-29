@@ -17,6 +17,11 @@ import {
   revokePrivacyPolicy as doRevokePrivacyPolicy,
   getLegalDocumentsStatus as doGetLegalDocumentsStatus,
 } from "./auth.service.js";
+import {
+  getCurrentTermsVersion,
+  getCurrentPrivacyPolicyVersion,
+  getCurrentCookiePolicyVersion,
+} from "../../config/legal-version.js";
 import { env, JWKS } from "../../config/env.js";
 import {
   RegisterSchema,
@@ -614,6 +619,23 @@ export async function getLegalDocumentsStatus(
     const status = await doGetLegalDocumentsStatus(userId);
     res.status(200).json(status);
     return;
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function getLegalDocumentVersions(
+  _req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> {
+  try {
+    const [terms, privacy, cookie] = await Promise.all([
+      getCurrentTermsVersion(),
+      getCurrentPrivacyPolicyVersion(),
+      getCurrentCookiePolicyVersion(),
+    ]);
+    res.status(200).json({ terms, privacy, cookie });
   } catch (error) {
     next(error);
   }

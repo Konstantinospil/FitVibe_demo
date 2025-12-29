@@ -14,7 +14,18 @@ const allowedSeverities: AuditLogSeverity[] = ["info", "warning", "error", "crit
  * GET /api/v1/logs
  */
 export async function listLogsHandler(req: Request, res: Response): Promise<void> {
-  const action = req.query.action as string | undefined;
+  const actionParam = req.query.action as string | string[] | undefined;
+  const action =
+    typeof actionParam === "string"
+      ? actionParam.includes(",")
+        ? actionParam
+            .split(",")
+            .map((value) => value.trim())
+            .filter(Boolean)
+        : actionParam.trim() || undefined
+      : Array.isArray(actionParam)
+        ? actionParam.map((value) => value.trim()).filter(Boolean)
+        : undefined;
   const entityType = req.query.entityType as string | undefined;
   const actorUserId = req.query.actorUserId as string | undefined;
   const outcome = req.query.outcome as string | undefined;

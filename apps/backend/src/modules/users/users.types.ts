@@ -115,3 +115,32 @@ export interface UserDataExportBundle {
   media: Record<string, unknown>[];
   stateHistory: Record<string, unknown>[];
 }
+
+export type UserAttributeValueType = "number" | "text" | "date";
+
+export interface UserAttribute {
+  id: string;
+  key: string;
+  label: string;
+  unit: string | null;
+  valueType: UserAttributeValueType;
+  minValue: number | null;
+  maxValue: number | null;
+  minLength: number | null;
+  maxLength: number | null;
+  minDate: string | null;
+  maxDate: string | null;
+  createdAt: string;
+}
+
+export interface UserAttributeLatestValue {
+  attributeId: string;
+  valueNumber: number | null;
+  valueText: string | null;
+  valueDate: string | null;
+  createdAt: string;
+}
+
+export interface UserAttributeWithLatestValue extends UserAttribute {
+  latestValue: UserAttributeLatestValue | null;
+}

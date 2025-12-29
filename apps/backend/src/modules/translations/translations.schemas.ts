@@ -1,10 +1,7 @@
 import { z } from "zod";
 
-const SUPPORTED_LANGUAGES = ["en", "de", "fr", "es", "el"] as const;
-const TRANSLATION_NAMESPACES = ["common", "auth", "terms", "privacy", "cookie"] as const;
-
-export const SupportedLanguageSchema = z.enum(SUPPORTED_LANGUAGES);
-export const TranslationNamespaceSchema = z.enum(TRANSLATION_NAMESPACES);
+export const SupportedLanguageSchema = z.string().min(2).max(10);
+export const TranslationNamespaceSchema = z.string().min(1).max(50);
 
 export const GetTranslationsParamsSchema = z.object({
   language: SupportedLanguageSchema,

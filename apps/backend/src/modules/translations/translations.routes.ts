@@ -7,6 +7,8 @@ import { asyncHandler } from "../../utils/async-handler.js";
 import {
   getTranslations,
   listTranslations,
+  getNamespaceUpdates,
+  getTranslationMetadata,
   createTranslation,
   updateTranslation,
   bulkUpdateTranslation,
@@ -21,6 +23,24 @@ import {
 } from "./translations.schemas.js";
 
 export const translationsRouter = Router();
+
+// Admin endpoint: Get latest namespace updates
+translationsRouter.get(
+  "/namespace-updates",
+  rateLimit("translations_namespace_updates", 30, 60),
+  requireAccessToken,
+  requireRole("admin"),
+  asyncHandler(getNamespaceUpdates),
+);
+
+// Admin endpoint: Get available namespaces and languages
+translationsRouter.get(
+  "/metadata",
+  rateLimit("translations_metadata", 30, 60),
+  requireAccessToken,
+  requireRole("admin"),
+  asyncHandler(getTranslationMetadata),
+);
 
 // Public endpoint: Get translations for a language
 translationsRouter.get(

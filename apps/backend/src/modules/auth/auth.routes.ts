@@ -16,6 +16,7 @@ import {
   acceptPrivacyPolicy,
   revokePrivacyPolicy,
   getLegalDocumentsStatus,
+  getLegalDocumentVersions,
   jwksHandler,
 } from "./auth.controller.js";
 // Removed twofa.controller imports - using two-factor.controller via two-factor.routes.ts instead
@@ -122,6 +123,12 @@ authRouter.get(
   rateLimit("auth_legal_documents_status", 60, 60),
   requireAccessToken,
   asyncHandler(getLegalDocumentsStatus),
+);
+
+authRouter.get(
+  "/legal-documents/versions",
+  rateLimit("auth_legal_documents_versions", 60, 60),
+  asyncHandler(getLegalDocumentVersions),
 );
 
 authRouter.get("/jwks", asyncHandler(jwksHandler));
