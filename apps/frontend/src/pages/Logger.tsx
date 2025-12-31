@@ -320,7 +320,7 @@ const Logger: React.FC = () => {
     <PageIntro
       eyebrow={t("logger.eyebrow")}
       title={session.title || t("logger.workoutSession")}
-      description={`${exerciseLogs.length} ${t("logger.exercises")} • ${completedSetsCount}/${totalSetsCount} ${t("logger.setsCompleted")}`}
+      description={`${exerciseLogs.length} ${t("logger.exercises", { defaultValue: "exercises" })} • ${completedSetsCount}/${totalSetsCount} ${t("logger.setsCompleted", { defaultValue: "sets completed" })}`}
     >
       <div className="grid grid--gap-15">
         {/* Session Info Bar */}
@@ -356,7 +356,7 @@ const Logger: React.FC = () => {
                     onClick={stopRestTimer}
                     leftIcon={<Pause size={16} />}
                   >
-                    {t("logger.stopRest")}
+                    {t("logger.stopRest", { defaultValue: "Stop Rest" })}
                   </Button>
                 ) : (
                   <Button
@@ -365,7 +365,7 @@ const Logger: React.FC = () => {
                     onClick={() => startRestTimer()}
                     leftIcon={<Clock size={16} />}
                   >
-                    {t("logger.startRest")} ({restDuration}s)
+                    {t("logger.startRest", { defaultValue: "Start Rest" })} ({restDuration}s)
                   </Button>
                 )}
 
@@ -377,7 +377,9 @@ const Logger: React.FC = () => {
                   leftIcon={<Check size={16} />}
                   disabled={completedSetsCount === 0}
                 >
-                  {isSaving ? t("logger.completing") : t("logger.completeSession")}
+                  {isSaving
+                    ? t("logger.completing", { defaultValue: "Completing..." })
+                    : t("logger.completeSession", { defaultValue: "Complete Session" })}
                 </Button>
               </div>
             </div>
@@ -397,16 +399,23 @@ const Logger: React.FC = () => {
                 <div className="flex flex--align-center flex--justify-between">
                   <div className="flex-1">
                     <CardTitle>
-                      {exerciseIndex + 1}. {exerciseLog.exercise_id || t("logger.customExercise")}
+                      {exerciseIndex + 1}.{" "}
+                      {exerciseLog.exercise_id ||
+                        t("logger.customExercise", { defaultValue: "Custom Exercise" })}
                     </CardTitle>
                     <div className="text-085 text-secondary mt-025">
-                      {completedSets} / {totalSets} {t("logger.setsCompleted")}
+                      {completedSets} / {totalSets}{" "}
+                      {t("logger.setsCompleted", { defaultValue: "sets completed" })}
                     </div>
                   </div>
 
                   <button
                     onClick={() => toggleExerciseCollapsed(exerciseIndex)}
-                    aria-label={exerciseLog.collapsed ? t("logger.expand") : t("logger.collapse")}
+                    aria-label={
+                      exerciseLog.collapsed
+                        ? t("logger.expand", { defaultValue: "Expand" })
+                        : t("logger.collapse", { defaultValue: "Collapse" })
+                    }
                     className="bg-transparent border-none"
                     style={{
                       color: "var(--color-text-secondary)",
@@ -471,7 +480,7 @@ const Logger: React.FC = () => {
                               reps: parseInt(e.target.value) || null,
                             })
                           }
-                          placeholder={t("logger.repsPlaceholder")}
+                          placeholder={t("logger.repsPlaceholder", { defaultValue: "Reps" })}
                           disabled={set.completed}
                           style={{
                             padding: "0.6rem",
@@ -495,7 +504,7 @@ const Logger: React.FC = () => {
                               weight_kg: parseFloat(e.target.value) || null,
                             })
                           }
-                          placeholder={t("logger.weightPlaceholder")}
+                          placeholder={t("logger.weightPlaceholder", { defaultValue: "Weight" })}
                           disabled={set.completed}
                           style={{
                             padding: "0.6rem",
@@ -520,7 +529,7 @@ const Logger: React.FC = () => {
                               rpe: val >= 1 && val <= 10 ? val : null,
                             });
                           }}
-                          placeholder={t("logger.rpePlaceholder")}
+                          placeholder={t("logger.rpePlaceholder", { defaultValue: "RPE" })}
                           disabled={set.completed}
                           style={{
                             padding: "0.6rem",
@@ -537,7 +546,9 @@ const Logger: React.FC = () => {
                         <button
                           onClick={() => toggleSetCompleted(exerciseIndex, setIndex)}
                           aria-label={
-                            set.completed ? t("logger.markIncomplete") : t("logger.markComplete")
+                            set.completed
+                              ? t("logger.markIncomplete", { defaultValue: "Mark incomplete" })
+                              : t("logger.markComplete", { defaultValue: "Mark complete" })
                           }
                           style={{
                             width: "36px",
@@ -580,7 +591,9 @@ const Logger: React.FC = () => {
                 leftIcon={<Check size={18} />}
                 disabled={completedSetsCount === 0}
               >
-                {isSaving ? t("logger.completing") : t("logger.completeSession")}
+                {isSaving
+                  ? t("logger.completing", { defaultValue: "Completing..." })
+                  : t("logger.completeSession", { defaultValue: "Complete Session" })}
               </Button>
             </div>
           </CardContent>

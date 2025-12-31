@@ -1,8 +1,20 @@
 import React, { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { actionMappingsApi, type ActionUiMapping } from "../services/api";
+import {
+  actionMappingsApi,
+  disableClamav,
+  disableMaintenanceMode,
+  disableReadOnlyMode,
+  enableClamav,
+  enableMaintenanceMode,
+  enableReadOnlyMode,
+  getOpsStatus,
+  getSystemConfig,
+  type ActionUiMapping,
+} from "../services/api";
 import { useAuthStore } from "../store/auth.store";
 import { useThemeColors } from "../hooks/useThemeColors";
+import { Button } from "../components/ui/Button";
 
 const SettingsPage: React.FC = () => {
   const colors = useThemeColors();
@@ -19,6 +31,19 @@ const SettingsPage: React.FC = () => {
     enabled: isAuthenticated,
   });
 
+  const { data: systemConfig, isLoading: isSystemConfigLoading } = useQuery({
+    queryKey: ["system-config"],
+    queryFn: getSystemConfig,
+    enabled: isAuthenticated,
+  });
+
+  const { data: opsStatus, isLoading: isOpsStatusLoading } = useQuery({
+    queryKey: ["admin-ops-status"],
+    queryFn: getOpsStatus,
+    enabled: isAuthenticated,
+    refetchInterval: 30000,
+  });
+
   const updateMutation = useMutation({
     mutationFn: (mapping: { action: string; uiName: string }) => actionMappingsApi.upsert(mapping),
     onSuccess: () => {
@@ -27,6 +52,39 @@ const SettingsPage: React.FC = () => {
       setEditValue("");
     },
   });
+
+  const readOnlyMutation = useMutation({
+    mutationFn: async (nextEnabled: boolean) =>
+      nextEnabled
+        ? enableReadOnlyMode({ reason: "Activated from backoffice" })
+        : disableReadOnlyMode({ notes: "Deactivated from backoffice" }),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["system-config"] });
+      void queryClient.invalidateQueries({ queryKey: ["admin-ops-status"] });
+    },
+  });
+
+  const maintenanceMutation = useMutation({
+    mutationFn: async (nextEnabled: boolean) =>
+      nextEnabled
+        ? enableMaintenanceMode({ message: "FitVibe is currently down for maintenance." })
+        : disableMaintenanceMode(),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["system-config"] });
+    },
+  });
+
+  const clamavMutation = useMutation({
+    mutationFn: async (nextEnabled: boolean) => (nextEnabled ? enableClamav() : disableClamav()),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["admin-ops-status"] });
+    },
+  });
+
+  const isReadOnly = systemConfig?.readOnlyMode ?? false;
+  const isMaintenance = systemConfig?.maintenanceMode ?? false;
+  const clamavEnabled = opsStatus?.backend.clamavEnabled ?? false;
+  const clamavHealth = opsStatus?.backend.clamavOk ?? false;
 
   const filteredMappings = useMemo(() => {
     const mappings = data?.mappings ?? [];
@@ -62,6 +120,106 @@ const SettingsPage: React.FC = () => {
   return (
     <div>
       <h1 style={{ color: colors.text, marginBottom: "2rem", fontSize: "2rem" }}>Settings</h1>
+
+      <div style={{ marginBottom: "2rem" }}>
+        <h2 style={{ color: colors.text, marginBottom: "1rem", fontSize: "1.5rem" }}>
+          System Controls
+        </h2>
+        <div
+          style={{
+            display: "grid",
+            gap: "1rem",
+            padding: "1.5rem",
+            background: colors.surface,
+            borderRadius: "12px",
+            border: `1px solid ${colors.border}`,
+          }}
+        >
+          <div
+            style={{
+              display: "flex",
+              flexWrap: "wrap",
+              gap: "1rem",
+              alignItems: "center",
+              justifyContent: "space-between",
+            }}
+          >
+            <div>
+              <div style={{ color: colors.text, fontWeight: 600 }}>Read-only mode</div>
+              <div style={{ color: colors.textSecondary, marginTop: "0.25rem" }}>
+                Status: {isSystemConfigLoading ? "Loading..." : isReadOnly ? "Enabled" : "Disabled"}
+              </div>
+            </div>
+            <Button
+              variant={isReadOnly ? "danger" : "primary"}
+              size="sm"
+              isLoading={readOnlyMutation.isPending}
+              disabled={isSystemConfigLoading || readOnlyMutation.isPending}
+              onClick={() => readOnlyMutation.mutate(!isReadOnly)}
+            >
+              {isReadOnly ? "Disable Read-only" : "Enable Read-only"}
+            </Button>
+          </div>
+
+          <div
+            style={{
+              display: "flex",
+              flexWrap: "wrap",
+              gap: "1rem",
+              alignItems: "center",
+              justifyContent: "space-between",
+            }}
+          >
+            <div>
+              <div style={{ color: colors.text, fontWeight: 600 }}>Maintenance mode</div>
+              <div style={{ color: colors.textSecondary, marginTop: "0.25rem" }}>
+                Status:{" "}
+                {isSystemConfigLoading ? "Loading..." : isMaintenance ? "Enabled" : "Disabled"}
+              </div>
+            </div>
+            <Button
+              variant={isMaintenance ? "danger" : "primary"}
+              size="sm"
+              isLoading={maintenanceMutation.isPending}
+              disabled={isSystemConfigLoading || maintenanceMutation.isPending}
+              onClick={() => maintenanceMutation.mutate(!isMaintenance)}
+            >
+              {isMaintenance ? "Disable Maintenance" : "Enable Maintenance"}
+            </Button>
+          </div>
+
+          <div
+            style={{
+              display: "flex",
+              flexWrap: "wrap",
+              gap: "1rem",
+              alignItems: "center",
+              justifyContent: "space-between",
+            }}
+          >
+            <div>
+              <div style={{ color: colors.text, fontWeight: 600 }}>ClamAV scanning</div>
+              <div style={{ color: colors.textSecondary, marginTop: "0.25rem" }}>
+                Status:{" "}
+                {isOpsStatusLoading
+                  ? "Loading..."
+                  : clamavEnabled
+                    ? `Enabled (${clamavHealth ? "OK" : "Down"})`
+                    : "Disabled"}
+              </div>
+            </div>
+            <Button
+              variant={clamavEnabled ? "danger" : "primary"}
+              size="sm"
+              isLoading={clamavMutation.isPending}
+              disabled={isOpsStatusLoading || clamavMutation.isPending}
+              onClick={() => clamavMutation.mutate(!clamavEnabled)}
+            >
+              {clamavEnabled ? "Disable ClamAV" : "Enable ClamAV"}
+            </Button>
+          </div>
+        </div>
+      </div>
 
       <div style={{ marginBottom: "2rem" }}>
         <h2 style={{ color: colors.text, marginBottom: "1rem", fontSize: "1.5rem" }}>

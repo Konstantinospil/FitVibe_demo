@@ -81,7 +81,7 @@ const Sessions: React.FC = () => {
     try {
       await deleteSession(sessionToDelete);
       setPlannedSessions(plannedSessions.filter((s) => s.id !== sessionToDelete));
-      toast.success(t("sessions.deleteSuccess"));
+      toast.success(labels.deleteSuccess);
       setSessionToDelete(null);
     } catch (error) {
       logger.apiError(
@@ -90,9 +90,33 @@ const Sessions: React.FC = () => {
         `/api/v1/sessions/${sessionToDelete}`,
         "DELETE",
       );
-      toast.error(t("sessions.deleteError"));
+      toast.error(labels.deleteError);
       setSessionToDelete(null);
     }
+  };
+
+  const labels = {
+    createNew: t("sessions.createNew"),
+    createSession: t("sessions.createSession"),
+    noPlanned: t("sessions.noPlanned"),
+    createFirst: t("sessions.createFirst"),
+    exercise: t("sessions.exercise"),
+    exercises: t("sessions.exercises"),
+    more: t("sessions.more"),
+    startSession: t("sessions.startSession"),
+    viewSession: t("sessions.viewSession"),
+    deleteSession: t("sessions.deleteSession"),
+    deleteConfirmTitle: t("sessions.deleteConfirmTitle"),
+    deleteConfirmMessage: t("sessions.deleteConfirmMessage"),
+    deleteConfirmLabel: t("sessions.deleteConfirmLabel"),
+    deleteSuccess: t("sessions.deleteSuccess"),
+    deleteError: t("sessions.deleteError"),
+    noActive: t("sessions.noActive"),
+    startFromPlanner: t("sessions.startFromPlanner"),
+    goToPlanner: t("sessions.goToPlanner"),
+    statusPlanned: t("sessions.statusPlanned"),
+    statusInProgress: t("sessions.statusInProgress"),
+    cancel: t("common.cancel"),
   };
 
   const formatDate = (dateString: string) => {
@@ -142,7 +166,7 @@ const Sessions: React.FC = () => {
               leftIcon={<Plus size={18} />}
               onClick={() => void navigate("/planner")}
             >
-              {t("sessions.createNew")}
+              {labels.createNew}
             </Button>
           </div>
 
@@ -156,19 +180,15 @@ const Sessions: React.FC = () => {
             <Card>
               <CardContent>
                 <div className="empty-state">
-                  <Calendar
-                    size={48}
-                    className="icon icon--muted"
-                    style={{ margin: "0 auto 1rem" }}
-                  />
-                  <h3 className="text-125 mb-05">{t("sessions.noPlanned")}</h3>
-                  <p className="text-secondary mb-15">{t("sessions.createFirst")}</p>
+                  <Calendar size={48} className="icon icon--muted sessions-empty-icon" />
+                  <h3 className="text-125 mb-05">{labels.noPlanned}</h3>
+                  <p className="text-secondary mb-15">{labels.createFirst}</p>
                   <Button
                     variant="primary"
                     leftIcon={<Plus size={18} />}
                     onClick={() => void navigate("/planner")}
                   >
-                    {t("sessions.createSession")}
+                    {labels.createSession}
                   </Button>
                 </div>
               </CardContent>
@@ -184,54 +204,26 @@ const Sessions: React.FC = () => {
                           <h3 className="text-11 font-weight-600 m-0">
                             {session.title || t("sessions.untitled")}
                           </h3>
-                          <span
-                            style={{
-                              padding: "0.25rem 0.75rem",
-                              borderRadius: "8px",
-                              background: "rgba(59, 130, 246, 0.15)",
-                              color: "rgb(59, 130, 246)",
-                              fontSize: "0.8rem",
-                              fontWeight: 600,
-                            }}
-                          >
-                            {t("sessions.statusPlanned")}
+                          <span className="status-badge status-badge--planned">
+                            {labels.statusPlanned}
                           </span>
                         </div>
 
-                        <div
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: "1rem",
-                            marginBottom: "0.75rem",
-                          }}
-                        >
-                          <div
-                            style={{
-                              display: "flex",
-                              alignItems: "center",
-                              gap: "0.5rem",
-                              color: "var(--color-text-secondary)",
-                              fontSize: "0.9rem",
-                            }}
-                          >
+                        <div className="sessions-meta">
+                          <div className="sessions-meta-item">
                             <Calendar size={16} />
                             {formatDate(session.planned_at)}
                           </div>
                           {session.exercises && session.exercises.length > 0 && (
                             <div className="text-09 text-secondary">
                               {session.exercises.length}{" "}
-                              {session.exercises.length === 1
-                                ? t("sessions.exercise")
-                                : t("sessions.exercises")}
+                              {session.exercises.length === 1 ? labels.exercise : labels.exercises}
                             </div>
                           )}
                         </div>
 
                         {session.notes && (
-                          <p className="text-09 text-secondary" style={{ margin: "0.5rem 0 0" }}>
-                            {session.notes}
-                          </p>
+                          <p className="text-09 text-secondary sessions-notes">{session.notes}</p>
                         )}
 
                         {session.exercises && session.exercises.length > 0 && (
@@ -240,21 +232,14 @@ const Sessions: React.FC = () => {
                               {session.exercises.slice(0, 5).map((ex, idx) => (
                                 <span
                                   key={idx}
-                                  className="rounded-sm text-085 text-secondary"
-                                  style={{
-                                    padding: "0.35rem 0.75rem",
-                                    background: "rgba(148, 163, 184, 0.1)",
-                                  }}
+                                  className="rounded-sm text-085 text-secondary sessions-exercise-tag"
                                 >
                                   {ex.exercise_id || t("sessions.customExercise")}
                                 </span>
                               ))}
                               {session.exercises.length > 5 && (
-                                <span
-                                  className="rounded-sm text-085 text-muted"
-                                  style={{ padding: "0.35rem 0.75rem" }}
-                                >
-                                  +{session.exercises.length - 5} {t("sessions.more")}
+                                <span className="rounded-sm text-085 text-muted sessions-exercise-tag sessions-exercise-tag--more">
+                                  +{session.exercises.length - 5} {labels.more}
                                 </span>
                               )}
                             </div>
@@ -265,46 +250,22 @@ const Sessions: React.FC = () => {
                       <div className="flex flex--gap-05">
                         <button
                           onClick={() => void navigate(`/logger/${session.id}`)}
-                          aria-label={t("sessions.startSession")}
-                          className="rounded-sm"
-                          style={{
-                            padding: "0.5rem",
-                            background: "rgba(52, 211, 153, 0.15)",
-                            color: "var(--color-accent)",
-                            border: "none",
-                            cursor: "pointer",
-                            lineHeight: 0,
-                          }}
+                          aria-label={labels.startSession}
+                          className="sessions-icon-button sessions-icon-button--start"
                         >
                           <Play size={18} />
                         </button>
                         <button
                           onClick={() => void navigate(`/sessions/${session.id}`)}
-                          aria-label={t("sessions.viewSession")}
-                          className="rounded-sm"
-                          style={{
-                            padding: "0.5rem",
-                            background: "rgba(148, 163, 184, 0.1)",
-                            color: "var(--color-text-secondary)",
-                            border: "none",
-                            cursor: "pointer",
-                            lineHeight: 0,
-                          }}
+                          aria-label={labels.viewSession}
+                          className="sessions-icon-button sessions-icon-button--view"
                         >
                           <Eye size={18} />
                         </button>
                         <button
                           onClick={() => void handleDeleteSession(session.id)}
-                          aria-label={t("sessions.deleteSession")}
-                          className="rounded-sm"
-                          style={{
-                            padding: "0.5rem",
-                            background: "rgba(239, 68, 68, 0.1)",
-                            color: "var(--color-danger)",
-                            border: "none",
-                            cursor: "pointer",
-                            lineHeight: 0,
-                          }}
+                          aria-label={labels.deleteSession}
+                          className="sessions-icon-button sessions-icon-button--delete"
                         >
                           <Trash2 size={18} />
                         </button>
@@ -320,87 +281,44 @@ const Sessions: React.FC = () => {
 
       {/* Logger Tab Content */}
       {activeTab === "logger" && (
-        <div style={{ display: "grid", gap: "1.5rem" }}>
+        <div className="grid grid--gap-15">
           {loadingActive ? (
             <Card>
               <CardContent>
-                <div
-                  style={{
-                    padding: "2rem",
-                    textAlign: "center",
-                    color: "var(--color-text-secondary)",
-                  }}
-                >
-                  {t("common.loading")}
-                </div>
+                <div className="sessions-loading-state">{t("common.loading")}</div>
               </CardContent>
             </Card>
           ) : activeSessions.length === 0 ? (
             <Card>
               <CardContent>
-                <div style={{ padding: "3rem 2rem", textAlign: "center" }}>
-                  <Play size={48} style={{ margin: "0 auto 1rem", opacity: 0.3 }} />
-                  <h3 style={{ fontSize: "1.25rem", marginBottom: "0.5rem" }}>
-                    {t("sessions.noActive")}
-                  </h3>
-                  <p style={{ color: "var(--color-text-secondary)", marginBottom: "1.5rem" }}>
-                    {t("sessions.startFromPlanner")}
-                  </p>
+                <div className="empty-state">
+                  <Play size={48} className="icon icon--muted sessions-empty-icon" />
+                  <h3 className="text-125 mb-05">{labels.noActive}</h3>
+                  <p className="text-secondary mb-15">{labels.startFromPlanner}</p>
                   <Button variant="secondary" onClick={() => setActiveTab("planner")}>
-                    {t("sessions.goToPlanner")}
+                    {labels.goToPlanner}
                   </Button>
                 </div>
               </CardContent>
             </Card>
           ) : (
-            <div style={{ display: "grid", gap: "1rem" }}>
+            <div className="grid grid--gap-md">
               {activeSessions.map((session) => (
                 <Card key={session.id}>
                   <CardContent>
-                    <div style={{ display: "flex", alignItems: "flex-start", gap: "1rem" }}>
-                      <div style={{ flex: 1 }}>
-                        <div
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: "0.75rem",
-                            marginBottom: "0.5rem",
-                          }}
-                        >
-                          <h3 style={{ fontSize: "1.1rem", fontWeight: 600, margin: 0 }}>
+                    <div className="flex flex--align-start flex--gap-md">
+                      <div className="flex-1">
+                        <div className="flex flex--align-center flex--gap-075 mb-05">
+                          <h3 className="text-11 font-weight-600 m-0">
                             {session.title || t("sessions.untitled")}
                           </h3>
-                          <span
-                            style={{
-                              padding: "0.25rem 0.75rem",
-                              borderRadius: "8px",
-                              background: "rgba(52, 211, 153, 0.15)",
-                              color: "var(--color-accent)",
-                              fontSize: "0.8rem",
-                              fontWeight: 600,
-                            }}
-                          >
-                            {t("sessions.statusInProgress")}
+                          <span className="status-badge status-badge--active">
+                            {labels.statusInProgress}
                           </span>
                         </div>
 
-                        <div
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: "1rem",
-                            marginBottom: "0.75rem",
-                          }}
-                        >
-                          <div
-                            style={{
-                              display: "flex",
-                              alignItems: "center",
-                              gap: "0.5rem",
-                              color: "var(--color-text-secondary)",
-                              fontSize: "0.9rem",
-                            }}
-                          >
+                        <div className="sessions-meta">
+                          <div className="sessions-meta-item">
                             <Calendar size={16} />
                             {t("sessions.started")}{" "}
                             {session.started_at
@@ -408,13 +326,9 @@ const Sessions: React.FC = () => {
                               : t("sessions.recently")}
                           </div>
                           {session.exercises && session.exercises.length > 0 && (
-                            <div
-                              style={{ color: "var(--color-text-secondary)", fontSize: "0.9rem" }}
-                            >
+                            <div className="text-09 text-secondary">
                               {session.exercises.length}{" "}
-                              {session.exercises.length === 1
-                                ? t("sessions.exercise")
-                                : t("sessions.exercises")}
+                              {session.exercises.length === 1 ? labels.exercise : labels.exercises}
                             </div>
                           )}
                         </div>
@@ -440,10 +354,10 @@ const Sessions: React.FC = () => {
       {/* Confirmation Dialog */}
       <ConfirmDialog
         isOpen={showDeleteConfirm}
-        title={t("sessions.deleteConfirmTitle")}
-        message={t("sessions.deleteConfirmMessage")}
-        confirmLabel={t("sessions.deleteConfirmLabel")}
-        cancelLabel={t("common.cancel")}
+        title={labels.deleteConfirmTitle}
+        message={labels.deleteConfirmMessage}
+        confirmLabel={labels.deleteConfirmLabel}
+        cancelLabel={labels.cancel}
         variant="danger"
         onConfirm={() => void confirmDeleteSession()}
         onCancel={() => {

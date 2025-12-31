@@ -60,7 +60,7 @@ export const Footer: React.FC = () => {
     display: "flex",
     alignItems: "center",
     gap: "0.5rem",
-    color: "var(--color-text-muted)",
+    color: "var(--color-link-form)",
     textDecoration: "none",
     transition: "color 150ms ease",
     fontSize: "var(--font-size-xs)",
@@ -80,14 +80,14 @@ export const Footer: React.FC = () => {
     const link = e.currentTarget;
     const icon = link.querySelector("svg");
     if (isHover) {
-      link.style.color = "var(--element-fire-base)";
+      link.style.color = "var(--color-link-form-hover)";
       if (icon) {
-        icon.style.color = "var(--element-fire-base)";
+        icon.style.color = "var(--color-link-form-hover)";
       }
     } else {
-      link.style.color = "var(--color-text-muted)";
+      link.style.color = "var(--color-link-form)";
       if (icon) {
-        icon.style.color = "var(--color-text-muted)";
+        icon.style.color = "var(--color-link-form)";
       }
     }
   };
@@ -144,9 +144,6 @@ export const Footer: React.FC = () => {
   return (
     <footer role="contentinfo" style={footerStyle}>
       <div style={containerStyle}>
-        <div style={logoContainerStyle}>
-          <img src={logo} alt={t("footer.brand", { defaultValue: "FitVibe" })} style={logoStyle} />
-        </div>
         <nav aria-label={t("footer.navigationLabel", { defaultValue: "Footer navigation" })}>
           <div style={linksContainerStyle}>
             {footerLinks.map((link) => {
@@ -169,6 +166,10 @@ export const Footer: React.FC = () => {
             })}
           </div>
         </nav>
+
+        <div style={logoContainerStyle}>
+          <img src={logo} alt={t("footer.brand", { defaultValue: "FitVibe" })} style={logoStyle} />
+        </div>
       </div>
     </footer>
   );

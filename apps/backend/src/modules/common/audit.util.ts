@@ -39,6 +39,8 @@ export async function insertAudit({
   }
 
   try {
+    const shouldResolve = severity === "info";
+    const resolvedAt = shouldResolve ? new Date().toISOString() : null;
     await db("audit_log").insert({
       id: crypto.randomUUID(),
       actor_user_id: actorUserId,
@@ -49,6 +51,8 @@ export async function insertAudit({
       request_id: requestId,
       metadata,
       severity,
+      resolved_at: resolvedAt,
+      resolved_by_user_id: shouldResolve ? actorUserId : null,
       created_at: new Date().toISOString(),
     });
   } catch (error) {

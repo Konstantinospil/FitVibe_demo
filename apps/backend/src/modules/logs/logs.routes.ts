@@ -10,7 +10,12 @@ import { asyncHandler } from "../../utils/async-handler.js";
 import { requireAccessToken } from "../auth/auth.middleware.js";
 import { requireRole } from "../common/rbac.middleware.js";
 import { rateLimit } from "../common/rateLimiter.js";
-import { listLogsHandler, recentActivityHandler, updateLogHandler } from "./logs.controller.js";
+import {
+  bulkUpdateLogsHandler,
+  listLogsHandler,
+  recentActivityHandler,
+  updateLogHandler,
+} from "./logs.controller.js";
 
 export const logsRouter = Router();
 
@@ -34,6 +39,16 @@ logsRouter.get(
   "/recent-activity",
   rateLimit("logs_recent_activity", 60, 60),
   asyncHandler(recentActivityHandler),
+);
+
+/**
+ * PATCH /api/v1/logs/bulk
+ * Bulk update audit log resolution status
+ */
+logsRouter.patch(
+  "/bulk",
+  rateLimit("logs_bulk_update", 10, 60),
+  asyncHandler(bulkUpdateLogsHandler),
 );
 
 /**

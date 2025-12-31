@@ -194,6 +194,14 @@ export interface SystemReadOnlyStatus {
   timestamp: string;
 }
 
+export interface SystemConfigResponse {
+  readOnlyMode: boolean;
+  maintenanceMode: boolean;
+  maintenanceMessage?: string;
+  features: Record<string, boolean>;
+  timestamp: string;
+}
+
 export interface EnableReadOnlyRequest {
   reason?: string;
   estimatedDuration?: string;
@@ -264,6 +272,30 @@ export interface UserSearchResponse {
 export interface UserActionRequest {
   reason?: string;
   notes?: string;
+}
+
+export type OpsLightStatus = "green" | "yellow" | "red";
+
+export interface OpsStatusResponse {
+  backend: {
+    status: OpsLightStatus;
+    dbOk: boolean;
+    nginxOk: boolean;
+    clamavOk: boolean;
+    clamavEnabled: boolean;
+    readOnly: boolean;
+  };
+  frontend: {
+    status: OpsLightStatus;
+    ok: boolean;
+  };
+  counts: {
+    loggedInUsers: number;
+    unresolvedMessages: number;
+    violationReports: number;
+    unresolvedAuditLogs: number;
+    openIssues: number;
+  };
 }
 
 export type AuditLogSeverity = "info" | "warning" | "error" | "critical";
@@ -376,6 +408,11 @@ export async function getSystemReadOnlyStatus(): Promise<SystemReadOnlyStatus> {
   return res.data;
 }
 
+export async function getSystemConfig(): Promise<SystemConfigResponse> {
+  const res = await apiClient.get<SystemConfigResponse>("/api/v1/system/config");
+  return res.data;
+}
+
 export async function enableReadOnlyMode(
   payload: EnableReadOnlyRequest,
 ): Promise<{ success: boolean; message: string }> {
@@ -392,6 +429,46 @@ export async function disableReadOnlyMode(
   const res = await apiClient.post<{ success: boolean; message: string }>(
     "/api/v1/system/read-only/disable",
     payload,
+  );
+  return res.data;
+}
+
+export async function enableMaintenanceMode(payload?: {
+  message?: string;
+}): Promise<{ success: boolean; maintenanceMode: boolean; message?: string }> {
+  const res = await apiClient.post<{
+    success: boolean;
+    maintenanceMode: boolean;
+    message?: string;
+  }>("/api/v1/system/maintenance/enable", payload ?? {});
+  return res.data;
+}
+
+export async function disableMaintenanceMode(): Promise<{
+  success: boolean;
+  maintenanceMode: boolean;
+  message?: string;
+}> {
+  const res = await apiClient.post<{
+    success: boolean;
+    maintenanceMode: boolean;
+    message?: string;
+  }>("/api/v1/system/maintenance/disable", {});
+  return res.data;
+}
+
+export async function enableClamav(): Promise<{ success: boolean; clamavEnabled: boolean }> {
+  const res = await apiClient.post<{ success: boolean; clamavEnabled: boolean }>(
+    "/api/v1/system/clamav/enable",
+    {},
+  );
+  return res.data;
+}
+
+export async function disableClamav(): Promise<{ success: boolean; clamavEnabled: boolean }> {
+  const res = await apiClient.post<{ success: boolean; clamavEnabled: boolean }>(
+    "/api/v1/system/clamav/disable",
+    {},
   );
   return res.data;
 }
@@ -468,6 +545,11 @@ export async function getRecentActivity(limit = 10): Promise<AuditLogEntry[]> {
   return res.data.activity;
 }
 
+export async function getOpsStatus(): Promise<OpsStatusResponse> {
+  const res = await apiClient.get<OpsStatusResponse>("/api/v1/admin/ops/status");
+  return res.data;
+}
+
 export const messagesApi = {
   list: async (params?: {
     limit?: number;
@@ -512,6 +594,7 @@ export const auditLogsApi = {
     entityType?: string;
     actorUserId?: string;
     outcome?: string;
+    requestId?: string;
     severity?: AuditLogSeverity;
     resolved?: boolean;
     createdFrom?: string;
@@ -543,6 +626,13 @@ export const auditLogsApi = {
       updates,
     );
     return response.data.log;
+  },
+  bulkUpdateResolved: async (logIds: string[], resolved: boolean) => {
+    const response = await apiClient.patch<{ updated: number }>(`/api/v1/logs/bulk`, {
+      ids: logIds,
+      resolved,
+    });
+    return response.data.updated;
   },
 };
 

@@ -11,9 +11,14 @@ const ALLOWLIST_REGEX: RegExp[] = [
   /^\/health(?:\/.*)?$/i,
   /^\/metrics(?:\/.*)?$/i,
   /^\/\.well-known\/jwks\.json$/i,
+  /^\/(?:api\/v\d+\/)?system\/config$/i,
   /^\/(?:api\/v\d+\/)?system\/read-only\/status$/i,
   /^\/(?:api\/v\d+\/)?system\/read-only\/enable$/i,
   /^\/(?:api\/v\d+\/)?system\/read-only\/disable$/i,
+  /^\/(?:api\/v\d+\/)?system\/maintenance\/enable$/i,
+  /^\/(?:api\/v\d+\/)?system\/maintenance\/disable$/i,
+  /^\/(?:api\/v\d+\/)?system\/clamav\/enable$/i,
+  /^\/(?:api\/v\d+\/)?system\/clamav\/disable$/i,
   /^\/(?:api\/v\d+\/)?auth\/refresh$/i,
 ];
 

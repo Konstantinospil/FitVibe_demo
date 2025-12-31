@@ -14,7 +14,7 @@ import {
   getLegalDocumentVersions,
   type LegalDocumentVersions,
 } from "../services/api";
-import { useAuth } from "../contexts/AuthContext";
+import { useAuthOptional } from "../contexts/AuthContext";
 
 // Helper function to safely get array from translation
 const getTranslationArray = <T,>(translation: unknown, fallback: T[] = []): T[] => {
@@ -28,7 +28,7 @@ const Privacy: React.FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
-  const { isInitializing } = useAuth();
+  const { isInitializing } = useAuthOptional();
   const [showRevokeConfirm, setShowRevokeConfirm] = useState(false);
   const [isRevoking, setIsRevoking] = useState(false);
   const [legalStatus, setLegalStatus] = useState<LegalDocumentsStatus | null>(null);

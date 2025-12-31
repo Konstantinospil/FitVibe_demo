@@ -193,6 +193,15 @@ export async function listActionMappingsHandler(req: Request, res: Response): Pr
 }
 
 /**
+ * Admin operations status
+ * GET /api/v1/admin/ops/status
+ */
+export async function getOpsStatusHandler(_req: Request, res: Response): Promise<void> {
+  const status = await service.getOpsStatus();
+  res.json(status);
+}
+
+/**
  * Upsert action UI mapping
  * POST /api/v1/admin/action-mappings
  */

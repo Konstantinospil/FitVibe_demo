@@ -3,6 +3,8 @@ import { BrowserRouter, useLocation } from "react-router-dom";
 import * as AuthContext from "../contexts/AuthContext";
 import { ErrorBoundary } from "../components/ErrorBoundary.js";
 import PublicRoutes from "./PublicRoutes";
+import Maintenance from "../pages/Maintenance";
+import { useSystemConfig } from "../utils/featureFlags";
 const ProtectedRoutes = lazy(() => import("./ProtectedRoutes"));
 
 const loadingFallback = (
@@ -40,6 +42,7 @@ const RouterContent: React.FC = () => {
   const { isAuthenticated, isInitializing } = useAuthOrFallback();
   const location = useLocation();
   const isPublicPath = PUBLIC_PATHS.has(location.pathname);
+  const { config } = useSystemConfig();
 
   // Wait for initialization to complete before deciding which routes to render
   if (isInitializing) {
@@ -55,6 +58,10 @@ const RouterContent: React.FC = () => {
         Loading...
       </div>
     );
+  }
+
+  if (config.maintenanceMode) {
+    return <Maintenance message={config.maintenanceMessage} />;
   }
 
   return isAuthenticated ? <ProtectedRoutes /> : <PublicRoutes />;

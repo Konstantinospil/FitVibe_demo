@@ -8,6 +8,7 @@ import { authApi } from "../services/api";
 import logoFull from "../assets/logo_full.png";
 import logoFullDark from "../assets/logo_full_dark.png";
 import AdminDashboardV2 from "../pages/AdminDashboard_v2";
+import AdminStatusHeader from "./AdminStatusHeader";
 
 const Layout: React.FC = () => {
   const navigate = useNavigate();
@@ -96,6 +97,7 @@ const Layout: React.FC = () => {
         </div>
       </aside>
       <main style={{ flex: 1, padding: "2rem", overflow: "auto", background: colors.bg }}>
+        <AdminStatusHeader />
         <Outlet />
       </main>
     </div>

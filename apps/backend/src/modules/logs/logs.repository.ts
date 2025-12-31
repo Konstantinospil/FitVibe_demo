@@ -14,6 +14,7 @@ export async function listAuditLogs(query: ListAuditLogsQuery): Promise<AuditLog
     entityType,
     actorUserId,
     outcome,
+    requestId,
     severity,
     resolved,
     createdFrom,
@@ -62,6 +63,15 @@ export async function listAuditLogs(query: ListAuditLogsQuery): Promise<AuditLog
 
   if (outcome) {
     queryBuilder = queryBuilder.where("al.outcome", outcome);
+  }
+
+  if (requestId) {
+    const requestIdPattern = `${requestId}%`;
+    queryBuilder = queryBuilder.where((builder) => {
+      builder
+        .whereRaw("al.request_id::text ILIKE ?", [requestIdPattern])
+        .orWhereRaw("al.metadata->>'requestId' ILIKE ?", [requestIdPattern]);
+    });
   }
 
   if (severity) {
@@ -193,4 +203,24 @@ export async function updateAuditLog(
   }
 
   return row;
+}
+
+export async function updateAuditLogsResolved(
+  ids: string[],
+  updates: {
+    resolvedAt: string | null;
+    resolvedByUserId: string | null;
+  },
+): Promise<number> {
+  if (ids.length === 0) {
+    return 0;
+  }
+
+  const updatePayload = {
+    resolved_at: updates.resolvedAt,
+    resolved_by_user_id: updates.resolvedByUserId,
+  };
+
+  const updatedCount = await db("audit_log").whereIn("id", ids).update(updatePayload);
+  return updatedCount;
 }

@@ -1,0 +1,35 @@
+<svg width="960" height="540" viewBox="0 0 960 540" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <title>Maintenance athlete illustration</title>
+  <desc>Stylized athlete digging a hole with a shovel on a training ground.</desc>
+  <rect width="960" height="540" rx="32" fill="#0B1220"/>
+  <rect y="350" width="960" height="190" fill="#0F1B2E"/>
+  <ellipse cx="720" cy="420" rx="110" ry="30" fill="#0A0F1C"/>
+  <ellipse cx="720" cy="410" rx="80" ry="20" fill="#121B2F"/>
+  <g stroke="#F8FAFC" stroke-width="10" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="300" cy="180" r="36" fill="#111D33"/>
+    <path d="M280 216L250 280" />
+    <path d="M320 214L372 252" />
+    <path d="M250 280L220 360" />
+    <path d="M372 252L420 330" />
+    <path d="M270 260L330 250" />
+    <path d="M420 330L520 330" />
+  </g>
+  <g stroke="#F97316" stroke-width="10" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M520 330L520 210" />
+    <path d="M520 210L590 170" />
+  </g>
+  <g stroke="#F8FAFC" stroke-width="10" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M590 170L660 150" />
+  </g>
+  <rect x="650" y="130" width="90" height="30" rx="12" fill="#F97316"/>
+  <circle cx="300" cy="180" r="18" fill="#38BDF8"/>
+  <path
+    d="M120 420C160 380 210 360 270 360C340 360 400 390 440 430"
+    stroke="#334155"
+    stroke-width="8"
+    stroke-linecap="round"
+  />
+  <circle cx="760" cy="140" r="36" fill="#0F172A" stroke="#334155" stroke-width="6"/>
+  <path d="M730 140H790" stroke="#F8FAFC" stroke-width="8" stroke-linecap="round" />
+  <path d="M760 110V170" stroke="#F8FAFC" stroke-width="8" stroke-linecap="round" />
+</svg>

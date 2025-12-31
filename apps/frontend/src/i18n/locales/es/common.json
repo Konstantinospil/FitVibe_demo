@@ -2,9 +2,12 @@
   "navigation": {
     "home": "Inicio",
     "sessions": "Sesiones",
+    "planner": "Planificador",
+    "logger": "Registro",
     "insights": "Perspectivas",
     "profile": "Perfil",
     "settings": "Configuración",
+    "notFound": "No encontrado",
     "signOut": "Cerrar sesión",
     "you": "Tú",
     "activeSession": "Sesión activa",
@@ -56,6 +59,21 @@
     "title": "Preferencias, privacidad y objetivos de rendimiento.",
     "description": "Establece visibilidad predeterminada, unidades preferidas y objetivos de mejores personales para que cada sesión compartida cuente tu historia.",
     "edit": "Editar perfil",
+    "social": {
+      "title": "Información social",
+      "description": "Añade cómo quieres ser visto y recuerda tus datos básicos."
+    },
+    "body": {
+      "title": "Medidas corporales",
+      "description": "Introduce estadísticas y medidas actuales alrededor del mapa corporal.",
+      "mapLabel": "Mapa de medidas",
+      "mapAriaLabel": "Mapa de medidas corporales",
+      "note": "Usa momentos y postura consistentes para mantener comparables las mediciones."
+    },
+    "performance": {
+      "title": "Métricas de rendimiento",
+      "description": "Registra los hitos que te importan y actualízalos a medida que progresas."
+    },
     "sections": {
       "visibility": {
         "title": "Visibilidad",
@@ -419,11 +437,23 @@
     "eyebrow": "Arquitectura de sesión",
     "title": "Diseña bloques de entrenamiento con intención.",
     "description": "Arrastra, duplica y periodiza entrenamientos. El planificador mantiene la intensidad, el volumen y las proporciones de descarga en el objetivo.",
+    "sessionDetailsTitle": "Detalles de la sesión",
+    "titleOptional": "Título (opcional)",
+    "plannedDate": "Fecha planificada",
+    "time": "Hora",
+    "notesOptional": "Notas (opcional)",
+    "addExercises": "Agregar ejercicios",
     "editBlock": "Editar bloque",
     "sessionTitlePlaceholder": "p. ej., Fuerza Tren Superior",
     "notesPlaceholder": "Agrega notas de sesión, objetivos de entrenamiento o contexto...",
     "exerciseSearchPlaceholder": "Buscar ejercicios (p. ej., sentadilla, press banca)...",
     "searchExercises": "Buscar ejercicios",
+    "exercisesTitle": "Ejercicios ({{count}})",
+    "setsLabel": "Series",
+    "repsLabel": "Repeticiones",
+    "weightLabel": "Peso (kg)",
+    "rpeLabel": "RPE (1-10)",
+    "restLabel": "Descanso (seg.)",
     "moveUp": "Mover hacia arriba",
     "moveDown": "Mover hacia abajo",
     "removeExercise": "Eliminar ejercicio",
@@ -431,7 +461,9 @@
     "weightPlaceholder": "80",
     "rpePlaceholder": "7",
     "speedPlaceholder": "90",
-    "exerciseNotesPlaceholder": "p. ej., Enfócate en la forma, tempo más lento en excéntricos"
+    "exerciseNotesPlaceholder": "p. ej., Enfócate en la forma, tempo más lento en excéntricos",
+    "saveSession": "Guardar sesión",
+    "saveError": "No se pudo guardar la sesión. Inténtalo de nuevo."
   },
   "sessions": {
     "eyebrow": "Gestión de entrenamiento",
@@ -511,7 +543,9 @@
     "next": "Siguiente",
     "previous": "Anterior",
     "submit": "Enviar",
-    "confirm": "Confirmar"
+    "confirm": "Confirmar",
+    "saving": "Guardando...",
+    "searching": "Buscando..."
   },
   "vibes": {
     "strength": {
@@ -652,6 +686,7 @@
         "imperial": "Imperial (lb, mi)"
       },
       "language": "Idioma",
+      "theme": "Tema",
       "languageOptions": {
         "en": "Inglés",
         "de": "Deutsch (German)"
@@ -702,6 +737,7 @@
       "deleteConfirmTitle": "Eliminar Cuenta",
       "deleteConfirmMessage": "Esto eliminará permanentemente tu cuenta y todos tus datos. Esta acción no se puede deshacer. ¿Estás absolutamente seguro?",
       "deleteConfirmLabel": "Sí, Eliminar Mi Cuenta",
+      "confirmDeleteLabel": "Confirmar eliminación",
       "deletePasswordPrompt": "Por favor, ingresa tu contraseña para confirmar la eliminación de la cuenta:",
       "deleteSuccess": "Tu cuenta ha sido programada para eliminación. Serás desconectado ahora.",
       "deleteError": "Error al eliminar la cuenta. Por favor, inténtalo de nuevo.",
@@ -721,7 +757,48 @@
     "userManagement": {
       "title": "Gestión de Usuarios",
       "description": "Gestionar cuentas de usuario y permisos",
-      "searchPlaceholder": "Buscar por correo electrónico, nombre de usuario o ID..."
+      "searchPlaceholder": "Buscar por correo electrónico, nombre de usuario o ID...",
+      "searchButton": "Buscar",
+      "searching": "Buscando...",
+      "error": "No se pudo buscar usuarios. Inténtalo de nuevo.",
+      "emptyTitle": "No se encontraron usuarios",
+      "emptyDescription": "Ningún usuario coincide con tu búsqueda. Prueba otra consulta.",
+      "actionLabels": {
+        "suspend": "Suspender",
+        "ban": "Bloquear",
+        "activate": "Activar",
+        "delete": "Eliminar"
+      },
+      "actions": {
+        "suspend": {
+          "title": "Suspender usuario",
+          "confirm": "Sí, suspender usuario",
+          "success": "Usuario suspendido correctamente",
+          "error": "No se pudo suspender al usuario. Inténtalo de nuevo.",
+          "body": "¿Seguro que quieres suspender a este usuario? No podrá acceder a su cuenta."
+        },
+        "ban": {
+          "title": "Bloquear usuario",
+          "confirm": "Sí, bloquear usuario",
+          "success": "Usuario bloqueado correctamente",
+          "error": "No se pudo bloquear al usuario. Inténtalo de nuevo.",
+          "body": "¿Seguro que quieres bloquear a este usuario? No podrá acceder a su cuenta."
+        },
+        "activate": {
+          "title": "Activar usuario",
+          "confirm": "Sí, activar usuario",
+          "success": "Usuario activado correctamente",
+          "error": "No se pudo activar al usuario. Inténtalo de nuevo.",
+          "body": "¿Seguro que quieres activar a este usuario?"
+        },
+        "delete": {
+          "title": "Eliminar usuario",
+          "confirm": "Sí, eliminar usuario",
+          "success": "Usuario eliminado correctamente",
+          "error": "No se pudo eliminar al usuario. Inténtalo de nuevo.",
+          "body": "¿Seguro que quieres eliminar a este usuario? Esta acción no se puede deshacer."
+        }
+      }
     },
     "systemControls": {
       "title": "Controles del Sistema",

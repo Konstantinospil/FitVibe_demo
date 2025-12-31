@@ -30,17 +30,17 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
   const signIn = useAuthStore((state) => state.signIn);
   const signOut = useAuthStore((state) => state.signOut);
   const updateUser = useAuthStore((state) => state.updateUser);
-  const [isInitializing, setIsInitializing] = useState(true);
+  const hasAuthFlag =
+    typeof window !== "undefined" && window.sessionStorage
+      ? window.sessionStorage.getItem("fitvibe:auth") === "1"
+      : false;
+  const [isInitializing, setIsInitializing] = useState(hasAuthFlag);
 
   // Restore authentication state on page load/refresh
   useEffect(() => {
     const restoreSession = async () => {
       try {
-        // Check if there's an auth flag in sessionStorage
-        const authFlag =
-          typeof window !== "undefined" && window.sessionStorage
-            ? window.sessionStorage.getItem("fitvibe:auth")
-            : null;
+        const authFlag = hasAuthFlag ? "1" : null;
 
         // If auth flag exists, verify session with backend
         if (authFlag === "1") {
@@ -88,7 +88,7 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
     };
 
     void restoreSession();
-  }, [signIn]);
+  }, [hasAuthFlag, signIn]);
 
   const value = useMemo(
     () => ({
@@ -126,4 +126,24 @@ const useAuth = (): AuthContextValue => {
   return context;
 };
 
-export { AuthProvider, useAuth };
+const useAuthOptional = (): AuthContextValue => {
+  const context = useContext(AuthContext);
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const user = useAuthStore((state) => state.user);
+  const signIn = useAuthStore((state) => state.signIn);
+  const signOut = useAuthStore((state) => state.signOut);
+  const updateUser = useAuthStore((state) => state.updateUser);
+
+  return (
+    context ?? {
+      isAuthenticated,
+      user,
+      signIn,
+      signOut,
+      updateUser,
+      isInitializing: false,
+    }
+  );
+};
+
+export { AuthProvider, useAuth, useAuthOptional };

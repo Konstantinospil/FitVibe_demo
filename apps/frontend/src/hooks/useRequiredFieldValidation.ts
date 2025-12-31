@@ -61,11 +61,13 @@ export function useRequiredFieldValidation(
 
     // Add event listeners to form (using event delegation)
     form.addEventListener("input", handleInput);
+    form.addEventListener("change", handleInput);
     form.addEventListener("invalid", handleInvalid, true);
 
     // Cleanup: remove event listeners
     return () => {
       form.removeEventListener("input", handleInput);
+      form.removeEventListener("change", handleInput);
       form.removeEventListener("invalid", handleInvalid, true);
     };
   }, [formRef, t]);

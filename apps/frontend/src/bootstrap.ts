@@ -1,13 +1,34 @@
-// Always load React app for all routes - let React Router handle routing
-// The static login shell in HTML is just a fallback for no-JS scenarios
-// Session restoration is handled by AuthContext, so we don't check auth here
-// This prevents premature redirects before React can restore the session
 const pathname = typeof window !== "undefined" ? window.location.pathname : "";
-const useLoginShell = pathname === "/login";
+const sessionFlag =
+  typeof window !== "undefined" && window.sessionStorage
+    ? window.sessionStorage.getItem("fitvibe:auth")
+    : null;
+const isAuthenticated = sessionFlag === "1";
 
-if (useLoginShell) {
+const publicRoutes = new Set([
+  "/login",
+  "/register",
+  "/forgot-password",
+  "/terms",
+  "/privacy",
+  "/cookie",
+  "/terms-reacceptance",
+]);
+
+const isPublicRoute =
+  publicRoutes.has(pathname) || pathname.startsWith("/login/") || pathname.startsWith("/public/");
+
+if (!isAuthenticated && !isPublicRoute) {
+  if (typeof window !== "undefined") {
+    window.location.replace("/login");
+  }
+} else if (!isAuthenticated && pathname === "/login") {
   void import("./public/login-shell");
 } else {
+  const shell = typeof document !== "undefined" ? document.getElementById("login-shell") : null;
+  if (shell) {
+    shell.remove();
+  }
   void import("./main");
 }
 

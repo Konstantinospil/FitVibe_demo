@@ -38,7 +38,7 @@ const PageIntro: React.FC<PageIntroProps> = ({
   title,
   description,
   children,
-  sectionPadding = "5rem 1.5rem",
+  sectionPadding = "clamp(2rem, 8vw, 5rem) clamp(1rem, 4vw, 1.5rem)",
   cardMaxWidth = "900px",
 }) => (
   <section

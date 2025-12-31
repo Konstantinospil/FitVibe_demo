@@ -33,6 +33,10 @@ const Planner: React.FC = () => {
   const navigate = useNavigate();
   const formRef = useRef<HTMLFormElement>(null);
   useRequiredFieldValidation(formRef, t);
+  const i18nLabel = (key: string, fallback: string) => {
+    const value = t(key);
+    return value === key ? fallback : value;
+  };
 
   // Session metadata
   const [sessionTitle, setSessionTitle] = useState("");
@@ -199,11 +203,16 @@ const Planner: React.FC = () => {
       void navigate("/sessions");
     } catch (error: unknown) {
       logger.apiError("Failed to create session", error, "/api/v1/sessions", "POST");
-      setSaveError("Failed to save session. Please try again.");
+      setSaveError(t("planner.saveError"));
     } finally {
       setIsSaving(false);
     }
   };
+
+  const searchLabel = i18nLabel("planner.searchExercises", "Search exercises");
+  const moveUpLabel = i18nLabel("planner.moveUp", "Move up");
+  const moveDownLabel = i18nLabel("planner.moveDown", "Move down");
+  const removeExerciseLabel = i18nLabel("planner.removeExercise", "Remove exercise");
 
   return (
     <PageIntro
@@ -216,7 +225,7 @@ const Planner: React.FC = () => {
         {/* Session Metadata Card */}
         <Card>
           <CardHeader>
-            <CardTitle>Session Details</CardTitle>
+            <CardTitle>{t("planner.sessionDetailsTitle")}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid--gap-md">
@@ -225,7 +234,7 @@ const Planner: React.FC = () => {
                   htmlFor="session-title"
                   className="form-label-text block mb-05 font-weight-600"
                 >
-                  Title (optional)
+                  {t("planner.titleOptional")}
                 </label>
                 <input
                   id="session-title"
@@ -233,23 +242,18 @@ const Planner: React.FC = () => {
                   value={sessionTitle}
                   onChange={(e) => setSessionTitle(e.target.value)}
                   placeholder={t("planner.sessionTitlePlaceholder")}
-                  className="form-input"
-                  style={{ background: "var(--color-surface)" }}
+                  className="form-input form-input--surface"
                 />
               </div>
 
-              <div className="grid" style={{ gridTemplateColumns: "2fr 1fr", gap: "1rem" }}>
+              <div className="grid grid--two-one grid--gap-md">
                 <div>
                   <label
                     htmlFor="planned-date"
                     className="form-label-text block mb-05 font-weight-600"
                   >
-                    <Calendar
-                      size={16}
-                      className="icon"
-                      style={{ marginRight: "0.5rem", verticalAlign: "middle" }}
-                    />
-                    Planned Date
+                    <Calendar size={16} className="icon icon--inline" />
+                    {t("planner.plannedDate")}
                   </label>
                   <input
                     id="planned-date"
@@ -258,8 +262,7 @@ const Planner: React.FC = () => {
                     value={plannedDate}
                     onChange={(e) => setPlannedDate(e.target.value)}
                     required
-                    className="form-input"
-                    style={{ background: "var(--color-surface)" }}
+                    className="form-input form-input--surface"
                   />
                 </div>
 
@@ -268,15 +271,14 @@ const Planner: React.FC = () => {
                     htmlFor="planned-time"
                     className="form-label-text block mb-05 font-weight-600"
                   >
-                    Time
+                    {t("planner.time")}
                   </label>
                   <input
                     id="planned-time"
                     type="time"
                     value={plannedTime}
                     onChange={(e) => setPlannedTime(e.target.value)}
-                    className="form-input"
-                    style={{ background: "var(--color-surface)" }}
+                    className="form-input form-input--surface"
                   />
                 </div>
               </div>
@@ -286,7 +288,7 @@ const Planner: React.FC = () => {
                   htmlFor="session-notes"
                   className="form-label-text block mb-05 font-weight-600"
                 >
-                  Notes (optional)
+                  {t("planner.notesOptional")}
                 </label>
                 <textarea
                   id="session-notes"
@@ -294,12 +296,7 @@ const Planner: React.FC = () => {
                   onChange={(e) => setSessionNotes(e.target.value)}
                   placeholder={t("planner.notesPlaceholder")}
                   rows={3}
-                  className="form-input"
-                  style={{
-                    background: "var(--color-surface)",
-                    fontFamily: "inherit",
-                    resize: "vertical",
-                  }}
+                  className="form-input form-input--surface planner-textarea"
                 />
               </div>
             </div>
@@ -309,79 +306,39 @@ const Planner: React.FC = () => {
         {/* Exercise Search */}
         <Card>
           <CardHeader>
-            <CardTitle>Add Exercises</CardTitle>
+            <CardTitle>{t("planner.addExercises")}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="relative">
               <div className="relative">
+                <label htmlFor="exercise-search" className="sr-only">
+                  {searchLabel}
+                </label>
                 <Search size={20} className="search-icon" />
                 <input
+                  id="exercise-search"
                   type="text"
                   value={exerciseSearch}
                   onChange={(e) => setExerciseSearch(e.target.value)}
                   onFocus={() => exerciseResults.length > 0 && setShowSearchResults(true)}
                   placeholder={t("planner.exerciseSearchPlaceholder")}
-                  aria-label={t("planner.searchExercises")}
-                  style={{
-                    width: "100%",
-                    padding: "0.75rem 1rem 0.75rem 3rem",
-                    borderRadius: "12px",
-                    border: "1px solid var(--color-border)",
-                    background: "var(--color-surface)",
-                    color: "var(--color-text-primary)",
-                    fontSize: "1rem",
-                  }}
+                  aria-label={searchLabel}
+                  className="planner-search-input"
                 />
               </div>
 
               {/* Search Results Dropdown */}
               {showSearchResults && exerciseResults.length > 0 && (
-                <div
-                  style={{
-                    position: "absolute",
-                    top: "calc(100% + 0.5rem)",
-                    left: 0,
-                    right: 0,
-                    background: "var(--color-surface)",
-                    border: "1px solid var(--color-border)",
-                    borderRadius: "12px",
-                    boxShadow: "var(--shadow-elevated)",
-                    maxHeight: "300px",
-                    overflowY: "auto",
-                    zIndex: 10,
-                  }}
-                >
+                <div className="planner-search-results">
                   {exerciseResults.map((exercise) => (
                     <button
                       key={exercise.id}
                       onClick={() => addExercise(exercise)}
-                      style={{
-                        width: "100%",
-                        padding: "1rem",
-                        border: "none",
-                        background: "transparent",
-                        color: "var(--color-text-primary)",
-                        textAlign: "left",
-                        cursor: "pointer",
-                        borderBottom: "1px solid var(--color-border)",
-                        transition: "background 150ms ease",
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.background = "rgba(52, 211, 153, 0.08)";
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.background = "transparent";
-                      }}
+                      className="planner-search-result"
                     >
-                      <div style={{ fontWeight: 600 }}>{exercise.name}</div>
+                      <div className="font-weight-600">{exercise.name}</div>
                       {exercise.muscle_group && (
-                        <div
-                          style={{
-                            fontSize: "0.85rem",
-                            color: "var(--color-text-secondary)",
-                            marginTop: "0.25rem",
-                          }}
-                        >
+                        <div className="planner-search-result-meta">
                           {exercise.muscle_group}
                           {exercise.equipment && ` • ${exercise.equipment}`}
                         </div>
@@ -391,17 +348,7 @@ const Planner: React.FC = () => {
                 </div>
               )}
 
-              {isSearching && (
-                <div
-                  style={{
-                    marginTop: "0.5rem",
-                    color: "var(--color-text-secondary)",
-                    fontSize: "0.9rem",
-                  }}
-                >
-                  Searching...
-                </div>
-              )}
+              {isSearching && <div className="planner-search-status">{t("common.searching")}</div>}
             </div>
           </CardContent>
         </Card>
@@ -410,121 +357,56 @@ const Planner: React.FC = () => {
         {exercises.length > 0 && (
           <Card>
             <CardHeader>
-              <CardTitle>Exercises ({exercises.length})</CardTitle>
+              <CardTitle>{t("planner.exercisesTitle", { count: exercises.length })}</CardTitle>
             </CardHeader>
             <CardContent>
-              <div style={{ display: "grid", gap: "1rem" }}>
+              <div className="grid grid--gap-md">
                 {exercises.map((ex, index) => (
-                  <div
-                    key={ex.tempId}
-                    style={{
-                      padding: "1.25rem",
-                      background: "rgba(15, 23, 42, 0.4)",
-                      borderRadius: "14px",
-                      border: "1px solid rgba(148, 163, 184, 0.18)",
-                    }}
-                  >
+                  <div key={ex.tempId} className="planner-exercise-card">
                     {/* Exercise Header */}
-                    <div
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "0.75rem",
-                        marginBottom: "1rem",
-                      }}
-                    >
-                      <div style={{ display: "flex", flexDirection: "column", gap: "0.25rem" }}>
+                    <div className="planner-exercise-header">
+                      <div className="planner-move-buttons">
                         <button
                           onClick={() => moveExercise(ex.tempId, "up")}
                           disabled={index === 0}
-                          aria-label={t("planner.moveUp")}
-                          style={{
-                            background: "transparent",
-                            border: "none",
-                            color:
-                              index === 0
-                                ? "var(--color-text-muted)"
-                                : "var(--color-text-secondary)",
-                            cursor: index === 0 ? "not-allowed" : "pointer",
-                            padding: "0.25rem",
-                            lineHeight: 0,
-                          }}
+                          aria-label={moveUpLabel}
+                          className="planner-move-button"
                         >
                           ▲
                         </button>
                         <button
                           onClick={() => moveExercise(ex.tempId, "down")}
                           disabled={index === exercises.length - 1}
-                          aria-label={t("planner.moveDown")}
-                          style={{
-                            background: "transparent",
-                            border: "none",
-                            color:
-                              index === exercises.length - 1
-                                ? "var(--color-text-muted)"
-                                : "var(--color-text-secondary)",
-                            cursor: index === exercises.length - 1 ? "not-allowed" : "pointer",
-                            padding: "0.25rem",
-                            lineHeight: 0,
-                          }}
+                          aria-label={moveDownLabel}
+                          className="planner-move-button"
                         >
                           ▼
                         </button>
                       </div>
 
-                      <div style={{ flex: 1 }}>
-                        <div style={{ fontWeight: 600, fontSize: "1.05rem" }}>
+                      <div className="flex-1">
+                        <div className="planner-exercise-title">
                           {index + 1}. {ex.exerciseName}
                         </div>
                         {ex.exercise?.muscle_group && (
-                          <div
-                            style={{
-                              fontSize: "0.85rem",
-                              color: "var(--color-text-secondary)",
-                              marginTop: "0.25rem",
-                            }}
-                          >
-                            {ex.exercise.muscle_group}
-                          </div>
+                          <div className="planner-exercise-meta">{ex.exercise.muscle_group}</div>
                         )}
                       </div>
 
                       <button
                         onClick={() => removeExercise(ex.tempId)}
-                        aria-label={t("planner.removeExercise")}
-                        style={{
-                          background: "transparent",
-                          border: "1px solid var(--color-border)",
-                          borderRadius: "8px",
-                          padding: "0.5rem",
-                          color: "var(--color-danger)",
-                          cursor: "pointer",
-                          lineHeight: 0,
-                        }}
+                        aria-label={removeExerciseLabel}
+                        className="planner-remove-button"
                       >
                         <Trash2 size={18} />
                       </button>
                     </div>
 
                     {/* Exercise Parameters */}
-                    <div
-                      style={{
-                        display: "grid",
-                        gridTemplateColumns: "repeat(auto-fit, minmax(120px, 1fr))",
-                        gap: "0.75rem",
-                      }}
-                    >
+                    <div className="planner-fields-grid">
                       <div>
-                        <label
-                          htmlFor={`${ex.tempId}-sets`}
-                          style={{
-                            display: "block",
-                            fontSize: "0.85rem",
-                            marginBottom: "0.35rem",
-                            fontWeight: 600,
-                          }}
-                        >
-                          Sets
+                        <label htmlFor={`${ex.tempId}-sets`} className="planner-field-label">
+                          {t("planner.setsLabel")}
                         </label>
                         <input
                           id={`${ex.tempId}-sets`}
@@ -534,28 +416,13 @@ const Planner: React.FC = () => {
                           onChange={(e) =>
                             updateExercise(ex.tempId, { sets: parseInt(e.target.value) || 1 })
                           }
-                          style={{
-                            width: "100%",
-                            padding: "0.6rem",
-                            borderRadius: "8px",
-                            border: "1px solid var(--color-border)",
-                            background: "var(--color-surface)",
-                            color: "var(--color-text-primary)",
-                          }}
+                          className="planner-field-input"
                         />
                       </div>
 
                       <div>
-                        <label
-                          htmlFor={`${ex.tempId}-reps`}
-                          style={{
-                            display: "block",
-                            fontSize: "0.85rem",
-                            marginBottom: "0.35rem",
-                            fontWeight: 600,
-                          }}
-                        >
-                          Reps
+                        <label htmlFor={`${ex.tempId}-reps`} className="planner-field-label">
+                          {t("planner.repsLabel")}
                         </label>
                         <input
                           id={`${ex.tempId}-reps`}
@@ -566,28 +433,13 @@ const Planner: React.FC = () => {
                             updateExercise(ex.tempId, { reps: parseInt(e.target.value) || null })
                           }
                           placeholder={t("planner.repsPlaceholder")}
-                          style={{
-                            width: "100%",
-                            padding: "0.6rem",
-                            borderRadius: "8px",
-                            border: "1px solid var(--color-border)",
-                            background: "var(--color-surface)",
-                            color: "var(--color-text-primary)",
-                          }}
+                          className="planner-field-input"
                         />
                       </div>
 
                       <div>
-                        <label
-                          htmlFor={`${ex.tempId}-weight`}
-                          style={{
-                            display: "block",
-                            fontSize: "0.85rem",
-                            marginBottom: "0.35rem",
-                            fontWeight: 600,
-                          }}
-                        >
-                          Weight (kg)
+                        <label htmlFor={`${ex.tempId}-weight`} className="planner-field-label">
+                          {t("planner.weightLabel")}
                         </label>
                         <input
                           id={`${ex.tempId}-weight`}
@@ -601,28 +453,13 @@ const Planner: React.FC = () => {
                             })
                           }
                           placeholder={t("planner.weightPlaceholder")}
-                          style={{
-                            width: "100%",
-                            padding: "0.6rem",
-                            borderRadius: "8px",
-                            border: "1px solid var(--color-border)",
-                            background: "var(--color-surface)",
-                            color: "var(--color-text-primary)",
-                          }}
+                          className="planner-field-input"
                         />
                       </div>
 
                       <div>
-                        <label
-                          htmlFor={`${ex.tempId}-rpe`}
-                          style={{
-                            display: "block",
-                            fontSize: "0.85rem",
-                            marginBottom: "0.35rem",
-                            fontWeight: 600,
-                          }}
-                        >
-                          RPE (1-10)
+                        <label htmlFor={`${ex.tempId}-rpe`} className="planner-field-label">
+                          {t("planner.rpeLabel")}
                         </label>
                         <input
                           id={`${ex.tempId}-rpe`}
@@ -635,28 +472,13 @@ const Planner: React.FC = () => {
                             updateExercise(ex.tempId, { rpe: val >= 1 && val <= 10 ? val : null });
                           }}
                           placeholder={t("planner.rpePlaceholder")}
-                          style={{
-                            width: "100%",
-                            padding: "0.6rem",
-                            borderRadius: "8px",
-                            border: "1px solid var(--color-border)",
-                            background: "var(--color-surface)",
-                            color: "var(--color-text-primary)",
-                          }}
+                          className="planner-field-input"
                         />
                       </div>
 
                       <div>
-                        <label
-                          htmlFor={`${ex.tempId}-rest`}
-                          style={{
-                            display: "block",
-                            fontSize: "0.85rem",
-                            marginBottom: "0.35rem",
-                            fontWeight: 600,
-                          }}
-                        >
-                          Rest (sec)
+                        <label htmlFor={`${ex.tempId}-rest`} className="planner-field-label">
+                          {t("planner.restLabel")}
                         </label>
                         <input
                           id={`${ex.tempId}-rest`}
@@ -668,30 +490,15 @@ const Planner: React.FC = () => {
                             updateExercise(ex.tempId, { restSec: parseInt(e.target.value) || null })
                           }
                           placeholder={t("planner.speedPlaceholder")}
-                          style={{
-                            width: "100%",
-                            padding: "0.6rem",
-                            borderRadius: "8px",
-                            border: "1px solid var(--color-border)",
-                            background: "var(--color-surface)",
-                            color: "var(--color-text-primary)",
-                          }}
+                          className="planner-field-input"
                         />
                       </div>
                     </div>
 
                     {/* Exercise Notes */}
-                    <div style={{ marginTop: "0.75rem" }}>
-                      <label
-                        htmlFor={`${ex.tempId}-notes`}
-                        style={{
-                          display: "block",
-                          fontSize: "0.85rem",
-                          marginBottom: "0.35rem",
-                          fontWeight: 600,
-                        }}
-                      >
-                        Notes (optional)
+                    <div className="planner-notes">
+                      <label htmlFor={`${ex.tempId}-notes`} className="planner-field-label">
+                        {t("planner.notesOptional")}
                       </label>
                       <input
                         id={`${ex.tempId}-notes`}
@@ -699,14 +506,7 @@ const Planner: React.FC = () => {
                         value={ex.notes}
                         onChange={(e) => updateExercise(ex.tempId, { notes: e.target.value })}
                         placeholder={t("planner.exerciseNotesPlaceholder")}
-                        style={{
-                          width: "100%",
-                          padding: "0.6rem",
-                          borderRadius: "8px",
-                          border: "1px solid var(--color-border)",
-                          background: "var(--color-surface)",
-                          color: "var(--color-text-primary)",
-                        }}
+                        className="planner-field-input"
                       />
                     </div>
                   </div>
@@ -719,28 +519,15 @@ const Planner: React.FC = () => {
         {/* Save Actions */}
         <Card>
           <CardContent>
-            {saveError && (
-              <div
-                style={{
-                  padding: "1rem",
-                  background: "rgba(239, 68, 68, 0.1)",
-                  border: "1px solid rgba(239, 68, 68, 0.3)",
-                  borderRadius: "12px",
-                  color: "var(--color-danger)",
-                  marginBottom: "1rem",
-                }}
-              >
-                {saveError}
-              </div>
-            )}
+            {saveError && <div className="planner-save-error">{saveError}</div>}
 
-            <div style={{ display: "flex", gap: "1rem", justifyContent: "flex-end" }}>
+            <div className="flex flex--gap-md flex--justify-end">
               <Button
                 variant="secondary"
                 onClick={() => void navigate("/sessions")}
                 disabled={isSaving}
               >
-                Cancel
+                {t("common.cancel")}
               </Button>
               <Button
                 type="submit"
@@ -749,7 +536,7 @@ const Planner: React.FC = () => {
                 leftIcon={<Save size={18} />}
                 disabled={exercises.length === 0}
               >
-                {isSaving ? "Saving..." : "Save Session"}
+                {isSaving ? t("common.saving") : t("planner.saveSession")}
               </Button>
             </div>
           </CardContent>

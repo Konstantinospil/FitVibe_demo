@@ -3,6 +3,7 @@
  */
 
 import { HttpError } from "../../utils/http.js";
+import net from "node:net";
 import { logAudit } from "../common/audit.util.js";
 import * as repo from "./admin.repository.js";
 import * as authService from "../auth/auth.service.js";
@@ -25,6 +26,8 @@ import { env } from "../../config/env.js";
 import { logger } from "../../config/logger.js";
 import crypto from "crypto";
 import { v4 as uuidv4 } from "uuid";
+import { checkHealth as checkClamavHealth } from "../../services/antivirus.service.js";
+import db from "../../db/index.js";
 import type {
   FeedReport,
   UserSearchResult,
@@ -33,13 +36,97 @@ import type {
   ListReportsQuery,
   SearchUsersQuery,
   ActionUiMapping,
+  AdminOpsStatus,
 } from "./admin.types.js";
+
+const NGINX_HOST = "127.0.0.1";
+const NGINX_PORT = 80;
+const FRONTEND_HOST = "127.0.0.1";
+const FRONTEND_PORT = 5173;
+const PORT_TIMEOUT_MS = 500;
+
+const checkPortOpen = (host: string, port: number, timeoutMs = PORT_TIMEOUT_MS) =>
+  new Promise<boolean>((resolve) => {
+    const socket = new net.Socket();
+    let settled = false;
+
+    const finalize = (ok: boolean) => {
+      if (settled) {
+        return;
+      }
+      settled = true;
+      socket.destroy();
+      resolve(ok);
+    };
+
+    socket.setTimeout(timeoutMs);
+    socket.once("connect", () => finalize(true));
+    socket.once("error", () => finalize(false));
+    socket.once("timeout", () => finalize(false));
+
+    socket.connect(port, host);
+  });
+
+const checkDatabase = async () => {
+  try {
+    await db.raw("SELECT 1");
+    return true;
+  } catch {
+    return false;
+  }
+};
 
 /**
  * List feed reports with optional filtering
  */
 export async function listReports(query: ListReportsQuery): Promise<FeedReport[]> {
   return await repo.listFeedReports(query);
+}
+
+export async function getOpsStatus(): Promise<AdminOpsStatus> {
+  const [dbOk, nginxOk, clamavOk, readOnly, frontendOk] = await Promise.all([
+    checkDatabase(),
+    checkPortOpen(NGINX_HOST, NGINX_PORT),
+    checkClamavHealth(),
+    Promise.resolve(env.readOnlyMode),
+    checkPortOpen(FRONTEND_HOST, FRONTEND_PORT),
+  ]);
+
+  const [loggedInUsers, unresolvedMessages, violationReports, unresolvedAuditLogs] =
+    await Promise.all([
+      repo.countActiveSessions(),
+      repo.countOpenMessages(),
+      repo.countPendingReports(),
+      repo.countUnresolvedAuditLogs(),
+    ]);
+
+  const backendStatus: AdminOpsStatus["backend"]["status"] =
+    !dbOk || !nginxOk ? "red" : readOnly || !clamavOk ? "yellow" : "green";
+  const frontendStatus: AdminOpsStatus["frontend"]["status"] = frontendOk ? "green" : "red";
+
+  const openIssues = unresolvedMessages + violationReports + unresolvedAuditLogs;
+
+  return {
+    backend: {
+      status: backendStatus,
+      dbOk,
+      nginxOk,
+      clamavOk,
+      clamavEnabled: env.clamav.enabled,
+      readOnly,
+    },
+    frontend: {
+      status: frontendStatus,
+      ok: frontendOk,
+    },
+    counts: {
+      loggedInUsers,
+      unresolvedMessages,
+      violationReports,
+      unresolvedAuditLogs,
+      openIssues,
+    },
+  };
 }
 
 /**

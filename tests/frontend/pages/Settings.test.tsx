@@ -69,6 +69,10 @@ const testI18n = i18n.createInstance();
 void testI18n.use(initReactI18next).init({
   lng: "en",
   fallbackLng: "en",
+  ns: ["common"],
+  defaultNS: "common",
+  keySeparator: false,
+  initImmediate: false,
   resources: {
     en: {
       common: {
@@ -108,6 +112,13 @@ void testI18n.use(initReactI18next).init({
         "settings.preferences.saving": "Saving...",
         "settings.preferences.saveSuccess": "Preferences saved successfully!",
         "settings.preferences.saveError": "Failed to save preferences. Please try again.",
+        "language.label": "Language",
+        "language.select": "Select language",
+        "language.english": "English",
+        "language.german": "German",
+        "language.french": "French",
+        "language.spanish": "Spanish",
+        "language.greek": "Greek",
         "settings.security.title": "Two-Factor Authentication (2FA)",
         "settings.security.enable2FA": "Enable 2FA",
         "settings.security.disable2FA": "Disable 2FA",
@@ -122,6 +133,48 @@ void testI18n.use(initReactI18next).init({
         "settings.account.yesDelete": "Yes, Delete My Account",
         "settings.account.confirmDelete": "Delete Account",
         "settings.account.deleteError": "Failed to delete account. Please try again.",
+        "settings.twoFactor.title": "Two-Factor Authentication (2FA)",
+        "settings.twoFactor.description": "Add an extra layer of security to your account.",
+        "settings.twoFactor.enable": "Enable 2FA",
+        "settings.twoFactor.disable": "Disable 2FA",
+        "settings.twoFactor.verifyAndEnable": "Verify and Enable",
+        "settings.twoFactor.enabled": "2FA is currently enabled",
+        "settings.twoFactor.enableSuccess": "2FA enabled successfully!",
+        "settings.twoFactor.scanQRCode": "Scan this QR code",
+        "settings.twoFactor.disabled": "2FA is currently disabled.",
+        "settings.twoFactor.loadingQRCode": "Loading QR code...",
+        "settings.twoFactor.enterCode": "Enter your 6-digit code",
+        "settings.twoFactor.backupCodes": "Backup Codes",
+        "settings.twoFactor.backupCodesDescription": "Save these backup codes in a safe place.",
+        "settings.twoFactor.enabledDescription": "Two-factor authentication is active.",
+        "settings.twoFactor.enterPasswordToDisable": "Enter your password to disable 2FA.",
+        "settings.twoFactor.disableConfirmTitle": "Disable Two-Factor Authentication",
+        "settings.twoFactor.disableConfirmMessage": "Are you sure you want to disable 2FA?",
+        "settings.twoFactor.disableConfirmLabel": "Yes, disable 2FA",
+        "settings.twoFactor.enterPasswordWarning": "Please enter your password to continue.",
+        "settings.twoFactor.invalidCode": "Invalid code. Please try again.",
+        "settings.twoFactor.enableError": "Failed to enable 2FA. Please try again.",
+        "settings.twoFactor.verifyError": "Failed to verify 2FA. Please try again.",
+        "settings.twoFactor.disableSuccess": "2FA disabled successfully!",
+        "settings.twoFactor.disableError": "Failed to disable 2FA. Please try again.",
+        "settings.dangerZone.title": "Danger Zone",
+        "settings.dangerZone.description": "Manage critical account actions.",
+        "settings.dangerZone.deleteAccount": "Delete My Account",
+        "settings.dangerZone.deleteWarning":
+          "⚠️ Warning: This will permanently delete your account",
+        "settings.dangerZone.deleteConfirmLabel": "Yes, Delete My Account",
+        "settings.dangerZone.deleteConfirmTitle": "Delete Account",
+        "settings.dangerZone.confirmDeleteLabel": "Confirm Delete",
+        "settings.dangerZone.deleteError": "Failed to delete account. Please try again.",
+        "settings.dangerZone.deleteSuccess": "Account deleted successfully.",
+        "settings.dangerZone.deletePasswordWarning": "Please enter your password to continue.",
+        "settings.dangerZone.deleteDescription": "This action cannot be undone.",
+        "settings.dangerZone.deletePasswordPrompt": "Enter your password to confirm deletion.",
+        "settings.dangerZone.deleteItems.data": "All personal data",
+        "settings.dangerZone.deleteItems.sessions": "Session history",
+        "settings.dangerZone.deleteItems.profile": "Profile information",
+        "settings.dangerZone.deleteItems.irreversible": "This cannot be reversed",
+        "settings.dangerZone.deleteConfirmMessage": "This will permanently delete your account.",
         "common.cancel": "Cancel",
         "common.confirm": "Confirm",
       },
@@ -166,9 +219,10 @@ describe("Settings", () => {
   // Set test timeout to prevent hanging
   vi.setConfig({ testTimeout: 10000 });
 
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.clearAllMocks();
     mockNavigate.mockClear();
+    await testI18n.changeLanguage("en");
 
     vi.mocked(useAuthStore).mockReturnValue({
       isAuthenticated: true,
@@ -380,40 +434,25 @@ describe("Settings", () => {
   });
 
   it("allows changing language preference", async () => {
-    const { container } = renderSettings();
+    renderSettings();
 
     // Wait for component to render
     await waitFor(
       () => {
-        const settingsTexts = screen.queryAllByText("Settings");
-        expect(Array.from(settingsTexts).find((el) => container.contains(el))).toBeInTheDocument();
+        expect(screen.getAllByText("Settings").length).toBeGreaterThan(0);
       },
       { timeout: 5000 },
     );
 
-    let languageSelect: HTMLSelectElement | undefined;
-    await waitFor(
-      () => {
-        const labels = screen.queryAllByLabelText("Language");
-        const label = Array.from(labels).find((el) => container.contains(el));
-        if (label && label.getAttribute("for")) {
-          languageSelect = container.querySelector(
-            `#${label.getAttribute("for")}`,
-          ) as HTMLSelectElement;
-        }
-        if (!languageSelect) {
-          languageSelect = container.querySelector("#locale") as HTMLSelectElement;
-        }
-        expect(languageSelect).toBeDefined();
-        expect(languageSelect).toBeInTheDocument();
-      },
-      { timeout: 5000 },
-    );
+    const languageButton = await screen.findByLabelText("Language");
+    fireEvent.click(languageButton);
 
-    expect(languageSelect).toBeDefined();
-    fireEvent.change(languageSelect!, { target: { value: "de" } });
+    const germanOption = await screen.findByRole("menuitemradio", { name: "German" });
+    fireEvent.click(germanOption);
 
-    expect(languageSelect!.value).toBe("de");
+    await waitFor(() => {
+      expect(testI18n.language).toBe("de");
+    });
   });
 
   it("saves preferences when save button clicked", async () => {

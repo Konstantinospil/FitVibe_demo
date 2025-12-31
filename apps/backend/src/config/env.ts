@@ -118,6 +118,7 @@ const EnvSchema = z.object({
   DSR_PURGE_DELAY_MIN: z.coerce.number().default(15),
   DSR_BACKUP_PURGE_DAYS: z.coerce.number().default(14),
   READ_ONLY_MODE: z.string().optional(),
+  MAINTENANCE_MODE: z.string().optional(),
   MAINTENANCE_MESSAGE: z
     .string()
     .default("System is temporarily in read-only mode for maintenance"),
@@ -306,6 +307,7 @@ export const env = {
     backupPurgeDays: raw.DSR_BACKUP_PURGE_DAYS,
   },
   readOnlyMode: parseBoolean(raw.READ_ONLY_MODE, false),
+  maintenanceMode: parseBoolean(raw.MAINTENANCE_MODE, false),
   maintenanceMessage: raw.MAINTENANCE_MESSAGE,
   clamav: {
     enabled: parseBoolean(raw.CLAMAV_ENABLED, false),

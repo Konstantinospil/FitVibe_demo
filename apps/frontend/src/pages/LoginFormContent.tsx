@@ -141,7 +141,7 @@ const LoginFormContent: React.FC = () => {
           const privacyOutdated = axiosError.response?.data?.privacyPolicyOutdated ?? false;
           // Redirect to the appropriate page - Terms takes priority if both need acceptance
           if (termsOutdated) {
-            void navigate("/terms", { replace: true });
+            void navigate("/terms-reacceptance", { replace: true });
           } else if (privacyOutdated) {
             void navigate("/privacy", { replace: true });
           }

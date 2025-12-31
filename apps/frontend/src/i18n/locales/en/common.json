@@ -2,9 +2,12 @@
   "navigation": {
     "home": "Home",
     "sessions": "Sessions",
+    "planner": "Planner",
+    "logger": "Logger",
     "insights": "Insights",
     "profile": "Profile",
     "settings": "Settings",
+    "notFound": "Not found",
     "signOut": "Sign out",
     "you": "You",
     "activeSession": "Active session",
@@ -56,6 +59,21 @@
     "title": "Preferences, privacy, and performance goals.",
     "description": "Set default visibility, preferred units, and personal best targets so every shared session tells your story.",
     "edit": "Edit profile",
+    "social": {
+      "title": "Social information",
+      "description": "Add how you want to be seen and remember your basics."
+    },
+    "body": {
+      "title": "Body measurements",
+      "description": "Enter current stats and measurements around the body map.",
+      "mapLabel": "Measurement map",
+      "mapAriaLabel": "Body measurement map",
+      "note": "Use consistent timing and posture for measurements to keep progress comparable."
+    },
+    "performance": {
+      "title": "Performance metrics",
+      "description": "Track benchmarks that matter to you and update them as you progress."
+    },
     "sections": {
       "visibility": {
         "title": "Visibility",
@@ -419,11 +437,23 @@
     "eyebrow": "Session architecture",
     "title": "Design training blocks with intent.",
     "description": "Drag, duplicate, and periodise workouts. Planner keeps intensity, volume, and deload ratios on target.",
+    "sessionDetailsTitle": "Session Details",
+    "titleOptional": "Title (optional)",
+    "plannedDate": "Planned Date",
+    "time": "Time",
+    "notesOptional": "Notes (optional)",
+    "addExercises": "Add Exercises",
     "editBlock": "Edit block",
     "sessionTitlePlaceholder": "e.g., Upper Body Strength",
     "notesPlaceholder": "Add session notes, training goals, or context...",
     "exerciseSearchPlaceholder": "Search for exercises (e.g., squat, bench press)...",
     "searchExercises": "Search exercises",
+    "exercisesTitle": "Exercises ({{count}})",
+    "setsLabel": "Sets",
+    "repsLabel": "Reps",
+    "weightLabel": "Weight (kg)",
+    "rpeLabel": "RPE (1-10)",
+    "restLabel": "Rest (sec)",
     "moveUp": "Move up",
     "moveDown": "Move down",
     "removeExercise": "Remove exercise",
@@ -431,7 +461,9 @@
     "weightPlaceholder": "80",
     "rpePlaceholder": "7",
     "speedPlaceholder": "90",
-    "exerciseNotesPlaceholder": "e.g., Focus on form, slower tempo on eccentrics"
+    "exerciseNotesPlaceholder": "e.g., Focus on form, slower tempo on eccentrics",
+    "saveSession": "Save Session",
+    "saveError": "Failed to save session. Please try again."
   },
   "sessions": {
     "eyebrow": "Training management",
@@ -557,6 +589,7 @@
         "imperial": "Imperial (lb, mi)"
       },
       "language": "Language",
+      "theme": "Theme",
       "languageOptions": {
         "en": "English",
         "de": "Deutsch (German)"
@@ -607,6 +640,7 @@
       "deleteConfirmTitle": "Delete Account",
       "deleteConfirmMessage": "This will permanently delete your account and all your data. This action cannot be undone. Are you absolutely sure?",
       "deleteConfirmLabel": "Yes, Delete My Account",
+      "confirmDeleteLabel": "Confirm delete",
       "deletePasswordPrompt": "Please enter your password to confirm account deletion:",
       "deleteSuccess": "Your account has been scheduled for deletion. You will be logged out now.",
       "deleteError": "Failed to delete account. Please try again.",
@@ -627,7 +661,9 @@
     "next": "Next",
     "previous": "Previous",
     "submit": "Submit",
-    "confirm": "Confirm"
+    "confirm": "Confirm",
+    "saving": "Saving...",
+    "searching": "Searching..."
   },
   "vibes": {
     "strength": {
@@ -721,7 +757,48 @@
     "userManagement": {
       "title": "User Management",
       "description": "Manage user accounts and permissions",
-      "searchPlaceholder": "Search by email, username, or ID..."
+      "searchPlaceholder": "Search by email, username, or ID...",
+      "searchButton": "Search",
+      "searching": "Searching...",
+      "error": "Failed to search users. Please try again.",
+      "emptyTitle": "No users found",
+      "emptyDescription": "No users match your search criteria. Try a different query.",
+      "actionLabels": {
+        "suspend": "Suspend",
+        "ban": "Ban",
+        "activate": "Activate",
+        "delete": "Delete"
+      },
+      "actions": {
+        "suspend": {
+          "title": "Suspend User",
+          "confirm": "Yes, Suspend User",
+          "success": "User suspended successfully",
+          "error": "Failed to suspend user. Please try again.",
+          "body": "Are you sure you want to suspend this user? They will not be able to access their account."
+        },
+        "ban": {
+          "title": "Ban User",
+          "confirm": "Yes, Ban User",
+          "success": "User banned successfully",
+          "error": "Failed to ban user. Please try again.",
+          "body": "Are you sure you want to ban this user? They will not be able to access their account."
+        },
+        "activate": {
+          "title": "Activate User",
+          "confirm": "Yes, Activate User",
+          "success": "User activated successfully",
+          "error": "Failed to activate user. Please try again.",
+          "body": "Are you sure you want to activate this user?"
+        },
+        "delete": {
+          "title": "Delete User",
+          "confirm": "Yes, Delete User",
+          "success": "User deleted successfully",
+          "error": "Failed to delete user. Please try again.",
+          "body": "Are you sure you want to delete this user? This action cannot be undone."
+        }
+      }
     },
     "systemControls": {
       "title": "System Controls",

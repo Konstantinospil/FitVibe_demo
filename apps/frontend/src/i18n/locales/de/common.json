@@ -2,9 +2,12 @@
   "navigation": {
     "home": "Start",
     "sessions": "Einheiten",
+    "planner": "Planer",
+    "logger": "Protokoll",
     "insights": "Einblicke",
     "profile": "Profil",
     "settings": "Einstellungen",
+    "notFound": "Nicht gefunden",
     "signOut": "Abmelden",
     "you": "Du",
     "activeSession": "Aktive Einheit",
@@ -56,6 +59,21 @@
     "title": "Stimme Einstellungen, Privatsphäre und Ziele ab.",
     "description": "Definiere Sichtbarkeiten, bevorzugte Einheiten und persönliche Bestleistungen, damit jede geteilte Session deine Geschichte erzählt.",
     "edit": "Profil bearbeiten",
+    "social": {
+      "title": "Soziale Informationen",
+      "description": "Füge hinzu, wie du gesehen werden möchtest und halte deine Grundlagen fest."
+    },
+    "body": {
+      "title": "Körpermaße",
+      "description": "Gib aktuelle Werte und Maße rund um die Körperkarte ein.",
+      "mapLabel": "Messkarte",
+      "mapAriaLabel": "Körpermesskarte",
+      "note": "Verwende konsistente Zeitpunkte und Haltung, damit Messungen vergleichbar bleiben."
+    },
+    "performance": {
+      "title": "Leistungskennzahlen",
+      "description": "Verfolge wichtige Benchmarks und aktualisiere sie, wenn du Fortschritte machst."
+    },
     "sections": {
       "visibility": {
         "title": "Sichtbarkeit",
@@ -393,11 +411,23 @@
     "eyebrow": "Einheiten-Architektur",
     "title": "Gestalte Trainingsblöcke mit Absicht.",
     "description": "Ziehe, dupliziere und periodisiere Workouts. Der Planer hält Intensität, Volumen und Deload-Verhältnisse im Einklang mit deinem Makrozyklus.",
+    "sessionDetailsTitle": "Sitzungsdetails",
+    "titleOptional": "Titel (optional)",
+    "plannedDate": "Geplantes Datum",
+    "time": "Zeit",
+    "notesOptional": "Notizen (optional)",
+    "addExercises": "Übungen hinzufügen",
     "editBlock": "Block bearbeiten",
     "sessionTitlePlaceholder": "z.B., Oberkörper-Kraft",
     "notesPlaceholder": "Einheitsnotizen, Trainingsziele oder Kontext hinzufügen...",
     "exerciseSearchPlaceholder": "Nach Übungen suchen (z.B., Kniebeuge, Bankdrücken)...",
     "searchExercises": "Übungen suchen",
+    "exercisesTitle": "Übungen ({{count}})",
+    "setsLabel": "Sätze",
+    "repsLabel": "Wiederholungen",
+    "weightLabel": "Gewicht (kg)",
+    "rpeLabel": "RPE (1-10)",
+    "restLabel": "Pause (Sek.)",
     "moveUp": "Nach oben",
     "moveDown": "Nach unten",
     "removeExercise": "Übung entfernen",
@@ -405,7 +435,9 @@
     "weightPlaceholder": "80",
     "rpePlaceholder": "7",
     "speedPlaceholder": "90",
-    "exerciseNotesPlaceholder": "z.B., Fokus auf Form, langsameres Tempo bei Exzentrik"
+    "exerciseNotesPlaceholder": "z.B., Fokus auf Form, langsameres Tempo bei Exzentrik",
+    "saveSession": "Sitzung speichern",
+    "saveError": "Sitzung konnte nicht gespeichert werden. Bitte versuche es erneut."
   },
   "sessions": {
     "eyebrow": "Training-Management",
@@ -531,6 +563,7 @@
         "imperial": "Imperial (lb, mi)"
       },
       "language": "Sprache",
+      "theme": "Design",
       "languageOptions": {
         "en": "Englisch",
         "de": "Deutsch (German)"
@@ -581,6 +614,7 @@
       "deleteConfirmTitle": "Konto löschen",
       "deleteConfirmMessage": "Dies wird dein Konto und alle deine Daten dauerhaft löschen. Diese Aktion kann nicht rückgängig gemacht werden. Bist du absolut sicher?",
       "deleteConfirmLabel": "Ja, mein Konto löschen",
+      "confirmDeleteLabel": "Löschen bestätigen",
       "deletePasswordPrompt": "Bitte gib dein Passwort ein, um die Kontolöschung zu bestätigen:",
       "deleteSuccess": "Dein Konto wurde zur Löschung vorgemerkt. Du wirst jetzt abgemeldet.",
       "deleteError": "Konto konnte nicht gelöscht werden. Bitte versuche es erneut.",
@@ -601,7 +635,9 @@
     "next": "Weiter",
     "previous": "Zurück",
     "submit": "Absenden",
-    "confirm": "Bestätigen"
+    "confirm": "Bestätigen",
+    "saving": "Speichern...",
+    "searching": "Suche..."
   },
   "vibes": {
     "strength": {
@@ -721,7 +757,48 @@
     "userManagement": {
       "title": "Benutzerverwaltung",
       "description": "Benutzerkonten und Berechtigungen verwalten",
-      "searchPlaceholder": "Suche nach E-Mail, Benutzername oder ID..."
+      "searchPlaceholder": "Suche nach E-Mail, Benutzername oder ID...",
+      "searchButton": "Suchen",
+      "searching": "Suche...",
+      "error": "Benutzersuche fehlgeschlagen. Bitte versuche es erneut.",
+      "emptyTitle": "Keine Benutzer gefunden",
+      "emptyDescription": "Keine Benutzer entsprechen deinen Suchkriterien. Versuche eine andere Suche.",
+      "actionLabels": {
+        "suspend": "Sperren",
+        "ban": "Bannen",
+        "activate": "Aktivieren",
+        "delete": "Löschen"
+      },
+      "actions": {
+        "suspend": {
+          "title": "Benutzer sperren",
+          "confirm": "Ja, Benutzer sperren",
+          "success": "Benutzer erfolgreich gesperrt",
+          "error": "Benutzer konnte nicht gesperrt werden. Bitte versuche es erneut.",
+          "body": "Möchtest du diesen Benutzer wirklich sperren? Er kann nicht mehr auf sein Konto zugreifen."
+        },
+        "ban": {
+          "title": "Benutzer bannen",
+          "confirm": "Ja, Benutzer bannen",
+          "success": "Benutzer erfolgreich gebannt",
+          "error": "Benutzer konnte nicht gebannt werden. Bitte versuche es erneut.",
+          "body": "Möchtest du diesen Benutzer wirklich bannen? Er kann nicht mehr auf sein Konto zugreifen."
+        },
+        "activate": {
+          "title": "Benutzer aktivieren",
+          "confirm": "Ja, Benutzer aktivieren",
+          "success": "Benutzer erfolgreich aktiviert",
+          "error": "Benutzer konnte nicht aktiviert werden. Bitte versuche es erneut.",
+          "body": "Möchtest du diesen Benutzer wirklich aktivieren?"
+        },
+        "delete": {
+          "title": "Benutzer löschen",
+          "confirm": "Ja, Benutzer löschen",
+          "success": "Benutzer erfolgreich gelöscht",
+          "error": "Benutzer konnte nicht gelöscht werden. Bitte versuche es erneut.",
+          "body": "Möchtest du diesen Benutzer wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden."
+        }
+      }
     },
     "systemControls": {
       "title": "Systemsteuerung",

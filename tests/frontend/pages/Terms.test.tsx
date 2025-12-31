@@ -1,8 +1,15 @@
 import React from "react";
-import { render, screen, cleanup, waitFor } from "@testing-library/react";
-import { describe, it, expect, vi, afterEach } from "vitest";
+import { render, screen, cleanup, waitFor, fireEvent } from "@testing-library/react";
+import { describe, it, expect, vi, afterEach, beforeEach } from "vitest";
 import { MemoryRouter } from "react-router-dom";
 import Terms from "../../src/pages/Terms";
+import {
+  revokeTerms,
+  acceptTerms,
+  getLegalDocumentsStatus,
+  getLegalDocumentVersions,
+} from "../../src/services/api";
+import { useAuthStore } from "../../src/store/auth.store";
 
 // Mock i18n config module - define translations first
 const mockTranslations: Record<string, string | string[]> = {
@@ -80,9 +87,33 @@ const mockTranslations: Record<string, string | string[]> = {
   ],
   "terms.section16.title": "16. Contact",
   "terms.section16.content": "Questions about these Terms can be sent to kpilpilidis@gmail.com.",
+  "terms.revokeConsent": "Revoke consent",
+  "terms.revokeConfirm.title": "Revoke consent",
+  "terms.revokeConfirm.message": "Are you sure?",
+  "terms.revokeConfirm.confirm": "Revoke",
+  "terms.revokeConfirm.cancel": "Cancel",
   "navigation.home": "Home",
   "auth.login.title": "Login",
+  "auth.legalDocumentsReacceptance.acceptTerms": "I accept the terms",
+  "auth.legalDocumentsReacceptance.submit": "Accept terms",
+  "auth.legalDocumentsReacceptance.submitting": "Submitting...",
+  "auth.legalDocumentsReacceptance.termsRequired": "Please accept the terms to continue",
 };
+
+vi.mock("../../src/services/api", () => ({
+  revokeTerms: vi.fn(),
+  acceptTerms: vi.fn(),
+  getLegalDocumentsStatus: vi.fn(),
+  getLegalDocumentVersions: vi.fn(),
+}));
+
+vi.mock("../../src/store/auth.store", () => ({
+  useAuthStore: vi.fn(),
+}));
+
+vi.mock("../../src/contexts/AuthContext", () => ({
+  useAuthOptional: () => ({ isInitializing: false }),
+}));
 
 vi.mock("../../src/i18n/config", () => ({
   default: {
@@ -111,6 +142,17 @@ vi.mock("react-i18next", () => ({
 }));
 
 describe("Terms page", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.mocked(useAuthStore).mockReturnValue(false);
+    vi.mocked(getLegalDocumentsStatus).mockResolvedValue({
+      terms: { needsAcceptance: true },
+    } as any);
+    vi.mocked(getLegalDocumentVersions).mockResolvedValue({
+      terms: "2024-06-01",
+    } as any);
+  });
+
   afterEach(() => {
     cleanup();
   });
@@ -193,5 +235,56 @@ describe("Terms page", () => {
       timeout: 5000,
     });
     expect(emailElements.length).toBeGreaterThan(0);
+  });
+
+  it("allows authenticated users to accept terms", async () => {
+    vi.mocked(useAuthStore).mockReturnValue(true);
+    vi.mocked(getLegalDocumentsStatus).mockResolvedValue({
+      terms: { needsAcceptance: true },
+    } as any);
+    vi.mocked(acceptTerms).mockResolvedValue({} as any);
+
+    render(
+      <MemoryRouter>
+        <Terms />
+      </MemoryRouter>,
+    );
+
+    const submitButton = await screen.findByRole("button", { name: "Accept terms" });
+    expect(submitButton).toBeDisabled();
+
+    const checkbox = screen.getByRole("checkbox");
+    fireEvent.click(checkbox);
+    expect(submitButton).toBeEnabled();
+    fireEvent.click(submitButton);
+
+    await waitFor(() => {
+      expect(acceptTerms).toHaveBeenCalledWith({ terms_accepted: true });
+    });
+  });
+
+  it("allows authenticated users to revoke consent", async () => {
+    vi.mocked(useAuthStore).mockReturnValue(true);
+    vi.mocked(getLegalDocumentsStatus).mockResolvedValue({
+      terms: { needsAcceptance: false },
+    } as any);
+    vi.mocked(revokeTerms).mockResolvedValue({} as any);
+
+    render(
+      <MemoryRouter>
+        <Terms />
+      </MemoryRouter>,
+    );
+
+    const revokeButton = await screen.findByRole("button", { name: "Revoke consent" });
+    fireEvent.click(revokeButton);
+
+    const confirmButton = await screen.findByRole("button", { name: "Revoke" });
+    fireEvent.click(confirmButton);
+
+    await waitFor(() => {
+      expect(revokeTerms).toHaveBeenCalled();
+      expect(getLegalDocumentsStatus).toHaveBeenCalled();
+    });
   });
 });

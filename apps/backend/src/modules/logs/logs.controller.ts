@@ -29,6 +29,7 @@ export async function listLogsHandler(req: Request, res: Response): Promise<void
   const entityType = req.query.entityType as string | undefined;
   const actorUserId = req.query.actorUserId as string | undefined;
   const outcome = req.query.outcome as string | undefined;
+  const requestId = req.query.requestId as string | undefined;
   const severity = req.query.severity as AuditLogSeverity | undefined;
   const resolved =
     req.query.resolved === "true" ? true : req.query.resolved === "false" ? false : undefined;
@@ -42,6 +43,7 @@ export async function listLogsHandler(req: Request, res: Response): Promise<void
     entityType,
     actorUserId,
     outcome,
+    requestId,
     severity,
     resolved,
     createdFrom,
@@ -92,6 +94,38 @@ export async function updateLogHandler(req: Request, res: Response): Promise<voi
   }
 
   res.json({ log: updated });
+}
+
+/**
+ * Bulk update audit log resolution status
+ * PATCH /api/v1/logs/bulk
+ */
+export async function bulkUpdateLogsHandler(req: Request, res: Response): Promise<void> {
+  const body = req.body as { ids?: string[]; resolved?: boolean } | undefined;
+  const ids = body?.ids;
+  const resolved = body?.resolved;
+
+  if (!Array.isArray(ids) || ids.length === 0) {
+    throw new HttpError(400, "BAD_REQUEST", "No audit log ids provided");
+  }
+
+  if (ids.some((id) => typeof id !== "string" || id.trim().length === 0)) {
+    throw new HttpError(400, "BAD_REQUEST", "Invalid audit log ids");
+  }
+
+  if (typeof resolved !== "boolean") {
+    throw new HttpError(400, "BAD_REQUEST", "Invalid resolved status");
+  }
+
+  const actorUserId = req.user?.sub ?? null;
+  const resolvedAt = resolved ? new Date().toISOString() : null;
+  const resolvedByUserId = resolved ? actorUserId : null;
+  const updatedCount = await service.updateLogsResolved(ids, {
+    resolvedAt,
+    resolvedByUserId,
+  });
+
+  res.json({ updated: updatedCount });
 }
 
 /**

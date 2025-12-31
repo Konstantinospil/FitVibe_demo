@@ -20,6 +20,20 @@ const Profile: React.FC = () => {
   const [values, setValues] = useState<Record<string, string>>({});
   const [editingId, setEditingId] = useState<string | null>(null);
   const [savingId, setSavingId] = useState<string | null>(null);
+  const overviewSections = [
+    {
+      title: t("profile.sections.visibility.title"),
+      description: t("profile.sections.visibility.description"),
+    },
+    {
+      title: t("profile.sections.units.title"),
+      description: t("profile.sections.units.description"),
+    },
+    {
+      title: t("profile.sections.achievements.title"),
+      description: t("profile.sections.achievements.description"),
+    },
+  ];
 
   useEffect(() => {
     const loadAttributes = async () => {
@@ -144,12 +158,11 @@ const Profile: React.FC = () => {
     return (
       <div
         key={attribute.id}
-        style={{
-          display: "grid",
-          gridTemplateColumns: "minmax(0, 1fr) auto",
-          gap: "0.75rem",
-          alignItems: isTextarea ? "start" : "center",
-        }}
+        className={
+          isTextarea
+            ? "profile-attribute-row profile-attribute-row--textarea"
+            : "profile-attribute-row"
+        }
       >
         {isTextarea ? (
           <Textarea
@@ -178,12 +191,11 @@ const Profile: React.FC = () => {
           />
         )}
         <div
-          style={{
-            display: "flex",
-            gap: "0.5rem",
-            alignItems: "center",
-            marginTop: isTextarea ? "1.8rem" : "1.4rem",
-          }}
+          className={
+            isTextarea
+              ? "profile-attribute-actions profile-attribute-actions--textarea"
+              : "profile-attribute-actions"
+          }
         >
           {isEditing ? (
             <>
@@ -195,7 +207,7 @@ const Profile: React.FC = () => {
                 }}
                 disabled={savingId === attribute.id}
               >
-                {savingId === attribute.id ? "Saving..." : "Save"}
+                {savingId === attribute.id ? t("common.saving") : t("common.save")}
               </Button>
               <Button
                 type="button"
@@ -203,7 +215,7 @@ const Profile: React.FC = () => {
                 size="sm"
                 onClick={() => setEditingId(null)}
               >
-                Cancel
+                {t("common.cancel")}
               </Button>
             </>
           ) : (
@@ -213,7 +225,7 @@ const Profile: React.FC = () => {
               size="sm"
               onClick={() => setEditingId(attribute.id)}
             >
-              Edit
+              {t("common.edit")}
             </Button>
           )}
         </div>
@@ -227,74 +239,26 @@ const Profile: React.FC = () => {
       title={t("profile.title")}
       description={t("profile.description")}
     >
-      <style>
-        {`
-          .profile-stack {
-            display: grid;
-            gap: var(--space-xl);
-          }
-
-          .profile-grid-2 {
-            display: grid;
-            gap: var(--space-md);
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-          }
-
-          .profile-grid-3 {
-            display: grid;
-            gap: var(--space-md);
-            grid-template-columns: repeat(3, minmax(0, 1fr));
-          }
-
-          .profile-body-grid {
-            display: grid;
-            gap: var(--space-lg);
-            grid-template-columns: minmax(0, 1fr) minmax(220px, 280px) minmax(0, 1fr);
-            align-items: center;
-          }
-
-          .profile-body-figure {
-            padding: var(--space-lg);
-            border-radius: 28px;
-            border: 1px dashed rgba(148, 163, 184, 0.35);
-            background: radial-gradient(circle at top, rgba(148, 163, 184, 0.14), transparent 70%);
-            display: grid;
-            place-items: center;
-            gap: var(--space-sm);
-          }
-
-          .profile-body-caption {
-            font-size: var(--font-size-xs);
-            color: var(--color-text-muted);
-            text-transform: uppercase;
-            letter-spacing: 0.12em;
-          }
-
-          .profile-section-note {
-            font-size: var(--font-size-xs);
-            color: var(--color-text-muted);
-          }
-
-          @media (max-width: 1100px) {
-            .profile-body-grid {
-              grid-template-columns: minmax(0, 1fr);
-            }
-          }
-
-          @media (max-width: 900px) {
-            .profile-grid-2,
-            .profile-grid-3 {
-              grid-template-columns: minmax(0, 1fr);
-            }
-          }
-        `}
-      </style>
-
       <div className="profile-stack">
+        <div className="flex flex--justify-end">
+          <Button type="button" variant="secondary">
+            {t("profile.edit")}
+          </Button>
+        </div>
+
+        {overviewSections.map((section) => (
+          <Card key={section.title}>
+            <CardHeader>
+              <CardTitle>{section.title}</CardTitle>
+              <CardDescription>{section.description}</CardDescription>
+            </CardHeader>
+          </Card>
+        ))}
+
         <Card>
           <CardHeader>
-            <CardTitle>Social information</CardTitle>
-            <CardDescription>Add how you want to be seen and remember your basics.</CardDescription>
+            <CardTitle>{t("profile.social.title")}</CardTitle>
+            <CardDescription>{t("profile.social.description")}</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="profile-grid-2">
@@ -315,10 +279,8 @@ const Profile: React.FC = () => {
 
         <Card>
           <CardHeader>
-            <CardTitle>Body measurements</CardTitle>
-            <CardDescription>
-              Enter current stats and measurements around the body map.
-            </CardDescription>
+            <CardTitle>{t("profile.body.title")}</CardTitle>
+            <CardDescription>{t("profile.body.description")}</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="profile-body-grid">
@@ -329,7 +291,7 @@ const Profile: React.FC = () => {
                 })}
               </div>
               <div className="profile-body-figure">
-                <svg viewBox="0 0 200 360" role="img" aria-label="Body measurement map">
+                <svg viewBox="0 0 200 360" role="img" aria-label={t("profile.body.mapAriaLabel")}>
                   <defs>
                     <linearGradient id="bodyGradient" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="0%" stopColor="rgba(148, 163, 184, 0.85)" />
@@ -384,7 +346,7 @@ const Profile: React.FC = () => {
                     strokeDasharray="4 4"
                   />
                 </svg>
-                <span className="profile-body-caption">Measurement map</span>
+                <span className="profile-body-caption">{t("profile.body.mapLabel")}</span>
               </div>
               <div className="profile-stack">
                 {bodyRightKeys.map((key) => {
@@ -393,18 +355,14 @@ const Profile: React.FC = () => {
                 })}
               </div>
             </div>
-            <span className="profile-section-note">
-              Use consistent timing and posture for measurements to keep progress comparable.
-            </span>
+            <span className="profile-section-note">{t("profile.body.note")}</span>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader>
-            <CardTitle>Performance metrics</CardTitle>
-            <CardDescription>
-              Track benchmarks that matter to you and update them as you progress.
-            </CardDescription>
+            <CardTitle>{t("profile.performance.title")}</CardTitle>
+            <CardDescription>{t("profile.performance.description")}</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="profile-grid-3">

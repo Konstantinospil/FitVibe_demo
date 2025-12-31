@@ -9,6 +9,7 @@ const mergeTranslations = <T extends Record<string, unknown>, U extends Record<s
 ) => ({ ...base, ...extra });
 
 const resources: Partial<Record<SupportedLanguage, { translation: Record<string, unknown> }>> = {};
+const SUPPORTED_LANGUAGES: SupportedLanguage[] = ["en", "de", "fr", "es", "el"];
 
 const FALLBACK_LANGUAGE: SupportedLanguage = "en";
 // Use relative URL in development (Vite proxy handles /api -> localhost:4000)
@@ -204,12 +205,12 @@ const detectLanguage = (): SupportedLanguage => {
   }
 
   const stored = window.localStorage.getItem("fitvibe:language") as SupportedLanguage | null;
-  if (stored && stored in resources) {
+  if (stored && SUPPORTED_LANGUAGES.includes(stored)) {
     return stored;
   }
 
   const browser = window.navigator?.language?.slice(0, 2) as SupportedLanguage | undefined;
-  if (browser && browser in resources) {
+  if (browser && SUPPORTED_LANGUAGES.includes(browser)) {
     return browser;
   }
 
@@ -286,6 +287,10 @@ export const translationsLoadingPromise = Promise.resolve()
   });
 
 export const loadLanguageTranslations = loadLanguage;
+
+export const loadFullTranslations = async (): Promise<void> => {
+  await loadLanguage("en");
+};
 
 export const ensurePrivateTranslationsLoaded = async () => {
   return Promise.resolve();

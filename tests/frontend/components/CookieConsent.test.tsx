@@ -4,6 +4,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { MemoryRouter } from "react-router-dom";
 import CookieConsent from "../../src/components/CookieConsent";
 import { useCookieConsent } from "../../src/hooks/useCookieConsent";
+import { ToastProvider } from "../../src/contexts/ToastContext";
 
 vi.mock("../../src/hooks/useCookieConsent");
 
@@ -68,9 +69,11 @@ describe("CookieConsent", () => {
     });
 
     const { container } = render(
-      <MemoryRouter>
-        <CookieConsent />
-      </MemoryRouter>,
+      <ToastProvider>
+        <MemoryRouter>
+          <CookieConsent />
+        </MemoryRouter>
+      </ToastProvider>,
     );
 
     expect(container.firstChild).toBeNull();
@@ -87,9 +90,11 @@ describe("CookieConsent", () => {
     });
 
     render(
-      <MemoryRouter>
-        <CookieConsent />
-      </MemoryRouter>,
+      <ToastProvider>
+        <MemoryRouter>
+          <CookieConsent />
+        </MemoryRouter>
+      </ToastProvider>,
     );
 
     await waitFor(
@@ -108,9 +113,11 @@ describe("CookieConsent", () => {
     });
 
     const { container } = render(
-      <MemoryRouter>
-        <CookieConsent />
-      </MemoryRouter>,
+      <ToastProvider>
+        <MemoryRouter>
+          <CookieConsent />
+        </MemoryRouter>
+      </ToastProvider>,
     );
 
     expect(container.firstChild).toBeNull();

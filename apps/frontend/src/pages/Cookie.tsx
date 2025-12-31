@@ -8,7 +8,6 @@ import { Card, CardContent, Button } from "../components/ui";
 import { useAuthStore } from "../store/auth.store";
 import { ConfirmDialog } from "../components/ConfirmDialog";
 import { revokeTerms, getLegalDocumentVersions, type LegalDocumentVersions } from "../services/api";
-import { useAuth } from "../contexts/AuthContext";
 
 const contentStyle: React.CSSProperties = {
   maxWidth: "900px",
@@ -23,7 +22,7 @@ const Cookie: React.FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
-  const { signOut } = useAuth();
+  const signOut = useAuthStore((state) => state.signOut);
   const [translationsReady, setTranslationsReady] = useState(false);
   const [showRevokeConfirm, setShowRevokeConfirm] = useState(false);
   const [isRevoking, setIsRevoking] = useState(false);

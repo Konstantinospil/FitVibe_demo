@@ -29,3 +29,13 @@ export async function updateLog(
 ): Promise<AuditLogEntry | null> {
   return await repo.updateAuditLog(id, updates);
 }
+
+export async function updateLogsResolved(
+  ids: string[],
+  updates: {
+    resolvedAt: string | null;
+    resolvedByUserId: string | null;
+  },
+): Promise<number> {
+  return await repo.updateAuditLogsResolved(ids, updates);
+}

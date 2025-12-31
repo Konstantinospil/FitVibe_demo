@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   auditLogsApi,
@@ -141,7 +141,10 @@ const AuditLogsPage: React.FC = () => {
   const [createdFrom, setCreatedFrom] = useState("");
   const [createdTo, setCreatedTo] = useState("");
   const [actionFilter, setActionFilter] = useState<string[]>([]);
+  const [requestIdFilter, setRequestIdFilter] = useState("");
+  const [requestIdInput, setRequestIdInput] = useState("");
   const [selectedLog, setSelectedLog] = useState<AuditLogEntry | null>(null);
+  const [selectedLogIds, setSelectedLogIds] = useState<Set<string>>(new Set());
   const limit = 50;
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
 
@@ -152,6 +155,15 @@ const AuditLogsPage: React.FC = () => {
   const resolvedValue =
     resolvedFilter === "resolved" ? true : resolvedFilter === "unresolved" ? false : undefined;
 
+  useEffect(() => {
+    const handle = window.setTimeout(() => {
+      setRequestIdFilter(requestIdInput.trim());
+      setPage(0);
+    }, 300);
+
+    return () => window.clearTimeout(handle);
+  }, [requestIdInput]);
+
   const { data, isLoading, error } = useQuery({
     queryKey: [
       "audit-logs",
@@ -161,6 +173,7 @@ const AuditLogsPage: React.FC = () => {
       createdFromIso,
       createdToIso,
       normalizedActionFilter,
+      requestIdFilter,
     ],
     queryFn: () =>
       auditLogsApi.list({
@@ -171,6 +184,7 @@ const AuditLogsPage: React.FC = () => {
         resolved: resolvedValue,
         createdFrom: createdFromIso,
         createdTo: createdToIso,
+        requestId: requestIdFilter.trim() || undefined,
       }),
     enabled: isAuthenticated,
   });
@@ -232,6 +246,19 @@ const AuditLogsPage: React.FC = () => {
     },
   });
 
+  const bulkUpdateResolvedMutation = useMutation({
+    mutationFn: async ({ logIds, resolved }: { logIds: string[]; resolved: boolean }) => {
+      if (logIds.length === 0) {
+        return 0;
+      }
+      return auditLogsApi.bulkUpdateResolved(logIds, resolved);
+    },
+    onSuccess: () => {
+      setSelectedLogIds(new Set());
+      void queryClient.invalidateQueries({ queryKey: ["audit-logs"] });
+    },
+  });
+
   const handleUpdateSeverity = (logId: string, severity: AuditLogSeverity) => {
     updateLogMutation.mutate({ logId, updates: { severity } });
   };
@@ -251,9 +278,83 @@ const AuditLogsPage: React.FC = () => {
     setPage(0);
   };
 
+  useEffect(() => {
+    setSelectedLogIds(new Set());
+  }, [
+    page,
+    severityFilter,
+    resolvedFilter,
+    createdFromIso,
+    createdToIso,
+    normalizedActionFilter,
+    requestIdFilter,
+  ]);
+
+  const currentLogIds = useMemo(() => data?.logs?.map((log) => log.id) ?? [], [data?.logs]);
+  const allSelected =
+    currentLogIds.length > 0 && currentLogIds.every((logId) => selectedLogIds.has(logId));
+  const selectedLogs = useMemo(
+    () => data?.logs?.filter((log) => selectedLogIds.has(log.id)) ?? [],
+    [data?.logs, selectedLogIds],
+  );
+  const resolvableLogIds = selectedLogs.filter((log) => !log.resolvedAt).map((log) => log.id);
+  const reopenableLogIds = selectedLogs.filter((log) => log.resolvedAt).map((log) => log.id);
+
+  const handleToggleSelectLog = (logId: string) => {
+    setSelectedLogIds((current) => {
+      const next = new Set(current);
+      if (next.has(logId)) {
+        next.delete(logId);
+      } else {
+        next.add(logId);
+      }
+      return next;
+    });
+  };
+
+  const handleToggleSelectAll = () => {
+    setSelectedLogIds((_current) => {
+      if (allSelected) {
+        return new Set();
+      }
+      return new Set(currentLogIds);
+    });
+  };
+
+  const handleResolveSelected = () => {
+    bulkUpdateResolvedMutation.mutate({ logIds: resolvableLogIds, resolved: true });
+  };
+
+  const handleReopenSelected = () => {
+    bulkUpdateResolvedMutation.mutate({ logIds: reopenableLogIds, resolved: false });
+  };
+
   return (
     <div>
       <h1 style={{ color: colors.text, marginBottom: "2rem", fontSize: "2rem" }}>Audit Logs</h1>
+
+      <div style={{ marginBottom: "1.5rem", maxWidth: "360px" }}>
+        <label
+          style={{ color: colors.text, display: "flex", flexDirection: "column", gap: "0.35rem" }}
+        >
+          Search by Request ID
+          <input
+            type="text"
+            value={requestIdInput}
+            onChange={(e) => {
+              setRequestIdInput(e.target.value);
+            }}
+            placeholder="Request ID"
+            style={{
+              padding: "0.5rem",
+              borderRadius: "4px",
+              border: `1px solid ${colors.border}`,
+              background: colors.surface,
+              color: colors.text,
+            }}
+          />
+        </label>
+      </div>
 
       <div style={{ marginBottom: "2rem", display: "flex", gap: "1.5rem", flexWrap: "wrap" }}>
         <label
@@ -461,7 +562,7 @@ const AuditLogsPage: React.FC = () => {
       {isLoading ? (
         <div style={{ color: colors.text }}>Loading...</div>
       ) : error ? (
-        <div style={{ color: "#9F2406", padding: "2rem" }}>
+        <div style={{ color: colors.text, padding: "2rem" }}>
           Error loading audit logs: {error instanceof Error ? error.message : String(error)}
         </div>
       ) : !data || !data.logs || data.logs.length === 0 ? (
@@ -470,6 +571,67 @@ const AuditLogsPage: React.FC = () => {
         </div>
       ) : (
         <>
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              marginBottom: "0.75rem",
+              gap: "1rem",
+              flexWrap: "wrap",
+            }}
+          >
+            <span style={{ color: colors.textMuted, fontSize: "0.875rem" }}>
+              {selectedLogIds.size > 0
+                ? `${selectedLogIds.size} selected`
+                : "Select logs to resolve in bulk"}
+            </span>
+            <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap" }}>
+              <button
+                type="button"
+                onClick={handleResolveSelected}
+                disabled={resolvableLogIds.length === 0 || bulkUpdateResolvedMutation.isPending}
+                style={{
+                  padding: "0.5rem 1rem",
+                  background:
+                    resolvableLogIds.length === 0 || bulkUpdateResolvedMutation.isPending
+                      ? colors.border
+                      : colors.accent,
+                  color: colors.text,
+                  border: "none",
+                  borderRadius: "4px",
+                  cursor:
+                    resolvableLogIds.length === 0 || bulkUpdateResolvedMutation.isPending
+                      ? "not-allowed"
+                      : "pointer",
+                  fontSize: "0.875rem",
+                }}
+              >
+                Mark Selected Resolved
+              </button>
+              <button
+                type="button"
+                onClick={handleReopenSelected}
+                disabled={reopenableLogIds.length === 0 || bulkUpdateResolvedMutation.isPending}
+                style={{
+                  padding: "0.5rem 1rem",
+                  background:
+                    reopenableLogIds.length === 0 || bulkUpdateResolvedMutation.isPending
+                      ? colors.border
+                      : colors.surfaceMuted,
+                  color: colors.text,
+                  border: "none",
+                  borderRadius: "4px",
+                  cursor:
+                    reopenableLogIds.length === 0 || bulkUpdateResolvedMutation.isPending
+                      ? "not-allowed"
+                      : "pointer",
+                  fontSize: "0.875rem",
+                }}
+              >
+                Reopen Selected
+              </button>
+            </div>
+          </div>
           <div
             style={{
               background: colors.surface,
@@ -482,6 +644,23 @@ const AuditLogsPage: React.FC = () => {
             <table style={{ width: "100%", borderCollapse: "collapse", minWidth: "1200px" }}>
               <thead>
                 <tr style={{ background: colors.surfaceMuted }}>
+                  <th
+                    style={{
+                      padding: "1rem",
+                      textAlign: "center",
+                      color: colors.text,
+                      borderBottom: `1px solid ${colors.border}`,
+                      width: "48px",
+                    }}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={allSelected}
+                      onChange={handleToggleSelectAll}
+                      disabled={currentLogIds.length === 0}
+                      aria-label="Select all logs on this page"
+                    />
+                  </th>
                   <th
                     style={{
                       padding: "1rem",
@@ -577,6 +756,15 @@ const AuditLogsPage: React.FC = () => {
               <tbody>
                 {data.logs.map((log) => (
                   <tr key={log.id} style={{ borderBottom: `1px solid ${colors.border}` }}>
+                    <td style={{ padding: "1rem", textAlign: "center" }}>
+                      <input
+                        type="checkbox"
+                        checked={selectedLogIds.has(log.id)}
+                        onChange={() => handleToggleSelectLog(log.id)}
+                        disabled={bulkUpdateResolvedMutation.isPending}
+                        aria-label={`Select log ${log.id}`}
+                      />
+                    </td>
                     <td style={{ padding: "1rem", color: colors.text }}>
                       {new Date(log.createdAt).toLocaleString()}
                     </td>
@@ -595,7 +783,9 @@ const AuditLogsPage: React.FC = () => {
                         onChange={(e) =>
                           handleUpdateSeverity(log.id, e.target.value as AuditLogSeverity)
                         }
-                        disabled={updateLogMutation.isPending}
+                        disabled={
+                          updateLogMutation.isPending || bulkUpdateResolvedMutation.isPending
+                        }
                         style={{
                           padding: "0.4rem 0.6rem",
                           borderRadius: "4px",
@@ -646,7 +836,9 @@ const AuditLogsPage: React.FC = () => {
                         </button>
                         <button
                           onClick={() => handleToggleResolved(log)}
-                          disabled={updateLogMutation.isPending}
+                          disabled={
+                            updateLogMutation.isPending || bulkUpdateResolvedMutation.isPending
+                          }
                           style={{
                             padding: "0.5rem 1rem",
                             background: log.resolvedAt

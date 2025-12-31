@@ -19,6 +19,7 @@ import {
   deleteUserDisplayNameHandler,
   listActionMappingsHandler,
   upsertActionMappingHandler,
+  getOpsStatusHandler,
 } from "./admin.controller.js";
 
 export const adminRouter = Router();
@@ -94,6 +95,12 @@ adminRouter.get(
   "/action-mappings",
   rateLimit("admin_action_mappings_list", 60, 60),
   asyncHandler(listActionMappingsHandler),
+);
+
+adminRouter.get(
+  "/ops/status",
+  rateLimit("admin_ops_status", 30, 60),
+  asyncHandler(getOpsStatusHandler),
 );
 
 adminRouter.post(

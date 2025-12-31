@@ -154,7 +154,7 @@ const VibeSidebar: React.FC = () => {
   const { t } = useTranslation();
   const { user } = useAuth();
   const [activeMetric, setActiveMetric] = useState<"overall" | VibeKey>("overall");
-  const [isPinned, setIsPinned] = useState(false);
+  const [isPinned, setIsPinned] = useState(true);
   const [isHovered, setIsHovered] = useState(false);
   const { data: vibePoints } = useQuery({
     queryKey: ["vibePoints", 12],

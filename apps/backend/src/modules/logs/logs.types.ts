@@ -26,6 +26,7 @@ export interface ListAuditLogsQuery {
   entityType?: string;
   actorUserId?: string;
   outcome?: string;
+  requestId?: string;
   severity?: AuditLogSeverity;
   resolved?: boolean;
   createdFrom?: string;

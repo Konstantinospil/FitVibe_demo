@@ -2,9 +2,12 @@
   "navigation": {
     "home": "Accueil",
     "sessions": "Séances",
+    "planner": "Planificateur",
+    "logger": "Journal",
     "insights": "Analyses",
     "profile": "Profil",
     "settings": "Paramètres",
+    "notFound": "Introuvable",
     "signOut": "Déconnexion",
     "you": "Vous",
     "activeSession": "Séance active",
@@ -56,6 +59,21 @@
     "title": "Préférences, confidentialité et objectifs de performance.",
     "description": "Définissez la visibilité par défaut, les unités préférées et les objectifs de records personnels pour que chaque séance partagée raconte votre histoire.",
     "edit": "Modifier le profil",
+    "social": {
+      "title": "Informations sociales",
+      "description": "Ajoutez comment vous souhaitez être vu et notez vos informations de base."
+    },
+    "body": {
+      "title": "Mensurations",
+      "description": "Saisissez vos mesures actuelles autour du plan du corps.",
+      "mapLabel": "Carte des mesures",
+      "mapAriaLabel": "Carte des mensurations",
+      "note": "Utilisez des moments et une posture cohérents pour garder des mesures comparables."
+    },
+    "performance": {
+      "title": "Indicateurs de performance",
+      "description": "Suivez les repères qui comptent pour vous et mettez-les à jour au fil des progrès."
+    },
     "sections": {
       "visibility": {
         "title": "Visibilité",
@@ -419,11 +437,23 @@
     "eyebrow": "Architecture de séance",
     "title": "Concevez des blocs d'entraînement avec intention.",
     "description": "Glissez, dupliquez et périodisez les entraînements. Le planificateur maintient l'intensité, le volume et les ratios de décharge sur la cible.",
+    "sessionDetailsTitle": "Détails de la séance",
+    "titleOptional": "Titre (facultatif)",
+    "plannedDate": "Date planifiée",
+    "time": "Heure",
+    "notesOptional": "Notes (facultatif)",
+    "addExercises": "Ajouter des exercices",
     "editBlock": "Modifier le bloc",
     "sessionTitlePlaceholder": "ex. Force du haut du corps",
     "notesPlaceholder": "Ajoutez des notes de séance, des objectifs d'entraînement ou du contexte...",
     "exerciseSearchPlaceholder": "Rechercher des exercices (ex. squat, développé couché)...",
     "searchExercises": "Rechercher des exercices",
+    "exercisesTitle": "Exercices ({{count}})",
+    "setsLabel": "Séries",
+    "repsLabel": "Répétitions",
+    "weightLabel": "Poids (kg)",
+    "rpeLabel": "RPE (1-10)",
+    "restLabel": "Repos (sec)",
     "moveUp": "Déplacer vers le haut",
     "moveDown": "Déplacer vers le bas",
     "removeExercise": "Supprimer l'exercice",
@@ -431,7 +461,9 @@
     "weightPlaceholder": "80",
     "rpePlaceholder": "7",
     "speedPlaceholder": "90",
-    "exerciseNotesPlaceholder": "ex. Concentrez-vous sur la forme, tempo plus lent sur les excentriques"
+    "exerciseNotesPlaceholder": "ex. Concentrez-vous sur la forme, tempo plus lent sur les excentriques",
+    "saveSession": "Enregistrer la séance",
+    "saveError": "Impossible d'enregistrer la séance. Veuillez réessayer."
   },
   "sessions": {
     "eyebrow": "Gestion de l'entraînement",
@@ -511,7 +543,9 @@
     "next": "Suivant",
     "previous": "Précédent",
     "submit": "Soumettre",
-    "confirm": "Confirmer"
+    "confirm": "Confirmer",
+    "saving": "Enregistrement...",
+    "searching": "Recherche..."
   },
   "vibes": {
     "strength": {
@@ -652,6 +686,7 @@
         "imperial": "Impérial (lb, mi)"
       },
       "language": "Langue",
+      "theme": "Thème",
       "languageOptions": {
         "en": "Anglais",
         "de": "Deutsch (German)"
@@ -702,6 +737,7 @@
       "deleteConfirmTitle": "Supprimer le compte",
       "deleteConfirmMessage": "Cela supprimera définitivement votre compte et toutes vos données. Cette action ne peut pas être annulée. Êtes-vous absolument sûr ?",
       "deleteConfirmLabel": "Oui, supprimer mon compte",
+      "confirmDeleteLabel": "Confirmer la suppression",
       "deletePasswordPrompt": "Veuillez entrer votre mot de passe pour confirmer la suppression du compte :",
       "deleteSuccess": "Votre compte a été programmé pour suppression. Vous serez déconnecté maintenant.",
       "deleteError": "Échec de la suppression du compte. Veuillez réessayer.",
@@ -721,7 +757,48 @@
     "userManagement": {
       "title": "Gestion des utilisateurs",
       "description": "Gérer les comptes utilisateurs et les permissions",
-      "searchPlaceholder": "Rechercher par e-mail, nom d'utilisateur ou ID..."
+      "searchPlaceholder": "Rechercher par e-mail, nom d'utilisateur ou ID...",
+      "searchButton": "Rechercher",
+      "searching": "Recherche...",
+      "error": "Échec de la recherche d'utilisateurs. Veuillez réessayer.",
+      "emptyTitle": "Aucun utilisateur trouvé",
+      "emptyDescription": "Aucun utilisateur ne correspond à votre recherche. Essayez une autre requête.",
+      "actionLabels": {
+        "suspend": "Suspendre",
+        "ban": "Bannir",
+        "activate": "Activer",
+        "delete": "Supprimer"
+      },
+      "actions": {
+        "suspend": {
+          "title": "Suspendre l'utilisateur",
+          "confirm": "Oui, suspendre l'utilisateur",
+          "success": "Utilisateur suspendu avec succès",
+          "error": "Impossible de suspendre l'utilisateur. Veuillez réessayer.",
+          "body": "Voulez-vous vraiment suspendre cet utilisateur ? Il ne pourra plus accéder à son compte."
+        },
+        "ban": {
+          "title": "Bannir l'utilisateur",
+          "confirm": "Oui, bannir l'utilisateur",
+          "success": "Utilisateur banni avec succès",
+          "error": "Impossible de bannir l'utilisateur. Veuillez réessayer.",
+          "body": "Voulez-vous vraiment bannir cet utilisateur ? Il ne pourra plus accéder à son compte."
+        },
+        "activate": {
+          "title": "Activer l'utilisateur",
+          "confirm": "Oui, activer l'utilisateur",
+          "success": "Utilisateur activé avec succès",
+          "error": "Impossible d'activer l'utilisateur. Veuillez réessayer.",
+          "body": "Voulez-vous vraiment activer cet utilisateur ?"
+        },
+        "delete": {
+          "title": "Supprimer l'utilisateur",
+          "confirm": "Oui, supprimer l'utilisateur",
+          "success": "Utilisateur supprimé avec succès",
+          "error": "Impossible de supprimer l'utilisateur. Veuillez réessayer.",
+          "body": "Voulez-vous vraiment supprimer cet utilisateur ? Cette action est irréversible."
+        }
+      }
     },
     "systemControls": {
       "title": "Contrôles système",

@@ -228,11 +228,23 @@ const LanguageSwitcher: React.FC = () => {
 
   const currentLanguage = LANGUAGES.find((lang) => lang.code === validLanguage) ?? LANGUAGES[0];
 
-  const handleLanguageChange = async (code: LangCode) => {
-    // Ensure translations are loaded before changing language
-    await loadLanguageTranslations(code);
-    await i18n.changeLanguage(code);
+  const handleLanguageChange = (code: LangCode) => {
     setIsOpen(false);
+    const change = async () => {
+      const hasBundle =
+        typeof i18n.hasResourceBundle === "function"
+          ? i18n.hasResourceBundle(code, "translation")
+          : false;
+      if (!hasBundle) {
+        try {
+          await loadLanguageTranslations(code);
+        } catch {
+          // Fall back to whatever resources are already registered.
+        }
+      }
+      await i18n.changeLanguage(code);
+    };
+    void change();
   };
 
   // Close dropdown when clicking outside
@@ -273,7 +285,7 @@ const LanguageSwitcher: React.FC = () => {
             <button
               key={option.code}
               onClick={() => {
-                void handleLanguageChange(option.code);
+                handleLanguageChange(option.code);
               }}
               style={{
                 ...optionStyle,

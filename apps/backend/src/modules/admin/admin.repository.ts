@@ -419,6 +419,42 @@ export async function removeFromBlacklist(email: string): Promise<void> {
     });
 }
 
+export async function countActiveSessions(): Promise<number> {
+  const rows = await db("auth_sessions")
+    .distinct("user_id")
+    .whereNull("revoked_at")
+    .where("expires_at", ">", db.fn.now());
+
+  return rows.length;
+}
+
+export async function countOpenMessages(): Promise<number> {
+  const row = await db("contact_messages")
+    .whereNull("responded_at")
+    .count<{ count: string }>("id as count")
+    .first();
+
+  return Number(row?.count ?? 0);
+}
+
+export async function countPendingReports(): Promise<number> {
+  const row = await db("feed_reports")
+    .where("status", "pending")
+    .count<{ count: string }>("id as count")
+    .first();
+
+  return Number(row?.count ?? 0);
+}
+
+export async function countUnresolvedAuditLogs(): Promise<number> {
+  const row = await db("audit_log")
+    .whereNull("resolved_at")
+    .count<{ count: string }>("id as count")
+    .first();
+
+  return Number(row?.count ?? 0);
+}
+
 /**
  * Update user deactivated_at timestamp
  */

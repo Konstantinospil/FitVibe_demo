@@ -40,8 +40,11 @@ const DEFAULT_LANGUAGE = "en";
 const form = document.getElementById("login-form") as HTMLFormElement | null;
 const shell = document.getElementById("login-shell");
 const AUTH_STORAGE_KEY = "fitvibe:auth";
-const pathname = typeof window !== "undefined" ? window.location.pathname : "";
-const shouldUseShell = pathname === "/login";
+const shouldUseShell = Boolean(form && shell);
+const DEFAULT_TOGGLE_LABELS = {
+  show: "Show password",
+  hide: "Hide password",
+};
 
 const authLoaders: Record<string, () => Promise<{ default: AuthTranslations }>> = {
   en: () => import("../i18n/locales/en/auth.json"),
@@ -183,25 +186,28 @@ if (!form || !shell || !shouldUseShell) {
     }
   };
 
-  const togglePasswordVisibility = async () => {
+  const togglePasswordVisibility = () => {
     if (!toggleButton) {
       return;
     }
-    const auth = copy ?? (await translationsPromise);
+    const auth = copy;
+    const labels = auth
+      ? { show: auth.showPassword, hide: auth.hidePassword }
+      : DEFAULT_TOGGLE_LABELS;
     if (passwordInput.type === "password") {
       passwordInput.type = "text";
-      toggleButton.textContent = auth.hidePassword;
-      toggleButton.setAttribute("aria-label", auth.hidePassword);
+      toggleButton.textContent = labels.hide;
+      toggleButton.setAttribute("aria-label", labels.hide);
     } else {
       passwordInput.type = "password";
-      toggleButton.textContent = auth.showPassword;
-      toggleButton.setAttribute("aria-label", auth.showPassword);
+      toggleButton.textContent = labels.show;
+      toggleButton.setAttribute("aria-label", labels.show);
     }
     passwordInput.focus();
   };
 
   toggleButton?.addEventListener("click", () => {
-    void togglePasswordVisibility();
+    togglePasswordVisibility();
   });
 
   const getReturnUrl = () => {
@@ -290,8 +296,10 @@ if (!form || !shell || !shouldUseShell) {
         const returnUrl = getReturnUrl();
         const searchParams = new URLSearchParams({
           pendingSessionId: data.pendingSessionId,
-          returnUrl,
         });
+        if (returnUrl !== "/") {
+          searchParams.set("returnUrl", returnUrl);
+        }
         window.location.assign(`/login/verify-2fa?${searchParams.toString()}`);
         return;
       }

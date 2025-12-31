@@ -49,9 +49,7 @@ describe("UserManagement", () => {
     );
 
     expect(screen.getAllByText("User Management")[0]).toBeInTheDocument();
-    expect(
-      screen.getAllByText("Search and manage user accounts and permissions")[0],
-    ).toBeInTheDocument();
+    expect(screen.getAllByText("Manage user accounts and permissions")[0]).toBeInTheDocument();
     expect(
       screen.getAllByPlaceholderText("Search by email, username, or ID...")[0],
     ).toBeInTheDocument();

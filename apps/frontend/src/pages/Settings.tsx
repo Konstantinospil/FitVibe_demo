@@ -1,9 +1,11 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { Save, Trash2, Shield, User, Globe, Upload } from "lucide-react";
+import { Save, Trash2, Shield, User, Globe } from "lucide-react";
 import PageIntro from "../components/PageIntro";
 import { Button } from "../components/ui/Button";
+import LanguageSwitcher from "../components/LanguageSwitcher";
+import ThemeToggle from "../components/ThemeToggle";
 import {
   Card,
   CardHeader,
@@ -13,14 +15,7 @@ import {
   CardFooter,
 } from "../components/ui/Card";
 import { useAuthStore } from "../store/auth.store";
-import {
-  apiClient,
-  setup2FA,
-  verify2FA,
-  disable2FA,
-  get2FAStatus,
-  uploadAvatar,
-} from "../services/api";
+import { apiClient, setup2FA, verify2FA, disable2FA, get2FAStatus } from "../services/api";
 import { logger } from "../utils/logger";
 import { useToast } from "../contexts/ToastContext";
 import { ConfirmDialog } from "../components/ConfirmDialog";
@@ -60,7 +55,64 @@ const Settings: React.FC = () => {
   const navigate = useNavigate();
   const { signOut } = useAuthStore();
   const toast = useToast();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+
+  const labels = {
+    title: t("settings.title"),
+    description: t("settings.description"),
+    loading: t("settings.loading"),
+    notAvailable: t("settings.notAvailable"),
+    profileTitle: t("settings.profile.title"),
+    profileDescription: t("settings.profile.description"),
+    displayName: t("settings.profile.displayName"),
+    displayNamePlaceholder: t("settings.profile.displayNamePlaceholder"),
+    alias: t("settings.profile.alias"),
+    aliasPlaceholder: t("settings.profile.aliasPlaceholder"),
+    aliasHelp: t("settings.profile.aliasHelp"),
+    email: t("settings.profile.email"),
+    emailCannotChange: t("settings.profile.emailCannotChange"),
+    weight: t("settings.profile.weight"),
+    weightPlaceholder: t("settings.profile.weightPlaceholder"),
+    weightUnit: t("settings.profile.weightUnit"),
+    weightKg: t("settings.profile.weightKg"),
+    weightLb: t("settings.profile.weightLb"),
+    fitnessLevel: t("settings.profile.fitnessLevel"),
+    fitnessLevelBeginner: t("settings.profile.fitnessLevelBeginner"),
+    fitnessLevelIntermediate: t("settings.profile.fitnessLevelIntermediate"),
+    fitnessLevelAdvanced: t("settings.profile.fitnessLevelAdvanced"),
+    fitnessLevelElite: t("settings.profile.fitnessLevelElite"),
+    trainingFrequency: t("settings.profile.trainingFrequency"),
+    trainingFrequencyRarely: t("settings.profile.trainingFrequencyRarely"),
+    trainingFrequency1_2: t("settings.profile.trainingFrequency1_2"),
+    trainingFrequency3_4: t("settings.profile.trainingFrequency3_4"),
+    trainingFrequency5Plus: t("settings.profile.trainingFrequency5Plus"),
+    twoFactorCodePlaceholder: t("settings.profile.twoFactorCodePlaceholder"),
+    passwordPlaceholder: t("settings.profile.passwordPlaceholder"),
+    preferencesTitle: t("settings.preferences.title"),
+    preferencesDescription: t("settings.preferences.description"),
+    defaultVisibility: t("settings.preferences.defaultVisibility"),
+    units: t("settings.preferences.units"),
+    language: t("settings.preferences.language"),
+    saveButton: t("settings.preferences.saveButton"),
+    saving: t("settings.preferences.saving"),
+    saveSuccess: t("settings.preferences.saveSuccess"),
+    saveError: t("settings.preferences.saveError"),
+    twoFactorTitle: t("settings.twoFactor.title"),
+    twoFactorEnable: t("settings.twoFactor.enable"),
+    twoFactorDisable: t("settings.twoFactor.disable"),
+    twoFactorVerifyAndEnable: t("settings.twoFactor.verifyAndEnable"),
+    twoFactorEnabled: t("settings.twoFactor.enabled"),
+    twoFactorEnableSuccess: t("settings.twoFactor.enableSuccess"),
+    scanQRCode: t("settings.twoFactor.scanQRCode"),
+    dangerTitle: t("settings.dangerZone.title"),
+    deleteAccount: t("settings.dangerZone.deleteAccount"),
+    deleteWarning: t("settings.dangerZone.deleteWarning"),
+    deleteConfirmLabel: t("settings.dangerZone.deleteConfirmLabel"),
+    deleteConfirmTitle: t("settings.dangerZone.deleteConfirmTitle"),
+    confirmDeleteLabel: t("settings.dangerZone.confirmDeleteLabel"),
+    deleteError: t("settings.dangerZone.deleteError"),
+    cancel: t("common.cancel"),
+  };
 
   // Active section
   const [activeSection, setActiveSection] = useState<SettingsSection>("profile");
@@ -82,16 +134,17 @@ const Settings: React.FC = () => {
   const [fitnessLevel, setFitnessLevel] = useState<FitnessLevel | "">("");
   const [trainingFrequency, setTrainingFrequency] = useState<TrainingFrequency | "">("");
 
-  // Avatar upload
-  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
-  const [uploadingAvatar, setUploadingAvatar] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
   // Load user data and 2FA status on mount
   useEffect(() => {
     void loadUserData();
     void load2FAStatus();
   }, []); // Intentionally empty - these functions are stable and should only run once on mount
+
+  useEffect(() => {
+    if (i18n.language) {
+      setLocale(i18n.language);
+    }
+  }, [i18n.language]);
 
   const loadUserData = async () => {
     setLoadingUser(true);
@@ -116,17 +169,6 @@ const Settings: React.FC = () => {
       if (response.data.locale) {
         setLocale(response.data.locale);
       }
-      // Load avatar
-      if (response.data.avatar?.url) {
-        // Backend returns /users/avatar/{userId}, convert to API endpoint
-        const avatarUrl = response.data.avatar.url;
-        if (avatarUrl.startsWith("/users/avatar/")) {
-          const userId = avatarUrl.replace("/users/avatar/", "");
-          setAvatarUrl(`/api/v1/users/avatar/${userId}`);
-        } else {
-          setAvatarUrl(avatarUrl);
-        }
-      }
       // Load profile data (FR-009)
       if (response.data.profile) {
         setAlias(response.data.profile.alias ?? "");
@@ -138,9 +180,18 @@ const Settings: React.FC = () => {
               : response.data.profile.weight.toFixed(1);
           setWeight(displayWeight);
           setWeightUnit((response.data.profile.weightUnit as "kg" | "lb") ?? "kg");
+        } else {
+          setWeight("");
+          setWeightUnit("kg");
         }
         setFitnessLevel((response.data.profile.fitnessLevel as FitnessLevel) ?? "");
         setTrainingFrequency((response.data.profile.trainingFrequency as TrainingFrequency) ?? "");
+      } else {
+        setAlias("");
+        setWeight("");
+        setWeightUnit("kg");
+        setFitnessLevel("");
+        setTrainingFrequency("");
       }
     } catch (error) {
       logger.apiError("Failed to load user data", error, "/api/v1/users/me", "GET");
@@ -179,102 +230,6 @@ const Settings: React.FC = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
-
-  // Avatar upload validation
-  const validateAvatarFile = (file: File): string | null => {
-    // Check file type - only allow image formats
-    const allowedTypes = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
-    if (!allowedTypes.includes(file.type)) {
-      return t("settings.profile.avatarInvalidFormat");
-    }
-
-    // Check file size (5MB max)
-    const maxSize = 5 * 1024 * 1024; // 5MB
-    if (file.size > maxSize) {
-      return t("settings.profile.avatarFileTooLarge");
-    }
-
-    // Additional validation: check file extension as backup
-    const fileName = file.name.toLowerCase();
-    const allowedExtensions = [".jpg", ".jpeg", ".png", ".webp"];
-    const hasValidExtension = allowedExtensions.some((ext) => fileName.endsWith(ext));
-    if (!hasValidExtension) {
-      return t("settings.profile.avatarInvalidFile");
-    }
-
-    return null;
-  };
-
-  const handleAvatarUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) {
-      return;
-    }
-
-    // Validate file
-    const validationError = validateAvatarFile(file);
-    if (validationError) {
-      toast.error(validationError);
-      if (fileInputRef.current) {
-        fileInputRef.current.value = "";
-      }
-      return;
-    }
-
-    setUploadingAvatar(true);
-    try {
-      const response = await uploadAvatar(file);
-
-      const fileUrl = response?.fileUrl;
-      if (fileUrl && typeof fileUrl === "string") {
-        // Backend returns relative path like /users/avatar/{userId}
-        // Convert to API endpoint: /api/v1/users/avatar/{userId}
-        let avatarUrl: string;
-        if (fileUrl.startsWith("http")) {
-          avatarUrl = fileUrl;
-        } else if (fileUrl.startsWith("/users/avatar/")) {
-          // Convert /users/avatar/{userId} to /api/v1/users/avatar/{userId}
-          const userId = fileUrl.replace("/users/avatar/", "");
-          avatarUrl = `/api/v1/users/avatar/${userId}`;
-        } else {
-          avatarUrl = fileUrl;
-        }
-        setAvatarUrl(avatarUrl);
-        toast.success(t("settings.profile.avatarUploadSuccess"));
-        // Reload user data to get updated avatar
-        await loadUserData();
-      } else {
-        toast.error(t("settings.profile.avatarUploadError"));
-      }
-    } catch (error: unknown) {
-      logger.apiError("Failed to upload avatar", error, "/api/v1/users/avatar", "POST");
-
-      // Try to extract more specific error message
-      let errorMessage = t("settings.profile.avatarUploadError");
-      if (error && typeof error === "object" && "response" in error) {
-        const axiosError = error as {
-          response?: { data?: { error?: string; message?: string } };
-        };
-        if (axiosError.response?.data?.error) {
-          const errorCode = axiosError.response.data.error;
-          if (errorCode === "UPLOAD_UNSUPPORTED_TYPE") {
-            errorMessage = t("settings.profile.avatarInvalidFormat");
-          } else if (errorCode === "UPLOAD_TOO_LARGE") {
-            errorMessage = t("settings.profile.avatarFileTooLarge");
-          } else if (axiosError.response.data.message) {
-            errorMessage = axiosError.response.data.message;
-          }
-        }
-      }
-
-      toast.error(errorMessage);
-    } finally {
-      setUploadingAvatar(false);
-      if (fileInputRef.current) {
-        fileInputRef.current.value = "";
-      }
-    }
-  };
 
   const handleSavePreferences = async () => {
     setIsSaving(true);
@@ -317,7 +272,7 @@ const Settings: React.FC = () => {
       logger.apiError("Failed to save preferences", error, "/api/v1/users/me", "PATCH");
       const errorMessage =
         (error as { response?: { data?: { error?: { message?: string } } } })?.response?.data?.error
-          ?.message ?? t("settings.preferences.saveError");
+          ?.message ?? labels.saveError;
       setSaveError(errorMessage);
     } finally {
       setIsSaving(false);
@@ -353,7 +308,7 @@ const Settings: React.FC = () => {
       setTwoFACode("");
       setTwoFAQRCode(null);
       setTwoFABackupCodes([]);
-      toast.success(t("settings.twoFactor.enableSuccess"));
+      toast.success(labels.twoFactorEnableSuccess);
     } catch (error) {
       logger.apiError("Failed to verify 2FA", error, "/api/v1/auth/2fa/verify", "POST");
       toast.error(t("settings.twoFactor.verifyError"));
@@ -414,7 +369,7 @@ const Settings: React.FC = () => {
       }, 2000);
     } catch (error) {
       logger.apiError("Failed to delete account", error, "/api/v1/users/me", "DELETE");
-      toast.error(t("settings.dangerZone.deleteError"));
+      toast.error(labels.deleteError);
     }
   };
 
@@ -423,134 +378,61 @@ const Settings: React.FC = () => {
       <CardHeader>
         <div className="flex flex--align-center flex--gap-075">
           <User size={20} />
-          <CardTitle>{t("settings.profile.title")}</CardTitle>
+          <CardTitle>{labels.profileTitle}</CardTitle>
         </div>
-        <CardDescription>{t("settings.profile.description")}</CardDescription>
+        <CardDescription>{labels.profileDescription}</CardDescription>
       </CardHeader>
       <CardContent>
         <div className="grid grid--gap-md">
-          {/* Avatar Upload */}
-          <div>
-            <label className="form-label-text block mb-05 font-weight-600">
-              {t("settings.profile.avatar")}
-            </label>
-            <div className="flex flex--align-center flex--gap-md">
-              <div
-                style={{
-                  width: "80px",
-                  height: "80px",
-                  borderRadius: "50%",
-                  overflow: "hidden",
-                  background: "var(--color-surface-muted)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  border: "2px solid var(--color-border)",
-                }}
-              >
-                {avatarUrl ? (
-                  <img
-                    src={avatarUrl}
-                    alt="Avatar"
-                    style={{ width: "100%", height: "100%", objectFit: "cover" }}
-                  />
-                ) : (
-                  <User size={40} style={{ color: "var(--color-text-muted)" }} />
-                )}
-              </div>
-              <div className="flex flex--gap-sm">
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/jpeg,image/jpg,image/png,image/webp"
-                  onChange={(e) => {
-                    void handleAvatarUpload(e);
-                  }}
-                  style={{ display: "none" }}
-                  id="avatar-upload"
-                />
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  leftIcon={<Upload size={16} />}
-                  disabled={uploadingAvatar}
-                  isLoading={uploadingAvatar}
-                  type="button"
-                  onClick={() => {
-                    if (fileInputRef.current && !uploadingAvatar) {
-                      fileInputRef.current.click();
-                    }
-                  }}
-                >
-                  {uploadingAvatar
-                    ? t("settings.profile.avatarUploading")
-                    : avatarUrl
-                      ? t("settings.profile.avatarChange")
-                      : t("settings.profile.avatarUpload")}
-                </Button>
-              </div>
-            </div>
-          </div>
-
           <div>
             <label htmlFor="display-name" className="form-label-text block mb-05 font-weight-600">
-              {t("settings.profile.displayName")}
+              {labels.displayName}
             </label>
             <input
               id="display-name"
               type="text"
               value={displayName}
               onChange={(e) => setDisplayName(e.target.value)}
-              placeholder={t("settings.profile.displayNamePlaceholder")}
-              className="form-input"
-              style={{ background: "var(--color-surface)" }}
+              placeholder={labels.displayNamePlaceholder}
+              className="form-input form-input--surface"
             />
           </div>
 
           <div>
             <label htmlFor="email" className="form-label-text block mb-05 font-weight-600">
-              {t("settings.profile.email")}
+              {labels.email}
             </label>
             <input
               id="email"
               type="email"
-              value={
-                loadingUser
-                  ? t("settings.loading")
-                  : (userData?.email ?? t("settings.notAvailable"))
-              }
+              value={loadingUser ? labels.loading : (userData?.email ?? labels.notAvailable)}
               disabled
-              className="form-input"
-              style={{
-                background: "rgba(0, 0, 0, 0.2)",
-                color: "var(--color-text-secondary)",
-              }}
+              className="form-input form-input--muted"
             />
-            <p className="mt-05 text-085 text-muted">{t("settings.profile.emailCannotChange")}</p>
+            <p className="mt-05 text-085 text-muted">{labels.emailCannotChange}</p>
           </div>
 
           {/* Alias field (FR-009) */}
           <div>
             <label htmlFor="alias" className="form-label-text block mb-05 font-weight-600">
-              {t("settings.profile.alias")}
+              {labels.alias}
             </label>
             <input
               id="alias"
               type="text"
               value={alias}
               onChange={(e) => setAlias(e.target.value)}
-              placeholder={t("settings.profile.aliasPlaceholder")}
-              className="form-input"
-              style={{ background: "var(--color-surface)" }}
+              placeholder={labels.aliasPlaceholder}
+              className="form-input form-input--surface"
             />
-            <p className="mt-05 text-085 text-muted">{t("settings.profile.aliasHelp")}</p>
+            <p className="mt-05 text-085 text-muted">{labels.aliasHelp}</p>
           </div>
 
           {/* Weight field (FR-009) */}
-          <div className="grid" style={{ gridTemplateColumns: "2fr 1fr", gap: "0.75rem" }}>
+          <div className="grid grid--two-one grid--gap-sm">
             <div>
               <label htmlFor="weight" className="form-label-text block mb-05 font-weight-600">
-                {t("settings.profile.weight")}
+                {labels.weight}
               </label>
               <input
                 id="weight"
@@ -560,24 +442,22 @@ const Settings: React.FC = () => {
                 step="0.1"
                 value={weight}
                 onChange={(e) => setWeight(e.target.value)}
-                placeholder={t("settings.profile.weightPlaceholder")}
-                className="form-input"
-                style={{ background: "var(--color-surface)" }}
+                placeholder={labels.weightPlaceholder}
+                className="form-input form-input--surface"
               />
             </div>
             <div>
               <label htmlFor="weight-unit" className="form-label-text block mb-05 font-weight-600">
-                {t("settings.profile.weightUnit")}
+                {labels.weightUnit}
               </label>
               <select
                 id="weight-unit"
                 value={weightUnit}
                 onChange={(e) => setWeightUnit(e.target.value as "kg" | "lb")}
-                className="form-input"
-                style={{ background: "var(--color-surface)" }}
+                className="form-input form-input--surface"
               >
-                <option value="kg">{t("settings.profile.weightKg")}</option>
-                <option value="lb">{t("settings.profile.weightLb")}</option>
+                <option value="kg">{labels.weightKg}</option>
+                <option value="lb">{labels.weightLb}</option>
               </select>
             </div>
           </div>
@@ -585,20 +465,19 @@ const Settings: React.FC = () => {
           {/* Fitness Level field (FR-009) */}
           <div>
             <label htmlFor="fitness-level" className="form-label-text block mb-05 font-weight-600">
-              {t("settings.profile.fitnessLevel")}
+              {labels.fitnessLevel}
             </label>
             <select
               id="fitness-level"
               value={fitnessLevel}
               onChange={(e) => setFitnessLevel(e.target.value as FitnessLevel)}
-              className="form-input"
-              style={{ background: "var(--color-surface)" }}
+              className="form-input form-input--surface"
             >
               <option value="">{t("common.loading")}</option>
-              <option value="beginner">{t("settings.profile.fitnessLevelBeginner")}</option>
-              <option value="intermediate">{t("settings.profile.fitnessLevelIntermediate")}</option>
-              <option value="advanced">{t("settings.profile.fitnessLevelAdvanced")}</option>
-              <option value="elite">{t("settings.profile.fitnessLevelElite")}</option>
+              <option value="beginner">{labels.fitnessLevelBeginner}</option>
+              <option value="intermediate">{labels.fitnessLevelIntermediate}</option>
+              <option value="advanced">{labels.fitnessLevelAdvanced}</option>
+              <option value="elite">{labels.fitnessLevelElite}</option>
             </select>
           </div>
 
@@ -608,22 +487,19 @@ const Settings: React.FC = () => {
               htmlFor="training-frequency"
               className="form-label-text block mb-05 font-weight-600"
             >
-              {t("settings.profile.trainingFrequency")}
+              {labels.trainingFrequency}
             </label>
             <select
               id="training-frequency"
               value={trainingFrequency}
               onChange={(e) => setTrainingFrequency(e.target.value as TrainingFrequency)}
-              className="form-input"
-              style={{ background: "var(--color-surface)" }}
+              className="form-input form-input--surface"
             >
               <option value="">{t("common.loading")}</option>
-              <option value="rarely">{t("settings.profile.trainingFrequencyRarely")}</option>
-              <option value="1_2_per_week">{t("settings.profile.trainingFrequency1_2")}</option>
-              <option value="3_4_per_week">{t("settings.profile.trainingFrequency3_4")}</option>
-              <option value="5_plus_per_week">
-                {t("settings.profile.trainingFrequency5Plus")}
-              </option>
+              <option value="rarely">{labels.trainingFrequencyRarely}</option>
+              <option value="1_2_per_week">{labels.trainingFrequency1_2}</option>
+              <option value="3_4_per_week">{labels.trainingFrequency3_4}</option>
+              <option value="5_plus_per_week">{labels.trainingFrequency5Plus}</option>
             </select>
           </div>
         </div>
@@ -648,9 +524,9 @@ const Settings: React.FC = () => {
       <CardHeader>
         <div className="flex flex--align-center flex--gap-075">
           <Globe size={20} />
-          <CardTitle>{t("settings.preferences.title")}</CardTitle>
+          <CardTitle>{labels.preferencesTitle}</CardTitle>
         </div>
-        <CardDescription>{t("settings.preferences.description")}</CardDescription>
+        <CardDescription>{labels.preferencesDescription}</CardDescription>
       </CardHeader>
       <CardContent>
         <div className="grid grid--gap-md">
@@ -659,14 +535,13 @@ const Settings: React.FC = () => {
               htmlFor="default-visibility"
               className="form-label-text block mb-05 font-weight-600"
             >
-              {t("settings.preferences.defaultVisibility")}
+              {labels.defaultVisibility}
             </label>
             <select
               id="default-visibility"
               value={defaultVisibility}
               onChange={(e) => setDefaultVisibility(e.target.value as SessionVisibility)}
-              className="form-input"
-              style={{ background: "var(--color-surface)" }}
+              className="form-input form-input--surface"
             >
               <option value="private">{t("settings.preferences.visibilityOptions.private")}</option>
               <option value="followers">
@@ -679,14 +554,13 @@ const Settings: React.FC = () => {
 
           <div>
             <label htmlFor="units" className="form-label-text block mb-05 font-weight-600">
-              {t("settings.preferences.units")}
+              {labels.units}
             </label>
             <select
               id="units"
               value={units}
               onChange={(e) => setUnits(e.target.value as Units)}
-              className="form-input"
-              style={{ background: "var(--color-surface)" }}
+              className="form-input form-input--surface"
             >
               <option value="metric">{t("settings.preferences.unitsOptions.metric")}</option>
               <option value="imperial">{t("settings.preferences.unitsOptions.imperial")}</option>
@@ -694,50 +568,34 @@ const Settings: React.FC = () => {
           </div>
 
           <div>
-            <label htmlFor="locale" className="form-label-text block mb-05 font-weight-600">
-              {t("settings.preferences.language")}
-            </label>
-            <select
-              id="locale"
-              value={locale}
-              onChange={(e) => setLocale(e.target.value)}
-              className="form-input"
-              style={{ background: "var(--color-surface)" }}
-            >
-              <option value="en">{t("settings.preferences.languageOptions.en")}</option>
-              <option value="de">{t("settings.preferences.languageOptions.de")}</option>
-            </select>
+            <div className="flex flex--align-center flex--justify-between flex--gap-md">
+              <div>
+                <div className="form-label-text block mb-05 font-weight-600">{labels.language}</div>
+              </div>
+              <LanguageSwitcher />
+            </div>
+          </div>
+
+          <div>
+            <div className="flex flex--align-center flex--justify-between flex--gap-md">
+              <div>
+                <div className="form-label-text block mb-05 font-weight-600">
+                  {t("settings.preferences.theme")}
+                </div>
+              </div>
+              <ThemeToggle />
+            </div>
           </div>
         </div>
       </CardContent>
       <CardFooter>
         {saveSuccess && (
-          <div
-            className="text-085"
-            style={{
-              padding: "0.75rem 1rem",
-              borderRadius: "8px",
-              background: "rgba(52, 211, 153, 0.15)",
-              color: "var(--color-accent)",
-              marginRight: "1rem",
-            }}
-          >
-            {t("settings.preferences.saveSuccess")}
+          <div className="text-085 settings-flash settings-flash--success">
+            {labels.saveSuccess}
           </div>
         )}
         {saveError && (
-          <div
-            className="text-085"
-            style={{
-              padding: "0.75rem 1rem",
-              borderRadius: "8px",
-              background: "rgba(239, 68, 68, 0.15)",
-              color: "var(--color-danger)",
-              marginRight: "1rem",
-            }}
-          >
-            {saveError}
-          </div>
+          <div className="text-085 settings-flash settings-flash--error">{saveError}</div>
         )}
         <Button
           variant="primary"
@@ -745,7 +603,7 @@ const Settings: React.FC = () => {
           isLoading={isSaving}
           leftIcon={<Save size={18} />}
         >
-          {isSaving ? t("settings.preferences.saving") : t("settings.preferences.saveButton")}
+          {isSaving ? labels.saving : labels.saveButton}
         </Button>
       </CardFooter>
     </Card>
@@ -757,7 +615,7 @@ const Settings: React.FC = () => {
         <CardHeader>
           <div className="flex flex--align-center flex--gap-075">
             <Shield size={20} />
-            <CardTitle>{t("settings.twoFactor.title")}</CardTitle>
+            <CardTitle>{labels.twoFactorTitle}</CardTitle>
           </div>
           <CardDescription>{t("settings.twoFactor.description")}</CardDescription>
         </CardHeader>
@@ -775,44 +633,22 @@ const Settings: React.FC = () => {
                 disabled={loading2FA}
                 isLoading={loading2FA}
               >
-                {t("settings.twoFactor.enable")}
+                {labels.twoFactorEnable}
               </Button>
             </div>
           )}
 
           {showTwoFASetup && (
             <div>
-              <p className="text-secondary mb-md">{t("settings.twoFactor.scanQRCode")}</p>
-              <div
-                style={{
-                  padding: "2rem",
-                  background: "rgba(255, 255, 255, 0.9)",
-                  borderRadius: "12px",
-                  textAlign: "center",
-                  marginBottom: "1.5rem",
-                }}
-              >
-                <div
-                  style={{
-                    width: "200px",
-                    height: "200px",
-                    background: "#fff",
-                    margin: "0 auto",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    border: "2px solid #ddd",
-                    borderRadius: "8px",
-                  }}
-                >
+              <p className="text-secondary mb-md">{labels.scanQRCode}</p>
+              <div className="settings-qr-card">
+                <div className="settings-qr-frame">
                   {twoFAQRCode ? (
-                    <img
-                      src={twoFAQRCode}
-                      alt="2FA QR Code"
-                      style={{ width: "100%", height: "100%", objectFit: "contain" }}
-                    />
+                    <img src={twoFAQRCode} alt="2FA QR Code" className="settings-qr-image" />
                   ) : (
-                    <span style={{ color: "#666" }}>{t("settings.twoFactor.loadingQRCode")}</span>
+                    <span className="settings-qr-loading">
+                      {t("settings.twoFactor.loadingQRCode")}
+                    </span>
                   )}
                 </div>
               </div>
@@ -826,17 +662,9 @@ const Settings: React.FC = () => {
                   type="text"
                   value={twoFACode}
                   onChange={(e) => setTwoFACode(e.target.value.replace(/\D/g, "").slice(0, 6))}
-                  placeholder={t("settings.profile.twoFactorCodePlaceholder")}
+                  placeholder={labels.twoFactorCodePlaceholder}
                   maxLength={6}
-                  className="form-input"
-                  style={{
-                    flex: 1,
-                    fontSize: "1.5rem",
-                    textAlign: "center",
-                    fontFamily: "monospace",
-                    letterSpacing: "0.5rem",
-                    background: "var(--color-surface)",
-                  }}
+                  className="form-input form-input--surface form-input--code form-input--code-lg settings-2fa-code"
                 />
                 <Button
                   variant="primary"
@@ -844,42 +672,19 @@ const Settings: React.FC = () => {
                   disabled={twoFACode.length !== 6 || loading2FA}
                   isLoading={loading2FA}
                 >
-                  {t("settings.twoFactor.verifyAndEnable")}
+                  {labels.twoFactorVerifyAndEnable}
                 </Button>
               </div>
 
               {twoFABackupCodes.length > 0 && (
-                <div
-                  style={{
-                    marginTop: "1.5rem",
-                    padding: "1rem",
-                    background: "rgba(251, 191, 36, 0.1)",
-                    border: "1px solid rgba(251, 191, 36, 0.3)",
-                    borderRadius: "8px",
-                  }}
-                >
+                <div className="settings-backup-codes">
                   <h4 className="mb-05 font-weight-600">{t("settings.twoFactor.backupCodes")}</h4>
                   <p className="text-085 text-secondary mb-md">
                     {t("settings.twoFactor.backupCodesDescription")}
                   </p>
-                  <div
-                    style={{
-                      display: "grid",
-                      gridTemplateColumns: "repeat(2, 1fr)",
-                      gap: "0.5rem",
-                      fontFamily: "monospace",
-                      fontSize: "0.9rem",
-                    }}
-                  >
+                  <div className="settings-backup-grid">
                     {twoFABackupCodes.map((code, index) => (
-                      <div
-                        key={index}
-                        style={{
-                          padding: "0.5rem",
-                          background: "rgba(0,0,0,0.2)",
-                          borderRadius: "4px",
-                        }}
-                      >
+                      <div key={index} className="settings-backup-code">
                         {code}
                       </div>
                     ))}
@@ -892,9 +697,8 @@ const Settings: React.FC = () => {
           {twoFAEnabled && (
             <div>
               <p
-                className="mb-md font-weight-600"
-                style={{ color: "var(--color-accent)" }}
-                dangerouslySetInnerHTML={{ __html: t("settings.twoFactor.enabled") }}
+                className="mb-md font-weight-600 text-accent"
+                dangerouslySetInnerHTML={{ __html: labels.twoFactorEnabled }}
               />
               <p className="text-secondary mb-md">{t("settings.twoFactor.enabledDescription")}</p>
               <div className="mb-md">
@@ -909,9 +713,8 @@ const Settings: React.FC = () => {
                   id="disable-2fa-password"
                   value={disable2FAPassword}
                   onChange={(e) => setDisable2FAPassword(e.target.value)}
-                  placeholder={t("settings.profile.passwordPlaceholder")}
-                  className="form-input"
-                  style={{ background: "var(--color-surface)" }}
+                  placeholder={labels.passwordPlaceholder}
+                  className="form-input form-input--surface"
                 />
               </div>
               <Button
@@ -920,7 +723,7 @@ const Settings: React.FC = () => {
                 disabled={!disable2FAPassword || loading2FA}
                 isLoading={loading2FA}
               >
-                {t("settings.twoFactor.disable")}
+                {labels.twoFactorDisable}
               </Button>
             </div>
           )}
@@ -935,10 +738,8 @@ const Settings: React.FC = () => {
     <Card>
       <CardHeader>
         <div className="flex flex--align-center flex--gap-075">
-          <Trash2 size={20} style={{ color: "var(--color-danger)" }} />
-          <CardTitle style={{ color: "var(--color-danger)" }}>
-            {t("settings.dangerZone.title")}
-          </CardTitle>
+          <Trash2 size={20} className="icon icon--danger" />
+          <CardTitle className="text-danger">{labels.dangerTitle}</CardTitle>
         </div>
         <CardDescription>{t("settings.dangerZone.description")}</CardDescription>
       </CardHeader>
@@ -946,13 +747,7 @@ const Settings: React.FC = () => {
         {!showDeleteConfirm && (
           <div>
             <p className="text-secondary mb-md">{t("settings.dangerZone.deleteDescription")}</p>
-            <ul
-              style={{
-                marginLeft: "1.5rem",
-                marginBottom: "1rem",
-                color: "var(--color-text-secondary)",
-              }}
-            >
+            <ul className="settings-delete-list">
               <li>{t("settings.dangerZone.deleteItems.data")}</li>
               <li>{t("settings.dangerZone.deleteItems.sessions")}</li>
               <li>{t("settings.dangerZone.deleteItems.profile")}</li>
@@ -963,28 +758,22 @@ const Settings: React.FC = () => {
               onClick={() => setShowDeleteConfirm(true)}
               leftIcon={<Trash2 size={18} />}
             >
-              {t("settings.dangerZone.deleteAccount")}
+              {labels.deleteAccount}
             </Button>
           </div>
         )}
 
         {showDeleteConfirm && (
           <div>
-            <p className="mb-md font-weight-600" style={{ color: "var(--color-danger)" }}>
-              {t("settings.dangerZone.deleteWarning")}
-            </p>
+            <p className="mb-md font-weight-600 text-danger">{labels.deleteWarning}</p>
             <p className="text-secondary mb-md">{t("settings.dangerZone.deletePasswordPrompt")}</p>
             <div className="mb-md">
               <input
                 type="password"
                 value={deleteConfirmPassword}
                 onChange={(e) => setDeleteConfirmPassword(e.target.value)}
-                placeholder={t("settings.profile.passwordPlaceholder")}
-                className="form-input"
-                style={{
-                  background: "var(--color-surface)",
-                  borderColor: "var(--color-danger)",
-                }}
+                placeholder={labels.passwordPlaceholder}
+                className="form-input form-input--surface form-input--danger"
               />
             </div>
             <div className="flex flex--gap-sm">
@@ -995,14 +784,14 @@ const Settings: React.FC = () => {
                   setDeleteConfirmPassword("");
                 }}
               >
-                {t("common.cancel")}
+                {labels.cancel}
               </Button>
               <Button
                 variant="danger"
                 onClick={() => void handleDeleteAccount()}
                 disabled={!deleteConfirmPassword}
               >
-                {t("settings.dangerZone.deleteConfirmLabel")}
+                {labels.deleteConfirmLabel}
               </Button>
             </div>
           </div>
@@ -1011,80 +800,56 @@ const Settings: React.FC = () => {
     </Card>
   );
 
-  const renderContent = () => {
-    switch (activeSection) {
-      case "profile":
-        return renderProfileSection();
-      case "preferences":
-        return renderPreferencesSection();
-      case "security":
-        return renderSecuritySection();
-      case "danger":
-        return renderDangerZoneSection();
-      default:
-        return renderProfileSection();
+  const renderContent = () => (
+    <div className="grid grid--gap-15">
+      <section id="settings-section-profile">{renderProfileSection()}</section>
+      <section id="settings-section-preferences">{renderPreferencesSection()}</section>
+      <section id="settings-section-security">{renderSecuritySection()}</section>
+      <section id="settings-section-danger">{renderDangerZoneSection()}</section>
+    </div>
+  );
+
+  const scrollToSection = (sectionId: SettingsSection) => {
+    if (typeof document === "undefined") {
+      return;
+    }
+    const target = document.getElementById(`settings-section-${sectionId}`);
+    if (target?.scrollIntoView) {
+      target.scrollIntoView({ behavior: "smooth", block: "start" });
     }
   };
 
   const sidebarItems = [
-    { id: "profile" as SettingsSection, label: t("settings.profile.title"), icon: User },
-    { id: "preferences" as SettingsSection, label: t("settings.preferences.title"), icon: Globe },
-    { id: "security" as SettingsSection, label: t("settings.twoFactor.title"), icon: Shield },
-    { id: "danger" as SettingsSection, label: t("settings.dangerZone.title"), icon: Trash2 },
+    { id: "profile" as SettingsSection, label: labels.profileTitle, icon: User },
+    { id: "preferences" as SettingsSection, label: labels.preferencesTitle, icon: Globe },
+    { id: "security" as SettingsSection, label: labels.twoFactorTitle, icon: Shield },
+    { id: "danger" as SettingsSection, label: labels.dangerTitle, icon: Trash2 },
   ];
 
   return (
     <PageIntro
       eyebrow={t("settings.eyebrow")}
-      title={t("settings.title")}
-      description={t("settings.description")}
+      title={labels.title}
+      description={labels.description}
     >
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "250px 1fr",
-          gap: "2rem",
-          maxWidth: "1200px",
-        }}
-      >
+      <div className="settings-layout">
         {/* Left Sidebar */}
-        <nav
-          aria-label={t("settings.title")}
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            gap: "0.5rem",
-          }}
-        >
+        <nav aria-label={t("settings.title")} className="settings-sidebar">
           {sidebarItems.map((item) => {
             const IconComponent = item.icon;
             const isActive = activeSection === item.id;
             return (
               <button
                 key={item.id}
-                onClick={() => setActiveSection(item.id)}
-                className="flex flex--align-center flex--gap-sm"
-                style={{
-                  padding: "0.75rem 1rem",
-                  borderRadius: "8px",
-                  border: "none",
-                  background: isActive ? "var(--color-surface)" : "transparent",
-                  color: isActive ? "var(--color-text-primary)" : "var(--color-text-secondary)",
-                  cursor: "pointer",
-                  transition: "all 150ms ease",
-                  textAlign: "left",
-                  fontWeight: isActive ? 600 : 400,
+                onClick={() => {
+                  setActiveSection(item.id);
+                  scrollToSection(item.id);
                 }}
-                onMouseEnter={(e) => {
-                  if (!isActive) {
-                    e.currentTarget.style.background = "var(--color-surface-muted)";
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (!isActive) {
-                    e.currentTarget.style.background = "transparent";
-                  }
-                }}
+                className={
+                  isActive
+                    ? "settings-sidebar-button settings-sidebar-button--active"
+                    : "settings-sidebar-button"
+                }
               >
                 <IconComponent size={18} />
                 <span>{item.label}</span>
@@ -1094,7 +859,7 @@ const Settings: React.FC = () => {
         </nav>
 
         {/* Center Content */}
-        <div style={{ minWidth: 0 }}>{renderContent()}</div>
+        <div className="min-w-0">{renderContent()}</div>
       </div>
 
       {/* Confirmation Dialogs */}
@@ -1111,10 +876,10 @@ const Settings: React.FC = () => {
 
       <ConfirmDialog
         isOpen={showDeleteAccountConfirm}
-        title={t("settings.dangerZone.deleteConfirmTitle")}
+        title={labels.deleteConfirmTitle}
         message={t("settings.dangerZone.deleteConfirmMessage")}
-        confirmLabel={t("settings.dangerZone.deleteConfirmLabel")}
-        cancelLabel={t("common.cancel")}
+        confirmLabel={labels.confirmDeleteLabel}
+        cancelLabel={labels.cancel}
         variant="danger"
         onConfirm={() => void confirmDeleteAccount()}
         onCancel={() => setShowDeleteAccountConfirm(false)}

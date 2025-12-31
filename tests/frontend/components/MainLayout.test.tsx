@@ -119,30 +119,28 @@ describe("MainLayout", () => {
     expect(profileLinks.length).toBeGreaterThan(0);
   });
 
-  it("should render theme toggle and language switcher", () => {
+  it("should render sign out control", () => {
     const { container } = render(<MainLayout />, { wrapper });
 
-    const themeToggles = screen.getAllByTestId("theme-toggle");
-    const languageSwitchers = screen.getAllByTestId("language-switcher");
-    const themeToggle =
-      Array.from(themeToggles).find((el) => container.contains(el)) || themeToggles[0];
-    const languageSwitcher =
-      Array.from(languageSwitchers).find((el) => container.contains(el)) || languageSwitchers[0];
+    const buttons = screen.getAllByRole("button");
+    const signOutButton =
+      buttons.find((btn) => {
+        const ariaLabel = btn.getAttribute("aria-label");
+        return ariaLabel && /sign out/i.test(ariaLabel) && container.contains(btn);
+      }) || buttons.find((btn) => /sign out/i.test(btn.getAttribute("aria-label") ?? ""));
 
-    expect(themeToggle).toBeInTheDocument();
-    expect(languageSwitcher).toBeInTheDocument();
+    expect(signOutButton).toBeInTheDocument();
   });
 
   it("should render footer", () => {
     const { container } = render(<MainLayout />, { wrapper });
 
     // Footer uses i18n translations - use getAllByText and filter by container
-    const fitvibeTexts = screen.getAllByText("FitVibe");
+    const footerLogos = screen.getAllByAltText("FitVibe");
     const termsTexts = screen.getAllByText("Terms");
     const privacyTexts = screen.getAllByText("Privacy");
 
-    const fitvibe =
-      Array.from(fitvibeTexts).find((el) => container.contains(el)) || fitvibeTexts[0];
+    const fitvibe = Array.from(footerLogos).find((el) => container.contains(el)) || footerLogos[0];
     const terms = Array.from(termsTexts).find((el) => container.contains(el)) || termsTexts[0];
     const privacy =
       Array.from(privacyTexts).find((el) => container.contains(el)) || privacyTexts[0];
@@ -228,9 +226,8 @@ describe("MainLayout", () => {
     const navElements = screen.getAllByRole("navigation");
     expect(navElements.length).toBeGreaterThan(0);
 
-    const fitvibeTexts = screen.getAllByText("FitVibe");
-    const fitvibe =
-      Array.from(fitvibeTexts).find((el) => container.contains(el)) || fitvibeTexts[0];
+    const footerLogos = screen.getAllByAltText("FitVibe");
+    const fitvibe = Array.from(footerLogos).find((el) => container.contains(el)) || footerLogos[0];
     expect(fitvibe).toBeInTheDocument(); // Footer
   });
 });

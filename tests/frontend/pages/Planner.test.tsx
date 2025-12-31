@@ -43,15 +43,31 @@ vi.mock("../../src/utils/logger", () => ({
 
 vi.mock("react-i18next", () => ({
   useTranslation: () => ({
-    t: (key: string) => {
+    t: (key: string, options?: { count?: number }) => {
       const translations: Record<string, string> = {
         "planner.eyebrow": "Planner",
         "planner.title": "Session Planner",
         "planner.description": "Plan your workout",
+        "planner.sessionDetailsTitle": "Session Details",
+        "planner.addExercises": "Add Exercises",
         "planner.exerciseSearchPlaceholder": "Search for exercises",
         "planner.sessionTitlePlaceholder": "Session title",
         "planner.notesPlaceholder": "Session notes",
+        "planner.exercisesTitle": "Exercises",
+        "planner.setsLabel": "Sets",
+        "planner.repsLabel": "Reps",
+        "planner.repsPlaceholder": "0",
+        "planner.weightLabel": "Weight",
+        "planner.weightPlaceholder": "0",
+        "planner.rpeLabel": "RPE",
+        "planner.rpePlaceholder": "0",
+        "planner.restLabel": "Rest",
+        "planner.saveSession": "Save Session",
+        "planner.saveError": "Failed to save session",
       };
+      if (key === "planner.exercisesTitle" && typeof options?.count === "number") {
+        return `Exercises (${options.count})`;
+      }
       return translations[key] || key;
     },
   }),

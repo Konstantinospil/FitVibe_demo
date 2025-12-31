@@ -27,6 +27,7 @@ export interface FeatureFlags {
 
 export interface SystemConfig {
   readOnlyMode: boolean;
+  maintenanceMode: boolean;
   maintenanceMessage?: string;
   features: FeatureFlags;
   timestamp: string;
@@ -34,6 +35,7 @@ export interface SystemConfig {
 
 const DEFAULT_CONFIG: SystemConfig = {
   readOnlyMode: false,
+  maintenanceMode: false,
   features: {
     socialFeed: false,
     coachDashboard: false,

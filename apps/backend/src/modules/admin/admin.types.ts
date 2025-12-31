@@ -63,3 +63,27 @@ export interface ActionUiMapping {
   action: string;
   uiName: string | null;
 }
+
+export type OpsLightStatus = "green" | "yellow" | "red";
+
+export interface AdminOpsStatus {
+  backend: {
+    status: OpsLightStatus;
+    dbOk: boolean;
+    nginxOk: boolean;
+    clamavOk: boolean;
+    clamavEnabled: boolean;
+    readOnly: boolean;
+  };
+  frontend: {
+    status: OpsLightStatus;
+    ok: boolean;
+  };
+  counts: {
+    loggedInUsers: number;
+    unresolvedMessages: number;
+    violationReports: number;
+    unresolvedAuditLogs: number;
+    openIssues: number;
+  };
+}

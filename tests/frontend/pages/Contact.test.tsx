@@ -142,4 +142,101 @@ describe("Contact page", () => {
 
     expect(screen.getByText(/12 \/ 5000/)).toBeInTheDocument();
   });
+
+  it("should prefill email when authenticated", () => {
+    vi.mocked(useAuthStore).mockImplementation((selector: any) =>
+      selector({
+        isAuthenticated: true,
+        user: { email: "prefill@example.com" },
+      }),
+    );
+
+    render(
+      <MemoryRouter>
+        <Contact />
+      </MemoryRouter>,
+    );
+
+    const emailInput = screen.getByLabelText("Email") as HTMLInputElement;
+    expect(emailInput.value).toBe("prefill@example.com");
+  });
+
+  it("should show error for invalid email address", async () => {
+    render(
+      <MemoryRouter>
+        <Contact />
+      </MemoryRouter>,
+    );
+
+    fireEvent.change(screen.getByLabelText("Email"), { target: { value: "invalid-email" } });
+    fireEvent.change(screen.getByLabelText("Topic"), { target: { value: "Billing" } });
+    fireEvent.change(screen.getByLabelText("Message"), { target: { value: "Help needed" } });
+
+    const form = screen.getByLabelText("Message").closest("form");
+    expect(form).toBeInTheDocument();
+    fireEvent.submit(form!);
+
+    await waitFor(() => {
+      expect(screen.getByText("Please enter a valid email address")).toBeInTheDocument();
+    });
+  });
+
+  it("should submit contact form successfully", async () => {
+    vi.mocked(rawHttpClient.post).mockResolvedValue({
+      data: { success: true },
+    } as any);
+
+    render(
+      <MemoryRouter>
+        <Contact />
+      </MemoryRouter>,
+    );
+
+    fireEvent.change(screen.getByLabelText("Email"), { target: { value: "user@example.com" } });
+    fireEvent.change(screen.getByLabelText("Topic"), { target: { value: "General" } });
+    fireEvent.change(screen.getByLabelText("Message"), { target: { value: "Hello team" } });
+
+    const form = screen.getByLabelText("Message").closest("form");
+    expect(form).toBeInTheDocument();
+    fireEvent.submit(form!);
+
+    await waitFor(() => {
+      expect(rawHttpClient.post).toHaveBeenCalled();
+      expect(mockToast.success).toHaveBeenCalledWith("Your message has been sent successfully!");
+    });
+
+    const emailInput = screen.getByLabelText("Email") as HTMLInputElement;
+    const topicInput = screen.getByLabelText("Topic") as HTMLInputElement;
+    const messageInput = screen.getByLabelText("Message") as HTMLTextAreaElement;
+    expect(emailInput.value).toBe("");
+    expect(topicInput.value).toBe("");
+    expect(messageInput.value).toBe("");
+  });
+
+  it("should handle network errors gracefully", async () => {
+    vi.mocked(rawHttpClient.post).mockRejectedValue({ code: "ERR_NETWORK" });
+
+    render(
+      <MemoryRouter>
+        <Contact />
+      </MemoryRouter>,
+    );
+
+    fireEvent.change(screen.getByLabelText("Email"), { target: { value: "user@example.com" } });
+    fireEvent.change(screen.getByLabelText("Topic"), { target: { value: "Support" } });
+    fireEvent.change(screen.getByLabelText("Message"), { target: { value: "Need assistance" } });
+
+    const form = screen.getByLabelText("Message").closest("form");
+    expect(form).toBeInTheDocument();
+    fireEvent.submit(form!);
+
+    await waitFor(() => {
+      expect(mockToast.error).toHaveBeenCalledWith(
+        "Cannot connect to server. Please check your connection and try again.",
+      );
+      expect(
+        screen.getByText("Cannot connect to server. Please check your connection and try again."),
+      ).toBeInTheDocument();
+    });
+  });
 });

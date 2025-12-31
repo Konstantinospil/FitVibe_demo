@@ -15,7 +15,7 @@ import {
   getLegalDocumentVersions,
   type LegalDocumentVersions,
 } from "../services/api";
-import { useAuth } from "../contexts/AuthContext";
+import { useAuthOptional } from "../contexts/AuthContext";
 
 const contentStyle: React.CSSProperties = {
   maxWidth: "900px",
@@ -30,7 +30,7 @@ const Terms: React.FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
-  const { isInitializing } = useAuth();
+  const { isInitializing } = useAuthOptional();
   const [translationsReady, setTranslationsReady] = useState(false);
   const [showRevokeConfirm, setShowRevokeConfirm] = useState(false);
   const [isRevoking, setIsRevoking] = useState(false);
