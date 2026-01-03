@@ -1,7 +1,7 @@
 import React from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui";
-import logo from "../assets/logo_full.png";
-import maintenanceImage from "../assets/maintenance_athlete.svg";
+import logo from "../assets/logo_full_dark.png";
+import maintenanceImage from "../assets/Maintenance.png";
 
 type MaintenanceProps = {
   message?: string;
@@ -76,15 +76,6 @@ const Maintenance: React.FC<MaintenanceProps> = ({ message }) => {
               height: "auto",
             }}
           />
-          <CardDescription
-            style={{
-              fontSize: "1rem",
-              lineHeight: 1.6,
-              maxWidth: "560px",
-            }}
-          >
-            {message ?? "Please check back soon."}
-          </CardDescription>
         </CardHeader>
         <CardContent
           style={{
@@ -95,7 +86,7 @@ const Maintenance: React.FC<MaintenanceProps> = ({ message }) => {
         >
           <img
             src={maintenanceImage}
-            alt="Athlete digging a hole during maintenance"
+            alt="Athlete building the fitvibe logo during maintenance"
             style={{
               width: "min(100%, 560px)",
               height: "auto",
