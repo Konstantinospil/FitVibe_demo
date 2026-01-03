@@ -24,6 +24,7 @@ if (!isAuthenticated && !isPublicRoute) {
   }
 } else if (!isAuthenticated && pathname === "/login") {
   void import("./public/login-shell");
+  void import("./main");
 } else {
   const shell = typeof document !== "undefined" ? document.getElementById("login-shell") : null;
   if (shell) {
