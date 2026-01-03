@@ -37,21 +37,34 @@ const restoreConsole = () => {
   }
 };
 
-const shouldSuppress = () => {
+const shouldSuppress = (env?: { PROD?: boolean }) => {
   try {
-    return Boolean(import.meta?.env?.PROD);
+    const metaEnv = env ?? import.meta?.env;
+    return Boolean(metaEnv?.PROD);
   } catch {
     return false;
   }
 };
 
-if (typeof window !== "undefined" && shouldSuppress()) {
-  suppressConsole();
-  if (typeof window.addEventListener === "function") {
-    window.addEventListener("beforeunload", () => {
-      restoreConsole();
-    });
-  }
-}
+type SuppressConsoleOptions = {
+  windowRef?: Window;
+  isProd?: boolean;
+};
 
-export {};
+const initializeSuppressConsole = (options: SuppressConsoleOptions = {}) => {
+  const windowRef = options.windowRef ?? (typeof window !== "undefined" ? window : undefined);
+  const isProd = options.isProd ?? shouldSuppress();
+
+  if (windowRef && isProd) {
+    suppressConsole();
+    if (typeof windowRef.addEventListener === "function") {
+      windowRef.addEventListener("beforeunload", () => {
+        restoreConsole();
+      });
+    }
+  }
+};
+
+initializeSuppressConsole();
+
+export { initializeSuppressConsole, restoreConsole, shouldSuppress, suppressConsole };

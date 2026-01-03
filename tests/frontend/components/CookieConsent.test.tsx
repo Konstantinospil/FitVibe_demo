@@ -8,6 +8,16 @@ import { ToastProvider } from "../../src/contexts/ToastContext";
 
 vi.mock("../../src/hooks/useCookieConsent");
 
+const mockToast = vi.hoisted(() => ({
+  error: vi.fn(),
+  success: vi.fn(),
+}));
+
+vi.mock("../../src/contexts/ToastContext", () => ({
+  ToastProvider: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  useToast: () => mockToast,
+}));
+
 const mockSavePreferences = vi.fn();
 const mockUseCookieConsent = vi.mocked(useCookieConsent);
 
@@ -35,6 +45,7 @@ vi.mock("react-i18next", () => ({
         "cookie.actions.rejectAll": "Reject All",
         "cookie.actions.acceptAll": "Accept All",
         "cookie.actions.savePreferences": "Save Preferences",
+        "cookie.actions.saveError": "Failed to save preferences",
       };
       return translations[key] || key;
     },
@@ -47,6 +58,8 @@ describe("CookieConsent", () => {
     mockSavePreferences.mockResolvedValue(undefined);
     // Reset mock implementation
     mockUseCookieConsent.mockReset();
+    mockToast.error.mockReset();
+    mockToast.success.mockReset();
   });
 
   afterEach(() => {
@@ -76,7 +89,7 @@ describe("CookieConsent", () => {
       </ToastProvider>,
     );
 
-    expect(container.firstChild).toBeNull();
+    expect(screen.queryByText("Cookie Preferences")).not.toBeInTheDocument();
   });
 
   it("should render when no consent exists", async () => {
@@ -120,6 +133,120 @@ describe("CookieConsent", () => {
       </ToastProvider>,
     );
 
-    expect(container.firstChild).toBeNull();
+    expect(screen.queryByText("Cookie Preferences")).not.toBeInTheDocument();
+  });
+
+  it("allows toggling and bulk accept/reject actions", async () => {
+    mockUseCookieConsent.mockReturnValue({
+      consentStatus: {
+        hasConsent: false,
+        consent: null,
+      },
+      isLoading: false,
+      savePreferences: mockSavePreferences,
+    });
+
+    render(
+      <ToastProvider>
+        <MemoryRouter>
+          <CookieConsent />
+        </MemoryRouter>
+      </ToastProvider>,
+    );
+
+    await screen.findByText("Cookie Preferences");
+
+    fireEvent.click(screen.getByLabelText("Preferences disabled"));
+    expect(screen.getByLabelText("Preferences enabled")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Accept All" }));
+    expect(screen.getByLabelText("Analytics enabled")).toBeInTheDocument();
+    expect(screen.getByLabelText("Marketing enabled")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Reject All" }));
+    expect(screen.getByLabelText("Preferences disabled")).toBeInTheDocument();
+    expect(screen.getByLabelText("Analytics disabled")).toBeInTheDocument();
+    expect(screen.getByLabelText("Marketing disabled")).toBeInTheDocument();
+  });
+
+  it("saves preferences with current selections", async () => {
+    mockUseCookieConsent.mockReturnValue({
+      consentStatus: {
+        hasConsent: false,
+        consent: null,
+      },
+      isLoading: false,
+      savePreferences: mockSavePreferences,
+    });
+
+    render(
+      <ToastProvider>
+        <MemoryRouter>
+          <CookieConsent />
+        </MemoryRouter>
+      </ToastProvider>,
+    );
+
+    await screen.findByText("Cookie Preferences");
+    fireEvent.click(screen.getByRole("button", { name: "Accept All" }));
+    fireEvent.click(screen.getByRole("button", { name: "Save Preferences" }));
+
+    await waitFor(() =>
+      expect(mockSavePreferences).toHaveBeenCalledWith({
+        essential: true,
+        preferences: true,
+        analytics: true,
+        marketing: true,
+      }),
+    );
+  });
+
+  it("shows an error when saving preferences fails", async () => {
+    mockSavePreferences.mockRejectedValue(new Error("Save failed"));
+    mockUseCookieConsent.mockReturnValue({
+      consentStatus: {
+        hasConsent: false,
+        consent: null,
+      },
+      isLoading: false,
+      savePreferences: mockSavePreferences,
+    });
+
+    render(
+      <ToastProvider>
+        <MemoryRouter>
+          <CookieConsent />
+        </MemoryRouter>
+      </ToastProvider>,
+    );
+
+    await screen.findByText("Cookie Preferences");
+    fireEvent.click(screen.getByRole("button", { name: "Save Preferences" }));
+
+    await waitFor(() => expect(mockToast.error).toHaveBeenCalledWith("Failed to save preferences"));
+  });
+
+  it("prevents toggling essential cookies", async () => {
+    mockUseCookieConsent.mockReturnValue({
+      consentStatus: {
+        hasConsent: false,
+        consent: null,
+      },
+      isLoading: false,
+      savePreferences: mockSavePreferences,
+    });
+
+    render(
+      <ToastProvider>
+        <MemoryRouter>
+          <CookieConsent />
+        </MemoryRouter>
+      </ToastProvider>,
+    );
+
+    await screen.findByText("Cookie Preferences");
+    const essentialToggle = screen.getByLabelText("Essential Cookies enabled");
+    fireEvent.click(essentialToggle);
+    expect(screen.getByLabelText("Essential Cookies enabled")).toBeInTheDocument();
   });
 });

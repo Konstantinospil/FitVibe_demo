@@ -6,6 +6,7 @@ import { I18nextProvider } from "react-i18next";
 import i18n from "i18next";
 import { initReactI18next } from "react-i18next";
 import { rawHttpClient, resendVerificationEmail } from "../../src/services/api";
+import { useCountdown } from "../../src/hooks/useCountdown";
 
 // Mock useNavigate
 const mockNavigate = vi.fn();
@@ -29,6 +30,10 @@ vi.mock("../../src/services/api", async () => {
     resendVerificationEmail: vi.fn(),
   };
 });
+
+vi.mock("../../src/hooks/useCountdown", () => ({
+  useCountdown: vi.fn(),
+}));
 
 // Initialize i18n for tests
 const testI18n = i18n.createInstance();
@@ -54,7 +59,12 @@ void testI18n.use(initReactI18next).init({
         "verifyEmail.resendEmailLabel": "Email address",
         "verifyEmail.resendEmailPlaceholder": "your@email.com",
         "verifyEmail.resendButton": "Send verification email",
+        "verifyEmail.resendSuccess": "We have sent a new verification email",
+        "verifyEmail.resending": "Resending...",
+        "verifyEmail.resendError": "Unable to resend verification email",
+        "verifyEmail.retryAfter": "Retry after {{seconds}}s",
         "errors.AUTH_TOKEN_EXPIRED": "Your verification link has expired. Please request a new one",
+        "errors.RATE_LIMITED": "Too many requests",
         "auth.register.fillAllFields": "Please fill in all fields",
       },
     },
@@ -76,6 +86,7 @@ describe("VerifyEmail", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockNavigate.mockClear();
+    vi.mocked(useCountdown).mockReturnValue([0, false, vi.fn()]);
   });
 
   afterEach(() => {
@@ -213,6 +224,20 @@ describe("VerifyEmail", () => {
 
     // After clicking, the button should trigger navigation
     // The component may unmount or navigate, so we just verify it was clickable
+  });
+
+  it("redirects to login after a successful verification delay", async () => {
+    vi.useFakeTimers();
+    vi.mocked(rawHttpClient.get).mockResolvedValue({ data: { success: true } });
+
+    renderWithProviders();
+
+    await Promise.resolve();
+
+    vi.runAllTimers();
+
+    expect(mockNavigate).toHaveBeenCalledWith("/login");
+    vi.useRealTimers();
   });
 
   it("handles error without response object", async () => {
@@ -604,5 +629,137 @@ describe("VerifyEmail", () => {
       },
       { timeout: 5000 },
     );
+  });
+
+  it("shows retry-after details when resend is rate limited", async () => {
+    vi.mocked(rawHttpClient.get).mockRejectedValue({
+      response: {
+        status: 410,
+        data: {
+          error: {
+            code: "AUTH_TOKEN_EXPIRED",
+            message: "Token expired",
+          },
+        },
+      },
+    });
+
+    const resetCountdown = vi.fn();
+    vi.mocked(useCountdown).mockReturnValue([15, true, resetCountdown]);
+
+    vi.mocked(resendVerificationEmail).mockRejectedValue({
+      response: {
+        data: {
+          error: {
+            code: "RATE_LIMITED",
+            retryAfter: 30,
+          },
+        },
+      },
+    });
+
+    renderWithProviders();
+
+    await waitFor(() => {
+      expect(screen.getByLabelText(/email address/i)).toBeInTheDocument();
+    });
+
+    fireEvent.change(screen.getByLabelText(/email address/i), {
+      target: { value: "test@example.com" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /send verification email/i }));
+
+    await waitFor(() => {
+      expect(screen.getByText("Too many requests")).toBeInTheDocument();
+      expect(screen.getByText("Retry after 15s")).toBeInTheDocument();
+    });
+
+    expect(resetCountdown).toHaveBeenCalledWith(30);
+  });
+
+  it("shows resend error when resend request fails without a response", async () => {
+    vi.mocked(rawHttpClient.get).mockRejectedValue({
+      response: {
+        status: 410,
+        data: {
+          error: {
+            code: "AUTH_TOKEN_EXPIRED",
+            message: "Token expired",
+          },
+        },
+      },
+    });
+
+    vi.mocked(resendVerificationEmail).mockRejectedValue(new Error("Network error"));
+
+    renderWithProviders();
+
+    await waitFor(() => {
+      expect(screen.getByLabelText(/email address/i)).toBeInTheDocument();
+    });
+
+    fireEvent.change(screen.getByLabelText(/email address/i), {
+      target: { value: "test@example.com" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /send verification email/i }));
+
+    await waitFor(() => {
+      expect(screen.getByText("Unable to resend verification email")).toBeInTheDocument();
+    });
+  });
+
+  it("navigates back to register from error state", async () => {
+    vi.mocked(rawHttpClient.get).mockRejectedValue({
+      response: {
+        data: {
+          error: {
+            message: "Invalid token",
+          },
+        },
+      },
+    });
+
+    renderWithProviders();
+
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: /back to register/i })).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: /back to register/i }));
+    expect(mockNavigate).toHaveBeenCalledWith("/register");
+  });
+
+  it("renders resend success state after a successful resend", async () => {
+    vi.mocked(rawHttpClient.get).mockRejectedValue({
+      response: {
+        status: 410,
+        data: {
+          error: {
+            code: "AUTH_TOKEN_EXPIRED",
+            message: "Token expired",
+          },
+        },
+      },
+    });
+
+    vi.mocked(resendVerificationEmail).mockResolvedValue({ success: true });
+
+    renderWithProviders();
+
+    await waitFor(() => {
+      expect(screen.getByLabelText(/email address/i)).toBeInTheDocument();
+    });
+
+    fireEvent.change(screen.getByLabelText(/email address/i), {
+      target: { value: "test@example.com" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /send verification email/i }));
+
+    await waitFor(() => {
+      expect(screen.getByText("We have sent a new verification email")).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: /go to login/i }));
+    expect(mockNavigate).toHaveBeenCalledWith("/login");
   });
 });

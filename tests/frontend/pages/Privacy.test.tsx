@@ -1,8 +1,10 @@
 import React from "react";
 import { render, screen, cleanup, waitFor } from "@testing-library/react";
-import { describe, it, expect, vi, afterEach } from "vitest";
+import userEvent from "@testing-library/user-event";
+import { describe, it, expect, vi, afterEach, beforeEach } from "vitest";
 import { MemoryRouter } from "react-router-dom";
 import Privacy from "../../src/pages/Privacy";
+import * as api from "../../src/services/api";
 
 vi.mock("react-i18next", () => ({
   useTranslation: () => ({
@@ -38,6 +40,13 @@ vi.mock("react-i18next", () => ({
       }
 
       const translations: Record<string, string> = {
+        "auth.login.title": "Login to Accept Privacy Policy",
+        "auth.legalDocumentsReacceptance.acceptPrivacy": "Accept privacy",
+        "auth.legalDocumentsReacceptance.submitting": "Submitting",
+        "auth.legalDocumentsReacceptance.submit": "Submit",
+        "auth.legalDocumentsReacceptance.privacyRequired": "Privacy required",
+        "auth.legalDocumentsReacceptance.notAuthenticated": "Not authenticated",
+        "auth.legalDocumentsReacceptance.error": "Privacy error",
         "privacy.eyebrow": "Privacy",
         "privacy.title": "Privacy Policy",
         "privacy.description": "How we handle your data",
@@ -68,13 +77,58 @@ vi.mock("react-i18next", () => ({
         "privacy.section3.specialCategoriesNote": "Special categories note",
         "privacy.section16.email": "Email:",
         "privacy.section16.emailValue": "kpilpilidis@gmail.com",
+        "privacy.revokeConsent": "Revoke consent",
+        "privacy.revokeConfirm.title": "Confirm revoke",
+        "privacy.revokeConfirm.message": "Are you sure?",
+        "privacy.revokeConfirm.confirm": "Confirm",
+        "privacy.revokeConfirm.cancel": "Cancel",
       };
       return translations[key] || key;
     },
   }),
 }));
 
+const mockNavigate = vi.fn();
+const mockAuthState = { isAuthenticated: false };
+const mockAuthOptionalState = { isInitializing: false };
+
+vi.mock("react-router-dom", async () => {
+  const actual = await vi.importActual("react-router-dom");
+  return {
+    ...actual,
+    useNavigate: () => mockNavigate,
+  };
+});
+
+vi.mock("../../src/store/auth.store", () => ({
+  useAuthStore: (selector: (state: { isAuthenticated: boolean }) => boolean) =>
+    selector(mockAuthState),
+}));
+
+vi.mock("../../src/contexts/AuthContext", () => ({
+  useAuthOptional: () => mockAuthOptionalState,
+}));
+
+vi.mock("../../src/services/api", () => ({
+  getLegalDocumentsStatus: vi.fn(),
+  getLegalDocumentVersions: vi.fn(),
+  acceptPrivacyPolicy: vi.fn(),
+  revokePrivacyPolicy: vi.fn(),
+}));
+
 describe("Privacy page", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockAuthState.isAuthenticated = false;
+    mockAuthOptionalState.isInitializing = false;
+    vi.mocked(api.getLegalDocumentVersions).mockResolvedValue({ privacy: "2025-01-01" });
+    vi.mocked(api.getLegalDocumentsStatus).mockResolvedValue({
+      terms: { needsAcceptance: false, currentVersion: "1" },
+      privacy: { needsAcceptance: true, currentVersion: "1" },
+      cookie: { needsAcceptance: false, currentVersion: "1" },
+    });
+  });
+
   afterEach(() => {
     cleanup();
   });
@@ -104,5 +158,93 @@ describe("Privacy page", () => {
 
     const emailElements = screen.getAllByText(/kpilpilidis@gmail.com/i);
     expect(emailElements.length).toBeGreaterThan(0);
+  });
+
+  it("shows login action when unauthenticated", () => {
+    mockAuthState.isAuthenticated = false;
+    render(
+      <MemoryRouter>
+        <Privacy />
+      </MemoryRouter>,
+    );
+
+    expect(
+      screen.getAllByRole("button", { name: "Login to Accept Privacy Policy" }).length,
+    ).toBeGreaterThan(0);
+  });
+
+  it("requires acceptance before submitting", async () => {
+    mockAuthState.isAuthenticated = true;
+    render(
+      <MemoryRouter>
+        <Privacy />
+      </MemoryRouter>,
+    );
+
+    const submitButton = screen.getByRole("button", { name: "Submit" });
+    expect(submitButton).toBeDisabled();
+
+    await userEvent.click(screen.getByRole("checkbox", { name: "Accept privacy" }));
+    expect(submitButton).toBeEnabled();
+  });
+
+  it("submits acceptance and navigates home", async () => {
+    mockAuthState.isAuthenticated = true;
+    vi.mocked(api.acceptPrivacyPolicy).mockResolvedValue({ ok: true });
+    render(
+      <MemoryRouter>
+        <Privacy />
+      </MemoryRouter>,
+    );
+
+    await userEvent.click(screen.getByRole("checkbox", { name: "Accept privacy" }));
+    await userEvent.click(screen.getByRole("button", { name: "Submit" }));
+
+    await waitFor(() => {
+      expect(api.acceptPrivacyPolicy).toHaveBeenCalledWith({ privacy_policy_accepted: true });
+      expect(mockNavigate).toHaveBeenCalledWith("/", { replace: true });
+    });
+  });
+
+  it("handles unauthenticated acceptance errors", async () => {
+    mockAuthState.isAuthenticated = true;
+    vi.mocked(api.acceptPrivacyPolicy).mockRejectedValue({
+      response: { status: 401, data: { error: { code: "UNAUTHENTICATED" } } },
+    });
+
+    render(
+      <MemoryRouter>
+        <Privacy />
+      </MemoryRouter>,
+    );
+
+    await userEvent.click(screen.getByRole("checkbox", { name: "Accept privacy" }));
+    await userEvent.click(screen.getByRole("button", { name: "Submit" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("Not authenticated");
+  });
+
+  it("allows revoking consent when already accepted", async () => {
+    mockAuthState.isAuthenticated = true;
+    vi.mocked(api.getLegalDocumentsStatus).mockResolvedValue({
+      terms: { needsAcceptance: false, currentVersion: "1" },
+      privacy: { needsAcceptance: false, currentVersion: "1" },
+      cookie: { needsAcceptance: false, currentVersion: "1" },
+    });
+    vi.mocked(api.revokePrivacyPolicy).mockResolvedValue(undefined);
+
+    render(
+      <MemoryRouter>
+        <Privacy />
+      </MemoryRouter>,
+    );
+
+    const revokeButton = await screen.findByRole("button", { name: "Revoke consent" });
+    await userEvent.click(revokeButton);
+    await userEvent.click(screen.getByRole("button", { name: "Confirm" }));
+
+    await waitFor(() => {
+      expect(api.revokePrivacyPolicy).toHaveBeenCalled();
+    });
   });
 });

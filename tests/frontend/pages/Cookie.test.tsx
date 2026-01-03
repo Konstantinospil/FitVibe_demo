@@ -1,12 +1,11 @@
 import React from "react";
-import { render, screen, cleanup, waitFor } from "@testing-library/react";
+import { render, screen, cleanup, waitFor, fireEvent } from "@testing-library/react";
 import { describe, it, expect, vi, afterEach } from "vitest";
 import { MemoryRouter } from "react-router-dom";
-import Cookie from "../../src/pages/Cookie";
+import type * as RouterDomModule from "react-router-dom";
 
-// Mock i18n config module - define translations first
-const mockTranslations: Record<string, string | string[]> = {
-  "cookie.title": "Cookie Policy", // Used by component to check if translations are loaded
+const baseTranslations: Record<string, string | string[]> = {
+  "cookie.title": "Cookie Policy",
   "cookie.eyebrow": "Cookie Policy",
   "cookie.policy.title": "Cookie Policy",
   "cookie.policy.description": "How we use cookies",
@@ -26,128 +25,308 @@ const mockTranslations: Record<string, string | string[]> = {
   "cookie.section6.content": "We may update this policy...",
   "cookie.section7.title": "7. Contact us",
   "cookie.section7.content": "For questions about cookies...",
+  "cookie.revokeConsent": "Revoke Consent",
+  "cookie.revokeConfirm.title": "Revoke cookie consent?",
+  "cookie.revokeConfirm.message": "This will log you out.",
+  "cookie.revokeConfirm.confirm": "Confirm",
+  "cookie.revokeConfirm.cancel": "Cancel",
   "navigation.home": "Home",
   "auth.login.title": "Login",
+  "common.loading": "Loading...",
 };
 
-vi.mock("../../src/i18n/config", () => ({
-  default: {
-    t: (key: string) => {
-      return mockTranslations[key as keyof typeof mockTranslations] || key;
-    },
-  },
-  translationsLoadingPromise: Promise.resolve(),
-}));
-
-vi.mock("react-i18next", () => ({
-  useTranslation: () => ({
-    t: (key: string, options?: { returnObjects?: boolean }) => {
-      const translations: Record<string, string | string[] | Record<string, unknown>> =
-        mockTranslations;
-      const value = translations[key];
-      if (options?.returnObjects && value && typeof value === "object" && !Array.isArray(value)) {
-        return value;
-      }
-      if (options?.returnObjects && Array.isArray(value)) {
-        return value;
-      }
-      return typeof value === "string" ? value : key;
-    },
-  }),
-}));
-
-vi.mock("../../src/store/auth.store", () => ({
-  useAuthStore: vi.fn((selector) =>
-    selector({
-      isAuthenticated: false,
-      user: null,
-    }),
-  ),
-}));
-
-const mockNavigate = vi.fn();
-vi.mock("react-router-dom", async () => {
-  const actual = await vi.importActual("react-router-dom");
-  return {
-    ...actual,
-    useNavigate: () => mockNavigate,
+type BuildOptions = {
+  translations?: Record<string, string | string[]>;
+  translationsLoadingPromise?: Promise<void>;
+  i18nTImpl?: (key: string) => string;
+  authState?: {
+    isAuthenticated?: boolean;
+    signOut?: () => unknown;
+    user?: unknown;
   };
-});
+  revokeTermsImpl?: () => Promise<unknown>;
+  getLegalDocumentVersionsImpl?: () => Promise<unknown>;
+};
+
+const buildCookie = async (options: BuildOptions = {}) => {
+  vi.resetModules();
+
+  const translations = { ...baseTranslations, ...options.translations };
+  const i18nTImpl = options.i18nTImpl ?? ((key: string) => translations[key] || key);
+  const i18nMock = { t: vi.fn(i18nTImpl) };
+  const translationsLoadingPromise = options.translationsLoadingPromise ?? Promise.resolve();
+
+  const authState = {
+    isAuthenticated: false,
+    user: null,
+    signOut: vi.fn(),
+    ...options.authState,
+  };
+
+  const mockNavigate = vi.fn();
+  const revokeTerms = vi.fn(options.revokeTermsImpl ?? (() => Promise.resolve()));
+  const getLegalDocumentVersions = vi.fn(
+    options.getLegalDocumentVersionsImpl ?? (() => Promise.resolve(null)),
+  );
+
+  vi.doMock("../../src/i18n/config", () => ({
+    default: i18nMock,
+    translationsLoadingPromise,
+  }));
+
+  vi.doMock("react-i18next", () => ({
+    useTranslation: () => ({
+      t: (
+        key: string,
+        options?: { returnObjects?: boolean; defaultValue?: string },
+      ): string | string[] | Record<string, unknown> => {
+        const value = translations[key];
+        if (options?.returnObjects) {
+          if (Array.isArray(value)) {
+            return value;
+          }
+          if (value && typeof value === "object") {
+            return value;
+          }
+        }
+        if (typeof value === "string") {
+          return value;
+        }
+        if (options?.defaultValue) {
+          return options.defaultValue;
+        }
+        return key;
+      },
+    }),
+  }));
+
+  vi.doMock("../../src/store/auth.store", () => ({
+    useAuthStore: vi.fn((selector) => selector(authState)),
+  }));
+
+  vi.doMock("../../src/services/api", () => ({
+    revokeTerms,
+    getLegalDocumentVersions,
+  }));
+
+  vi.doMock("react-router-dom", async () => {
+    const actual = await vi.importActual<typeof RouterDomModule>("react-router-dom");
+    return {
+      ...actual,
+      useNavigate: () => mockNavigate,
+    };
+  });
+
+  const module = await import("../../src/pages/Cookie");
+
+  return {
+    Cookie: module.default,
+    authState,
+    mockNavigate,
+    revokeTerms,
+    getLegalDocumentVersions,
+    i18nMock,
+  };
+};
 
 describe("Cookie page", () => {
   afterEach(() => {
     cleanup();
     vi.clearAllMocks();
+    vi.useRealTimers();
   });
 
-  it("should render cookie policy content", async () => {
+  it("shows loading state while translations are pending", async () => {
+    const { Cookie } = await buildCookie({
+      translationsLoadingPromise: new Promise(() => {}),
+      i18nTImpl: () => "cookie.title",
+    });
+
     render(
       <MemoryRouter>
         <Cookie />
       </MemoryRouter>,
     );
 
-    // Wait for translations to load and component to render
-    await waitFor(
-      () => {
-        const titles = screen.getAllByText("Cookie Policy");
-        expect(titles.length).toBeGreaterThan(0);
-      },
-      { timeout: 3000 },
-    );
-    const descriptions = screen.getAllByText("How we use cookies");
-    expect(descriptions.length).toBeGreaterThan(0);
+    expect(screen.getByRole("status")).toHaveTextContent("Loading...");
   });
 
-  it("should display effective date", async () => {
+  it("renders after polling when translations become available", async () => {
+    vi.useFakeTimers();
+    let calls = 0;
+    const { Cookie } = await buildCookie({
+      i18nTImpl: (key) => {
+        if (key === "cookie.title") {
+          calls += 1;
+          return calls < 2 ? "cookie.title" : "Cookie Policy";
+        }
+        return baseTranslations[key] || key;
+      },
+    });
+
     render(
       <MemoryRouter>
         <Cookie />
       </MemoryRouter>,
     );
 
-    await waitFor(
-      () => {
-        expect(screen.getByText(/Effective Date/i)).toBeInTheDocument();
-        expect(screen.getByText("2024-06-01")).toBeInTheDocument();
-      },
-      { timeout: 3000 },
-    );
+    await vi.advanceTimersByTimeAsync(100);
+    await vi.runOnlyPendingTimersAsync();
+
+    expect(screen.getAllByText("Cookie Policy").length).toBeGreaterThan(0);
   });
 
-  it("should render cookie sections", async () => {
+  it("renders after polling timeout when translations never load", async () => {
+    vi.useFakeTimers();
+    const { Cookie } = await buildCookie({
+      i18nTImpl: () => "cookie.title",
+    });
+
     render(
       <MemoryRouter>
         <Cookie />
       </MemoryRouter>,
     );
 
-    await waitFor(
-      () => {
-        expect(screen.getByText("1. What are cookies?")).toBeInTheDocument();
-        expect(screen.getByText("2. Types of cookies")).toBeInTheDocument();
-        expect(screen.getByText("3. How we use cookies")).toBeInTheDocument();
-      },
-      { timeout: 3000 },
-    );
+    await vi.advanceTimersByTimeAsync(2000);
+    await vi.runOnlyPendingTimersAsync();
+
+    expect(screen.queryByRole("status")).not.toBeInTheDocument();
   });
 
-  it("should render home/login button", async () => {
+  it("renders effective date from API", async () => {
+    const { Cookie } = await buildCookie({
+      getLegalDocumentVersionsImpl: () => Promise.resolve({ cookie: "2024-07-01" }),
+    });
+
     render(
       <MemoryRouter>
         <Cookie />
       </MemoryRouter>,
     );
 
-    await waitFor(
-      () => {
-        const buttons = screen.getAllByRole("button");
-        const homeButton = buttons.find(
-          (btn) => btn.textContent?.includes("Login") || btn.textContent?.includes("Home"),
-        );
-        expect(homeButton).toBeInTheDocument();
-      },
-      { timeout: 3000 },
+    await waitFor(() => {
+      expect(screen.getByText("2024-07-01")).toBeInTheDocument();
+    });
+  });
+
+  it("falls back to translation date when API fails", async () => {
+    const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
+    const { Cookie } = await buildCookie({
+      getLegalDocumentVersionsImpl: () => Promise.reject(new Error("fail")),
+    });
+
+    render(
+      <MemoryRouter>
+        <Cookie />
+      </MemoryRouter>,
     );
+
+    await waitFor(() => {
+      expect(screen.getByText("2024-06-01")).toBeInTheDocument();
+    });
+
+    consoleError.mockRestore();
+  });
+
+  it("filters array translations and ignores non-arrays", async () => {
+    const { Cookie } = await buildCookie({
+      translations: {
+        "cookie.section2.items": ["Essential cookies", 123, "Functional cookies"],
+        "cookie.section4.items": "not-array",
+      },
+    });
+
+    render(
+      <MemoryRouter>
+        <Cookie />
+      </MemoryRouter>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText("2. Types of cookies")).toBeInTheDocument();
+    });
+
+    expect(screen.getByText("Essential cookies")).toBeInTheDocument();
+    expect(screen.getByText("Functional cookies")).toBeInTheDocument();
+    expect(screen.queryByText("123")).not.toBeInTheDocument();
+    expect(screen.queryByText("Browser settings")).not.toBeInTheDocument();
+  });
+
+  it("navigates to login when unauthenticated", async () => {
+    const { Cookie, mockNavigate } = await buildCookie();
+
+    render(
+      <MemoryRouter>
+        <Cookie />
+      </MemoryRouter>,
+    );
+
+    const button = await screen.findByRole("button", { name: "Login" });
+    fireEvent.click(button);
+
+    expect(mockNavigate).toHaveBeenCalledWith("/login");
+  });
+
+  it("navigates home when authenticated and revokes consent on success", async () => {
+    const signOut = vi.fn();
+    const { Cookie, mockNavigate, revokeTerms } = await buildCookie({
+      authState: { isAuthenticated: true, signOut },
+    });
+
+    render(
+      <MemoryRouter>
+        <Cookie />
+      </MemoryRouter>,
+    );
+
+    const homeButton = await screen.findByRole("button", { name: "Home" });
+    fireEvent.click(homeButton);
+    expect(mockNavigate).toHaveBeenCalledWith("/");
+
+    const revokeButton = screen.getByRole("button", { name: "Revoke Consent" });
+    fireEvent.click(revokeButton);
+
+    const confirmButton = await screen.findByRole("button", { name: "Confirm" });
+    fireEvent.click(confirmButton);
+
+    await waitFor(() => {
+      expect(revokeTerms).toHaveBeenCalled();
+    });
+
+    expect(signOut).toHaveBeenCalled();
+    expect(mockNavigate).toHaveBeenCalledWith("/login", { replace: true });
+  });
+
+  it("closes revoke dialog when revocation fails", async () => {
+    const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
+    const revokeTerms = vi.fn().mockRejectedValue(new Error("nope"));
+    const signOut = vi.fn();
+    const { Cookie, mockNavigate } = await buildCookie({
+      authState: { isAuthenticated: true, signOut },
+      revokeTermsImpl: revokeTerms,
+    });
+
+    render(
+      <MemoryRouter>
+        <Cookie />
+      </MemoryRouter>,
+    );
+
+    const revokeButton = await screen.findByRole("button", { name: "Revoke Consent" });
+    fireEvent.click(revokeButton);
+
+    const confirmButton = await screen.findByRole("button", { name: "Confirm" });
+    fireEvent.click(confirmButton);
+
+    await waitFor(() => {
+      expect(revokeTerms).toHaveBeenCalled();
+    });
+
+    expect(signOut).not.toHaveBeenCalled();
+    expect(mockNavigate).not.toHaveBeenCalledWith("/login", { replace: true });
+    expect(screen.queryByText("Revoke cookie consent?")).not.toBeInTheDocument();
+
+    consoleError.mockRestore();
   });
 });

@@ -15,6 +15,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
  */
 
 describe("suppressConsole", () => {
+  const originalConsole = globalThis.console;
   let originalConsoleError: typeof console.error;
   let originalConsoleWarn: typeof console.warn;
   let originalWindow: typeof window | undefined;
@@ -25,13 +26,17 @@ describe("suppressConsole", () => {
     originalConsoleError = console.error;
     originalConsoleWarn = console.warn;
     originalWindow = global.window;
+    savedBeforeunloadHandler = undefined;
 
     // Clear module cache to allow fresh imports
     vi.resetModules();
   });
 
   afterEach(() => {
+    vi.unstubAllGlobals();
+
     // Restore original console methods
+    globalThis.console = originalConsole;
     console.error = originalConsoleError;
     console.warn = originalConsoleWarn;
 
@@ -61,61 +66,99 @@ describe("suppressConsole", () => {
 
   describe("production mode detection", () => {
     it("should detect production mode from import.meta.env.PROD", async () => {
-      // Ensure window exists
-      if (!global.window) {
-        global.window = {
-          addEventListener: vi.fn((event: string, handler: () => void) => {
-            if (event === "beforeunload") {
-              savedBeforeunloadHandler = handler;
-            }
-          }),
-          URL: {
-            createObjectURL: vi.fn(),
-            revokeObjectURL: vi.fn(),
-          },
-        } as unknown as Window & typeof globalThis;
-      }
-
-      // In test environment, we're typically in development mode
-      // So the module should NOT suppress console methods
-      // We verify that console methods are still functional
-      const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
-      const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
-
-      // Import the module
-      await import("../../src/utils/suppressConsole");
-
-      // In development/test mode, console methods should still work
-      console.error("test error");
-      console.warn("test warning");
-
-      // The spies should be called (methods not suppressed in dev)
-      // Note: In test environment, we're in dev mode, so suppression won't happen
-      expect(typeof console.error).toBe("function");
-      expect(typeof console.warn).toBe("function");
-
-      errorSpy.mockRestore();
-      warnSpy.mockRestore();
+      const module = await import("../../src/utils/suppressConsole");
+      expect(module.shouldSuppress({ PROD: true })).toBe(true);
+      expect(module.shouldSuppress({ PROD: false })).toBe(false);
     });
 
     it("should handle errors when accessing environment variables", async () => {
-      // Ensure window exists
-      if (!global.window) {
-        global.window = {
-          addEventListener: vi.fn(),
-          URL: {
-            createObjectURL: vi.fn(),
-            revokeObjectURL: vi.fn(),
+      const module = await import("../../src/utils/suppressConsole");
+      const throwingEnv = new Proxy(
+        {},
+        {
+          get: () => {
+            throw new Error("env failure");
           },
-        } as unknown as Window & typeof globalThis;
-      }
+        },
+      );
 
-      // Should not throw even if environment access fails
-      await expect(import("../../src/utils/suppressConsole")).resolves.not.toThrow();
+      expect(module.shouldSuppress(throwingEnv as { PROD?: boolean })).toBe(false);
+    });
+  });
 
-      // Console methods should still be callable
-      expect(typeof console.error).toBe("function");
-      expect(typeof console.warn).toBe("function");
+  describe("production suppression", () => {
+    it("suppresses console methods and restores them on beforeunload", async () => {
+      const errorSpy = vi.fn();
+      const warnSpy = vi.fn();
+
+      globalThis.console = { error: errorSpy, warn: warnSpy } as unknown as Console;
+
+      const addEventListenerSpy = vi.fn((event: string, handler: () => void) => {
+        if (event === "beforeunload") {
+          savedBeforeunloadHandler = handler;
+        }
+      });
+
+      global.window = {
+        addEventListener: addEventListenerSpy,
+        URL: {
+          createObjectURL: vi.fn(),
+          revokeObjectURL: vi.fn(),
+        },
+      } as unknown as Window & typeof globalThis;
+
+      const module = await import("../../src/utils/suppressConsole");
+      module.initializeSuppressConsole({ windowRef: global.window, isProd: true });
+
+      globalThis.console.error("suppressed");
+      globalThis.console.warn("suppressed");
+      expect(errorSpy).not.toHaveBeenCalled();
+      expect(warnSpy).not.toHaveBeenCalled();
+
+      savedBeforeunloadHandler?.();
+
+      globalThis.console.error("restored");
+      globalThis.console.warn("restored");
+      expect(errorSpy).toHaveBeenCalledWith("restored");
+      expect(warnSpy).toHaveBeenCalledWith("restored");
+    });
+
+    it("handles missing console methods gracefully", async () => {
+      globalThis.console = { error: "nope", warn: null } as unknown as Console;
+      global.window = {
+        addEventListener: vi.fn((event: string, handler: () => void) => {
+          if (event === "beforeunload") {
+            savedBeforeunloadHandler = handler;
+          }
+        }),
+      } as unknown as Window & typeof globalThis;
+
+      const module = await import("../../src/utils/suppressConsole");
+      module.initializeSuppressConsole({ windowRef: global.window, isProd: true });
+
+      expect(globalThis.console.error).toBe("nope");
+      expect(globalThis.console.warn).toBeNull();
+
+      savedBeforeunloadHandler?.();
+
+      expect(globalThis.console.error).toBe("nope");
+      expect(globalThis.console.warn).toBeNull();
+    });
+
+    it("does nothing when console is unavailable", async () => {
+      // @ts-expect-error - testing missing console
+      globalThis.console = undefined;
+      global.window = {
+        addEventListener: vi.fn((event: string, handler: () => void) => {
+          if (event === "beforeunload") {
+            savedBeforeunloadHandler = handler;
+          }
+        }),
+      } as unknown as Window & typeof globalThis;
+
+      const module = await import("../../src/utils/suppressConsole");
+      module.initializeSuppressConsole({ windowRef: global.window, isProd: true });
+      expect(globalThis.console).toBeUndefined();
     });
   });
 
@@ -185,26 +228,21 @@ describe("suppressConsole", () => {
         },
       } as unknown as Window & typeof globalThis;
 
-      // Mock production mode by setting import.meta.env
-      // Note: This is tricky because the module reads env at import time
-      // In actual production builds, Vite sets this automatically
-      // For testing, we verify the module structure works
+      const module = await import("../../src/utils/suppressConsole");
+      module.initializeSuppressConsole({ windowRef: global.window, isProd: true });
 
-      await import("../../src/utils/suppressConsole");
-
-      // In test environment (dev mode), beforeunload handler may not be registered
-      // But we verify the module doesn't break
-      expect(typeof window.addEventListener).toBe("function");
+      expect(addEventListenerSpy).toHaveBeenCalledWith("beforeunload", expect.any(Function));
     });
   });
 
   describe("module structure", () => {
-    it("should export no functions (side-effect only module)", async () => {
+    it("should expose suppression helpers for testing", async () => {
       const module = await import("../../src/utils/suppressConsole");
 
-      // This is a side-effect module, so it should have no exports
-      // or minimal exports
-      expect(Object.keys(module)).toHaveLength(0);
+      expect(typeof module.initializeSuppressConsole).toBe("function");
+      expect(typeof module.suppressConsole).toBe("function");
+      expect(typeof module.restoreConsole).toBe("function");
+      expect(typeof module.shouldSuppress).toBe("function");
     });
 
     it("should not throw when imported multiple times", async () => {
@@ -219,6 +257,20 @@ describe("suppressConsole", () => {
   });
 
   describe("edge cases", () => {
+    it("should treat env access failures as non-production", async () => {
+      const module = await import("../../src/utils/suppressConsole");
+      const throwingEnv = new Proxy(
+        {},
+        {
+          get: () => {
+            throw new Error("env failure");
+          },
+        },
+      );
+
+      expect(module.shouldSuppress(throwingEnv as { PROD?: boolean })).toBe(false);
+    });
+
     it("should handle missing window.URL gracefully", async () => {
       global.window = {
         addEventListener: vi.fn(),

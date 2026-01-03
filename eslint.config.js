@@ -127,10 +127,11 @@ export default tseslint.config(
     languageOptions: {
       parserOptions: {
         // Disable type-aware linting for test files
-        project: false,
+        ...tseslint.configs.disableTypeChecked.languageOptions.parserOptions,
       },
     },
     rules: {
+      ...tseslint.configs.disableTypeChecked.rules,
       "@typescript-eslint/no-unsafe-assignment": "off",
       "@typescript-eslint/no-unsafe-call": "off",
       "@typescript-eslint/no-unsafe-member-access": "off",

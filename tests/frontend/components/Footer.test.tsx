@@ -99,4 +99,32 @@ describe("Footer", () => {
     expect(link).toHaveStyle({ color: "var(--color-text-muted)" });
     expect(icon).toHaveStyle({ color: "var(--color-text-muted)" });
   });
+
+  it("renders all footer links with aria labels", () => {
+    vi.mocked(useThemeStore).mockImplementation((selector: any) => selector({ theme: "light" }));
+
+    render(
+      <MemoryRouter>
+        <Footer />
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByRole("link", { name: "Impressum" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Terms" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Privacy" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Cookies" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Contact" })).toBeInTheDocument();
+  });
+
+  it("uses default logo when theme is not dark", () => {
+    vi.mocked(useThemeStore).mockImplementation((selector: any) => selector({ theme: "system" }));
+
+    render(
+      <MemoryRouter>
+        <Footer />
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByAltText("FitVibe")).toHaveAttribute("src", "logo-light.png");
+  });
 });

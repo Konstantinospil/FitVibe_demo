@@ -195,7 +195,7 @@ describe("Insights page", () => {
     expect(screen.getAllByText("24 days")[0]).toBeInTheDocument();
   });
 
-  it.skip("should handle export progress", async () => {
+  it("should handle export progress", async () => {
     const mockBlob = new Blob(["test"], { type: "text/csv" });
     vi.mocked(api.exportProgress).mockResolvedValue(mockBlob);
 
@@ -553,7 +553,7 @@ describe("Insights page", () => {
     );
   });
 
-  it.skip("should handle export error in progress tab", async () => {
+  it("should handle export error in progress tab", async () => {
     vi.mocked(useDashboardAnalytics).mockReturnValue({
       data: undefined,
       isLoading: false,

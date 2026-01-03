@@ -135,7 +135,6 @@ describe("asyncHandler utility", () => {
       };
       const handler = asyncHandler(async () => {
         await Promise.resolve();
-        // eslint-disable-next-line @typescript-eslint/only-throw-error
         throw customError;
       });
 

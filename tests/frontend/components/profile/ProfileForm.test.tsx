@@ -80,4 +80,80 @@ describe("ProfileForm", () => {
     expect(await screen.findByText("Load failed")).toBeInTheDocument();
     expect(showToast).toHaveBeenCalled();
   });
+
+  it("shows loading spinner while profile data is loading", async () => {
+    const { ProfileForm } = await import("../../src/components/profile/ProfileForm");
+    getCurrentUser.mockImplementation(
+      () =>
+        new Promise(() => {
+          // keep pending to stay in loading state
+        }),
+    );
+
+    const { container } = render(<ProfileForm />);
+
+    expect(container.querySelector(".spinner")).toBeInTheDocument();
+  });
+
+  it("updates form fields and submits with parsed values", async () => {
+    const { ProfileForm } = await import("../../src/components/profile/ProfileForm");
+    getCurrentUser.mockResolvedValue({ displayName: "Alex", profile: {} });
+    updateProfile.mockResolvedValue(undefined);
+
+    render(<ProfileForm />);
+
+    await waitFor(() => expect(getCurrentUser).toHaveBeenCalled());
+
+    fireEvent.change(screen.getByLabelText("settings.profile.displayName"), {
+      target: { value: "New Name" },
+    });
+    fireEvent.change(screen.getByLabelText("settings.profile.alias"), {
+      target: { value: "new-alias" },
+    });
+    fireEvent.change(screen.getByLabelText("settings.profile.bio"), {
+      target: { value: "Updated bio" },
+    });
+    fireEvent.change(screen.getByLabelText("settings.profile.weight"), {
+      target: { value: "82.5" },
+    });
+    fireEvent.change(screen.getByLabelText("settings.profile.weightUnit"), {
+      target: { value: "lb" },
+    });
+    fireEvent.change(screen.getByLabelText("settings.profile.fitnessLevel"), {
+      target: { value: "advanced" },
+    });
+    fireEvent.change(screen.getByLabelText("settings.profile.trainingFrequency"), {
+      target: { value: "5_plus_per_week" },
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "common.save" }));
+
+    await waitFor(() =>
+      expect(updateProfile).toHaveBeenCalledWith(
+        expect.objectContaining({
+          displayName: "New Name",
+          alias: "new-alias",
+          bio: "Updated bio",
+          weight: 82.5,
+          weightUnit: "lb",
+          fitnessLevel: "advanced",
+          trainingFrequency: "5_plus_per_week",
+        }),
+      ),
+    );
+  });
+
+  it("shows error when save fails", async () => {
+    const { ProfileForm } = await import("../../src/components/profile/ProfileForm");
+    getCurrentUser.mockResolvedValue({ displayName: "Alex", profile: {} });
+    updateProfile.mockRejectedValue(new Error("Save failed"));
+
+    render(<ProfileForm />);
+
+    await waitFor(() => expect(getCurrentUser).toHaveBeenCalled());
+
+    fireEvent.click(screen.getByRole("button", { name: "common.save" }));
+
+    expect(await screen.findByText("settings.profile.saveError")).toBeInTheDocument();
+  });
 });

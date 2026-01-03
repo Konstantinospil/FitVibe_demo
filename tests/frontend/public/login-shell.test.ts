@@ -10,13 +10,22 @@ vi.mock("../../src/main", () => ({
 const buildFormDom = () => {
   document.body.innerHTML = `
     <div id="login-shell">
+      <div class="login-fallback__eyebrow"></div>
+      <h1 class="login-fallback__title"></h1>
+      <p class="login-fallback__desc"></p>
       <form id="login-form">
-        <input type="email" name="email" />
-        <input type="password" name="password" />
+        <label class="login-fallback__label"><span></span><input type="email" name="email" /></label>
+        <label class="login-fallback__label login-fallback__label--password">
+          <span></span><input type="password" name="password" />
+        </label>
         <button type="button" data-role="toggle-password">Show</button>
-        <button type="submit">Submit</button>
+        <button type="submit"><span>Submit</span></button>
         <div class="login-fallback__error" hidden></div>
       </form>
+      <div class="login-fallback__links">
+        <a href="/register"></a>
+        <a href="/forgot-password"></a>
+      </div>
     </div>
   `;
 };
@@ -34,12 +43,14 @@ describe("login fallback shell", () => {
     vi.resetModules();
     mockLoadMain.mockClear();
     document.body.innerHTML = "";
+    window.localStorage.clear();
     assignSpy = vi.fn();
     Object.defineProperty(window, "location", {
       configurable: true,
       value: {
         ...originalLocation,
         assign: assignSpy,
+        search: "",
       },
     });
     Object.defineProperty(window, "sessionStorage", {
@@ -93,6 +104,41 @@ describe("login fallback shell", () => {
     // We can't reliably test the mock call with void import(), but we verify no errors occurred
   });
 
+  it("applies translations using the default language when metadata fails", async () => {
+    buildFormDom();
+    (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
+      ok: false,
+      json: () => Promise.resolve({}),
+    });
+
+    await importLoginShell();
+
+    await waitFor(() => {
+      const eyebrow = document.querySelector(".login-fallback__eyebrow") as HTMLElement;
+      const title = document.querySelector(".login-fallback__title") as HTMLElement;
+      expect(eyebrow.textContent?.length).toBeGreaterThan(0);
+      expect(title.textContent?.length).toBeGreaterThan(0);
+    });
+  });
+
+  it("falls back to default translations when language is unsupported", async () => {
+    buildFormDom();
+    window.localStorage.setItem("fitvibe:language", "xx");
+    (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({ data: { languages: ["xx"] } }),
+    });
+
+    await importLoginShell();
+
+    await waitFor(() => {
+      const toggleButton = document.querySelector(
+        "[data-role='toggle-password']",
+      ) as HTMLButtonElement;
+      expect(toggleButton.getAttribute("aria-label")?.length).toBeGreaterThan(0);
+    });
+  });
+
   it("toggles password visibility with the toggle button", async () => {
     buildFormDom();
     await importLoginShell();
@@ -109,6 +155,20 @@ describe("login fallback shell", () => {
     toggleButton.click();
     expect(passwordInput.type).toBe("password");
     expect(toggleButton.getAttribute("aria-label")).toBe("Show password");
+  });
+
+  it("shows a fill-all-fields error when submitting empty inputs", async () => {
+    buildFormDom();
+    await importLoginShell();
+
+    const form = document.getElementById("login-form") as HTMLFormElement;
+    form.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
+
+    await waitFor(() => {
+      const errorRegion = document.querySelector(".login-fallback__error") as HTMLDivElement;
+      expect(errorRegion.hidden).toBe(false);
+      expect(errorRegion.textContent?.length).toBeGreaterThan(0);
+    });
   });
 
   it("redirects to the 2FA verification screen when required", async () => {
@@ -132,6 +192,28 @@ describe("login fallback shell", () => {
       },
       { timeout: 5000 },
     );
+  });
+
+  it("includes a returnUrl when redirecting to 2FA", async () => {
+    buildFormDom();
+    window.location.search = "?returnUrl=%2Fplanner";
+    (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({ requires2FA: true, pendingSessionId: "pending-321" }),
+    });
+
+    await importLoginShell();
+
+    const form = document.getElementById("login-form") as HTMLFormElement;
+    (form.elements.namedItem("email") as HTMLInputElement).value = "user@example.com";
+    (form.elements.namedItem("password") as HTMLInputElement).value = "s3cret";
+    form.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
+
+    await waitFor(() => {
+      expect(assignSpy).toHaveBeenCalledWith(
+        "/login/verify-2fa?pendingSessionId=pending-321&returnUrl=%2Fplanner",
+      );
+    });
   });
 
   it("stores a session flag and navigates home after successful login", async () => {
@@ -159,10 +241,81 @@ describe("login fallback shell", () => {
     );
   });
 
+  it("sanitizes invalid returnUrl values", async () => {
+    buildFormDom();
+    window.location.search = "?returnUrl=https://evil.test";
+    (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({ requires2FA: false }),
+    });
+
+    await importLoginShell();
+
+    const form = document.getElementById("login-form") as HTMLFormElement;
+    (form.elements.namedItem("email") as HTMLInputElement).value = "user@example.com";
+    (form.elements.namedItem("password") as HTMLInputElement).value = "s3cret";
+    form.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
+
+    await waitFor(() => {
+      expect(assignSpy).toHaveBeenCalledWith("/");
+    });
+  });
+
+  it("redirects to terms reacceptance when required", async () => {
+    buildFormDom();
+    (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
+      ok: false,
+      json: () =>
+        Promise.resolve({
+          error: { code: "TERMS_VERSION_OUTDATED", message: "Terms outdated" },
+          termsOutdated: true,
+          privacyPolicyOutdated: false,
+        }),
+    });
+
+    await importLoginShell();
+
+    const form = document.getElementById("login-form") as HTMLFormElement;
+    (form.elements.namedItem("email") as HTMLInputElement).value = "user@example.com";
+    (form.elements.namedItem("password") as HTMLInputElement).value = "s3cret";
+    form.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
+
+    await waitFor(() => {
+      expect(window.sessionStorage.getItem("fitvibe:auth")).toBe("1");
+      expect(assignSpy).toHaveBeenCalledWith("/terms");
+    });
+  });
+
+  it("redirects to privacy reacceptance when required", async () => {
+    buildFormDom();
+    (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
+      ok: false,
+      json: () =>
+        Promise.resolve({
+          error: { code: "PRIVACY_POLICY_VERSION_OUTDATED", message: "Privacy outdated" },
+          termsOutdated: false,
+          privacyPolicyOutdated: true,
+        }),
+    });
+
+    await importLoginShell();
+
+    const form = document.getElementById("login-form") as HTMLFormElement;
+    (form.elements.namedItem("email") as HTMLInputElement).value = "user@example.com";
+    (form.elements.namedItem("password") as HTMLInputElement).value = "s3cret";
+    form.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
+
+    await waitFor(() => {
+      expect(window.sessionStorage.getItem("fitvibe:auth")).toBe("1");
+      expect(assignSpy).toHaveBeenCalledWith("/privacy");
+    });
+  });
+
   it("shows an error message when authentication fails", async () => {
     buildFormDom();
     (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
       ok: false,
+      json: () => Promise.resolve({ error: { message: "Nope" } }),
     });
 
     await importLoginShell();
@@ -176,7 +329,7 @@ describe("login fallback shell", () => {
       () => {
         const errorRegion = document.querySelector(".login-fallback__error") as HTMLDivElement;
         expect(errorRegion.hidden).toBe(false);
-        expect(errorRegion.textContent).toContain("We couldn't verify your credentials");
+        expect(errorRegion.textContent).toContain("Nope");
       },
       { timeout: 5000 },
     );
