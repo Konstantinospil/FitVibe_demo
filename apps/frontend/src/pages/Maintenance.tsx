@@ -1,5 +1,5 @@
 import React from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui";
+import { Card, CardContent, CardHeader, CardTitle } from "../components/ui";
 import logo from "../assets/logo_full_dark.png";
 import maintenanceImage from "../assets/Maintenance.png";
 
@@ -27,7 +27,7 @@ const accentLineStyle: React.CSSProperties = {
   background: "var(--color-accent)",
 };
 
-const Maintenance: React.FC<MaintenanceProps> = ({ message }) => {
+const Maintenance: React.FC<MaintenanceProps> = () => {
   return (
     <section
       style={{
