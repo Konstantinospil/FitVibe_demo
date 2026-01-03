@@ -627,7 +627,7 @@ jobs:
         env:
           LHCI_PORT: "4173"
         run: |
-          export CHROME_PATH="$(node -e "const p=require('playwright-core');console.log(p.chromium.executablePath())")"
+          export CHROME_PATH="$(node -e "const { chromium } = require('@playwright/test'); console.log(chromium.executablePath())")"
           pnpm exec lhci autorun --config=tests/perf/lighthouserc.ci.json --exit-on-error
 
       - name: Upload Lighthouse artifacts

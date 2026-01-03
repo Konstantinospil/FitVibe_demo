@@ -16,6 +16,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 
 describe("suppressConsole", () => {
   const originalConsole = globalThis.console;
+  const originalLocalStorage = globalThis.localStorage;
   let originalConsoleError: typeof console.error;
   let originalConsoleWarn: typeof console.warn;
   let originalWindow: typeof window | undefined;
@@ -28,6 +29,17 @@ describe("suppressConsole", () => {
     originalWindow = global.window;
     savedBeforeunloadHandler = undefined;
 
+    if (!globalThis.localStorage) {
+      globalThis.localStorage = {
+        getItem: vi.fn(),
+        setItem: vi.fn(),
+        removeItem: vi.fn(),
+        clear: vi.fn(),
+        key: vi.fn(),
+        length: 0,
+      };
+    }
+
     // Clear module cache to allow fresh imports
     vi.resetModules();
   });
@@ -39,6 +51,8 @@ describe("suppressConsole", () => {
     globalThis.console = originalConsole;
     console.error = originalConsoleError;
     console.warn = originalConsoleWarn;
+
+    globalThis.localStorage = originalLocalStorage;
 
     // Restore window
     if (originalWindow) {
@@ -109,6 +123,9 @@ describe("suppressConsole", () => {
 
       const module = await import("../../src/utils/suppressConsole");
       module.initializeSuppressConsole({ windowRef: global.window, isProd: true });
+
+      errorSpy.mockClear();
+      warnSpy.mockClear();
 
       globalThis.console.error("suppressed");
       globalThis.console.warn("suppressed");
