@@ -72,13 +72,7 @@ describe("Translations admin page", () => {
     await screen.findByText("Home");
     const editButton = await screen.findByTitle("Edit");
     fireEvent.click(editButton);
-    const editField = await waitFor(() => {
-      const field = container.querySelector("textarea.form-input");
-      if (!field) {
-        throw new Error("Edit field not found");
-      }
-      return field;
-    });
+    const editField = await screen.findByDisplayValue("Home");
     fireEvent.change(editField, { target: { value: "Homepage" } });
     const saveButton = await waitFor(() => {
       const icon = container.querySelector("svg.lucide-save");
