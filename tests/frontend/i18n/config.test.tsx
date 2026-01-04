@@ -36,7 +36,7 @@ const setupConfig = async (options?: {
       return 0;
     };
   } else {
-    delete (window as Partial<Window>).requestIdleCallback;
+    window.requestIdleCallback = undefined;
   }
 
   const i18nMock = {

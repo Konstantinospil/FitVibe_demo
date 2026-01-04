@@ -238,11 +238,7 @@ describe("Translations admin page", () => {
 
     await screen.findByText("Home");
     fireEvent.click(await screen.findByTitle("Edit"));
-    await waitFor(() => {
-      const textarea = container.querySelector("textarea.form-input");
-      expect(textarea).not.toBeNull();
-      expect((textarea as HTMLTextAreaElement).value).toBe("Home");
-    });
+    await screen.findByDisplayValue("Home");
     const cancelButton = await waitFor(() => {
       const icon = container.querySelector("svg.lucide-x");
       const button = icon?.closest("button");
