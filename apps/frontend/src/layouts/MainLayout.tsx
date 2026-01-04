@@ -250,7 +250,7 @@ const MainLayout: React.FC = () => {
         <div style={{ flex: 1, minWidth: 0 }}>
           <Outlet />
         </div>
-        <VibeSidebar />
+        {!isCompact && <VibeSidebar />}
       </main>
 
       <Footer />

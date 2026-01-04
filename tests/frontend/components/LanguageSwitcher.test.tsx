@@ -4,13 +4,14 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import userEvent from "@testing-library/user-event";
 import LanguageSwitcher from "../../src/components/LanguageSwitcher";
 
-const changeLanguage = vi.fn();
-const hasResourceBundle = vi.fn();
+let changeLanguage = vi.fn();
+let hasResourceBundle: ((code: string, ns: string) => boolean) | undefined = vi.fn();
+let language = "en";
 
 vi.mock("react-i18next", () => ({
   useTranslation: () => ({
     i18n: {
-      language: "en",
+      language,
       changeLanguage,
       hasResourceBundle,
     },
@@ -38,6 +39,10 @@ describe("LanguageSwitcher", () => {
   beforeEach(() => {
     // Reset document state
     document.body.innerHTML = "";
+    language = "en";
+    changeLanguage = vi.fn();
+    hasResourceBundle = vi.fn();
+    loadLanguageTranslations.mockReset();
   });
 
   afterEach(() => {
@@ -278,6 +283,67 @@ describe("LanguageSwitcher", () => {
     await waitFor(() => {
       expect(loadLanguageTranslations).toHaveBeenCalledWith("es");
       expect(changeLanguage).toHaveBeenCalledWith("es");
+    });
+  });
+
+  it("falls back to English when language is not supported", async () => {
+    language = "it";
+
+    const { container } = render(<LanguageSwitcher />);
+    const button = screen
+      .getAllByRole("button", { name: /select language/i })
+      .find((btn) => container.contains(btn));
+    fireEvent.click(button ?? screen.getAllByRole("button", { name: /select language/i })[0]);
+
+    await waitFor(() => {
+      const englishOption = screen
+        .getAllByRole("menuitemradio", { name: /english/i })
+        .find((el) => container.contains(el));
+      expect(englishOption).toBeInTheDocument();
+      expect(englishOption).toHaveAttribute("aria-checked", "true");
+    });
+  });
+
+  it("loads translations when hasResourceBundle is missing", async () => {
+    hasResourceBundle = undefined;
+    loadLanguageTranslations.mockResolvedValue(undefined);
+
+    const { container } = render(<LanguageSwitcher />);
+    const button = screen
+      .getAllByRole("button", { name: /select language/i })
+      .find((btn) => container.contains(btn));
+    fireEvent.click(button ?? screen.getAllByRole("button", { name: /select language/i })[0]);
+
+    await waitFor(() => {
+      const germanOption = screen
+        .getAllByRole("menuitemradio", { name: /german/i })
+        .find((el) => container.contains(el));
+      expect(germanOption).toBeInTheDocument();
+      fireEvent.click(germanOption as HTMLElement);
+    });
+
+    await waitFor(() => {
+      expect(loadLanguageTranslations).toHaveBeenCalledWith("de");
+      expect(changeLanguage).toHaveBeenCalledWith("de");
+    });
+  });
+
+  it("keeps selected option background on hover", async () => {
+    const { container } = render(<LanguageSwitcher />);
+    const button = screen
+      .getAllByRole("button", { name: /select language/i })
+      .find((btn) => container.contains(btn));
+    fireEvent.click(button ?? screen.getAllByRole("button", { name: /select language/i })[0]);
+
+    await waitFor(() => {
+      const englishOption = screen
+        .getAllByRole("menuitemradio", { name: /english/i })
+        .find((el) => container.contains(el));
+      expect(englishOption).toBeInTheDocument();
+      expect(englishOption).toHaveStyle({ background: "var(--color-surface-muted)" });
+      fireEvent.mouseEnter(englishOption as HTMLElement);
+      fireEvent.mouseLeave(englishOption as HTMLElement);
+      expect(englishOption).toHaveStyle({ background: "var(--color-surface-muted)" });
     });
   });
 });

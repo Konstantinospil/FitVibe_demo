@@ -3,10 +3,14 @@ import { freezeTime } from "../helpers/fakeClock.js";
 import { getDynamicMasks } from "../helpers/mask.js";
 import { assertNoHorizontalOverflow } from "../helpers/responsive.js";
 import { gotoAuthenticated } from "../helpers/auth.js";
+import { mockCookieConsent, mockCurrentUser, mockSystemConfig } from "../helpers/mockApi.js";
 
 test.describe("Dashboard Page Visual Tests", () => {
   test.beforeEach(async ({ page }) => {
     await freezeTime(page);
+    await mockSystemConfig(page);
+    await mockCurrentUser(page);
+    await mockCookieConsent(page);
     // Set explicit timeout for network operations
     page.setDefaultTimeout(30000); // 30s for network operations
     // Set default navigation timeout

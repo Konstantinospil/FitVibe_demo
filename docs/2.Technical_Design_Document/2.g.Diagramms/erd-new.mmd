@@ -6,6 +6,7 @@ erDiagram
     text code PK
     text description
     timestamptz created_at
+    timestamptz deactivated_at
   }
 
   users {
@@ -48,6 +49,7 @@ erDiagram
     jsonb unit_preferences
     timestamptz created_at
     timestamptz updated_at
+    timestamptz deactivated_at
   }
 
   user_contacts {
@@ -60,6 +62,7 @@ erDiagram
     boolean is_verified
     timestamptz verified_at
     timestamptz created_at
+    timestamptz deactivated_at
   }
 
   user_state_history {
@@ -70,6 +73,8 @@ erDiagram
     jsonb new_value
     timestamptz changed_at
     %% PK (id, changed_at)
+    timestamptz created_at
+    timestamptz deactivated_at
   }
 
   user_tombstones {
@@ -82,6 +87,7 @@ erDiagram
     timestamptz backup_purge_due_at
     jsonb metadata
     timestamptz created_at
+    timestamptz deactivated_at
   }
 
   blacklist {
@@ -92,6 +98,7 @@ erDiagram
     timestamptz created_at
     timestamptz updated_at
     uuid created_by FK "-> users.id"
+    timestamptz deactivated_at
   }
 
   %% =========================================================
@@ -101,6 +108,7 @@ erDiagram
     text key PK
     text description
     timestamptz created_at
+    timestamptz deactivated_at
   }
 
   code_values {
@@ -111,24 +119,29 @@ erDiagram
     int sort_order
     boolean is_active
     %% UNIQUE (set_key, code)
+    timestamptz created_at
+    timestamptz deactivated_at
   }
 
   genders {
     text code PK
     text description
     timestamptz created_at
+    timestamptz deactivated_at
   }
 
   fitness_levels {
     text code PK
     text description
     timestamptz created_at
+    timestamptz deactivated_at
   }
 
   exercise_types {
     text code PK
     text description
     timestamptz created_at
+    timestamptz deactivated_at
   }
 
   %% =========================================================
@@ -142,6 +155,7 @@ erDiagram
     timestamptz created_at
     timestamptz expires_at
     timestamptz revoked_at
+    timestamptz deactivated_at
   }
 
   refresh_tokens {
@@ -153,6 +167,7 @@ erDiagram
     timestamptz created_at
     timestamptz revoked_at
     timestamptz rotated_at
+    timestamptz deactivated_at
   }
 
   auth_tokens {
@@ -163,6 +178,7 @@ erDiagram
     timestamptz created_at
     timestamptz expires_at
     timestamptz consumed_at
+    timestamptz deactivated_at
   }
 
   verification_tokens {
@@ -173,6 +189,7 @@ erDiagram
     timestamptz expires_at
     timestamptz consumed_at
     timestamptz created_at
+    timestamptz deactivated_at
   }
 
   reset_tokens {
@@ -182,6 +199,7 @@ erDiagram
     timestamptz expires_at
     timestamptz consumed_at
     timestamptz created_at
+    timestamptz deactivated_at
   }
 
   pending_2fa_sessions {
@@ -192,6 +210,7 @@ erDiagram
     text ip
     text user_agent
     boolean verified
+    timestamptz deactivated_at
   }
 
   user_2fa_settings {
@@ -206,6 +225,7 @@ erDiagram
     timestamptz last_used_at
     timestamptz created_at
     timestamptz updated_at
+    timestamptz deactivated_at
   }
 
   backup_codes {
@@ -216,6 +236,7 @@ erDiagram
     timestamptz used_at
     int generation_batch
     timestamptz created_at
+    timestamptz deactivated_at
   }
 
   two_factor_backup_codes {
@@ -225,6 +246,7 @@ erDiagram
     boolean used
     timestamptz used_at
     timestamptz created_at
+    timestamptz deactivated_at
   }
 
   two_factor_audit_log {
@@ -235,6 +257,7 @@ erDiagram
     text user_agent
     jsonb metadata
     timestamptz created_at
+    timestamptz deactivated_at
   }
 
   failed_login_attempts {
@@ -248,6 +271,7 @@ erDiagram
     timestamptz first_attempt_at
     timestamptz created_at
     timestamptz updated_at
+    timestamptz deactivated_at
   }
 
   failed_login_attempts_by_ip {
@@ -260,6 +284,7 @@ erDiagram
     timestamptz first_attempt_at
     timestamptz created_at
     timestamptz updated_at
+    timestamptz deactivated_at
   }
 
   %% =========================================================
@@ -270,6 +295,7 @@ erDiagram
     text slug UNIQUE
     text title
     timestamptz created_at
+    timestamptz deactivated_at
   }
 
   exercises {
@@ -287,24 +313,31 @@ erDiagram
     timestamptz created_at
     timestamptz updated_at
     timestamptz archived_at
+    timestamptz deactivated_at
   }
 
   tags {
     uuid id PK
     text slug UNIQUE
     text label
+    timestamptz created_at
+    timestamptz deactivated_at
   }
 
   exercise_tags {
     uuid exercise_id FK "-> exercises.id"
     uuid tag_id FK "-> tags.id"
     %% PK (exercise_id, tag_id)
+    timestamptz created_at
+    timestamptz deactivated_at
   }
 
   translation_fields {
     text entity_type
     text field_key
     %% PK (entity_type, field_key)
+    timestamptz created_at
+    timestamptz deactivated_at
   }
 
   translations {
@@ -318,6 +351,7 @@ erDiagram
     uuid created_by FK "-> users.id"
     uuid updated_by FK "-> users.id"
     timestamptz deleted_at
+    timestamptz deactivated_at
   }
 
   translation_cache {
@@ -327,6 +361,7 @@ erDiagram
     text translated
     uuid hash UNIQUE
     timestamptz created_at
+    timestamptz deactivated_at
   }
 
   %% =========================================================
@@ -345,6 +380,7 @@ erDiagram
     timestamptz created_at
     timestamptz updated_at
     timestamptz archived_at
+    timestamptz deactivated_at
   }
 
   workout_templates {
@@ -361,12 +397,15 @@ erDiagram
     timestamptz created_at
     timestamptz updated_at
     timestamptz archived_at
+    timestamptz deactivated_at
   }
 
   template_muscle_groups {
     uuid template_id FK "-> workout_templates.id"
     text muscle_group
     %% PK (template_id, muscle_group)
+    timestamptz created_at
+    timestamptz deactivated_at
   }
 
   template_exercises {
@@ -379,6 +418,8 @@ erDiagram
     text target_rest
     text notes
     timestamptz updated_at
+    timestamptz created_at
+    timestamptz deactivated_at
   }
 
   template_ratings {
@@ -389,6 +430,7 @@ erDiagram
     text review
     timestamptz created_at
     timestamptz updated_at
+    timestamptz deactivated_at
   }
 
   sessions {
@@ -411,6 +453,7 @@ erDiagram
     timestamptz updated_at
     timestamptz deleted_at
     %% PK (id, planned_at)
+    timestamptz deactivated_at
   }
 
   session_exercises {
@@ -421,6 +464,7 @@ erDiagram
     text notes
     timestamptz created_at
     timestamptz updated_at
+    timestamptz deactivated_at
   }
 
   exercise_sets {
@@ -434,6 +478,7 @@ erDiagram
     int rpe
     text notes
     timestamptz created_at
+    timestamptz deactivated_at
   }
 
   planned_exercise_attributes {
@@ -448,6 +493,7 @@ erDiagram
     interval rest
     jsonb extras
     timestamptz created_at
+    timestamptz deactivated_at
   }
 
   actual_exercise_attributes {
@@ -462,6 +508,8 @@ erDiagram
     interval rest
     jsonb extras
     timestamptz recorded_at
+    timestamptz created_at
+    timestamptz deactivated_at
   }
 
   %% =========================================================
@@ -477,6 +525,7 @@ erDiagram
     text photo_url
     timestamptz recorded_at
     timestamptz created_at
+    timestamptz deactivated_at
   }
 
   personal_records {
@@ -494,6 +543,7 @@ erDiagram
     timestamptz achieved_at
     text notes
     timestamptz created_at
+    timestamptz deactivated_at
   }
 
   body_measurements {
@@ -509,6 +559,7 @@ erDiagram
     numeric(6,2) bicep_cm
     text notes
     timestamptz created_at
+    timestamptz deactivated_at
   }
 
   recovery_logs {
@@ -522,6 +573,7 @@ erDiagram
     smallint energy_level
     text notes
     timestamptz created_at
+    timestamptz deactivated_at
   }
 
   %% =========================================================
@@ -536,6 +588,7 @@ erDiagram
     int priority
     jsonb criteria
     timestamptz created_at
+    timestamptz deactivated_at
   }
 
   badges {
@@ -544,6 +597,8 @@ erDiagram
     text badge_type FK "-> badge_catalog.code"
     jsonb metadata
     timestamptz awarded_at
+    timestamptz created_at
+    timestamptz deactivated_at
   }
 
   user_points {
@@ -558,6 +613,7 @@ erDiagram
     timestamptz awarded_at
     timestamptz created_at
     %% PK (id, awarded_at)
+    timestamptz deactivated_at
   }
 
   %% =========================================================
@@ -576,6 +632,7 @@ erDiagram
     timestamptz created_at
     timestamptz updated_at
     timestamptz deleted_at
+    timestamptz deactivated_at
   }
 
   feed_likes {
@@ -583,6 +640,7 @@ erDiagram
     uuid user_id FK "-> users.id"
     timestamptz created_at
     %% PK (feed_item_id, user_id)
+    timestamptz deactivated_at
   }
 
   session_bookmarks {
@@ -590,6 +648,7 @@ erDiagram
     uuid user_id FK "-> users.id"
     timestamptz created_at
     %% PK (session_id, user_id)
+    timestamptz deactivated_at
   }
 
   feed_comments {
@@ -601,6 +660,7 @@ erDiagram
     timestamptz created_at
     timestamptz edited_at
     timestamptz deleted_at
+    timestamptz deactivated_at
   }
 
   followers {
@@ -608,6 +668,7 @@ erDiagram
     uuid following_id FK "-> users.id"
     timestamptz created_at
     %% PK (follower_id, following_id)
+    timestamptz deactivated_at
   }
 
   user_blocks {
@@ -615,6 +676,7 @@ erDiagram
     uuid blocked_id FK "-> users.id"
     timestamptz created_at
     %% PK (blocker_id, blocked_id)
+    timestamptz deactivated_at
   }
 
   feed_reports {
@@ -628,6 +690,7 @@ erDiagram
     timestamptz created_at
     timestamptz resolved_at
     uuid resolved_by FK "-> users.id"
+    timestamptz deactivated_at
   }
 
   share_links {
@@ -641,6 +704,7 @@ erDiagram
     timestamptz created_at
     timestamptz revoked_at
     uuid created_by FK "-> users.id"
+    timestamptz deactivated_at
   }
 
   notifications {
@@ -657,6 +721,7 @@ erDiagram
     timestamptz expires_at
     timestamptz created_at
     timestamptz read_at
+    timestamptz deactivated_at
   }
 
   %% =========================================================
@@ -673,6 +738,7 @@ erDiagram
     text media_type
     int bytes
     timestamptz created_at
+    timestamptz deactivated_at
   }
 
   %% =========================================================
@@ -688,6 +754,7 @@ erDiagram
     text outcome
     uuid request_id
     timestamptz created_at
+    timestamptz deactivated_at
   }
 
   idempotency_keys {
@@ -701,6 +768,7 @@ erDiagram
     jsonb response_body
     timestamptz created_at
     timestamptz updated_at
+    timestamptz deactivated_at
   }
 
   contact_messages {
@@ -714,6 +782,7 @@ erDiagram
     uuid read_by_user_id FK "-> users.id"
     timestamptz responded_at
     text response
+    timestamptz deactivated_at
   }
 
   cookie_consents {
@@ -729,6 +798,7 @@ erDiagram
     text user_agent
     timestamptz created_at
     timestamptz updated_at
+    timestamptz deactivated_at
   }
 
   action_ui_mappings {
@@ -736,6 +806,7 @@ erDiagram
     text ui_name
     timestamptz created_at
     timestamptz updated_at
+    timestamptz deactivated_at
   }
 
   %% =========================================================
@@ -751,12 +822,15 @@ erDiagram
     numeric max_value
     boolean is_time_series
     timestamptz created_at
+    timestamptz deactivated_at
   }
 
   attribute_scopes {
     uuid attribute_id FK "-> attributes.id"
     text entity_type
     %% PK (attribute_id, entity_type)
+    timestamptz created_at
+    timestamptz deactivated_at
   }
 
   attribute_values {
@@ -774,6 +848,8 @@ erDiagram
     timestamptz ts_value
     jsonb json_value
     uuid code_value_id FK "-> code_values.id"
+    timestamptz created_at
+    timestamptz deactivated_at
   }
 
   %% =========================================================
@@ -788,6 +864,8 @@ erDiagram
     timestamptz planned_at
     timestamptz completed_at
     timestamptz refreshed_at
+    timestamptz created_at
+    timestamptz deactivated_at
   }
 
   weekly_aggregates {
@@ -796,6 +874,8 @@ erDiagram
     int sessions
     numeric total_volume
     timestamptz refreshed_at
+    timestamptz created_at
+    timestamptz deactivated_at
   }
 
   mv_leaderboard {
@@ -806,6 +886,8 @@ erDiagram
     text display_name
     int points
     int badges_count
+    timestamptz created_at
+    timestamptz deactivated_at
   }
 
   %% =========================================================

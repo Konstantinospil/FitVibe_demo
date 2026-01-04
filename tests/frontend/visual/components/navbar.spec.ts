@@ -1,11 +1,16 @@
 import { test, expect } from "@playwright/test";
 import { freezeTime } from "../helpers/fakeClock.js";
 import { getDynamicMasks } from "../helpers/mask.js";
+import { gotoAuthenticated } from "../helpers/auth.js";
+import { mockCookieConsent, mockCurrentUser, mockSystemConfig } from "../helpers/mockApi.js";
 
 test.describe("Navbar Component Visual Tests", () => {
   test.beforeEach(async ({ page }) => {
     await freezeTime(page);
-    await page.goto("/");
+    await mockSystemConfig(page);
+    await mockCurrentUser(page);
+    await mockCookieConsent(page);
+    await gotoAuthenticated(page, "/");
     await page.waitForLoadState("networkidle");
   });
 

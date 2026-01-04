@@ -19,6 +19,7 @@ export async function setupAuthenticatedState(page: Page): Promise<void> {
     // Mock authentication token
     // In a real implementation, this would be a valid JWT or the app would
     // need to be configured to accept this mock token
+    sessionStorage.setItem("fitvibe:auth", "1");
     localStorage.setItem("auth_token", "mock-jwt-token-for-visual-tests");
     localStorage.setItem("user_id", "test-user-123");
   });
@@ -32,6 +33,7 @@ export async function setupAuthenticatedState(page: Page): Promise<void> {
  */
 export async function clearAuthenticatedState(page: Page): Promise<void> {
   await page.evaluate(() => {
+    sessionStorage.removeItem("fitvibe:auth");
     localStorage.removeItem("auth_token");
     localStorage.removeItem("user_id");
   });

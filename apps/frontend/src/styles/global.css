@@ -1768,6 +1768,22 @@ small {
   background: var(--color-surface-muted);
 }
 
+@media (max-width: 900px) {
+  .settings-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .settings-sidebar {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+
+  .settings-sidebar-button {
+    flex: 1 1 160px;
+    justify-content: center;
+  }
+}
+
 .grid--gap-06 {
   gap: 0.6rem;
 }

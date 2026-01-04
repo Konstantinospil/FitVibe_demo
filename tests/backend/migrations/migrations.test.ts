@@ -255,6 +255,41 @@ describeFn("database migrations", () => {
       expect(columns.awarded_at).toBeDefined();
     });
 
+    it("adds created_at and deactivated_at to every table", async () => {
+      const missingCreatedAt = await client.raw(`
+        SELECT t.table_name
+        FROM information_schema.tables t
+        WHERE t.table_schema = 'tmp_migration_test'
+          AND t.table_type = 'BASE TABLE'
+          AND t.table_name NOT IN ('knex_migrations', 'knex_migrations_lock')
+          AND NOT EXISTS (
+            SELECT 1
+            FROM information_schema.columns c
+            WHERE c.table_schema = t.table_schema
+              AND c.table_name = t.table_name
+              AND c.column_name = 'created_at'
+          )
+      `);
+
+      const missingDeactivatedAt = await client.raw(`
+        SELECT t.table_name
+        FROM information_schema.tables t
+        WHERE t.table_schema = 'tmp_migration_test'
+          AND t.table_type = 'BASE TABLE'
+          AND t.table_name NOT IN ('knex_migrations', 'knex_migrations_lock')
+          AND NOT EXISTS (
+            SELECT 1
+            FROM information_schema.columns c
+            WHERE c.table_schema = t.table_schema
+              AND c.table_name = t.table_name
+              AND c.column_name = 'deactivated_at'
+          )
+      `);
+
+      expect(missingCreatedAt.rows).toHaveLength(0);
+      expect(missingDeactivatedAt.rows).toHaveLength(0);
+    });
+
     it("creates foreign key constraints between users and profiles", async () => {
       const foreignKeys = await client.raw(`
         SELECT

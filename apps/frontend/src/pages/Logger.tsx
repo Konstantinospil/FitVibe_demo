@@ -436,7 +436,8 @@ const Logger: React.FC = () => {
                     <div
                       style={{
                         display: "grid",
-                        gridTemplateColumns: "40px 1fr 1fr 1fr 40px",
+                        gridTemplateColumns:
+                          "32px minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) 32px",
                         gap: "0.75rem",
                         padding: "0.5rem 0.75rem",
                         fontSize: "0.85rem",
@@ -458,7 +459,8 @@ const Logger: React.FC = () => {
                         key={setIndex}
                         style={{
                           display: "grid",
-                          gridTemplateColumns: "40px 1fr 1fr 1fr 40px",
+                          gridTemplateColumns:
+                            "32px minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) 32px",
                           gap: "0.75rem",
                           padding: "0.75rem",
                           background: set.completed
@@ -491,6 +493,9 @@ const Logger: React.FC = () => {
                               : "var(--color-surface)",
                             color: "var(--color-text-primary)",
                             textAlign: "center",
+                            width: "100%",
+                            minWidth: 0,
+                            boxSizing: "border-box",
                           }}
                         />
 
@@ -515,6 +520,9 @@ const Logger: React.FC = () => {
                               : "var(--color-surface)",
                             color: "var(--color-text-primary)",
                             textAlign: "center",
+                            width: "100%",
+                            minWidth: 0,
+                            boxSizing: "border-box",
                           }}
                         />
 
@@ -540,6 +548,9 @@ const Logger: React.FC = () => {
                               : "var(--color-surface)",
                             color: "var(--color-text-primary)",
                             textAlign: "center",
+                            width: "100%",
+                            minWidth: 0,
+                            boxSizing: "border-box",
                           }}
                         />
 

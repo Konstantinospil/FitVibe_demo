@@ -57,7 +57,12 @@ tests/frontend/visual/
 │   └── responsive.ts           # Responsive design validation helpers
 ├── pages/
 │   ├── auth.spec.ts            # Auth page visual tests
-│   └── dashboard.spec.ts       # Dashboard page visual tests (authenticated & unauthenticated)
+│   ├── dashboard.spec.ts       # Dashboard page visual tests (authenticated & unauthenticated)
+│   ├── feed.spec.ts            # Feed page visual tests
+│   ├── logger.spec.ts          # Logger page visual tests
+│   ├── planner.spec.ts         # Planner page visual tests
+│   ├── profile.spec.ts         # Profile page visual tests
+│   └── settings.spec.ts        # Settings page visual tests
 └── components/
     └── navbar.spec.ts          # Component-level visual tests
 ```

@@ -12,7 +12,8 @@
         "http://127.0.0.1:4173/contact"
       ],
       "numberOfRuns": 1,
-      "puppeteerScript": "tests/perf/lhci-login.cjs"
+      "puppeteerScript": "tests/perf/lhci-login.cjs",
+      "chromeFlags": ["--no-sandbox", "--disable-setuid-sandbox"]
     },
     "assert": {
       "assertions": {

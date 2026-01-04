@@ -72,7 +72,13 @@ describe("Translations admin page", () => {
     await screen.findByText("Home");
     const editButton = await screen.findByTitle("Edit");
     fireEvent.click(editButton);
-    const editField = await screen.findByDisplayValue("Home");
+    const editField = await waitFor(() => {
+      const field = container.querySelector("tbody textarea");
+      if (!field) {
+        throw new Error("Edit textarea not found");
+      }
+      return field;
+    });
     fireEvent.change(editField, { target: { value: "Homepage" } });
     const saveButton = await waitFor(() => {
       const icon = container.querySelector("svg.lucide-save");
@@ -238,7 +244,13 @@ describe("Translations admin page", () => {
 
     await screen.findByText("Home");
     fireEvent.click(await screen.findByTitle("Edit"));
-    await screen.findByDisplayValue("Home");
+    await waitFor(() => {
+      const field = container.querySelector("tbody textarea");
+      if (!field) {
+        throw new Error("Edit textarea not found");
+      }
+      return field;
+    });
     const cancelButton = await waitFor(() => {
       const icon = container.querySelector("svg.lucide-x");
       const button = icon?.closest("button");

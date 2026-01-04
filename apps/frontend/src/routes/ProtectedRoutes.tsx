@@ -11,6 +11,7 @@ const Sessions = lazy(() => import("../pages/Sessions"));
 const Planner = lazy(() => import("../pages/Planner"));
 const Logger = lazy(() => import("../pages/Logger"));
 const Insights = lazy(() => import("../pages/Insights"));
+const Feed = lazy(() => import("../pages/Feed"));
 const Profile = lazy(() => import("../pages/Profile"));
 const Settings = lazy(() => import("../pages/Settings"));
 const NotFound = lazy(() => import("../pages/NotFound"));
@@ -46,6 +47,7 @@ const ProtectedRoutes: React.FC = () => {
               <Route path="planner" element={<Planner />} />
               <Route path="logger/:sessionId" element={<Logger />} />
               <Route path="insights" element={<Insights />} />
+              <Route path="feed" element={<Feed />} />
               <Route path="profile" element={<Profile />} />
               <Route path="settings" element={<Settings />} />
               <Route path="terms" element={<Terms />} />
