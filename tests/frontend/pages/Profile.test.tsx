@@ -4,11 +4,30 @@ import Profile from "../../src/pages/Profile";
 import { I18nextProvider } from "react-i18next";
 import i18n from "i18next";
 import { initReactI18next } from "react-i18next";
-import { addUserAttributeValue, getUserAttributes } from "../../src/services/api";
+import {
+  addBioValue,
+  addPerfValue,
+  addUserAttributeValue,
+  createBioAttribute,
+  createPerfAttribute,
+  getBioAttributes,
+  getPerfAttributes,
+  getUserAttributes,
+  updateBioVisibility,
+  updatePerfVisibility,
+} from "../../src/services/api";
 
 vi.mock("../../src/services/api", () => ({
+  addBioValue: vi.fn(),
+  addPerfValue: vi.fn(),
   addUserAttributeValue: vi.fn(),
+  createBioAttribute: vi.fn(),
+  createPerfAttribute: vi.fn(),
+  getBioAttributes: vi.fn(),
+  getPerfAttributes: vi.fn(),
   getUserAttributes: vi.fn(),
+  updateBioVisibility: vi.fn(),
+  updatePerfVisibility: vi.fn(),
 }));
 
 vi.mock("../../src/utils/logger", () => ({
@@ -44,6 +63,44 @@ void testI18n.use(initReactI18next).init({
         "profile.body.note": "Body measurements are optional.",
         "profile.performance.title": "Performance",
         "profile.performance.description": "Track personal records",
+        "profile.measurements.title": "Body Metrics",
+        "profile.measurements.description": "Track body composition",
+        "profile.measurements.tabs.biometrical": "Biometrics",
+        "profile.measurements.tabs.performance": "Performance",
+        "profile.measurements.search.label": "Search metrics",
+        "profile.measurements.search.placeholder": "Search metrics...",
+        "profile.measurements.search.searching": "Searching...",
+        "profile.measurements.search.empty": "No results",
+        "profile.measurements.tooltip.unit": "Unit",
+        "profile.measurements.tooltip.minMax": "Min/Max",
+        "profile.measurements.actions.add": "Add",
+        "profile.measurements.actions.remove": "Remove",
+        "profile.measurements.create.title": "Create metric",
+        "profile.measurements.create.cta": "Create attribute",
+        "profile.measurements.create.attributeName": "Attribute name",
+        "profile.measurements.create.attributeNamePlaceholder": "e.g. Body fat",
+        "profile.measurements.create.unitType": "Unit type",
+        "profile.measurements.create.granularity": "Granularity",
+        "profile.measurements.create.granularityPlaceholder": "e.g. kg",
+        "profile.measurements.create.measurementSystem": "System",
+        "profile.measurements.create.minValue": "Min",
+        "profile.measurements.create.maxValue": "Max",
+        "profile.measurements.create.minValuePlaceholder": "Min value",
+        "profile.measurements.create.maxValuePlaceholder": "Max value",
+        "profile.measurements.create.ratioToggleLabel": "Derived metric",
+        "profile.measurements.create.ratioSourceA": "Source A",
+        "profile.measurements.create.ratioSourceB": "Source B",
+        "profile.measurements.unitTypes.length": "Length",
+        "profile.measurements.unitTypes.weight": "Weight",
+        "profile.measurements.unitTypes.volume": "Volume",
+        "profile.measurements.unitTypes.ratio": "Ratio",
+        "profile.measurements.unitTypes.count": "Count",
+        "profile.measurements.unitTypes.time": "Time",
+        "profile.measurements.unitTypes.power": "Power",
+        "profile.measurements.unitTypes.percentage": "Percentage",
+        "profile.measurements.system.metric": "Metric",
+        "profile.measurements.system.imperial": "Imperial",
+        "profile.measurements.derived": "Derived",
         "common.edit": "Edit",
         "common.save": "Save",
         "common.cancel": "Cancel",
@@ -79,14 +136,6 @@ describe("Profile", () => {
           latestValue: { valueText: null, valueNumber: null, valueDate: "1990-01-01" },
         },
         {
-          id: "attr-weight",
-          key: "weight_kg",
-          label: "Weight",
-          valueType: "number",
-          unit: "kg",
-          latestValue: { valueText: null, valueNumber: 72.5, valueDate: null },
-        },
-        {
           id: "attr-bio",
           key: "biography",
           label: "Biography",
@@ -96,6 +145,57 @@ describe("Profile", () => {
         },
       ],
     } as any);
+
+    vi.mocked(getBioAttributes).mockResolvedValue({
+      attributes: [
+        {
+          id: "bio-weight",
+          key: "weight",
+          normalizedKey: "weight",
+          label: "Weight",
+          description: null,
+          unitType: "weight",
+          granularity: "kg",
+          measurementSystem: "metric",
+          minValueMetric: null,
+          maxValueMetric: null,
+          minValueImperial: null,
+          maxValueImperial: null,
+          isDefault: true,
+          derivedFromAId: null,
+          derivedFromBId: null,
+          derivedOperator: null,
+          createdAt: "2025-01-01T00:00:00.000Z",
+          updatedAt: "2025-01-01T00:00:00.000Z",
+          isVisible: true,
+          latestValue: {
+            attributeId: "bio-weight",
+            valueNumber: 72.5,
+            measuredAt: "2025-01-01T00:00:00.000Z",
+          },
+        },
+      ],
+    } as any);
+
+    vi.mocked(getPerfAttributes).mockResolvedValue({ attributes: [] } as any);
+    vi.mocked(addBioValue).mockResolvedValue({
+      latestValue: {
+        attributeId: "bio-weight",
+        valueNumber: 80,
+        measuredAt: "2025-01-02T00:00:00.000Z",
+      },
+    } as any);
+    vi.mocked(addPerfValue).mockResolvedValue({
+      latestValue: {
+        attributeId: "perf-1",
+        valueNumber: 1,
+        measuredAt: "2025-01-02T00:00:00.000Z",
+      },
+    } as any);
+    vi.mocked(updateBioVisibility).mockResolvedValue(undefined as any);
+    vi.mocked(updatePerfVisibility).mockResolvedValue(undefined as any);
+    vi.mocked(createBioAttribute).mockResolvedValue({ attribute: {} } as any);
+    vi.mocked(createPerfAttribute).mockResolvedValue({ attribute: {} } as any);
   });
 
   afterEach(() => {
@@ -113,27 +213,26 @@ describe("Profile", () => {
   it("displays all profile sections", () => {
     renderWithProviders(<Profile />);
 
-    // Visibility section
-    expect(screen.getByText("Privacy & Visibility")).toBeInTheDocument();
-    expect(screen.getByText("Control who can see your workouts")).toBeInTheDocument();
-
-    // Units section
-    expect(screen.getByText("Units & Preferences")).toBeInTheDocument();
-    expect(screen.getByText("Choose metric or imperial")).toBeInTheDocument();
-
     // Achievements section
     expect(screen.getByText("Achievements")).toBeInTheDocument();
     expect(screen.getByText("Track your fitness milestones")).toBeInTheDocument();
+
+    // Social section
+    expect(screen.getByText("Social")).toBeInTheDocument();
+    expect(screen.getByText("Social details")).toBeInTheDocument();
+
+    // Measurements section
+    expect(screen.getByText("Body Metrics")).toBeInTheDocument();
+    expect(screen.getByText("Track body composition")).toBeInTheDocument();
   });
 
   it("renders edit button", async () => {
     renderWithProviders(<Profile />);
 
-    // Wait for button to be rendered (component might render asynchronously)
-    const editButton = await waitFor(() => screen.getByRole("button", { name: /edit profile/i }), {
+    const editButtons = await waitFor(() => screen.getAllByRole("button", { name: "Edit" }), {
       timeout: 3000,
     });
-    expect(editButton).toBeInTheDocument();
+    expect(editButtons.length).toBeGreaterThan(0);
   });
 
   it("renders fetched attribute fields", async () => {
@@ -142,32 +241,20 @@ describe("Profile", () => {
     await waitFor(() => {
       expect(screen.getByLabelText("Display Name")).toBeInTheDocument();
       expect(screen.getByLabelText("Date of Birth")).toBeInTheDocument();
-      expect(screen.getByLabelText("Weight (kg)")).toBeInTheDocument();
       expect(screen.getByLabelText("Biography")).toBeInTheDocument();
+      expect(screen.getByLabelText("Weight (kg)")).toBeInTheDocument();
     });
   });
 
-  it("allows editing and saving numeric attributes", async () => {
-    vi.mocked(addUserAttributeValue).mockResolvedValue({
-      latestValue: { valueText: null, valueNumber: 80, valueDate: null },
-    } as any);
-
+  it("allows editing and saving numeric measurements", async () => {
     renderWithProviders(<Profile />);
 
     const weightInput = await screen.findByLabelText("Weight (kg)");
-    const weightRow = weightInput.closest(".profile-attribute-row");
-    expect(weightRow).toBeInTheDocument();
-
-    const editButton = weightRow!.querySelector("button");
-    expect(editButton).toBeInTheDocument();
-    fireEvent.click(editButton!);
-
     fireEvent.change(weightInput, { target: { value: "80" } });
-    const saveButton = screen.getByRole("button", { name: "Save" });
-    fireEvent.click(saveButton);
+    fireEvent.blur(weightInput);
 
     await waitFor(() => {
-      expect(addUserAttributeValue).toHaveBeenCalledWith("attr-weight", { valueNumber: 80 });
+      expect(addBioValue).toHaveBeenCalledWith("bio-weight", { valueNumber: 80 });
     });
   });
 

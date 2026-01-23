@@ -1,6 +1,6 @@
 # Acceptance Criteria Index
 
-**Last Updated**: 2025-01-21
+**Last Updated**: 2026-01-04
 
 This index provides a comprehensive list of all acceptance criteria in the FitVibe project.
 
@@ -37,6 +37,15 @@ This index provides a comprehensive list of all acceptance criteria in the FitVi
 | US-1.3-AC03 | [US-1.3](../d.User_stories/US-1.3-profile-testing.md) | Proposed | Integration + E2E | [US-1.3-AC03.md](./US-1.3-AC03.md) |
 | US-1.3-AC04 | [US-1.3](../d.User_stories/US-1.3-profile-testing.md) | Proposed | Integration + E2E | [US-1.3-AC04.md](./US-1.3-AC04.md) |
 | US-1.3-AC05 | [US-1.3](../d.User_stories/US-1.3-profile-testing.md) | Proposed | Integration + E2E | [US-1.3-AC05.md](./US-1.3-AC05.md) |
+
+#### US-1.4: Profile Measurements
+
+| AC ID       | Story                                                      | Status   | Test Method                | File                               |
+| ----------- | ---------------------------------------------------------- | -------- | -------------------------- | ---------------------------------- |
+| US-1.4-AC01 | [US-1.4](../d.User_stories/US-1.4-profile-measurements.md) | Proposed | Integration + API negative | [US-1.4-AC01.md](./US-1.4-AC01.md) |
+| US-1.4-AC02 | [US-1.4](../d.User_stories/US-1.4-profile-measurements.md) | Proposed | Integration                | [US-1.4-AC02.md](./US-1.4-AC02.md) |
+| US-1.4-AC03 | [US-1.4](../d.User_stories/US-1.4-profile-measurements.md) | Proposed | E2E                        | [US-1.4-AC03.md](./US-1.4-AC03.md) |
+| US-1.4-AC04 | [US-1.4](../d.User_stories/US-1.4-profile-measurements.md) | Proposed | Integration + E2E          | [US-1.4-AC04.md](./US-1.4-AC04.md) |
 
 ### Epic 2: Exercise Library
 

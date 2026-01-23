@@ -142,9 +142,18 @@ vi.mock("react-i18next", () => ({
 }));
 
 describe("Terms page", () => {
+  const setAuthenticated = (value: boolean) => {
+    vi.mocked(useAuthStore).mockImplementation(
+      (selector?: (state: { isAuthenticated: boolean }) => boolean) => {
+        const state = { isAuthenticated: value };
+        return selector ? selector(state) : (state as unknown as boolean);
+      },
+    );
+  };
+
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(useAuthStore).mockReturnValue(false);
+    setAuthenticated(false);
     vi.mocked(getLegalDocumentsStatus).mockResolvedValue({
       terms: { needsAcceptance: true },
     } as any);
@@ -238,7 +247,7 @@ describe("Terms page", () => {
   });
 
   it("allows authenticated users to accept terms", async () => {
-    vi.mocked(useAuthStore).mockReturnValue(true);
+    setAuthenticated(true);
     vi.mocked(getLegalDocumentsStatus).mockResolvedValue({
       terms: { needsAcceptance: true },
     } as any);
@@ -264,7 +273,7 @@ describe("Terms page", () => {
   });
 
   it("allows authenticated users to revoke consent", async () => {
-    vi.mocked(useAuthStore).mockReturnValue(true);
+    setAuthenticated(true);
     vi.mocked(getLegalDocumentsStatus).mockResolvedValue({
       terms: { needsAcceptance: false },
     } as any);
@@ -286,5 +295,44 @@ describe("Terms page", () => {
       expect(revokeTerms).toHaveBeenCalled();
       expect(getLegalDocumentsStatus).toHaveBeenCalled();
     });
+  });
+
+  it("shows login button when unauthenticated", async () => {
+    setAuthenticated(false);
+
+    render(
+      <MemoryRouter>
+        <Terms />
+      </MemoryRouter>,
+    );
+
+    const loginButtons = await screen.findAllByRole("button", { name: "Login" });
+    expect(loginButtons.length).toBeGreaterThan(0);
+  });
+
+  it("shows authentication error for 401 when accepting terms", async () => {
+    setAuthenticated(true);
+    vi.mocked(getLegalDocumentsStatus).mockResolvedValue({
+      terms: { needsAcceptance: true },
+    } as any);
+    vi.mocked(acceptTerms).mockRejectedValue({
+      response: { status: 401, data: { error: { code: "UNAUTHENTICATED" } } },
+    });
+
+    render(
+      <MemoryRouter>
+        <Terms />
+      </MemoryRouter>,
+    );
+
+    const checkbox = await screen.findByRole("checkbox");
+    fireEvent.click(checkbox);
+
+    const submitButton = screen.getByRole("button", { name: "Accept terms" });
+    fireEvent.click(submitButton);
+
+    expect(
+      await screen.findByText("auth.legalDocumentsReacceptance.notAuthenticated"),
+    ).toBeInTheDocument();
   });
 });

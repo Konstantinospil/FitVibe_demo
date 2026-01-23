@@ -74,6 +74,60 @@
       "title": "Leistungskennzahlen",
       "description": "Verfolge wichtige Benchmarks und aktualisiere sie, wenn du Fortschritte machst."
     },
+    "measurements": {
+      "title": "Profilmessungen",
+      "description": "Füge biometrische und Leistungswerte hinzu und verfolge deinen Fortschritt.",
+      "tabs": {
+        "biometrical": "Biometrisch",
+        "performance": "Leistung"
+      },
+      "search": {
+        "label": "Attribute suchen oder hinzufügen",
+        "placeholder": "Attribute suchen",
+        "searching": "Suche...",
+        "empty": "Keine passenden Attribute gefunden."
+      },
+      "tooltip": {
+        "unit": "Einheit",
+        "minMax": "Min/Max"
+      },
+      "actions": {
+        "add": "Hinzufügen",
+        "remove": "Entfernen"
+      },
+      "create": {
+        "title": "Attribut erstellen",
+        "cta": "Attribut erstellen",
+        "attributeName": "Attributname",
+        "attributeNamePlaceholder": "z. B. Schulterbreite",
+        "unitType": "Einheitstyp",
+        "granularity": "Granularität",
+        "granularityPlaceholder": "z. B. cm, kg, Wiederholungen",
+        "measurementSystem": "Maßsystem",
+        "minValue": "Mindestwert",
+        "maxValue": "Höchstwert",
+        "minValuePlaceholder": "Min",
+        "maxValuePlaceholder": "Max",
+        "ratioToggleLabel": "Als Verhältnis erstellen",
+        "ratioSourceA": "Quellwert A",
+        "ratioSourceB": "Quellwert B"
+      },
+      "unitTypes": {
+        "length": "Länge",
+        "weight": "Gewicht",
+        "volume": "Volumen",
+        "ratio": "Verhältnis",
+        "count": "Anzahl",
+        "time": "Zeit",
+        "power": "Leistung",
+        "percentage": "Prozent"
+      },
+      "system": {
+        "metric": "Metrisch",
+        "imperial": "Imperial"
+      },
+      "derived": "Abgeleitet"
+    },
     "sections": {
       "visibility": {
         "title": "Sichtbarkeit",

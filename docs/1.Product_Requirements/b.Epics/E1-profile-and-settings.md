@@ -9,8 +9,7 @@
 **Priority**: Medium  
 **Gate**: SILVER  
 **Estimated Total Effort**: 8-12 story points  
-**Created**: 2025-01-20  
-**Updated**: 2025-12-21
+**Created**: 2025-01-20
 
 ---
 
@@ -27,12 +26,14 @@ Allows users to personalize their FitVibe experience by managing their profile i
 - [E1-A1: Profile Management API](../c.Activities/E1-A1-profile-management-api.md)
 - [E1-A2: Avatar Upload System](../c.Activities/E1-A2-avatar-upload-system.md)
 - [E1-A3: Profile Testing Suite](../c.Activities/E1-A3-profile-testing-suite.md)
+- [Implementation Plans](../../6.Implementation/plans/E1-profile-and-settings-implementation-plans.md)
 
 ## Related User Stories
 
 - [US-1.1: Profile Editing](../d.User_stories/US-1.1-profile-editing.md)
 - [US-1.2: Avatar Upload](../d.User_stories/US-1.2-avatar-upload.md)
 - [US-1.3: Profile Testing](../d.User_stories/US-1.3-profile-testing.md)
+- [US-1.4: Profile Measurements](../d.User_stories/US-1.4-profile-measurements.md)
 
 ## Dependencies
 
@@ -65,7 +66,7 @@ Allows users to personalize their FitVibe experience by managing their profile i
 
 ---
 
-**Last Updated**: 2025-12-21  
-**Next Review**: 2026-01-21
+**Last Updated**: 2026-01-04  
+**Next Review**: 2026-02-04
 
 **Implementation Status**: Core functionality implemented including profile update API, avatar upload with image processing, and settings management. Testing and refinement in progress.

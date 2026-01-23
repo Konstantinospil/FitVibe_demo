@@ -9,6 +9,55 @@ import { useDashboardAnalytics } from "../../src/hooks/useDashboardAnalytics";
 import { cleanupQueryClient, createTestQueryClient } from "../helpers/testQueryClient";
 
 const mockNavigate = vi.fn();
+let translationMode: "normal" | "empty" = "normal";
+
+const translations: Record<string, string> = {
+  "insights.eyebrow": "Insights",
+  "insights.title": "Analytics & Insights",
+  "insights.description": "Track your progress",
+  "insights.dashboardTab": "Dashboard",
+  "insights.progressTab": "Progress",
+  "dashboard.last4Weeks": "Last 4 weeks",
+  "dashboard.last8Weeks": "Last 8 weeks",
+  "dashboard.weekly": "Weekly",
+  "dashboard.monthly": "Monthly",
+  "dashboard.selectRange": "Select range",
+  "progress.presetRange": "Preset",
+  "progress.customRange": "Custom",
+  "progress.period": "Period",
+  "progress.7days": "7 days",
+  "progress.30days": "30 days",
+  "progress.90days": "90 days",
+  "progress.groupBy": "Group by",
+  "progress.daily": "Daily",
+  "progress.export": "Export",
+  "progress.exportCsv": "Export CSV",
+  "progress.exportError": "Export failed",
+  "progress.exportFailed": "Export failed",
+  "progress.volumeTrend": "Volume Trend",
+  "progress.sessionsTrend": "Sessions Trend",
+  "progress.intensityTrend": "Intensity Trend",
+  "progress.exerciseBreakdown": "Exercise Breakdown",
+  "progress.loadError": "Failed to load",
+  "progress.failedToLoad": "Failed to load",
+  "progress.failedToLoadExercise": "Failed to load exercises",
+  "progress.retry": "Retry",
+  "progress.noData": "No data available",
+  "progress.noExercises": "No exercises",
+  "progress.noExerciseData": "No exercise data",
+  "progress.exercise": "Exercise",
+  "progress.sessions": "Sessions",
+  "progress.totalVolume": "Total Volume",
+  "progress.avgVolume": "Avg Volume",
+  "progress.maxWeight": "Max Weight",
+  "progress.trend": "Trend",
+  "progress.trendUp": "Up",
+  "progress.trendDown": "Down",
+  "progress.trendStable": "Stable",
+  "progress.chartError": "Chart error",
+  "progress.reload": "Reload",
+  "progress.reloadPage": "Reload page",
+};
 
 vi.mock("react-router-dom", async () => {
   const actual = await vi.importActual("react-router-dom");
@@ -26,6 +75,16 @@ vi.mock("../../src/services/api", () => ({
   getProgressTrends: vi.fn(),
   getExerciseBreakdown: vi.fn(),
   exportProgress: vi.fn(),
+}));
+
+vi.mock("../../src/components/ui/Chart", () => ({
+  Chart: ({ valueFormatter }: { valueFormatter?: (value: number) => string }) => {
+    if (valueFormatter) {
+      valueFormatter(1);
+      valueFormatter(2);
+    }
+    return <div data-testid="chart" />;
+  },
 }));
 
 vi.mock("../../src/utils/logger", () => ({
@@ -47,53 +106,9 @@ vi.mock("react-i18next", async () => {
     ...actual,
     useTranslation: () => ({
       t: (key: string) => {
-        const translations: Record<string, string> = {
-          "insights.eyebrow": "Insights",
-          "insights.title": "Analytics & Insights",
-          "insights.description": "Track your progress",
-          "insights.dashboardTab": "Dashboard",
-          "insights.progressTab": "Progress",
-          "dashboard.last4Weeks": "Last 4 weeks",
-          "dashboard.last8Weeks": "Last 8 weeks",
-          "dashboard.weekly": "Weekly",
-          "dashboard.monthly": "Monthly",
-          "dashboard.selectRange": "Select range",
-          "progress.presetRange": "Preset",
-          "progress.customRange": "Custom",
-          "progress.period": "Period",
-          "progress.7days": "7 days",
-          "progress.30days": "30 days",
-          "progress.90days": "90 days",
-          "progress.groupBy": "Group by",
-          "progress.daily": "Daily",
-          "progress.export": "Export",
-          "progress.exportCsv": "Export CSV",
-          "progress.exportError": "Export failed",
-          "progress.exportFailed": "Export failed",
-          "progress.volumeTrend": "Volume Trend",
-          "progress.sessionsTrend": "Sessions Trend",
-          "progress.intensityTrend": "Intensity Trend",
-          "progress.exerciseBreakdown": "Exercise Breakdown",
-          "progress.loadError": "Failed to load",
-          "progress.failedToLoad": "Failed to load",
-          "progress.failedToLoadExercise": "Failed to load exercises",
-          "progress.retry": "Retry",
-          "progress.noData": "No data available",
-          "progress.noExercises": "No exercises",
-          "progress.noExerciseData": "No exercise data",
-          "progress.exercise": "Exercise",
-          "progress.sessions": "Sessions",
-          "progress.totalVolume": "Total Volume",
-          "progress.avgVolume": "Avg Volume",
-          "progress.maxWeight": "Max Weight",
-          "progress.trend": "Trend",
-          "progress.trendUp": "Up",
-          "progress.trendDown": "Down",
-          "progress.trendStable": "Stable",
-          "progress.chartError": "Chart error",
-          "progress.reload": "Reload",
-          "progress.reloadPage": "Reload page",
-        };
+        if (translationMode === "empty") {
+          return "";
+        }
         return translations[key] || key;
       },
       i18n: {
@@ -116,6 +131,7 @@ describe("Insights page", () => {
   beforeEach(() => {
     queryClient = createTestQueryClient();
     vi.clearAllMocks();
+    translationMode = "normal";
     vi.mocked(api.getProgressTrends).mockResolvedValue([]);
     vi.mocked(api.getExerciseBreakdown).mockResolvedValue({ exercises: [], period: 30 });
   });
@@ -586,6 +602,93 @@ describe("Insights page", () => {
     await waitFor(
       () => {
         expect(api.exportProgress).toHaveBeenCalled();
+      },
+      { timeout: 5000 },
+    );
+  });
+
+  it("renders progress tab no-data branches when translations are empty", async () => {
+    vi.mocked(useDashboardAnalytics).mockReturnValue({
+      data: undefined,
+      isLoading: false,
+      isFetching: false,
+      error: null,
+      refetch: vi.fn(),
+    } as unknown as ReturnType<typeof useDashboardAnalytics>);
+
+    vi.mocked(api.getProgressTrends).mockResolvedValue([]);
+    vi.mocked(api.getExerciseBreakdown).mockResolvedValue({ exercises: [], period: 30 });
+
+    const renderResult = renderInsights();
+    const progressTab = getProgressTab();
+    fireEvent.click(progressTab);
+
+    translationMode = "empty";
+    renderResult.rerender(
+      <QueryClientProvider client={queryClient}>
+        <Insights />
+      </QueryClientProvider>,
+    );
+
+    await waitFor(
+      () => {
+        expect(api.getProgressTrends).toHaveBeenCalled();
+        expect(api.getExerciseBreakdown).toHaveBeenCalled();
+      },
+      { timeout: 5000 },
+    );
+
+    expect(screen.queryAllByTestId("chart")).toHaveLength(0);
+  });
+
+  it("renders progress charts with empty translations", async () => {
+    vi.mocked(useDashboardAnalytics).mockReturnValue({
+      data: undefined,
+      isLoading: false,
+      isFetching: false,
+      error: null,
+      refetch: vi.fn(),
+    } as unknown as ReturnType<typeof useDashboardAnalytics>);
+
+    vi.mocked(api.getProgressTrends).mockResolvedValue([
+      {
+        label: "Week 1",
+        date: "2024-01-01",
+        volume: 50000,
+        sessions: 2,
+        avgIntensity: 7.5,
+      },
+    ]);
+    vi.mocked(api.getExerciseBreakdown).mockResolvedValue({
+      exercises: [
+        {
+          exerciseId: "ex-1",
+          exerciseName: "Bench Press",
+          totalSessions: 2,
+          totalVolume: 20000,
+          avgVolume: 10000,
+          maxWeight: 100,
+          trend: "up" as const,
+        },
+      ],
+      period: 30,
+    });
+
+    const renderResult = renderInsights();
+    const progressTab = getProgressTab();
+    fireEvent.click(progressTab);
+
+    translationMode = "empty";
+    renderResult.rerender(
+      <QueryClientProvider client={queryClient}>
+        <Insights />
+      </QueryClientProvider>,
+    );
+
+    await waitFor(
+      () => {
+        expect(screen.getAllByTestId("chart")).toHaveLength(3);
+        expect(screen.getByText("Bench Press")).toBeInTheDocument();
       },
       { timeout: 5000 },
     );

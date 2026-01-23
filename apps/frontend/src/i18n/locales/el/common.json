@@ -74,6 +74,60 @@
       "title": "Δείκτες απόδοσης",
       "description": "Παρακολούθησε τα ορόσημα που μετράνε για σένα και ενημέρωσέ τα καθώς προοδεύεις."
     },
+    "measurements": {
+      "title": "Μετρήσεις προφίλ",
+      "description": "Πρόσθεσε βιομετρικές και επιδόσεις και παρακολούθησε την πρόοδό σου.",
+      "tabs": {
+        "biometrical": "Βιομετρικά",
+        "performance": "Επίδοση"
+      },
+      "search": {
+        "label": "Αναζήτηση ή προσθήκη χαρακτηριστικών",
+        "placeholder": "Αναζήτηση χαρακτηριστικών",
+        "searching": "Αναζήτηση...",
+        "empty": "Δεν βρέθηκαν αντίστοιχα χαρακτηριστικά."
+      },
+      "tooltip": {
+        "unit": "Μονάδα",
+        "minMax": "Ελάχιστο/Μέγιστο"
+      },
+      "actions": {
+        "add": "Προσθήκη",
+        "remove": "Αφαίρεση"
+      },
+      "create": {
+        "title": "Δημιουργία χαρακτηριστικού",
+        "cta": "Δημιουργία χαρακτηριστικού",
+        "attributeName": "Όνομα χαρακτηριστικού",
+        "attributeNamePlaceholder": "π.χ. πλάτος ώμων",
+        "unitType": "Τύπος μονάδας",
+        "granularity": "Βαθμίδα",
+        "granularityPlaceholder": "π.χ. cm, kg, επαναλήψεις",
+        "measurementSystem": "Σύστημα μέτρησης",
+        "minValue": "Ελάχιστη τιμή",
+        "maxValue": "Μέγιστη τιμή",
+        "minValuePlaceholder": "Ελάχ.",
+        "maxValuePlaceholder": "Μέγ.",
+        "ratioToggleLabel": "Δημιουργία ως λόγος",
+        "ratioSourceA": "Πηγή λόγου A",
+        "ratioSourceB": "Πηγή λόγου B"
+      },
+      "unitTypes": {
+        "length": "Μήκος",
+        "weight": "Βάρος",
+        "volume": "Όγκος",
+        "ratio": "Λόγος",
+        "count": "Πλήθος",
+        "time": "Χρόνος",
+        "power": "Ισχύς",
+        "percentage": "Ποσοστό"
+      },
+      "system": {
+        "metric": "Μετρικό",
+        "imperial": "Ιμπεριαλικό"
+      },
+      "derived": "Παράγωγο"
+    },
     "sections": {
       "visibility": {
         "title": "Ορατότητα",

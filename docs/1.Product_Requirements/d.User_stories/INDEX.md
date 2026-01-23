@@ -1,6 +1,6 @@
 # User Stories Index
 
-**Last Updated**: 2025-01-21
+**Last Updated**: 2026-01-04
 
 This index provides a comprehensive list of all user stories in the FitVibe project.
 
@@ -10,11 +10,12 @@ This index provides a comprehensive list of all user stories in the FitVibe proj
 
 ### Epic 1: Profile & Settings
 
-| ID     | Title           | Epic                                        | Status   | Story Points | File                                                     |
-| ------ | --------------- | ------------------------------------------- | -------- | ------------ | -------------------------------------------------------- |
-| US-1.1 | Profile Editing | [E1](../b.Epics/E1-profile-and-settings.md) | Proposed | 5            | [US-1.1-profile-editing.md](./US-1.1-profile-editing.md) |
-| US-1.2 | Avatar Upload   | [E1](../b.Epics/E1-profile-and-settings.md) | Proposed | 3            | [US-1.2-avatar-upload.md](./US-1.2-avatar-upload.md)     |
-| US-1.3 | Profile Testing | [E1](../b.Epics/E1-profile-and-settings.md) | Proposed | 2            | [US-1.3-profile-testing.md](./US-1.3-profile-testing.md) |
+| ID     | Title                | Epic                                        | Status   | Story Points | File                                                               |
+| ------ | -------------------- | ------------------------------------------- | -------- | ------------ | ------------------------------------------------------------------ |
+| US-1.1 | Profile Editing      | [E1](../b.Epics/E1-profile-and-settings.md) | Proposed | 5            | [US-1.1-profile-editing.md](./US-1.1-profile-editing.md)           |
+| US-1.2 | Avatar Upload        | [E1](../b.Epics/E1-profile-and-settings.md) | Proposed | 3            | [US-1.2-avatar-upload.md](./US-1.2-avatar-upload.md)               |
+| US-1.3 | Profile Testing      | [E1](../b.Epics/E1-profile-and-settings.md) | Proposed | 2            | [US-1.3-profile-testing.md](./US-1.3-profile-testing.md)           |
+| US-1.4 | Profile Measurements | [E1](../b.Epics/E1-profile-and-settings.md) | Proposed | 8            | [US-1.4-profile-measurements.md](./US-1.4-profile-measurements.md) |
 
 ### Epic 2: Exercise Library
 
@@ -124,7 +125,7 @@ This index provides a comprehensive list of all user stories in the FitVibe proj
 
 ### By Epic
 
-- **Epic 1**: 3 stories (10 SP)
+- **Epic 1**: 4 stories (18 SP)
 - **Epic 2**: 6 stories (21 SP)
 - **Epic 3**: 8 stories (31 SP)
 - **Epic 4**: 5 stories (20 SP)
@@ -137,8 +138,8 @@ This index provides a comprehensive list of all user stories in the FitVibe proj
 
 ### By Status
 
-- **Proposed**: 60 stories
-- **Total Story Points**: 214 SP
+- **Proposed**: 61 stories
+- **Total Story Points**: 222 SP
 
 ---
 

@@ -61,4 +61,84 @@ describe("ResetPassword", () => {
 
     await screen.findByText("resetPassword.successText");
   });
+
+  it("shows error when token is missing", async () => {
+    render(
+      <MemoryRouter initialEntries={["/reset-password"]}>
+        <ResetPassword />
+      </MemoryRouter>,
+    );
+
+    fireEvent.change(screen.getByPlaceholderText("resetPassword.newPasswordPlaceholder"), {
+      target: { value: "Password123!" },
+    });
+    fireEvent.change(screen.getByPlaceholderText("resetPassword.confirmPasswordPlaceholder"), {
+      target: { value: "Password123!" },
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "resetPassword.resetButton" }));
+
+    expect(await screen.findByText("resetPassword.invalidToken")).toBeInTheDocument();
+  });
+
+  it("shows API error message when reset fails", async () => {
+    resetPassword.mockRejectedValueOnce({
+      response: { data: { error: { message: "Token expired" } } },
+    });
+
+    render(
+      <MemoryRouter initialEntries={["/reset-password?token=token123"]}>
+        <ResetPassword />
+      </MemoryRouter>,
+    );
+
+    fireEvent.change(screen.getByPlaceholderText("resetPassword.newPasswordPlaceholder"), {
+      target: { value: "Password123!" },
+    });
+    fireEvent.change(screen.getByPlaceholderText("resetPassword.confirmPasswordPlaceholder"), {
+      target: { value: "Password123!" },
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "resetPassword.resetButton" }));
+
+    expect(await screen.findByText("Token expired")).toBeInTheDocument();
+  });
+
+  it("shows generic error when reset fails without response", async () => {
+    resetPassword.mockRejectedValueOnce(new Error("Network error"));
+
+    render(
+      <MemoryRouter initialEntries={["/reset-password?token=token123"]}>
+        <ResetPassword />
+      </MemoryRouter>,
+    );
+
+    fireEvent.change(screen.getByPlaceholderText("resetPassword.newPasswordPlaceholder"), {
+      target: { value: "Password123!" },
+    });
+    fireEvent.change(screen.getByPlaceholderText("resetPassword.confirmPasswordPlaceholder"), {
+      target: { value: "Password123!" },
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "resetPassword.resetButton" }));
+
+    expect(await screen.findByText("resetPassword.errorReset")).toBeInTheDocument();
+  });
+
+  it("toggles password visibility", async () => {
+    render(
+      <MemoryRouter initialEntries={["/reset-password?token=token123"]}>
+        <ResetPassword />
+      </MemoryRouter>,
+    );
+
+    const passwordInput = screen.getByPlaceholderText("resetPassword.newPasswordPlaceholder");
+    const toggleButton = screen.getAllByRole("button", { name: "auth.showPassword" })[0];
+
+    fireEvent.mouseDown(toggleButton);
+    expect(passwordInput).toHaveAttribute("type", "text");
+
+    fireEvent.mouseUp(toggleButton);
+    expect(passwordInput).toHaveAttribute("type", "password");
+  });
 });

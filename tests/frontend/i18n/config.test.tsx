@@ -31,12 +31,29 @@ const setupConfig = async (options?: {
   }
 
   if (options?.requestIdleCallback) {
-    window.requestIdleCallback = (cb: IdleRequestCallback) => {
-      cb({ didTimeout: false, timeRemaining: () => 0 });
-      return 0;
-    };
+    Object.defineProperty(window, "requestIdleCallback", {
+      value: (cb: IdleRequestCallback) => {
+        cb({ didTimeout: false, timeRemaining: () => 0 });
+        return 0;
+      },
+      configurable: true,
+      writable: true,
+    });
   } else {
-    window.requestIdleCallback = undefined;
+    const descriptor = Object.getOwnPropertyDescriptor(window, "requestIdleCallback");
+    if (descriptor?.configurable) {
+      delete (window as { requestIdleCallback?: unknown }).requestIdleCallback;
+    } else {
+      try {
+        Object.defineProperty(window, "requestIdleCallback", {
+          value: undefined,
+          configurable: true,
+          writable: true,
+        });
+      } catch {
+        (window as { requestIdleCallback?: unknown }).requestIdleCallback = undefined;
+      }
+    }
   }
 
   const i18nMock = {
@@ -157,17 +174,14 @@ describe("i18n config", () => {
   });
 
   it("falls back to timeout-based loading without requestIdleCallback", async () => {
-    vi.useFakeTimers();
     const { config, i18nMock } = await setupConfig({
       storedLanguage: "fr",
       requestIdleCallback: false,
     });
 
-    await vi.runAllTimersAsync();
     await config.translationsLoadingPromise;
 
     expect(i18nMock.changeLanguage).toHaveBeenCalledWith("fr");
-    vi.useRealTimers();
   });
 
   it("loads full translations via helper export", async () => {

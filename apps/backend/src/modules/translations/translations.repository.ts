@@ -362,6 +362,18 @@ export async function deleteTranslation(
   return updated > 0;
 }
 
+export async function updateMeasurementAttributeLabel(
+  attributeKey: string,
+  label: string,
+  trx?: Knex.Transaction,
+): Promise<void> {
+  const dbInstance = withDb(trx);
+  await Promise.all([
+    dbInstance("bio_attributes").where({ key: attributeKey }).update({ label }),
+    dbInstance("perf_attributes").where({ key: attributeKey }).update({ label }),
+  ]);
+}
+
 /**
  * List all translations with pagination
  */

@@ -670,6 +670,147 @@ export async function addUserAttributeValue(
   return res.data;
 }
 
+export type MeasurementUnitType =
+  | "length"
+  | "weight"
+  | "volume"
+  | "ratio"
+  | "count"
+  | "time"
+  | "power"
+  | "percentage";
+
+export type MeasurementSystem = "metric" | "imperial";
+
+export type MeasurementValue = {
+  attributeId: string;
+  valueNumber: number;
+  measuredAt: string;
+};
+
+export type MeasurementAttribute = {
+  id: string;
+  key: string;
+  normalizedKey: string;
+  label: string;
+  description: string | null;
+  unitType: MeasurementUnitType;
+  granularity: string;
+  measurementSystem: MeasurementSystem;
+  minValueMetric: number | null;
+  maxValueMetric: number | null;
+  minValueImperial: number | null;
+  maxValueImperial: number | null;
+  isDefault: boolean;
+  derivedFromAId: string | null;
+  derivedFromBId: string | null;
+  derivedOperator: "ratio" | null;
+  createdAt: string;
+  updatedAt: string;
+  isVisible: boolean;
+  latestValue: MeasurementValue | null;
+};
+
+export type MeasurementsResponse = {
+  attributes: MeasurementAttribute[];
+};
+
+export type MeasurementAttributeCreateRequest = {
+  key?: string;
+  label: string;
+  description?: string | null;
+  unitType: MeasurementUnitType;
+  granularity: string;
+  measurementSystem: MeasurementSystem;
+  minValue?: number | null;
+  maxValue?: number | null;
+  derivedFromAId?: string | null;
+  derivedFromBId?: string | null;
+  derivedOperator?: "ratio";
+};
+
+export async function getBioAttributes(params?: {
+  q?: string;
+  includeHidden?: boolean;
+  lang?: string;
+}): Promise<MeasurementsResponse> {
+  const res = await apiClient.get<MeasurementsResponse>(
+    "/api/v1/measurements/biometrics/attributes",
+    {
+      params,
+    },
+  );
+  return res.data;
+}
+
+export async function getPerfAttributes(params?: {
+  q?: string;
+  includeHidden?: boolean;
+  lang?: string;
+}): Promise<MeasurementsResponse> {
+  const res = await apiClient.get<MeasurementsResponse>(
+    "/api/v1/measurements/performance/attributes",
+    {
+      params,
+    },
+  );
+  return res.data;
+}
+
+export async function createBioAttribute(
+  payload: MeasurementAttributeCreateRequest,
+): Promise<{ attribute: MeasurementAttribute }> {
+  const res = await apiClient.post<{ attribute: MeasurementAttribute }>(
+    "/api/v1/measurements/biometrics/attributes",
+    payload,
+  );
+  return res.data;
+}
+
+export async function createPerfAttribute(
+  payload: MeasurementAttributeCreateRequest,
+): Promise<{ attribute: MeasurementAttribute }> {
+  const res = await apiClient.post<{ attribute: MeasurementAttribute }>(
+    "/api/v1/measurements/performance/attributes",
+    payload,
+  );
+  return res.data;
+}
+
+export async function addBioValue(
+  attributeId: string,
+  payload: { valueNumber: number; measuredAt?: string },
+): Promise<{ latestValue: MeasurementValue }> {
+  const res = await apiClient.post<{ latestValue: MeasurementValue }>(
+    `/api/v1/measurements/biometrics/attributes/${attributeId}/values`,
+    payload,
+  );
+  return res.data;
+}
+
+export async function addPerfValue(
+  attributeId: string,
+  payload: { valueNumber: number; measuredAt?: string },
+): Promise<{ latestValue: MeasurementValue }> {
+  const res = await apiClient.post<{ latestValue: MeasurementValue }>(
+    `/api/v1/measurements/performance/attributes/${attributeId}/values`,
+    payload,
+  );
+  return res.data;
+}
+
+export async function updateBioVisibility(attributeId: string, isVisible: boolean): Promise<void> {
+  await apiClient.put(`/api/v1/measurements/biometrics/attributes/${attributeId}/visibility`, {
+    isVisible,
+  });
+}
+
+export async function updatePerfVisibility(attributeId: string, isVisible: boolean): Promise<void> {
+  await apiClient.put(`/api/v1/measurements/performance/attributes/${attributeId}/visibility`, {
+    isVisible,
+  });
+}
+
 // Session Management API
 export interface SessionInfo {
   id: string;

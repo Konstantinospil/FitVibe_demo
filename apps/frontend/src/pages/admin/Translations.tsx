@@ -445,7 +445,7 @@ const Translations: React.FC = () => {
           )}
 
           {/* Translations List */}
-          {loading ? (
+          {loading && translations.length === 0 ? (
             <div style={{ textAlign: "center", padding: "2rem" }}>Loading translations...</div>
           ) : translations.length === 0 ? (
             <div

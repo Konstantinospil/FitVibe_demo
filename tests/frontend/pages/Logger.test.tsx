@@ -39,6 +39,20 @@ void testI18n.use(initReactI18next).init({
         "logger.eyebrow": "Workout",
         "logger.title": "Logger",
         "logger.description": "Log your workout",
+        "logger.sessionTime": "Session time",
+        "logger.restTimer": "Rest Timer",
+        "logger.stopRest": "Stop Rest",
+        "logger.startRest": "Start Rest",
+        "logger.completeSession": "Complete Session",
+        "logger.completing": "Completing...",
+        "logger.setsCompleted": "sets completed",
+        "logger.markComplete": "Mark complete",
+        "logger.markIncomplete": "Mark incomplete",
+        "logger.repsPlaceholder": "Reps",
+        "logger.weightPlaceholder": "Weight",
+        "logger.rpePlaceholder": "RPE",
+        "logger.collapse": "Collapse",
+        "logger.expand": "Expand",
         "common.loading": "Loading...",
       },
     },
@@ -79,6 +93,35 @@ const mockSessionData = {
         rpe: 7,
       },
       sets: [],
+    },
+  ],
+};
+
+const mockSessionWithSets = {
+  ...mockSessionData,
+  status: "in_progress" as const,
+  started_at: "2024-01-15T10:05:00Z",
+  exercises: [
+    {
+      id: "ex-1",
+      exercise_id: "bench-press",
+      order_index: 0,
+      notes: "Working sets",
+      planned: {
+        sets: 2,
+        reps: 8,
+        load: 90,
+        rpe: 8,
+      },
+      sets: [
+        {
+          order_index: 0,
+          reps: 8,
+          weight_kg: 95,
+          rpe: 8,
+          notes: "Felt good",
+        },
+      ],
     },
   ],
 };
@@ -225,6 +268,103 @@ describe("Logger", () => {
       },
       { timeout: 5000 },
     );
+  });
+
+  it("uses existing set data when provided", async () => {
+    vi.mocked(api.getSession).mockResolvedValue(mockSessionWithSets as any);
+    vi.mocked(api.updateSession).mockResolvedValue({} as any);
+
+    renderLogger();
+
+    await waitFor(
+      () => {
+        expect(screen.getByText("Test Workout")).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
+
+    const repsInput = screen.getAllByPlaceholderText("Reps")[0];
+    const weightInput = screen.getByPlaceholderText("Weight");
+    const rpeInput = screen.getByPlaceholderText("RPE");
+
+    expect(repsInput).toHaveValue(8);
+    expect(weightInput).toHaveValue(95);
+    expect(rpeInput).toHaveValue(8);
+    expect(api.updateSession).not.toHaveBeenCalledWith(
+      "test-session-id",
+      expect.objectContaining({ status: "in_progress" }),
+    );
+  });
+
+  it("toggles exercise collapse state", async () => {
+    vi.mocked(api.getSession).mockResolvedValue(mockSessionData as any);
+    vi.mocked(api.updateSession).mockResolvedValue({} as any);
+
+    renderLogger();
+
+    await waitFor(
+      () => {
+        expect(screen.getByText("Test Workout")).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
+
+    expect(screen.getByText("Reps")).toBeInTheDocument();
+
+    const collapseButton = screen.getByRole("button", { name: "Collapse" });
+    fireEvent.click(collapseButton);
+
+    expect(screen.queryByText("Reps")).not.toBeInTheDocument();
+
+    const expandButton = screen.getByRole("button", { name: "Expand" });
+    fireEvent.click(expandButton);
+
+    expect(screen.getByText("Reps")).toBeInTheDocument();
+  });
+
+  it("starts and stops the rest timer from controls", async () => {
+    vi.mocked(api.getSession).mockResolvedValue(mockSessionData as any);
+    vi.mocked(api.updateSession).mockResolvedValue({} as any);
+
+    renderLogger();
+
+    await waitFor(
+      () => {
+        expect(screen.getByText("Test Workout")).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
+
+    const startButton = screen.getByRole("button", { name: /Start Rest/i });
+    fireEvent.click(startButton);
+
+    expect(screen.getByText("Rest Timer")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Stop Rest/i })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: /Stop Rest/i }));
+
+    expect(screen.queryByText("Rest Timer")).not.toBeInTheDocument();
+  });
+
+  it("toggles set completion and disables inputs", async () => {
+    vi.mocked(api.getSession).mockResolvedValue(mockSessionData as any);
+    vi.mocked(api.updateSession).mockResolvedValue({} as any);
+
+    renderLogger();
+
+    await waitFor(
+      () => {
+        expect(screen.getByText("Test Workout")).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
+
+    const repsInput = screen.getAllByPlaceholderText("Reps")[0];
+    const completeButton = screen.getAllByLabelText(/Mark complete/i)[0];
+
+    fireEvent.click(completeButton);
+    expect(repsInput).toBeDisabled();
+    expect(screen.getAllByLabelText(/Mark incomplete/i)[0]).toBeInTheDocument();
   });
 
   it("completes session when confirmed in dialog", async () => {

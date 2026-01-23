@@ -7,8 +7,10 @@ const TranslationsPage: React.FC = () => {
   const [keyPath, setKeyPath] = useState("");
   const [language, setLanguage] = useState<string>("");
   const [namespace, setNamespace] = useState<string>("");
-  const [activeOnly, setActiveOnly] = useState(false);
+  const [showIncompleteOnly, setShowIncompleteOnly] = useState(false);
   const [page, setPage] = useState(0);
+  const [expandedKeys, setExpandedKeys] = useState<Record<string, boolean>>({});
+  const [showArchivedByKey, setShowArchivedByKey] = useState<Record<string, boolean>>({});
   const [editingKey, setEditingKey] = useState<{ namespace: string; key_path: string } | null>(
     null,
   );
@@ -30,17 +32,36 @@ const TranslationsPage: React.FC = () => {
   const limit = 50;
 
   const { data, isLoading } = useQuery({
-    queryKey: ["translations", search, keyPath, language, namespace, activeOnly, page],
-    queryFn: () =>
-      translationsApi.list({
+    queryKey: ["translations", search, keyPath, namespace],
+    queryFn: async () => {
+      const pageLimit = 500;
+      const baseParams = {
         search: search || undefined,
         keyPath: keyPath || undefined,
-        language: language || undefined,
         namespace: namespace || undefined,
-        activeOnly: activeOnly ? undefined : false, // false shows all, undefined shows only active
-        limit,
-        offset: page * limit,
-      }),
+        activeOnly: undefined, // only active translations in the list
+        limit: pageLimit,
+      };
+      const firstPage = await translationsApi.list({ ...baseParams, offset: 0 });
+      const allTranslations = [...firstPage.data];
+      let offset = firstPage.pagination.limit;
+      const total = firstPage.pagination.total;
+
+      while (offset < total) {
+        const nextPage = await translationsApi.list({ ...baseParams, offset });
+        allTranslations.push(...nextPage.data);
+        offset += nextPage.pagination.limit;
+      }
+
+      return {
+        data: allTranslations,
+        pagination: {
+          total,
+          limit: pageLimit,
+          offset: 0,
+        },
+      };
+    },
   });
 
   const { data: translationMetadata } = useQuery({
@@ -58,7 +79,6 @@ const TranslationsPage: React.FC = () => {
     () => translationMetadata?.data.namespaces ?? [],
     [translationMetadata],
   );
-  const primaryLanguage = languages[0];
 
   useEffect(() => {
     if (languages.length > 0 && !newTranslation.language) {
@@ -98,6 +118,110 @@ const TranslationsPage: React.FC = () => {
     const label = languageDisplayNames?.of(code);
     return label || code;
   };
+
+  const groupedTranslations = useMemo(() => {
+    const translations = data?.data ?? [];
+    const grouped = new Map<
+      string,
+      { namespace: string; key_path: string; translations: Translation[] }
+    >();
+
+    translations.forEach((trans) => {
+      const key = `${trans.namespace}::${trans.key_path}`;
+      const existing = grouped.get(key);
+      if (existing) {
+        existing.translations.push(trans);
+      } else {
+        grouped.set(key, {
+          namespace: trans.namespace,
+          key_path: trans.key_path,
+          translations: [trans],
+        });
+      }
+    });
+
+    const groups = Array.from(grouped.values()).map((group) => {
+      const activeByLanguage = new Map<string, Translation>();
+      const deletedByLanguage = new Map<string, Translation>();
+
+      group.translations.forEach((trans) => {
+        if (trans.deleted_at) {
+          if (!deletedByLanguage.has(trans.language)) {
+            deletedByLanguage.set(trans.language, trans);
+          }
+        } else if (!activeByLanguage.has(trans.language)) {
+          activeByLanguage.set(trans.language, trans);
+        }
+      });
+
+      const displayLanguage =
+        (activeByLanguage.has("en") && "en") ||
+        languages.find((lang) => activeByLanguage.has(lang)) ||
+        Array.from(activeByLanguage.keys())[0] ||
+        Array.from(deletedByLanguage.keys())[0];
+
+      let displayTranslation = displayLanguage ? activeByLanguage.get(displayLanguage) : undefined;
+
+      if (!displayTranslation) {
+        const firstDeletedLanguage = languages.find((lang) => deletedByLanguage.has(lang));
+        const deletedFallback =
+          (displayLanguage && deletedByLanguage.get(displayLanguage)) ||
+          deletedByLanguage.get("en") ||
+          (firstDeletedLanguage ? deletedByLanguage.get(firstDeletedLanguage) : undefined) ||
+          group.translations[0];
+        displayTranslation = deletedFallback;
+      }
+
+      const isArchived = activeByLanguage.size === 0;
+      const isIncomplete =
+        languages.length > 0 && languages.some((lang) => !activeByLanguage.has(lang));
+
+      return {
+        namespace: group.namespace,
+        key_path: group.key_path,
+        translations: group.translations,
+        activeByLanguage,
+        deletedByLanguage,
+        displayLanguage,
+        displayTranslation,
+        isArchived,
+        isIncomplete,
+      };
+    });
+
+    return groups;
+  }, [data, languages]);
+
+  const filteredTranslations = useMemo(() => {
+    const filtered = groupedTranslations.filter((group) => {
+      if (showIncompleteOnly && !group.isIncomplete) {
+        return false;
+      }
+      if (language) {
+        if (!group.activeByLanguage.has(language)) {
+          return false;
+        }
+      }
+      return true;
+    });
+
+    return filtered.sort((a, b) => {
+      const aKey = `${a.namespace}.${a.key_path}`;
+      const bKey = `${b.namespace}.${b.key_path}`;
+      return aKey.localeCompare(bKey);
+    });
+  }, [groupedTranslations, language, showIncompleteOnly]);
+
+  const pagedTranslations = useMemo(() => {
+    const start = page * limit;
+    return filteredTranslations.slice(start, start + limit);
+  }, [filteredTranslations, page, limit]);
+
+  useEffect(() => {
+    if (page > 0 && page * limit >= filteredTranslations.length) {
+      setPage(0);
+    }
+  }, [filteredTranslations, page, limit]);
 
   // Fetch all language versions when editing a key (including deleted ones)
   const { data: editingTranslations } = useQuery({
@@ -180,10 +304,8 @@ const TranslationsPage: React.FC = () => {
     },
   });
 
-  const handleEdit = (trans: Translation) => {
-    setEditingKey({ namespace: trans.namespace, key_path: trans.key_path });
-    // Initialize with current translation value
-    setEditValues({ [trans.language]: trans.value });
+  const handleEdit = (target: { namespace: string; key_path: string }) => {
+    setEditingKey({ namespace: target.namespace, key_path: target.key_path });
   };
 
   // Update edit values when editing translations are loaded
@@ -192,10 +314,12 @@ const TranslationsPage: React.FC = () => {
       const values: Record<string, string> = {};
       editingTranslations.data.forEach((t) => {
         if (t.namespace === editingKey.namespace && t.key_path === editingKey.key_path) {
-          values[t.language] = t.value;
+          if (!t.deleted_at) {
+            values[t.language] = t.value;
+          }
         }
       });
-      setEditValues((prev) => ({ ...prev, ...values }));
+      setEditValues(values);
     }
   }, [editingKey, editingTranslations]);
 
@@ -214,6 +338,8 @@ const TranslationsPage: React.FC = () => {
   const handleCancelEdit = () => {
     setEditingKey(null);
     setEditValues({});
+    setExpandedKeys({});
+    setShowArchivedByKey({});
   };
 
   return (
@@ -358,14 +484,14 @@ const TranslationsPage: React.FC = () => {
         >
           <input
             type="checkbox"
-            checked={activeOnly}
+            checked={showIncompleteOnly}
             onChange={(e) => {
-              setActiveOnly(e.target.checked);
+              setShowIncompleteOnly(e.target.checked);
               setPage(0);
             }}
             style={{ cursor: "pointer" }}
           />
-          Show only active
+          Incomplete only
         </label>
         <button
           onClick={() => setShowCreate(true)}
@@ -559,7 +685,6 @@ const TranslationsPage: React.FC = () => {
         </div>
       )}
 
-      {/* Edit Panel - Show all language versions when editing */}
       {editingKey && editingTranslations && (
         <div
           style={{
@@ -574,43 +699,35 @@ const TranslationsPage: React.FC = () => {
             Editing: {editingKey.namespace}.{editingKey.key_path}
           </h3>
           <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-            {languages.map((lang) => {
-              //const existing = editingTranslations.data.find(
-              //  (t) =>
-              //    t.namespace === editingKey.namespace &&
-              //    t.key_path === editingKey.key_path &&
-              //    t.language === lang,
-              //);
-              return (
-                <div key={lang}>
-                  <label
-                    style={{
-                      display: "block",
-                      marginBottom: "0.5rem",
-                      fontSize: "0.875rem",
-                      color: "var(--color-text-primary)",
-                      fontWeight: 500,
-                    }}
-                  >
-                    {getLanguageLabel(lang)}
-                  </label>
-                  <textarea
-                    value={editValues[lang] || ""}
-                    onChange={(e) => setEditValues({ ...editValues, [lang]: e.target.value })}
-                    placeholder={`Translation for ${getLanguageLabel(lang)}...`}
-                    rows={2}
-                    style={{
-                      width: "100%",
-                      padding: "0.75rem",
-                      background: "var(--color-input-bg)",
-                      border: "1px solid var(--color-input-border)",
-                      borderRadius: "var(--radius-xs)",
-                      color: "var(--color-text-primary)",
-                    }}
-                  />
-                </div>
-              );
-            })}
+            {languages.map((lang) => (
+              <div key={lang}>
+                <label
+                  style={{
+                    display: "block",
+                    marginBottom: "0.5rem",
+                    fontSize: "0.875rem",
+                    color: "var(--color-text-primary)",
+                    fontWeight: 500,
+                  }}
+                >
+                  {getLanguageLabel(lang)}
+                </label>
+                <textarea
+                  value={editValues[lang] || ""}
+                  onChange={(e) => setEditValues({ ...editValues, [lang]: e.target.value })}
+                  placeholder={`Translation for ${getLanguageLabel(lang)}...`}
+                  rows={2}
+                  style={{
+                    width: "100%",
+                    padding: "0.75rem",
+                    background: "var(--color-input-bg)",
+                    border: "1px solid var(--color-input-border)",
+                    borderRadius: "var(--radius-xs)",
+                    color: "var(--color-text-primary)",
+                  }}
+                />
+              </div>
+            ))}
             <div style={{ display: "flex", gap: "1rem", marginTop: "0.5rem" }}>
               <button
                 onClick={handleSave}
@@ -666,10 +783,10 @@ const TranslationsPage: React.FC = () => {
                       textAlign: "left",
                       color: "var(--color-text-primary)",
                       borderBottom: "1px solid var(--color-border)",
-                      width: "100px",
+                      width: "80px",
                     }}
                   >
-                    Language
+                    Status
                   </th>
                   <th
                     style={{
@@ -734,18 +851,6 @@ const TranslationsPage: React.FC = () => {
                       textAlign: "left",
                       color: "var(--color-text-primary)",
                       borderBottom: "1px solid var(--color-border)",
-                      whiteSpace: "nowrap",
-                      width: "160px",
-                    }}
-                  >
-                    Deleted At
-                  </th>
-                  <th
-                    style={{
-                      padding: "0.75rem",
-                      textAlign: "left",
-                      color: "var(--color-text-primary)",
-                      borderBottom: "1px solid var(--color-border)",
                       position: "sticky",
                       right: 0,
                       background: "var(--color-surface-muted)",
@@ -759,204 +864,317 @@ const TranslationsPage: React.FC = () => {
                 </tr>
               </thead>
               <tbody>
-                {data?.data.map((trans) => {
+                {pagedTranslations.map((group) => {
+                  const rowKey = `${group.namespace}::${group.key_path}`;
                   const isEditingThisKey =
-                    editingKey?.namespace === trans.namespace &&
-                    editingKey?.key_path === trans.key_path;
-                  const isDeleted = !!trans.deleted_at;
+                    editingKey?.namespace === group.namespace &&
+                    editingKey?.key_path === group.key_path;
+                  const isDeleted = group.isArchived;
+                  const isExpanded = !!expandedKeys[rowKey];
+                  const displayValue = group.displayTranslation?.value || "-";
+                  const displayLanguage = group.displayLanguage;
+                  const showArchivedForKey = !!showArchivedByKey[rowKey];
+                  const handleRowClick = () => {
+                    if (isExpanded) {
+                      setExpandedKeys({});
+                      setEditingKey(null);
+                      setShowArchivedByKey({});
+                      return;
+                    }
+                    handleEdit({ namespace: group.namespace, key_path: group.key_path });
+                    setExpandedKeys({ [rowKey]: true });
+                    setShowArchivedByKey({});
+                  };
                   return (
-                    <tr
-                      key={trans.id}
-                      style={{
-                        borderBottom: "1px solid var(--color-border)",
-                        background: isEditingThisKey
-                          ? "var(--color-accent-muted)"
-                          : isDeleted
-                            ? "var(--color-danger-bg)"
-                            : "var(--color-surface)",
-                        opacity: isDeleted ? 0.7 : 1,
-                      }}
-                    >
-                      <td style={{ padding: "0.75rem", color: "var(--color-text-primary)" }}>
-                        {getLanguageLabel(trans.language)}
-                      </td>
-                      <td style={{ padding: "0.75rem", color: "var(--color-text-primary)" }}>
-                        {trans.namespace}
-                      </td>
-                      <td
+                    <React.Fragment key={rowKey}>
+                      <tr
+                        onClick={handleRowClick}
                         style={{
-                          padding: "0.75rem",
-                          color: "var(--color-text-primary)",
-                          fontFamily: "monospace",
-                          fontSize: "0.875rem",
-                        }}
-                      >
-                        {trans.key_path}
-                      </td>
-                      <td style={{ padding: "0.75rem", color: "var(--color-text-primary)" }}>
-                        {isEditingThisKey ? (
-                          <input
-                            type="text"
-                            value={editValues[trans.language] || ""}
-                            onChange={(e) =>
-                              setEditValues({ ...editValues, [trans.language]: e.target.value })
-                            }
-                            style={{
-                              width: "100%",
-                              padding: "0.5rem",
-                              background: "var(--color-input-bg)",
-                              border: "1px solid var(--color-input-border)",
-                              borderRadius: "var(--radius-xs)",
-                              color: "var(--color-text-primary)",
-                            }}
-                          />
-                        ) : (
-                          <div
-                            style={{
-                              overflow: "hidden",
-                              textOverflow: "ellipsis",
-                              whiteSpace: "nowrap",
-                            }}
-                          >
-                            {trans.value}
-                          </div>
-                        )}
-                      </td>
-                      <td
-                        style={{
-                          padding: "0.75rem",
-                          color: "var(--color-text-primary)",
-                          fontSize: "0.8rem",
-                          whiteSpace: "nowrap",
-                        }}
-                      >
-                        {trans.created_at
-                          ? new Date(trans.created_at).toLocaleString("en-US", {
-                              month: "short",
-                              day: "numeric",
-                              year: "numeric",
-                              hour: "2-digit",
-                              minute: "2-digit",
-                            })
-                          : "-"}
-                      </td>
-                      <td
-                        style={{
-                          padding: "0.75rem",
-                          color: "var(--color-text-primary)",
-                          fontSize: "0.8rem",
-                          whiteSpace: "nowrap",
-                        }}
-                      >
-                        {trans.updated_at
-                          ? new Date(trans.updated_at).toLocaleString("en-US", {
-                              month: "short",
-                              day: "numeric",
-                              year: "numeric",
-                              hour: "2-digit",
-                              minute: "2-digit",
-                            })
-                          : "-"}
-                      </td>
-                      <td
-                        style={{
-                          padding: "0.75rem",
-                          color: isDeleted
-                            ? "var(--color-danger-text)"
-                            : "var(--color-text-primary)",
-                          fontSize: "0.8rem",
-                          whiteSpace: "nowrap",
-                        }}
-                      >
-                        {trans.deleted_at
-                          ? new Date(trans.deleted_at).toLocaleString("en-US", {
-                              month: "short",
-                              day: "numeric",
-                              year: "numeric",
-                              hour: "2-digit",
-                              minute: "2-digit",
-                            })
-                          : "-"}
-                      </td>
-                      <td
-                        style={{
-                          padding: "0.75rem",
-                          position: "sticky",
-                          right: 0,
+                          borderBottom: "1px solid var(--color-border)",
                           background: isEditingThisKey
                             ? "var(--color-accent-muted)"
                             : isDeleted
                               ? "var(--color-danger-bg)"
                               : "var(--color-surface)",
-                          zIndex: 5,
-                          minWidth: "150px",
-                          width: "150px",
-                          boxShadow: "var(--shadow-e1)",
+                          opacity: isDeleted ? 0.7 : 1,
+                          cursor: "pointer",
                         }}
                       >
-                        {isEditingThisKey && trans.language === primaryLanguage ? (
-                          <div style={{ display: "flex", gap: "0.5rem" }}>
-                            <button
-                              onClick={handleSave}
-                              disabled={bulkUpdateMutation.isPending}
+                        <td style={{ padding: "0.75rem", color: "var(--color-text-primary)" }}>
+                          <div
+                            style={{
+                              width: "10px",
+                              height: "10px",
+                              borderRadius: "999px",
+                              background: group.isIncomplete
+                                ? "var(--color-danger)"
+                                : "var(--color-success)",
+                            }}
+                          />
+                        </td>
+                        <td style={{ padding: "0.75rem", color: "var(--color-text-primary)" }}>
+                          {group.namespace}
+                        </td>
+                        <td
+                          style={{
+                            padding: "0.75rem",
+                            color: "var(--color-text-primary)",
+                            fontFamily: "monospace",
+                            fontSize: "0.875rem",
+                          }}
+                        >
+                          {group.key_path}
+                        </td>
+                        <td style={{ padding: "0.75rem", color: "var(--color-text-primary)" }}>
+                          <button
+                            type="button"
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              handleRowClick();
+                            }}
+                            style={{
+                              background: "transparent",
+                              border: "none",
+                              color: "inherit",
+                              cursor: "pointer",
+                              padding: 0,
+                              textAlign: "left",
+                              width: "100%",
+                            }}
+                          >
+                            <div
                               style={{
-                                padding: "0.5rem 1rem",
-                                background: "var(--color-primary)",
-                                color: "var(--color-primary-on)",
-                                border: "none",
-                                borderRadius: "var(--radius-xs)",
-                                cursor: "pointer",
-                                fontSize: "0.875rem",
+                                overflow: "hidden",
+                                textOverflow: "ellipsis",
+                                whiteSpace: "nowrap",
+                                fontWeight: 500,
                               }}
                             >
-                              Save All
-                            </button>
-                            <button
-                              onClick={handleCancelEdit}
+                              {displayValue}
+                            </div>
+                            <div
                               style={{
-                                padding: "0.5rem 1rem",
-                                background: "transparent",
-                                color: "var(--color-text-primary)",
-                                border: "1px solid var(--color-border)",
-                                borderRadius: "var(--radius-xs)",
-                                cursor: "pointer",
-                                fontSize: "0.875rem",
+                                fontSize: "0.75rem",
+                                color: "var(--color-text-muted)",
+                                marginTop: "0.25rem",
                               }}
                             >
-                              Cancel
-                            </button>
-                          </div>
-                        ) : isEditingThisKey ? (
-                          <div style={{ color: "var(--color-accent)", fontSize: "0.875rem" }}>
-                            Editing...
-                          </div>
-                        ) : (
-                          <div style={{ display: "flex", gap: "0.5rem" }}>
-                            <button
-                              onClick={() => handleEdit(trans)}
+                              {displayLanguage ? getLanguageLabel(displayLanguage) : "No language"}
+                            </div>
+                          </button>
+                        </td>
+                        <td
+                          style={{
+                            padding: "0.75rem",
+                            color: "var(--color-text-primary)",
+                            fontSize: "0.8rem",
+                            whiteSpace: "nowrap",
+                          }}
+                        >
+                          {group.displayTranslation?.created_at
+                            ? new Date(group.displayTranslation.created_at).toLocaleString(
+                                "en-US",
+                                {
+                                  month: "short",
+                                  day: "numeric",
+                                  year: "numeric",
+                                  hour: "2-digit",
+                                  minute: "2-digit",
+                                },
+                              )
+                            : "-"}
+                        </td>
+                        <td
+                          style={{
+                            padding: "0.75rem",
+                            color: "var(--color-text-primary)",
+                            fontSize: "0.8rem",
+                            whiteSpace: "nowrap",
+                          }}
+                        >
+                          {group.displayTranslation?.updated_at
+                            ? new Date(group.displayTranslation.updated_at).toLocaleString(
+                                "en-US",
+                                {
+                                  month: "short",
+                                  day: "numeric",
+                                  year: "numeric",
+                                  hour: "2-digit",
+                                  minute: "2-digit",
+                                },
+                              )
+                            : "-"}
+                        </td>
+                        <td
+                          style={{
+                            padding: "0.75rem",
+                            position: "sticky",
+                            right: 0,
+                            background: isEditingThisKey
+                              ? "var(--color-accent-muted)"
+                              : isDeleted
+                                ? "var(--color-danger-bg)"
+                                : "var(--color-surface)",
+                            zIndex: 5,
+                            minWidth: "150px",
+                            width: "150px",
+                            boxShadow: "var(--shadow-e1)",
+                          }}
+                        >
+                          {isEditingThisKey ? (
+                            <div style={{ color: "var(--color-accent)", fontSize: "0.875rem" }}>
+                              Editing...
+                            </div>
+                          ) : (
+                            <div style={{ display: "flex", gap: "0.5rem" }}>
+                              <button
+                                onClick={(event) => {
+                                  event.stopPropagation();
+                                  handleEdit({
+                                    namespace: group.namespace,
+                                    key_path: group.key_path,
+                                  });
+                                  setExpandedKeys({ [rowKey]: true });
+                                }}
+                                style={{
+                                  padding: "0.5rem 1rem",
+                                  background: "transparent",
+                                  color: "var(--color-text-primary)",
+                                  border: "1px solid var(--color-border)",
+                                  borderRadius: "var(--radius-xs)",
+                                  cursor: "pointer",
+                                  fontSize: "0.875rem",
+                                }}
+                              >
+                                Edit
+                              </button>
+                            </div>
+                          )}
+                        </td>
+                      </tr>
+                      {isExpanded && (
+                        <tr
+                          style={{
+                            borderBottom: "1px solid var(--color-border)",
+                            background: "var(--color-surface-muted)",
+                          }}
+                        >
+                          <td colSpan={7} style={{ padding: "0.75rem 1rem" }}>
+                            <div
                               style={{
-                                padding: "0.5rem 1rem",
-                                background: "transparent",
-                                color: "var(--color-text-primary)",
-                                border: "1px solid var(--color-border)",
-                                borderRadius: "var(--radius-xs)",
-                                cursor: "pointer",
-                                fontSize: "0.875rem",
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "space-between",
+                                marginBottom: "0.75rem",
                               }}
                             >
-                              Edit
-                            </button>
-                          </div>
-                        )}
-                      </td>
-                    </tr>
+                              <div style={{ color: "var(--color-text-secondary)" }}>
+                                {group.namespace}.{group.key_path}
+                              </div>
+                              <button
+                                type="button"
+                                onClick={(event) => {
+                                  event.stopPropagation();
+                                  setShowArchivedByKey((prev) => ({
+                                    ...prev,
+                                    [rowKey]: !prev[rowKey],
+                                  }));
+                                }}
+                                style={{
+                                  padding: "0.4rem 0.9rem",
+                                  background: showArchivedForKey
+                                    ? "var(--color-accent)"
+                                    : "transparent",
+                                  color: "var(--color-text-primary)",
+                                  border: "1px solid var(--color-border)",
+                                  borderRadius: "var(--radius-xs)",
+                                  cursor: "pointer",
+                                  fontSize: "0.85rem",
+                                }}
+                              >
+                                {showArchivedForKey ? "Hide Archive" : "Archive"}
+                              </button>
+                            </div>
+                            <div
+                              style={{
+                                display: "flex",
+                                flexDirection: "column",
+                                gap: "0.5rem",
+                              }}
+                            >
+                              {languages.map((lang) => {
+                                const activeTranslation = group.activeByLanguage.get(lang);
+                                const deletedTranslation = editingTranslations?.data.find(
+                                  (t) =>
+                                    t.language === lang &&
+                                    t.namespace === group.namespace &&
+                                    t.key_path === group.key_path &&
+                                    !!t.deleted_at,
+                                );
+                                const showDeleted =
+                                  showArchivedForKey && !activeTranslation && deletedTranslation;
+                                const value = activeTranslation?.value
+                                  ? activeTranslation.value
+                                  : showArchivedForKey
+                                    ? deletedTranslation?.value
+                                    : undefined;
+                                return (
+                                  <div key={lang}>
+                                    <div
+                                      style={{
+                                        display: "flex",
+                                        gap: "1rem",
+                                        alignItems: "flex-start",
+                                      }}
+                                    >
+                                      <div
+                                        style={{
+                                          minWidth: "140px",
+                                          fontWeight: 600,
+                                          color: "var(--color-text-primary)",
+                                        }}
+                                      >
+                                        {getLanguageLabel(lang)}
+                                      </div>
+                                      <div
+                                        style={{
+                                          color: value
+                                            ? "var(--color-text-primary)"
+                                            : "var(--color-text-muted)",
+                                          whiteSpace: "pre-wrap",
+                                        }}
+                                      >
+                                        {value || "Missing"}
+                                      </div>
+                                      {showDeleted && (
+                                        <span
+                                          style={{
+                                            fontSize: "0.75rem",
+                                            color: "var(--color-danger-text)",
+                                            border: "1px solid var(--color-danger)",
+                                            borderRadius: "var(--radius-2xs)",
+                                            padding: "0.1rem 0.35rem",
+                                          }}
+                                        >
+                                          Deleted
+                                        </span>
+                                      )}
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                    </React.Fragment>
                   );
                 })}
               </tbody>
             </table>
           </div>
 
-          {data && data.pagination.total > limit && (
+          {filteredTranslations.length > limit && (
             <div style={{ marginTop: "2rem", display: "flex", gap: "1rem", alignItems: "center" }}>
               <button
                 onClick={() => setPage((p) => Math.max(0, p - 1))}
@@ -973,21 +1191,24 @@ const TranslationsPage: React.FC = () => {
                 Previous
               </button>
               <span style={{ color: "var(--color-text-primary)" }}>
-                Page {page + 1} of {Math.ceil(data.pagination.total / limit)}
+                Page {page + 1} of {Math.ceil(filteredTranslations.length / limit)}
               </span>
               <button
                 onClick={() => setPage((p) => p + 1)}
-                disabled={(page + 1) * limit >= data.pagination.total}
+                disabled={(page + 1) * limit >= filteredTranslations.length}
                 style={{
                   padding: "0.75rem 1.5rem",
                   background:
-                    (page + 1) * limit >= data.pagination.total
+                    (page + 1) * limit >= filteredTranslations.length
                       ? "var(--color-border)"
                       : "var(--color-accent)",
                   color: "var(--color-text-primary)",
                   border: "none",
                   borderRadius: "var(--radius-xs)",
-                  cursor: (page + 1) * limit >= data.pagination.total ? "not-allowed" : "pointer",
+                  cursor:
+                    (page + 1) * limit >= (data?.pagination.total ?? filteredTranslations.length)
+                      ? "not-allowed"
+                      : "pointer",
                 }}
               >
                 Next

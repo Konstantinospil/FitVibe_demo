@@ -74,6 +74,60 @@
       "title": "Performance metrics",
       "description": "Track benchmarks that matter to you and update them as you progress."
     },
+    "measurements": {
+      "title": "Profile measurements",
+      "description": "Add biometric and performance metrics, then track progress over time.",
+      "tabs": {
+        "biometrical": "Biometrical",
+        "performance": "Performance"
+      },
+      "search": {
+        "label": "Search or add attributes",
+        "placeholder": "Search attributes",
+        "searching": "Searching...",
+        "empty": "No matching attributes found."
+      },
+      "tooltip": {
+        "unit": "Unit",
+        "minMax": "Min/Max"
+      },
+      "actions": {
+        "add": "Add",
+        "remove": "Remove"
+      },
+      "create": {
+        "title": "Create attribute",
+        "cta": "Create attribute",
+        "attributeName": "Attribute name",
+        "attributeNamePlaceholder": "e.g. Shoulder width",
+        "unitType": "Unit type",
+        "granularity": "Granularity",
+        "granularityPlaceholder": "e.g. cm, kg, reps",
+        "measurementSystem": "Measurement system",
+        "minValue": "Min value",
+        "maxValue": "Max value",
+        "minValuePlaceholder": "Min",
+        "maxValuePlaceholder": "Max",
+        "ratioToggleLabel": "Create as ratio",
+        "ratioSourceA": "Ratio source A",
+        "ratioSourceB": "Ratio source B"
+      },
+      "unitTypes": {
+        "length": "Length",
+        "weight": "Weight",
+        "volume": "Volume",
+        "ratio": "Ratio",
+        "count": "Count",
+        "time": "Time",
+        "power": "Power",
+        "percentage": "Percentage"
+      },
+      "system": {
+        "metric": "Metric",
+        "imperial": "Imperial"
+      },
+      "derived": "Derived"
+    },
     "sections": {
       "visibility": {
         "title": "Visibility",

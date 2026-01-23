@@ -74,6 +74,60 @@
       "title": "Indicateurs de performance",
       "description": "Suivez les repères qui comptent pour vous et mettez-les à jour au fil des progrès."
     },
+    "measurements": {
+      "title": "Mesures du profil",
+      "description": "Ajoutez des mesures biométriques et de performance, puis suivez vos progrès.",
+      "tabs": {
+        "biometrical": "Biométrie",
+        "performance": "Performance"
+      },
+      "search": {
+        "label": "Rechercher ou ajouter des attributs",
+        "placeholder": "Rechercher des attributs",
+        "searching": "Recherche...",
+        "empty": "Aucun attribut correspondant trouvé."
+      },
+      "tooltip": {
+        "unit": "Unité",
+        "minMax": "Min/Max"
+      },
+      "actions": {
+        "add": "Ajouter",
+        "remove": "Retirer"
+      },
+      "create": {
+        "title": "Créer un attribut",
+        "cta": "Créer un attribut",
+        "attributeName": "Nom de l'attribut",
+        "attributeNamePlaceholder": "ex. Largeur des épaules",
+        "unitType": "Type d'unité",
+        "granularity": "Granularité",
+        "granularityPlaceholder": "ex. cm, kg, répétitions",
+        "measurementSystem": "Système de mesure",
+        "minValue": "Valeur min",
+        "maxValue": "Valeur max",
+        "minValuePlaceholder": "Min",
+        "maxValuePlaceholder": "Max",
+        "ratioToggleLabel": "Créer en ratio",
+        "ratioSourceA": "Source du ratio A",
+        "ratioSourceB": "Source du ratio B"
+      },
+      "unitTypes": {
+        "length": "Longueur",
+        "weight": "Poids",
+        "volume": "Volume",
+        "ratio": "Ratio",
+        "count": "Compte",
+        "time": "Temps",
+        "power": "Puissance",
+        "percentage": "Pourcentage"
+      },
+      "system": {
+        "metric": "Métrique",
+        "imperial": "Impérial"
+      },
+      "derived": "Dérivé"
+    },
     "sections": {
       "visibility": {
         "title": "Visibilité",

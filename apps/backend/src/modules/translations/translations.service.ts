@@ -9,6 +9,7 @@ import {
   getLatestNamespaceUpdates,
   getTranslationMetadata,
   getNamespacesForLanguage,
+  updateMeasurementAttributeLabel,
 } from "./translations.repository.js";
 import type {
   SupportedLanguage,
@@ -19,6 +20,17 @@ import type {
   TranslationRecord,
 } from "./translations.types.js";
 import { HttpError } from "../../utils/http.js";
+import { insertAudit } from "../common/audit.util.js";
+
+const ATTRIBUTE_NAMESPACE = "user_attributes";
+const DEFAULT_ATTRIBUTE_LANGUAGE = "en";
+
+function attributeKeyFromPath(keyPath: string): string | null {
+  if (!keyPath.startsWith(`${ATTRIBUTE_NAMESPACE}.`)) {
+    return null;
+  }
+  return keyPath.slice(`${ATTRIBUTE_NAMESPACE}.`.length);
+}
 
 /**
  * Get translations for a language and optional namespace
@@ -65,11 +77,25 @@ export async function createTranslationService(
   dto: CreateTranslationDTO,
   userId?: string,
 ): Promise<TranslationRecord> {
-  return createTranslation({
+  const record = await createTranslation({
     ...dto,
     created_by: userId ?? null,
     updated_by: userId ?? null,
   });
+  if (dto.namespace === ATTRIBUTE_NAMESPACE && dto.language === DEFAULT_ATTRIBUTE_LANGUAGE) {
+    const key = attributeKeyFromPath(dto.key_path);
+    if (key) {
+      await updateMeasurementAttributeLabel(key, dto.value);
+      await insertAudit({
+        actorUserId: userId ?? null,
+        entity: "measurement_attributes",
+        action: "rename",
+        entityId: key,
+        metadata: { namespace: dto.namespace, key_path: dto.key_path, label: dto.value },
+      });
+    }
+  }
+  return record;
 }
 
 /**
@@ -102,6 +128,20 @@ export async function updateTranslationService(
     throw new HttpError(500, "TRANSLATION_UPDATE_FAILED", "Failed to update translation");
   }
 
+  if (namespace === ATTRIBUTE_NAMESPACE && language === DEFAULT_ATTRIBUTE_LANGUAGE) {
+    const key = attributeKeyFromPath(keyPath);
+    if (key) {
+      await updateMeasurementAttributeLabel(key, dto.value);
+      await insertAudit({
+        actorUserId: userId ?? null,
+        entity: "measurement_attributes",
+        action: "rename",
+        entityId: key,
+        metadata: { namespace, key_path: keyPath, label: dto.value },
+      });
+    }
+  }
+
   return updated;
 }
 
@@ -113,6 +153,8 @@ export async function bulkUpdateTranslationService(
   userId?: string,
 ): Promise<TranslationRecord[]> {
   const results: TranslationRecord[] = [];
+  const key = attributeKeyFromPath(dto.key_path);
+  const enValue = dto.translations[DEFAULT_ATTRIBUTE_LANGUAGE];
 
   for (const [language, value] of Object.entries(dto.translations)) {
     if (value === undefined) {
@@ -126,6 +168,17 @@ export async function bulkUpdateTranslationService(
       updated_by: userId ?? null,
     });
     results.push(result);
+  }
+
+  if (dto.namespace === ATTRIBUTE_NAMESPACE && key && typeof enValue === "string") {
+    await updateMeasurementAttributeLabel(key, enValue);
+    await insertAudit({
+      actorUserId: userId ?? null,
+      entity: "measurement_attributes",
+      action: "rename",
+      entityId: key,
+      metadata: { namespace: dto.namespace, key_path: dto.key_path, label: enValue },
+    });
   }
 
   return results;
