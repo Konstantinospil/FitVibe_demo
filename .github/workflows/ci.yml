@@ -24,7 +24,7 @@ env:
   BACKEND_IMAGE: ghcr.io/${{ github.repository_owner }}/fitvibe-backend
   FRONTEND_IMAGE: ghcr.io/${{ github.repository_owner }}/fitvibe-frontend
   NODE_VERSION: "20"
-  PNPM_VERSION: "9.14.4"
+  PNPM_VERSION: "10.28.1"
   APP_VERSION: "0.5"
   GIT_SHA: ${{ github.sha }}
 
