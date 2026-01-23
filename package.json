@@ -3,7 +3,7 @@
   "version": "2.0.0",
   "private": true,
   "type": "module",
-  "packageManager": "pnpm@9.14.4",
+  "packageManager": "pnpm@10.28.1",
   "engines": {
     "node": ">=18.19"
   },
@@ -52,7 +52,7 @@
     "globals": "^16.4.0",
     "husky": "^9.1.7",
     "lint-staged": "^15.5.2",
-    "pnpm": "^10.20.0",
+    "pnpm": "^10.28.1",
     "prettier": "^3.6.2",
     "rimraf": "^6.0.1",
     "ts-node": "^10.9.2",

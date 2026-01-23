@@ -17,7 +17,7 @@ overrides:
   "@smithy/core": ^3.18.7
   qs: ^6.14.1
 
-pnpmfileChecksum: grrypyllm2ewjqhri5aw4olxvu
+pnpmfileChecksum: sha256-aOXpvLBYA3mVXnxp4xFJYUemlS6+n06SqiSyAj1iEBc=
 
 importers:
   .:
@@ -90,8 +90,8 @@ importers:
         specifier: ^15.5.2
         version: 15.5.2
       pnpm:
-        specifier: ^10.20.0
-        version: 10.24.0
+        specifier: ^10.28.1
+        version: 10.28.1
       prettier:
         specifier: ^3.6.2
         version: 3.7.4
@@ -3024,18 +3024,21 @@ packages:
       {
         integrity: sha512-qPuhN3QrT7ZZLcLCyKOSNhuijUi9G5guMRVrxq63r9YNOxxQjPm59gVxLM+7xGnHnM6cimY57tuKsjK7y9LM1g==,
       }
+    deprecated: Please upgrade to v13 of otplib. Refer to otplib docs for migration paths
 
   "@otplib/plugin-thirty-two@12.0.1":
     resolution:
       {
         integrity: sha512-MtT+uqRso909UkbrrYpJ6XFjj9D+x2Py7KjTO9JDPhL0bJUYVu5kFP4TFZW4NFAywrAtFRxOVY261u0qwb93gA==,
       }
+    deprecated: Please upgrade to v13 of otplib. Refer to otplib docs for migration paths
 
   "@otplib/preset-default@12.0.1":
     resolution:
       {
         integrity: sha512-xf1v9oOJRyXfluBhMdpOkr+bsE+Irt+0D5uHtvg6x1eosfmHCsCC6ej/m7FXiWqdo0+ZUI6xSKDhJwc8yfiOPQ==,
       }
+    deprecated: Please upgrade to v13 of otplib. Refer to otplib docs for migration paths
 
   "@otplib/preset-v11@12.0.1":
     resolution:
@@ -9465,10 +9468,10 @@ packages:
       }
     engines: { node: ">=10.13.0" }
 
-  pnpm@10.24.0:
+  pnpm@10.28.1:
     resolution:
       {
-        integrity: sha512-Af+K5xtEGZA7ZcYPstydNM+LtuBtA73hEu8496NNaQTEJLpmvqXNzxKJAjC/OflYBHMUDtnJRv7zKLblI4o0Wg==,
+        integrity: sha512-fX27yp6ZRHt8O/enMoavqva+mSUeuUmLrvp9QGiS9nuHmts6HX5of8TMwaOIxxdfuq5WeiarRNEGe1T8sNajFg==,
       }
     engines: { node: ">=18.12" }
     hasBin: true
@@ -11445,6 +11448,7 @@ packages:
         integrity: sha512-6qN4hJdMwfYBtE3YBTTHhoeuUrDBPZmbQaxWAqSALV/MeEnR5z1xd8UKud2RAkFoPkmB+hli1TZSnyi84xz1vQ==,
       }
     engines: { node: ">=18" }
+    deprecated: Use @exodus/bytes instead for a more spec-conformant and faster implementation
 
   whatwg-fetch@3.6.20:
     resolution:
@@ -18513,7 +18517,7 @@ snapshots:
 
   pngjs@5.0.0: {}
 
-  pnpm@10.24.0: {}
+  pnpm@10.28.1: {}
 
   possible-typed-array-names@1.1.0: {}
 
