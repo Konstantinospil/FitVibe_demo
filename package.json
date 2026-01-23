@@ -62,6 +62,8 @@
   },
   "pnpm": {
     "overrides": {
+      "diff": "^4.0.4",
+      "lodash-es": "^4.17.23",
       "lodash": "^4.17.23",
       "@remix-run/router": "1.23.2",
       "chrome-launcher": "^1.2.1",
