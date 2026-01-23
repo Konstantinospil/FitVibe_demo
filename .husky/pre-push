@@ -1,6 +1,3 @@
-#!/usr/bin/env sh
-. "$(dirname -- "$0")/_/husky.sh"
-
 # Run security checks before pushing
 echo "🔒 Running security checks before push..."
 pnpm security:scan
@@ -12,4 +9,3 @@ pnpm audit --audit-level=high || {
   echo "   Fix vulnerabilities before pushing."
   exit 1
 }
-
