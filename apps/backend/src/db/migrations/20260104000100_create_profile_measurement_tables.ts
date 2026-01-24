@@ -53,6 +53,7 @@ export async function up(knex: Knex): Promise<void> {
       .onDelete("SET NULL");
     table.string("derived_operator").nullable();
     table.timestamp("created_at", { useTz: true }).notNullable().defaultTo(knex.fn.now());
+    table.timestamp("deactivated_at", { useTz: true }).nullable();
     table.timestamp("updated_at", { useTz: true }).notNullable().defaultTo(knex.fn.now());
   });
 
@@ -75,6 +76,7 @@ export async function up(knex: Knex): Promise<void> {
     table.decimal("value_number", 14, 4).notNullable();
     table.timestamp("measured_at", { useTz: true }).notNullable().defaultTo(knex.fn.now());
     table.timestamp("created_at", { useTz: true }).notNullable().defaultTo(knex.fn.now());
+    table.timestamp("deactivated_at", { useTz: true }).nullable();
   });
 
   await knex.schema.createTable("bio_attribute_selections", (table) => {
@@ -94,6 +96,7 @@ export async function up(knex: Knex): Promise<void> {
       .onDelete("CASCADE");
     table.boolean("is_visible").notNullable().defaultTo(true);
     table.timestamp("created_at", { useTz: true }).notNullable().defaultTo(knex.fn.now());
+    table.timestamp("deactivated_at", { useTz: true }).nullable();
     table.primary(["user_id", "attribute_id"], BIO_SELECTION_PK);
   });
 
@@ -127,6 +130,7 @@ export async function up(knex: Knex): Promise<void> {
       .onDelete("SET NULL");
     table.string("derived_operator").nullable();
     table.timestamp("created_at", { useTz: true }).notNullable().defaultTo(knex.fn.now());
+    table.timestamp("deactivated_at", { useTz: true }).nullable();
     table.timestamp("updated_at", { useTz: true }).notNullable().defaultTo(knex.fn.now());
   });
 
@@ -149,6 +153,7 @@ export async function up(knex: Knex): Promise<void> {
     table.decimal("value_number", 14, 4).notNullable();
     table.timestamp("measured_at", { useTz: true }).notNullable().defaultTo(knex.fn.now());
     table.timestamp("created_at", { useTz: true }).notNullable().defaultTo(knex.fn.now());
+    table.timestamp("deactivated_at", { useTz: true }).nullable();
   });
 
   await knex.schema.createTable("perf_attribute_selections", (table) => {
@@ -168,6 +173,7 @@ export async function up(knex: Knex): Promise<void> {
       .onDelete("CASCADE");
     table.boolean("is_visible").notNullable().defaultTo(true);
     table.timestamp("created_at", { useTz: true }).notNullable().defaultTo(knex.fn.now());
+    table.timestamp("deactivated_at", { useTz: true }).nullable();
     table.primary(["user_id", "attribute_id"], PERF_SELECTION_PK);
   });
 

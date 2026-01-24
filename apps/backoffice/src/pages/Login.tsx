@@ -38,7 +38,7 @@ const Login: React.FC = () => {
           email: user.email,
           role: user.role,
         });
-        navigate("/");
+        void navigate("/");
       } else {
         setError("Access denied. Admin role required.");
       }

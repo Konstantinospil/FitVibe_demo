@@ -28,7 +28,7 @@ const Layout: React.FC = () => {
       console.error("Logout error:", err);
     }
     signOut();
-    navigate("/login");
+    void navigate("/login");
   };
 
   return (

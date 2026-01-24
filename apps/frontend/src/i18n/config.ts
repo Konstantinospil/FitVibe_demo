@@ -8,6 +8,13 @@ const mergeTranslations = <T extends Record<string, unknown>, U extends Record<s
   extra: U,
 ) => ({ ...base, ...extra });
 
+const warn = (...args: unknown[]) => {
+  const consoleRef = typeof globalThis !== "undefined" ? globalThis.console : undefined;
+  if (consoleRef && typeof consoleRef.warn === "function") {
+    consoleRef.warn(...args);
+  }
+};
+
 const resources: Partial<Record<SupportedLanguage, { translation: Record<string, unknown> }>> = {};
 const SUPPORTED_LANGUAGES: SupportedLanguage[] = ["en", "de", "fr", "es", "el"];
 
@@ -46,7 +53,7 @@ async function loadTranslationsFromAPI(
 
     return (await response.json()) as Record<string, unknown>;
   } catch (error) {
-    console.warn(`Failed to load translations from API for ${lng}:`, error);
+    warn(`Failed to load translations from API for ${lng}:`, error);
     return null;
   }
 }
@@ -76,7 +83,7 @@ async function loadTranslationsFromJSON(lng: SupportedLanguage): Promise<Record<
       wrappedCookie,
     );
   } catch (error) {
-    console.warn(`Failed to load JSON translations for ${lng}:`, error);
+    warn(`Failed to load JSON translations for ${lng}:`, error);
     throw error;
   }
 }
@@ -128,7 +135,7 @@ function cacheTranslations(lng: SupportedLanguage, data: Record<string, unknown>
     };
     window.localStorage.setItem(cacheKey, JSON.stringify(cached));
   } catch (error) {
-    console.warn("Failed to cache translations:", error);
+    warn("Failed to cache translations:", error);
   }
 }
 
@@ -157,7 +164,7 @@ async function loadLanguage(lng: SupportedLanguage): Promise<void> {
     // Try cached translations first
     const cached = getCachedTranslations(lng);
     if (cached) {
-      console.warn(`Using cached translations for ${lng}`);
+      warn(`Using cached translations for ${lng}`);
       i18n.addResourceBundle(lng, "translation", cached.data, true, true);
       resources[lng] = { translation: cached.data };
       return;
@@ -179,7 +186,7 @@ async function loadLanguage(lng: SupportedLanguage): Promise<void> {
 
     // Fallback to JSON if API fails or returns empty translations
     if (!translations || isEmpty) {
-      console.warn(
+      warn(
         `Falling back to JSON translations for ${lng}${isEmpty ? " (API returned empty translations)" : ""}`,
       );
       translations = await loadTranslationsFromJSON(lng);
@@ -191,7 +198,7 @@ async function loadLanguage(lng: SupportedLanguage): Promise<void> {
     i18n.addResourceBundle(lng, "translation", translations, true, true);
     resources[lng] = { translation: translations };
   } catch (error) {
-    console.warn(`Failed to load language ${lng}:`, error);
+    warn(`Failed to load language ${lng}:`, error);
     // Fallback to English if language loading fails
     if (lng !== "en") {
       await loadLanguage("en");
