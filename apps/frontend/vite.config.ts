@@ -36,6 +36,10 @@ export default defineConfig(() => {
               ),
               "@testing-library/dom": pathResolve(root, "node_modules/@testing-library/dom"),
               "react-router-dom": pathResolve(root, "node_modules/react-router-dom"),
+              "react-router-dom/server": pathResolve(
+                root,
+                "node_modules/react-router-dom/server.js",
+              ),
               "react-router": pathResolve(root, "node_modules/react-router"),
               "@remix-run/router": pathResolve(root, "node_modules/@remix-run/router"),
               i18next: pathResolve(root, "node_modules/i18next"),

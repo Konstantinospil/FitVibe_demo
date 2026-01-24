@@ -44,7 +44,7 @@ const TermsReacceptance: React.FC = () => {
     try {
       await signOut?.();
     } finally {
-      navigate("/login", { replace: true });
+      void navigate("/login", { replace: true });
     }
   };
 

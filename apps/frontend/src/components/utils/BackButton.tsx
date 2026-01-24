@@ -20,11 +20,11 @@ export const BackButton: React.FC<BackButtonProps> = ({
 
   const handleClick = () => {
     if (onClick) {
-      onClick();
+      void onClick();
     } else if (to) {
-      navigate(to);
+      void navigate(to);
     } else {
-      navigate(-1);
+      void navigate(-1);
     }
   };
 

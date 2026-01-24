@@ -36,8 +36,8 @@ vi.mock("../../src/i18n/config.js", () => ({
   default: i18nMock,
 }));
 
-vi.mock("../../src/routes/Router", () => ({
-  Router: ({ location }: { location: string }) => <div>SSR {location}</div>,
+vi.mock("../../src/routes/ServerRouter", () => ({
+  ServerRouter: ({ location }: { location: string }) => <div>SSR {location}</div>,
 }));
 
 vi.mock("../../src/services/api.js", () => ({

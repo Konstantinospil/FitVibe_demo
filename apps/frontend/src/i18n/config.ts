@@ -224,8 +224,6 @@ const detectLanguage = (): SupportedLanguage => {
   return FALLBACK_LANGUAGE;
 };
 
-const initialLanguage = detectLanguage();
-
 // Initialize i18n
 void i18n.use(initReactI18next).init({
   resources: {},
@@ -255,14 +253,15 @@ export const translationsLoadingPromise = Promise.resolve()
     return loadMinimalLoginTranslations();
   })
   .then(() => {
+    const preferredLanguage = detectLanguage();
     if (typeof window !== "undefined" && window.requestIdleCallback) {
       return new Promise<void>((resolve) => {
         window.requestIdleCallback(
           () => {
             void loadLanguage("en").then(() => {
-              if (initialLanguage !== "en") {
-                return loadLanguage(initialLanguage).then(() => {
-                  void i18n.changeLanguage(initialLanguage);
+              if (preferredLanguage !== "en") {
+                return loadLanguage(preferredLanguage).then(() => {
+                  void i18n.changeLanguage(preferredLanguage);
                   resolve();
                 });
               } else {
@@ -278,9 +277,9 @@ export const translationsLoadingPromise = Promise.resolve()
       return new Promise<void>((resolve) => {
         setTimeout(() => {
           void loadLanguage("en").then(() => {
-            if (initialLanguage !== "en") {
-              return loadLanguage(initialLanguage).then(() => {
-                void i18n.changeLanguage(initialLanguage);
+            if (preferredLanguage !== "en") {
+              return loadLanguage(preferredLanguage).then(() => {
+                void i18n.changeLanguage(preferredLanguage);
                 resolve();
               });
             } else {
