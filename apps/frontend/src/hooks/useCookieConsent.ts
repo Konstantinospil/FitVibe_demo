@@ -1,5 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { apiClient } from "../services/api";
+import { initializeAnalytics, disableAnalytics } from "../utils/analytics";
+import { initializeMarketing, disableMarketing } from "../utils/marketing";
 
 export interface CookieConsentState {
   essential: boolean;
@@ -113,13 +115,15 @@ export function useCookieConsent(): UseCookieConsentReturn {
 
       // Initialize analytics/marketing based on consent
       if (response.data.data.analytics) {
-        // TODO: Initialize analytics (e.g., Google Analytics, etc.)
-        // This is where you would initialize your analytics SDK
+        initializeAnalytics();
+      } else {
+        disableAnalytics();
       }
 
       if (response.data.data.marketing) {
-        // TODO: Initialize marketing scripts (e.g., remarketing pixels, etc.)
-        // This is where you would initialize your marketing SDK
+        initializeMarketing();
+      } else {
+        disableMarketing();
       }
     } catch (err) {
       const error = err instanceof Error ? err : new Error("Failed to save preferences");

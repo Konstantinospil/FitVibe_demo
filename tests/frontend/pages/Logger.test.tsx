@@ -1,4 +1,4 @@
-import { render, screen, fireEvent, waitFor, cleanup } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor, cleanup, act } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
 import Logger from "../../src/pages/Logger";
@@ -33,6 +33,7 @@ const testI18n = i18n.createInstance();
 void testI18n.use(initReactI18next).init({
   lng: "en",
   fallbackLng: "en",
+  initImmediate: false,
   resources: {
     en: {
       translation: {
@@ -46,6 +47,7 @@ void testI18n.use(initReactI18next).init({
         "logger.completeSession": "Complete Session",
         "logger.completing": "Completing...",
         "logger.setsCompleted": "sets completed",
+        "logger.exercises": "exercises",
         "logger.markComplete": "Mark complete",
         "logger.markIncomplete": "Mark incomplete",
         "logger.repsPlaceholder": "Reps",
@@ -53,6 +55,8 @@ void testI18n.use(initReactI18next).init({
         "logger.rpePlaceholder": "RPE",
         "logger.collapse": "Collapse",
         "logger.expand": "Expand",
+        "logger.customExercise": "Custom Exercise",
+        "logger.workoutSession": "Workout Session",
         "common.loading": "Loading...",
       },
     },
@@ -71,6 +75,12 @@ const renderLogger = (sessionId: string = "test-session-id") => {
       </MemoryRouter>
     </ToastProvider>,
   );
+};
+
+const flushPromises = async () => {
+  await act(async () => {
+    await Promise.resolve();
+  });
 };
 
 const mockSessionData = {
@@ -133,6 +143,7 @@ describe("Logger", () => {
   });
 
   afterEach(() => {
+    vi.useRealTimers();
     cleanup();
   });
 
@@ -534,5 +545,170 @@ describe("Logger", () => {
       },
       { timeout: 5000 },
     );
+  });
+
+  it("renders a custom exercise label when exercise_id is missing", async () => {
+    vi.mocked(api.getSession).mockResolvedValue({
+      ...mockSessionData,
+      exercises: [
+        {
+          ...mockSessionData.exercises[0],
+          exercise_id: null,
+        },
+      ],
+    } as any);
+    vi.mocked(api.updateSession).mockResolvedValue({} as any);
+
+    renderLogger();
+
+    await waitFor(
+      () => {
+        expect(screen.getByText("Test Workout")).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
+
+    expect(screen.getByText(/Custom Exercise/i)).toBeInTheDocument();
+  });
+
+  it("falls back to default session title when none is provided", async () => {
+    vi.mocked(api.getSession).mockResolvedValue({
+      ...mockSessionData,
+      title: null,
+    } as any);
+    vi.mocked(api.updateSession).mockResolvedValue({} as any);
+
+    renderLogger();
+
+    await waitFor(
+      () => {
+        expect(screen.getByText("Workout Session")).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
+  });
+
+  it("clears RPE when value is out of range", async () => {
+    vi.mocked(api.getSession).mockResolvedValue(mockSessionData as any);
+    vi.mocked(api.updateSession).mockResolvedValue({} as any);
+
+    renderLogger();
+
+    await waitFor(
+      () => {
+        expect(screen.getByText("Test Workout")).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
+
+    const rpeInput = screen.getAllByPlaceholderText("RPE")[0] as HTMLInputElement;
+    fireEvent.change(rpeInput, { target: { value: "11" } });
+
+    await waitFor(() => {
+      expect(rpeInput.value).toBe("");
+    });
+  });
+
+  it("accepts RPE when value is within range", async () => {
+    vi.mocked(api.getSession).mockResolvedValue(mockSessionData as any);
+    vi.mocked(api.updateSession).mockResolvedValue({} as any);
+
+    renderLogger();
+
+    await waitFor(
+      () => {
+        expect(screen.getByText("Test Workout")).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
+
+    const rpeInput = screen.getAllByPlaceholderText("RPE")[0] as HTMLInputElement;
+    fireEvent.change(rpeInput, { target: { value: "5" } });
+
+    await waitFor(() => {
+      expect(rpeInput.value).toBe("5");
+    });
+  });
+
+  it("formats session timer with hours when elapsed exceeds an hour", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2024-01-15T11:00:00Z"));
+    vi.mocked(api.getSession).mockResolvedValue({
+      ...mockSessionData,
+      status: "in_progress",
+      started_at: "2024-01-15T10:00:00Z",
+    } as any);
+    vi.mocked(api.updateSession).mockResolvedValue({} as any);
+
+    renderLogger();
+
+    await flushPromises();
+    await flushPromises();
+    expect(screen.getByText("Test Workout")).toBeInTheDocument();
+
+    await act(async () => {
+      vi.advanceTimersByTime(1000);
+    });
+
+    expect(screen.getByText("1:00:01")).toBeInTheDocument();
+
+    vi.useRealTimers();
+  });
+
+  it("auto-starts rest timer on set completion and vibrates when it finishes", async () => {
+    vi.useFakeTimers();
+    const originalVibrate = navigator.vibrate;
+    const vibrateSpy = vi.fn();
+    (navigator as any).vibrate = vibrateSpy;
+
+    vi.mocked(api.getSession).mockResolvedValue(mockSessionData as any);
+    vi.mocked(api.updateSession).mockResolvedValue({} as any);
+
+    renderLogger();
+
+    await flushPromises();
+    await flushPromises();
+    expect(screen.getByText("Test Workout")).toBeInTheDocument();
+
+    await act(async () => {
+      fireEvent.click(screen.getAllByLabelText(/Mark complete/i)[0]);
+    });
+
+    expect(screen.getByText("Rest Timer")).toBeInTheDocument();
+
+    await act(async () => {
+      vi.advanceTimersByTime(90_000);
+    });
+
+    expect(screen.queryByText("Rest Timer")).not.toBeInTheDocument();
+    expect(vibrateSpy).toHaveBeenCalled();
+
+    (navigator as any).vibrate = originalVibrate;
+    vi.useRealTimers();
+  });
+
+  it("clears reps and weight inputs when zero is entered", async () => {
+    vi.mocked(api.getSession).mockResolvedValue(mockSessionData as any);
+    vi.mocked(api.updateSession).mockResolvedValue({} as any);
+
+    renderLogger();
+
+    await waitFor(
+      () => {
+        expect(screen.getByText("Test Workout")).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
+
+    const repsInput = screen.getAllByPlaceholderText("Reps")[0] as HTMLInputElement;
+    const weightInput = screen.getAllByPlaceholderText("Weight")[0] as HTMLInputElement;
+
+    fireEvent.change(repsInput, { target: { value: "0" } });
+    fireEvent.change(weightInput, { target: { value: "0" } });
+
+    await waitFor(() => {
+      expect(repsInput.value).toBe("");
+      expect(weightInput.value).toBe("");
+    });
   });
 });

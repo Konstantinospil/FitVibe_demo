@@ -5,6 +5,7 @@ import { describe, it, expect, vi, afterEach, beforeEach } from "vitest";
 import { MemoryRouter } from "react-router-dom";
 import Privacy from "../../src/pages/Privacy";
 import * as api from "../../src/services/api";
+import { ToastProvider } from "../../src/contexts/ToastContext";
 
 vi.mock("react-i18next", () => ({
   useTranslation: () => ({
@@ -135,9 +136,11 @@ describe("Privacy page", () => {
 
   it("should render privacy policy content", () => {
     render(
-      <MemoryRouter>
-        <Privacy />
-      </MemoryRouter>,
+      <ToastProvider>
+        <MemoryRouter>
+          <Privacy />
+        </MemoryRouter>
+      </ToastProvider>,
     );
 
     expect(screen.getByText("Privacy Policy")).toBeInTheDocument();
@@ -151,9 +154,11 @@ describe("Privacy page", () => {
 
   it("should render contact information", () => {
     render(
-      <MemoryRouter>
-        <Privacy />
-      </MemoryRouter>,
+      <ToastProvider>
+        <MemoryRouter>
+          <Privacy />
+        </MemoryRouter>
+      </ToastProvider>,
     );
 
     const emailElements = screen.getAllByText(/kpilpilidis@gmail.com/i);
@@ -163,9 +168,11 @@ describe("Privacy page", () => {
   it("shows login action when unauthenticated", () => {
     mockAuthState.isAuthenticated = false;
     render(
-      <MemoryRouter>
-        <Privacy />
-      </MemoryRouter>,
+      <ToastProvider>
+        <MemoryRouter>
+          <Privacy />
+        </MemoryRouter>
+      </ToastProvider>,
     );
 
     expect(
@@ -176,9 +183,11 @@ describe("Privacy page", () => {
   it("requires acceptance before submitting", async () => {
     mockAuthState.isAuthenticated = true;
     render(
-      <MemoryRouter>
-        <Privacy />
-      </MemoryRouter>,
+      <ToastProvider>
+        <MemoryRouter>
+          <Privacy />
+        </MemoryRouter>
+      </ToastProvider>,
     );
 
     const submitButton = screen.getByRole("button", { name: "Submit" });
@@ -192,9 +201,11 @@ describe("Privacy page", () => {
     mockAuthState.isAuthenticated = true;
     vi.mocked(api.acceptPrivacyPolicy).mockResolvedValue({ ok: true });
     render(
-      <MemoryRouter>
-        <Privacy />
-      </MemoryRouter>,
+      <ToastProvider>
+        <MemoryRouter>
+          <Privacy />
+        </MemoryRouter>
+      </ToastProvider>,
     );
 
     await userEvent.click(screen.getByRole("checkbox", { name: "Accept privacy" }));
@@ -213,9 +224,11 @@ describe("Privacy page", () => {
     });
 
     render(
-      <MemoryRouter>
-        <Privacy />
-      </MemoryRouter>,
+      <ToastProvider>
+        <MemoryRouter>
+          <Privacy />
+        </MemoryRouter>
+      </ToastProvider>,
     );
 
     await userEvent.click(screen.getByRole("checkbox", { name: "Accept privacy" }));
@@ -234,9 +247,11 @@ describe("Privacy page", () => {
     vi.mocked(api.revokePrivacyPolicy).mockResolvedValue(undefined);
 
     render(
-      <MemoryRouter>
-        <Privacy />
-      </MemoryRouter>,
+      <ToastProvider>
+        <MemoryRouter>
+          <Privacy />
+        </MemoryRouter>
+      </ToastProvider>,
     );
 
     const revokeButton = await screen.findByRole("button", { name: "Revoke consent" });

@@ -3,6 +3,7 @@ import { render, screen, cleanup, waitFor, fireEvent } from "@testing-library/re
 import { describe, it, expect, vi, afterEach, beforeEach } from "vitest";
 import { MemoryRouter } from "react-router-dom";
 import Terms from "../../src/pages/Terms";
+import { ToastProvider } from "../../src/contexts/ToastContext";
 import {
   revokeTerms,
   acceptTerms,
@@ -168,9 +169,11 @@ describe("Terms page", () => {
 
   it("should render terms and conditions content", async () => {
     const { container } = render(
-      <MemoryRouter>
-        <Terms />
-      </MemoryRouter>,
+      <ToastProvider>
+        <MemoryRouter>
+          <Terms />
+        </MemoryRouter>
+      </ToastProvider>,
     );
 
     await waitFor(
@@ -186,9 +189,11 @@ describe("Terms page", () => {
 
   it("should display effective date", async () => {
     render(
-      <MemoryRouter>
-        <Terms />
-      </MemoryRouter>,
+      <ToastProvider>
+        <MemoryRouter>
+          <Terms />
+        </MemoryRouter>
+      </ToastProvider>,
     );
 
     await waitFor(
@@ -202,9 +207,11 @@ describe("Terms page", () => {
 
   it("should render terms sections", async () => {
     render(
-      <MemoryRouter>
-        <Terms />
-      </MemoryRouter>,
+      <ToastProvider>
+        <MemoryRouter>
+          <Terms />
+        </MemoryRouter>
+      </ToastProvider>,
     );
 
     await waitFor(
@@ -219,9 +226,11 @@ describe("Terms page", () => {
 
   it("should render health and safety notice", async () => {
     render(
-      <MemoryRouter>
-        <Terms />
-      </MemoryRouter>,
+      <ToastProvider>
+        <MemoryRouter>
+          <Terms />
+        </MemoryRouter>
+      </ToastProvider>,
     );
 
     await waitFor(
@@ -234,9 +243,11 @@ describe("Terms page", () => {
 
   it("should render contact information", async () => {
     render(
-      <MemoryRouter>
-        <Terms />
-      </MemoryRouter>,
+      <ToastProvider>
+        <MemoryRouter>
+          <Terms />
+        </MemoryRouter>
+      </ToastProvider>,
     );
 
     // Wait for email elements to render (component loads translations asynchronously)
@@ -254,9 +265,11 @@ describe("Terms page", () => {
     vi.mocked(acceptTerms).mockResolvedValue({} as any);
 
     render(
-      <MemoryRouter>
-        <Terms />
-      </MemoryRouter>,
+      <ToastProvider>
+        <MemoryRouter>
+          <Terms />
+        </MemoryRouter>
+      </ToastProvider>,
     );
 
     const submitButton = await screen.findByRole("button", { name: "Accept terms" });
@@ -280,9 +293,11 @@ describe("Terms page", () => {
     vi.mocked(revokeTerms).mockResolvedValue({} as any);
 
     render(
-      <MemoryRouter>
-        <Terms />
-      </MemoryRouter>,
+      <ToastProvider>
+        <MemoryRouter>
+          <Terms />
+        </MemoryRouter>
+      </ToastProvider>,
     );
 
     const revokeButton = await screen.findByRole("button", { name: "Revoke consent" });
@@ -301,9 +316,11 @@ describe("Terms page", () => {
     setAuthenticated(false);
 
     render(
-      <MemoryRouter>
-        <Terms />
-      </MemoryRouter>,
+      <ToastProvider>
+        <MemoryRouter>
+          <Terms />
+        </MemoryRouter>
+      </ToastProvider>,
     );
 
     const loginButtons = await screen.findAllByRole("button", { name: "Login" });
@@ -320,9 +337,11 @@ describe("Terms page", () => {
     });
 
     render(
-      <MemoryRouter>
-        <Terms />
-      </MemoryRouter>,
+      <ToastProvider>
+        <MemoryRouter>
+          <Terms />
+        </MemoryRouter>
+      </ToastProvider>,
     );
 
     const checkbox = await screen.findByRole("checkbox");

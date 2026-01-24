@@ -16,6 +16,7 @@ import {
   type LegalDocumentVersions,
 } from "../services/api";
 import { useAuthOptional } from "../contexts/AuthContext";
+import { useToast } from "../contexts/ToastContext";
 
 const contentStyle: React.CSSProperties = {
   maxWidth: "900px",
@@ -31,6 +32,7 @@ const Terms: React.FC = () => {
   const navigate = useNavigate();
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const { isInitializing } = useAuthOptional();
+  const toast = useToast();
   const [translationsReady, setTranslationsReady] = useState(false);
   const [showRevokeConfirm, setShowRevokeConfirm] = useState(false);
   const [isRevoking, setIsRevoking] = useState(false);
@@ -141,7 +143,9 @@ const Terms: React.FC = () => {
       console.error("Failed to revoke consent:", error);
       setIsRevoking(false);
       setShowRevokeConfirm(false);
-      // TODO: Show error toast
+      toast.error(
+        t("terms.revokeError") || "Failed to revoke terms of service consent. Please try again.",
+      );
     } finally {
       setIsRevoking(false);
     }

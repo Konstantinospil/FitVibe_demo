@@ -142,7 +142,7 @@ describe("measurements service", () => {
 
   it("rejects invalid attribute creation requests", async () => {
     await expect(
-      createMeasurementAttribute("bio", {
+      createMeasurementAttribute("bio", "user-1", {
         label: " ",
         unitType: "length",
         granularity: "cm",
@@ -153,7 +153,7 @@ describe("measurements service", () => {
     jest.mocked(getAttributeByNormalizedKey).mockResolvedValue({ id: "existing" } as never);
 
     await expect(
-      createMeasurementAttribute("bio", {
+      createMeasurementAttribute("bio", "user-1", {
         label: "Height",
         unitType: "length",
         granularity: "cm",
@@ -186,7 +186,7 @@ describe("measurements service", () => {
       updated_at: "2025-01-01",
     });
 
-    const created = await createMeasurementAttribute("bio", {
+    const created = await createMeasurementAttribute("bio", "user-1", {
       label: "Height",
       unitType: "length",
       granularity: "cm",
@@ -208,7 +208,7 @@ describe("measurements service", () => {
     jest.mocked(getAttributeByNormalizedKey).mockResolvedValue(null);
 
     await expect(
-      createMeasurementAttribute("bio", {
+      createMeasurementAttribute("bio", "user-1", {
         label: "ratio",
         unitType: "ratio",
         granularity: "ratio",
@@ -223,7 +223,7 @@ describe("measurements service", () => {
     jest.mocked(getAttributeById).mockResolvedValueOnce({ id: "b" } as never);
 
     await expect(
-      createMeasurementAttribute("bio", {
+      createMeasurementAttribute("bio", "user-1", {
         label: "ratio",
         unitType: "ratio",
         granularity: "ratio",

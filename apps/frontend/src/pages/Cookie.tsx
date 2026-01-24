@@ -8,6 +8,7 @@ import { Card, CardContent, Button } from "../components/ui";
 import { useAuthStore } from "../store/auth.store";
 import { ConfirmDialog } from "../components/ConfirmDialog";
 import { revokeTerms, getLegalDocumentVersions, type LegalDocumentVersions } from "../services/api";
+import { useToast } from "../contexts/ToastContext";
 
 const contentStyle: React.CSSProperties = {
   maxWidth: "900px",
@@ -23,6 +24,7 @@ const Cookie: React.FC = () => {
   const navigate = useNavigate();
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const signOut = useAuthStore((state) => state.signOut);
+  const toast = useToast();
   const [translationsReady, setTranslationsReady] = useState(false);
   const [showRevokeConfirm, setShowRevokeConfirm] = useState(false);
   const [isRevoking, setIsRevoking] = useState(false);
@@ -39,7 +41,7 @@ const Cookie: React.FC = () => {
       console.error("Failed to revoke consent:", error);
       setIsRevoking(false);
       setShowRevokeConfirm(false);
-      // TODO: Show error toast
+      toast.error(t("cookie.revokeError") || "Failed to revoke cookie consent. Please try again.");
     }
   };
 

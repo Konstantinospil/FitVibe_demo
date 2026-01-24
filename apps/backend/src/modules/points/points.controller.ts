@@ -1,8 +1,8 @@
 import type { Request, Response } from "express";
 import { z } from "zod";
 
-import { getPointsHistory, getPointsSummary } from "./points.service.js";
-import type { PointsHistoryQuery } from "./points.types.js";
+import { getLeaderboard, getPointsHistory, getPointsSummary } from "./points.service.js";
+import type { LeaderboardQuery, PointsHistoryQuery } from "./points.types.js";
 import { getBadgeCatalog } from "./points.repository.js";
 
 const historyQuerySchema = z.object({
@@ -10,6 +10,11 @@ const historyQuerySchema = z.object({
   limit: z.coerce.number().int().positive().max(100).optional(),
   from: z.string().optional(),
   to: z.string().optional(),
+});
+
+const leaderboardQuerySchema = z.object({
+  limit: z.coerce.number().int().positive().max(100).optional(),
+  offset: z.coerce.number().int().nonnegative().optional(),
 });
 
 function requireUser(req: Request, res: Response): string | null {
@@ -56,4 +61,15 @@ export async function getBadgeCatalogHandler(_req: Request, res: Response): Prom
   const catalog = await getBadgeCatalog();
   const badges = Array.from(catalog.values());
   res.json({ badges });
+}
+
+export async function getLeaderboardHandler(req: Request, res: Response): Promise<void> {
+  const parsed = leaderboardQuerySchema.safeParse(req.query);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.flatten() });
+    return;
+  }
+
+  const leaderboard = await getLeaderboard(parsed.data as LeaderboardQuery);
+  res.json(leaderboard);
 }

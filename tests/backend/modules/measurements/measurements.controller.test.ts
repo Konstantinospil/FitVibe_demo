@@ -77,6 +77,7 @@ describe("measurements controller", () => {
 
   it("creates an attribute when payload is valid", async () => {
     const req = {
+      user: { sub: "user-1" },
       body: {
         label: "Height",
         unitType: "length",
@@ -90,7 +91,7 @@ describe("measurements controller", () => {
 
     await createBioAttribute(req, res);
 
-    expect(createMeasurementAttribute).toHaveBeenCalledWith("bio", {
+    expect(createMeasurementAttribute).toHaveBeenCalledWith("bio", "user-1", {
       key: undefined,
       label: "Height",
       description: null,
@@ -108,7 +109,7 @@ describe("measurements controller", () => {
   });
 
   it("validates attribute payloads", async () => {
-    const req = { body: { label: "" } } as Request;
+    const req = { user: { sub: "user-1" }, body: { label: "" } } as Request;
     const res = createResponse();
 
     await createBioAttribute(req, res);

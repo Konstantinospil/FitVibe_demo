@@ -1665,3 +1665,86 @@ export interface SessionInfo {
   revokedAt: string | null;
   isCurrent: boolean;
 }
+
+// Points and Badges API
+export interface PointsEventRecord {
+  id: string;
+  user_id: string;
+  source_type: string;
+  source_id: string | null;
+  algorithm_version: string | null;
+  points: number;
+  calories: number | null;
+  metadata: Record<string, unknown>;
+  awarded_at: string;
+  created_at: string;
+}
+
+export interface PointsSummary {
+  balance: number;
+  recent: PointsEventRecord[];
+}
+
+export interface PointsHistoryQuery {
+  cursor?: string;
+  limit?: number;
+  from?: string;
+  to?: string;
+}
+
+export interface PointsHistoryResult {
+  items: PointsEventRecord[];
+  nextCursor: string | null;
+}
+
+export interface BadgeCatalogEntry {
+  code: string;
+  name: string;
+  description: string;
+  category: string;
+  icon?: string | null;
+  priority: number;
+  criteria: Record<string, unknown>;
+}
+
+export async function getPointsSummary(): Promise<PointsSummary> {
+  const res = await apiClient.get<PointsSummary>("/api/v1/points");
+  return res.data;
+}
+
+export async function getPointsHistory(query?: PointsHistoryQuery): Promise<PointsHistoryResult> {
+  const res = await apiClient.get<PointsHistoryResult>("/api/v1/points/history", { params: query });
+  return res.data;
+}
+
+export async function getBadgeCatalog(): Promise<{ badges: BadgeCatalogEntry[] }> {
+  const res = await apiClient.get<{ badges: BadgeCatalogEntry[] }>("/api/v1/points/badges");
+  return res.data;
+}
+
+export interface LeaderboardEntry {
+  userId: string;
+  username: string;
+  displayName: string;
+  points: number;
+  rank: number;
+}
+
+export interface LeaderboardQuery {
+  limit?: number;
+  offset?: number;
+}
+
+export interface LeaderboardResult {
+  entries: LeaderboardEntry[];
+  total: number;
+  limit: number;
+  offset: number;
+}
+
+export async function getLeaderboard(query?: LeaderboardQuery): Promise<LeaderboardResult> {
+  const res = await apiClient.get<LeaderboardResult>("/api/v1/points/leaderboard", {
+    params: query,
+  });
+  return res.data;
+}

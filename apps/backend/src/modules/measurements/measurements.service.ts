@@ -231,8 +231,13 @@ export async function listMeasurementAttributesForUser(
 
 export async function createMeasurementAttribute(
   category: "bio" | "perf",
+  userId: string,
   input: MeasurementAttributeCreateInput,
 ): Promise<MeasurementAttribute> {
+  // Note: userId is validated but not currently stored in the database.
+  // If we need to track attribute creators, we would need to:
+  // 1. Add a migration to add created_by_user_id column to bio_attributes and perf_attributes tables
+  // 2. Update the insertAttribute repository function to accept and store userId
   const label = input.label.trim();
   if (!label) {
     throw new HttpError(400, "MEASUREMENT_LABEL_REQUIRED", "Label is required");

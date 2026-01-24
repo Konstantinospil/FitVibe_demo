@@ -15,6 +15,7 @@ import {
   type LegalDocumentVersions,
 } from "../services/api";
 import { useAuthOptional } from "../contexts/AuthContext";
+import { useToast } from "../contexts/ToastContext";
 
 // Helper function to safely get array from translation
 const getTranslationArray = <T,>(translation: unknown, fallback: T[] = []): T[] => {
@@ -29,6 +30,7 @@ const Privacy: React.FC = () => {
   const navigate = useNavigate();
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const { isInitializing } = useAuthOptional();
+  const toast = useToast();
   const [showRevokeConfirm, setShowRevokeConfirm] = useState(false);
   const [isRevoking, setIsRevoking] = useState(false);
   const [legalStatus, setLegalStatus] = useState<LegalDocumentsStatus | null>(null);
@@ -142,7 +144,9 @@ const Privacy: React.FC = () => {
       console.error("Failed to revoke consent:", error);
       setIsRevoking(false);
       setShowRevokeConfirm(false);
-      // TODO: Show error toast
+      toast.error(
+        t("privacy.revokeError") || "Failed to revoke privacy policy consent. Please try again.",
+      );
     } finally {
       setIsRevoking(false);
     }

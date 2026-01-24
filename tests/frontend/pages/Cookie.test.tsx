@@ -118,9 +118,11 @@ const buildCookie = async (options: BuildOptions = {}) => {
   });
 
   const module = await import("../../src/pages/Cookie");
+  const { ToastProvider } = await import("../../src/contexts/ToastContext");
 
   return {
     Cookie: module.default,
+    ToastProvider,
     authState,
     mockNavigate,
     revokeTerms,
@@ -137,15 +139,17 @@ describe("Cookie page", () => {
   });
 
   it("shows loading state while translations are pending", async () => {
-    const { Cookie } = await buildCookie({
+    const { Cookie, ToastProvider } = await buildCookie({
       translationsLoadingPromise: new Promise(() => {}),
       i18nTImpl: () => "cookie.title",
     });
 
     render(
-      <MemoryRouter>
-        <Cookie />
-      </MemoryRouter>,
+      <ToastProvider>
+        <MemoryRouter>
+          <Cookie />
+        </MemoryRouter>
+      </ToastProvider>,
     );
 
     expect(screen.getByRole("status")).toHaveTextContent("Loading...");
@@ -154,7 +158,7 @@ describe("Cookie page", () => {
   it("renders after polling when translations become available", async () => {
     vi.useFakeTimers();
     let calls = 0;
-    const { Cookie } = await buildCookie({
+    const { Cookie, ToastProvider } = await buildCookie({
       i18nTImpl: (key) => {
         if (key === "cookie.title") {
           calls += 1;
@@ -165,9 +169,11 @@ describe("Cookie page", () => {
     });
 
     render(
-      <MemoryRouter>
-        <Cookie />
-      </MemoryRouter>,
+      <ToastProvider>
+        <MemoryRouter>
+          <Cookie />
+        </MemoryRouter>
+      </ToastProvider>,
     );
 
     await vi.advanceTimersByTimeAsync(100);
@@ -178,14 +184,16 @@ describe("Cookie page", () => {
 
   it("renders after polling timeout when translations never load", async () => {
     vi.useFakeTimers();
-    const { Cookie } = await buildCookie({
+    const { Cookie, ToastProvider } = await buildCookie({
       i18nTImpl: () => "cookie.title",
     });
 
     render(
-      <MemoryRouter>
-        <Cookie />
-      </MemoryRouter>,
+      <ToastProvider>
+        <MemoryRouter>
+          <Cookie />
+        </MemoryRouter>
+      </ToastProvider>,
     );
 
     await vi.advanceTimersByTimeAsync(2000);
@@ -195,14 +203,16 @@ describe("Cookie page", () => {
   });
 
   it("renders effective date from API", async () => {
-    const { Cookie } = await buildCookie({
+    const { Cookie, ToastProvider } = await buildCookie({
       getLegalDocumentVersionsImpl: () => Promise.resolve({ cookie: "2024-07-01" }),
     });
 
     render(
-      <MemoryRouter>
-        <Cookie />
-      </MemoryRouter>,
+      <ToastProvider>
+        <MemoryRouter>
+          <Cookie />
+        </MemoryRouter>
+      </ToastProvider>,
     );
 
     await waitFor(() => {
@@ -212,14 +222,16 @@ describe("Cookie page", () => {
 
   it("falls back to translation date when API fails", async () => {
     const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
-    const { Cookie } = await buildCookie({
+    const { Cookie, ToastProvider } = await buildCookie({
       getLegalDocumentVersionsImpl: () => Promise.reject(new Error("fail")),
     });
 
     render(
-      <MemoryRouter>
-        <Cookie />
-      </MemoryRouter>,
+      <ToastProvider>
+        <MemoryRouter>
+          <Cookie />
+        </MemoryRouter>
+      </ToastProvider>,
     );
 
     await waitFor(() => {
@@ -230,7 +242,7 @@ describe("Cookie page", () => {
   });
 
   it("filters array translations and ignores non-arrays", async () => {
-    const { Cookie } = await buildCookie({
+    const { Cookie, ToastProvider } = await buildCookie({
       translations: {
         "cookie.section2.items": ["Essential cookies", 123, "Functional cookies"],
         "cookie.section4.items": "not-array",
@@ -238,9 +250,11 @@ describe("Cookie page", () => {
     });
 
     render(
-      <MemoryRouter>
-        <Cookie />
-      </MemoryRouter>,
+      <ToastProvider>
+        <MemoryRouter>
+          <Cookie />
+        </MemoryRouter>
+      </ToastProvider>,
     );
 
     await waitFor(() => {
@@ -254,12 +268,14 @@ describe("Cookie page", () => {
   });
 
   it("navigates to login when unauthenticated", async () => {
-    const { Cookie, mockNavigate } = await buildCookie();
+    const { Cookie, ToastProvider, mockNavigate } = await buildCookie();
 
     render(
-      <MemoryRouter>
-        <Cookie />
-      </MemoryRouter>,
+      <ToastProvider>
+        <MemoryRouter>
+          <Cookie />
+        </MemoryRouter>
+      </ToastProvider>,
     );
 
     const button = await screen.findByRole("button", { name: "Login" });
@@ -270,14 +286,16 @@ describe("Cookie page", () => {
 
   it("navigates home when authenticated and revokes consent on success", async () => {
     const signOut = vi.fn();
-    const { Cookie, mockNavigate, revokeTerms } = await buildCookie({
+    const { Cookie, ToastProvider, mockNavigate, revokeTerms } = await buildCookie({
       authState: { isAuthenticated: true, signOut },
     });
 
     render(
-      <MemoryRouter>
-        <Cookie />
-      </MemoryRouter>,
+      <ToastProvider>
+        <MemoryRouter>
+          <Cookie />
+        </MemoryRouter>
+      </ToastProvider>,
     );
 
     const homeButton = await screen.findByRole("button", { name: "Home" });
@@ -302,15 +320,17 @@ describe("Cookie page", () => {
     const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
     const revokeTerms = vi.fn().mockRejectedValue(new Error("nope"));
     const signOut = vi.fn();
-    const { Cookie, mockNavigate } = await buildCookie({
+    const { Cookie, ToastProvider, mockNavigate } = await buildCookie({
       authState: { isAuthenticated: true, signOut },
       revokeTermsImpl: revokeTerms,
     });
 
     render(
-      <MemoryRouter>
-        <Cookie />
-      </MemoryRouter>,
+      <ToastProvider>
+        <MemoryRouter>
+          <Cookie />
+        </MemoryRouter>
+      </ToastProvider>,
     );
 
     const revokeButton = await screen.findByRole("button", { name: "Revoke Consent" });

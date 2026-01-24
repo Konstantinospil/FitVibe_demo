@@ -9,6 +9,7 @@ import { pointsJobsService } from "../../jobs/services/points-jobs.service.js";
 import {
   findPointsEventBySource,
   getExercisesMetadata,
+  getLeaderboard as fetchLeaderboard,
   getPointsBalance,
   getPointsHistory as fetchPointsHistory,
   getRecentPointsEvents,
@@ -19,6 +20,8 @@ import {
 } from "./points.repository.js";
 import type {
   AwardPointsResult,
+  LeaderboardQuery,
+  LeaderboardResult,
   PointsCalculationContext,
   PointsCalculationResult,
   PointsEventRecord,
@@ -290,6 +293,24 @@ export async function getPointsHistory(
   return {
     items,
     nextCursor,
+  };
+}
+
+export async function getLeaderboard(query: LeaderboardQuery): Promise<LeaderboardResult> {
+  const limit = Math.min(query.limit ?? 50, 100); // Max 100 entries
+  const offset = query.offset ?? 0;
+
+  if (offset < 0) {
+    throw new HttpError(400, "E.POINTS.INVALID_OFFSET", "POINTS_INVALID_OFFSET");
+  }
+
+  const { entries, total } = await fetchLeaderboard(limit, offset);
+
+  return {
+    entries,
+    total,
+    limit,
+    offset,
   };
 }
 

@@ -1,5 +1,6 @@
 import type { Request, Response } from "express";
 import { z } from "zod";
+import { logger } from "../../config/logger.js";
 import {
   buildProgressReport,
   getExerciseBreakdown,
@@ -29,18 +30,30 @@ function requireUserId(req: Request, res: Response): string | null {
   return userId;
 }
 
+function normalizeError(error: unknown): Error {
+  return error instanceof Error ? error : new Error(String(error));
+}
+
 export async function summaryHandler(req: Request, res: Response): Promise<void> {
   const parsed = z.object({ period: periodEnum }).safeParse(req.query);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.flatten() });
     return;
   }
+
   const userId = requireUserId(req, res);
   if (!userId) {
-    return;
+    return; // requireUserId already sent 401 response
   }
-  const result = await getSummary(userId, parsed.data.period);
-  res.json(result);
+
+  try {
+    const result = await getSummary(userId, parsed.data.period);
+    res.json(result);
+  } catch (error) {
+    const err = normalizeError(error);
+    logger.error({ err }, "Failed to get progress summary");
+    res.status(500).json({ error: "Internal server error" });
+  }
 }
 
 export async function trendsHandler(req: Request, res: Response): Promise<void> {
@@ -54,12 +67,20 @@ export async function trendsHandler(req: Request, res: Response): Promise<void> 
     res.status(400).json({ error: parsed.error.flatten() });
     return;
   }
+
   const userId = requireUserId(req, res);
   if (!userId) {
-    return;
+    return; // requireUserId already sent 401 response
   }
-  const result = await getTrends(userId, parsed.data.period, parsed.data.group_by);
-  res.json(result);
+
+  try {
+    const result = await getTrends(userId, parsed.data.period, parsed.data.group_by);
+    res.json(result);
+  } catch (error) {
+    const err = normalizeError(error);
+    logger.error({ err }, "Failed to get progress trends");
+    res.status(500).json({ error: "Internal server error" });
+  }
 }
 
 export async function exercisesHandler(req: Request, res: Response): Promise<void> {
@@ -72,21 +93,36 @@ export async function exercisesHandler(req: Request, res: Response): Promise<voi
     res.status(400).json({ error: parsed.error.flatten() });
     return;
   }
+
   const userId = requireUserId(req, res);
   if (!userId) {
-    return;
+    return; // requireUserId already sent 401 response
   }
-  const result = await getExerciseBreakdown(userId, parsed.data.period);
-  res.json(result);
+
+  try {
+    const result = await getExerciseBreakdown(userId, parsed.data.period);
+    res.json(result);
+  } catch (error) {
+    const err = normalizeError(error);
+    logger.error({ err }, "Failed to get exercise breakdown");
+    res.status(500).json({ error: "Internal server error" });
+  }
 }
 
 export async function plansHandler(req: Request, res: Response): Promise<void> {
   const userId = requireUserId(req, res);
   if (!userId) {
-    return;
+    return; // requireUserId already sent 401 response
   }
-  const result = await getPlans(userId);
-  res.json(result);
+
+  try {
+    const result = await getPlans(userId);
+    res.json(result);
+  } catch (error) {
+    const err = normalizeError(error);
+    logger.error({ err }, "Failed to get plans");
+    res.status(500).json({ error: "Internal server error" });
+  }
 }
 
 export async function vibePointsHandler(req: Request, res: Response): Promise<void> {
@@ -95,12 +131,20 @@ export async function vibePointsHandler(req: Request, res: Response): Promise<vo
     res.status(400).json({ error: parsed.error.flatten() });
     return;
   }
+
   const userId = requireUserId(req, res);
   if (!userId) {
-    return;
+    return; // requireUserId already sent 401 response
   }
-  const result = await getVibePoints(userId, parsed.data.months);
-  res.json(result);
+
+  try {
+    const result = await getVibePoints(userId, parsed.data.months);
+    res.json(result);
+  } catch (error) {
+    const err = normalizeError(error);
+    logger.error({ err }, "Failed to get vibe points");
+    res.status(500).json({ error: "Internal server error" });
+  }
 }
 
 const exportParams = z
@@ -117,24 +161,31 @@ export async function exportHandler(req: Request, res: Response): Promise<void> 
     res.status(400).json({ error: parsed.error.flatten() });
     return;
   }
+
   const userId = requireUserId(req, res);
   if (!userId) {
-    return;
+    return; // requireUserId already sent 401 response
   }
 
-  const { period, group_by: groupBy, format } = parsed.data;
-  const report = await buildProgressReport(userId, period, groupBy);
+  try {
+    const { period, group_by: groupBy, format } = parsed.data;
+    const report = await buildProgressReport(userId, period, groupBy);
 
-  if (format === "csv") {
-    const csv = renderProgressReportCsv(report);
-    res.setHeader("Content-Type", "text/csv");
-    res.setHeader(
-      "Content-Disposition",
-      `attachment; filename="progress-report-${period}d-${groupBy}.csv"`,
-    );
-    res.send(csv);
-    return;
+    if (format === "csv") {
+      const csv = renderProgressReportCsv(report);
+      res.setHeader("Content-Type", "text/csv");
+      res.setHeader(
+        "Content-Disposition",
+        `attachment; filename="progress-report-${period}d-${groupBy}.csv"`,
+      );
+      res.send(csv);
+      return;
+    }
+
+    res.json(report);
+  } catch (error) {
+    const err = normalizeError(error);
+    logger.error({ err }, "Failed to export progress report");
+    res.status(500).json({ error: "Internal server error" });
   }
-
-  res.json(report);
 }

@@ -1,6 +1,15 @@
 import { render, screen, waitFor, cleanup } from "@testing-library/react";
 import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
 
+const mockUseSystemConfig = vi.hoisted(() =>
+  vi.fn(() => ({
+    config: {
+      maintenanceMode: false,
+      maintenanceMessage: "",
+    },
+  })),
+);
+
 // Mock Router before importing AppRouter to avoid import issues
 // We need to mock it to use BrowserRouter and handle the routes
 vi.mock("../../src/routes/Router", async () => {
@@ -19,6 +28,10 @@ vi.mock("../../src/routes/Router", async () => {
     },
   };
 });
+
+vi.mock("../../src/utils/featureFlags", () => ({
+  useSystemConfig: () => mockUseSystemConfig(),
+}));
 
 import AppRouter from "../../src/routes/AppRouter";
 
@@ -107,6 +120,10 @@ vi.mock("../../src/pages/NotFound", () => ({
   default: () => <div>Not Found Page</div>,
 }));
 
+vi.mock("../../src/pages/Maintenance", () => ({
+  default: ({ message }: { message?: string }) => <div>{message ?? "Maintenance"}</div>,
+}));
+
 // Mock QueryClient
 vi.mock("../../src/lib/queryClient", () => ({
   queryClient: {
@@ -144,6 +161,12 @@ describe("AppRouter", () => {
     mockUseAuth.mockReturnValue({
       isAuthenticated: false,
     });
+    mockUseSystemConfig.mockReturnValue({
+      config: {
+        maintenanceMode: false,
+        maintenanceMessage: "",
+      },
+    });
   });
 
   afterEach(() => {
@@ -180,6 +203,58 @@ describe("AppRouter", () => {
     await waitFor(
       () => {
         expect(screen.getByText("Protected Routes")).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
+  });
+
+  it("renders loading state while initializing on private routes", async () => {
+    mockUseAuth.mockReturnValue({
+      isAuthenticated: false,
+      isInitializing: true,
+    });
+
+    window.history.pushState({}, "", "/sessions");
+    render(<AppRouter />);
+
+    await waitFor(
+      () => {
+        expect(screen.getByText("Loading...")).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
+  });
+
+  it("renders PublicRoutes while initializing on public routes", async () => {
+    mockUseAuth.mockReturnValue({
+      isAuthenticated: false,
+      isInitializing: true,
+    });
+
+    window.history.pushState({}, "", "/login");
+    render(<AppRouter />);
+
+    await waitFor(
+      () => {
+        expect(screen.getByText("Public Routes")).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
+  });
+
+  it("renders Maintenance page when maintenance mode is enabled", async () => {
+    mockUseSystemConfig.mockReturnValue({
+      config: {
+        maintenanceMode: true,
+        maintenanceMessage: "Down for maintenance",
+      },
+    });
+
+    render(<AppRouter />);
+
+    await waitFor(
+      () => {
+        expect(screen.getByText("Down for maintenance")).toBeInTheDocument();
       },
       { timeout: 5000 },
     );

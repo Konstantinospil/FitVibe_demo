@@ -195,6 +195,7 @@
     "description": "Please read our Terms and Conditions carefully before using FitVibe.",
     "effectiveDate": "Effective Date",
     "revokeConsent": "Revoke Consent",
+    "revokeError": "Failed to revoke terms of service consent. Please try again.",
     "revokeConfirm": {
       "title": "Revoke Consent",
       "message": "Revoking your consent means you will no longer be able to use FitVibe. You will be logged out and will need to accept the Terms and Conditions again to continue using the service.",
@@ -208,6 +209,7 @@
     "description": "Learn how we collect, use, and protect your personal data.",
     "effectiveDate": "Effective date",
     "revokeConsent": "Revoke Consent",
+    "revokeError": "Failed to revoke privacy policy consent. Please try again.",
     "revokeConfirm": {
       "title": "Revoke Consent",
       "message": "Revoking your consent means you will no longer be able to use FitVibe. You will be logged out and will need to accept the Privacy Policy again to continue using the service.",

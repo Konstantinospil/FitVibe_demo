@@ -60,13 +60,19 @@ async function listAttributes(category: "bio" | "perf", req: Request, res: Respo
 }
 
 async function createAttribute(category: "bio" | "perf", req: Request, res: Response) {
+  const userId = req.user?.sub;
+  if (!userId) {
+    res.status(401).json({ error: "Unauthorized" });
+    return;
+  }
+
   const parsed = createAttributeSchema.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.flatten() });
     return;
   }
 
-  const attribute = await createMeasurementAttribute(category, {
+  const attribute = await createMeasurementAttribute(category, userId, {
     key: parsed.data.key,
     label: parsed.data.label,
     description: parsed.data.description ?? null,

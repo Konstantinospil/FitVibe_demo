@@ -7,6 +7,7 @@ import type {
   ExerciseMetadata,
   InsertPointsEvent,
   InsertBadgeAward,
+  LeaderboardEntry,
   PointsEventRecord,
   UserPointsProfile,
 } from "./points.types.js";
@@ -391,4 +392,61 @@ export async function getCompletedSessionDatesInRange(
     days.add(iso.slice(0, 10));
   }
   return days;
+}
+
+export async function getLeaderboard(
+  limit = 50,
+  offset = 0,
+  trx?: Knex.Transaction,
+): Promise<{ entries: LeaderboardEntry[]; total: number }> {
+  const exec = executor(trx);
+
+  // Get leaderboard entries with user information using Knex query builder
+  const rows = await exec("users as u")
+    .leftJoin(`${TABLE} as up`, "up.user_id", "u.id")
+    .whereNull("u.deleted_at")
+    .where("u.status", "active")
+    .groupBy("u.id", "u.username", "u.display_name")
+    .havingRaw("COALESCE(SUM(up.points), 0) > 0")
+    .select(
+      "u.id as user_id",
+      "u.username",
+      "u.display_name",
+      exec.raw("COALESCE(SUM(up.points), 0) as total_points"),
+    )
+    .orderBy("total_points", "desc")
+    .orderBy("u.username", "asc")
+    .limit(limit)
+    .offset(offset);
+
+  // Get total count of users with points
+  const totalResult = await exec("users as u")
+    .leftJoin(`${TABLE} as up`, "up.user_id", "u.id")
+    .whereNull("u.deleted_at")
+    .where("u.status", "active")
+    .groupBy("u.id")
+    .havingRaw("COALESCE(SUM(up.points), 0) > 0")
+    .countDistinct("u.id as count")
+    .first();
+
+  const total = Number(totalResult?.count ?? 0);
+
+  const entries: LeaderboardEntry[] = rows.map((row: unknown, index: number) => {
+    const r = row as {
+      user_id: string;
+      username: string;
+      display_name: string;
+      total_points: string | number;
+    };
+    return {
+      userId: r.user_id,
+      username: r.username,
+      displayName: r.display_name,
+      points:
+        typeof r.total_points === "string" ? Number(r.total_points) : Number(r.total_points ?? 0),
+      rank: offset + index + 1,
+    };
+  });
+
+  return { entries, total };
 }

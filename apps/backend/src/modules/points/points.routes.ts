@@ -6,6 +6,7 @@ import {
   getPointsHistoryHandler,
   getPointsSummaryHandler,
   getBadgeCatalogHandler,
+  getLeaderboardHandler,
 } from "./points.controller.js";
 import { rateLimit } from "../common/rateLimiter.js";
 
@@ -18,3 +19,4 @@ pointsRouter.get(
   rateLimit("badges_catalog", 60, 60),
   asyncHandler(getBadgeCatalogHandler),
 );
+pointsRouter.get("/leaderboard", asyncHandler(getLeaderboardHandler));

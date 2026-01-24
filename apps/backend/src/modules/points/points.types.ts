@@ -124,3 +124,23 @@ export interface BadgeEvaluationResult {
   badgeCode: string;
   metadata: Record<string, unknown>;
 }
+
+export interface LeaderboardEntry {
+  userId: string;
+  username: string;
+  displayName: string;
+  points: number;
+  rank: number;
+}
+
+export interface LeaderboardQuery {
+  limit?: number;
+  offset?: number;
+}
+
+export interface LeaderboardResult {
+  entries: LeaderboardEntry[];
+  total: number;
+  limit: number;
+  offset: number;
+}
