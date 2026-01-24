@@ -6,7 +6,7 @@
 import React from "react";
 import { renderToString } from "react-dom/server";
 import { QueryClientProvider, dehydrate, type QueryClient } from "@tanstack/react-query";
-import { Router } from "../routes/Router";
+import { ServerRouter } from "../routes/ServerRouter";
 import { ToastProvider } from "../contexts/ToastContext";
 import { createQueryClient } from "../lib/queryClient";
 import { readFileSync, existsSync } from "node:fs";
@@ -204,7 +204,7 @@ export async function renderPage(url: string): Promise<string> {
   const appHtml = renderToString(
     <QueryClientProvider client={queryClient}>
       <ToastProvider>
-        <Router location={url} queryClient={queryClient} dehydratedState={dehydratedState} />
+        <ServerRouter location={url} queryClient={queryClient} dehydratedState={dehydratedState} />
       </ToastProvider>
     </QueryClientProvider>,
   );

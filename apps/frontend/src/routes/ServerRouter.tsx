@@ -1,5 +1,5 @@
 import React from "react";
-import { MemoryRouter } from "react-router-dom";
+import { StaticRouter } from "react-router-dom/server";
 import {
   QueryClientProvider,
   HydrationBoundary,
@@ -8,19 +8,23 @@ import {
 } from "@tanstack/react-query";
 import ProtectedRoutes from "./ProtectedRoutes";
 
-export interface RouterProps {
+export interface ServerRouterProps {
   location: string;
   queryClient: QueryClient;
   dehydratedState?: DehydratedState;
 }
 
 /**
- * Router component for non-SSR environments (tests/client)
- * Uses MemoryRouter to avoid server-only dependencies
+ * SSR Router component for server-side rendering
+ * Uses StaticRouter for deterministic server rendering
  */
-export const Router: React.FC<RouterProps> = ({ location, queryClient, dehydratedState }) => {
+export const ServerRouter: React.FC<ServerRouterProps> = ({
+  location,
+  queryClient,
+  dehydratedState,
+}) => {
   return (
-    <MemoryRouter initialEntries={[location]}>
+    <StaticRouter location={location}>
       <QueryClientProvider client={queryClient}>
         {dehydratedState ? (
           <HydrationBoundary state={dehydratedState}>
@@ -30,6 +34,6 @@ export const Router: React.FC<RouterProps> = ({ location, queryClient, dehydrate
           <ProtectedRoutes />
         )}
       </QueryClientProvider>
-    </MemoryRouter>
+    </StaticRouter>
   );
 };
