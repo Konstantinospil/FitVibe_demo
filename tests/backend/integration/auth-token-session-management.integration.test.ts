@@ -15,7 +15,7 @@ import bcrypt from "bcryptjs";
 import app from "../../../apps/backend/src/app.js";
 import db from "../../../apps/backend/src/db/index.js";
 import { createUser } from "../../../apps/backend/src/modules/auth/auth.repository.js";
-import { truncateAll, ensureRolesSeeded } from "../../setup/test-helpers.js";
+import { truncateAll, ensureRolesSeeded, acceptLatestLegalDocs } from "../../setup/test-helpers.js";
 import { v4 as uuidv4 } from "uuid";
 import type { Cookie } from "supertest";
 import { describeWithTestDatabase } from "../../setup/db-availability.js";
@@ -54,8 +54,8 @@ describeWithTestDatabase("Integration: Token Refresh, Logout, and Session Manage
       emailVerified: true,
       terms_accepted: true,
       terms_accepted_at: now,
-      terms_version: "2024-06-01",
     });
+    await acceptLatestLegalDocs(userId);
   });
 
   afterEach(async () => {

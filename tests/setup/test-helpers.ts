@@ -21,6 +21,34 @@ export async function wait(ms: number): Promise<void> {
 }
 
 /**
+ * Mark a user as having accepted the latest terms and privacy policy versions.
+ * Keeps integration tests aligned with legal version checks.
+ */
+export async function acceptLatestLegalDocs(userId: string): Promise<void> {
+  const db = await getDb();
+  const [{ getCurrentTermsVersion }, { getCurrentPrivacyPolicyVersion }] = await Promise.all([
+    import("../../apps/backend/src/config/terms.js"),
+    import("../../apps/backend/src/config/privacy.js"),
+  ]);
+
+  const now = new Date().toISOString();
+  const [termsVersion, privacyVersion] = await Promise.all([
+    getCurrentTermsVersion(),
+    getCurrentPrivacyPolicyVersion(),
+  ]);
+
+  await db("users").where({ id: userId }).update({
+    terms_accepted: true,
+    terms_accepted_at: now,
+    terms_version: termsVersion,
+    privacy_policy_accepted: true,
+    privacy_policy_accepted_at: now,
+    privacy_policy_version: privacyVersion,
+    updated_at: now,
+  });
+}
+
+/**
  * Execute a function within a database transaction that will be rolled back.
  * Useful for integration tests to ensure test data is cleaned up.
  */

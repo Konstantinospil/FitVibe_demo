@@ -6,6 +6,7 @@ process.env.CSRF_ALLOWED_ORIGINS = process.env.CSRF_ALLOWED_ORIGINS ?? "http://l
 process.env.EMAIL_ENABLED = process.env.EMAIL_ENABLED ?? "false";
 process.env.CLAMAV_ENABLED = process.env.CLAMAV_ENABLED ?? "true";
 process.env.VAULT_ENABLED = process.env.VAULT_ENABLED ?? "false";
+process.env.TRUST_PROXY = process.env.TRUST_PROXY ?? "true";
 
 jest.setTimeout(1000 * 30);
 
@@ -13,6 +14,8 @@ jest.setTimeout(1000 * 30);
 // This is critical for stopping Prometheus metrics timers
 let stopMetricsCollectionFn: (() => void) | null = null;
 let clearRateLimitersFn: (() => void) | null = null;
+const TEST_DB_LOCK_KEY = 424242;
+let testDbLockHeld = false;
 
 // Use dynamic imports to avoid circular dependencies and ensure modules are loaded
 void import("./src/observability/metrics.js")
@@ -34,6 +37,48 @@ void import("./src/middlewares/rate-limit.js")
   .catch(() => {
     // Ignore if rate-limit can't be imported
   });
+
+async function resetRateLimiters(): Promise<void> {
+  if (clearRateLimitersFn) {
+    clearRateLimitersFn();
+    return;
+  }
+  try {
+    const { clearRateLimiters } = await import("./src/middlewares/rate-limit.js");
+    clearRateLimiters();
+  } catch {
+    // Ignore if rate-limit can't be imported
+  }
+}
+
+async function withTestDbLock(acquire: boolean): Promise<void> {
+  try {
+    const { testDatabaseAvailable } = await import("../../tests/setup/db-availability.js");
+    if (!testDatabaseAvailable || process.env.TEST_DB_SERIALIZE === "false") {
+      return;
+    }
+    const { db } = await import("./src/db/index.js");
+    if (acquire) {
+      await db.raw("SELECT pg_advisory_lock(?)", [TEST_DB_LOCK_KEY]);
+      testDbLockHeld = true;
+    } else if (testDbLockHeld) {
+      await db.raw("SELECT pg_advisory_unlock(?)", [TEST_DB_LOCK_KEY]);
+      testDbLockHeld = false;
+    }
+  } catch {
+    // Ignore if database isn't reachable for test suite
+  }
+}
+
+beforeEach(async () => {
+  await resetRateLimiters();
+  await withTestDbLock(true);
+});
+
+afterEach(async () => {
+  await withTestDbLock(false);
+  await resetRateLimiters();
+});
 
 // Global teardown to ensure all async operations complete
 afterAll(async () => {

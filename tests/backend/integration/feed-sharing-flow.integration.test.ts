@@ -19,7 +19,7 @@ import {
   createUser,
   findUserByEmail,
 } from "../../../apps/backend/src/modules/auth/auth.repository.js";
-import { truncateAll, ensureRolesSeeded } from "../../setup/test-helpers.js";
+import { truncateAll, ensureRolesSeeded, acceptLatestLegalDocs } from "../../setup/test-helpers.js";
 import { v4 as uuidv4 } from "uuid";
 import { describeWithTestDatabase } from "../../setup/db-availability.js";
 
@@ -56,7 +56,6 @@ describeWithTestDatabase("Integration: Feed Sharing → Reactions Flow", () => {
         emailVerified: true,
         terms_accepted: true,
         terms_accepted_at: now,
-        terms_version: "2024-06-01",
       });
     } catch (error) {
       throw new Error(
@@ -67,6 +66,7 @@ describeWithTestDatabase("Integration: Feed Sharing → Reactions Flow", () => {
     if (!user1Result) {
       throw new Error("Failed to create user1: createUser returned undefined");
     }
+    await acceptLatestLegalDocs(userId1);
 
     // Verify user1 exists in database before login
     const verifyUser1 = await db("users").where({ id: userId1 }).first();
@@ -148,7 +148,6 @@ describeWithTestDatabase("Integration: Feed Sharing → Reactions Flow", () => {
         emailVerified: true,
         terms_accepted: true,
         terms_accepted_at: now,
-        terms_version: "2024-06-01",
       });
     } catch (error) {
       throw new Error(
@@ -159,6 +158,7 @@ describeWithTestDatabase("Integration: Feed Sharing → Reactions Flow", () => {
     if (!user2Result) {
       throw new Error("Failed to create user2: createUser returned undefined");
     }
+    await acceptLatestLegalDocs(userId2);
 
     // Verify user2 exists in database before login
     const verifyUser2 = await db("users").where({ id: userId2 }).first();

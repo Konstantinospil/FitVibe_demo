@@ -9,8 +9,7 @@ import request from "supertest";
 import bcrypt from "bcryptjs";
 import app from "../../../apps/backend/src/app.js";
 import { createUser } from "../../../apps/backend/src/modules/auth/auth.repository.js";
-import { truncateAll, ensureRolesSeeded } from "../../setup/test-helpers.js";
-import { getCurrentTermsVersion } from "../../../apps/backend/src/config/terms.js";
+import { truncateAll, ensureRolesSeeded, acceptLatestLegalDocs } from "../../setup/test-helpers.js";
 import { v4 as uuidv4 } from "uuid";
 import { describeWithTestDatabase } from "../../setup/db-availability.js";
 
@@ -35,8 +34,9 @@ describeWithTestDatabase("Integration: Lockout Error Details", () => {
 
       // Create a valid user
       const passwordHash = await bcrypt.hash(password, 12);
+      const userId = uuidv4();
       await createUser({
-        id: uuidv4(),
+        id: userId,
         username: "lockeduser",
         display_name: "Locked User",
         locale: "en-US",
@@ -46,8 +46,10 @@ describeWithTestDatabase("Integration: Lockout Error Details", () => {
         password_hash: passwordHash,
         primaryEmail: email,
         emailVerified: true,
-        terms_version: getCurrentTermsVersion(),
+        terms_accepted: true,
+        terms_accepted_at: new Date().toISOString(),
       });
+      await acceptLatestLegalDocs(userId);
 
       // Make 5 failed attempts to trigger account lockout
       for (let i = 0; i < 5; i++) {
@@ -81,8 +83,8 @@ describeWithTestDatabase("Integration: Lockout Error Details", () => {
     it("should include structured details in AUTH_IP_LOCKED error", async () => {
       const ipAddress = "192.168.1.200";
 
-      // Make 10 failed attempts to trigger IP lockout
-      for (let i = 1; i <= 10; i++) {
+      // Make 9 failed attempts (10th will trigger IP lockout)
+      for (let i = 1; i <= 9; i++) {
         await request(app)
           .post("/api/v1/auth/login")
           .set("X-Forwarded-For", ipAddress)
@@ -92,12 +94,12 @@ describeWithTestDatabase("Integration: Lockout Error Details", () => {
           });
       }
 
-      // Next attempt should trigger IP lockout with structured details
+      // 10th attempt should trigger IP lockout with structured details
       const response = await request(app)
         .post("/api/v1/auth/login")
         .set("X-Forwarded-For", ipAddress)
         .send({
-          email: "test11@example.com",
+          email: "test10@example.com",
           password: "WrongPassword123!",
         });
 
@@ -117,12 +119,13 @@ describeWithTestDatabase("Integration: Lockout Error Details", () => {
   describe("Pre-Lockout Warning Details", () => {
     it("should include warning details in AUTH_INVALID_CREDENTIALS when approaching lockout", async () => {
       const email = "warning@example.com";
-      const ipAddress = "192.168.1.300";
+      const ipAddress = "192.168.1.130";
 
       // Create a valid user
       const passwordHash = await bcrypt.hash("ValidPassword123!", 12);
+      const userId = uuidv4();
       await createUser({
-        id: uuidv4(),
+        id: userId,
         username: "warninguser",
         display_name: "Warning User",
         locale: "en-US",
@@ -132,8 +135,10 @@ describeWithTestDatabase("Integration: Lockout Error Details", () => {
         password_hash: passwordHash,
         primaryEmail: email,
         emailVerified: true,
-        terms_version: getCurrentTermsVersion(),
+        terms_accepted: true,
+        terms_accepted_at: new Date().toISOString(),
       });
+      await acceptLatestLegalDocs(userId);
 
       // Make 2 failed attempts (3 remaining, should trigger warning)
       for (let i = 0; i < 2; i++) {
@@ -163,12 +168,13 @@ describeWithTestDatabase("Integration: Lockout Error Details", () => {
 
     it("should not include warning details when not approaching lockout", async () => {
       const email = "nowarning@example.com";
-      const ipAddress = "192.168.1.400";
+      const ipAddress = "192.168.1.140";
 
       // Create a valid user
       const passwordHash = await bcrypt.hash("ValidPassword123!", 12);
+      const userId = uuidv4();
       await createUser({
-        id: uuidv4(),
+        id: userId,
         username: "nowarninguser",
         display_name: "No Warning User",
         locale: "en-US",
@@ -178,8 +184,10 @@ describeWithTestDatabase("Integration: Lockout Error Details", () => {
         password_hash: passwordHash,
         primaryEmail: email,
         emailVerified: true,
-        terms_version: getCurrentTermsVersion(),
+        terms_accepted: true,
+        terms_accepted_at: new Date().toISOString(),
       });
+      await acceptLatestLegalDocs(userId);
 
       // Make 1 failed attempt (4 remaining, should not trigger warning)
       await request(app).post("/api/v1/auth/login").set("X-Forwarded-For", ipAddress).send({

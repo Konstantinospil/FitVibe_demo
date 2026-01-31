@@ -15,7 +15,7 @@ import request from "supertest";
 import app from "../../../apps/backend/src/app.js";
 import db from "../../../apps/backend/src/db/index.js";
 import { createUser } from "../../../apps/backend/src/modules/auth/auth.repository.js";
-import { truncateAll, ensureRolesSeeded } from "../../setup/test-helpers.js";
+import { truncateAll, ensureRolesSeeded, acceptLatestLegalDocs } from "../../setup/test-helpers.js";
 import { v4 as uuidv4 } from "uuid";
 import { describeWithTestDatabase } from "../../setup/db-availability.js";
 
@@ -52,8 +52,8 @@ describeWithTestDatabase("Integration: Resend Verification Email", () => {
       emailVerified: false,
       terms_accepted: true,
       terms_accepted_at: new Date().toISOString(),
-      terms_version: "2024-06-01",
     });
+    await acceptLatestLegalDocs(userId);
 
     // Request resend
     const response = await request(app).post("/api/v1/auth/verify/resend").send({
@@ -66,7 +66,7 @@ describeWithTestDatabase("Integration: Resend Verification Email", () => {
 
     // Verify a new token was created
     const tokens = await db("auth_tokens")
-      .where({ user_id: userId, type: "email_verification" })
+      .where({ user_id: userId, token_type: "email_verification" })
       .orderBy("created_at", "desc")
       .limit(1);
 
@@ -100,8 +100,8 @@ describeWithTestDatabase("Integration: Resend Verification Email", () => {
       emailVerified: true,
       terms_accepted: true,
       terms_accepted_at: new Date().toISOString(),
-      terms_version: "2024-06-01",
     });
+    await acceptLatestLegalDocs(userId);
 
     const response = await request(app).post("/api/v1/auth/verify/resend").send({
       email,
@@ -127,8 +127,8 @@ describeWithTestDatabase("Integration: Resend Verification Email", () => {
       emailVerified: false,
       terms_accepted: true,
       terms_accepted_at: new Date().toISOString(),
-      terms_version: "2024-06-01",
     });
+    await acceptLatestLegalDocs(userId);
 
     // Make 3 successful requests
     for (let i = 0; i < 3; i++) {
@@ -178,8 +178,8 @@ describeWithTestDatabase("Integration: Resend Verification Email", () => {
       emailVerified: false,
       terms_accepted: true,
       terms_accepted_at: new Date().toISOString(),
-      terms_version: "2024-06-01",
     });
+    await acceptLatestLegalDocs(userId);
 
     // First resend
     const response1 = await request(app).post("/api/v1/auth/verify/resend").send({
@@ -198,7 +198,7 @@ describeWithTestDatabase("Integration: Resend Verification Email", () => {
 
     // Verify both tokens exist
     const tokens = await db("auth_tokens")
-      .where({ user_id: userId, type: "email_verification" })
+      .where({ user_id: userId, token_type: "email_verification" })
       .orderBy("created_at", "desc");
 
     expect(tokens.length).toBeGreaterThanOrEqual(2);

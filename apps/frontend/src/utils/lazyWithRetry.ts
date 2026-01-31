@@ -10,7 +10,7 @@ import { lazy, type ComponentType } from "react";
  *
  * On failure: retries once, then forces a full page reload to fetch fresh assets.
  */
-export function lazyWithRetry<T extends ComponentType<unknown>>(
+export function lazyWithRetry<T extends ComponentType<object>>(
   importFn: () => Promise<{ default: T }>,
   maxRetries = 1,
 ): React.LazyExoticComponent<T> {

@@ -19,8 +19,7 @@ import {
   isIPLocked,
   resetFailedAttemptsByIP,
 } from "../../../apps/backend/src/modules/auth/bruteforce.repository.js";
-import { truncateAll, ensureRolesSeeded } from "../../setup/test-helpers.js";
-import { getCurrentTermsVersion } from "../../../apps/backend/src/config/terms.js";
+import { truncateAll, ensureRolesSeeded, acceptLatestLegalDocs } from "../../setup/test-helpers.js";
 import { v4 as uuidv4 } from "uuid";
 import { describeWithTestDatabase } from "../../setup/db-availability.js";
 
@@ -129,14 +128,15 @@ describeWithTestDatabase("Integration: IP-Based Brute Force Protection", () => {
     });
 
     it("should prevent login from locked IP even with correct credentials", async () => {
-      const ipAddress = "192.168.1.300";
+      const ipAddress = "192.168.1.130";
       const email = "valid@example.com";
       const password = "ValidPassword123!";
 
       // Create a valid user with verified email
       const passwordHash = await bcrypt.hash(password, 12);
+      const userId = uuidv4();
       await createUser({
-        id: uuidv4(),
+        id: userId,
         username: "validuser",
         display_name: "Valid User",
         locale: "en-US",
@@ -146,8 +146,10 @@ describeWithTestDatabase("Integration: IP-Based Brute Force Protection", () => {
         password_hash: passwordHash,
         primaryEmail: email,
         emailVerified: true,
-        terms_version: getCurrentTermsVersion(),
+        terms_accepted: true,
+        terms_accepted_at: new Date().toISOString(),
       });
+      await acceptLatestLegalDocs(userId);
 
       // Lock the IP by making 10 failed attempts
       for (let i = 1; i <= 10; i++) {
@@ -180,14 +182,15 @@ describeWithTestDatabase("Integration: IP-Based Brute Force Protection", () => {
 
   describe("IP Attempt Reset on Successful Login", () => {
     it("should reset IP attempts on successful login", async () => {
-      const ipAddress = "192.168.1.400";
+      const ipAddress = "192.168.1.140";
       const email = "success@example.com";
       const password = "ValidPassword123!";
 
       // Create a valid user with verified email
       const passwordHash = await bcrypt.hash(password, 12);
+      const userId = uuidv4();
       await createUser({
-        id: uuidv4(),
+        id: userId,
         username: "successuser",
         display_name: "Success User",
         locale: "en-US",
@@ -197,8 +200,10 @@ describeWithTestDatabase("Integration: IP-Based Brute Force Protection", () => {
         password_hash: passwordHash,
         primaryEmail: email,
         emailVerified: true,
-        terms_version: getCurrentTermsVersion(),
+        terms_accepted: true,
+        terms_accepted_at: new Date().toISOString(),
       });
+      await acceptLatestLegalDocs(userId);
 
       // Make some failed attempts
       for (let i = 1; i <= 3; i++) {
@@ -233,14 +238,15 @@ describeWithTestDatabase("Integration: IP-Based Brute Force Protection", () => {
     });
 
     it("should reset IP attempts even if account-level attempts exist", async () => {
-      const ipAddress = "192.168.1.500";
+      const ipAddress = "192.168.1.150";
       const email = "mixed@example.com";
       const password = "ValidPassword123!";
 
       // Create a valid user with verified email
       const passwordHash = await bcrypt.hash(password, 12);
+      const userId = uuidv4();
       await createUser({
-        id: uuidv4(),
+        id: userId,
         username: "mixeduser",
         display_name: "Mixed User",
         locale: "en-US",
@@ -250,8 +256,10 @@ describeWithTestDatabase("Integration: IP-Based Brute Force Protection", () => {
         password_hash: passwordHash,
         primaryEmail: email,
         emailVerified: true,
-        terms_version: getCurrentTermsVersion(),
+        terms_accepted: true,
+        terms_accepted_at: new Date().toISOString(),
       });
+      await acceptLatestLegalDocs(userId);
 
       // Make failed attempts with this email (creates account-level record)
       for (let i = 0; i < 2; i++) {
@@ -295,7 +303,7 @@ describeWithTestDatabase("Integration: IP-Based Brute Force Protection", () => {
 
   describe("IP Protection vs Account Protection", () => {
     it("should check IP lockout before account lockout", async () => {
-      const ipAddress = "192.168.1.600";
+      const ipAddress = "192.168.1.160";
       const email = "test@example.com";
 
       // Lock the IP first (10 attempts with different emails)
@@ -328,7 +336,7 @@ describeWithTestDatabase("Integration: IP-Based Brute Force Protection", () => {
     });
 
     it("should allow account-level lockout when IP is not locked", async () => {
-      const ipAddress = "192.168.1.700";
+      const ipAddress = "192.168.1.170";
       const email = "account@example.com";
 
       // Make 5 failed attempts with same email (triggers account-level lockout)

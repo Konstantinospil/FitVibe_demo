@@ -17,7 +17,7 @@ import bcrypt from "bcryptjs";
 import app from "../../../apps/backend/src/app.js";
 import db from "../../../apps/backend/src/db/index.js";
 import { createUser } from "../../../apps/backend/src/modules/auth/auth.repository.js";
-import { truncateAll, ensureRolesSeeded } from "../../setup/test-helpers.js";
+import { truncateAll, ensureRolesSeeded, acceptLatestLegalDocs } from "../../setup/test-helpers.js";
 import { v4 as uuidv4 } from "uuid";
 import { describeWithTestDatabase } from "../../setup/db-availability.js";
 
@@ -72,6 +72,7 @@ describeWithTestDatabase("Integration: Auth → Session Flow", () => {
 
     expect(verifyResponse.status).toBe(200);
     expect(verifyResponse.body.user.status).toBe("active");
+    await acceptLatestLegalDocs(userId as string);
 
     // Verify user can be found by email before login (same query login uses)
     // Reuse findUserByEmail from earlier import
@@ -147,12 +148,12 @@ describeWithTestDatabase("Integration: Auth → Session Flow", () => {
       emailVerified: true,
       terms_accepted: true,
       terms_accepted_at: now,
-      terms_version: "2024-06-01",
     });
 
     if (!userResult) {
       throw new Error("Failed to create user for login failure test");
     }
+    await acceptLatestLegalDocs(userId);
 
     // Verify user exists and can be found by email
     const verifyUser = await db("users").where({ id: userId }).first();
