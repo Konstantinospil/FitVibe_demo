@@ -5,6 +5,7 @@ settings:
   excludeLinksFromLockfile: false
 
 overrides:
+  fast-xml-parser: ">=5.3.4"
   diff: ^4.0.4
   lodash-es: ^4.17.23
   lodash: ^4.17.23
@@ -6682,10 +6683,10 @@ packages:
         integrity: sha512-W+KJc2dmILlPplD/H4K9l9LcAHAfPtP6BY84uVLXQ6Evcz9Lcg33Y2z1IVblT6xdY54PXYVHEv+0Wpq8Io6zkA==,
       }
 
-  fast-xml-parser@5.2.5:
+  fast-xml-parser@5.3.4:
     resolution:
       {
-        integrity: sha512-pfX9uG9Ki0yekDHx2SiuRIyFdyAr1kMIMitPvb0YBo8SUfKvia7w7FIyd/l6av85pFYRhZscS75MwMnbvY+hcQ==,
+        integrity: sha512-EFd6afGmXlCx8H8WTZHhAoDaWaGyuIBoZJ2mknrNxug+aZKjkp0a0dlars9Izl+jF+7Gu1/5f/2h68cQpe0IiA==,
       }
     hasBin: true
 
@@ -12532,13 +12533,13 @@ snapshots:
   "@aws-sdk/xml-builder@3.921.0":
     dependencies:
       "@smithy/types": 4.9.0
-      fast-xml-parser: 5.2.5
+      fast-xml-parser: 5.3.4
       tslib: 2.8.1
 
   "@aws-sdk/xml-builder@3.930.0":
     dependencies:
       "@smithy/types": 4.9.0
-      fast-xml-parser: 5.2.5
+      fast-xml-parser: 5.3.4
       tslib: 2.8.1
 
   "@aws/lambda-invoke-store@0.1.1": {}
@@ -16657,7 +16658,7 @@ snapshots:
 
   fast-safe-stringify@2.1.1: {}
 
-  fast-xml-parser@5.2.5:
+  fast-xml-parser@5.3.4:
     dependencies:
       strnum: 2.1.1
 
