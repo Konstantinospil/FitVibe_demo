@@ -217,7 +217,7 @@ jobs:
 
       - name: Backend unit tests & coverage
         timeout-minutes: 15
-        run: pnpm --filter @fitvibe/backend run test:coverage -- --maxWorkers=2
+        run: pnpm --filter @fitvibe/backend exec jest tests/backend --coverage --maxWorkers=2
 
       - name: Upload backend coverage artifact
         if: always()

@@ -247,13 +247,14 @@ const loadMinimalLoginTranslations = async () => {
   void i18n.changeLanguage("en");
 };
 
-// Load full translations after initial render
+// Load full translations after initial render.
+// Capture preferred language before minimal load so changeLanguage("en") does not overwrite localStorage.
 export const translationsLoadingPromise = Promise.resolve()
   .then(() => {
-    return loadMinimalLoginTranslations();
-  })
-  .then(() => {
     const preferredLanguage = detectLanguage();
+    return loadMinimalLoginTranslations().then(() => preferredLanguage);
+  })
+  .then((preferredLanguage) => {
     if (typeof window !== "undefined" && window.requestIdleCallback) {
       return new Promise<void>((resolve) => {
         window.requestIdleCallback(
