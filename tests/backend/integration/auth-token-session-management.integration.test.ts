@@ -9,7 +9,7 @@
  * 5. Token reuse detection
  */
 
-import { describe, it, expect, beforeEach, afterEach } from "@jest/globals";
+import { it, expect, beforeEach, afterEach } from "@jest/globals";
 import request from "supertest";
 import bcrypt from "bcryptjs";
 import app from "../../../apps/backend/src/app.js";
@@ -18,8 +18,9 @@ import { createUser } from "../../../apps/backend/src/modules/auth/auth.reposito
 import { truncateAll, ensureRolesSeeded } from "../../setup/test-helpers.js";
 import { v4 as uuidv4 } from "uuid";
 import type { Cookie } from "supertest";
+import { describeWithTestDatabase } from "../../setup/db-availability.js";
 
-describe("Integration: Token Refresh, Logout, and Session Management", () => {
+describeWithTestDatabase("Integration: Token Refresh, Logout, and Session Management", () => {
   let userId: string;
   let userEmail: string;
   let userPassword: string;

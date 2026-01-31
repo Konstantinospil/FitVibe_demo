@@ -10,7 +10,7 @@
  * Uses real database with transaction-based cleanup.
  */
 
-import { describe, it, expect, beforeEach, afterEach } from "@jest/globals";
+import { it, expect, beforeEach, afterEach } from "@jest/globals";
 import request from "supertest";
 import bcrypt from "bcryptjs";
 import app from "../../../apps/backend/src/app.js";
@@ -21,8 +21,9 @@ import {
 } from "../../../apps/backend/src/modules/auth/auth.repository.js";
 import { truncateAll, ensureRolesSeeded } from "../../setup/test-helpers.js";
 import { v4 as uuidv4 } from "uuid";
+import { describeWithTestDatabase } from "../../setup/db-availability.js";
 
-describe("Integration: Feed Sharing → Reactions Flow", () => {
+describeWithTestDatabase("Integration: Feed Sharing → Reactions Flow", () => {
   let user1: { id: string; email: string; accessToken: string };
   let user2: { id: string; email: string; accessToken: string };
 

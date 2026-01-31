@@ -12,8 +12,9 @@ import { createUser } from "../../../apps/backend/src/modules/auth/auth.reposito
 import { truncateAll, ensureRolesSeeded } from "../../setup/test-helpers.js";
 import { getCurrentTermsVersion } from "../../../apps/backend/src/config/terms.js";
 import { v4 as uuidv4 } from "uuid";
+import { describeWithTestDatabase } from "../../setup/db-availability.js";
 
-describe("Integration: Lockout Error Details", () => {
+describeWithTestDatabase("Integration: Lockout Error Details", () => {
   beforeEach(async () => {
     const { env } = await import("../../../apps/backend/src/config/env.js");
     (env as { readOnlyMode: boolean }).readOnlyMode = false;

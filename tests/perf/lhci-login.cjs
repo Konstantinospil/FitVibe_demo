@@ -5,18 +5,21 @@ const SUBMIT_SELECTOR = 'button[type="submit"]';
 function getCredentials() {
   const email = process.env.LHCI_EMAIL || process.env.LHCI_USERNAME;
   const password = process.env.LHCI_PASSWORD;
-
-  if (!email || !password) {
-    throw new Error("Missing LHCI_EMAIL (or LHCI_USERNAME) / LHCI_PASSWORD env vars.");
-  }
-
-  return { email, password };
+  return email && password ? { email, password } : null;
 }
 
 module.exports = async (browser, context) => {
   const { url } = context;
-  const { email, password } = getCredentials();
   const page = await browser.newPage();
+
+  const credentials = getCredentials();
+  if (!credentials) {
+    // No credentials: open URL without login (CI without secrets; auth routes show login page)
+    await page.goto(url, { waitUntil: "networkidle0" });
+    return page;
+  }
+
+  const { email, password } = credentials;
   const loginUrl = new URL("/login", url).toString();
 
   await page.goto(loginUrl, { waitUntil: "networkidle0" });

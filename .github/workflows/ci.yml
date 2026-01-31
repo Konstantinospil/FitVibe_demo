@@ -637,6 +637,9 @@ jobs:
         timeout-minutes: 10
         env:
           LHCI_PORT: "4173"
+          # Optional: set LHCI_EMAIL and LHCI_PASSWORD (or LHCI_USERNAME) in repo secrets to audit authenticated routes
+          LHCI_EMAIL: ${{ secrets.LHCI_EMAIL }}
+          LHCI_PASSWORD: ${{ secrets.LHCI_PASSWORD }}
         run: |
           export CHROME_PATH="$(node -e "const { chromium } = require('@playwright/test'); console.log(chromium.executablePath())")"
           pnpm exec lhci autorun --config=tests/perf/lighthouserc.ci.json --exit-on-error

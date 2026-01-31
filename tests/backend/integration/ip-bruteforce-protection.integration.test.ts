@@ -8,7 +8,7 @@
  * 4. Integration with account-level protection
  */
 
-import { describe, it, expect, beforeEach, afterEach } from "@jest/globals";
+import { it, expect, beforeEach, afterEach } from "@jest/globals";
 import request from "supertest";
 import bcrypt from "bcryptjs";
 import app from "../../../apps/backend/src/app.js";
@@ -22,8 +22,9 @@ import {
 import { truncateAll, ensureRolesSeeded } from "../../setup/test-helpers.js";
 import { getCurrentTermsVersion } from "../../../apps/backend/src/config/terms.js";
 import { v4 as uuidv4 } from "uuid";
+import { describeWithTestDatabase } from "../../setup/db-availability.js";
 
-describe("Integration: IP-Based Brute Force Protection", () => {
+describeWithTestDatabase("Integration: IP-Based Brute Force Protection", () => {
   beforeEach(async () => {
     // Ensure read-only mode is disabled for tests
     const { env } = await import("../../../apps/backend/src/config/env.js");

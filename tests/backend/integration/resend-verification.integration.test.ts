@@ -10,15 +10,16 @@
  * 6. Invalid email format validation
  */
 
-import { describe, it, expect, beforeEach, afterEach } from "@jest/globals";
+import { it, expect, beforeEach, afterEach } from "@jest/globals";
 import request from "supertest";
 import app from "../../../apps/backend/src/app.js";
 import db from "../../../apps/backend/src/db/index.js";
 import { createUser } from "../../../apps/backend/src/modules/auth/auth.repository.js";
 import { truncateAll, ensureRolesSeeded } from "../../setup/test-helpers.js";
 import { v4 as uuidv4 } from "uuid";
+import { describeWithTestDatabase } from "../../setup/db-availability.js";
 
-describe("Integration: Resend Verification Email", () => {
+describeWithTestDatabase("Integration: Resend Verification Email", () => {
   beforeEach(async () => {
     // Ensure read-only mode is disabled for tests
     const { env } = await import("../../../apps/backend/src/config/env.js");
