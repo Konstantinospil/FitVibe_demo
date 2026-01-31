@@ -52,9 +52,14 @@ module.exports = {
     "\\.integration\\.test\\.ts$",
     "verification-resend-limit\\.test\\.ts$",
     "login-enumeration\\.test\\.ts$",
-    "migrations/migrations\\.test\\.ts",
-    "seeds/seeds\\.test\\.ts",
-    "db/utils/scripts\\.test\\.ts",
+    // Omit DB test patterns when RUN_DB_TESTS=1 so CI can run them in the database_tests job
+    ...(process.env.RUN_DB_TESTS === "1"
+      ? []
+      : [
+          "migrations/migrations\\.test\\.ts",
+          "seeds/seeds\\.test\\.ts",
+          "db/utils/scripts\\.test\\.ts",
+        ]),
   ],
   clearMocks: true,
   // Enable forceExit in CI to prevent timeout issues

@@ -304,6 +304,10 @@ export const ensurePrivateTranslationsLoaded = async () => {
 
 if (typeof window !== "undefined" && window.localStorage) {
   i18n.on("languageChanged", (lng) => {
+    // Guard for SSR/test teardown: callback may run after window is gone
+    if (typeof window === "undefined" || !window.localStorage) {
+      return;
+    }
     window.localStorage.setItem("fitvibe:language", lng);
     // Clear translation cache when language changes to force fresh load
     const cacheKey = `${TRANSLATIONS_CACHE_KEY}:${lng}`;

@@ -415,11 +415,15 @@ jobs:
 
       - name: Run database migration tests
         timeout-minutes: 10
+        env:
+          RUN_DB_TESTS: "1"
         run: |
           pnpm --filter @fitvibe/backend exec jest migrations/migrations.test.ts --maxWorkers=1 --forceExit
 
       - name: Run database seed tests
         timeout-minutes: 10
+        env:
+          RUN_DB_TESTS: "1"
         run: |
           pnpm --filter @fitvibe/backend exec jest seeds/seeds.test.ts --maxWorkers=1 --forceExit
 
