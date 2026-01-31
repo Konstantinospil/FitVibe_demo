@@ -1,11 +1,13 @@
-import React, { Suspense, lazy } from "react";
+import React, { Suspense } from "react";
 import { BrowserRouter, useLocation } from "react-router-dom";
 import * as AuthContext from "../contexts/AuthContext";
 import { ErrorBoundary } from "../components/ErrorBoundary.js";
 import PublicRoutes from "./PublicRoutes";
 import Maintenance from "../pages/Maintenance";
 import { useSystemConfig } from "../utils/featureFlags";
-const ProtectedRoutes = lazy(() => import("./ProtectedRoutes"));
+import { lazyWithRetry } from "../utils/lazyWithRetry";
+
+const ProtectedRoutes = lazyWithRetry(() => import("./ProtectedRoutes"));
 
 const loadingFallback = (
   <div
