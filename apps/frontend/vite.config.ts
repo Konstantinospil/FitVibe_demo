@@ -136,7 +136,7 @@ export default defineConfig(() => {
       coverage: {
         provider: "istanbul" as const,
         reporter: ["text", "html", "json", "json-summary"],
-        reportsDirectory: "./coverage",
+        reportsDirectory: pathResolve(root, "coverage"),
         include: ["src/**/*.{ts,tsx}"],
         exclude: [...(configDefaults.coverage.exclude || []), "src/main.tsx"],
       },

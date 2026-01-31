@@ -222,7 +222,7 @@ jobs:
 
       - name: Backend unit tests & coverage
         timeout-minutes: 15
-        run: pnpm --filter @fitvibe/backend test -- --coverage --maxWorkers=2 --testPathIgnorePatterns="migrations/migrations\\.test\\.ts|seeds/seeds\\.test\\.ts|.*\\.integration\\.test\\.ts$|src/db/utils/__tests__/scripts\\.test\\.ts"
+        run: pnpm --filter @fitvibe/backend run test:coverage -- --maxWorkers=2 --testPathIgnorePatterns="migrations/migrations\\.test\\.ts|seeds/seeds\\.test\\.ts|.*\\.integration\\.test\\.ts$|src/db/utils/__tests__/scripts\\.test\\.ts"
 
       - name: Upload backend coverage artifact
         if: always()
@@ -510,6 +510,26 @@ jobs:
           name: frontend-coverage-${{ github.run_id }}
           path: apps/frontend/coverage
           if-no-files-found: ignore
+
+      - name: Verify coverage artifacts
+        run: |
+          BACKEND_OK=false
+          FRONTEND_OK=false
+          if test -f apps/backend/coverage/coverage-final.json || test -f apps/backend/coverage/coverage-summary.json; then
+            BACKEND_OK=true
+          fi
+          if test -f apps/frontend/coverage/coverage-final.json || test -f apps/frontend/coverage/coverage-summary.json; then
+            FRONTEND_OK=true
+          fi
+          if [ "$BACKEND_OK" = false ] && [ "$FRONTEND_OK" = false ]; then
+            echo "::error::No coverage files found. Backend: apps/backend/coverage (backend-coverage-${{ github.run_id }}). Frontend: apps/frontend/coverage (frontend-coverage-${{ github.run_id }}). Ensure backend_tests and frontend_tests run with --coverage and upload artifacts."
+            echo "Backend coverage dir contents:"
+            ls -la apps/backend/coverage 2>/dev/null || echo "(dir missing or empty)"
+            echo "Frontend coverage dir contents:"
+            ls -la apps/frontend/coverage 2>/dev/null || echo "(dir missing or empty)"
+            exit 1
+          fi
+          echo "Coverage artifacts present: backend=$BACKEND_OK frontend=$FRONTEND_OK"
 
       - name: Aggregate coverage files
         timeout-minutes: 5

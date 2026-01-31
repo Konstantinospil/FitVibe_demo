@@ -1,6 +1,14 @@
 {
   "ci": {
     "collect": {
+      "puppeteerLaunchOptions": {
+        "args": [
+          "--no-sandbox",
+          "--disable-setuid-sandbox",
+          "--disable-dev-shm-usage",
+          "--disable-gpu"
+        ]
+      },
       "url": [
         "http://127.0.0.1:4173/",
         "http://127.0.0.1:4173/profile",

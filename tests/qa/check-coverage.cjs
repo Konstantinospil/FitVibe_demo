@@ -48,17 +48,22 @@ function collectCoverageDirs(rootDir) {
         const hasFinal = fs.existsSync(finalPath);
 
         if (hasSummary || hasFinal) {
-          // Check file modification time (skip if older than 24 hours)
-          const coverageFile = hasSummary ? summaryPath : finalPath;
-          const stats = fs.statSync(coverageFile);
-          const ageHours = (Date.now() - stats.mtimeMs) / (1000 * 60 * 60);
-
-          if (ageHours < 24) {
+          // In CI, skip staleness check (artifacts may have preserved or shifted mtime)
+          if (process.env.CI === "true") {
             dirs.push(coveragePath);
           } else {
-            console.warn(
-              `Skipping stale coverage: ${coveragePath} (last updated ${ageHours.toFixed(1)} hours ago)`,
-            );
+            // Check file modification time (skip if older than 24 hours)
+            const coverageFile = hasSummary ? summaryPath : finalPath;
+            const stats = fs.statSync(coverageFile);
+            const ageHours = (Date.now() - stats.mtimeMs) / (1000 * 60 * 60);
+
+            if (ageHours < 24) {
+              dirs.push(coveragePath);
+            } else {
+              console.warn(
+                `Skipping stale coverage: ${coveragePath} (last updated ${ageHours.toFixed(1)} hours ago)`,
+              );
+            }
           }
         }
       }

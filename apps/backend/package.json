@@ -11,6 +11,7 @@
     "lint": "eslint \"src\" \"../../tests/backend\" --max-warnings=0",
     "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.test.json",
     "test": "jest --passWithNoTests",
+    "test:coverage": "jest --passWithNoTests --coverage",
     "openapi:build": "node scripts/generate-openapi.mjs",
     "db:retention": "tsx src/db/scripts/run-retention.ts",
     "db:rotate-secrets": "tsx src/db/scripts/rotate-secrets.ts",

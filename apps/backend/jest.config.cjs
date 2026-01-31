@@ -1,3 +1,4 @@
+const path = require("node:path");
 const baseConfig = require("../../jest.config.cjs");
 
 module.exports = {
@@ -34,7 +35,7 @@ module.exports = {
     "!<rootDir>/src/jobs/services/queue.service.ts",
     "!<rootDir>/src/modules/auth/two-factor.controller.ts",
   ],
-  coverageDirectory: "<rootDir>/coverage",
+  coverageDirectory: path.resolve(__dirname, "coverage"),
   coverageReporters: ["json", "json-summary", "lcov", "text"],
   coveragePathIgnorePatterns: [
     "/node_modules/",
