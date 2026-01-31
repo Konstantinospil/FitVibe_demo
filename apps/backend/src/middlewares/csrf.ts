@@ -143,11 +143,6 @@ export function csrfProtection(req: Request, res: Response, next: NextFunction) 
     return next();
   }
 
-  // In test, skip token validation so integration tests (supertest) can run without CSRF tokens
-  if (env.NODE_ENV === "test") {
-    return next();
-  }
-
   const secret = ensureSecret(csrfReq, res);
   const token = extractToken(req);
   if (!token || !tokens.verify(secret, token)) {
