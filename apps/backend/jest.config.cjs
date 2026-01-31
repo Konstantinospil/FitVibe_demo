@@ -52,6 +52,9 @@ module.exports = {
     "\\.integration\\.test\\.ts$",
     "verification-resend-limit\\.test\\.ts$",
     "login-enumeration\\.test\\.ts$",
+    "migrations/migrations\\.test\\.ts",
+    "seeds/seeds\\.test\\.ts",
+    "db/utils/scripts\\.test\\.ts",
   ],
   clearMocks: true,
   // Enable forceExit in CI to prevent timeout issues

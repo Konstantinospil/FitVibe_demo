@@ -11,6 +11,7 @@ import app from "../../../apps/backend/src/app.js";
 import { createUser } from "../../../apps/backend/src/modules/auth/auth.repository.js";
 import { truncateAll, ensureRolesSeeded } from "../../setup/test-helpers.js";
 import { getCurrentTermsVersion } from "../../../apps/backend/src/config/terms.js";
+import { v4 as uuidv4 } from "uuid";
 
 describe("Integration: Lockout Error Details", () => {
   beforeEach(async () => {
@@ -34,7 +35,7 @@ describe("Integration: Lockout Error Details", () => {
       // Create a valid user
       const passwordHash = await bcrypt.hash(password, 12);
       await createUser({
-        id: "user-locked",
+        id: uuidv4(),
         username: "lockeduser",
         display_name: "Locked User",
         locale: "en-US",
@@ -120,7 +121,7 @@ describe("Integration: Lockout Error Details", () => {
       // Create a valid user
       const passwordHash = await bcrypt.hash("ValidPassword123!", 12);
       await createUser({
-        id: "user-warning",
+        id: uuidv4(),
         username: "warninguser",
         display_name: "Warning User",
         locale: "en-US",
@@ -166,7 +167,7 @@ describe("Integration: Lockout Error Details", () => {
       // Create a valid user
       const passwordHash = await bcrypt.hash("ValidPassword123!", 12);
       await createUser({
-        id: "user-nowarning",
+        id: uuidv4(),
         username: "nowarninguser",
         display_name: "No Warning User",
         locale: "en-US",

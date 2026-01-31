@@ -21,6 +21,7 @@ import {
 } from "../../../apps/backend/src/modules/auth/bruteforce.repository.js";
 import { truncateAll, ensureRolesSeeded } from "../../setup/test-helpers.js";
 import { getCurrentTermsVersion } from "../../../apps/backend/src/config/terms.js";
+import { v4 as uuidv4 } from "uuid";
 
 describe("Integration: IP-Based Brute Force Protection", () => {
   beforeEach(async () => {
@@ -134,7 +135,7 @@ describe("Integration: IP-Based Brute Force Protection", () => {
       // Create a valid user with verified email
       const passwordHash = await bcrypt.hash(password, 12);
       await createUser({
-        id: "user-valid",
+        id: uuidv4(),
         username: "validuser",
         display_name: "Valid User",
         locale: "en-US",
@@ -185,7 +186,7 @@ describe("Integration: IP-Based Brute Force Protection", () => {
       // Create a valid user with verified email
       const passwordHash = await bcrypt.hash(password, 12);
       await createUser({
-        id: "user-success",
+        id: uuidv4(),
         username: "successuser",
         display_name: "Success User",
         locale: "en-US",
@@ -238,7 +239,7 @@ describe("Integration: IP-Based Brute Force Protection", () => {
       // Create a valid user with verified email
       const passwordHash = await bcrypt.hash(password, 12);
       await createUser({
-        id: "user-mixed",
+        id: uuidv4(),
         username: "mixeduser",
         display_name: "Mixed User",
         locale: "en-US",
