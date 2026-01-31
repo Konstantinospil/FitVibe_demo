@@ -12,7 +12,9 @@
     "you": "Εσείς",
     "activeSession": "Ενεργή συνεδρία",
     "skipToContent": "Μετάβαση στο κύριο περιεχόμενο",
-    "breadcrumb": "Πλοήγηση breadcrumb"
+    "breadcrumb": "Πλοήγηση breadcrumb",
+    "sidebar": "Κύρια πλοήγηση",
+    "closeSidebar": "Κλείσιμο πλευρικής μπάρας"
   },
   "language": {
     "label": "Γλώσσα",

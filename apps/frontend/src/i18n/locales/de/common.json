@@ -12,7 +12,9 @@
     "you": "Du",
     "activeSession": "Aktive Einheit",
     "skipToContent": "Zum Hauptinhalt springen",
-    "breadcrumb": "Brotkrümmelnavigation"
+    "breadcrumb": "Brotkrümmelnavigation",
+    "sidebar": "Hauptnavigation",
+    "closeSidebar": "Seitenleiste schließen"
   },
   "language": {
     "label": "Sprache",

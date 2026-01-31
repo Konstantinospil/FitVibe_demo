@@ -19,7 +19,8 @@ const CSRF_COOKIE_VERSION = "v1";
 
 type CsrfRequest = Request & {
   csrfToken?: () => string;
-  _csrfSecret?: string;
+  /** Cached encrypted cookie payload only; decrypted secret is never stored on the request. */
+  _csrfEncryptedPayload?: string | null;
 };
 
 function encryptSecret(secret: string): string {
@@ -54,8 +55,15 @@ function decryptSecret(payload: string): string | null {
 }
 
 function ensureSecret(req: CsrfRequest, res: Response): string {
-  if (req._csrfSecret) {
-    return req._csrfSecret;
+  // Use cached encrypted payload so we don't re-read cookies; decrypt on each call so the
+  // plaintext secret is never stored on the request (CodeQL: clear-text storage of sensitive data).
+  const cachedEncrypted = req._csrfEncryptedPayload;
+  if (cachedEncrypted !== undefined) {
+    const secret = cachedEncrypted ? decryptSecret(cachedEncrypted) : null;
+    if (secret) {
+      return secret;
+    }
+    // Cached payload was invalid; fall through to re-read cookie or generate new secret.
   }
 
   const rawCookie =
@@ -67,27 +75,33 @@ function ensureSecret(req: CsrfRequest, res: Response): string {
     // SECURITY: Double-submit cookie pattern for CSRF protection
     // The secret is stored encrypted in an HttpOnly cookie (not accessible to JavaScript),
     // sent only over HTTPS in production (secure flag), and uses SameSite to prevent CSRF.
-    res.cookie(CSRF_COOKIE_NAME, encryptSecret(secret), {
+    const encrypted = encryptSecret(secret);
+    res.cookie(CSRF_COOKIE_NAME, encrypted, {
       httpOnly: true, // Prevents JavaScript access (XSS protection)
       sameSite: "lax", // CSRF protection
       secure: env.isProduction, // HTTPS-only in production
       path: "/",
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     });
+    Object.defineProperty(req, "_csrfEncryptedPayload", {
+      value: encrypted,
+      enumerable: false,
+      configurable: false,
+    });
+  } else {
+    Object.defineProperty(req, "_csrfEncryptedPayload", {
+      value: rawCookie,
+      enumerable: false,
+      configurable: false,
+    });
   }
-
-  Object.defineProperty(req, "_csrfSecret", {
-    value: secret,
-    enumerable: false,
-    configurable: false,
-  });
 
   if (typeof req.csrfToken !== "function") {
     Object.defineProperty(req, "csrfToken", {
       enumerable: false,
       configurable: true,
       writable: true,
-      value: () => tokens.create(secret),
+      value: () => tokens.create(ensureSecret(req, res)),
     });
   }
 

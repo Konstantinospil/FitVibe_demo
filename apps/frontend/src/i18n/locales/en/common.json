@@ -12,7 +12,9 @@
     "you": "You",
     "activeSession": "Active session",
     "skipToContent": "Skip to main content",
-    "breadcrumb": "Breadcrumb navigation"
+    "breadcrumb": "Breadcrumb navigation",
+    "sidebar": "Main navigation",
+    "closeSidebar": "Close sidebar"
   },
   "language": {
     "label": "Language",

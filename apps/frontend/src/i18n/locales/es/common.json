@@ -12,7 +12,9 @@
     "you": "Tú",
     "activeSession": "Sesión activa",
     "skipToContent": "Saltar al contenido principal",
-    "breadcrumb": "Navegación de migas de pan"
+    "breadcrumb": "Navegación de migas de pan",
+    "sidebar": "Navegación principal",
+    "closeSidebar": "Cerrar barra lateral"
   },
   "language": {
     "label": "Idioma",

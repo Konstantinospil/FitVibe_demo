@@ -63,7 +63,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ items, isOpen, onClose, logo }
           transition: "transform 150ms ease",
         }}
         role="navigation"
-        aria-label={t("navigation.sidebar") || "Main navigation"}
+        aria-label={t("navigation.sidebar")}
       >
         {/* Header */}
         <div
@@ -78,7 +78,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ items, isOpen, onClose, logo }
             variant="ghost"
             size="sm"
             onClick={onClose}
-            aria-label={t("navigation.closeSidebar") || "Close sidebar"}
+            aria-label={t("navigation.closeSidebar")}
             leftIcon={<X size={20} />}
           />
         </div>

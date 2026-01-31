@@ -12,7 +12,9 @@
     "you": "Vous",
     "activeSession": "Séance active",
     "skipToContent": "Aller au contenu principal",
-    "breadcrumb": "Navigation fil d'Ariane"
+    "breadcrumb": "Navigation fil d'Ariane",
+    "sidebar": "Navigation principale",
+    "closeSidebar": "Fermer la barre latérale"
   },
   "language": {
     "label": "Langue",
