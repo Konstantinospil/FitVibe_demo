@@ -35,6 +35,7 @@ module.exports = {
     "!<rootDir>/src/modules/auth/two-factor.controller.ts",
   ],
   coverageDirectory: "<rootDir>/coverage",
+  coverageReporters: ["json", "json-summary", "lcov", "text"],
   coveragePathIgnorePatterns: [
     "/node_modules/",
     "<rootDir>/src/config/logger.ts",

@@ -195,6 +195,7 @@
     "description": "Veuillez lire attentivement nos Conditions générales avant d'utiliser FitVibe.",
     "effectiveDate": "Date d'entrée en vigueur",
     "revokeConsent": "Révoquer le consentement",
+    "revokeError": "Échec de la révocation du consentement aux Conditions générales. Veuillez réessayer.",
     "revokeConfirm": {
       "title": "Révoquer le consentement",
       "message": "Révoquer votre consentement signifie que vous ne pourrez plus utiliser FitVibe. Vous serez déconnecté et devrez accepter à nouveau les Conditions générales pour continuer à utiliser le service.",
@@ -208,6 +209,7 @@
     "description": "Découvrez comment nous collectons, utilisons et protégeons vos données personnelles.",
     "effectiveDate": "Date d'entrée en vigueur",
     "revokeConsent": "Révoquer le consentement",
+    "revokeError": "Échec de la révocation du consentement à la Politique de confidentialité. Veuillez réessayer.",
     "revokeConfirm": {
       "title": "Révoquer le consentement",
       "message": "Révoquer votre consentement signifie que vous ne pourrez plus utiliser FitVibe. Vous serez déconnecté et devrez accepter à nouveau la Politique de confidentialité pour continuer à utiliser le service.",

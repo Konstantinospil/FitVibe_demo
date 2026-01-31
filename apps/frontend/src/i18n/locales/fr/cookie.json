@@ -76,6 +76,7 @@
     "content": "Les questions concernant cette Politique relative aux cookies peuvent être envoyées à kpilpilidis@gmail.com."
   },
   "revokeConsent": "Révoquer le consentement",
+  "revokeError": "Échec de la révocation du consentement aux cookies. Veuillez réessayer.",
   "revokeConfirm": {
     "title": "Révoquer le consentement",
     "message": "Révoquer votre consentement signifie que vous ne pourrez plus utiliser FitVibe. Vous serez déconnecté et devrez accepter à nouveau les conditions générales et la politique de confidentialité pour continuer à utiliser le service.",

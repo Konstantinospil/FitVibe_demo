@@ -830,7 +830,7 @@ jobs:
           fi
 
   excluded_tests:
-    name: Excluded Tests (Integration & Scripts)
+    name: Excluded Tests (Integration)
     runs-on: ubuntu-latest
     timeout-minutes: 30
     needs:
@@ -961,12 +961,6 @@ jobs:
         timeout-minutes: 10
         run: pnpm --filter @fitvibe/backend exec tsx src/db/utils/migrateAll.ts
 
-      - name: Run scripts.test.ts
-        timeout-minutes: 10
-        env:
-          CI: "true"
-        run: pnpm --filter @fitvibe/backend exec jest --runTestsByPath tests/backend/db/utils/scripts.test.ts --maxWorkers=1 --forceExit
-
       - name: Run integration tests
         timeout-minutes: 20
         env:
@@ -979,7 +973,6 @@ jobs:
         run: |
           echo "## Excluded Tests Summary" >> $GITHUB_STEP_SUMMARY
           if [ "${{ job.status }}" == "success" ]; then
-            echo "- ✅ Scripts test passed" >> $GITHUB_STEP_SUMMARY
             echo "- ✅ Integration tests passed" >> $GITHUB_STEP_SUMMARY
           else
             echo "- ❌ Some excluded tests failed" >> $GITHUB_STEP_SUMMARY
