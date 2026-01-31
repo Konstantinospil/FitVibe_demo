@@ -4,6 +4,7 @@ import * as authService from "../../../../apps/backend/src/modules/auth/auth.ser
 import type { JwtPayload } from "../../../../apps/backend/src/modules/auth/auth.types.js";
 import { HttpError } from "../../../../apps/backend/src/utils/http.js";
 import { env } from "../../../../apps/backend/src/config/env.js";
+import { getTestValidPassword, getTestNewPassword } from "../../test-helpers/test-passwords.js";
 
 // Mock dependencies
 jest.mock("../../../../apps/backend/src/modules/auth/auth.service.js");
@@ -89,7 +90,7 @@ describe("Auth Controller", () => {
       const registerData = {
         email: "test@example.com",
         username: "testuser",
-        password: "SecureP@ssw0rd123",
+        password: getTestValidPassword(),
         terms_accepted: true,
       };
 
@@ -127,7 +128,7 @@ describe("Auth Controller", () => {
       const registerData = {
         email: "test@example.com",
         username: "testuser",
-        password: "SecureP@ssw0rd123",
+        password: getTestValidPassword(),
         terms_accepted: true,
       };
       mockRequest.body = registerData;
@@ -159,7 +160,7 @@ describe("Auth Controller", () => {
       const registerData = {
         email: "test@example.com",
         username: "testuser",
-        password: "SecureP@ssw0rd123",
+        password: getTestValidPassword(),
         terms_accepted: true,
       };
       mockRequest.body = registerData;
@@ -184,7 +185,7 @@ describe("Auth Controller", () => {
     it("should login user, set cookies, and return user session info", async () => {
       const loginData = {
         email: "test@example.com",
-        password: "SecureP@ssw0rd123",
+        password: getTestValidPassword(),
       };
 
       mockRequest.body = loginData;
@@ -578,9 +579,10 @@ describe("Auth Controller", () => {
 
   describe("resetPassword", () => {
     it("should reset password with valid token", async () => {
+      const newPassword = getTestNewPassword();
       mockRequest.body = {
         token: "valid-reset-token",
-        newPassword: "NewP@ssw0rd123",
+        newPassword,
       };
 
       mockAuthService.resetPassword.mockResolvedValue();
@@ -591,10 +593,7 @@ describe("Auth Controller", () => {
         mockNext,
       );
 
-      expect(mockAuthService.resetPassword).toHaveBeenCalledWith(
-        "valid-reset-token",
-        "NewP@ssw0rd123",
-      );
+      expect(mockAuthService.resetPassword).toHaveBeenCalledWith("valid-reset-token", newPassword);
       expect(mockResponse.clearCookie).toHaveBeenCalledTimes(2);
       expect(mockResponse.status).toHaveBeenCalledWith(204);
       expect(mockResponse.send).toHaveBeenCalled();

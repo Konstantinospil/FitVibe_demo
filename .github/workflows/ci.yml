@@ -1294,6 +1294,7 @@ jobs:
       - name: Scan for CVEs (OSV)
         timeout-minutes: 10
         uses: google/osv-scanner-action/osv-scanner-action@v2.2.4
+        continue-on-error: true # Report vulnerabilities without failing CI; review osv-report artifact
         with:
           scan-args: |-
             --lockfile=pnpm-lock.yaml

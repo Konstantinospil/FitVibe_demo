@@ -92,7 +92,7 @@ async function loadTranslationsFromJSON(lng: SupportedLanguage): Promise<Record<
  * Get cached translations from localStorage
  */
 function getCachedTranslations(lng: SupportedLanguage): CachedTranslations | null {
-  if (typeof window === "undefined") {
+  if (typeof window === "undefined" || !window.localStorage) {
     return null;
   }
 
@@ -122,7 +122,7 @@ function getCachedTranslations(lng: SupportedLanguage): CachedTranslations | nul
  * Cache translations in localStorage
  */
 function cacheTranslations(lng: SupportedLanguage, data: Record<string, unknown>): void {
-  if (typeof window === "undefined") {
+  if (typeof window === "undefined" || !window.localStorage) {
     return;
   }
 
@@ -207,7 +207,7 @@ async function loadLanguage(lng: SupportedLanguage): Promise<void> {
 }
 
 const detectLanguage = (): SupportedLanguage => {
-  if (typeof window === "undefined") {
+  if (typeof window === "undefined" || !window.localStorage) {
     return FALLBACK_LANGUAGE;
   }
 
@@ -302,7 +302,7 @@ export const ensurePrivateTranslationsLoaded = async () => {
   return Promise.resolve();
 };
 
-if (typeof window !== "undefined") {
+if (typeof window !== "undefined" && window.localStorage) {
   i18n.on("languageChanged", (lng) => {
     window.localStorage.setItem("fitvibe:language", lng);
     // Clear translation cache when language changes to force fresh load

@@ -10,10 +10,10 @@ Admin panel for managing FitVibe application settings, translations, user messag
 pnpm install
 ```
 
-2. Create the admin user:
+2. Create the admin user (from repo root, with `.env` containing `ADMIN_USERNAME`, `ADMIN_PASSWORD`, and `ADMIN_EMAIL`):
 
 ```bash
-node ../../scripts/create-admin-user.mjs
+pnpm --filter @fitvibe/backend exec tsx scripts/create-admin-user.ts
 ```
 
 3. Start the development server:
@@ -26,9 +26,7 @@ The backoffice will be available at `http://localhost:5174`
 
 ## Admin Credentials
 
-- **Username**: administrator1
-- **Password**: paS123
-- **Email**: admin@fitvibe.local
+Set `ADMIN_USERNAME`, `ADMIN_PASSWORD`, and `ADMIN_EMAIL` in your `.env` before running the create-admin-user script. See `.env.example` for the expected variable names.
 
 ## Features
 

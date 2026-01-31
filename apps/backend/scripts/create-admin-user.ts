@@ -4,22 +4,29 @@
  *
  * Usage: pnpm --filter @fitvibe/backend exec tsx scripts/create-admin-user.ts
  *
- * This script creates a user with:
- * - Username: administrator1
- * - Password: paS123
- * - Role: admin
- * - Status: active
+ * Requires environment variables (set in .env or shell):
+ * - ADMIN_USERNAME: Admin login username
+ * - ADMIN_PASSWORD: Admin password
+ * - ADMIN_EMAIL: Admin email address
  *
- * NOTE: This script is NOT committed to git (in .gitignore)
+ * Creates a user with role: admin, status: active
  */
+
+import * as dotenv from "dotenv";
+dotenv.config();
 
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
 import { db } from "../src/db/connection.js";
 
-const ADMIN_USERNAME = "administrator1";
-const ADMIN_PASSWORD = "paS123";
-const ADMIN_EMAIL = "admin@fitvibe.local";
+const ADMIN_USERNAME = process.env.ADMIN_USERNAME;
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL;
+
+if (!ADMIN_USERNAME || !ADMIN_PASSWORD || !ADMIN_EMAIL) {
+  console.error("❌ Missing required environment variables. See script header for required vars.");
+  process.exit(1);
+}
 const ADMIN_DISPLAY_NAME = "Administrator";
 const ADMIN_ROLE = "admin";
 const ADMIN_STATUS = "active";
@@ -96,7 +103,6 @@ async function createAdminUser() {
 
     console.warn("✅ Admin user created successfully!");
     console.warn(`   Username: ${ADMIN_USERNAME}`);
-    console.warn(`   Password: ${ADMIN_PASSWORD}`);
     console.warn(`   Email: ${ADMIN_EMAIL}`);
     console.warn(`   Role: ${ADMIN_ROLE}`);
   } catch (error) {

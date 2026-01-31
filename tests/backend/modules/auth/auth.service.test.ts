@@ -18,6 +18,7 @@ import type {
 } from "../../../../apps/backend/src/modules/auth/auth.repository.js";
 import { getCurrentTermsVersion } from "../../../../apps/backend/src/config/terms.js";
 import { getCurrentPrivacyPolicyVersion } from "../../../../apps/backend/src/config/privacy.js";
+import { getTestValidPassword, getTestNewPassword } from "../../test-helpers/test-passwords.js";
 
 // Helper function to create complete AuthUserRecord
 // Note: For tests that check terms/privacy policy versions, set them explicitly using:
@@ -132,7 +133,7 @@ jest.mock("../../../../apps/backend/src/config/env.js", () => ({
         port: 2525,
         secure: false,
         user: "test-user",
-        pass: "test-pass",
+        pass: process.env.TEST_SMTP_PASS ?? "test-placeholder",
       },
       from: {
         name: "FitVibe Tests",
@@ -206,7 +207,7 @@ describe("Auth Service", () => {
     const validRegisterDto: RegisterDTO = {
       email: "test@example.com",
       username: "testuser",
-      password: "SecureP@ssw0rd123",
+      password: getTestValidPassword(),
       terms_accepted: true,
       profile: {
         display_name: "Test User",
@@ -412,7 +413,7 @@ describe("Auth Service", () => {
   describe("login", () => {
     const validLoginDto: LoginDTO = {
       email: "test@example.com",
-      password: "SecureP@ssw0rd123",
+      password: getTestValidPassword(),
     };
 
     const loginContext: LoginContext = {
@@ -840,7 +841,7 @@ describe("Auth Service", () => {
   describe("resetPassword", () => {
     it("should reset password successfully", async () => {
       const mockToken = "reset-token";
-      const newPassword = "NewP@ssw0rd456";
+      const newPassword = getTestNewPassword();
 
       const mockAuthToken = {
         id: "token-123",
@@ -877,12 +878,12 @@ describe("Auth Service", () => {
     it("should throw error if token is invalid", async () => {
       mockAuthRepo.findAuthToken.mockResolvedValue(undefined);
 
-      await expect(authService.resetPassword("invalid-token", "NewP@ssw0rd456")).rejects.toThrow(
-        HttpError,
-      );
-      await expect(authService.resetPassword("invalid-token", "NewP@ssw0rd456")).rejects.toThrow(
-        "AUTH_INVALID_TOKEN",
-      );
+      await expect(
+        authService.resetPassword("invalid-token", getTestNewPassword()),
+      ).rejects.toThrow(HttpError);
+      await expect(
+        authService.resetPassword("invalid-token", getTestNewPassword()),
+      ).rejects.toThrow("AUTH_INVALID_TOKEN");
     });
 
     it("should throw error if token is expired", async () => {
@@ -899,12 +900,12 @@ describe("Auth Service", () => {
       mockAuthRepo.findAuthToken.mockResolvedValue(mockAuthToken);
       mockAuthRepo.consumeAuthToken.mockResolvedValue(1);
 
-      await expect(authService.resetPassword("expired-token", "NewP@ssw0rd456")).rejects.toThrow(
-        HttpError,
-      );
-      await expect(authService.resetPassword("expired-token", "NewP@ssw0rd456")).rejects.toThrow(
-        "AUTH_INVALID_TOKEN",
-      );
+      await expect(
+        authService.resetPassword("expired-token", getTestNewPassword()),
+      ).rejects.toThrow(HttpError);
+      await expect(
+        authService.resetPassword("expired-token", getTestNewPassword()),
+      ).rejects.toThrow("AUTH_INVALID_TOKEN");
     });
 
     it("should throw error if user not found", async () => {
@@ -921,8 +922,10 @@ describe("Auth Service", () => {
       mockAuthRepo.findAuthToken.mockResolvedValue(mockAuthToken);
       mockAuthRepo.findUserById.mockResolvedValue(undefined);
 
-      await expect(authService.resetPassword("token", "NewP@ssw0rd456")).rejects.toThrow(HttpError);
-      await expect(authService.resetPassword("token", "NewP@ssw0rd456")).rejects.toThrow(
+      await expect(authService.resetPassword("token", getTestNewPassword())).rejects.toThrow(
+        HttpError,
+      );
+      await expect(authService.resetPassword("token", getTestNewPassword())).rejects.toThrow(
         "AUTH_USER_NOT_FOUND",
       );
     });

@@ -1,5 +1,8 @@
 FROM nginx:1.25-alpine
 
+# Upgrade OpenSSL to address CVE-2025-11187 (libcrypto3/libssl3)
+RUN apk update && apk upgrade --no-cache openssl libcrypto3 libssl3
+
 # Remove default config
 RUN rm /etc/nginx/conf.d/default.conf
 

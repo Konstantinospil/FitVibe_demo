@@ -4,28 +4,33 @@
  *
  * Usage: node scripts/create-admin-user.mjs
  *
- * This script creates a user with:
- * - Username: administrator1
- * - Password: paS123
- * - Role: admin
- * - Status: active
+ * Requires environment variables (set in .env or shell):
+ * - ADMIN_USERNAME: Admin login username
+ * - ADMIN_PASSWORD: Admin password
+ * - ADMIN_EMAIL: Admin email address
  *
- * NOTE: This script is NOT committed to git (in .gitignore)
+ * Creates a user with role: admin, status: active
  */
 
 import dotenv from "dotenv";
+dotenv.config();
+
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
-
-// Load environment variables
-dotenv.config();
 
 // Import db after env is loaded
 const { db } = await import("../src/db/connection.js");
 
-const ADMIN_USERNAME = "administrator1";
-const ADMIN_PASSWORD = "paS123";
-const ADMIN_EMAIL = "admin@fitvibe.local";
+const ADMIN_USERNAME = process.env.ADMIN_USERNAME;
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL;
+
+if (!ADMIN_USERNAME || !ADMIN_PASSWORD || !ADMIN_EMAIL) {
+  console.error(
+    "❌ Missing required environment variables. Set ADMIN_USERNAME, ADMIN_PASSWORD, and ADMIN_EMAIL in .env or your shell.",
+  );
+  process.exit(1);
+}
 const ADMIN_DISPLAY_NAME = "Administrator";
 const ADMIN_ROLE = "admin";
 const ADMIN_STATUS = "active";
@@ -102,7 +107,6 @@ async function createAdminUser() {
 
     console.log("✅ Admin user created successfully!");
     console.log(`   Username: ${ADMIN_USERNAME}`);
-    console.log(`   Password: ${ADMIN_PASSWORD}`);
     console.log(`   Email: ${ADMIN_EMAIL}`);
     console.log(`   Role: ${ADMIN_ROLE}`);
   } catch (error) {
