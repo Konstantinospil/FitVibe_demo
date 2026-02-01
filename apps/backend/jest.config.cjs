@@ -49,7 +49,10 @@ module.exports = {
   ],
   testPathIgnorePatterns: [
     "/node_modules/",
-    "\\.integration\\.test\\.ts$",
+    // Exclude integration folder from unit tests; integration job sets RUN_INTEGRATION_TESTS=1
+    ...(process.env.RUN_INTEGRATION_TESTS === "1"
+      ? []
+      : ["integration/", "\\.integration\\.test\\.ts$"]),
     "verification-resend-limit\\.test\\.ts$",
     "login-enumeration\\.test\\.ts$",
     // Omit DB test patterns when RUN_DB_TESTS=1 so CI can run them in the database_tests job

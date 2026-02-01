@@ -1655,6 +1655,10 @@ export async function uploadAvatar(file: File): Promise<AvatarUploadResponse> {
   return res.data;
 }
 
+export async function deleteAvatar(): Promise<void> {
+  await apiClient.delete("/api/v1/users/avatar");
+}
+
 // Session Management API
 export interface SessionInfo {
   id: string;

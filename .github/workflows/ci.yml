@@ -91,20 +91,8 @@ jobs:
     permissions:
       contents: read
       actions: read
+    # No postgres - only unit tests; DB-dependent tests run in integration job
     services:
-      postgres:
-        image: postgres:16
-        env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: fitvibe_test
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd="pg_isready -U postgres"
-          --health-interval=10s
-          --health-timeout=5s
-          --health-retries=5
       clamav:
         image: clamav/clamav:latest
         ports:
@@ -117,15 +105,6 @@ jobs:
           --health-timeout 5s
           --health-retries 5
     env:
-      DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/fitvibe_test
-      # Individual PG env vars for test files to detect database
-      PGHOST: 127.0.0.1
-      PGPORT: 5432
-      PGUSER: postgres
-      PGPASSWORD: postgres
-      PGDATABASE: fitvibe_test
-      # Highest priority - test files check this first
-      TEST_DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/fitvibe_test
       CLAMAV_ENABLED: "true"
       CLAMAV_HOST: "127.0.0.1"
       CLAMAV_PORT: "3310"
@@ -176,25 +155,11 @@ jobs:
             libpango1.0-dev \
             libjpeg-dev \
             libgif-dev \
-            librsvg2-dev \
-            postgresql-client
+            librsvg2-dev
 
-      - name: Wait for services
-        timeout-minutes: 15
+      - name: Wait for ClamAV
+        timeout-minutes: 5
         run: |
-          echo "Waiting for PostgreSQL..."
-          for i in {1..30}; do
-            if pg_isready -h 127.0.0.1 -p 5432 -U postgres >/dev/null 2>&1; then
-              echo "PostgreSQL is ready"
-              break
-            fi
-            if [ $i -eq 30 ]; then
-              echo "PostgreSQL failed to start" >&2
-              exit 1
-            fi
-            sleep 2
-          done
-
           echo "Waiting for ClamAV..."
           python3 - <<'PY'
           import socket, time, sys
@@ -974,7 +939,8 @@ jobs:
         env:
           NODE_ENV: test
           CI: "true"
-        run: pnpm --filter @fitvibe/backend exec jest --maxWorkers=2 --testMatch="**/integration/**/*.integration.test.ts" --testPathIgnorePatterns="/node_modules/|verification-resend-limit\\.test\\.ts$|login-enumeration\\.test\\.ts$" --forceExit
+          RUN_INTEGRATION_TESTS: "1"
+        run: pnpm --filter @fitvibe/backend exec jest --maxWorkers=2 --testMatch="**/integration/**/*.test.ts" --testPathIgnorePatterns="/node_modules/|verification-resend-limit\\.test\\.ts$|login-enumeration\\.test\\.ts$" --forceExit
 
       - name: Job summary
         if: always()
@@ -1206,7 +1172,8 @@ jobs:
         timeout-minutes: 20
         env:
           NODE_ENV: test
-        run: pnpm --filter @fitvibe/backend exec jest --maxWorkers=2 --testMatch="**/integration/**/*.integration.test.ts" --testPathIgnorePatterns="/node_modules/|verification-resend-limit\\.test\\.ts$|login-enumeration\\.test\\.ts$"
+          RUN_INTEGRATION_TESTS: "1"
+        run: pnpm --filter @fitvibe/backend exec jest --maxWorkers=2 --testMatch="**/integration/**/*.test.ts" --testPathIgnorePatterns="/node_modules/|verification-resend-limit\\.test\\.ts$|login-enumeration\\.test\\.ts$"
 
       - name: Job summary
         if: always()

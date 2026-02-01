@@ -699,6 +699,8 @@
       "avatarRemove": "Supprimer l'avatar",
       "avatarUploading": "Téléversement...",
       "avatarUploadSuccess": "Avatar téléversé avec succès !",
+      "avatarDeleteSuccess": "Avatar supprimé avec succès.",
+      "avatarDeleteConfirm": "Êtes-vous sûr de vouloir supprimer votre photo de profil ?",
       "avatarUploadError": "Échec du téléversement de l'avatar. Veuillez réessayer.",
       "avatarInvalidFormat": "Veuillez téléverser une image (JPEG, PNG ou WebP)",
       "avatarFileTooLarge": "La taille du fichier doit être inférieure à 5 Mo",

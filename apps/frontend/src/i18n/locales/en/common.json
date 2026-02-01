@@ -602,6 +602,8 @@
       "avatarRemove": "Remove Avatar",
       "avatarUploading": "Uploading...",
       "avatarUploadSuccess": "Avatar uploaded successfully!",
+      "avatarDeleteSuccess": "Avatar removed successfully.",
+      "avatarDeleteConfirm": "Are you sure you want to remove your profile picture?",
       "avatarUploadError": "Failed to upload avatar. Please try again.",
       "avatarInvalidFormat": "Please upload an image file (JPEG, PNG, or WebP)",
       "avatarFileTooLarge": "File size must be less than 5MB",

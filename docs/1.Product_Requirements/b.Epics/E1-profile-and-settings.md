@@ -5,7 +5,7 @@
 **Epic ID**: E1  
 **Requirement ID**: [FR-009](../a.Requirements/FR-009-profile-and-settings.md)  
 **Title**: Profile & Settings  
-**Status**: Progressing  
+**Status**: Nearly Complete  
 **Priority**: Medium  
 **Gate**: SILVER  
 **Estimated Total Effort**: 8-12 story points  
@@ -69,4 +69,4 @@ Allows users to personalize their FitVibe experience by managing their profile i
 **Last Updated**: 2026-01-04  
 **Next Review**: 2026-02-04
 
-**Implementation Status**: Core functionality implemented including profile update API, avatar upload with image processing, and settings management. Testing and refinement in progress.
+**Implementation Status**: Profile editing (validation, immutable fields, audit logging, frontend Settings/ProfileForm), profile measurements (backend module + DB + frontend Profile.tsx), and profile/avatar/measurements tests are implemented. Backend avatar upload (malware scan, idempotency, delete) is complete; frontend avatar upload/remove UI is not yet exposed in Settings (API client has uploadAvatar; no deleteAvatar wrapper or UI).

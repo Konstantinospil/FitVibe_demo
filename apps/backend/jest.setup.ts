@@ -59,8 +59,35 @@ async function withTestDbLock(acquire: boolean): Promise<void> {
     }
     const { db } = await import("./src/db/index.js");
     if (acquire) {
-      await db.raw("SELECT pg_advisory_lock(?)", [TEST_DB_LOCK_KEY]);
-      testDbLockHeld = true;
+      const maxWaitMs = Number(process.env.TEST_DB_LOCK_WAIT_MS ?? 3000);
+      const start = Date.now();
+
+      while (true) {
+        // Knex raw() returns untyped result; we validate shape at runtime
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+        const result = await db.raw("SELECT pg_try_advisory_lock(?) AS acquired", [
+          TEST_DB_LOCK_KEY,
+        ]);
+        const rows =
+          typeof result === "object" && result !== null && "rows" in result
+            ? (result as { rows?: Array<{ acquired?: boolean }> }).rows
+            : undefined;
+        const acquired = rows?.[0]?.acquired === true;
+        if (acquired) {
+          testDbLockHeld = true;
+          return;
+        }
+
+        if (!Number.isFinite(maxWaitMs) || maxWaitMs <= 0) {
+          return;
+        }
+
+        if (Date.now() - start >= maxWaitMs) {
+          return;
+        }
+
+        await new Promise((resolve) => setTimeout(resolve, 100));
+      }
     } else if (testDbLockHeld) {
       await db.raw("SELECT pg_advisory_unlock(?)", [TEST_DB_LOCK_KEY]);
       testDbLockHeld = false;

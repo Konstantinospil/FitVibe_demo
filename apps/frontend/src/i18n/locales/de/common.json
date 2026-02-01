@@ -576,6 +576,8 @@
       "avatarRemove": "Profilbild entfernen",
       "avatarUploading": "Wird hochgeladen...",
       "avatarUploadSuccess": "Profilbild erfolgreich hochgeladen!",
+      "avatarDeleteSuccess": "Profilbild erfolgreich entfernt.",
+      "avatarDeleteConfirm": "Möchtest du dein Profilbild wirklich entfernen?",
       "avatarUploadError": "Profilbild konnte nicht hochgeladen werden. Bitte versuche es erneut.",
       "avatarInvalidFormat": "Bitte lade eine Bilddatei hoch (JPEG, PNG oder WebP)",
       "avatarFileTooLarge": "Dateigröße muss kleiner als 5 MB sein",

@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { Save, Trash2, Shield, User, Globe } from "lucide-react";
+import { Save, Trash2, Shield, User, Globe, Upload, ImageIcon } from "lucide-react";
 import PageIntro from "../components/PageIntro";
 import { Button } from "../components/ui/Button";
 import LanguageSwitcher from "../components/LanguageSwitcher";
@@ -15,7 +15,15 @@ import {
   CardFooter,
 } from "../components/ui/Card";
 import { useAuthStore } from "../store/auth.store";
-import { apiClient, setup2FA, verify2FA, disable2FA, get2FAStatus } from "../services/api";
+import {
+  apiClient,
+  setup2FA,
+  verify2FA,
+  disable2FA,
+  get2FAStatus,
+  uploadAvatar,
+  deleteAvatar,
+} from "../services/api";
 import { logger } from "../utils/logger";
 import { useToast } from "../contexts/ToastContext";
 import { ConfirmDialog } from "../components/ConfirmDialog";
@@ -64,6 +72,14 @@ const Settings: React.FC = () => {
     notAvailable: t("settings.notAvailable"),
     profileTitle: t("settings.profile.title"),
     profileDescription: t("settings.profile.description"),
+    avatarUpload: t("settings.profile.avatarUpload"),
+    avatarRemove: t("settings.profile.avatarRemove"),
+    avatarUploading: t("settings.profile.avatarUploading"),
+    avatarUploadSuccess: t("settings.profile.avatarUploadSuccess"),
+    avatarDeleteSuccess: t("settings.profile.avatarDeleteSuccess"),
+    avatarUploadError: t("settings.profile.avatarUploadError"),
+    avatarInvalidFormat: t("settings.profile.avatarInvalidFormat"),
+    avatarFileTooLarge: t("settings.profile.avatarFileTooLarge"),
     displayName: t("settings.profile.displayName"),
     displayNamePlaceholder: t("settings.profile.displayNamePlaceholder"),
     alias: t("settings.profile.alias"),
@@ -231,6 +247,11 @@ const Settings: React.FC = () => {
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
 
+  // Avatar state
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+  const [showDeleteAvatarConfirm, setShowDeleteAvatarConfirm] = useState(false);
+  const avatarInputRef = useRef<HTMLInputElement>(null);
+
   const handleSavePreferences = async () => {
     setIsSaving(true);
     setSaveSuccess(false);
@@ -276,6 +297,54 @@ const Settings: React.FC = () => {
       setSaveError(errorMessage);
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const ALLOWED_AVATAR_TYPES = ["image/jpeg", "image/png", "image/webp", "image/jpg"];
+  const MAX_AVATAR_BYTES = 5 * 1024 * 1024;
+
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) {
+      return;
+    }
+
+    if (!ALLOWED_AVATAR_TYPES.includes(file.type)) {
+      toast.error(labels.avatarInvalidFormat);
+      return;
+    }
+    if (file.size > MAX_AVATAR_BYTES) {
+      toast.error(labels.avatarFileTooLarge);
+      return;
+    }
+
+    setIsUploadingAvatar(true);
+    try {
+      await uploadAvatar(file);
+      toast.success(labels.avatarUploadSuccess);
+      await loadUserData();
+    } catch (error) {
+      logger.apiError("Failed to upload avatar", error, "/api/v1/users/avatar", "POST");
+      toast.error(labels.avatarUploadError);
+    } finally {
+      setIsUploadingAvatar(false);
+    }
+  };
+
+  const handleDeleteAvatar = () => {
+    setShowDeleteAvatarConfirm(true);
+  };
+
+  const confirmDeleteAvatar = async () => {
+    setShowDeleteAvatarConfirm(false);
+    try {
+      await deleteAvatar();
+      toast.success(labels.avatarDeleteSuccess);
+      await loadUserData();
+    } catch (error) {
+      logger.apiError("Failed to delete avatar", error, "/api/v1/users/avatar", "DELETE");
+      toast.error(labels.avatarUploadError);
     }
   };
 
@@ -384,6 +453,59 @@ const Settings: React.FC = () => {
       </CardHeader>
       <CardContent>
         <div className="grid grid--gap-md">
+          {/* Avatar section */}
+          <div className="flex flex--align-center flex--gap-md">
+            <div className="settings-avatar">
+              {userData?.avatar?.url && userData?.id ? (
+                <img
+                  src={`/api/v1/users/avatar/${userData.id}`}
+                  alt={labels.profileTitle}
+                  className="settings-avatar-image"
+                />
+              ) : (
+                <ImageIcon size={36} className="settings-avatar-icon" aria-hidden />
+              )}
+            </div>
+            <div className="flex flex--column flex--gap-sm">
+              <div className="flex flex--gap-sm">
+                <input
+                  ref={avatarInputRef}
+                  id="avatar-upload"
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  onChange={(e) => {
+                    void handleAvatarUpload(e);
+                  }}
+                  disabled={isUploadingAvatar}
+                  className="sr-only"
+                  aria-label={labels.avatarUpload}
+                />
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  leftIcon={<Upload size={16} />}
+                  disabled={isUploadingAvatar}
+                  isLoading={isUploadingAvatar}
+                  onClick={() => avatarInputRef.current?.click()}
+                >
+                  {isUploadingAvatar ? labels.avatarUploading : labels.avatarUpload}
+                </Button>
+                {userData?.avatar?.url && (
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    leftIcon={<Trash2 size={16} />}
+                    onClick={handleDeleteAvatar}
+                  >
+                    {labels.avatarRemove}
+                  </Button>
+                )}
+              </div>
+            </div>
+          </div>
+
           <div>
             <label htmlFor="display-name" className="form-label-text block mb-05 font-weight-600">
               {labels.displayName}
@@ -883,6 +1005,17 @@ const Settings: React.FC = () => {
         variant="danger"
         onConfirm={() => void confirmDeleteAccount()}
         onCancel={() => setShowDeleteAccountConfirm(false)}
+      />
+
+      <ConfirmDialog
+        isOpen={showDeleteAvatarConfirm}
+        title={t("settings.profile.avatarRemove")}
+        message={t("settings.profile.avatarDeleteConfirm")}
+        confirmLabel={labels.avatarRemove}
+        cancelLabel={labels.cancel}
+        variant="warning"
+        onConfirm={() => void confirmDeleteAvatar()}
+        onCancel={() => setShowDeleteAvatarConfirm(false)}
       />
     </PageIntro>
   );
