@@ -27,9 +27,12 @@ export PGUSER=fitvibe
 export PGPASSWORD=fitvibe
 export PGDATABASE=fitvibe_test
 
+export RUN_INTEGRATION_TESTS=1
+export DEBUG_AUTH_TOKENS=1
+
 pnpm --filter @fitvibe/backend exec jest \
-  --maxWorkers=2 \
-  --testMatch="**/integration/**/*.integration.test.ts" \
+  --runInBand \
+  --testMatch="**/integration/**/*.test.ts" \
   --testPathIgnorePatterns="/node_modules/|verification-resend-limit\\.test\\.ts$|login-enumeration\\.test\\.ts$" \
   --forceExit
 

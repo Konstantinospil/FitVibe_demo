@@ -21,6 +21,7 @@
     "test:visual:update": "pnpm --filter @fitvibe/frontend run build && playwright test --config tests/frontend/visual/config/playwright.config.ts --update-snapshots",
     "test:coverage:gate": "node tests/qa/check-coverage.cjs",
     "perf:test": "node tests/perf/run-local-perf.mjs",
+    "perf:lhci": "node tests/perf/run-lhci-local.mjs",
     "qa:summary": "node tests/qa/generate-summary.mjs",
     "i18n:check": "node tests/qa/check-i18n.cjs",
     "i18n:check:db": "pnpm --filter @fitvibe/backend run db:check-i18n",
@@ -76,7 +77,8 @@
       "jws": "4.0.1",
       "nodemailer": "7.0.11",
       "@smithy/core": "^3.18.7",
-      "qs": "^6.14.1"
+      "qs": "^6.14.1",
+      "express@4": "4.22.0"
     }
   },
   "overrides": {

@@ -25,9 +25,16 @@ jest.mock("../../../apps/backend/src/modules/auth/bruteforce.repository.js");
 jest.mock("bcryptjs");
 jest.mock("jsonwebtoken");
 jest.mock("crypto");
-jest.mock("uuid", () => ({
-  v4: jest.fn(() => "00000000-0000-0000-0000-000000000123"),
-}));
+// Use counter-based uuid to avoid audit_log duplicate key (each insert gets unique id)
+jest.mock("uuid", () => {
+  let counter = 0;
+  return {
+    v4: jest.fn(() => {
+      counter += 1;
+      return `00000000-0000-0000-0000-${String(counter).padStart(12, "0")}`;
+    }),
+  };
+});
 
 const mockAuthRepo = jest.mocked(authRepo);
 const mockTwofaService = jest.mocked(twofaService);
@@ -145,10 +152,10 @@ describe("2-Stage Login Flow (AC-1.6)", () => {
       // Execute
       const result = await authService.login(loginDto, loginContext);
 
-      // Verify
+      // Verify (first uuid call in 2FA path returns 00000000-0000-0000-0000-000000000001)
       expect(result.requires2FA).toBe(true);
       if (result.requires2FA) {
-        expect(result.pendingSessionId).toBe("00000000-0000-0000-0000-000000000123");
+        expect(result.pendingSessionId).toMatch(/^00000000-0000-0000-0000-[0-9a-f]{12}$/i);
       }
       expect(mockTwofaService.is2FAEnabled).toHaveBeenCalledWith("user-123");
       expect(mockPending2faRepo.createPending2FASession).toHaveBeenCalled();
@@ -412,10 +419,10 @@ describe("2-Stage Login Flow (AC-1.6)", () => {
 
       await authService.login(loginDto, loginContext);
 
-      // Verify pending 2FA session was created
+      // Verify pending 2FA session was created (uuid counter produces unique ids)
       expect(mockPending2faRepo.createPending2FASession).toHaveBeenCalledWith(
         expect.objectContaining({
-          id: "00000000-0000-0000-0000-000000000123",
+          id: expect.stringMatching(/^00000000-0000-0000-0000-[0-9a-f]{12}$/i),
           user_id: "user-123",
           ip: "127.0.0.1",
           user_agent: "Mozilla/5.0",

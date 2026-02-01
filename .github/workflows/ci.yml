@@ -940,7 +940,8 @@ jobs:
           NODE_ENV: test
           CI: "true"
           RUN_INTEGRATION_TESTS: "1"
-        run: pnpm --filter @fitvibe/backend exec jest --maxWorkers=2 --testMatch="**/integration/**/*.test.ts" --testPathIgnorePatterns="/node_modules/|verification-resend-limit\\.test\\.ts$|login-enumeration\\.test\\.ts$" --forceExit
+          DEBUG_AUTH_TOKENS: "1"
+        run: pnpm --filter @fitvibe/backend exec jest --runInBand --testMatch="**/integration/**/*.test.ts" --testPathIgnorePatterns="/node_modules/|verification-resend-limit\\.test\\.ts$|login-enumeration\\.test\\.ts$" --forceExit
 
       - name: Job summary
         if: always()
@@ -1173,7 +1174,8 @@ jobs:
         env:
           NODE_ENV: test
           RUN_INTEGRATION_TESTS: "1"
-        run: pnpm --filter @fitvibe/backend exec jest --maxWorkers=2 --testMatch="**/integration/**/*.test.ts" --testPathIgnorePatterns="/node_modules/|verification-resend-limit\\.test\\.ts$|login-enumeration\\.test\\.ts$"
+          DEBUG_AUTH_TOKENS: "1"
+        run: pnpm --filter @fitvibe/backend exec jest --runInBand --testMatch="**/integration/**/*.test.ts" --testPathIgnorePatterns="/node_modules/|verification-resend-limit\\.test\\.ts$|login-enumeration\\.test\\.ts$"
 
       - name: Job summary
         if: always()
