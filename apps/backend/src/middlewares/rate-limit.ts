@@ -29,8 +29,8 @@ export function clearRateLimiters(): void {
  * @param duration - Time window in seconds
  */
 export function rateLimit(key: string, points = 60, duration = 60) {
-  const limiter = getLimiter(key, points, duration);
   return (req: Request, res: Response, next: NextFunction): void => {
+    const limiter = getLimiter(key, points, duration);
     const ip = extractClientIpForRateLimit(req);
     limiter
       .consume(ip)
@@ -61,8 +61,8 @@ export function rateLimit(key: string, points = 60, duration = 60) {
  * @param duration - Time window in seconds
  */
 export function rateLimitByUser(key: string, points = 60, duration = 60) {
-  const limiter = getLimiter(`${key}:user`, points, duration);
   return (req: Request, res: Response, next: NextFunction): void => {
+    const limiter = getLimiter(`${key}:user`, points, duration);
     const userId = req.user?.sub;
     const fallbackIp = extractClientIpForRateLimit(req);
     const identity = userId ? `user:${userId}` : fallbackIp;
@@ -96,10 +96,9 @@ export function rateLimitByUser(key: string, points = 60, duration = 60) {
  * @param duration - Time window in seconds
  */
 export function rateLimitByIPAndEmail(key: string, points = 5, duration = 3600) {
-  const ipLimiter = getLimiter(`${key}:ip`, points, duration);
-  const emailLimiter = getLimiter(`${key}:email`, points, duration);
-
   return (req: Request, res: Response, next: NextFunction): void => {
+    const ipLimiter = getLimiter(`${key}:ip`, points, duration);
+    const emailLimiter = getLimiter(`${key}:email`, points, duration);
     const ip = extractClientIpForRateLimit(req);
     const email =
       typeof req.body === "object" && req.body !== null && "email" in req.body
