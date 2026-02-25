@@ -287,11 +287,13 @@ export function detectSuspiciousPatterns(req: Request, res: Response, next: Next
   };
 
   // Check query, params, and body
-  if (
-    checkObject(req.query as Record<string, unknown>) ||
-    checkObject(req.params as Record<string, unknown>) ||
-    checkObject(req.body as Record<string, unknown>)
-  ) {
+  const query: Record<string, unknown> =
+    req.query && typeof req.query === "object" ? (req.query as Record<string, unknown>) : {};
+  const params: Record<string, unknown> =
+    req.params && typeof req.params === "object" ? (req.params as Record<string, unknown>) : {};
+  const body: Record<string, unknown> =
+    req.body && typeof req.body === "object" ? (req.body as Record<string, unknown>) : {};
+  if (checkObject(query) || checkObject(params) || checkObject(body)) {
     logger.warn(
       {
         method: req.method,

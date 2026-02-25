@@ -13,6 +13,7 @@ import { csrfProtection, csrfTokenRoute, validateOrigin } from "./middlewares/cs
 import { httpLogger } from "./middlewares/request-logger.js";
 import { errorHandler } from "./middlewares/error.handler.js";
 import { readOnlyGuard } from "./middlewares/read-only.guard.js";
+import { detectSuspiciousPatterns } from "./middlewares/enhanced-security.js";
 import { metricsMiddleware, metricsRoute } from "./observability/metrics.js";
 import { asyncHandler } from "./utils/async-handler.js";
 
@@ -158,6 +159,9 @@ if (env.csrf.enabled) {
   }
   app.use(csrfProtection); // CSRF protection applied globally
 }
+
+// Detect suspicious patterns in body/query (SQL injection, XSS) - reject before reaching handlers
+app.use(detectSuspiciousPatterns);
 
 // Apply read-only mode guard to protect against mutations during maintenance
 app.use(readOnlyGuard);

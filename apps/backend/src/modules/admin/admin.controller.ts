@@ -77,8 +77,22 @@ export async function searchUsersHandler(req: Request, res: Response): Promise<v
     throw new HttpError(400, "MISSING_QUERY", "Query parameter 'q' is required");
   }
 
+  const trimmed = query.trim();
+  if (trimmed.length === 0) {
+    throw new HttpError(400, "INVALID_QUERY", "Search query cannot be empty");
+  }
+  // Security: cap length to prevent abuse and align with DB behavior
+  const MAX_SEARCH_LENGTH = 200;
+  if (trimmed.length > MAX_SEARCH_LENGTH) {
+    throw new HttpError(
+      400,
+      "INVALID_QUERY",
+      `Search query must be at most ${MAX_SEARCH_LENGTH} characters`,
+    );
+  }
+
   const searchQuery: SearchUsersQuery = {
-    query,
+    query: trimmed,
     limit: Math.min(limit, 50), // Cap at 50
     offset,
     blacklisted,
