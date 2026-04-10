@@ -36,6 +36,33 @@ pnpm --filter @fitvibe/backend typecheck   # strict tsc pass
 pnpm --filter @fitvibe/backend test        # jest suite
 ```
 
+### Running integration tests locally
+
+Integration tests are **excluded** from the default `pnpm test` (so CI can run unit tests without Postgres). To run them locally before pushing (and avoid failures in GitHub Actions):
+
+1. **Start PostgreSQL** (same as for dev, e.g. local Postgres or `docker run ... postgres:16` on port 5432).
+
+2. **Point tests at the DB** (from repo root or `apps/backend`):
+   - Either set `TEST_DATABASE_URL` (e.g. `export TEST_DATABASE_URL=postgresql://fitvibe:fitvibe@localhost:5432/fitvibe_test`), or
+   - Set `DATABASE_URL` and `USE_APP_DATABASE_FOR_TESTS=true` if you use the same DB as the app.
+
+3. **Apply migrations and seed** (from repo root):
+
+   ```bash
+   pnpm --filter @fitvibe/backend exec tsx src/db/utils/migrateAll.ts
+   pnpm --filter @fitvibe/backend exec tsx src/db/utils/seedAll.ts
+   ```
+
+   Use the same `DATABASE_URL` / `TEST_DATABASE_URL` (and `NODE_ENV=test` if your app expects it).
+
+4. **Run integration tests** (from repo root):
+   ```bash
+   pnpm test:integration
+   ```
+   Or from `apps/backend`: `pnpm run test:integration`.
+
+Optional: some tests expect ClamAV. In CI it runs in a container; locally you can run ClamAV or leave it disabled (those tests may skip or be skipped if the service is unavailable).
+
 Database tasks live under `src/db/scripts` and can be executed with `pnpm ts-node` or by wiring them into npm scripts:
 
 ```bash

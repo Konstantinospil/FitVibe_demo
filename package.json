@@ -17,6 +17,7 @@
     "test:frontend": "turbo run test --filter=@fitvibe/frontend -- --coverage",
     "test:a11y": "pnpm --filter @fitvibe/frontend run build && playwright test tests/frontend/e2e/accessibility.spec.cjs --config tests/frontend/e2e/playwright.config.cjs --reporter=line",
     "test:contract": "pnpm -w openapi:build && pnpm --filter @fitvibe/backend exec jest tests/backend/contract/openapi.contract.test.ts --maxWorkers=1",
+    "test:integration": "RUN_INTEGRATION_TESTS=1 pnpm --filter @fitvibe/backend exec jest --runInBand --testMatch=\"**/integration/**/*.test.ts\" --testPathIgnorePatterns=\"/node_modules/|verification-resend-limit\\.test\\.ts$|login-enumeration\\.test\\.ts$\"",
     "test:visual": "pnpm --filter @fitvibe/frontend run build && playwright test --config tests/frontend/visual/config/playwright.config.ts",
     "test:visual:update": "pnpm --filter @fitvibe/frontend run build && playwright test --config tests/frontend/visual/config/playwright.config.ts --update-snapshots",
     "test:coverage:gate": "node tests/qa/check-coverage.cjs",

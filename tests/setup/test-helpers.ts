@@ -344,8 +344,13 @@ export async function truncateAll(): Promise<void> {
     // Note: "roles" is NOT truncated - it's needed for foreign key constraints
   ];
 
-  // Disable foreign key checks temporarily
-  await db.raw("SET session_replication_role = 'replica'");
+  // Disable triggers temporarily so TRUNCATE CASCADE doesn't fire audit/other triggers.
+  // Requires superuser or REPLICATION role; if not allowed, we continue without it.
+  try {
+    await db.raw("SET session_replication_role = 'replica'");
+  } catch {
+    // Permission denied (e.g. non-superuser local DB) – proceed without disabling triggers
+  }
   for (const table of tables) {
     try {
       await db.raw(`TRUNCATE TABLE ${table} CASCADE`);
@@ -361,7 +366,11 @@ export async function truncateAll(): Promise<void> {
       throw error;
     }
   }
-  await db.raw("SET session_replication_role = 'origin'");
+  try {
+    await db.raw("SET session_replication_role = 'origin'");
+  } catch {
+    // Ignore if we never set replica (or permission denied)
+  }
 
   // Ensure roles and fitness_levels are seeded after truncation (these tables are not truncated)
   await ensureRolesSeeded();

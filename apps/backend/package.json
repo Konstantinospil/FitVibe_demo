@@ -11,6 +11,8 @@
     "lint": "eslint \"src\" \"../../tests/backend\" --max-warnings=0",
     "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.test.json",
     "test": "jest --passWithNoTests",
+    "test:coverage": "jest --passWithNoTests --coverage",
+    "test:integration": "RUN_INTEGRATION_TESTS=1 jest --runInBand --testMatch=\"**/integration/**/*.test.ts\" --testPathIgnorePatterns=\"/node_modules/|verification-resend-limit\\.test\\.ts$|login-enumeration\\.test\\.ts$\"",
     "openapi:build": "node scripts/generate-openapi.mjs",
     "db:retention": "tsx src/db/scripts/run-retention.ts",
     "db:rotate-secrets": "tsx src/db/scripts/rotate-secrets.ts",
