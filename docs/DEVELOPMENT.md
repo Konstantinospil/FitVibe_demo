@@ -30,42 +30,15 @@ chore: update dependencies - push to main
 
 ## Usage
 
-### Method 1: Using the Push Script (Recommended)
-
-After committing, run the push script:
+Commit with a branch directive, then push that branch:
 
 ```bash
-# Make your changes and commit
 git add .
 git commit -m "fix: update tests [push:dev]"
-
-# Push to the specified branch
-./scripts/git-push-branch.sh
-```
-
-### Method 2: Using the Combined Script
-
-Commit and push in one command:
-
-```bash
-# Commit and push to dev
-./scripts/git-commit-and-push.sh "fix: update tests" dev
-
-# Or include directive in message
-./scripts/git-commit-and-push.sh "fix: update tests [push:stage]"
-```
-
-### Method 3: Manual Push
-
-If you prefer manual control:
-
-```bash
-# Commit with directive
-git commit -m "fix: update tests [push:dev]"
-
-# Manually push to the branch
 git push origin dev
 ```
+
+For staging or production, use `[push:stage]` / `[push:main]` and push `origin stage` or `origin main`.
 
 ## Workflow Details
 
@@ -101,19 +74,6 @@ git push origin dev
 4. **Branch protection**: Consider protecting `main` and `stage` branches in GitHub settings
 
 ## Troubleshooting
-
-### Script not found
-
-Make sure scripts are executable:
-
-```bash
-chmod +x scripts/git-push-branch.sh
-chmod +x scripts/git-commit-and-push.sh
-```
-
-### Branch doesn't exist
-
-The script will automatically create the branch if it doesn't exist locally or remotely.
 
 ### CI/CD not triggering
 

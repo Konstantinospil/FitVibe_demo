@@ -33,9 +33,6 @@ Your repository is **already well-protected**:
 ```bash
 # Run the secret scanner manually
 pnpm security:scan
-
-# Or use the dedicated secret scan script
-bash scripts/secrets-scan.sh
 ```
 
 ### 2. Check for Dependency Vulnerabilities
@@ -43,9 +40,6 @@ bash scripts/secrets-scan.sh
 ```bash
 # Check for high/critical vulnerabilities
 pnpm audit --audit-level=high
-
-# Or run the full audit script
-bash scripts/dependency-audit.sh
 ```
 
 ### 3. Verify .gitignore is Working

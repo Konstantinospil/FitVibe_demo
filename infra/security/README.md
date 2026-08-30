@@ -130,12 +130,11 @@ Run security scans regularly:
 # Dependency audit
 pnpm audit
 
-# Secrets scan
-./scripts/secrets-scan.sh
-
-# Security scan
-./scripts/security-scan.sh
+# Secrets and security checks
+pnpm security:scan
 ```
+
+Scheduled scans also run via `.github/workflows/security-scan.yml`.
 
 ### Manual Reviews
 
