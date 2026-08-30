@@ -131,7 +131,7 @@ export const EmailVerification: React.FC<EmailVerificationProps> = ({ onVerified
                       "Your email has been successfully verified"}
                   </p>
                 </div>
-                <Button variant="primary" onClick={() => navigate("/")}>
+                <Button variant="primary" onClick={() => void navigate("/")}>
                   {t("common.continue") || "Continue"}
                 </Button>
               </>
@@ -150,7 +150,7 @@ export const EmailVerification: React.FC<EmailVerificationProps> = ({ onVerified
                       "The verification link is invalid or expired"}
                   </p>
                 </div>
-                <Button variant="primary" onClick={() => navigate("/login")}>
+                <Button variant="primary" onClick={() => void navigate("/login")}>
                   {t("common.backToLogin") || "Back to Login"}
                 </Button>
               </>

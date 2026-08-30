@@ -61,7 +61,7 @@ export const AccountDeletionForm: React.FC<AccountDeletionFormProps> = ({ onDele
       setShowConfirmModal(false);
       // Sign out and redirect
       await signOut();
-      navigate("/login");
+      void navigate("/login");
       onDeleted?.();
     } catch {
       setError(
