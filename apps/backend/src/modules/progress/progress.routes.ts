@@ -8,6 +8,7 @@ import {
   plansHandler,
   summaryHandler,
   trendsHandler,
+  vibePointsHandler,
 } from "./progress.controller.js";
 import { asyncHandler } from "../../utils/async-handler.js";
 
@@ -36,6 +37,12 @@ progressRouter.get(
   rateLimit("progress_plans", 60, 60),
   requireAuth,
   asyncHandler(plansHandler),
+);
+progressRouter.get(
+  "/vibes",
+  rateLimit("progress_vibes", 60, 60),
+  requireAuth,
+  asyncHandler(vibePointsHandler),
 );
 progressRouter.get(
   "/export",

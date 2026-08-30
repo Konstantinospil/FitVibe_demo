@@ -51,3 +51,24 @@ export interface ProgressReport {
   exercises: ExerciseBreakdown[];
   plans: PlanProgress[];
 }
+
+export interface VibeTrendPoint {
+  month: string;
+  points: number;
+}
+
+export interface VibePointsSeries {
+  type_code: string;
+  points: number;
+  trend: VibeTrendPoint[];
+}
+
+export interface VibePointsPayload {
+  period_months: number;
+  months: string[];
+  overall: {
+    points: number;
+    trend: VibeTrendPoint[];
+  };
+  vibes: VibePointsSeries[];
+}
