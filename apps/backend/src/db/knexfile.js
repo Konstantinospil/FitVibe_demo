@@ -44,7 +44,7 @@ var config = {
     connection: {
       host: process.env.PGHOST || "localhost",
       port: parseInt(process.env.PGPORT || "5432", 10),
-      database: process.env.PGDATABASE || "fitvibe_test",
+      database: process.env.PGDATABASE || "fitvibe",
       user: process.env.PGUSER || "fitvibe",
       password: process.env.PGPASSWORD || "fitvibe",
     },
