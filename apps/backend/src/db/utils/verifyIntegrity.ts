@@ -10,23 +10,21 @@ const TABLES = [
   "users",
   "profiles",
   "user_contacts",
-  "auth_sessions",
+  "user_tombstones",
   "user_state_history",
+  "auth_sessions",
   "audit_log",
-  "user_metrics",
   "exercises",
   "sessions",
   "session_exercises",
   "exercise_sets",
   "planned_exercise_attributes",
-  "actual_exercise_attributes",
+  "personal_records",
   "user_points",
   "plans",
   "badges",
   "followers",
   "media",
-  "translation_cache",
-  // Critical tables verified by migrateAll.ts
   "feed_items",
   "feed_comments",
   "feed_likes",
@@ -34,17 +32,14 @@ const TABLES = [
   "user_blocks",
   "idempotency_keys",
   "pending_2fa_sessions",
-  "user_preferences",
-  "personal_records",
+  "user_2fa_settings",
+  "cookie_consents",
+  "translations",
+  "bio_attributes",
+  "perf_attributes",
 ];
 
-const VIEWS = [
-  "session_summary",
-  "v_session_summary",
-  "vw_user_performance",
-  "vw_feed_summary",
-  "mv_leaderboard",
-];
+const VIEWS = ["session_summary", "weekly_aggregates", "mv_leaderboard"];
 
 async function verify(): Promise<void> {
   try {

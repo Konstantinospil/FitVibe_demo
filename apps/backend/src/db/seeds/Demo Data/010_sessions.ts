@@ -10,7 +10,7 @@ const SESSIONS = [
     id: "99999999-9999-9999-9999-999999999999",
     owner_id: "22222222-2222-2222-2222-222222222222",
     title: "Strength Block A",
-    plan_id: "33333333-3333-3333-3333-333333333333",
+    plan_id: null,
     planned_at: upcoming,
     started_at: null,
     completed_at: null,
@@ -42,6 +42,5 @@ const SESSIONS = [
 ];
 
 export async function seed(knex: Knex): Promise<void> {
-  await knex.raw("SELECT public.ensure_monthly_partitions();");
-  await knex("sessions").insert(SESSIONS).onConflict(["id", "planned_at"]).ignore();
+  await knex("sessions").insert(SESSIONS).onConflict("id").ignore();
 }

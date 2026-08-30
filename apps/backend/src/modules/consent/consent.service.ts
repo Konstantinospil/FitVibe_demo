@@ -75,7 +75,6 @@ export async function saveCookiePreferences(
     entityId: consent.id,
     outcome: "success",
     metadata: {
-      ipAddress,
       preferences: {
         essential: consent.essentialCookies,
         preferences: consent.preferencesCookies,

@@ -59,9 +59,7 @@ export async function listExercises(userId: string, queryParams: ExerciseQuery, 
   }
   if (q) {
     baseQuery.andWhere(function () {
-      this.whereILike("name", `%${q}%`)
-        .orWhereILike("description_en", `%${q}%`)
-        .orWhereILike("description_de", `%${q}%`);
+      this.whereILike("name", `%${q}%`).orWhereILike("description", `%${q}%`);
     });
   }
 
@@ -79,8 +77,8 @@ export async function listExercises(userId: string, queryParams: ExerciseQuery, 
       "equipment",
       "tags",
       "is_public",
-      "description_en",
-      "description_de",
+      db.raw("description as description_en"),
+      db.raw("NULL as description_de"),
       "created_at",
       "updated_at",
       "archived_at",
@@ -107,8 +105,11 @@ export async function getExerciseRaw(id: string) {
 }
 
 export async function createExercise(row: Exercise) {
+  const { description_en, description_de, ...rest } = row;
+  void description_de;
   return db("exercises").insert({
-    ...row,
+    ...rest,
+    description: description_en,
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
     archived_at: null,
@@ -116,9 +117,13 @@ export async function createExercise(row: Exercise) {
 }
 
 export async function updateExercise(id: string, updates: Partial<Exercise>) {
-  return db("exercises")
-    .where({ id })
-    .update({ ...updates, updated_at: new Date().toISOString() });
+  const { description_en, description_de, ...rest } = updates;
+  void description_de;
+  const patch: Record<string, unknown> = { ...rest, updated_at: new Date().toISOString() };
+  if (description_en !== undefined) {
+    patch.description = description_en;
+  }
+  return db("exercises").where({ id }).update(patch);
 }
 
 export async function archiveExercise(id: string) {

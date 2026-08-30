@@ -100,33 +100,26 @@ describe("Integration: Audit Logging Verification", () => {
     await truncateAll();
   });
 
-  it("should create audit log entry for alias change", async () => {
+  it("should create state history entry for alias change", async () => {
     if (!dbAvailable) {
       console.warn("Skipping test: database unavailable");
       return;
     }
 
-    // Update alias
     await request(app).patch("/api/v1/users/me").set("Authorization", `Bearer ${authToken}`).send({
       alias: "testalias",
     });
 
-    // Verify audit log entry was created
-    const auditLogs = await db("audit_log")
-      .where({ actor_user_id: userId, entity_type: "users", action: "profile_update" })
-      .orderBy("created_at", "desc")
+    const history = await db("user_state_history")
+      .where({ user_id: userId, field: "alias" })
+      .orderBy("changed_at", "desc")
       .limit(1);
 
-    expect(auditLogs.length).toBeGreaterThan(0);
-    const auditLog = auditLogs[0];
-    expect(auditLog.metadata).toBeDefined();
-
-    const metadata = auditLog.metadata as { changes?: { alias?: { old?: string; next?: string } } };
-    expect(metadata.changes?.alias).toBeDefined();
-    expect(metadata.changes?.alias?.next).toBe("testalias");
+    expect(history.length).toBeGreaterThan(0);
+    expect(history[0].new_value).toBe("testalias");
   });
 
-  it("should create audit log entry for weight change", async () => {
+  it("should create state history entry for weight change", async () => {
     if (!dbAvailable) {
       console.warn("Skipping test: database unavailable");
       return;
@@ -139,20 +132,13 @@ describe("Integration: Audit Logging Verification", () => {
     });
 
     // Verify audit log entry was created
-    const auditLogs = await db("audit_log")
-      .where({ actor_user_id: userId, entity_type: "users", action: "profile_update" })
-      .orderBy("created_at", "desc")
+    const history = await db("user_state_history")
+      .where({ user_id: userId, field: "weight" })
+      .orderBy("changed_at", "desc")
       .limit(1);
 
-    expect(auditLogs.length).toBeGreaterThan(0);
-    const auditLog = auditLogs[0];
-    expect(auditLog.metadata).toBeDefined();
-
-    const metadata = auditLog.metadata as {
-      changes?: { weight?: { old?: number; next?: number } };
-    };
-    expect(metadata.changes?.weight).toBeDefined();
-    expect(metadata.changes?.weight?.next).toBe(75.5);
+    expect(history.length).toBeGreaterThan(0);
+    expect(Number(history[0].new_value)).toBe(75.5);
   });
 
   it("should create state history entry for profile changes", async () => {
@@ -179,13 +165,12 @@ describe("Integration: Audit Logging Verification", () => {
     expect(historyEntry.new_value).toBe("newalias");
   });
 
-  it("should log all changed fields in audit log", async () => {
+  it("should log all changed fields in state history", async () => {
     if (!dbAvailable) {
       console.warn("Skipping test: database unavailable");
       return;
     }
 
-    // Update multiple fields
     await request(app).patch("/api/v1/users/me").set("Authorization", `Bearer ${authToken}`).send({
       alias: "multialias",
       weight: 80,
@@ -193,25 +178,7 @@ describe("Integration: Audit Logging Verification", () => {
       fitnessLevel: "intermediate",
     });
 
-    // Verify audit log contains all changes
-    const auditLogs = await db("audit_log")
-      .where({ actor_user_id: userId, entity_type: "users", action: "profile_update" })
-      .orderBy("created_at", "desc")
-      .limit(1);
-
-    expect(auditLogs.length).toBeGreaterThan(0);
-    const auditLog = auditLogs[0];
-    const metadata = auditLog.metadata as {
-      changes?: {
-        alias?: { old?: string; next?: string };
-        weight?: { old?: number; next?: number };
-        fitness_level?: { old?: string; next?: string };
-      };
-    };
-
-    expect(metadata.changes?.alias).toBeDefined();
-    expect(metadata.changes?.weight).toBeDefined();
-    expect(metadata.changes?.fitness_level).toBeDefined();
+    const fields = await db("user_state_history").where({ user_id: userId }).pluck("field");
+    expect(fields).toEqual(expect.arrayContaining(["alias", "weight", "fitness_level"]));
   });
 });
-

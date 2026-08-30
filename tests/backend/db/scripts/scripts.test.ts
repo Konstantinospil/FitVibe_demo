@@ -133,14 +133,14 @@ describe("db scripts", () => {
   });
 
   describe("rotate-partitions.ts", () => {
-    it("ensures partitions and cleans up", async () => {
+    it("refreshes progress views and cleans up", async () => {
       await runScript("rotate-partitions");
 
-      expect(rawMock).toHaveBeenCalledWith("SELECT public.ensure_monthly_partitions();");
+      expect(rawMock).toHaveBeenCalledWith("SELECT public.refresh_session_summary(TRUE);");
       expect(destroyMock).toHaveBeenCalled();
     });
 
-    it("logs and exits when rotation fails", async () => {
+    it("logs and exits when refresh fails", async () => {
       const error = new Error("partition-fail");
       rawMock.mockRejectedValueOnce(error);
 
@@ -148,7 +148,7 @@ describe("db scripts", () => {
 
       expect(loggerErrorMock).toHaveBeenCalledWith(
         expect.objectContaining({ err: error }),
-        "Failed to rotate partitions",
+        "Failed to refresh progress views",
       );
       expect(processExitMock).toHaveBeenCalledWith(1);
     });

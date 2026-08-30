@@ -26,7 +26,8 @@ export interface RegisterProfileInput {
 
 export interface RegisterDTO {
   email: string;
-  username: string;
+  alias?: string;
+  username?: string;
   password: string;
   profile?: RegisterProfileInput;
   terms_accepted: boolean;

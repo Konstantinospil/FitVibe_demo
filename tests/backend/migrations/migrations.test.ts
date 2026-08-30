@@ -136,7 +136,7 @@ describeFn("database migrations", () => {
 
       const columns = await client("users").columnInfo();
       expect(columns.id).toBeDefined();
-      expect(columns.username).toBeDefined();
+      expect(columns.username).toBeUndefined();
       expect(columns.display_name).toBeDefined();
       expect(columns.password_hash).toBeDefined();
       expect(columns.role_code).toBeDefined();
@@ -153,6 +153,7 @@ describeFn("database migrations", () => {
       expect(columns.date_of_birth).toBeDefined();
       expect(columns.gender_code).toBeDefined();
       expect(columns.alias).toBeDefined();
+      expect(columns.alias_changed_at).toBeDefined();
       expect(columns.bio).toBeDefined();
       expect(columns.visibility).toBeDefined();
       expect(columns.created_at).toBeDefined();
@@ -223,7 +224,7 @@ describeFn("database migrations", () => {
       expect(columns.id).toBeDefined();
       expect(columns.user_id).toBeDefined();
       expect(columns.exercise_id).toBeDefined();
-      expect(columns.pr_type).toBeDefined();
+      expect(columns.metric).toBeDefined();
       expect(columns.value).toBeDefined();
       expect(columns.achieved_at).toBeDefined();
       expect(columns.is_current).toBeDefined();
@@ -237,7 +238,7 @@ describeFn("database migrations", () => {
       const columns = await client("feed_items").columnInfo();
       expect(columns.id).toBeDefined();
       expect(columns.owner_id).toBeDefined();
-      expect(columns.kind).toBeDefined();
+      expect(columns.session_id).toBeDefined();
       expect(columns.visibility).toBeDefined();
       expect(columns.created_at).toBeDefined();
       expect(columns.updated_at).toBeDefined();
@@ -287,6 +288,14 @@ describeFn("database migrations", () => {
       `);
 
       expect(indexes.rows.length).toBeGreaterThan(0);
+    });
+
+    it("does not recreate dropped tables or users.username", async () => {
+      expect(await client.schema.hasColumn("users", "username")).toBe(false);
+      expect(await client.schema.hasTable("user_metrics")).toBe(false);
+      expect(await client.schema.hasTable("share_links")).toBe(false);
+      expect(await client.schema.hasTable("translation_cache")).toBe(false);
+      expect(await client.schema.hasTable("actual_exercise_attributes")).toBe(false);
     });
   });
 });

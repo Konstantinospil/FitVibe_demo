@@ -23,7 +23,6 @@ import {
   insertUserMetric,
   getLatestUserMetrics,
   type ProfileRow,
-  type UserMetricRow,
 } from "./users.repository.js";
 import type {
   UpdateProfileDTO,
@@ -97,6 +96,10 @@ type UserStateHistoryRow = {
   new_value: unknown;
   changed_at: string;
 };
+
+function cloneExportRows(rows: GenericRow[]): GenericRow[] {
+  return rows.map((row) => ({ ...row }));
+}
 
 function toContact(row: ContactRow): UserContact {
   return {
@@ -177,12 +180,8 @@ function toUserSafe(row: UserRow): UserSafe {
 }
 
 async function ensureUsernameAvailable(userId: string, username: string) {
-  const normalized = username.toLowerCase();
-  const conflict = await db<UserRow>("users")
-    .whereRaw("LOWER(username) = ?", [normalized])
-    .whereNot({ id: userId })
-    .first<UserRow>();
-  if (conflict) {
+  const available = await checkAliasAvailable(username, userId);
+  if (!available) {
     throw new HttpError(409, "USER_USERNAME_TAKEN", "USER_USERNAME_TAKEN");
   }
 }
@@ -289,7 +288,6 @@ export async function createUser(
       await createUserRecord(
         {
           id: userId,
-          username,
           displayName,
           locale,
           preferredLang,
@@ -299,6 +297,7 @@ export async function createUser(
         },
         trx,
       );
+      await updateProfileAlias(userId, username, trx);
       try {
         await upsertContact(
           userId,
@@ -366,10 +365,10 @@ export async function updateProfile(userId: string, dto: UpdateProfileDTO): Prom
   if (dto.username) {
     const normalized = dto.username.trim();
     ensureUsernameFormat(normalized);
-    if (normalized.toLowerCase() !== user.username.toLowerCase()) {
+    if (normalized.toLowerCase() !== (user.username ?? "").toLowerCase()) {
       await ensureUsernameAvailable(userId, normalized);
-      patch.username = normalized;
-      changes.username = { old: user.username, next: normalized };
+      patch.alias = normalized;
+      changes.alias = { old: user.username, next: normalized };
     }
   }
 
@@ -504,8 +503,9 @@ export async function updateProfile(userId: string, dto: UpdateProfileDTO): Prom
     }
 
     // Update alias in profiles table
-    if (dto.alias !== undefined) {
-      const normalizedAlias = dto.alias.trim();
+    const nextAlias = dto.alias ?? patch.alias;
+    if (nextAlias !== undefined) {
+      const normalizedAlias = nextAlias.trim();
       const profile = await getProfileByUserId(userId, trx);
       const currentAlias = profile?.alias ?? null;
       if (normalizedAlias !== currentAlias) {
@@ -520,19 +520,9 @@ export async function updateProfile(userId: string, dto: UpdateProfileDTO): Prom
 
     // Record state history for all changes
     for (const [field, diff] of Object.entries(changes)) {
-      await insertStateHistory(userId, field, diff.old, diff.next, trx);
+      await insertStateHistory(userId, field, diff.old, diff.next, trx, userId, null);
     }
   });
-
-  if (Object.keys(changes).length > 0) {
-    await insertAudit({
-      actorUserId: userId,
-      entity: "users",
-      action: "profile_update",
-      entityId: userId,
-      metadata: { changes },
-    });
-  }
 
   const updated = await fetchUserWithContacts(userId);
   if (!updated) {
@@ -841,7 +831,18 @@ export async function removeContact(userId: string, contactId: string): Promise<
 }
 
 export async function collectUserData(userId: string): Promise<UserDataExportBundle> {
-  const user = await db<UserRow>("users").where({ id: userId }).first<UserRow>();
+  await insertAudit({
+    actorUserId: userId,
+    entityType: "users",
+    action: "data_export_requested",
+    entityId: userId,
+  });
+
+  const user = await db<UserRow>("users")
+    .leftJoin("profiles", "profiles.user_id", "users.id")
+    .select<UserRow[]>("users.*", db.raw("profiles.alias as username"))
+    .where("users.id", userId)
+    .first<UserRow>();
   if (!user) {
     throw new HttpError(404, "USER_NOT_FOUND", "USER_NOT_FOUND");
   }
@@ -859,39 +860,78 @@ export async function collectUserData(userId: string): Promise<UserDataExportBun
         date_of_birth: profileRow.date_of_birth,
         gender_code: profileRow.gender_code,
         visibility: profileRow.visibility,
-        timezone: profileRow.timezone,
-        unit_preferences: profileRow.unit_preferences,
+        fitness_level_code: profileRow.fitness_level_code,
+        training_frequency: profileRow.training_frequency,
         created_at: profileRow.created_at,
         updated_at: profileRow.updated_at,
       }
     : null;
 
-  const metrics = await db<UserMetricRow>("user_metrics")
-    .where({ user_id: userId })
-    .orderBy("recorded_at", "asc");
-
-  // Parallelize independent queries for better performance
-  const [sessions, plans, exercises, pointsHistory, badges, followers, following] =
-    await Promise.all([
-      db<SessionRow>("sessions").where({ owner_id: userId }),
-      db<GenericRow>("plans").where({ user_id: userId }),
-      db<GenericRow>("exercises").where({ owner_id: userId }),
-      db<UserPointRow>("user_points").where({ user_id: userId }).orderBy("awarded_at", "asc"),
-      db<BadgeRow>("badges").where({ user_id: userId }).orderBy("awarded_at", "asc"),
-      db<GenericRow>("followers").where({ following_id: userId }).orderBy("created_at", "asc"),
-      db<GenericRow>("followers").where({ follower_id: userId }).orderBy("created_at", "asc"),
-    ]);
+  const [
+    bioValues,
+    perfValues,
+    consents,
+    sessions,
+    plans,
+    exercises,
+    pointsHistory,
+    badges,
+    followers,
+    following,
+    blocks,
+    personalRecords,
+    vibeLevels,
+    vibeChanges,
+    feedItems,
+    feedLikes,
+    feedComments,
+    bookmarks,
+    reports,
+    twoFactorSettings,
+  ] = await Promise.all([
+    db<GenericRow>("bio_attribute_values").where({ user_id: userId }).orderBy("measured_at", "asc"),
+    db<GenericRow>("perf_attribute_values")
+      .where({ user_id: userId })
+      .orderBy("measured_at", "asc"),
+    db<GenericRow>("cookie_consents").where({ user_id: userId }).orderBy("consent_given_at", "asc"),
+    db<SessionRow>("sessions").where({ owner_id: userId }),
+    db<GenericRow>("plans").where({ user_id: userId }),
+    db<GenericRow>("exercises").where({ owner_id: userId }),
+    db<UserPointRow>("user_points").where({ user_id: userId }).orderBy("awarded_at", "asc"),
+    db<BadgeRow>("badges").where({ user_id: userId }).orderBy("awarded_at", "asc"),
+    db<GenericRow>("followers").where({ following_id: userId }).orderBy("created_at", "asc"),
+    db<GenericRow>("followers").where({ follower_id: userId }).orderBy("created_at", "asc"),
+    db<GenericRow>("user_blocks")
+      .where({ blocker_id: userId })
+      .orWhere({ blocked_id: userId })
+      .orderBy("created_at", "asc"),
+    db<GenericRow>("personal_records").where({ user_id: userId }).orderBy("achieved_at", "asc"),
+    db<GenericRow>("user_domain_vibe_levels").where({ user_id: userId }),
+    db<GenericRow>("vibe_level_changes").where({ user_id: userId }).orderBy("created_at", "asc"),
+    db<GenericRow>("feed_items").where({ owner_id: userId }).orderBy("created_at", "asc"),
+    db<GenericRow>("feed_likes").where({ user_id: userId }),
+    db<GenericRow>("feed_comments").where({ user_id: userId }),
+    db<GenericRow>("session_bookmarks").where({ user_id: userId }),
+    db<GenericRow>("feed_reports").where({ reporter_id: userId }),
+    db<{ is_enabled: boolean; is_verified: boolean }>("user_2fa_settings")
+      .select("is_enabled", "is_verified")
+      .where({ user_id: userId })
+      .first(),
+  ]);
+  const metrics = { bio: bioValues, perf: perfValues, consents };
 
   const sessionIds = sessions.map((session) => session.id);
   const totalPoints = pointsHistory.reduce((sum, record) => sum + Number(record.points ?? 0), 0);
 
-  // These queries depend on sessionIds, so run them in parallel after sessions are loaded
   const [sessionExercises, exerciseSets] = await Promise.all([
     sessionIds.length
       ? db<SessionExerciseRow>("session_exercises").whereIn("session_id", sessionIds)
       : Promise.resolve([]),
     sessionIds.length
-      ? db<GenericRow>("exercise_sets").whereIn("session_id", sessionIds)
+      ? db<GenericRow>("exercise_sets")
+          .join("session_exercises", "session_exercises.id", "exercise_sets.session_exercise_id")
+          .whereIn("session_exercises.session_id", sessionIds)
+          .select("exercise_sets.*")
       : Promise.resolve([]),
   ]);
 
@@ -932,32 +972,51 @@ export async function collectUserData(userId: string): Promise<UserDataExportBun
     sessionSets: exerciseSets.length,
     plans: plans.length,
     personalExercises: exercises.length,
-    metrics: metrics.length,
+    personalRecords: personalRecords.length,
+    metrics: metrics.bio.length + metrics.perf.length + metrics.consents.length,
     pointsHistory: pointsHistory.length,
     badges: badges.length,
+    vibeLevels: vibeLevels.length,
+    vibeChanges: vibeChanges.length,
+    feedItems: feedItems.length,
     media: media.length,
     followers: followers.length,
     following: following.length,
+    blocks: blocks.length,
     stateHistory: stateHistory.length,
   };
 
+  await insertAudit({
+    actorUserId: userId,
+    entityType: "users",
+    action: "data_export_completed",
+    entityId: userId,
+    metadata: { recordCounts },
+  });
+
   return {
     meta: {
-      schemaVersion: "1.0.0",
+      schemaVersion: "2.0.0",
       exportedAt: new Date().toISOString(),
       recordCounts,
     },
     user: { ...userRecord },
     profile,
-    contacts: contacts.map((contact) => ({ ...contact })),
-    metrics: metrics.map((metric) => ({ ...metric })),
+    contacts: cloneExportRows(contacts),
+    metrics: {
+      bio: cloneExportRows(metrics.bio),
+      perf: cloneExportRows(metrics.perf),
+      consents: cloneExportRows(metrics.consents),
+    },
     social: {
       followers,
       following,
+      blocks,
     },
     exercises: {
       personal: exercises,
       plans,
+      personalRecords,
     },
     sessions: {
       items: sessions,
@@ -969,6 +1028,21 @@ export async function collectUserData(userId: string): Promise<UserDataExportBun
       history: pointsHistory,
     },
     badges,
+    vibe: {
+      levels: vibeLevels,
+      changes: vibeChanges,
+    },
+    feed: {
+      items: feedItems,
+      likes: feedLikes,
+      comments: feedComments,
+      bookmarks,
+      reports,
+    },
+    twoFactor: {
+      isEnabled: Boolean(twoFactorSettings?.is_enabled),
+      isVerified: Boolean(twoFactorSettings?.is_verified),
+    },
     media,
     stateHistory,
   };

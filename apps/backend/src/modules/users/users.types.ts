@@ -93,14 +93,20 @@ export interface UserDataExportBundle {
   user: Record<string, unknown>;
   profile: Record<string, unknown> | null;
   contacts: Record<string, unknown>[];
-  metrics: Record<string, unknown>[];
+  metrics: {
+    bio: Record<string, unknown>[];
+    perf: Record<string, unknown>[];
+    consents: Record<string, unknown>[];
+  };
   social: {
     followers: Record<string, unknown>[];
     following: Record<string, unknown>[];
+    blocks: Record<string, unknown>[];
   };
   exercises: {
     personal: Record<string, unknown>[];
     plans: Record<string, unknown>[];
+    personalRecords: Record<string, unknown>[];
   };
   sessions: {
     items: Record<string, unknown>[];
@@ -112,6 +118,21 @@ export interface UserDataExportBundle {
     history: Record<string, unknown>[];
   };
   badges: Record<string, unknown>[];
+  vibe: {
+    levels: Record<string, unknown>[];
+    changes: Record<string, unknown>[];
+  };
+  feed: {
+    items: Record<string, unknown>[];
+    likes: Record<string, unknown>[];
+    comments: Record<string, unknown>[];
+    bookmarks: Record<string, unknown>[];
+    reports: Record<string, unknown>[];
+  };
+  twoFactor: {
+    isEnabled: boolean;
+    isVerified: boolean;
+  };
   media: Record<string, unknown>[];
   stateHistory: Record<string, unknown>[];
 }

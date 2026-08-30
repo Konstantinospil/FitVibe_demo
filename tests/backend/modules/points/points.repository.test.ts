@@ -352,15 +352,10 @@ describe("Points Repository", () => {
       const dbModule = await import("../../../../apps/backend/src/db/connection.js");
       const dbFn = dbModule.db as jest.Mock;
       dbFn("profiles");
-      dbFn("user_metrics");
       if (queryBuilders["profiles"]) {
         queryBuilders["profiles"].first = jest.fn().mockResolvedValue({
           date_of_birth: null,
           gender_code: null,
-        });
-      }
-      if (queryBuilders["user_metrics"]) {
-        queryBuilders["user_metrics"].first = jest.fn().mockResolvedValue({
           fitness_level_code: null,
           training_frequency: null,
         });
@@ -375,15 +370,10 @@ describe("Points Repository", () => {
       const dbModule = await import("../../../../apps/backend/src/db/connection.js");
       const dbFn = dbModule.db as jest.Mock;
       dbFn("profiles");
-      dbFn("user_metrics");
       if (queryBuilders["profiles"]) {
         queryBuilders["profiles"].first = jest.fn().mockResolvedValue({
           date_of_birth: "1990-01-01",
           gender_code: "male",
-        });
-      }
-      if (queryBuilders["user_metrics"]) {
-        queryBuilders["user_metrics"].first = jest.fn().mockResolvedValue({
           fitness_level_code: "intermediate",
           training_frequency: 3,
         });
@@ -402,10 +392,12 @@ describe("Points Repository", () => {
     it("should work with transaction", async () => {
       const newBuilder = createMockQueryBuilder();
       queryBuilders["profiles"] = newBuilder;
-      queryBuilders["user_metrics"] = newBuilder;
-      newBuilder.first
-        .mockResolvedValueOnce({ date_of_birth: null, gender_code: null })
-        .mockResolvedValueOnce({ fitness_level_code: null, training_frequency: null });
+      newBuilder.first.mockResolvedValue({
+        date_of_birth: null,
+        gender_code: null,
+        fitness_level_code: null,
+        training_frequency: null,
+      });
       const mockTrx = ((_table: string) => newBuilder) as any;
 
       await pointsRepository.getUserPointsProfile(userId, mockTrx);
@@ -663,4 +655,3 @@ describe("Points Repository", () => {
     });
   });
 });
-

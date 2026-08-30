@@ -14,9 +14,12 @@ function createMockQueryBuilder(defaultValue: unknown = null) {
     whereRaw: jest.fn().mockReturnThis(),
     whereNotNull: jest.fn().mockReturnThis(),
     joinRaw: jest.fn().mockReturnThis(),
+    join: jest.fn().mockReturnThis(),
+    leftJoin: jest.fn().mockReturnThis(),
+    andWhere: jest.fn().mockReturnThis(),
     select: jest.fn().mockReturnThis(),
     first: jest.fn().mockResolvedValue(null),
-    insert: jest.fn().mockResolvedValue([]),
+    insert: jest.fn().mockResolvedValue(1),
     update: jest.fn().mockResolvedValue(1),
     delete: jest.fn().mockResolvedValue(1),
     del: jest.fn().mockResolvedValue(1),
@@ -112,7 +115,7 @@ describe("Users Repository", () => {
       const result = await usersRepository.findUserById(userId);
 
       expect(result).toEqual(mockUser);
-      expect(queryBuilders["users"]?.where).toHaveBeenCalledWith({ id: userId });
+      expect(queryBuilders["users"]?.where).toHaveBeenCalledWith("users.id", userId);
     });
   });
 
@@ -225,7 +228,7 @@ describe("Users Repository", () => {
     });
 
     it("should work with transaction", async () => {
-      const updates: UpdateProfileDTO = { username: "newuser" };
+      const updates: UpdateProfileDTO = { displayName: "New Name" };
       const dbModule = await import("../../../../apps/backend/src/db/connection.js");
       const dbFn = dbModule.db as jest.Mock;
       const mockTrx = dbFn as any;
@@ -245,7 +248,6 @@ describe("Users Repository", () => {
     it("should create user record", async () => {
       const input: usersRepository.CreateUserRecordInput = {
         id: userId,
-        username: "testuser",
         displayName: "Test User",
         status: "active",
         roleCode: "athlete",
@@ -268,7 +270,6 @@ describe("Users Repository", () => {
     it("should use default locale and preferredLang", async () => {
       const input: usersRepository.CreateUserRecordInput = {
         id: userId,
-        username: "testuser",
         displayName: "Test User",
         status: "active",
         roleCode: "athlete",
@@ -295,7 +296,6 @@ describe("Users Repository", () => {
     it("should work with transaction", async () => {
       const input: usersRepository.CreateUserRecordInput = {
         id: userId,
-        username: "testuser",
         displayName: "Test User",
         status: "active",
         roleCode: "athlete",
@@ -927,8 +927,9 @@ describe("Users Repository", () => {
         date_of_birth: null,
         gender_code: null,
         visibility: "private",
-        timezone: "UTC",
-        unit_preferences: {},
+        alias_changed_at: null,
+        fitness_level_code: null,
+        training_frequency: null,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       };
@@ -997,8 +998,9 @@ describe("Users Repository", () => {
         date_of_birth: null,
         gender_code: null,
         visibility: "private",
-        timezone: null,
-        unit_preferences: {},
+        alias_changed_at: null,
+        fitness_level_code: null,
+        training_frequency: null,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       };
@@ -1055,8 +1057,9 @@ describe("Users Repository", () => {
         date_of_birth: null,
         gender_code: null,
         visibility: "private",
-        timezone: null,
-        unit_preferences: {},
+        alias_changed_at: null,
+        fitness_level_code: null,
+        training_frequency: null,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       };
@@ -1108,48 +1111,51 @@ describe("Users Repository", () => {
   });
 
   describe("insertUserMetric", () => {
-    it("should insert user metric", async () => {
+    it("should write fitness fields to profiles and weight to bio values", async () => {
       const metric = {
         weight: 75,
         unit: "kg",
         fitness_level_code: "intermediate",
-        training_frequency: "3-4",
+        training_frequency: "3_4_per_week",
       };
 
       const dbModule = await import("../../../../apps/backend/src/db/connection.js");
       const dbFn = dbModule.db as jest.Mock;
-      dbFn("user_metrics");
-      if (queryBuilders["user_metrics"]) {
-        queryBuilders["user_metrics"].insert = jest.fn().mockReturnThis();
-        queryBuilders["user_metrics"].returning = jest.fn().mockResolvedValue([{ id: "metric-1" }]);
+      dbFn("profiles");
+      dbFn("bio_attributes");
+      dbFn("bio_attribute_values");
+      if (queryBuilders["profiles"]) {
+        queryBuilders["profiles"].update = jest.fn().mockResolvedValue(1);
+      }
+      if (queryBuilders["bio_attributes"]) {
+        queryBuilders["bio_attributes"].first = jest.fn().mockResolvedValue({ id: "attr-1" });
+      }
+      if (queryBuilders["bio_attribute_values"]) {
+        queryBuilders["bio_attribute_values"].insert = jest.fn().mockReturnThis();
+        queryBuilders["bio_attribute_values"].returning = jest
+          .fn()
+          .mockResolvedValue([{ id: "metric-1" }]);
       }
 
       const result = await usersRepository.insertUserMetric(userId, metric);
 
       expect(result).toBe("metric-1");
-      expect(queryBuilders["user_metrics"]?.insert).toHaveBeenCalled();
+      expect(queryBuilders["bio_attribute_values"]?.insert).toHaveBeenCalled();
     });
 
-    it("should use default values for optional fields", async () => {
-      const metric = { weight: 75 };
+    it("should skip bio insert when weight is omitted", async () => {
+      const metric = { fitness_level_code: "beginner" };
 
       const dbModule = await import("../../../../apps/backend/src/db/connection.js");
       const dbFn = dbModule.db as jest.Mock;
-      dbFn("user_metrics");
-      if (queryBuilders["user_metrics"]) {
-        queryBuilders["user_metrics"].insert = jest.fn().mockReturnThis();
-        queryBuilders["user_metrics"].returning = jest.fn().mockResolvedValue([{ id: "metric-1" }]);
+      dbFn("profiles");
+      if (queryBuilders["profiles"]) {
+        queryBuilders["profiles"].update = jest.fn().mockResolvedValue(1);
       }
 
-      await usersRepository.insertUserMetric(userId, metric);
+      const result = await usersRepository.insertUserMetric(userId, metric);
 
-      expect(queryBuilders["user_metrics"]?.insert).toHaveBeenCalledWith(
-        expect.objectContaining({
-          unit: "kg",
-          fitness_level_code: null,
-          training_frequency: null,
-        }),
-      );
+      expect(result).toBe(userId);
     });
 
     it("should work with transaction", async () => {
@@ -1158,10 +1164,17 @@ describe("Users Repository", () => {
       const dbFn = dbModule.db as jest.Mock;
       const mockTrx = dbFn as any;
 
-      dbFn("user_metrics");
-      if (queryBuilders["user_metrics"]) {
-        queryBuilders["user_metrics"].insert = jest.fn().mockReturnThis();
-        queryBuilders["user_metrics"].returning = jest.fn().mockResolvedValue([{ id: "metric-1" }]);
+      dbFn("profiles");
+      dbFn("bio_attributes");
+      dbFn("bio_attribute_values");
+      if (queryBuilders["bio_attributes"]) {
+        queryBuilders["bio_attributes"].first = jest.fn().mockResolvedValue({ id: "attr-1" });
+      }
+      if (queryBuilders["bio_attribute_values"]) {
+        queryBuilders["bio_attribute_values"].insert = jest.fn().mockReturnThis();
+        queryBuilders["bio_attribute_values"].returning = jest
+          .fn()
+          .mockResolvedValue([{ id: "metric-1" }]);
       }
 
       const result = await usersRepository.insertUserMetric(userId, metric, mockTrx);
@@ -1172,24 +1185,25 @@ describe("Users Repository", () => {
 
   describe("getLatestUserMetrics", () => {
     it("should get latest user metrics", async () => {
-      const mockMetric: usersRepository.UserMetricRow = {
-        id: "metric-1",
-        user_id: userId,
-        weight: 75,
-        unit: "kg",
-        fitness_level_code: "intermediate",
-        training_frequency: "3-4",
-        recorded_at: new Date().toISOString(),
-        created_at: new Date().toISOString(),
-      };
-
       const dbModule = await import("../../../../apps/backend/src/db/connection.js");
       const dbFn = dbModule.db as jest.Mock;
-      dbFn("user_metrics");
-      if (queryBuilders["user_metrics"]) {
-        queryBuilders["user_metrics"].select = jest.fn().mockReturnThis();
-        queryBuilders["user_metrics"].orderBy = jest.fn().mockReturnThis();
-        queryBuilders["user_metrics"].first = jest.fn().mockResolvedValue(mockMetric);
+      dbFn("profiles");
+      dbFn("bio_attribute_values as v");
+      if (queryBuilders["profiles"]) {
+        queryBuilders["profiles"].first = jest.fn().mockResolvedValue({
+          fitness_level_code: "intermediate",
+          training_frequency: "3_4_per_week",
+        });
+      }
+      if (queryBuilders["bio_attribute_values as v"]) {
+        queryBuilders["bio_attribute_values as v"].join = jest.fn().mockReturnThis();
+        queryBuilders["bio_attribute_values as v"].where = jest.fn().mockReturnThis();
+        queryBuilders["bio_attribute_values as v"].andWhere = jest.fn().mockReturnThis();
+        queryBuilders["bio_attribute_values as v"].orderBy = jest.fn().mockReturnThis();
+        queryBuilders["bio_attribute_values as v"].select = jest.fn().mockReturnThis();
+        queryBuilders["bio_attribute_values as v"].first = jest
+          .fn()
+          .mockResolvedValue({ value_number: 75 });
       }
 
       const result = await usersRepository.getLatestUserMetrics(userId);
@@ -1198,18 +1212,25 @@ describe("Users Repository", () => {
         weight: 75,
         unit: "kg",
         fitness_level_code: "intermediate",
-        training_frequency: "3-4",
+        training_frequency: "3_4_per_week",
       });
     });
 
     it("should return null when no metrics exist", async () => {
       const dbModule = await import("../../../../apps/backend/src/db/connection.js");
       const dbFn = dbModule.db as jest.Mock;
-      dbFn("user_metrics");
-      if (queryBuilders["user_metrics"]) {
-        queryBuilders["user_metrics"].select = jest.fn().mockReturnThis();
-        queryBuilders["user_metrics"].orderBy = jest.fn().mockReturnThis();
-        queryBuilders["user_metrics"].first = jest.fn().mockResolvedValue(null);
+      dbFn("profiles");
+      dbFn("bio_attribute_values as v");
+      if (queryBuilders["profiles"]) {
+        queryBuilders["profiles"].first = jest.fn().mockResolvedValue(null);
+      }
+      if (queryBuilders["bio_attribute_values as v"]) {
+        queryBuilders["bio_attribute_values as v"].join = jest.fn().mockReturnThis();
+        queryBuilders["bio_attribute_values as v"].where = jest.fn().mockReturnThis();
+        queryBuilders["bio_attribute_values as v"].andWhere = jest.fn().mockReturnThis();
+        queryBuilders["bio_attribute_values as v"].orderBy = jest.fn().mockReturnThis();
+        queryBuilders["bio_attribute_values as v"].select = jest.fn().mockReturnThis();
+        queryBuilders["bio_attribute_values as v"].first = jest.fn().mockResolvedValue(null);
       }
 
       const result = await usersRepository.getLatestUserMetrics(userId);
@@ -1222,11 +1243,18 @@ describe("Users Repository", () => {
       const dbFn = dbModule.db as jest.Mock;
       const mockTrx = dbFn as any;
 
-      dbFn("user_metrics");
-      if (queryBuilders["user_metrics"]) {
-        queryBuilders["user_metrics"].select = jest.fn().mockReturnThis();
-        queryBuilders["user_metrics"].orderBy = jest.fn().mockReturnThis();
-        queryBuilders["user_metrics"].first = jest.fn().mockResolvedValue(null);
+      dbFn("profiles");
+      dbFn("bio_attribute_values as v");
+      if (queryBuilders["profiles"]) {
+        queryBuilders["profiles"].first = jest.fn().mockResolvedValue(null);
+      }
+      if (queryBuilders["bio_attribute_values as v"]) {
+        queryBuilders["bio_attribute_values as v"].join = jest.fn().mockReturnThis();
+        queryBuilders["bio_attribute_values as v"].where = jest.fn().mockReturnThis();
+        queryBuilders["bio_attribute_values as v"].andWhere = jest.fn().mockReturnThis();
+        queryBuilders["bio_attribute_values as v"].orderBy = jest.fn().mockReturnThis();
+        queryBuilders["bio_attribute_values as v"].select = jest.fn().mockReturnThis();
+        queryBuilders["bio_attribute_values as v"].first = jest.fn().mockResolvedValue(null);
       }
 
       const result = await usersRepository.getLatestUserMetrics(userId, mockTrx);

@@ -5,10 +5,10 @@ import { deleteStorageObject } from "../../services/mediaStorage.service.js";
 import { toError } from "../../utils/error.utils.js";
 import { logger } from "../../config/logger.js";
 import { env } from "../../config/env.js";
+import crypto from "node:crypto";
 
 type UserRow = {
   id: string;
-  username: string;
   status: string;
   deleted_at: string | null;
   purge_scheduled_at: string | null;
@@ -109,41 +109,67 @@ export async function executeAccountDeletion(userId: string): Promise<void> {
     .andWhere("type", "email")
     .andWhere("is_primary", true)
     .first<ContactRow>();
+  const profileRow = await db<{ alias: string }>("profiles")
+    .where("user_id", userId)
+    .first<{ alias: string }>();
   const purgedAt = new Date().toISOString();
+
+  const hashIdentifier = (value: string | null | undefined): string => {
+    const source = (value ?? "").trim().toLowerCase();
+    return crypto.createHash("sha256").update(source).digest("hex");
+  };
 
   await db.transaction(async (trx) => {
     await trx("user_tombstones").insert({
       user_id: userId,
-      username: user.username ?? null,
-      email: primaryEmailRow?.value ?? null,
+      email_hash: hashIdentifier(primaryEmailRow?.value),
+      alias_hash: hashIdentifier(profileRow?.alias),
       deleted_at: user.deleted_at ?? purgedAt,
       purged_at: purgedAt,
       backup_purge_due_at: user.backup_purge_due_at ?? null,
-      metadata: {
-        mediaRemoved: mediaRows.length,
-      },
     });
+
+    await trx("feed_likes").where({ user_id: userId }).del();
+    await trx("feed_comments").where({ user_id: userId }).del();
+    await trx("feed_reports").where({ reporter_id: userId }).del();
+    await trx("session_bookmarks").where({ user_id: userId }).del();
+    await trx("feed_items").where({ owner_id: userId }).del();
+    await trx("user_blocks").where({ blocker_id: userId }).orWhere({ blocked_id: userId }).del();
+    await trx("followers").where({ follower_id: userId }).del();
+    await trx("followers").where({ following_id: userId }).del();
+
+    await trx("personal_records").where({ user_id: userId }).del();
+    await trx("user_domain_vibe_levels").where({ user_id: userId }).del();
+    await trx("vibe_level_changes").where({ user_id: userId }).del();
+    await trx("user_points").where({ user_id: userId }).del();
+    await trx("badges").where({ user_id: userId }).del();
+
+    await trx("bio_attribute_values").where({ user_id: userId }).del();
+    await trx("bio_attribute_selections").where({ user_id: userId }).del();
+    await trx("perf_attribute_values").where({ user_id: userId }).del();
+    await trx("perf_attribute_selections").where({ user_id: userId }).del();
+
+    await trx("cookie_consents").where({ user_id: userId }).del();
+    await trx("pending_2fa_sessions").where({ user_id: userId }).del();
+    await trx("backup_codes").where({ user_id: userId }).del();
+    await trx("user_2fa_settings").where({ user_id: userId }).del();
 
     if (sessionIds.length > 0) {
       await trx("exercise_sets")
-        .whereIn("session_id", sessionIds as readonly string[])
+        .whereIn(
+          "session_exercise_id",
+          trx("session_exercises").select("id").whereIn("session_id", sessionIds),
+        )
         .del();
-      await trx("session_exercises")
-        .whereIn("session_id", sessionIds as readonly string[])
-        .del();
+      await trx("session_exercises").whereIn("session_id", sessionIds).del();
     }
 
     await trx("sessions").where({ owner_id: userId }).del();
     await trx("exercises").where({ owner_id: userId }).del();
     await trx("plans").where({ user_id: userId }).del();
-    await trx("user_metrics").where({ user_id: userId }).del();
     await trx("user_contacts").where({ user_id: userId }).del();
     await trx("profiles").where({ user_id: userId }).del();
     await trx("user_state_history").where({ user_id: userId }).del();
-    await trx("user_points").where({ user_id: userId }).del();
-    await trx("badges").where({ user_id: userId }).del();
-    await trx("followers").where({ follower_id: userId }).del();
-    await trx("followers").where({ following_id: userId }).del();
     await trx("media").where({ owner_id: userId }).del();
     await trx("auth_tokens").where({ user_id: userId }).del();
     await trx("refresh_tokens").where({ user_id: userId }).del();

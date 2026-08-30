@@ -13,7 +13,6 @@ export async function seed(knex: Knex): Promise<void> {
   const users = [
     {
       id: ADMIN_ID,
-      username: "admin",
       display_name: "FitVibe Admin",
       locale: "en-US",
       preferred_lang: "en",
@@ -25,7 +24,6 @@ export async function seed(knex: Knex): Promise<void> {
     },
     {
       id: ATHLETE_ID,
-      username: "jane.doe",
       display_name: "Jane Doe",
       locale: "en-GB",
       preferred_lang: "en",

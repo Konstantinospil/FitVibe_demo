@@ -251,23 +251,18 @@ export async function getUserPointsProfile(
   trx?: Knex.Transaction,
 ): Promise<UserPointsProfile> {
   const exec = executor(trx);
-  const [staticRow, metricsRow] = await Promise.all([
-    exec<ProfileRow>("profiles")
-      .select<ProfileRow[]>(["date_of_birth", "gender_code"])
-      .where({ user_id: userId })
-      .first(),
-    exec<UserMetricsRow>("user_metrics")
-      .select<UserMetricsRow[]>(["fitness_level_code", "training_frequency", "recorded_at"])
-      .where({ user_id: userId })
-      .orderBy("recorded_at", "desc")
-      .first(),
-  ]);
+  const profile = await exec<ProfileRow & UserMetricsRow>("profiles")
+    .select<
+      Array<ProfileRow & UserMetricsRow>
+    >(["date_of_birth", "gender_code", "fitness_level_code", "training_frequency"])
+    .where({ user_id: userId })
+    .first();
 
   return {
-    dateOfBirth: staticRow?.date_of_birth ?? null,
-    genderCode: staticRow?.gender_code ?? null,
-    fitnessLevelCode: metricsRow?.fitness_level_code ?? null,
-    trainingFrequency: metricsRow?.training_frequency ?? null,
+    dateOfBirth: profile?.date_of_birth ?? null,
+    genderCode: profile?.gender_code ?? null,
+    fitnessLevelCode: profile?.fitness_level_code ?? null,
+    trainingFrequency: profile?.training_frequency ?? null,
   };
 }
 

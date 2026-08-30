@@ -163,31 +163,43 @@ export async function enableTwoFactor(
   // Hash backup codes
   const hashedCodes = await hashBackupCodes(backupCodes);
 
-  // Update user record with 2FA enabled
-  await exec("users").where({ id: userId }).update({
-    two_factor_enabled: true,
-    two_factor_secret: secret, // In production, encrypt this!
-    two_factor_enabled_at: new Date(),
-    updated_at: new Date(),
-  });
+  await exec("user_2fa_settings")
+    .insert({
+      user_id: userId,
+      totp_secret: secret,
+      is_enabled: true,
+      is_verified: true,
+      enabled_at: new Date(),
+      updated_at: new Date(),
+    })
+    .onConflict("user_id")
+    .merge({
+      totp_secret: secret,
+      is_enabled: true,
+      is_verified: true,
+      enabled_at: new Date(),
+      updated_at: new Date(),
+    });
 
-  // Store backup codes
+  await exec("backup_codes").where({ user_id: userId }).del();
   const backupCodeRecords = hashedCodes.map((codeHash) => ({
     user_id: userId,
     code_hash: codeHash,
-    used: false,
+    is_used: false,
     created_at: new Date(),
   }));
+  await exec("backup_codes").insert(backupCodeRecords);
 
-  await exec("two_factor_backup_codes").insert(backupCodeRecords);
-
-  // Audit log
-  await exec("two_factor_audit_log").insert({
-    user_id: userId,
-    event_type: "enabled",
-    ip_address: ipAddress,
-    user_agent: userAgent,
-    metadata: { backup_codes_count: backupCodes.length },
+  await exec("audit_log").insert({
+    actor_user_id: userId,
+    entity_type: "auth",
+    action: "2fa_enabled",
+    entity_id: userId,
+    metadata: {
+      backup_codes_count: backupCodes.length,
+      ip_address: ipAddress,
+      user_agent: userAgent,
+    },
     created_at: new Date(),
   });
 
@@ -209,23 +221,21 @@ export async function disableTwoFactor(
 ): Promise<void> {
   const exec = trx ?? db;
 
-  // Update user record
-  await exec("users").where({ id: userId }).update({
-    two_factor_enabled: false,
-    two_factor_secret: null,
-    two_factor_enabled_at: null,
+  await exec("user_2fa_settings").where({ user_id: userId }).update({
+    is_enabled: false,
+    totp_secret: "",
+    enabled_at: null,
     updated_at: new Date(),
   });
 
-  // Delete backup codes
-  await exec("two_factor_backup_codes").where({ user_id: userId }).delete();
+  await exec("backup_codes").where({ user_id: userId }).del();
 
-  // Audit log
-  await exec("two_factor_audit_log").insert({
-    user_id: userId,
-    event_type: "disabled",
-    ip_address: ipAddress,
-    user_agent: userAgent,
+  await exec("audit_log").insert({
+    actor_user_id: userId,
+    entity_type: "auth",
+    action: "2fa_disabled",
+    entity_id: userId,
+    metadata: { ip_address: ipAddress, user_agent: userAgent },
     created_at: new Date(),
   });
 
@@ -251,53 +261,50 @@ export async function verifyTwoFactorToken(
 ): Promise<boolean> {
   const exec = trx ?? db;
 
-  // Get user's 2FA secret
-  const user = await exec("users")
-    .where({ id: userId })
-    .select("two_factor_secret", "two_factor_enabled")
-    .first<{ two_factor_secret: string | null; two_factor_enabled: boolean }>();
+  const settings = await exec("user_2fa_settings")
+    .where({ user_id: userId })
+    .first<{ totp_secret: string | null; is_enabled: boolean }>();
 
-  if (!user || !user.two_factor_enabled || !user.two_factor_secret) {
+  if (!settings || !settings.is_enabled || !settings.totp_secret) {
     logger.warn({ userId }, "[2fa] User does not have 2FA enabled");
     return false;
   }
 
-  // Try TOTP verification first
-  if (verifyTotpToken(token, user.two_factor_secret)) {
-    // Audit log
-    await exec("two_factor_audit_log").insert({
-      user_id: userId,
-      event_type: "verified",
-      ip_address: ipAddress,
-      user_agent: userAgent,
-      metadata: { method: "totp" },
+  if (verifyTotpToken(token, settings.totp_secret)) {
+    await exec("audit_log").insert({
+      actor_user_id: userId,
+      entity_type: "auth",
+      action: "2fa_verified",
+      entity_id: userId,
+      metadata: { method: "totp", ip_address: ipAddress, user_agent: userAgent },
       created_at: new Date(),
     });
-
     logger.info({ userId }, "[2fa] TOTP verification successful");
     return true;
   }
 
-  // Try backup code verification
-  const backupCodes = await exec("two_factor_backup_codes")
-    .where({ user_id: userId, used: false })
+  const backupCodes = await exec("backup_codes")
+    .where({ user_id: userId, is_used: false })
     .select<BackupCode[]>("*");
 
   for (const backupCodeRecord of backupCodes) {
     if (await verifyBackupCode(token, backupCodeRecord.code_hash)) {
       // Mark backup code as used
-      await exec("two_factor_backup_codes").where({ id: backupCodeRecord.id }).update({
-        used: true,
+      await exec("backup_codes").where({ id: backupCodeRecord.id }).update({
+        is_used: true,
         used_at: new Date(),
       });
 
-      // Audit log
-      await exec("two_factor_audit_log").insert({
-        user_id: userId,
-        event_type: "backup_code_used",
-        ip_address: ipAddress,
-        user_agent: userAgent,
-        metadata: { backup_code_id: backupCodeRecord.id },
+      await exec("audit_log").insert({
+        actor_user_id: userId,
+        entity_type: "auth",
+        action: "2fa_backup_code_used",
+        entity_id: userId,
+        metadata: {
+          backup_code_id: backupCodeRecord.id,
+          ip_address: ipAddress,
+          user_agent: userAgent,
+        },
         created_at: new Date(),
       });
 
@@ -307,11 +314,12 @@ export async function verifyTwoFactorToken(
   }
 
   // Failed verification
-  await exec("two_factor_audit_log").insert({
-    user_id: userId,
-    event_type: "failed_verification",
-    ip_address: ipAddress,
-    user_agent: userAgent,
+  await exec("audit_log").insert({
+    actor_user_id: userId,
+    entity_type: "auth",
+    action: "2fa_failed_verification",
+    entity_id: userId,
+    metadata: { ip_address: ipAddress, user_agent: userAgent },
     created_at: new Date(),
   });
 
@@ -337,29 +345,30 @@ export async function regenerateBackupCodes(
   const exec = trx ?? db;
 
   // Delete old backup codes
-  await exec("two_factor_backup_codes").where({ user_id: userId }).delete();
+  await exec("backup_codes").where({ user_id: userId }).del();
 
-  // Generate new codes
   const backupCodes = generateBackupCodes();
   const hashedCodes = await hashBackupCodes(backupCodes);
 
-  // Store new codes
   const backupCodeRecords = hashedCodes.map((codeHash) => ({
     user_id: userId,
     code_hash: codeHash,
-    used: false,
+    is_used: false,
     created_at: new Date(),
   }));
 
-  await exec("two_factor_backup_codes").insert(backupCodeRecords);
+  await exec("backup_codes").insert(backupCodeRecords);
 
-  // Audit log
-  await exec("two_factor_audit_log").insert({
-    user_id: userId,
-    event_type: "backup_codes_regenerated",
-    ip_address: ipAddress,
-    user_agent: userAgent,
-    metadata: { backup_codes_count: backupCodes.length },
+  await exec("audit_log").insert({
+    actor_user_id: userId,
+    entity_type: "auth",
+    action: "2fa_backup_codes_generated",
+    entity_id: userId,
+    metadata: {
+      backup_codes_count: backupCodes.length,
+      ip_address: ipAddress,
+      user_agent: userAgent,
+    },
     created_at: new Date(),
   });
 
@@ -380,9 +389,9 @@ export async function getBackupCodeStats(
 ): Promise<{ total: number; used: number; remaining: number }> {
   const exec = trx ?? db;
 
-  const result = await exec("two_factor_backup_codes")
+  const result = await exec("backup_codes")
     .where({ user_id: userId })
-    .select(exec.raw("COUNT(*) as total, SUM(CASE WHEN used THEN 1 ELSE 0 END) as used"))
+    .select(exec.raw("COUNT(*) as total, SUM(CASE WHEN is_used THEN 1 ELSE 0 END) as used"))
     .first<{ total: string; used: string }>();
 
   const total = parseInt(result?.total ?? "0", 10);

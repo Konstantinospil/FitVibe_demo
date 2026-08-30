@@ -9,11 +9,9 @@ const STATE_TABLE = "user_state_history";
 const MEDIA_TABLE = "media";
 const AVATAR_TARGET_TYPE = "user_avatar";
 const PROFILES_TABLE = "profiles";
-const USER_METRICS_TABLE = "user_metrics";
 
 export interface CreateUserRecordInput {
   id: string;
-  username: string;
   displayName: string;
   locale?: string;
   preferredLang?: string;
@@ -73,7 +71,8 @@ function withDb(trx?: Knex.Transaction) {
 export async function findUserByEmail(email: string): Promise<UserRow | undefined> {
   const normalized = email.toLowerCase();
   return db(USERS_TABLE)
-    .select<UserRow[]>(`${USERS_TABLE}.*`)
+    .leftJoin(PROFILES_TABLE, `${PROFILES_TABLE}.user_id`, `${USERS_TABLE}.id`)
+    .select<UserRow[]>(`${USERS_TABLE}.*`, db.raw(`${PROFILES_TABLE}.alias as username`))
     .joinRaw(
       `INNER JOIN ${CONTACTS_TABLE} c ON c.user_id = ${USERS_TABLE}.id AND c.type = ? AND c.is_primary IS TRUE`,
       ["email"],
@@ -83,18 +82,27 @@ export async function findUserByEmail(email: string): Promise<UserRow | undefine
 }
 
 export async function findUserById(id: string): Promise<UserRow | undefined> {
-  return db<UserRow>(USERS_TABLE).where({ id }).first();
+  return db<UserRow>(USERS_TABLE)
+    .leftJoin(PROFILES_TABLE, `${PROFILES_TABLE}.user_id`, `${USERS_TABLE}.id`)
+    .select<UserRow[]>(`${USERS_TABLE}.*`, db.raw(`${PROFILES_TABLE}.alias as username`))
+    .where(`${USERS_TABLE}.id`, id)
+    .first();
 }
 
 export async function findUserByUsername(username: string): Promise<UserRow | undefined> {
-  return db<UserRow>(USERS_TABLE).whereRaw("LOWER(username) = ?", [username.toLowerCase()]).first();
+  return db<UserRow>(USERS_TABLE)
+    .join(PROFILES_TABLE, `${PROFILES_TABLE}.user_id`, `${USERS_TABLE}.id`)
+    .select<UserRow[]>(`${USERS_TABLE}.*`, db.raw(`${PROFILES_TABLE}.alias as username`))
+    .whereRaw(`LOWER(${PROFILES_TABLE}.alias) = ?`, [username.toLowerCase()])
+    .first();
 }
 
 export async function listUsers(limit = 50, offset = 0): Promise<UserRow[]> {
   return db(USERS_TABLE)
+    .leftJoin(PROFILES_TABLE, `${PROFILES_TABLE}.user_id`, `${USERS_TABLE}.id`)
     .select(
       `${USERS_TABLE}.id`,
-      `${USERS_TABLE}.username`,
+      db.raw(`${PROFILES_TABLE}.alias as username`),
       `${USERS_TABLE}.display_name`,
       `${USERS_TABLE}.locale`,
       `${USERS_TABLE}.preferred_lang`,
@@ -139,9 +147,6 @@ export async function updateUserProfile(
   trx?: Knex.Transaction,
 ) {
   const patch: Record<string, unknown> = {};
-  if (updates.username !== undefined) {
-    patch.username = updates.username;
-  }
   if (updates.displayName !== undefined) {
     patch.display_name = updates.displayName;
   }
@@ -173,7 +178,6 @@ export async function createUserRecord(
   const now = new Date().toISOString();
   return withDb(trx)(USERS_TABLE).insert({
     id: input.id,
-    username: input.username,
     display_name: input.displayName,
     locale: input.locale ?? "en-US",
     preferred_lang: input.preferredLang ?? "en",
@@ -201,18 +205,17 @@ export async function insertStateHistory(
   oldValue: unknown,
   newValue: unknown,
   trx?: Knex.Transaction,
+  actorUserId?: string | null,
+  requestId?: string | null,
 ): Promise<number> {
-  // For JSONB columns, we need to ensure values are properly JSON-encoded
-  // Knex should handle this, but we'll use raw SQL for JSONB to be explicit
-  const db = withDb(trx);
+  const dbConn = withDb(trx);
   const id = crypto.randomUUID();
   const now = new Date().toISOString();
 
-  // Use raw SQL with JSONB casting to ensure proper encoding
-  const result: { rowCount?: number } = await db.raw(
+  const result: { rowCount?: number } = await dbConn.raw(
     `
-    INSERT INTO ${STATE_TABLE} (id, user_id, field, old_value, new_value, changed_at)
-    VALUES (?, ?, ?, ?::jsonb, ?::jsonb, ?)
+    INSERT INTO ${STATE_TABLE} (id, user_id, field, old_value, new_value, changed_at, actor_user_id, request_id)
+    VALUES (?, ?, ?, ?::jsonb, ?::jsonb, ?, ?, ?)
     `,
     [
       id,
@@ -221,9 +224,10 @@ export async function insertStateHistory(
       oldValue === null || oldValue === undefined ? null : JSON.stringify(oldValue),
       newValue === null || newValue === undefined ? null : JSON.stringify(newValue),
       now,
+      actorUserId ?? userId,
+      requestId ?? null,
     ],
   );
-  // Return row count (number of rows affected)
   return result.rowCount ?? 1;
 }
 
@@ -266,7 +270,11 @@ export async function fetchUserWithContacts(
   contacts: ContactRow[];
   avatar: AvatarRow | null;
 } | null> {
-  const user = await (trx ?? db)<UserRow>(USERS_TABLE).where({ id: userId }).first();
+  const user = await (trx ?? db)<UserRow>(USERS_TABLE)
+    .leftJoin(PROFILES_TABLE, `${PROFILES_TABLE}.user_id`, `${USERS_TABLE}.id`)
+    .select<UserRow[]>(`${USERS_TABLE}.*`, db.raw(`${PROFILES_TABLE}.alias as username`))
+    .where(`${USERS_TABLE}.id`, userId)
+    .first();
   if (!user) {
     return null;
   }
@@ -343,15 +351,15 @@ export async function deleteContact(
 
 export type ProfileRow = {
   user_id: string;
-  alias: string | null;
+  alias: string;
   alias_changed_at: string | null;
   bio: string | null;
   avatar_asset_id: string | null;
   date_of_birth: string | null;
   gender_code: string | null;
   visibility: string;
-  timezone: string | null;
-  unit_preferences: Record<string, unknown>;
+  fitness_level_code: string | null;
+  training_frequency: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -380,7 +388,7 @@ export async function getUserMetrics(userId: string, trx?: Knex.Transaction): Pr
 
   // Get follower count
   const followerResult = await exec("followers")
-    .where({ followed_id: userId })
+    .where({ following_id: userId })
     .count<{ count: string | number }>("* as count")
     .first();
   const follower_count = Number(followerResult?.count ?? 0);
@@ -483,8 +491,8 @@ export async function getProfileByUserId(
       "date_of_birth",
       "gender_code",
       "visibility",
-      "timezone",
-      "unit_preferences",
+      "fitness_level_code",
+      "training_frequency",
       "created_at",
       "updated_at",
     ])
@@ -534,7 +542,6 @@ export async function updateProfileAlias(
     alias,
     alias_changed_at: now,
     visibility: "private",
-    unit_preferences: {},
     created_at: now,
     updated_at: now,
   });
@@ -580,15 +587,34 @@ export async function insertUserMetric(
 ): Promise<string> {
   const exec = withDb(trx);
   const now = new Date().toISOString();
-  const [record] = (await exec(USER_METRICS_TABLE)
+  const profilePatch: Record<string, unknown> = { updated_at: now };
+  if (metric.fitness_level_code !== undefined) {
+    profilePatch.fitness_level_code = metric.fitness_level_code;
+  }
+  if (metric.training_frequency !== undefined) {
+    profilePatch.training_frequency = metric.training_frequency;
+  }
+  if (Object.keys(profilePatch).length > 1) {
+    await exec(PROFILES_TABLE).where({ user_id: userId }).update(profilePatch);
+  }
+
+  if (metric.weight === undefined) {
+    return userId;
+  }
+
+  const attribute = await exec("bio_attributes")
+    .where({ key: "weight_kg" })
+    .first<{ id: string }>();
+  if (!attribute) {
+    return userId;
+  }
+  const [record] = (await exec("bio_attribute_values")
     .insert({
       id: crypto.randomUUID(),
       user_id: userId,
-      weight: metric.weight ?? null,
-      unit: metric.unit ?? "kg",
-      fitness_level_code: metric.fitness_level_code ?? null,
-      training_frequency: metric.training_frequency ?? null,
-      recorded_at: now,
+      attribute_id: attribute.id,
+      value_number: metric.weight,
+      measured_at: now,
       created_at: now,
     })
     .returning("id")) as Array<{ id: string }>;
@@ -604,19 +630,24 @@ export async function getLatestUserMetrics(
   fitness_level_code: string | null;
   training_frequency: string | null;
 } | null> {
-  const row = await withDb(trx)<UserMetricRow>(USER_METRICS_TABLE)
-    .where({ user_id: userId })
-    .orderBy("recorded_at", "desc")
-    .select(["weight", "unit", "fitness_level_code", "training_frequency"])
-    .first();
+  const exec = withDb(trx);
+  const profile = await exec<ProfileRow>(PROFILES_TABLE).where({ user_id: userId }).first();
+  const weightRow = await exec("bio_attribute_values as v")
+    .join("bio_attributes as a", "a.id", "v.attribute_id")
+    .where("v.user_id", userId)
+    .andWhere("a.key", "weight_kg")
+    .orderBy("v.measured_at", "desc")
+    .select("v.value_number")
+    .first<{ value_number: number | string }>();
 
-  return row
-    ? {
-        // PostgreSQL numeric columns are returned as strings, convert to number
-        weight: row.weight !== null && row.weight !== undefined ? Number(row.weight) : null,
-        unit: row.unit,
-        fitness_level_code: row.fitness_level_code,
-        training_frequency: row.training_frequency,
-      }
-    : null;
+  if (!profile && !weightRow) {
+    return null;
+  }
+
+  return {
+    weight: weightRow?.value_number !== undefined ? Number(weightRow.value_number) : null,
+    unit: "kg",
+    fitness_level_code: profile?.fitness_level_code ?? null,
+    training_frequency: profile?.training_frequency ?? null,
+  };
 }

@@ -3,6 +3,7 @@ import { db } from "../../db/connection.js";
 const FEED_ITEMS_TABLE = "feed_items";
 const SESSIONS_TABLE = "sessions";
 const USERS_TABLE = "users";
+const PROFILES_TABLE = "profiles";
 const FOLLOWERS_TABLE = "followers";
 const FEED_LIKES_TABLE = "feed_likes";
 const SESSION_BOOKMARKS_TABLE = "session_bookmarks";
@@ -47,7 +48,8 @@ export async function listFeedSessions({
 }: FeedQueryOptions): Promise<FeedItemWithSessionRow[]> {
   const query = db(FEED_ITEMS_TABLE)
     .leftJoin(SESSIONS_TABLE, `${SESSIONS_TABLE}.id`, `${FEED_ITEMS_TABLE}.session_id`)
-    .leftJoin(USERS_TABLE, `${USERS_TABLE}.id`, `${FEED_ITEMS_TABLE}.owner_id`);
+    .leftJoin(USERS_TABLE, `${USERS_TABLE}.id`, `${FEED_ITEMS_TABLE}.owner_id`)
+    .leftJoin(PROFILES_TABLE, `${PROFILES_TABLE}.user_id`, `${FEED_ITEMS_TABLE}.owner_id`);
 
   // For popularity sorting, we need to join with feed_likes to count likes
   if (sort === "popularity") {
@@ -66,7 +68,7 @@ export async function listFeedSessions({
   query
     .select<
       FeedItemWithSessionRow[]
-    >([`${FEED_ITEMS_TABLE}.id as feed_item_id`, `${FEED_ITEMS_TABLE}.owner_id`, `${USERS_TABLE}.username as owner_username`, `${USERS_TABLE}.display_name as owner_display_name`, `${FEED_ITEMS_TABLE}.visibility`, `${FEED_ITEMS_TABLE}.published_at`, `${SESSIONS_TABLE}.id as session_id`, `${SESSIONS_TABLE}.title as session_title`, `${SESSIONS_TABLE}.completed_at as session_completed_at`, `${SESSIONS_TABLE}.points as session_points`])
+    >([`${FEED_ITEMS_TABLE}.id as feed_item_id`, `${FEED_ITEMS_TABLE}.owner_id`, `${PROFILES_TABLE}.alias as owner_username`, `${USERS_TABLE}.display_name as owner_display_name`, `${FEED_ITEMS_TABLE}.visibility`, `${FEED_ITEMS_TABLE}.published_at`, `${SESSIONS_TABLE}.id as session_id`, `${SESSIONS_TABLE}.title as session_title`, `${SESSIONS_TABLE}.completed_at as session_completed_at`, `${SESSIONS_TABLE}.points as session_points`])
     .whereNull(`${FEED_ITEMS_TABLE}.deleted_at`);
 
   // Apply search query if provided
@@ -76,7 +78,7 @@ export async function listFeedSessions({
       builder
         .whereRaw(`LOWER(${SESSIONS_TABLE}.title) LIKE ?`, [searchTerm])
         .orWhereRaw(`LOWER(${SESSION_EXERCISES_TABLE}.exercise_name) LIKE ?`, [searchTerm])
-        .orWhereRaw(`LOWER(${USERS_TABLE}.username) LIKE ?`, [searchTerm])
+        .orWhereRaw(`LOWER(${PROFILES_TABLE}.alias) LIKE ?`, [searchTerm])
         .orWhereRaw(`LOWER(${USERS_TABLE}.display_name) LIKE ?`, [searchTerm]);
     });
   }
@@ -87,7 +89,7 @@ export async function listFeedSessions({
       .groupBy([
         `${FEED_ITEMS_TABLE}.id`,
         `${FEED_ITEMS_TABLE}.owner_id`,
-        `${USERS_TABLE}.username`,
+        `${PROFILES_TABLE}.alias`,
         `${USERS_TABLE}.display_name`,
         `${FEED_ITEMS_TABLE}.visibility`,
         `${FEED_ITEMS_TABLE}.published_at`,
@@ -157,7 +159,8 @@ export async function countFeedSessions({
 }): Promise<number> {
   const query = db(FEED_ITEMS_TABLE)
     .leftJoin(SESSIONS_TABLE, `${SESSIONS_TABLE}.id`, `${FEED_ITEMS_TABLE}.session_id`)
-    .leftJoin(USERS_TABLE, `${USERS_TABLE}.id`, `${FEED_ITEMS_TABLE}.owner_id`);
+    .leftJoin(USERS_TABLE, `${USERS_TABLE}.id`, `${FEED_ITEMS_TABLE}.owner_id`)
+    .leftJoin(PROFILES_TABLE, `${PROFILES_TABLE}.user_id`, `${FEED_ITEMS_TABLE}.owner_id`);
 
   // For search, we need to join with session_exercises to search exercise names
   if (searchQuery) {
@@ -177,7 +180,7 @@ export async function countFeedSessions({
       builder
         .whereRaw(`LOWER(${SESSIONS_TABLE}.title) LIKE ?`, [searchTerm])
         .orWhereRaw(`LOWER(${SESSION_EXERCISES_TABLE}.exercise_name) LIKE ?`, [searchTerm])
-        .orWhereRaw(`LOWER(${USERS_TABLE}.username) LIKE ?`, [searchTerm])
+        .orWhereRaw(`LOWER(${PROFILES_TABLE}.alias) LIKE ?`, [searchTerm])
         .orWhereRaw(`LOWER(${USERS_TABLE}.display_name) LIKE ?`, [searchTerm]);
     });
   }
@@ -289,9 +292,6 @@ export async function insertFeedItem({
     .insert({
       owner_id: ownerId,
       session_id: sessionId ?? null,
-      kind: sessionId ? "session" : "generic",
-      target_type: sessionId ? "session" : null,
-      target_id: sessionId ?? null,
       visibility,
       published_at: publishedAt ?? db.fn.now(),
     })
@@ -348,9 +348,10 @@ export async function upsertFollower(followerId: string, followingId: string): P
 export async function listFollowers(userId: string): Promise<FollowerRow[]> {
   const rows = await db(FOLLOWERS_TABLE)
     .join(USERS_TABLE, `${USERS_TABLE}.id`, `${FOLLOWERS_TABLE}.follower_id`)
+    .join(PROFILES_TABLE, `${PROFILES_TABLE}.user_id`, `${FOLLOWERS_TABLE}.follower_id`)
     .select<FollowerRow[]>([
       `${USERS_TABLE}.id as follower_id`,
-      `${USERS_TABLE}.username as follower_username`,
+      `${PROFILES_TABLE}.alias as follower_username`,
       `${USERS_TABLE}.display_name as follower_display_name`,
       `${FOLLOWERS_TABLE}.created_at as followed_at`,
     ])
@@ -363,9 +364,10 @@ export async function listFollowers(userId: string): Promise<FollowerRow[]> {
 export async function listFollowing(userId: string): Promise<FollowingRow[]> {
   const rows = await db(FOLLOWERS_TABLE)
     .join(USERS_TABLE, `${USERS_TABLE}.id`, `${FOLLOWERS_TABLE}.following_id`)
+    .join(PROFILES_TABLE, `${PROFILES_TABLE}.user_id`, `${FOLLOWERS_TABLE}.following_id`)
     .select<FollowingRow[]>([
       `${USERS_TABLE}.id as following_id`,
-      `${USERS_TABLE}.username as following_username`,
+      `${PROFILES_TABLE}.alias as following_username`,
       `${USERS_TABLE}.display_name as following_display_name`,
       `${FOLLOWERS_TABLE}.created_at as followed_at`,
     ])
@@ -516,6 +518,7 @@ export async function listBookmarkedSessions(
       `${SESSION_BOOKMARKS_TABLE}.session_id`,
     )
     .join(USERS_TABLE, `${USERS_TABLE}.id`, `${SESSIONS_TABLE}.owner_id`)
+    .join(PROFILES_TABLE, `${PROFILES_TABLE}.user_id`, `${SESSIONS_TABLE}.owner_id`)
     .select<BookmarkRow[]>([
       `${SESSION_BOOKMARKS_TABLE}.session_id`,
       `${FEED_ITEMS_TABLE}.id as feed_item_id`,
@@ -523,7 +526,7 @@ export async function listBookmarkedSessions(
       `${SESSIONS_TABLE}.completed_at`,
       `${SESSIONS_TABLE}.visibility`,
       `${SESSIONS_TABLE}.owner_id`,
-      `${USERS_TABLE}.username as owner_username`,
+      `${PROFILES_TABLE}.alias as owner_username`,
       `${USERS_TABLE}.display_name as owner_display_name`,
       `${SESSION_BOOKMARKS_TABLE}.created_at`,
       `${SESSIONS_TABLE}.points`,
@@ -565,11 +568,12 @@ export async function listCommentsForFeedItem(
 ): Promise<CommentRow[]> {
   return db(FEED_COMMENTS_TABLE)
     .join(USERS_TABLE, `${USERS_TABLE}.id`, `${FEED_COMMENTS_TABLE}.user_id`)
+    .join(PROFILES_TABLE, `${PROFILES_TABLE}.user_id`, `${FEED_COMMENTS_TABLE}.user_id`)
     .select<CommentRow[]>([
       `${FEED_COMMENTS_TABLE}.id`,
       `${FEED_COMMENTS_TABLE}.feed_item_id`,
       `${FEED_COMMENTS_TABLE}.user_id`,
-      `${USERS_TABLE}.username`,
+      `${PROFILES_TABLE}.alias as username`,
       `${USERS_TABLE}.display_name`,
       `${FEED_COMMENTS_TABLE}.body`,
       `${FEED_COMMENTS_TABLE}.created_at`,
@@ -624,11 +628,12 @@ export async function findCommentById(commentId: string): Promise<FeedCommentRec
 export async function getCommentWithAuthor(commentId: string): Promise<CommentRow | undefined> {
   return db(FEED_COMMENTS_TABLE)
     .join(USERS_TABLE, `${USERS_TABLE}.id`, `${FEED_COMMENTS_TABLE}.user_id`)
+    .join(PROFILES_TABLE, `${PROFILES_TABLE}.user_id`, `${FEED_COMMENTS_TABLE}.user_id`)
     .select<CommentRow[]>([
       `${FEED_COMMENTS_TABLE}.id`,
       `${FEED_COMMENTS_TABLE}.feed_item_id`,
       `${FEED_COMMENTS_TABLE}.user_id`,
-      `${USERS_TABLE}.username`,
+      `${PROFILES_TABLE}.alias as username`,
       `${USERS_TABLE}.display_name`,
       `${FEED_COMMENTS_TABLE}.body`,
       `${FEED_COMMENTS_TABLE}.created_at`,
@@ -722,7 +727,9 @@ export async function getLeaderboardRows({
   const periodStartExpr = db.raw("date_trunc(?, now())::date", [period]);
 
   const query = db(LEADERBOARD_TABLE)
-    .select<LeaderboardRow[]>(["user_id", "username", "display_name", "points", "badges_count"])
+    .select<
+      LeaderboardRow[]
+    >(["user_id", "alias as username", "display_name", "points", "badges_count"])
     .where({ period_type: period })
     .andWhere("period_start", "=", periodStartExpr)
     .orderBy("points", "desc")

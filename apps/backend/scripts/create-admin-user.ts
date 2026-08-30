@@ -5,7 +5,7 @@
  * Usage: pnpm --filter @fitvibe/backend exec tsx scripts/create-admin-user.ts
  *
  * Requires environment variables (set in .env or shell):
- * - ADMIN_USERNAME: Admin login username
+ * - ADMIN_USERNAME: Admin login alias
  * - ADMIN_PASSWORD: Admin password
  * - ADMIN_EMAIL: Admin email address
  *
@@ -35,24 +35,22 @@ async function createAdminUser() {
   try {
     console.warn("Creating admin user...");
 
-    // Check if user already exists
-    const existingUser = await db<{ id: string }>("users")
-      .where("username", ADMIN_USERNAME)
-      .orWhere("username", ADMIN_USERNAME.toLowerCase())
-      .first();
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- knex .first() is untyped
+    const existingUser = await db("users")
+      .join("profiles as p", "p.user_id", "users.id")
+      .whereRaw("LOWER(p.alias) = ?", [ADMIN_USERNAME.toLowerCase()])
+      .first<{ id: string }>();
 
     if (existingUser) {
       console.warn("Admin user already exists. Skipping creation.");
       return;
     }
 
-    // Hash password
     const passwordHash = await bcrypt.hash(ADMIN_PASSWORD, 12);
     const userId = crypto.randomUUID();
     const now = new Date().toISOString();
 
-    // Check if admin role exists
-    const adminRole = await db<{ id: string }>("roles").where("code", ADMIN_ROLE).first();
+    const adminRole = await db<{ code: string }>("roles").where("code", ADMIN_ROLE).first();
     if (!adminRole) {
       console.warn("Creating admin role...");
       await db("roles").insert({
@@ -62,12 +60,9 @@ async function createAdminUser() {
       });
     }
 
-    // Create user in transaction
     await db.transaction(async (trx) => {
-      // Create user
       await trx("users").insert({
         id: userId,
-        username: ADMIN_USERNAME,
         display_name: ADMIN_DISPLAY_NAME,
         locale: "en-US",
         preferred_lang: "en",
@@ -78,7 +73,6 @@ async function createAdminUser() {
         updated_at: now,
       });
 
-      // Create email contact
       await trx("user_contacts").insert({
         id: crypto.randomUUID(),
         user_id: userId,
@@ -86,16 +80,16 @@ async function createAdminUser() {
         value: ADMIN_EMAIL.toLowerCase(),
         is_primary: true,
         is_recovery: true,
-        is_verified: true, // Auto-verify admin email
+        is_verified: true,
         verified_at: now,
         created_at: now,
       });
 
-      // Create profile
       await trx("profiles").insert({
         user_id: userId,
+        alias: ADMIN_USERNAME,
+        alias_changed_at: now,
         visibility: "private",
-        unit_preferences: {},
         created_at: now,
         updated_at: now,
       });

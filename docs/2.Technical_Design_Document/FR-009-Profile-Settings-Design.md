@@ -20,10 +20,11 @@ This document provides the technical design for implementing FR-009 Profile & Se
 ### Functional Requirements from FR-009
 
 1. **Editable Profile Fields**:
-   - Alias (display name, max length TBD)
-   - Weight (with unit selection: kg/lbs)
-   - Fitness Level (enum: beginner, intermediate, advanced, elite)
-   - Training Frequency (for personalization)
+   - Alias (**handle**, unique, rate-limited to one change per 30 days)
+   - Display name (shown name; not the handle)
+   - Weight (with unit selection: kg/lbs; stored as bio `weight_kg`)
+   - Fitness Level (on `profiles.fitness_level_code`)
+   - Training Frequency (on `profiles.training_frequency`)
    - Avatar (already implemented via separate endpoint)
 
 2. **Immutable Fields** (after registration):
@@ -43,12 +44,9 @@ This document provides the technical design for implementing FR-009 Profile & Se
 - Basic profile update (`PATCH /api/v1/users/me`) for: username, displayName, locale, preferredLang, defaultVisibility, units
 - User metrics retrieval (`GET /api/v1/users/:userId/metrics`)
 
-❌ **Missing**:
+❌ **Historical (removed in baseline rebuild)**:
 
-- Alias update in profile update endpoint
-- Weight update (currently only in time-series `user_metrics` table)
-- Fitness level update (currently only in time-series `user_metrics` table)
-- Training frequency update (currently only in time-series `user_metrics` table)
+- Weight / fitness / frequency used to live in time-series `user_metrics`. That table is gone.
 
 ---
 
@@ -65,14 +63,24 @@ The implementation extends the existing `users` module. No new modules are requi
 **profiles table**:
 
 - `user_id` (PK, FK → users.id)
-- `alias` (citext, unique, nullable)
+- `alias` (citext, unique, **required**) — login **handle**
+- `alias_changed_at` (timestamptz, nullable) — rate-limit window
 - `bio` (text, nullable, max 500 chars)
 - `avatar_asset_id` (uuid, FK → media.id)
 - `date_of_birth` (date, nullable, immutable)
 - `gender_code` (text, FK → genders.code, immutable)
 - `visibility` (text, default 'private')
-- `timezone` (text, nullable)
-- `unit_preferences` (jsonb, default '{}')
+- `fitness_level_code` (text, FK → fitness_levels.code)
+- `training_frequency` (text)
+
+**users table**: `display_name` is the shown name. There is no `users.username`. Units live on `users.units`.
+
+**Weight** is stored in `bio_attribute_values` for attribute `weight_kg` (not `user_metrics`).
+Fitness level and training frequency are columns on `profiles`.
+
+#### Implementation notes
+
+`insertUserMetric` writes fitness/frequency to `profiles` and weight to `bio_attribute_values`. Historical weight samples remain in bio values.
 
 **user_metrics table** (time-series):
 

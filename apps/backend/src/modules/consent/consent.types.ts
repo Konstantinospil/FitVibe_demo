@@ -19,17 +19,17 @@ export interface CookieConsent {
 
 export interface CookieConsentRow {
   id: string;
-  ip_address: string;
+  user_id: string | null;
+  client_key: string;
   consent_version: string;
+  source: string;
   essential_cookies: boolean;
   preferences_cookies: boolean;
   analytics_cookies: boolean;
   marketing_cookies: boolean;
   consent_given_at: string;
-  last_updated_at: string;
   user_agent: string | null;
   created_at: string;
-  updated_at: string;
 }
 
 export interface CreateCookieConsentInput {

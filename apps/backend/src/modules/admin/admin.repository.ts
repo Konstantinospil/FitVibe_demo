@@ -20,7 +20,7 @@ export async function listFeedReports(query: ListReportsQuery): Promise<FeedRepo
     .select(
       "fr.id",
       "fr.reporter_id as reporterId",
-      "reporter.username as reporterUsername",
+      "reporter_profile.alias as reporterUsername",
       "fr.feed_item_id as feedItemId",
       "fr.comment_id as commentId",
       "fr.reason",
@@ -31,10 +31,21 @@ export async function listFeedReports(query: ListReportsQuery): Promise<FeedRepo
       "fr.resolved_by as resolvedBy",
     )
     .leftJoin("users as reporter", "fr.reporter_id", "reporter.id")
+    .leftJoin("profiles as reporter_profile", "reporter_profile.user_id", "fr.reporter_id")
     .leftJoin("feed_items as fi", "fr.feed_item_id", "fi.id")
     .leftJoin("feed_comments as fc", "fr.comment_id", "fc.id")
-    .leftJoin("users as content_author_feed", "fi.user_id", "content_author_feed.id")
+    .leftJoin("users as content_author_feed", "fi.owner_id", "content_author_feed.id")
+    .leftJoin(
+      "profiles as content_author_feed_profile",
+      "content_author_feed_profile.user_id",
+      "fi.owner_id",
+    )
     .leftJoin("users as content_author_comment", "fc.user_id", "content_author_comment.id")
+    .leftJoin(
+      "profiles as content_author_comment_profile",
+      "content_author_comment_profile.user_id",
+      "fc.user_id",
+    )
     .select(
       db.raw(`
         COALESCE(
@@ -46,8 +57,8 @@ export async function listFeedReports(query: ListReportsQuery): Promise<FeedRepo
     .select(
       db.raw(`
         COALESCE(
-          content_author_feed.username,
-          content_author_comment.username
+          content_author_feed_profile.alias,
+          content_author_comment_profile.alias
         ) as "contentAuthor"
       `),
     )
@@ -71,7 +82,7 @@ export async function getFeedReportById(reportId: string): Promise<FeedReport | 
     .select(
       "fr.id",
       "fr.reporter_id as reporterId",
-      "reporter.username as reporterUsername",
+      "reporter_profile.alias as reporterUsername",
       "fr.feed_item_id as feedItemId",
       "fr.comment_id as commentId",
       "fr.reason",
@@ -82,10 +93,21 @@ export async function getFeedReportById(reportId: string): Promise<FeedReport | 
       "fr.resolved_by as resolvedBy",
     )
     .leftJoin("users as reporter", "fr.reporter_id", "reporter.id")
+    .leftJoin("profiles as reporter_profile", "reporter_profile.user_id", "fr.reporter_id")
     .leftJoin("feed_items as fi", "fr.feed_item_id", "fi.id")
     .leftJoin("feed_comments as fc", "fr.comment_id", "fc.id")
-    .leftJoin("users as content_author_feed", "fi.user_id", "content_author_feed.id")
+    .leftJoin("users as content_author_feed", "fi.owner_id", "content_author_feed.id")
+    .leftJoin(
+      "profiles as content_author_feed_profile",
+      "content_author_feed_profile.user_id",
+      "fi.owner_id",
+    )
     .leftJoin("users as content_author_comment", "fc.user_id", "content_author_comment.id")
+    .leftJoin(
+      "profiles as content_author_comment_profile",
+      "content_author_comment_profile.user_id",
+      "fc.user_id",
+    )
     .select(
       db.raw(`
         COALESCE(
@@ -97,8 +119,8 @@ export async function getFeedReportById(reportId: string): Promise<FeedReport | 
     .select(
       db.raw(`
         COALESCE(
-          content_author_feed.username,
-          content_author_comment.username
+          content_author_feed_profile.alias,
+          content_author_comment_profile.alias
         ) as "contentAuthor"
       `),
     )
@@ -148,10 +170,16 @@ export async function searchUsers(query: SearchUsersQuery): Promise<UserSearchRe
   const { query: searchQuery, limit = 20, offset = 0 } = query;
 
   const rows = await db("users as u")
+    .leftJoin("profiles as p", "p.user_id", "u.id")
+    .leftJoin("user_contacts as c", function () {
+      this.on("c.user_id", "=", "u.id")
+        .andOn("c.type", "=", db.raw("?", ["email"]))
+        .andOn("c.is_primary", "=", db.raw("true"));
+    })
     .select(
       "u.id",
-      "u.username",
-      "u.email",
+      "p.alias as username",
+      "c.value as email",
       "u.role_code as roleCode",
       "u.status",
       "u.created_at as createdAt",
@@ -159,7 +187,7 @@ export async function searchUsers(query: SearchUsersQuery): Promise<UserSearchRe
     .select(
       db.raw(`(
         SELECT MAX(us.created_at)
-        FROM user_sessions us
+        FROM auth_sessions us
         WHERE us.user_id = u.id
       ) as "lastLoginAt"`),
     )
@@ -167,7 +195,7 @@ export async function searchUsers(query: SearchUsersQuery): Promise<UserSearchRe
       db.raw(`(
         SELECT COUNT(*)
         FROM sessions s
-        WHERE s.user_id = u.id
+        WHERE s.owner_id = u.id
       ) as "sessionCount"`),
     )
     .select(
@@ -175,7 +203,7 @@ export async function searchUsers(query: SearchUsersQuery): Promise<UserSearchRe
         SELECT COUNT(*)
         FROM feed_reports fr
         WHERE fr.feed_item_id IN (
-          SELECT id FROM feed_items WHERE user_id = u.id
+          SELECT id FROM feed_items WHERE owner_id = u.id
         )
         OR fr.comment_id IN (
           SELECT id FROM feed_comments WHERE user_id = u.id
@@ -183,8 +211,8 @@ export async function searchUsers(query: SearchUsersQuery): Promise<UserSearchRe
       ) as "reportCount"`),
     )
     .where(function () {
-      this.where("u.email", "ilike", `%${searchQuery}%`)
-        .orWhere("u.username", "ilike", `%${searchQuery}%`)
+      this.where("c.value", "ilike", `%${searchQuery}%`)
+        .orWhere("p.alias", "ilike", `%${searchQuery}%`)
         .orWhere("u.id", "=", searchQuery);
     })
     .whereNull("u.deleted_at")
@@ -220,10 +248,16 @@ export async function softDeleteUser(userId: string): Promise<void> {
  */
 export async function getUserForAdmin(userId: string): Promise<UserSearchResult | null> {
   const row = (await db<UserSearchResult>("users as u")
+    .leftJoin("profiles as p", "p.user_id", "u.id")
+    .leftJoin("user_contacts as c", function () {
+      this.on("c.user_id", "=", "u.id")
+        .andOn("c.type", "=", db.raw("?", ["email"]))
+        .andOn("c.is_primary", "=", db.raw("true"));
+    })
     .select(
       "u.id",
-      "u.username",
-      "u.email",
+      "p.alias as username",
+      "c.value as email",
       "u.role_code as roleCode",
       "u.status",
       "u.created_at as createdAt",
@@ -231,7 +265,7 @@ export async function getUserForAdmin(userId: string): Promise<UserSearchResult 
     .select(
       db.raw(`(
         SELECT MAX(us.created_at)
-        FROM user_sessions us
+        FROM auth_sessions us
         WHERE us.user_id = u.id
       ) as "lastLoginAt"`),
     )
@@ -239,7 +273,7 @@ export async function getUserForAdmin(userId: string): Promise<UserSearchResult 
       db.raw(`(
         SELECT COUNT(*)
         FROM sessions s
-        WHERE s.user_id = u.id
+        WHERE s.owner_id = u.id
       ) as "sessionCount"`),
     )
     .select(
@@ -247,7 +281,7 @@ export async function getUserForAdmin(userId: string): Promise<UserSearchResult 
         SELECT COUNT(*)
         FROM feed_reports fr
         WHERE fr.feed_item_id IN (
-          SELECT id FROM feed_items WHERE user_id = u.id
+          SELECT id FROM feed_items WHERE owner_id = u.id
         )
         OR fr.comment_id IN (
           SELECT id FROM feed_comments WHERE user_id = u.id

@@ -23,17 +23,18 @@ SELECT
   pp.period_type,
   pp.period_start,
   u.id AS user_id,
-  u.username,
+  p.alias,
   u.display_name,
   SUM(pp.points)::int AS points,
   COALESCE(bc.badges_count, 0)::int AS badges_count
 FROM period_points pp
 JOIN users u ON u.id = pp.user_id
+JOIN profiles p ON p.user_id = u.id
 LEFT JOIN badge_counts bc ON bc.user_id = pp.user_id
 GROUP BY
   pp.period_type,
   pp.period_start,
   u.id,
-  u.username,
+  p.alias,
   u.display_name,
   bc.badges_count;

@@ -39,6 +39,7 @@ import {
   revokeSessionsByUserId,
   markEmailVerified,
 } from "./auth.repository.js";
+import { attachAnonymousConsents } from "../consent/consent.repository.js";
 import type {
   JwtPayload,
   LoginDTO,
@@ -255,10 +256,10 @@ export async function register(
 
   try {
     const email = dto.email.toLowerCase();
-    const username = dto.username.trim();
-    assertPasswordPolicy(dto.password, { email, username });
+    const alias = (dto.alias ?? dto.username ?? "").trim();
+    assertPasswordPolicy(dto.password, { email, alias });
     const existingByEmail = await findUserByEmail(email);
-    const existingByUsername = await findUserByUsername(username);
+    const existingByUsername = await findUserByUsername(alias);
 
     if (existingByEmail || existingByUsername) {
       if (existingByEmail && existingByEmail.status === "pending_verification") {
@@ -300,8 +301,8 @@ export async function register(
 
     await createUser({
       id,
-      username,
-      display_name: dto.profile?.display_name ?? username,
+      alias,
+      display_name: dto.profile?.display_name ?? alias,
       status: "pending_verification",
       role_code: "athlete",
       password_hash,
@@ -846,6 +847,7 @@ export async function login(
       ip: context.ip ?? null,
       requestId: context.requestId ?? null,
     });
+    await attachAnonymousConsents(user.id, ipAddress);
 
     return {
       requires2FA: false,
@@ -970,6 +972,7 @@ export async function verify2FALogin(
     ip: context.ip ?? null,
     requestId: context.requestId ?? null,
   });
+  await attachAnonymousConsents(user.id, context.ip ?? ipAddress ?? "unknown");
 
   // Clean up pending session
   await deletePending2FASession(pendingSessionId);
@@ -1222,7 +1225,7 @@ export async function resetPassword(token: string, newPassword: string): Promise
   }
   assertPasswordPolicy(newPassword, {
     email: user.primary_email ?? undefined,
-    username: user.username,
+    alias: user.username,
   });
 
   const password_hash = await bcrypt.hash(newPassword, 12);

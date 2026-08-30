@@ -24,7 +24,8 @@ export async function listAuditLogs(query: ListAuditLogsQuery): Promise<AuditLog
       "al.created_at as createdAt",
     )
     .leftJoin("users as u", "al.actor_user_id", "u.id")
-    .select("u.username as actorUsername")
+    .leftJoin("profiles as p", "p.user_id", "al.actor_user_id")
+    .select("p.alias as actorUsername")
     .orderBy("al.created_at", "desc")
     .limit(Math.min(limit, 500)) // Cap at 500
     .offset(offset);
@@ -66,7 +67,8 @@ export async function getRecentAdminActivity(limit = 20): Promise<AuditLogEntry[
       "al.created_at as createdAt",
     )
     .leftJoin("users as u", "al.actor_user_id", "u.id")
-    .select("u.username as actorUsername")
+    .leftJoin("profiles as p", "p.user_id", "al.actor_user_id")
+    .select("p.alias as actorUsername")
     .whereIn("al.action", [
       "user_suspended",
       "user_banned",

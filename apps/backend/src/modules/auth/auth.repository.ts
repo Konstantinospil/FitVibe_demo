@@ -4,6 +4,7 @@ import { db } from "../../db/connection.js";
 
 const USERS_TABLE = "users";
 const CONTACTS_TABLE = "user_contacts";
+const PROFILES_TABLE = "profiles";
 
 interface RefreshTokenInsert {
   id: string;
@@ -74,9 +75,10 @@ function userQuery() {
         .andOn("c.type", "=", db.raw("?", ["email"]))
         .andOn("c.is_primary", "=", db.raw("true"));
     })
+    .leftJoin(`${PROFILES_TABLE} as p`, "p.user_id", "u.id")
     .select(
       "u.id",
-      "u.username",
+      "p.alias as username",
       "u.display_name",
       "u.locale",
       "u.preferred_lang",
@@ -100,7 +102,7 @@ export async function findUserByEmail(email: string): Promise<AuthUserRecord | u
 
 export async function findUserByUsername(username: string): Promise<AuthUserRecord | undefined> {
   return userQuery()
-    .whereRaw("LOWER(u.username) = ?", [username.toLowerCase()])
+    .whereRaw("LOWER(p.alias) = ?", [username.toLowerCase()])
     .first<AuthUserRecord>();
 }
 
@@ -110,7 +112,7 @@ export async function findUserById(id: string): Promise<AuthUserRecord | undefin
 
 export async function createUser(input: {
   id: string;
-  username: string;
+  alias: string;
   display_name: string;
   locale?: string;
   preferred_lang?: string;
@@ -127,7 +129,6 @@ export async function createUser(input: {
   return db.transaction(async (trx) => {
     await trx(USERS_TABLE).insert({
       id: input.id,
-      username: input.username,
       display_name: input.display_name,
       locale: input.locale ?? "en-US",
       preferred_lang: input.preferred_lang ?? "en",
@@ -151,6 +152,15 @@ export async function createUser(input: {
       is_verified: input.emailVerified ?? false,
       verified_at: input.emailVerified ? now : null,
       created_at: now,
+    });
+
+    await trx(PROFILES_TABLE).insert({
+      user_id: input.id,
+      alias: input.alias,
+      alias_changed_at: now,
+      visibility: "private",
+      created_at: now,
+      updated_at: now,
     });
 
     return userQuery().transacting(trx).where("u.id", input.id).first<AuthUserRecord>();

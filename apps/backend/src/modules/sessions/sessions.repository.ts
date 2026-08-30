@@ -220,12 +220,11 @@ export async function getSessionWithDetails(
   const exec = executor(trx);
   const exerciseRows = await exec<SessionExerciseRow>("session_exercises as se")
     .leftJoin("planned_exercise_attributes as plan", "plan.session_exercise_id", "se.id")
-    .leftJoin("actual_exercise_attributes as act", "act.session_exercise_id", "se.id")
     .where("se.session_id", id)
     .orderBy("se.order_index", "asc")
     .select<
       SessionExerciseRow[]
-    >(["se.id as id", "se.session_id as session_id", "se.exercise_id as exercise_id", "se.exercise_name as exercise_name", "se.order_index as order_index", "se.notes as notes", "se.created_at as created_at", "se.updated_at as updated_at", "plan.sets as planned_sets", "plan.reps as planned_reps", "plan.load as planned_load", "plan.distance as planned_distance", "plan.duration as planned_duration", "plan.rpe as planned_rpe", "plan.rest as planned_rest", "plan.extras as planned_extras", "act.sets as actual_sets", "act.reps as actual_reps", "act.load as actual_load", "act.distance as actual_distance", "act.duration as actual_duration", "act.rpe as actual_rpe", "act.rest as actual_rest", "act.extras as actual_extras", "act.recorded_at as actual_recorded_at"]);
+    >(["se.id as id", "se.session_id as session_id", "se.exercise_id as exercise_id", "se.exercise_name as exercise_name", "se.order_index as order_index", "se.notes as notes", "se.created_at as created_at", "se.updated_at as updated_at", "plan.sets as planned_sets", "plan.reps as planned_reps", "plan.load as planned_load", "plan.distance as planned_distance", "plan.duration as planned_duration", "plan.rpe as planned_rpe", "plan.rest as planned_rest", "plan.extras as planned_extras"]);
 
   const exerciseIds = exerciseRows.map((row) => row.id);
 
@@ -280,15 +279,15 @@ export async function getSessionWithDetails(
     });
 
     const actual: SessionExerciseActualAttributes | null = buildActualAttributes({
-      sets: row.actual_sets ?? null,
-      reps: row.actual_reps ?? null,
-      load: toNumber(row.actual_load),
-      distance: toNumber(row.actual_distance),
-      duration: row.actual_duration ?? null,
-      rpe: row.actual_rpe ?? null,
-      rest: row.actual_rest ?? null,
-      extras: normalizeExtras(row.actual_extras),
-      recorded_at: toDateString(row.actual_recorded_at) ?? null,
+      sets: null,
+      reps: null,
+      load: null,
+      distance: null,
+      duration: null,
+      rpe: null,
+      rest: null,
+      extras: {},
+      recorded_at: null,
     });
 
     return {
@@ -436,31 +435,6 @@ export async function replaceSessionExercises(
 
   if (plannedRows.length) {
     await trx("planned_exercise_attributes").insert(plannedRows);
-  }
-
-  const actualRows = exercises
-    .map((exercise) => {
-      const actual = buildActualAttributes(exercise.actual);
-      if (!actual) {
-        return null;
-      }
-      return {
-        session_exercise_id: exercise.id,
-        sets: actual.sets,
-        reps: actual.reps,
-        load: actual.load,
-        distance: actual.distance,
-        duration: actual.duration,
-        rpe: actual.rpe,
-        rest: actual.rest,
-        extras: actual.extras ?? {},
-        recorded_at: actual.recorded_at ?? timestamp,
-      };
-    })
-    .filter((row): row is NonNullable<typeof row> => Boolean(row));
-
-  if (actualRows.length) {
-    await trx("actual_exercise_attributes").insert(actualRows);
   }
 
   const setRows = exercises.flatMap((exercise) =>

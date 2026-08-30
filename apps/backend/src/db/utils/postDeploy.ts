@@ -6,14 +6,8 @@ async function refreshProgressViews(): Promise<void> {
   await db.raw("SELECT public.refresh_session_summary(TRUE);");
 }
 
-async function ensurePartitions(): Promise<void> {
-  await db.raw("SELECT public.ensure_monthly_partitions();");
-}
-
 async function main(): Promise<void> {
   try {
-    logger.info("[post-deploy] Ensuring monthly partitions...");
-    await ensurePartitions();
     logger.info(
       "[post-deploy] Refreshing analytics materialized views (session_summary, weekly_aggregates)...",
     );

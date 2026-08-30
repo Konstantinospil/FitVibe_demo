@@ -7,17 +7,14 @@ import { seed as seedExerciseTypes } from "../../../../apps/backend/src/db/seeds
 import { seed as seedUsers } from "../../../../apps/backend/src/db/seeds/005_users.js";
 import { seed as seedProfiles } from "../../../../apps/backend/src/db/seeds/Demo Data/006_profiles.js";
 import { seed as seedUserContacts } from "../../../../apps/backend/src/db/seeds/Demo Data/007_user_contacts.js";
-import { seed as seedUserMetrics } from "../../../../apps/backend/src/db/seeds/Demo Data/008_user_metrics.js";
 import { seed as seedExercises } from "../../../../apps/backend/src/db/seeds/Demo Data/009_exercises.js";
 import { seed as seedSessions } from "../../../../apps/backend/src/db/seeds/Demo Data/010_sessions.js";
 import { seed as seedSessionExercises } from "../../../../apps/backend/src/db/seeds/Demo Data/011_session_exercises.js";
 import { seed as seedPlannedAttributes } from "../../../../apps/backend/src/db/seeds/Demo Data/012_planned_exercise_attributes.js";
-import { seed as seedActualAttributes } from "../../../../apps/backend/src/db/seeds/Demo Data/013_actual_exercise_attributes.js";
 import { seed as seedUserPoints } from "../../../../apps/backend/src/db/seeds/Demo Data/014_user_points.js";
 import { seed as seedBadges } from "../../../../apps/backend/src/db/seeds/Demo Data/015_badges.js";
 import { seed as seedFollowers } from "../../../../apps/backend/src/db/seeds/Demo Data/016_followers.js";
 import { seed as seedMedia } from "../../../../apps/backend/src/db/seeds/Demo Data/017_media.js";
-import { seed as seedTranslationCache } from "../../../../apps/backend/src/db/seeds/Demo Data/018_translation_cache.js";
 import { seed as seedExerciseSets } from "../../../../apps/backend/src/db/seeds/Demo Data/019_exercise_sets.js";
 import { seed as seedPlans } from "../../../../apps/backend/src/db/seeds/Demo Data/020_plans.js";
 import bcrypt from "bcryptjs";
@@ -162,14 +159,6 @@ describe("database seed modules", () => {
       sampleMatcher: { type: "email" },
     },
     {
-      name: "user_metrics",
-      seedFn: seedUserMetrics,
-      table: "user_metrics",
-      conflict: "id",
-      strategy: "ignore",
-      sampleMatcher: { unit: "kg" },
-    },
-    {
       name: "exercises",
       seedFn: seedExercises,
       table: "exercises",
@@ -187,9 +176,8 @@ describe("database seed modules", () => {
       name: "sessions",
       seedFn: seedSessions,
       table: "sessions",
-      conflict: ["id", "planned_at"],
+      conflict: "id",
       strategy: "ignore",
-      rawCalls: ["SELECT public.ensure_monthly_partitions();"],
     },
     {
       name: "session_exercises",
@@ -206,14 +194,6 @@ describe("database seed modules", () => {
       conflict: "session_exercise_id",
       strategy: "merge",
       sampleMatcher: { rest: "00:03:00" },
-    },
-    {
-      name: "actual attribute rows",
-      seedFn: seedActualAttributes,
-      table: "actual_exercise_attributes",
-      conflict: "session_exercise_id",
-      strategy: "merge",
-      sampleMatcher: { duration: "00:38:45" },
     },
     {
       name: "user_points",
@@ -238,14 +218,6 @@ describe("database seed modules", () => {
       conflict: "id",
       strategy: "ignore",
       sampleMatcher: { media_type: "photo" },
-    },
-    {
-      name: "translation cache",
-      seedFn: seedTranslationCache,
-      table: "translation_cache",
-      conflict: "id",
-      strategy: "ignore",
-      sampleMatcher: { lang: "de" },
     },
     {
       name: "exercise sets",

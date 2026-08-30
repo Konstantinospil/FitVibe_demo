@@ -9,14 +9,17 @@ export const passwordPolicy = z
   .regex(/(?=.*\d)/, "passwordDigit")
   .regex(/(?=.*[^\w\s])/, "passwordSymbol");
 
+const aliasSchema = z
+  .string()
+  .min(3)
+  .max(50)
+  .regex(/^[a-zA-Z0-9_\-.]+$/, "usernameFormat");
+
 export const RegisterSchema = z
   .object({
     email: z.string().email(),
-    username: z
-      .string()
-      .min(3)
-      .max(50)
-      .regex(/^[a-zA-Z0-9_\-.]+$/, "usernameFormat"),
+    alias: aliasSchema.optional(),
+    username: aliasSchema.optional(),
     password: passwordPolicy,
     profile: z
       .object({
@@ -28,6 +31,10 @@ export const RegisterSchema = z
       })
       .optional(),
     terms_accepted: z.boolean(),
+  })
+  .refine((data) => Boolean((data.alias ?? data.username)?.trim()), {
+    message: "ALIAS_REQUIRED",
+    path: ["alias"],
   })
   .refine((data) => data.terms_accepted === true, {
     message: "TERMS_ACCEPTANCE_REQUIRED",

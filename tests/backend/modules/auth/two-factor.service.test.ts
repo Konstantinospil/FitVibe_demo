@@ -36,6 +36,9 @@ jest.mock("../../../../apps/backend/src/db/connection.js", () => {
     update: jest.fn().mockReturnThis(),
     insert: jest.fn().mockReturnThis(),
     delete: jest.fn().mockReturnThis(),
+    del: jest.fn().mockReturnThis(),
+    onConflict: jest.fn().mockReturnThis(),
+    merge: jest.fn().mockReturnThis(),
     first: jest.fn(),
     raw: jest.fn(),
   };
@@ -71,6 +74,9 @@ describe("two-factor.service", () => {
     update: jest.Mock;
     insert: jest.Mock;
     delete: jest.Mock;
+    del: jest.Mock;
+    onConflict: jest.Mock;
+    merge: jest.Mock;
     first: jest.Mock;
     raw: jest.Mock;
   };
@@ -82,8 +88,6 @@ describe("two-factor.service", () => {
     mockQueryBuilder = {
       where: jest.fn().mockReturnThis(),
       select: jest.fn().mockImplementation((columns: unknown) => {
-        // If select is called with "*", it returns a promise (for backup codes)
-        // Otherwise, it returns the query builder for chaining (for user query with .first())
         if (columns === "*") {
           return Promise.resolve([]);
         }
@@ -92,6 +96,9 @@ describe("two-factor.service", () => {
       update: jest.fn().mockReturnThis(),
       insert: jest.fn().mockReturnThis(),
       delete: jest.fn().mockReturnThis(),
+      del: jest.fn().mockReturnThis(),
+      onConflict: jest.fn().mockReturnThis(),
+      merge: jest.fn().mockReturnThis(),
       first: jest.fn(),
       raw: jest.fn().mockReturnThis(),
     };
@@ -299,30 +306,27 @@ describe("two-factor.service", () => {
         .mockResolvedValueOnce(hashedCodes[0] as never)
         .mockResolvedValueOnce(hashedCodes[1] as never);
 
-      mockQueryBuilder.update.mockResolvedValue(1);
-      mockQueryBuilder.insert.mockResolvedValue([{ id: "code-1" }, { id: "code-2" }]);
-
       await twoFactorService.enableTwoFactor(userId, secret, backupCodes, ipAddress, userAgent);
 
-      expect(mockedDb).toHaveBeenCalledWith("users");
-      expect(mockQueryBuilder.where).toHaveBeenCalledWith({ id: userId });
-      expect(mockQueryBuilder.update).toHaveBeenCalledWith(
+      expect(mockedDb).toHaveBeenCalledWith("user_2fa_settings");
+      expect(mockQueryBuilder.insert).toHaveBeenCalledWith(
         expect.objectContaining({
-          two_factor_enabled: true,
-          two_factor_secret: secret,
+          user_id: userId,
+          totp_secret: secret,
+          is_enabled: true,
         }),
       );
-      expect(mockedDb).toHaveBeenCalledWith("two_factor_backup_codes");
+      expect(mockedDb).toHaveBeenCalledWith("backup_codes");
       expect(mockQueryBuilder.insert).toHaveBeenCalledWith(
         expect.arrayContaining([
           expect.objectContaining({
             user_id: userId,
             code_hash: hashedCodes[0],
-            used: false,
+            is_used: false,
           }),
         ]),
       );
-      expect(mockedDb).toHaveBeenCalledWith("two_factor_audit_log");
+      expect(mockedDb).toHaveBeenCalledWith("audit_log");
     });
 
     it("should work with transaction", async () => {
@@ -335,6 +339,9 @@ describe("two-factor.service", () => {
         update: jest.fn().mockReturnThis(),
         insert: jest.fn().mockReturnThis(),
         delete: jest.fn().mockReturnThis(),
+        del: jest.fn().mockReturnThis(),
+        onConflict: jest.fn().mockReturnThis(),
+        merge: jest.fn().mockReturnThis(),
         first: jest.fn(),
       };
       const mockTrx = ((_table: string) => mockTrxQueryBuilder) as unknown as Knex.Transaction;
@@ -342,12 +349,9 @@ describe("two-factor.service", () => {
       const hashedCodes = ["$2a$10$hash1"];
       mockedBcrypt.hash.mockResolvedValueOnce(hashedCodes[0] as never);
 
-      mockTrxQueryBuilder.update.mockResolvedValue(1);
-      mockTrxQueryBuilder.insert.mockResolvedValue([{ id: "code-1" }]);
-
       await twoFactorService.enableTwoFactor(userId, secret, backupCodes, null, null, mockTrx);
 
-      expect(mockTrxQueryBuilder.update).toHaveBeenCalled();
+      expect(mockTrxQueryBuilder.insert).toHaveBeenCalled();
     });
   });
 
@@ -363,18 +367,17 @@ describe("two-factor.service", () => {
 
       await twoFactorService.disableTwoFactor(userId, ipAddress, userAgent);
 
-      expect(mockedDb).toHaveBeenCalledWith("users");
-      expect(mockQueryBuilder.where).toHaveBeenCalledWith({ id: userId });
+      expect(mockedDb).toHaveBeenCalledWith("user_2fa_settings");
       expect(mockQueryBuilder.update).toHaveBeenCalledWith(
         expect.objectContaining({
-          two_factor_enabled: false,
-          two_factor_secret: null,
+          is_enabled: false,
+          totp_secret: "",
         }),
       );
-      expect(mockedDb).toHaveBeenCalledWith("two_factor_backup_codes");
+      expect(mockedDb).toHaveBeenCalledWith("backup_codes");
       expect(mockQueryBuilder.where).toHaveBeenCalledWith({ user_id: userId });
-      expect(mockQueryBuilder.delete).toHaveBeenCalled();
-      expect(mockedDb).toHaveBeenCalledWith("two_factor_audit_log");
+      expect(mockQueryBuilder.del).toHaveBeenCalled();
+      expect(mockedDb).toHaveBeenCalledWith("audit_log");
     });
 
     it("should work with transaction", async () => {
@@ -385,6 +388,9 @@ describe("two-factor.service", () => {
         update: jest.fn().mockReturnThis(),
         insert: jest.fn().mockReturnThis(),
         delete: jest.fn().mockReturnThis(),
+        del: jest.fn().mockReturnThis(),
+        onConflict: jest.fn().mockReturnThis(),
+        merge: jest.fn().mockReturnThis(),
         first: jest.fn(),
       };
       const mockTrx = ((_table: string) => mockTrxQueryBuilder) as unknown as Knex.Transaction;
@@ -408,8 +414,8 @@ describe("two-factor.service", () => {
       const userAgent = "Mozilla/5.0";
 
       mockQueryBuilder.first.mockResolvedValue({
-        two_factor_secret: secret,
-        two_factor_enabled: true,
+        totp_secret: secret,
+        is_enabled: true,
       });
 
       mockedAuthenticator.verify.mockReturnValue(true);
@@ -424,7 +430,7 @@ describe("two-factor.service", () => {
 
       expect(result).toBe(true);
       expect(mockedAuthenticator.verify).toHaveBeenCalledWith({ token, secret });
-      expect(mockedDb).toHaveBeenCalledWith("two_factor_audit_log");
+      expect(mockedDb).toHaveBeenCalledWith("audit_log");
     });
 
     it("should verify backup code successfully", async () => {
@@ -436,8 +442,8 @@ describe("two-factor.service", () => {
 
       // First call: get user 2FA info (uses .first())
       mockQueryBuilder.first.mockResolvedValueOnce({
-        two_factor_secret: secret,
-        two_factor_enabled: true,
+        totp_secret: secret,
+        is_enabled: true,
       });
 
       // Override select to handle backup codes query
@@ -452,7 +458,7 @@ describe("two-factor.service", () => {
             {
               id: "code-1",
               code_hash: "$2a$10$hash1",
-              used: false,
+              is_used: false,
               used_at: null,
               created_at: new Date().toISOString(),
             },
@@ -478,7 +484,7 @@ describe("two-factor.service", () => {
       expect(mockedBcrypt.compare).toHaveBeenCalledWith(token, "$2a$10$hash1");
       expect(mockQueryBuilder.update).toHaveBeenCalledWith(
         expect.objectContaining({
-          used: true,
+          is_used: true,
         }),
       );
     });
@@ -488,8 +494,8 @@ describe("two-factor.service", () => {
       const token = "123456";
 
       mockQueryBuilder.first.mockResolvedValue({
-        two_factor_secret: null,
-        two_factor_enabled: false,
+        totp_secret: null,
+        is_enabled: false,
       });
 
       const result = await twoFactorService.verifyTwoFactorToken(userId, token, null, null);
@@ -514,8 +520,8 @@ describe("two-factor.service", () => {
       const secret = "JBSWY3DPEHPK3PXP";
 
       mockQueryBuilder.first.mockResolvedValueOnce({
-        two_factor_secret: secret,
-        two_factor_enabled: true,
+        totp_secret: secret,
+        is_enabled: true,
       });
 
       // Backup codes query returns empty array (select with "*" returns promise)
@@ -533,7 +539,7 @@ describe("two-factor.service", () => {
       const result = await twoFactorService.verifyTwoFactorToken(userId, token, null, null);
 
       expect(result).toBe(false);
-      expect(mockedDb).toHaveBeenCalledWith("two_factor_audit_log");
+      expect(mockedDb).toHaveBeenCalledWith("audit_log");
     });
 
     it("should work with transaction", async () => {
@@ -546,13 +552,16 @@ describe("two-factor.service", () => {
         update: jest.fn().mockReturnThis(),
         insert: jest.fn().mockReturnThis(),
         delete: jest.fn().mockReturnThis(),
+        del: jest.fn().mockReturnThis(),
+        onConflict: jest.fn().mockReturnThis(),
+        merge: jest.fn().mockReturnThis(),
         first: jest.fn(),
       };
       const mockTrx = ((_table: string) => mockTrxQueryBuilder) as unknown as Knex.Transaction;
 
       mockTrxQueryBuilder.first.mockResolvedValue({
-        two_factor_secret: secret,
-        two_factor_enabled: true,
+        totp_secret: secret,
+        is_enabled: true,
       });
 
       mockedAuthenticator.verify.mockReturnValue(true);
@@ -586,9 +595,9 @@ describe("two-factor.service", () => {
       const result = await twoFactorService.regenerateBackupCodes(userId, ipAddress, userAgent);
 
       expect(result).toHaveLength(10);
-      expect(mockQueryBuilder.delete).toHaveBeenCalled();
+      expect(mockQueryBuilder.del).toHaveBeenCalled();
       expect(mockQueryBuilder.insert).toHaveBeenCalled();
-      expect(mockedDb).toHaveBeenCalledWith("two_factor_audit_log");
+      expect(mockedDb).toHaveBeenCalledWith("audit_log");
     });
 
     it("should work with transaction", async () => {
@@ -599,6 +608,9 @@ describe("two-factor.service", () => {
         update: jest.fn().mockReturnThis(),
         insert: jest.fn().mockReturnThis(),
         delete: jest.fn().mockReturnThis(),
+        del: jest.fn().mockReturnThis(),
+        onConflict: jest.fn().mockReturnThis(),
+        merge: jest.fn().mockReturnThis(),
         first: jest.fn(),
       };
       const mockTrx = ((_table: string) => mockTrxQueryBuilder) as unknown as Knex.Transaction;
@@ -638,7 +650,7 @@ describe("two-factor.service", () => {
         used: 3,
         remaining: 7,
       });
-      expect(mockedDb).toHaveBeenCalledWith("two_factor_backup_codes");
+      expect(mockedDb).toHaveBeenCalledWith("backup_codes");
       expect(mockQueryBuilder.where).toHaveBeenCalledWith({ user_id: userId });
     });
 

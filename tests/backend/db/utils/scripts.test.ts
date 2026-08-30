@@ -491,19 +491,12 @@ describe("db utils scripts", () => {
   });
 
   describe("postDeploy tasks", () => {
-    it("ensures partitions and refreshes views", async () => {
-      // Mock the raw SQL calls
+    it("refreshes progress views", async () => {
       (mockDb.raw as jest.Mock).mockResolvedValue([{ result: true }]);
 
-      // Test ensurePartitions
-      await mockDb.raw("SELECT public.ensure_monthly_partitions();");
-      expect(mockDb.raw).toHaveBeenCalledWith("SELECT public.ensure_monthly_partitions();");
-
-      // Test refreshProgressViews
       await mockDb.raw("SELECT public.refresh_session_summary(TRUE);");
       expect(mockDb.raw).toHaveBeenCalledWith("SELECT public.refresh_session_summary(TRUE);");
 
-      // Verify connection is destroyed
       await mockDb.destroy();
       expect(mockDb.destroy).toHaveBeenCalled();
     });
@@ -512,7 +505,7 @@ describe("db utils scripts", () => {
       const error = new Error("Maintenance failed");
       (mockDb.raw as jest.Mock).mockRejectedValue(error);
 
-      await expect(mockDb.raw("SELECT public.ensure_monthly_partitions();")).rejects.toThrow(
+      await expect(mockDb.raw("SELECT public.refresh_session_summary(TRUE);")).rejects.toThrow(
         "Maintenance failed",
       );
 
