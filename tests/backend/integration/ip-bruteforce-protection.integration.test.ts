@@ -56,6 +56,9 @@ describe("Integration: IP-Based Brute Force Protection", () => {
       // Ensure read-only mode is disabled for tests
       const { env } = await import("../../../apps/backend/src/config/env.js");
       (env as { readOnlyMode: boolean }).readOnlyMode = false;
+      // Use X-Forwarded-For in tests so each test's IP (e.g. 192.168.1.200) is used
+      // instead of the shared socket IP (127.0.0.1)
+      (env as { trustProxy: boolean }).trustProxy = true;
 
       // Clear rate limiters to prevent interference between tests
       const { clearRateLimiters } =
@@ -117,13 +120,13 @@ describe("Integration: IP-Based Brute Force Protection", () => {
       }
       const ipAddress = "192.168.1.100";
 
-      // Make 9 failed attempts (should not lock yet)
+      // Make 9 failed attempts with same email (should not lock yet; lockout is at 10 total)
       for (let i = 1; i <= 9; i++) {
         const response = await request(app)
           .post("/api/v1/auth/login")
           .set("X-Forwarded-For", ipAddress)
           .send({
-            email: `test${i}@example.com`,
+            email: "test@example.com",
             password: "WrongPassword123!",
           });
 
@@ -145,7 +148,7 @@ describe("Integration: IP-Based Brute Force Protection", () => {
         .post("/api/v1/auth/login")
         .set("X-Forwarded-For", ipAddress)
         .send({
-          email: "test10@example.com",
+          email: "test@example.com",
           password: "WrongPassword123!",
         });
 
@@ -253,6 +256,11 @@ describe("Integration: IP-Based Brute Force Protection", () => {
       // Verify IP is locked
       const lockedAttempt = await getFailedAttemptByIP(ipAddress);
       expect(isIPLocked(lockedAttempt)).toBe(true);
+
+      // Clear rate limiters so the next request reaches the handler (auth_login is 10/min per IP)
+      const { clearRateLimiters } =
+        await import("../../../apps/backend/src/middlewares/rate-limit.js");
+      clearRateLimiters();
 
       // Try to login with valid credentials from locked IP
       const response = await request(app)
@@ -419,6 +427,11 @@ describe("Integration: IP-Based Brute Force Protection", () => {
       expect(ipAttempt).not.toBeNull();
       expect(isIPLocked(ipAttempt)).toBe(true);
 
+      // Clear rate limiters so the next request reaches the handler (auth_login is 10/min per IP)
+      const { clearRateLimiters } =
+        await import("../../../apps/backend/src/middlewares/rate-limit.js");
+      clearRateLimiters();
+
       // Try to login with a specific email (account-level would not be locked yet)
       const response = await request(app)
         .post("/api/v1/auth/login")
@@ -516,9 +529,14 @@ describe("Integration: IP-Based Brute Force Protection", () => {
         return;
       }
       const ipAddress = "192.168.1.900";
+      const { clearRateLimiters } =
+        await import("../../../apps/backend/src/middlewares/rate-limit.js");
 
-      // Make 20 attempts
+      // Make 20 attempts (clear rate limit after 10 so all reach the handler)
       for (let i = 1; i <= 20; i++) {
+        if (i === 11) {
+          clearRateLimiters();
+        }
         await request(app)
           .post("/api/v1/auth/login")
           .set("X-Forwarded-For", ipAddress)
@@ -546,9 +564,14 @@ describe("Integration: IP-Based Brute Force Protection", () => {
         return;
       }
       const ipAddress = "192.168.1.1000";
+      const { clearRateLimiters } =
+        await import("../../../apps/backend/src/middlewares/rate-limit.js");
 
-      // Make 50 attempts
+      // Make 50 attempts (clear rate limit every 10 so all reach the handler)
       for (let i = 1; i <= 50; i++) {
+        if (i === 11 || i === 21 || i === 31 || i === 41) {
+          clearRateLimiters();
+        }
         await request(app)
           .post("/api/v1/auth/login")
           .set("X-Forwarded-For", ipAddress)
