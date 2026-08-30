@@ -240,7 +240,8 @@ const ssrHandler: RequestHandler = async (req: Request, res: Response, next: Nex
     next(err);
   }
 };
-app.get("*", ssrHandler);
+// Express 5 / path-to-regexp v8 requires a named splat; /{*splat} matches `/` and nested paths.
+app.get("/{*splat}", ssrHandler);
 
 // Error handler
 app.use((err: Error, req: Request, res: Response, _next: NextFunction) => {
