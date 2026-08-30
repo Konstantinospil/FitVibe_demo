@@ -1,6 +1,6 @@
 # ADR-003 — Data Retention & GDPR Backup Purge Window
 
-> **File:** docs/adr/ADR-003-data-retention-and-gdpr-backup-purge.md  
+> **File:** docs/2.Technical_Design_Document/2.f.Architectural_Decision_Documentation/ADR-003-data-retention-and-gdpr-backup-purge.md  
 > **Purpose:** Define lawful data retention, deletion, and backup purge policies to meet GDPR and FitVibe’s PRD/SEC requirements.
 
 ---
@@ -17,8 +17,8 @@ links:
 - TDD: "docs/2. Technical Design Document v2.md#data-model--persistence"
 - QA: "docs/3. Testing and Quality Assurance Plan.md#compliance-and-data-governance-tests"
 - Related:
-  - "docs/adr/ADR-002-authentication-token-strategy.md"
-  - "docs/adr/ADR-005-partitioning-sessions-audit-log.md"
+  - "docs/2.Technical_Design_Document/2.f.Architectural_Decision_Documentation/ADR-002-authentication-token-strategy.md"
+  - "docs/2.Technical_Design_Document/2.f.Architectural_Decision_Documentation/ADR-005-partitioning-sessions-audit-log.md"
 
 ---
 

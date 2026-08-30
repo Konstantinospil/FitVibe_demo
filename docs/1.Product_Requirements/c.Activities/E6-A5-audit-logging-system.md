@@ -3,7 +3,7 @@
 ---
 
 **Activity ID**: E6-A5  
-**Epic ID**: [E6](../b.Epics/E6-privacy-&-gdpr.md)  
+**Epic ID**: [E6](../b.Epics/E6-privacy-and-gdpr.md)  
 **Title**: Audit Logging System  
 **Status**: Open  
 **Difficulty**: 2  
@@ -34,7 +34,7 @@ Implement audit logging system for Privacy & GDPR. Implement backend API endpoin
 
 ### Blocking Dependencies
 
-- [E6: Privacy & GDPR](../b.Epics/E6-privacy-&-gdpr.md): Parent epic
+- [E6: Privacy & GDPR](../b.Epics/E6-privacy-and-gdpr.md): Parent epic
 
 ### Non-Blocking Dependencies
 

@@ -67,7 +67,7 @@ The product requires a web stack that is type-safe, observable, and CI-friendly 
    - **Budgets:** API **p95 < 300 ms**; LCP **< 2.5 s**; CI fails on **>10%** perf regression.
 
 10. **Feature Flags**
-    - Centralized typed flags in `packages/shared/flags.ts` with environment-backed defaults.
+    - Centralized typed flags in `packages/types/flags.ts` with environment-backed defaults.
     - Critical defaults (e.g., `FEATURE_UGC_AI_TRANSLATION=false` in prod) verified in CI.
 
 ---

@@ -26,7 +26,7 @@ Provides the foundation for secure platform access and user account management. 
 ## Related Activities
 
 - [E11-A1: User Registration System](../c.Activities/E11-A1-user-registration-system.md)
-- [E11-A2: Authentication & Session Management](../c.Activities/E11-A2-authentication-&-session-management.md)
+- [E11-A2: Authentication & Session Management](../c.Activities/E11-A2-authentication-and-session-management.md)
 - [E11-A3: Auth-Wall Implementation](../c.Activities/E11-A3-auth-wall-implementation.md)
 
 ## Related User Stories

@@ -3,7 +3,7 @@
 ---
 
 **Activity ID**: E3-A5  
-**Epic ID**: [E3](../b.Epics/E3-sharing-&-community.md)  
+**Epic ID**: [E3](../b.Epics/E3-sharing-and-community.md)  
 **Title**: User Following System  
 **Status**: Done  
 **Difficulty**: 2  
@@ -68,7 +68,7 @@ Implement user following system for Sharing & Community. Implement backend API e
 
 ### Blocking Dependencies
 
-- [E3: Sharing & Community](../b.Epics/E3-sharing-&-community.md): Parent epic
+- [E3: Sharing & Community](../b.Epics/E3-sharing-and-community.md): Parent epic
 
 ### Non-Blocking Dependencies
 

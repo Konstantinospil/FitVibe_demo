@@ -61,7 +61,7 @@ Manual testing occurs at **two gates**:
 - **Risk-based**: Prioritize critical paths (auth, payments, data integrity)
 - **User-centric**: Test from end-user perspective, not just technical correctness
 - **Cross-functional**: Test across browsers, devices, screen sizes, languages
-- **Accessibility**: Verify WCAG 2.1 AA compliance manually
+- **Accessibility**: Verify WCAG 2.2 AA compliance manually
 - **Security**: Verify security controls and privacy settings
 
 ### 1.4 Test Execution Time Estimates
@@ -662,7 +662,7 @@ Before starting manual testing, verify:
 - [ ] All **Critical** and **High** defects from staging fixed
 - [ ] Performance benchmarks met (p95 response times)
 - [ ] Security scan passes (0 High/Critical vulnerabilities)
-- [ ] Accessibility audit passes (WCAG 2.1 AA)
+- [ ] Accessibility audit passes (WCAG 2.2 AA)
 - [ ] QA Lead approval
 - [ ] Tech Lead approval (technical gates)
 

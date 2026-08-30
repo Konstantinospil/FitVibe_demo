@@ -3,7 +3,7 @@
 ---
 
 **Activity ID**: E6-A4  
-**Epic ID**: [E6](../b.Epics/E6-privacy-&-gdpr.md)  
+**Epic ID**: [E6](../b.Epics/E6-privacy-and-gdpr.md)  
 **Title**: Privacy Settings UI  
 **Status**: Open  
 **Difficulty**: 2  
@@ -34,7 +34,7 @@ Implement privacy settings ui for Privacy & GDPR. Implement functionality with p
 
 ### Blocking Dependencies
 
-- [E6: Privacy & GDPR](../b.Epics/E6-privacy-&-gdpr.md): Parent epic
+- [E6: Privacy & GDPR](../b.Epics/E6-privacy-and-gdpr.md): Parent epic
 
 ### Non-Blocking Dependencies
 

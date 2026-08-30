@@ -1,6 +1,6 @@
 # ADR-005 — Partitioning Strategy for `sessions` and `audit_log`
 
-> **File:** docs/adr/ADR-005-partitioning-sessions-and-audit-log.md  
+> **File:** docs/2.Technical_Design_Document/2.f.Architectural_Decision_Documentation/ADR-005-partitioning-sessions-and-audit-log.md  
 > **Purpose:** Ensure scalable storage and performant queries for write‑heavy time‑series tables.
 
 ---

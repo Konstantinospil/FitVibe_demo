@@ -1,6 +1,6 @@
 # ADR-008 — Materialized Views for Analytics
 
-> **File:** docs/adr/ADR-008-materialized-views-for-analytics.md  
+> **File:** docs/2.Technical_Design_Document/2.f.Architectural_Decision_Documentation/ADR-008-materialized-views-for-analytics.md  
 > **Purpose:** Provide fast read paths for dashboards and reports without impacting OLTP workload.
 
 ---

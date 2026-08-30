@@ -1,6 +1,6 @@
 # ADR-010 — Public/Link/Private Visibility Model
 
-> **File:** docs/adr/ADR-010-public-link-private-visibility-model.md  
+> **File:** docs/2.Technical_Design_Document/2.f.Architectural_Decision_Documentation/ADR-010-public-link-private-visibility-model.md  
 > **Purpose:** Define resource visibility for sessions, plans, and profiles with privacy‑first defaults.
 
 ---

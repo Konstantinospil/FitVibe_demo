@@ -169,7 +169,7 @@ pnpm --filter @fitvibe/frontend dev
 
 - **Frontend**: http://localhost:5173
 - **Backend API**: http://localhost:4000
-- **API Health Check**: http://localhost:4000/api/v1/health
+- **API Health Check**: http://localhost:4000/health
 
 ## Port Configuration
 
@@ -334,7 +334,7 @@ psql -h localhost -U fitvibe -l | grep fitvibe
 1. **Check backend is running:**
 
    ```bash
-   curl http://localhost:4000/api/v1/health
+   curl http://localhost:4000/health
    ```
 
 2. **Check Vite proxy configuration** in `apps/frontend/vite.config.ts`:

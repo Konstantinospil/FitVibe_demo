@@ -3,7 +3,7 @@
 ---
 
 **Activity ID**: E6-A3  
-**Epic ID**: [E6](../b.Epics/E6-privacy-&-gdpr.md)  
+**Epic ID**: [E6](../b.Epics/E6-privacy-and-gdpr.md)  
 **Title**: Consent Management System  
 **Status**: Open  
 **Difficulty**: 2  
@@ -34,7 +34,7 @@ Implement consent management system for Privacy & GDPR. Implement backend API en
 
 ### Blocking Dependencies
 
-- [E6: Privacy & GDPR](../b.Epics/E6-privacy-&-gdpr.md): Parent epic
+- [E6: Privacy & GDPR](../b.Epics/E6-privacy-and-gdpr.md): Parent epic
 
 ### Non-Blocking Dependencies
 

@@ -70,7 +70,7 @@ This ADR defines the API style guide and how i18n concerns are represented at th
     - OpenTelemetry tracing enabled for HTTP and DB spans with correlation IDs propagated.
 
 11. **Documentation & SDKs**
-    - OpenAPI generated clients for **TypeScript** in `packages/shared` (SDK), versioned with the app.
+    - OpenAPI generated clients for **TypeScript** in `packages/types` (SDK), versioned with the app.
     - Changelog and migration notes per API release; code samples validated in CI.
 
 ---

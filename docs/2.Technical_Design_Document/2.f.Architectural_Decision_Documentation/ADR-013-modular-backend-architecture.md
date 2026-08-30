@@ -31,7 +31,7 @@ Goals:
    - Each module exports: `router`, `service`, `repository`, `types`, `validators`, `mappers`, and `events`.
 
 3. **Contracts & Types**
-   - **DTOs** in `packages/shared` define request/response shapes; **Zod** (or equivalent) validators shared by router and tests.
+   - **DTOs** in `packages/types` define request/response shapes; **Zod** (or equivalent) validators shared by router and tests.
    - **Error model:** `DomainError(code, message, details?)` with HTTP mapping in a central middleware; no raw DB errors cross the router boundary.
    - **Idempotency:** Write endpoints accept `Idempotency-Key`; service layer ensures deterministic replay and 409 on payload mismatch (per policy).
 

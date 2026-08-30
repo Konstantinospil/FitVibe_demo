@@ -1,6 +1,6 @@
 # ADR-006 — Observability Cardinality Policy
 
-> **File:** docs/adr/ADR-006-observability-cardinality-policy.md  
+> **File:** docs/2.Technical_Design_Document/2.f.Architectural_Decision_Documentation/ADR-006-observability-cardinality-policy.md  
 > **Purpose:** Bound metric and trace label cardinality to ensure reliable, cost‑effective observability.
 
 ---

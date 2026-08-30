@@ -3,7 +3,7 @@
 ---
 
 **Activity ID**: E5-A3  
-**Epic ID**: [E5](../b.Epics/E5-logging-&-import.md)  
+**Epic ID**: [E5](../b.Epics/E5-logging-and-import.md)  
 **Title**: FIT File Import  
 **Status**: Open  
 **Difficulty**: 3  
@@ -34,7 +34,7 @@ Implement fit file import for Logging & Import. Implement functionality with pro
 
 ### Blocking Dependencies
 
-- [E5: Logging & Import](../b.Epics/E5-logging-&-import.md): Parent epic
+- [E5: Logging & Import](../b.Epics/E5-logging-and-import.md): Parent epic
 
 ### Non-Blocking Dependencies
 

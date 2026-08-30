@@ -1,6 +1,6 @@
 # ADR-002 — Authentication & Session Strategy (JWT RS256 with Refresh Rotation)
 
-> **File:** docs/adr/ADR-002-authentication-token-strategy.md  
+> **File:** docs/2.Technical_Design_Document/2.f.Architectural_Decision_Documentation/ADR-002-authentication-token-strategy.md  
 > **Purpose:** Decide the application-wide authentication and session strategy for FitVibe.
 
 ---
@@ -17,7 +17,7 @@ links:
 - PRD: "docs/1. Product Requirements Document.md#security--privacy"
 - TDD: "docs/2. Technical Design Document v2.md#authentication-authorization"
 - QA: "docs/3. Testing and Quality Assurance Plan.md#security-tests-and-slos"
-- ADR-001: "docs/adr/ADR-001-api-versioning-policy.md"
+- ADR-001: "docs/2.Technical_Design_Document/2.f.Architectural_Decision_Documentation/ADR-001-api-versioning-policy.md"
 
 ---
 

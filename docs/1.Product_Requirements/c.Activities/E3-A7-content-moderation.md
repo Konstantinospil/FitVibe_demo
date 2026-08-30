@@ -3,7 +3,7 @@
 ---
 
 **Activity ID**: E3-A7  
-**Epic ID**: [E3](../b.Epics/E3-sharing-&-community.md)  
+**Epic ID**: [E3](../b.Epics/E3-sharing-and-community.md)  
 **Title**: Content Moderation  
 **Status**: Done  
 **Difficulty**: 3  
@@ -71,7 +71,7 @@ Implement content moderation for Sharing & Community. Implement functionality wi
 
 ### Blocking Dependencies
 
-- [E3: Sharing & Community](../b.Epics/E3-sharing-&-community.md): Parent epic
+- [E3: Sharing & Community](../b.Epics/E3-sharing-and-community.md): Parent epic
 
 ### Non-Blocking Dependencies
 

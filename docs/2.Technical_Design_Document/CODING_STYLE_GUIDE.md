@@ -1946,7 +1946,7 @@ This guide has been reviewed against industry best practices and state-of-the-ar
 3. **Modern React Patterns**: React 18 patterns (lazy loading, hooks, Suspense) are current
 4. **Layered Architecture**: Clear separation (routes → controllers → services → repositories) follows SOLID principles
 5. **Security-First**: CSRF, input validation, parameterized queries are all properly addressed
-6. **Accessibility**: WCAG 2.1 AA compliance requirements are modern and comprehensive
+6. **Accessibility**: WCAG 2.2 AA compliance requirements are modern and comprehensive
 7. **Testing Patterns**: Deterministic testing with fake clocks and seeded PRNG is advanced
 8. **Performance**: Code splitting, memoization, and query optimization patterns are current
 
@@ -1967,7 +1967,7 @@ This guide has been reviewed against industry best practices and state-of-the-ar
 | TypeScript Strictness | ✅ Strict, no `any`       | ⚠️ Often lenient    | **Above Average** |
 | Testing Coverage      | ✅ 80% repo, 90% critical | ⚠️ Often 70-80%     | **Above Average** |
 | Security Practices    | ✅ Comprehensive          | ⚠️ Often basic      | **Above Average** |
-| Accessibility         | ✅ WCAG 2.1 AA            | ⚠️ Often WCAG 2.0 A | **Above Average** |
+| Accessibility         | ✅ WCAG 2.2 AA            | ⚠️ Often WCAG 2.0 A | **Above Average** |
 | Code Organization     | ✅ Modular, layered       | ✅ Similar          | **On Par**        |
 | Error Handling        | ✅ Centralized, typed     | ✅ Similar          | **On Par**        |
 | Performance           | ✅ Optimized patterns     | ✅ Similar          | **On Par**        |
@@ -2028,7 +2028,7 @@ The FitVibe coding style guide represents **above-average industry standards** w
 - **Security**: Comprehensive security practices exceed most projects
 - **Type Safety**: Strict TypeScript usage is better than many codebases
 - **Testing**: Deterministic testing patterns are advanced
-- **Accessibility**: WCAG 2.1 AA compliance is modern and thorough
+- **Accessibility**: WCAG 2.2 AA compliance is modern and thorough
 
 The guide is **production-ready** and provides excellent guidance for maintaining a high-quality codebase. All high-priority enhancements have been added, making this a comprehensive, state-of-the-art style guide.
 

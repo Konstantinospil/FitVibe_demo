@@ -3,7 +3,7 @@
 ---
 
 **Activity ID**: E10-A2  
-**Epic ID**: [E10](../b.Epics/E10-availability-&-backups.md)  
+**Epic ID**: [E10](../b.Epics/E10-availability-and-backups.md)  
 **Title**: Backup Restore Procedures  
 **Status**: Open  
 **Difficulty**: 3  
@@ -34,7 +34,7 @@ Implement backup restore procedures for Availability & Backups. Implement functi
 
 ### Blocking Dependencies
 
-- [E10: Availability & Backups](../b.Epics/E10-availability-&-backups.md): Parent epic
+- [E10: Availability & Backups](../b.Epics/E10-availability-and-backups.md): Parent epic
 
 ### Non-Blocking Dependencies
 

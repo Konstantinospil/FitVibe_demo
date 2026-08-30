@@ -27,34 +27,34 @@ Requirements are organized by:
 
 ### Authentication & User Management
 
-| ID     | Title              | Status | Priority | Gate   | Document                                                                           | PRD Reference |
-| ------ | ------------------ | ------ | -------- | ------ | ---------------------------------------------------------------------------------- | ------------- |
-| FR-001 | User Registration  | Done   | High     | GOLD   | [FR-001-user-registration.md](Requirements/done/FR-001-user-registration.md)       | PRD §4.1      |
-| FR-002 | Login & Session    | Done   | High     | GOLD   | [FR-002-login-and-session.md](Requirements/done/FR-002-login-and-session.md)       | PRD §4.1      |
-| FR-003 | Auth-Wall          | Done   | High     | GOLD   | [FR-003-authwall.md](Requirements/done/FR-003-authwall.md)                         | PRD §4.1      |
-| FR-009 | Profile & Settings | Done   | Medium   | SILVER | [FR-009-profile-and-settings.md](Requirements/done/FR-009-profile-and-settings.md) | PRD §4.2      |
+| ID     | Title              | Status | Priority | Gate   | Document                                                                        | PRD Reference |
+| ------ | ------------------ | ------ | -------- | ------ | ------------------------------------------------------------------------------- | ------------- |
+| FR-001 | User Registration  | Done   | High     | GOLD   | [FR-001-user-registration.md](a.Requirements/FR-001-user-registration.md)       | PRD §4.1      |
+| FR-002 | Login & Session    | Done   | High     | GOLD   | [FR-002-login-and-session.md](a.Requirements/FR-002-login-and-session.md)       | PRD §4.1      |
+| FR-003 | Auth-Wall          | Done   | High     | GOLD   | [FR-003-authwall.md](a.Requirements/FR-003-authwall.md)                         | PRD §4.1      |
+| FR-009 | Profile & Settings | Done   | Medium   | SILVER | [FR-009-profile-and-settings.md](a.Requirements/FR-009-profile-and-settings.md) | PRD §4.2      |
 
 ### Content Management
 
-| ID     | Title            | Status      | Priority | Gate   | Document                                                                              | PRD Reference |
-| ------ | ---------------- | ----------- | -------- | ------ | ------------------------------------------------------------------------------------- | ------------- |
-| FR-010 | Exercise Library | Open        | Medium   | SILVER | [FR-010-exercise-library.md](Requirements/open/FR-010-exercise-library.md)            | PRD §4.3      |
-| FR-004 | Planner          | Progressing | Medium   | SILVER | [FR-004-planner.md](Requirements/progressing/FR-004-planner.md)                       | PRD §4.4      |
-| FR-005 | Logging & Import | Progressing | Medium   | SILVER | [FR-005-logging-and-import.md](Requirements/progressing/FR-005-logging-and-import.md) | PRD §4.4      |
+| ID     | Title            | Status      | Priority | Gate   | Document                                                                    | PRD Reference |
+| ------ | ---------------- | ----------- | -------- | ------ | --------------------------------------------------------------------------- | ------------- |
+| FR-010 | Exercise Library | Open        | Medium   | SILVER | [FR-010-exercise-library.md](a.Requirements/FR-010-exercise-library.md)     | PRD §4.3      |
+| FR-004 | Planner          | Progressing | Medium   | SILVER | [FR-004-planner.md](a.Requirements/FR-004-planner.md)                       | PRD §4.4      |
+| FR-005 | Logging & Import | Progressing | Medium   | SILVER | [FR-005-logging-and-import.md](a.Requirements/FR-005-logging-and-import.md) | PRD §4.4      |
 
 ### Analytics & Social
 
-| ID     | Title               | Status | Priority | Gate   | Document                                                                             | PRD Reference |
-| ------ | ------------------- | ------ | -------- | ------ | ------------------------------------------------------------------------------------ | ------------- |
-| FR-006 | Gamification        | Done   | Medium   | SILVER | [FR-006-gamification.md](Requirements/done/FR-006-gamification.md)                   | PRD §4.6      |
-| FR-007 | Analytics & Export  | Done   | High     | GOLD   | [FR-007-analytics-and-export.md](Requirements/done/FR-007-analytics-and-export.md)   | PRD §4.5      |
-| FR-011 | Sharing & Community | Open   | Medium   | SILVER | [FR-011-sharing-and-community.md](Requirements/open/FR-011-sharing-and-community.md) | PRD §4.7      |
+| ID     | Title               | Status | Priority | Gate   | Document                                                                          | PRD Reference |
+| ------ | ------------------- | ------ | -------- | ------ | --------------------------------------------------------------------------------- | ------------- |
+| FR-006 | Gamification        | Done   | Medium   | SILVER | [FR-006-gamification.md](a.Requirements/FR-006-gamification.md)                   | PRD §4.6      |
+| FR-007 | Analytics & Export  | Done   | High     | GOLD   | [FR-007-analytics-and-export.md](a.Requirements/FR-007-analytics-and-export.md)   | PRD §4.5      |
+| FR-011 | Sharing & Community | Open   | Medium   | SILVER | [FR-011-sharing-and-community.md](a.Requirements/FR-011-sharing-and-community.md) | PRD §4.7      |
 
 ### Administration
 
-| ID     | Title        | Status | Priority | Gate | Document                                                               | PRD Reference |
-| ------ | ------------ | ------ | -------- | ---- | ---------------------------------------------------------------------- | ------------- |
-| FR-008 | Admin & RBAC | Done   | High     | GOLD | [FR-008-admin-and-rbac.md](Requirements/done/FR-008-admin-and-rbac.md) | PRD §4.8      |
+| ID     | Title        | Status | Priority | Gate | Document                                                            | PRD Reference |
+| ------ | ------------ | ------ | -------- | ---- | ------------------------------------------------------------------- | ------------- |
+| FR-008 | Admin & RBAC | Done   | High     | GOLD | [FR-008-admin-and-rbac.md](a.Requirements/FR-008-admin-and-rbac.md) | PRD §4.8      |
 
 ---
 
@@ -62,30 +62,30 @@ Requirements are organized by:
 
 ### Security & Privacy
 
-| ID      | Title          | Status      | Priority | Gate | Document                                                          | PRD Reference |
-| ------- | -------------- | ----------- | -------- | ---- | ----------------------------------------------------------------- | ------------- |
-| NFR-001 | Security       | Done        | High     | GOLD | [NFR-001-security.md](Requirements/done/NFR-001-security.md)      | PRD §5.1      |
-| NFR-002 | Privacy & GDPR | Progressing | High     | GOLD | [NFR-002-privacy.md](Requirements/progressing/NFR-002-privacy.md) | PRD §5.2      |
+| ID      | Title          | Status      | Priority | Gate | Document                                                  | PRD Reference |
+| ------- | -------------- | ----------- | -------- | ---- | --------------------------------------------------------- | ------------- |
+| NFR-001 | Security       | Done        | High     | GOLD | [NFR-001-security.md](a.Requirements/NFR-001-security.md) | PRD §5.1      |
+| NFR-002 | Privacy & GDPR | Progressing | High     | GOLD | [NFR-002-privacy.md](a.Requirements/NFR-002-privacy.md)   | PRD §5.2      |
 
 ### Performance & Quality
 
-| ID      | Title                       | Status      | Priority | Gate | Document                                                                  | PRD Reference |
-| ------- | --------------------------- | ----------- | -------- | ---- | ------------------------------------------------------------------------- | ------------- |
-| NFR-003 | Performance                 | Progressing | High     | GOLD | [NFR-003-performance.md](Requirements/progressing/NFR-003-performance.md) | PRD §5.3      |
-| NFR-004 | Accessibility (WCAG 2.1 AA) | Progressing | High     | GOLD | [NFR-004-a11y.md](Requirements/progressing/NFR-004-a11y.md)               | PRD §5.5      |
+| ID      | Title                       | Status      | Priority | Gate | Document                                                        | PRD Reference |
+| ------- | --------------------------- | ----------- | -------- | ---- | --------------------------------------------------------------- | ------------- |
+| NFR-003 | Performance                 | Progressing | High     | GOLD | [NFR-003-performance.md](a.Requirements/NFR-003-performance.md) | PRD §5.3      |
+| NFR-004 | Accessibility (WCAG 2.2 AA) | Progressing | High     | GOLD | [NFR-004-a11y.md](a.Requirements/NFR-004-a11y.md)               | PRD §5.5      |
 
 ### Operations & Infrastructure
 
-| ID      | Title                       | Status      | Priority | Gate   | Document                                                  | PRD Reference  |
-| ------- | --------------------------- | ----------- | -------- | ------ | --------------------------------------------------------- | -------------- |
-| NFR-005 | Availability & Backups      | Progressing | High     | SILVER | [NFR-005-ops.md](Requirements/progressing/NFR-005-ops.md) | PRD §5.4, §5.7 |
-| NFR-006 | Internationalization (i18n) | Done        | Medium   | SILVER | [NFR-006-i18n.md](Requirements/done/NFR-006-i18n.md)      | PRD §4.8       |
+| ID      | Title                       | Status      | Priority | Gate   | Document                                          | PRD Reference  |
+| ------- | --------------------------- | ----------- | -------- | ------ | ------------------------------------------------- | -------------- |
+| NFR-005 | Availability & Backups      | Progressing | High     | SILVER | [NFR-005-ops.md](a.Requirements/NFR-005-ops.md)   | PRD §5.4, §5.7 |
+| NFR-006 | Internationalization (i18n) | Done        | Medium   | SILVER | [NFR-006-i18n.md](a.Requirements/NFR-006-i18n.md) | PRD §4.8       |
 
 ### Observability
 
-| ID      | Title         | Status | Priority | Gate   | Document                                                               | PRD Reference |
-| ------- | ------------- | ------ | -------- | ------ | ---------------------------------------------------------------------- | ------------- |
-| NFR-007 | Observability | Open   | Medium   | SILVER | [NFR-007-observability.md](Requirements/open/NFR-007-observability.md) | PRD §5.6      |
+| ID      | Title         | Status | Priority | Gate   | Document                                                            | PRD Reference |
+| ------- | ------------- | ------ | -------- | ------ | ------------------------------------------------------------------- | ------------- |
+| NFR-007 | Observability | Open   | Medium   | SILVER | [NFR-007-observability.md](a.Requirements/NFR-007-observability.md) | PRD §5.6      |
 
 ---
 

@@ -128,7 +128,8 @@ apps/backend/uploads/
 docker-compose.override.yml
 
 # --- Documentation: Implementation folder (planning/reviews) ---
-docs/6.Implementation/
+docs/6.Implementation/*
+!docs/6.Implementation/README.md
 
 # --- Cursor IDE configuration (personal, not part of the app) ---
 .cursor/

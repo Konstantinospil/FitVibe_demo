@@ -3,7 +3,7 @@
 ---
 
 **Activity ID**: E3-A2  
-**Epic ID**: [E3](../b.Epics/E3-sharing-&-community.md)  
+**Epic ID**: [E3](../b.Epics/E3-sharing-and-community.md)  
 **Title**: Session Visibility Controls  
 **Status**: Done  
 **Difficulty**: 2  
@@ -64,7 +64,7 @@ Implement session visibility controls for Sharing & Community. Implement functio
 
 ### Blocking Dependencies
 
-- [E3: Sharing & Community](../b.Epics/E3-sharing-&-community.md): Parent epic
+- [E3: Sharing & Community](../b.Epics/E3-sharing-and-community.md): Parent epic
 
 ### Non-Blocking Dependencies
 

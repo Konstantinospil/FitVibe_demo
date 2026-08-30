@@ -1,6 +1,6 @@
 # ADR-004 — Media Upload Safety & AV Scanning
 
-> **File:** docs/adr/ADR-004-media-upload-safety-and-av-scanning.md  
+> **File:** docs/2.Technical_Design_Document/2.f.Architectural_Decision_Documentation/ADR-004-media-upload-safety-and-av-scanning.md  
 > **Purpose:** Define a secure pipeline for handling user media (images/videos) to prevent malware and abuse content from entering the system.
 
 ---

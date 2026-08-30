@@ -3,7 +3,7 @@
 ---
 
 **Activity ID**: E5-A6  
-**Epic ID**: [E5](../b.Epics/E5-logging-&-import.md)  
+**Epic ID**: [E5](../b.Epics/E5-logging-and-import.md)  
 **Title**: Import Testing Suite  
 **Status**: Open  
 **Difficulty**: 2  
@@ -34,7 +34,7 @@ Implement import testing suite for Logging & Import. Create comprehensive test s
 
 ### Blocking Dependencies
 
-- [E5: Logging & Import](../b.Epics/E5-logging-&-import.md): Parent epic
+- [E5: Logging & Import](../b.Epics/E5-logging-and-import.md): Parent epic
 
 ### Non-Blocking Dependencies
 

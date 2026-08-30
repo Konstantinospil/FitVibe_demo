@@ -62,7 +62,7 @@ FitVibe uses RS256 (RSA asymmetric) JWT tokens for authentication. Per ADR-002 a
 
   ```bash
   # SSH to production server
-  stat -c %Y /app/keys/jwt_private.pem
+  stat -c %Y /app/keys/jwt_rs256.key
   # Calculate age: (current_time - creation_time) / 86400 = days
   ```
 
@@ -75,8 +75,8 @@ FitVibe uses RS256 (RSA asymmetric) JWT tokens for authentication. Per ADR-002 a
 
 - [ ] Backup current keys:
   ```bash
-  cp /app/keys/jwt_private.pem /app/keys/backup/jwt_private_$(date +%Y%m%d).pem
-  cp /app/keys/jwt_public.pem /app/keys/backup/jwt_public_$(date +%Y%m%d).pem
+  cp /app/keys/jwt_rs256.key /app/keys/backup/jwt_private_$(date +%Y%m%d).pem
+  cp /app/keys/jwt_rs256.pub /app/keys/backup/jwt_public_$(date +%Y%m%d).pem
   ```
 
 ### 3. Access Verification
@@ -95,11 +95,11 @@ FitVibe uses RS256 (RSA asymmetric) JWT tokens for authentication. Per ADR-002 a
 
    ```bash
    # On secure workstation (not production server)
-   openssl genrsa -out jwt_private_new.pem 4096
-   openssl rsa -in jwt_private_new.pem -pubout -out jwt_public_new.pem
+   openssl genrsa -out jwt_rs256_new.key 4096
+   openssl rsa -in jwt_rs256_new.key -pubout -out jwt_rs256_new.pub
 
    # Verify key integrity
-   openssl rsa -in jwt_private_new.pem -check -noout
+   openssl rsa -in jwt_rs256_new.key -check -noout
    # Expected output: RSA key ok
    ```
 
@@ -117,8 +117,8 @@ FitVibe uses RS256 (RSA asymmetric) JWT tokens for authentication. Per ADR-002 a
 
    ```bash
    vault kv put secret/fitvibe/staging/jwt \
-     private_key=@jwt_private_new.pem \
-     public_key=@jwt_public_new.pem \
+     private_key=@jwt_rs256_new.key \
+     public_key=@jwt_rs256_new.pub \
      kid="$NEW_KID"
    ```
 
@@ -128,8 +128,8 @@ FitVibe uses RS256 (RSA asymmetric) JWT tokens for authentication. Per ADR-002 a
    aws secretsmanager create-secret \
      --name fitvibe/staging/jwt-new \
      --secret-string "$(jq -n \
-       --arg priv "$(cat jwt_private_new.pem)" \
-       --arg pub "$(cat jwt_public_new.pem)" \
+       --arg priv "$(cat jwt_rs256_new.key)" \
+       --arg pub "$(cat jwt_rs256_new.pub)" \
        --arg kid "$NEW_KID" \
        '{private_key: $priv, public_key: $pub, kid: $kid}')"
    ```
@@ -138,8 +138,8 @@ FitVibe uses RS256 (RSA asymmetric) JWT tokens for authentication. Per ADR-002 a
 
    ```bash
    # Update environment variables
-   export JWT_PRIVATE_KEY_PATH=/app/keys/jwt_private_new.pem
-   export JWT_PUBLIC_KEY_PATH=/app/keys/jwt_public_new.pem
+   export JWT_PRIVATE_KEY_PATH=/app/keys/jwt_rs256_new.key
+   export JWT_PUBLIC_KEY_PATH=/app/keys/jwt_rs256_new.pub
    export JWT_KEY_ID=$NEW_KID
 
    # Restart backend service
@@ -221,8 +221,8 @@ FitVibe uses RS256 (RSA asymmetric) JWT tokens for authentication. Per ADR-002 a
    ```bash
    # Store new key in secrets manager
    vault kv put secret/fitvibe/production/jwt-new \
-     private_key=@jwt_private_new.pem \
-     public_key=@jwt_public_new.pem \
+     private_key=@jwt_rs256_new.key \
+     public_key=@jwt_rs256_new.pub \
      kid="$NEW_KID"
 
    # Update application config to load BOTH keys
@@ -235,12 +235,12 @@ FitVibe uses RS256 (RSA asymmetric) JWT tokens for authentication. Per ADR-002 a
    Edit backend environment config to use new key for signing:
 
    ```bash
-   export JWT_PRIVATE_KEY_PATH=/app/keys/jwt_private_new.pem
-   export JWT_PUBLIC_KEY_PATH=/app/keys/jwt_public_new.pem
+   export JWT_PRIVATE_KEY_PATH=/app/keys/jwt_rs256_new.key
+   export JWT_PUBLIC_KEY_PATH=/app/keys/jwt_rs256_new.pub
    export JWT_KEY_ID=$NEW_KID
 
    # Keep old public key available for validation
-   export JWT_PUBLIC_KEY_OLD_PATH=/app/keys/jwt_public.pem
+   export JWT_PUBLIC_KEY_OLD_PATH=/app/keys/jwt_rs256.pub
    export JWT_KEY_ID_OLD="key-20250811-020000"  # Previous kid
    ```
 
@@ -341,8 +341,8 @@ During the 24-hour overlap:
 
    ```bash
    # Move to secure archive (retain for 2 years per compliance)
-   aws s3 cp jwt_private.pem s3://fitvibe-secrets-archive/jwt/2025/
-   aws s3 cp jwt_public.pem s3://fitvibe-secrets-archive/jwt/2025/
+   aws s3 cp jwt_rs256.key s3://fitvibe-secrets-archive/jwt/2025/
+   aws s3 cp jwt_rs256.pub s3://fitvibe-secrets-archive/jwt/2025/
 
    # Update secrets manager
    vault kv metadata delete secret/fitvibe/production/jwt-old
@@ -393,8 +393,8 @@ If issues arise during rotation (e.g., spike in 401s, users unable to login):
 
    ```bash
    kubectl set env deployment/fitvibe-backend \
-     JWT_PRIVATE_KEY_PATH=/app/keys/jwt_private.pem \
-     JWT_PUBLIC_KEY_PATH=/app/keys/jwt_public.pem \
+     JWT_PRIVATE_KEY_PATH=/app/keys/jwt_rs256.key \
+     JWT_PUBLIC_KEY_PATH=/app/keys/jwt_rs256.pub \
      JWT_KEY_ID="key-20250811-020000" \
      -n production
 
@@ -523,7 +523,7 @@ kubectl exec deployment/fitvibe-backend -n production -- env | grep JWT
 **Symptoms:**
 
 - Backend fails to start
-- Error: `ENOENT: no such file or directory, open '/app/keys/jwt_private_new.pem'`
+- Error: `ENOENT: no such file or directory, open '/app/keys/jwt_rs256_new.key'`
 
 **Diagnosis:**
 
@@ -571,16 +571,16 @@ KID="key-$(date +%Y%m%d-%H%M%S)"
 OUTPUT_DIR="${1:-.}"
 
 echo "Generating RSA-4096 key pair with kid=$KID..."
-openssl genrsa -out "$OUTPUT_DIR/jwt_private.pem" 4096
-openssl rsa -in "$OUTPUT_DIR/jwt_private.pem" -pubout -out "$OUTPUT_DIR/jwt_public.pem"
+openssl genrsa -out "$OUTPUT_DIR/jwt_rs256.key" 4096
+openssl rsa -in "$OUTPUT_DIR/jwt_rs256.key" -pubout -out "$OUTPUT_DIR/jwt_rs256.pub"
 
 echo "Verifying key integrity..."
-openssl rsa -in "$OUTPUT_DIR/jwt_private.pem" -check -noout
+openssl rsa -in "$OUTPUT_DIR/jwt_rs256.key" -check -noout
 
 echo "$KID" > "$OUTPUT_DIR/jwt_kid.txt"
 echo "Keys generated successfully:"
-echo "  Private: $OUTPUT_DIR/jwt_private.pem"
-echo "  Public:  $OUTPUT_DIR/jwt_public.pem"
+echo "  Private: $OUTPUT_DIR/jwt_rs256.key"
+echo "  Public:  $OUTPUT_DIR/jwt_rs256.pub"
 echo "  Key ID:  $KID"
 ```
 

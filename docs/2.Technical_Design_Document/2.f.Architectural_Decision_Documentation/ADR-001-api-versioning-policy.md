@@ -1,6 +1,6 @@
 # ADR-001 — Adopt URI-based API Versioning with Additive v1 Policy and Deprecation Headers
 
-> **File:** docs/adr/ADR-001-api-versioning-policy.md  
+> **File:** docs/2.Technical_Design_Document/2.f.Architectural_Decision_Documentation/ADR-001-api-versioning-policy.md  
 > **Purpose:** Architectural decision record defining FitVibe’s API versioning strategy for MVP and beyond.
 
 ---
@@ -38,7 +38,7 @@ FitVibe exposes a public REST API consumed by the React SPA and future clients (
 We adopt **URI-based major versioning** using `/api/v1` with an **additive-only** compatibility policy for v1.
 
 - **Base path**:
-  - Local: `http://localhost:4100/api/v1`
+  - Local: `http://localhost:4000/api/v1`
   - Staging/Prod: `https://api.fitvibe.app/api/v1`
 - **Within v1**: Only backward-compatible, additive changes permitted (new optional fields/endpoints; enums are forward-tolerant). No removals or breaking behavior changes.
 - **Breaking changes**: Require a **new major path** (e.g., `/api/v2`) with a managed deprecation window for v1 endpoints.

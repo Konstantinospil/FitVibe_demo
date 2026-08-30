@@ -52,7 +52,7 @@ fitvibe/
 5. **Governance**
 
 - **CODEOWNERS** per directory; **conventional commits**; **changesets** for versioning of published packages.
-- **Feature flags** centralized in `packages/shared/flags.ts`; defaults set by env and validated in CI (e.g., `FEATURE_UGC_AI_TRANSLATION=false` in prod).
+- **Feature flags** centralized in `packages/types/flags.ts`; defaults set by env and validated in CI (e.g., `FEATURE_UGC_AI_TRANSLATION=false` in prod).
 - ADR index maintained under `docs/` with bidirectional links to PRD/TDD sections.
 
 6. **Environment & Secrets**

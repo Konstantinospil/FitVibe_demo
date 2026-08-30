@@ -3,7 +3,7 @@
 ---
 
 **Activity ID**: E3-A1  
-**Epic ID**: [E3](../b.Epics/E3-sharing-&-community.md)  
+**Epic ID**: [E3](../b.Epics/E3-sharing-and-community.md)  
 **Title**: Public Feed Implementation  
 **Status**: Done  
 **Difficulty**: 3  
@@ -82,7 +82,7 @@ Implement public feed implementation for Sharing & Community. Implement function
 
 ### Blocking Dependencies
 
-- [E3: Sharing & Community](../b.Epics/E3-sharing-&-community.md): Parent epic
+- [E3: Sharing & Community](../b.Epics/E3-sharing-and-community.md): Parent epic
 
 ### Non-Blocking Dependencies
 

@@ -21,7 +21,7 @@
 
 ## Description
 
-Color contrast must meet WCAG 2.1 AA standards: text 4.5:1 for normal text, 3:1 for large text; UI components 3:1. Color is not the only means of conveying information; icons, labels, or patterns supplement color coding.
+Color contrast must meet WCAG 2.2 AA standards: text 4.5:1 for normal text, 3:1 for large text; UI components 3:1. Color is not the only means of conveying information; icons, labels, or patterns supplement color coding.
 
 ## Related Acceptance Criteria
 

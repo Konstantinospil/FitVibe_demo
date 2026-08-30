@@ -3,7 +3,7 @@
 ---
 
 **Activity ID**: E6-A6  
-**Epic ID**: [E6](../b.Epics/E6-privacy-&-gdpr.md)  
+**Epic ID**: [E6](../b.Epics/E6-privacy-and-gdpr.md)  
 **Title**: GDPR Testing Suite  
 **Status**: Open  
 **Difficulty**: 2  
@@ -34,7 +34,7 @@ Implement gdpr testing suite for Privacy & GDPR. Create comprehensive test suite
 
 ### Blocking Dependencies
 
-- [E6: Privacy & GDPR](../b.Epics/E6-privacy-&-gdpr.md): Parent epic
+- [E6: Privacy & GDPR](../b.Epics/E6-privacy-and-gdpr.md): Parent epic
 
 ### Non-Blocking Dependencies
 

@@ -24,7 +24,7 @@ Legal compliance requirement and ethical imperative. Accessible design benefits 
 
 ## Related Activities
 
-- [E8-A1: ARIA Labels & Semantic HTML](../c.Activities/E8-A1-aria-labels-&-semantic-html.md)
+- [E8-A1: ARIA Labels & Semantic HTML](../c.Activities/E8-A1-aria-labels-and-semantic-html.md)
 - [E8-A2: Keyboard Navigation Implementation](../c.Activities/E8-A2-keyboard-navigation-implementation.md)
 - [E8-A3: Color Contrast Compliance](../c.Activities/E8-A3-color-contrast-compliance.md)
 - [E8-A4: Screen Reader Support](../c.Activities/E8-A4-screen-reader-support.md)

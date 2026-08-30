@@ -25,7 +25,7 @@ Allows users to plan their training effectively, improving adherence and goal ac
 ## Related Activities
 
 - [E4-A1: Plan CRUD Operations](../c.Activities/E4-A1-plan-crud-operations.md)
-- [E4-A2: Plan Activation & Progress Tracking](../c.Activities/E4-A2-plan-activation-&-progress-tracking.md)
+- [E4-A2: Plan Activation & Progress Tracking](../c.Activities/E4-A2-plan-activation-and-progress-tracking.md)
 - [E4-A3: Drag-and-Drop Scheduling](../c.Activities/E4-A3-drag-and-drop-scheduling.md)
 - [E4-A4: Mobile Touch Gestures](../c.Activities/E4-A4-mobile-touch-gestures.md)
 - [E4-A5: Planner Testing Suite](../c.Activities/E4-A5-planner-testing-suite.md)

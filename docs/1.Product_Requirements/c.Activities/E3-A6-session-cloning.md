@@ -3,7 +3,7 @@
 ---
 
 **Activity ID**: E3-A6  
-**Epic ID**: [E3](../b.Epics/E3-sharing-&-community.md)  
+**Epic ID**: [E3](../b.Epics/E3-sharing-and-community.md)  
 **Title**: Session Cloning  
 **Status**: Done  
 **Difficulty**: 2  
@@ -66,7 +66,7 @@ Implement session cloning for Sharing & Community. Implement functionality with 
 
 ### Blocking Dependencies
 
-- [E3: Sharing & Community](../b.Epics/E3-sharing-&-community.md): Parent epic
+- [E3: Sharing & Community](../b.Epics/E3-sharing-and-community.md): Parent epic
 
 ### Non-Blocking Dependencies
 

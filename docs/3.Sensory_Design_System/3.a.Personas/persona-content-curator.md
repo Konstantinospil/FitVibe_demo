@@ -74,4 +74,4 @@ journey
 
 - PRD §3.1 Personas; sharing & privacy (PRD §2, §8).
 - TDD: RBAC matrix, API endpoints (sessions, plans, feedback, library).
-- QA Plan: performance (LCP < 2.5s, API p95 < 300ms), security, accessibility (WCAG 2.1 AA).
+- QA Plan: performance (LCP < 2.5s, API p95 < 300ms), security, accessibility (WCAG 2.2 AA).

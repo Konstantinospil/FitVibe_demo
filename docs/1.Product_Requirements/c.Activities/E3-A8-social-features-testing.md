@@ -3,7 +3,7 @@
 ---
 
 **Activity ID**: E3-A8  
-**Epic ID**: [E3](../b.Epics/E3-sharing-&-community.md)  
+**Epic ID**: [E3](../b.Epics/E3-sharing-and-community.md)  
 **Title**: Social Features Testing  
 **Status**: Done  
 **Difficulty**: 2  
@@ -73,7 +73,7 @@ Implement social features testing for Sharing & Community. Create comprehensive 
 
 ### Blocking Dependencies
 
-- [E3: Sharing & Community](../b.Epics/E3-sharing-&-community.md): Parent epic
+- [E3: Sharing & Community](../b.Epics/E3-sharing-and-community.md): Parent epic
 
 ### Non-Blocking Dependencies
 

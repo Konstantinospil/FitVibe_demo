@@ -1190,7 +1190,7 @@
 
 ### US-8.3-AC01
 
-**Criterion**: Color contrast meets WCAG 2.1 AA standards: text 4.5:1 for normal text, 3:1 for large text; UI components 3:1.
+**Criterion**: Color contrast meets WCAG 2.2 AA standards: text 4.5:1 for normal text, 3:1 for large text; UI components 3:1.
 
 - **Test Method**: Accessibility audit
 - **Evidence Required**: Color contrast audit results, contrast ratio measurements

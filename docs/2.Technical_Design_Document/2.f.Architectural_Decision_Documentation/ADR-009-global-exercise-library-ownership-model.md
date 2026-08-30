@@ -1,6 +1,6 @@
 # ADR-009 — Global Exercise Library Ownership Model
 
-> **File:** docs/adr/ADR-009-global-exercise-library-ownership-model.md  
+> **File:** docs/2.Technical_Design_Document/2.f.Architectural_Decision_Documentation/ADR-009-global-exercise-library-ownership-model.md  
 > **Purpose:** Balance a curated global exercise catalog with user customization and extension.
 
 ---

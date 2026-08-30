@@ -13,7 +13,7 @@ The FitVibe platform requires comprehensive quality assurance across multiple di
 
 The QA Plan (4a.Testing_and_Quality_Assurance_Plan.md) mandates:
 
-- **Accessibility**: WCAG 2.1 AA, axe/Lighthouse score ≥90
+- **Accessibility**: WCAG 2.2 AA, axe/Lighthouse score ≥90
 - **Performance**: LCP P75 < 2.5s, Lighthouse score ≥90
 - **Best Practices**: Security headers, HTTPS, modern web standards
 - **SEO**: Meta tags, semantic HTML, proper document structure

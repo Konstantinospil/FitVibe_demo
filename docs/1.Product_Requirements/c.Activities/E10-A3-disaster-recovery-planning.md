@@ -3,7 +3,7 @@
 ---
 
 **Activity ID**: E10-A3  
-**Epic ID**: [E10](../b.Epics/E10-availability-&-backups.md)  
+**Epic ID**: [E10](../b.Epics/E10-availability-and-backups.md)  
 **Title**: Disaster Recovery Planning  
 **Status**: Open  
 **Difficulty**: 2  
@@ -34,7 +34,7 @@ Implement disaster recovery planning for Availability & Backups. Implement funct
 
 ### Blocking Dependencies
 
-- [E10: Availability & Backups](../b.Epics/E10-availability-&-backups.md): Parent epic
+- [E10: Availability & Backups](../b.Epics/E10-availability-and-backups.md): Parent epic
 
 ### Non-Blocking Dependencies
 

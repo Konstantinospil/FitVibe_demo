@@ -1,0 +1,745 @@
+erDiagram
+  %% =========================================================
+  %% Identity & Access
+  %% =========================================================
+  roles {
+    text code PK
+    text description
+    timestamptz created_at
+    timestamptz deactivated_at
+  }
+
+  users {
+    uuid id PK
+    citext username UNIQUE
+    text display_name
+    text locale
+    text preferred_lang
+    text status              \"ENUM active|suspended|deleted\"
+    text role_code           FK \"-> roles.code\"
+    text password_hash
+    text default_visibility  \"ENUM private|followers|link|public\"
+    text units               \"ENUM metric|imperial\"
+    boolean terms_accepted
+    timestamptz terms_accepted_at
+    text terms_version
+    boolean privacy_policy_accepted
+    timestamptz privacy_policy_accepted_at
+    text privacy_policy_version
+    timestamptz purge_scheduled_at
+    timestamptz backup_purge_due_at
+    boolean two_factor_enabled
+    text two_factor_secret
+    timestamptz two_factor_enabled_at
+    timestamptz deactivated_at
+    timestamptz created_at
+    timestamptz updated_at
+    timestamptz deleted_at
+  }
+
+  profiles {
+    uuid user_id PK FK \"-> users.id (ON DELETE CASCADE)\"
+    date date_of_birth
+    text gender_code FK \"-> genders.code\"
+    citext alias UNIQUE
+    text bio
+    uuid avatar_asset_id FK \"-> media.id\"
+    text visibility        \"ENUM private|link|public\"
+    text timezone
+    jsonb unit_preferences
+    timestamptz created_at
+    timestamptz updated_at
+    timestamptz deactivated_at
+  }
+
+  user_contacts {
+    uuid id PK
+    uuid user_id FK \"-> users.id\"
+    text type
+    text value UNIQUE
+    boolean is_primary
+    boolean is_recovery
+    boolean is_verified
+    timestamptz verified_at
+    timestamptz created_at
+    timestamptz deactivated_at
+  }
+
+  user_state_history {
+    uuid id PK
+    uuid user_id FK \"-> users.id\"
+    text field
+    jsonb old_value
+    jsonb new_value
+    timestamptz changed_at
+    %% PK (id, changed_at)
+    timestamptz created_at
+    timestamptz deactivated_at
+  }
+
+  user_tombstones {
+    uuid id PK
+    uuid user_id
+    text username
+    text email
+    timestamptz deleted_at
+    timestamptz purged_at
+    timestamptz backup_purge_due_at
+    jsonb metadata
+    timestamptz created_at
+    timestamptz deactivated_at
+  }
+
+  blacklist {
+    uuid id PK
+    citext email
+    timestamptz active_from
+    timestamptz active_to
+    timestamptz created_at
+    timestamptz updated_at
+    uuid created_by FK \"-> users.id\"
+    timestamptz deactivated_at
+  }
+
+  %% =========================================================
+  %% Reference Tables
+  %% =========================================================
+  genders {
+    text code PK
+    text description
+    timestamptz created_at
+    timestamptz deactivated_at
+  }
+
+  fitness_levels {
+    text code PK
+    text description
+    timestamptz created_at
+    timestamptz deactivated_at
+  }
+
+  exercise_types {
+    text code PK
+    text description
+    timestamptz created_at
+    timestamptz deactivated_at
+  }
+
+  %% =========================================================
+  %% Auth & Security
+  %% =========================================================
+  auth_sessions {
+    uuid jti PK
+    uuid user_id FK \"-> users.id\"
+    text user_agent
+    inet ip
+    timestamptz created_at
+    timestamptz expires_at
+    timestamptz revoked_at
+    timestamptz deactivated_at
+  }
+
+  refresh_tokens {
+    uuid id PK
+    uuid user_id FK \"-> users.id\"
+    uuid session_jti FK \"-> auth_sessions.jti\"
+    text token_hash UNIQUE
+    timestamptz expires_at
+    timestamptz created_at
+    timestamptz revoked_at
+    timestamptz rotated_at
+    timestamptz deactivated_at
+  }
+
+  auth_tokens {
+    uuid id PK
+    uuid user_id FK \"-> users.id\"
+    text token_type
+    text token_hash UNIQUE
+    timestamptz created_at
+    timestamptz expires_at
+    timestamptz consumed_at
+    timestamptz deactivated_at
+  }
+
+  pending_2fa_sessions {
+    uuid id PK
+    uuid user_id FK \"-> users.id\"
+    timestamptz created_at
+    timestamptz expires_at
+    text ip
+    text user_agent
+    boolean verified
+    timestamptz deactivated_at
+  }
+
+  user_2fa_settings {
+    uuid id PK
+    uuid user_id FK \"-> users.id\"
+    text totp_secret
+    boolean is_enabled
+    boolean is_verified
+    text recovery_email
+    text recovery_phone
+    timestamptz enabled_at
+    timestamptz last_used_at
+    timestamptz created_at
+    timestamptz updated_at
+    timestamptz deactivated_at
+  }
+
+  backup_codes {
+    uuid id PK
+    uuid user_id FK \"-> users.id\"
+    text code_hash
+    boolean is_used
+    timestamptz used_at
+    int generation_batch
+    timestamptz created_at
+    timestamptz deactivated_at
+  }
+
+  two_factor_backup_codes {
+    uuid id PK
+    uuid user_id FK \"-> users.id\"
+    text code_hash
+    boolean used
+    timestamptz used_at
+    timestamptz created_at
+    timestamptz deactivated_at
+  }
+
+  two_factor_audit_log {
+    uuid id PK
+    uuid user_id FK \"-> users.id\"
+    text event_type
+    text ip_address
+    text user_agent
+    jsonb metadata
+    timestamptz created_at
+    timestamptz deactivated_at
+  }
+
+  failed_login_attempts {
+    uuid id PK
+    text identifier
+    text ip_address
+    text user_agent
+    int attempt_count
+    timestamptz locked_until
+    timestamptz last_attempt_at
+    timestamptz first_attempt_at
+    timestamptz created_at
+    timestamptz updated_at
+    timestamptz deactivated_at
+  }
+
+  failed_login_attempts_by_ip {
+    uuid id PK
+    text ip_address
+    int distinct_email_count
+    int total_attempt_count
+    timestamptz locked_until
+    timestamptz last_attempt_at
+    timestamptz first_attempt_at
+    timestamptz created_at
+    timestamptz updated_at
+    timestamptz deactivated_at
+  }
+
+  %% =========================================================
+  %% Exercises, Plans & Sessions
+  %% =========================================================
+  exercises {
+    uuid id PK
+    uuid owner_id FK \"-> users.id\"
+    text name
+    text type_code FK \"-> exercise_types.code\"
+    text muscle_group
+    text equipment
+    jsonb tags
+    boolean is_public
+    text description_en
+    text description_de
+    timestamptz created_at
+    timestamptz updated_at
+    timestamptz archived_at
+    timestamptz deactivated_at
+  }
+
+  plans {
+    uuid id PK
+    uuid user_id FK \"-> users.id\"
+    text name
+    text status
+    numeric(5,2) progress_percent
+    int session_count
+    int completed_count
+    date start_date
+    date end_date
+    timestamptz created_at
+    timestamptz updated_at
+    timestamptz archived_at
+    timestamptz deactivated_at
+  }
+
+  sessions {
+    uuid id PK
+    uuid owner_id FK \"-> users.id\"
+    uuid plan_id FK \"-> plans.id\"
+    text title
+    timestamptz planned_at
+    timestamptz started_at
+    timestamptz completed_at
+    text status
+    text visibility
+    text recurrence_rule
+    text notes
+    int calories
+    int points
+    timestamptz created_at
+    timestamptz updated_at
+    timestamptz deleted_at
+    %% PK (id, planned_at)
+    timestamptz deactivated_at
+  }
+
+  session_exercises {
+    uuid id PK
+    uuid session_id
+    uuid exercise_id FK \"-> exercises.id\"
+    int order_index
+    text notes
+    timestamptz created_at
+    timestamptz updated_at
+    timestamptz deactivated_at
+  }
+
+  exercise_sets {
+    uuid id PK
+    uuid session_exercise_id FK \"-> session_exercises.id\"
+    int order_index
+    int reps
+    numeric(8,2) weight_kg
+    int distance_m
+    int duration_sec
+    int rpe
+    text notes
+    timestamptz created_at
+    timestamptz deactivated_at
+  }
+
+  planned_exercise_attributes {
+    uuid id PK
+    uuid session_exercise_id FK \"-> session_exercises.id\"
+    int sets
+    int reps
+    numeric(8,2) load
+    numeric(8,2) distance
+    interval duration
+    int rpe
+    interval rest
+    jsonb extras
+    timestamptz created_at
+    timestamptz deactivated_at
+  }
+
+  actual_exercise_attributes {
+    uuid id PK
+    uuid session_exercise_id FK \"-> session_exercises.id\"
+    int sets
+    int reps
+    numeric(8,2) load
+    numeric(8,2) distance
+    interval duration
+    int rpe
+    interval rest
+    jsonb extras
+    timestamptz recorded_at
+    timestamptz created_at
+    timestamptz deactivated_at
+  }
+
+  user_metrics {
+    uuid id PK
+    uuid user_id FK \"-> users.id\"
+    numeric(6,2) weight
+    text unit
+    text fitness_level_code FK \"-> fitness_levels.code\"
+    text training_frequency
+    text photo_url
+    timestamptz recorded_at
+    timestamptz created_at
+    timestamptz deactivated_at
+  }
+
+  personal_records {
+    uuid id PK
+    uuid user_id FK \"-> users.id\"
+    uuid exercise_id FK \"-> exercises.id\"
+    text pr_type
+    numeric(10,2) value
+    int reps
+    numeric(10,2) weight_kg
+    int duration_sec
+    uuid session_id
+    uuid set_id
+    boolean is_current
+    timestamptz achieved_at
+    text notes
+    timestamptz created_at
+    timestamptz deactivated_at
+  }
+
+  %% =========================================================
+  %% Gamification
+  %% =========================================================
+  badge_catalog {
+    text code PK
+    text name
+    text description
+    text category
+    text icon
+    int priority
+    jsonb criteria
+    timestamptz created_at
+    timestamptz deactivated_at
+  }
+
+  badges {
+    uuid id PK
+    uuid user_id FK \"-> users.id\"
+    text badge_type FK \"-> badge_catalog.code\"
+    jsonb metadata
+    timestamptz awarded_at
+    timestamptz created_at
+    timestamptz deactivated_at
+  }
+
+  user_points {
+    uuid id PK
+    uuid user_id FK \"-> users.id\"
+    text source_type
+    uuid source_id
+    text algorithm_version
+    int points
+    int calories
+    jsonb metadata
+    timestamptz awarded_at
+    timestamptz created_at
+    %% PK (id, awarded_at)
+    timestamptz deactivated_at
+  }
+
+  %% =========================================================
+  %% Feed & Social
+  %% =========================================================
+  feed_items {
+    uuid id PK
+    uuid owner_id FK \"-> users.id\"
+    uuid session_id
+    text kind
+    text target_type
+    uuid target_id
+    text visibility
+    numeric(10,2) score
+    timestamptz published_at
+    timestamptz created_at
+    timestamptz updated_at
+    timestamptz deleted_at
+    timestamptz deactivated_at
+  }
+
+  feed_likes {
+    uuid feed_item_id FK \"-> feed_items.id\"
+    uuid user_id FK \"-> users.id\"
+    timestamptz created_at
+    %% PK (feed_item_id, user_id)
+    timestamptz deactivated_at
+  }
+
+  session_bookmarks {
+    uuid session_id
+    uuid user_id FK \"-> users.id\"
+    timestamptz created_at
+    %% PK (session_id, user_id)
+    timestamptz deactivated_at
+  }
+
+  feed_comments {
+    uuid id PK
+    uuid feed_item_id FK \"-> feed_items.id\"
+    uuid user_id FK \"-> users.id\"
+    uuid parent_id FK \"-> feed_comments.id\"
+    text body
+    timestamptz created_at
+    timestamptz edited_at
+    timestamptz deleted_at
+    timestamptz deactivated_at
+  }
+
+  followers {
+    uuid follower_id FK \"-> users.id\"
+    uuid following_id FK \"-> users.id\"
+    timestamptz created_at
+    %% PK (follower_id, following_id)
+    timestamptz deactivated_at
+  }
+
+  user_blocks {
+    uuid blocker_id FK \"-> users.id\"
+    uuid blocked_id FK \"-> users.id\"
+    timestamptz created_at
+    %% PK (blocker_id, blocked_id)
+    timestamptz deactivated_at
+  }
+
+  feed_reports {
+    uuid id PK
+    uuid reporter_id FK \"-> users.id\"
+    uuid feed_item_id FK \"-> feed_items.id\"
+    uuid comment_id FK \"-> feed_comments.id\"
+    text reason
+    text details
+    text status
+    timestamptz created_at
+    timestamptz resolved_at
+    uuid resolved_by FK \"-> users.id\"
+    timestamptz deactivated_at
+  }
+
+  %% =========================================================
+  %% Media
+  %% =========================================================
+  media {
+    uuid id PK
+    uuid owner_id FK \"-> users.id\"
+    text target_type
+    uuid target_id
+    text storage_key
+    text file_url
+    text mime_type
+    text media_type
+    int bytes
+    timestamptz created_at
+    timestamptz deactivated_at
+  }
+
+  %% =========================================================
+  %% Translations
+  %% =========================================================
+  translations {
+    uuid id PK
+    text namespace
+    text key_path
+    text language
+    text value
+    timestamptz created_at
+    timestamptz updated_at
+    uuid created_by FK \"-> users.id\"
+    uuid updated_by FK \"-> users.id\"
+    timestamptz deleted_at
+    timestamptz deactivated_at
+  }
+
+  translation_cache {
+    uuid id PK
+    text source
+    text lang
+    text translated
+    uuid hash UNIQUE
+    timestamptz created_at
+    timestamptz deactivated_at
+  }
+
+  %% =========================================================
+  %% Operations & Admin
+  %% =========================================================
+  audit_log {
+    uuid id PK
+    uuid actor_user_id FK \"-> users.id\"
+    text entity_type
+    text action
+    uuid entity_id
+    jsonb metadata
+    text outcome
+    uuid request_id
+    timestamptz created_at
+    timestamptz deactivated_at
+  }
+
+  idempotency_keys {
+    uuid id PK
+    uuid user_id FK \"-> users.id\"
+    text method
+    text route
+    text key
+    text request_hash
+    int response_status
+    jsonb response_body
+    timestamptz created_at
+    timestamptz updated_at
+    timestamptz deactivated_at
+  }
+
+  contact_messages {
+    uuid id PK
+    uuid user_id FK \"-> users.id\"
+    text email
+    text topic
+    text message
+    timestamptz created_at
+    timestamptz read_at
+    uuid read_by_user_id FK \"-> users.id\"
+    timestamptz responded_at
+    text response
+    timestamptz deactivated_at
+  }
+
+  cookie_consents {
+    uuid id PK
+    text ip_address
+    text consent_version
+    boolean essential_cookies
+    boolean preferences_cookies
+    boolean analytics_cookies
+    boolean marketing_cookies
+    timestamptz consent_given_at
+    timestamptz last_updated_at
+    text user_agent
+    timestamptz created_at
+    timestamptz updated_at
+    timestamptz deactivated_at
+  }
+
+  action_ui_mappings {
+    text action PK
+    text ui_name
+    timestamptz created_at
+    timestamptz updated_at
+    timestamptz deactivated_at
+  }
+
+  %% =========================================================
+  %% Analytics (Views)
+  %% =========================================================
+  session_summary {
+    uuid session_id
+    uuid owner_id
+    int exercise_count
+    numeric total_volume
+    text status
+    timestamptz planned_at
+    timestamptz completed_at
+    timestamptz refreshed_at
+    timestamptz created_at
+    timestamptz deactivated_at
+  }
+
+  weekly_aggregates {
+    uuid owner_id
+    date week_start
+    int sessions
+    numeric total_volume
+    timestamptz refreshed_at
+    timestamptz created_at
+    timestamptz deactivated_at
+  }
+
+  mv_leaderboard {
+    text period_type
+    date period_start
+    uuid user_id
+    text username
+    text display_name
+    int points
+    int badges_count
+    timestamptz created_at
+    timestamptz deactivated_at
+  }
+
+  %% =========================================================
+  %% Relationships (high-level)
+  %% =========================================================
+  roles ||--o{ users : assigns
+
+  users ||--|| profiles : has
+  users ||--o{ user_contacts : has
+  users ||--o{ user_state_history : logs
+  users ||--o{ user_tombstones : tombstones
+  users ||--o{ blacklist : created
+
+  genders ||--o{ profiles : uses
+  fitness_levels ||--o{ user_metrics : uses
+  exercise_types ||--o{ exercises : categorizes
+
+  users ||--o{ auth_sessions : has
+  auth_sessions ||--o{ refresh_tokens : issues
+  users ||--o{ refresh_tokens : owns
+  users ||--o{ auth_tokens : owns
+  users ||--o{ pending_2fa_sessions : has
+  users ||--|| user_2fa_settings : config
+  users ||--o{ backup_codes : recovers
+  users ||--o{ two_factor_backup_codes : recovers
+  users ||--o{ two_factor_audit_log : logs
+
+  users ||--o{ exercises : owns
+  users ||--o{ plans : owns
+  plans ||--o{ sessions : schedules
+  users ||--o{ sessions : owns
+  sessions ||--o{ session_exercises : includes
+  exercises ||--o{ session_exercises : used_in
+  session_exercises ||--o{ exercise_sets : has
+  session_exercises ||--|| planned_exercise_attributes : planned
+  session_exercises ||--|| actual_exercise_attributes : actual
+  users ||--o{ user_metrics : tracks
+  users ||--o{ personal_records : achieves
+  exercises ||--o{ personal_records : records
+
+  badge_catalog ||--o{ badges : defines
+  users ||--o{ badges : earns
+  users ||--o{ user_points : earns
+
+  users ||--o{ feed_items : publishes
+  sessions ||--o{ feed_items : summarizes
+  feed_items ||--o{ feed_likes : liked_by
+  users ||--o{ feed_likes : likes
+  feed_items ||--o{ feed_comments : has
+  users ||--o{ feed_comments : writes
+  feed_comments ||--o{ feed_comments : replies
+  sessions ||--o{ session_bookmarks : bookmarked
+  users ||--o{ session_bookmarks : bookmarks
+  users ||--o{ followers : follows
+  users ||--o{ followers : followed
+  users ||--o{ user_blocks : blocks
+  users ||--o{ user_blocks : blocked
+  users ||--o{ feed_reports : reports
+  users ||--o{ feed_reports : resolves
+  feed_items ||--o{ feed_reports : reported_item
+  feed_comments ||--o{ feed_reports : reported_comment
+
+  users ||--o{ media : uploads
+  media ||--o{ profiles : avatar
+
+  users ||--o{ translations : created
+  users ||--o{ translations : updated
+
+  users ||--o{ audit_log : acts
+  users ||--o{ idempotency_keys : requests
+  users ||--o{ contact_messages : sends
+  users ||--o{ contact_messages : reads
+
+  users ||--o{ session_summary : summarized
+  users ||--o{ weekly_aggregates : aggregated
+  users ||--o{ mv_leaderboard : ranked
+
+
+
+
+
+
+
+
+
+
+

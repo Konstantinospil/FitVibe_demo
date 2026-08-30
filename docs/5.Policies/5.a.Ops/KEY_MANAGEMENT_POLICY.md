@@ -29,8 +29,8 @@ Applies to the following key types:
 
 - Keys are generated using OpenSSL or Node’s `crypto` module:
   ```bash
-  openssl genrsa -out jwt_private.pem 4096
-  openssl rsa -in jwt_private.pem -pubout -out jwt_public.pem
+  openssl genrsa -out jwt_rs256.key 4096
+  openssl rsa -in jwt_rs256.key -pubout -out jwt_rs256.pub
   ```
 - Each environment (`dev`, `staging`, `prod`) has unique key pairs.
 - Private keys are never stored in version control.

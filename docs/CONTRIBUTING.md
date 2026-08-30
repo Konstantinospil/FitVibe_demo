@@ -7,9 +7,9 @@ Thank you for helping improve FitVibe. This guide follows GitHub's recommendatio
 ## 1. Ways to Contribute
 
 - **Bug reports:** open a GitHub issue with reproduction steps, expected behaviour, and environment details.
-- **Feature proposals:** start a discussion issue so we can align with the Product Requirements Document (`apps/docs/1. Product Requirements Document.md`).
+- **Feature proposals:** start a discussion issue so we can align with the Product Requirements Document (`docs/1.Product_Requirements/1.Product_Requirements_Document.md`).
 - **Code contributions:** follow the workflow below and submit a pull request.
-- **Documentation updates:** keep the Technical Design Document (`apps/docs/2. Technical Design Document.md`) and local README files in sync with your changes.
+- **Documentation updates:** keep the Technical Design Document (`docs/2.Technical_Design_Document/`) and local README files in sync with your changes.
 
 ---
 
@@ -77,7 +77,7 @@ Every pull request should include:
 ## 6. Documentation and Diagrams
 
 - Product or UX changes: update the PRD (`docs/1.Product_Requirements/1.Product_Requirements_Document.md`).
-- Technical changes: update the TDD (`docs/2.Technical_Design_Document/`) and regenerate any affected Mermaid diagrams stored under `docs/2.Technical_Design_Document/2.g.Diagramms/`.
+- Technical changes: update the TDD (`docs/2.Technical_Design_Document/`) and regenerate any affected Mermaid diagrams stored under `docs/2.Technical_Design_Document/2.g.Diagrams/`.
 - Architecture decisions: add or update an ADR in `docs/2.Technical_Design_Document/2.f.Architectural_Decision_Documentation/`.
 - Infrastructure updates: document in `infra/README.md` and any relevant policy under `infra/security/`.
 

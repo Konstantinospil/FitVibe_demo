@@ -184,7 +184,7 @@ Backend error responses shall follow this structure:
 ### Business Constraints
 
 - Must not reveal sensitive information (e.g., exact attempt counts for security)
-- Must be accessible (WCAG 2.1 AA compliant)
+- Must be accessible (WCAG 2.2 AA compliant)
 
 ## Assumptions
 
@@ -210,7 +210,7 @@ Backend error responses shall follow this structure:
 
 - [FR-002: Login & Session](./FR-002-login-and-session.md) - Login functionality
 - [NFR-001: Security](./NFR-001-security.md) - Security requirements
-- [NFR-004: Accessibility](./NFR-004-accessibility.md) - Accessibility requirements
+- [NFR-004: Accessibility](./NFR-004-a11y.md) - Accessibility requirements
 
 ---
 

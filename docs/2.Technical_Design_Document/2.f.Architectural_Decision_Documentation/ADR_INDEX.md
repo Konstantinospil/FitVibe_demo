@@ -1,42 +1,40 @@
 # Architecture Decision Record (ADR) Index
 
-**Sources of truth:** PRD, TDD, and QA plan.  
-Legend — Status: ✅ Accepted · 📝 Proposed · ⏳ Deferred · ✖️ Superseded
+**Sources of truth:** PRD, TDD, and QA plan. Status is copied from each ADR file.
 
----
+| ID | Title | Status | Decision Date | File |
+| --- | --- | --- | --- | --- |
+| ADR-001 | Adopt URI-based API Versioning with Additive v1 Policy and Deprecation Headers | Accepted | 2025-10-13 | [ADR-001-api-versioning-policy.md](./ADR-001-api-versioning-policy.md) |
+| ADR-002 | Authentication & Session Strategy — JWT (RS256) with Refresh Token Rotation and Sliding Sessions | Accepted | 2025-10-13 | [ADR-002-authentication-token-strategy.md](./ADR-002-authentication-token-strategy.md) |
+| ADR-003 | Data Retention & GDPR Backup Purge Window | Accepted | 2025-10-14 | [ADR-003-data-retention-and-gdpr-backup-purge.md](./ADR-003-data-retention-and-gdpr-backup-purge.md) |
+| ADR-004 | Media Upload Safety & AV Scanning | Accepted | 2025-10-14 | [ADR-004-media-upload-safety-and-av-scanning.md](./ADR-004-media-upload-safety-and-av-scanning.md) |
+| ADR-005 | Partitioning Strategy for sessions & audit_log | Accepted | 2025-10-14 | [ADR-005-partitioning-sessions-and-audit-log.md](./ADR-005-partitioning-sessions-and-audit-log.md) |
+| ADR-006 | Observability Cardinality Policy | Accepted | 2025-10-14 | [ADR-006-observability-cardinality-policy.md](./ADR-006-observability-cardinality-policy.md) |
+| ADR-007 | Idempotency Policy for Writes | Proposed | 2025-10-13 | [ADR-007-idempotency-policy-for-writes.md](./ADR-007-idempotency-policy-for-writes.md) |
+| ADR-008 | Materialized Views for Analytics | Proposed | 2025-10-13 | [ADR-008-materialized-views-for-analytics.md](./ADR-008-materialized-views-for-analytics.md) |
+| ADR-009 | Global Exercise Library Ownership Model | Proposed | 2025-10-13 | [ADR-009-global-exercise-library-ownership-model.md](./ADR-009-global-exercise-library-ownership-model.md) |
+| ADR-010 | Public/Link/Private Visibility Model | Proposed | 2025-10-13 | [ADR-010-public-link-private-visibility-model.md](./ADR-010-public-link-private-visibility-model.md) |
+| ADR-011 | ADR-011: Internationalization – Hybrid Model with MVP Static-Only Rollout | Accepted |  | [ADR-011-internationalization-hybrid-approach.md](./ADR-011-internationalization-hybrid-approach.md) |
+| ADR-012 | ADR-012: Monorepo Structure, Tooling, and Governance | Accepted |  | [ADR-012-monorepo-structure.md](./ADR-012-monorepo-structure.md) |
+| ADR-013 | ADR-013: Modular Backend Architecture (Router → Service → Repository) | Accepted |  | [ADR-013-modular-backend-architecture.md](./ADR-013-modular-backend-architecture.md) |
+| ADR-014 | ADR-014: Technology Stack & Runtime Standards | Accepted |  | [ADR-014-technology-stack.md](./ADR-014-technology-stack.md) |
+| ADR-015 | ADR-015: API Design & Internationalization (Hybrid) – MVP Static, UGC Translation Feature-Flagged | Accepted |  | [ADR-015-api-design-and-i18n-hybrid.md](./ADR-015-api-design-and-i18n-hybrid.md) |
+| ADR-016 | ADR-016: Security Middleware & Audit Logging | Accepted |  | [ADR-016-audit-logging-and-security-middleware.md](./ADR-016-audit-logging-and-security-middleware.md) |
+| ADR-017 | ADR-017: Avatar Handling & Media Storage (Object Storage + AV Scan) | Accepted |  | [ADR-017-avatar-handling-base64.md](./ADR-017-avatar-handling-base64.md) |
+| ADR-018 | ADR-018: CI/CD with GitHub Actions and GHCR | Accepted |  | [ADR-018-ci-cd-github-ghcr.md](./ADR-018-ci-cd-github-ghcr.md) |
+| ADR-019 | ADR-019: Caching & Performance Strategy | Accepted |  | [ADR-019-caching-and-performance-strategy.md](./ADR-019-caching-and-performance-strategy.md) |
+| ADR-020 | ADR-020: Accessibility Compliance (WCAG 2.2 AA) & Inclusive UX | Accepted |  | [ADR-020-accessibility-compliance.md](./ADR-020-accessibility-compliance.md) |
+| ADR-021 | ADR-021: Standardize Backend Test Runner on Jest 30 + @swc/jest | Deferred | 2025-10-14 | [ADR-021-test-runner-backend-jest30-swc.md](./ADR-021-test-runner-backend-jest30-swc.md) |
+| ADR-022 | ADR-022: Comprehensive Lighthouse Testing Across All Categories | Accepted |  | [ADR-022-lighthouse-comprehensive-testing.md](./ADR-022-lighthouse-comprehensive-testing.md) |
+| ADR-023 | ADR-023: Server-Side Rendering (SSR) Implementation | Accepted |  | [ADR-023-server-side-rendering.md](./ADR-023-server-side-rendering.md) |
+| ADR-024 | ADR-024: Legal Document Version Calculation from Multi-Language Translations | Accepted |  | [ADR-024-legal-document-version-calculation.md](./ADR-024-legal-document-version-calculation.md) |
+| ADR-025 | ADR-025: Lower Lighthouse CI Thresholds by 15% | Accepted |  | [ADR-025-lighthouse-ci-thresholds.md](./ADR-025-lighthouse-ci-thresholds.md) |
+| ADR-026 | ADR-026: Database Encryption (In Transit and At Rest) | Accepted |  | [ADR-026-database-encryption.md](./ADR-026-database-encryption.md) |
+| ADR-027 | Enforce Authentication Wall (pre-login access limited to auth and legal routes) | Accepted | 2025-10-26 | [ADR-027-auth-wall.md](./ADR-027-auth-wall.md) |
 
-## ADR Catalog
+## Numbering notes
 
-| ID      | Title                                                                                    | Status      | Summary                                                                                                                                              | Decision Date | Links                                                         |
-| ------- | ---------------------------------------------------------------------------------------- | ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- | ------------- | ------------------------------------------------------------- |
-| ADR-001 | API Versioning Policy (v1 additive; v2 for breaking changes)                             | 📝 Proposed | `/api/v1` is stable; additive fields only; deprecations use `Deprecation/Sunset` headers; breaking changes land in `/api/v2` with 2-release overlap. | 2025-10-13    | TDD §7.1.4, §7.1.1                                            |
-| ADR-002 | Auth Tokens & Rotation Strategy                                                          | 📝 Proposed | RS256 JWT with 15m access, 14d refresh; refresh rotation + reuse detection; JWKS-based key rotation.                                                 | 2025-10-13    | TDD §5.1.1, §12.4                                             |
-| ADR-003 | Data Retention & GDPR Backup Purge Window                                                | 📝 Proposed | Classification table; DSR delete hard-deletes private content and purges backups ≤14 days; audit trail.                                              | 2025-10-13    | TDD §6.6, §12.6                                               |
-| ADR-004 | Media Upload Safety & AV Scanning                                                        | 📝 Proposed | AV scan before persistence; allow-list MIME; EXIF strip; quarantine on suspect/malware; alerting.                                                    | 2025-10-13    | TDD §5.1.6, §12.10                                            |
-| ADR-005 | Partitioning Strategy for `sessions` (monthly)                                           | 📝 Proposed | Range partition on `planned_at` with default partition; rotate & archive after 24 months.                                                            | 2025-10-13    | TDD §6.4, §12.9                                               |
-| ADR-006 | Observability Cardinality Policy                                                         | 📝 Proposed | Route templates in labels, bounded label sets, no PII; alerts on series count growth.                                                                | 2025-10-13    | TDD §5.4                                                      |
-| ADR-007 | Idempotency Policy for Writes                                                            | 📝 Proposed | `Idempotency-Key` header; 24h storage; 409 on payload mismatch; deterministic replay.                                                                | 2025-10-13    | TDD §5.7, §7.14                                               |
-| ADR-008 | Materialized Views for Analytics                                                         | 📝 Proposed | Use matviews for `session_summary`, `weekly_aggregates`; incremental refresh on writes + scheduled.                                                  | 2025-10-13    | TDD §4.5, §6.3                                                |
-| ADR-009 | Global Exercise Library Ownership Model                                                  | 📝 Proposed | Admin-owned global records (`owner_id = NULL`); user-owned duplicates allowed via normalized uniqueness.                                             | 2025-10-13    | TDD §4.3, §6.2.6                                              |
-| ADR-010 | Public/Link/Private Visibility Model                                                     | 📝 Proposed | Resource visibility enum with default **private**; link tokens revocable; public feed feature-flagged.                                               | 2025-10-13    | TDD §4.7, §7.8                                                |
-| ADR-011 | Internationalization – Hybrid Model with MVP Static-Only Rollout                         | ✅ Accepted | Static UI catalogs (EN/DE) for MVP; feature-flagged AI translation for UGC with caching, PII redaction, and DSR purge.                               | 2025-10-14    | [ADR-011](./ADR-011-internationalization-hybrid-approach.md)  |
-| ADR-012 | Monorepo Structure, Tooling, and Governance                                              | ✅ Accepted | pnpm workspaces + optional Turbo; Dockerized CI; governance via CODEOWNERS, changesets, and feature flags.                                           | 2025-10-14    | [ADR-012](./ADR-012-monorepo-structure.md)                    |
-| ADR-013 | Modular Backend Architecture (Router → Service → Repository)                             | ✅ Accepted | Three-layer modules (router/service/repo); strict authz, audit, caching seams; Knex migrations.                                                      | 2025-10-14    | [ADR-013](./ADR-013-modular-backend-architecture.md)          |
-| ADR-014 | Technology Stack & Runtime Standards                                                     | ✅ Accepted | Node/Express, React/Vite, Postgres + Knex, object storage for media, strong headers/CSRF/RBAC; OpenAPI in CI.                                        | 2025-10-14    | [ADR-014](./ADR-014-technology-stack.md)                      |
-| ADR-015 | API Design & Internationalization (Hybrid) – MVP Static, UGC Translation Feature-Flagged | ✅ Accepted | REST/JSON `/v1`, RFC7807 errors, idempotency, cursor pagination; i18n hybrid at API with feature flag.                                               | 2025-10-14    | [ADR-015](./ADR-015-api-design-and-i18n-hybrid.md)            |
-| ADR-016 | Security Middleware & Audit Logging                                                      | ✅ Accepted | CSP/HSTS/Referrer/Permissions, CSRF, RBAC; PII-free audit logs with correlation IDs and tamper-evidence.                                             | 2025-10-14    | [ADR-016](./ADR-016-audit-logging-and-security-middleware.md) |
-| ADR-017 | Avatar Handling & Media Storage (Object Storage + AV Scan)                               | ✅ Accepted | Server-mediated uploads; AV scan; EXIF strip; derivatives; signed URLs; private-by-default.                                                          | 2025-10-14    | [ADR-017](./ADR-017-avatar-handling-base64.md)                |
-| ADR-018 | CI/CD with GitHub Actions and GHCR                                                       | ✅ Accepted | GitHub Actions with quality gates; GHCR images with SBOM/provenance; OIDC, signed releases, manual prod gate.                                        | 2025-10-14    | [ADR-018](./ADR-018-ci-cd-github-ghcr.md)                     |
-| ADR-019 | Caching & Performance Strategy                                                           | ✅ Accepted | Layered caching with explicit invalidation; API p95 < 300 ms; LCP < 2.5 s; fail on >10% regression.                                                  | 2025-10-14    | [ADR-019](./ADR-019-caching-and-performance-strategy.md)      |
-| ADR-020 | Accessibility Compliance (WCAG 2.1 AA) & Inclusive UX                                    | ✅ Accepted | Semantics-first components, keyboard flows, contrast, alt text; Lighthouse/axe in CI with ≥90 score.                                                 | 2025-10-14    | [ADR-020](./ADR-020-accessibility-compliance.md)              |
-| ADR-021 | Standardize Backend Test Runner on Jest 30 + @swc/jest                                   | ✅ Accepted | Adopt _Jest 30_ with _@swc/jest_ for the backend test runner (unit + integration with Supertest), replacing ts-jest.                                 | 2025-10-14    | [ADR-021](./ADR-021-test-runner-backend-jest30-sw.md)         |
-| ADR-022 | Comprehensive Lighthouse Testing Across All Categories                                   | ✅ Accepted | Expand Lighthouse CI to validate all four categories (Performance, Accessibility, Best Practices, SEO) with ≥90 score threshold for each.            | 2025-01-21    | [ADR-022](./ADR-022-lighthouse-comprehensive-testing.md)      |
-| ADR-023 | Server-Side Rendering (SSR) Implementation                                               | ✅ Accepted | Implement SSR for all routes using React 18 streaming SSR via Node.js/Express to achieve LCP < 2.5s and Performance ≥ 90.                            | 2025-12-12    | [ADR-023](./ADR-023-server-side-rendering.md)                 |
-
----
-
-## Maintenance Notes
-
-- When an ADR changes state, update both the file’s **Status Log** and this index.
-- Superseded ADRs remain listed with a link to the successor.
-- Add PRD/TDD section numbers in _Links_ for quick traceability.
+- ADR-021 is the Jest 30 proposal (**Deferred**; backend remains Jest 29 + ts-jest).
+- ADR-023 is Server-Side Rendering.
+- ADR-026 is Database Encryption (formerly a duplicate ADR-023).
+- ADR-027 is the Auth Wall (formerly ADR-0021).

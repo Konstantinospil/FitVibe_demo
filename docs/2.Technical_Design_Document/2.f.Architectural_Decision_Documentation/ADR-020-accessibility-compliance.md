@@ -121,5 +121,5 @@ This ADR defines accessibility non-negotiables, component patterns, testing, and
 
 | Version | Date       | Change                                                                  | Author   |
 | ------- | ---------- | ----------------------------------------------------------------------- | -------- |
-| v1.0    | 2025-10-14 | Initial ADR for WCAG 2.1 AA accessibility compliance and CI enforcement | Reviewer |
+| v1.0    | 2025-10-14 | Initial ADR for WCAG 2.2 AA accessibility compliance and CI enforcement | Reviewer |
 | v2.0    | 2025-01-21 | Updated to WCAG 2.2 AA with 9 new success criteria                      | Reviewer |

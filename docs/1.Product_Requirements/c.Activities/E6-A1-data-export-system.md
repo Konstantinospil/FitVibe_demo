@@ -3,7 +3,7 @@
 ---
 
 **Activity ID**: E6-A1  
-**Epic ID**: [E6](../b.Epics/E6-privacy-&-gdpr.md)  
+**Epic ID**: [E6](../b.Epics/E6-privacy-and-gdpr.md)  
 **Title**: Data Export System  
 **Status**: Open  
 **Difficulty**: 3  
@@ -34,7 +34,7 @@ Implement data export system for Privacy & GDPR. Implement backend API endpoints
 
 ### Blocking Dependencies
 
-- [E6: Privacy & GDPR](../b.Epics/E6-privacy-&-gdpr.md): Parent epic
+- [E6: Privacy & GDPR](../b.Epics/E6-privacy-and-gdpr.md): Parent epic
 
 ### Non-Blocking Dependencies
 

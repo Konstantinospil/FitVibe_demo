@@ -3,7 +3,7 @@
 ---
 
 **Activity ID**: E5-A4  
-**Epic ID**: [E5](../b.Epics/E5-logging-&-import.md)  
+**Epic ID**: [E5](../b.Epics/E5-logging-and-import.md)  
 **Title**: Metric Calculation Engine  
 **Status**: Open  
 **Difficulty**: 3  
@@ -34,7 +34,7 @@ Implement metric calculation engine for Logging & Import. Implement functionalit
 
 ### Blocking Dependencies
 
-- [E5: Logging & Import](../b.Epics/E5-logging-&-import.md): Parent epic
+- [E5: Logging & Import](../b.Epics/E5-logging-and-import.md): Parent epic
 
 ### Non-Blocking Dependencies
 

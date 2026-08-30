@@ -3,7 +3,7 @@
 ---
 
 **Activity ID**: E11-A1  
-**Epic ID**: [E11](../b.Epics/E11-authentication-&-registration.md)  
+**Epic ID**: [E11](../b.Epics/E11-authentication-and-registration.md)  
 **Title**: User Registration System  
 **Status**: Done  
 **Difficulty**: 2  
@@ -35,7 +35,7 @@ Implement user registration system for Authentication & Registration. Implement 
 
 ### Blocking Dependencies
 
-- [E11: Authentication & Registration](../b.Epics/E11-authentication-&-registration.md): Parent epic
+- [E11: Authentication & Registration](../b.Epics/E11-authentication-and-registration.md): Parent epic
 
 ### Non-Blocking Dependencies
 

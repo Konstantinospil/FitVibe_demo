@@ -36,7 +36,7 @@ We require a deterministic, secure, and budget-enforcing delivery pipeline. The 
    - **`security`**: Dependency audit (`pnpm audit --prod --audit-level=high`), OSV scanner, Snyk scan, TruffleHog secret scanning, static secret scan, Trivy container scan.
    - **`zap_baseline`**: OWASP ZAP baseline scan (if target URL configured).
    - **`performance`**: k6 smoke test, performance budget assertion (API p95 < 300ms, LCP < 2.5s, no >10% regression), Lighthouse CI.
-   - **`accessibility`**: Axe accessibility suite for WCAG 2.1 AA compliance.
+   - **`accessibility`**: Axe accessibility suite for WCAG 2.2 AA compliance.
    - **`qa_summary`**: Aggregate coverage and performance metrics, generate QA summary.
 
    **Conditional Jobs** (run only on push to `main`/`stage`):

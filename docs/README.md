@@ -49,7 +49,7 @@ The documentation hub serves as the authoritative reference for:
 **Supporting Materials:**
 
 - [`2.f.Architectural_Decision_Documentation/`](2.Technical_Design_Document/2.f.Architectural_Decision_Documentation/) - Architecture Decision Records (ADRs)
-- [`2.g.Diagramms/`](2.Technical_Design_Document/2.g.Diagramms/) - Mermaid diagrams and visual documentation
+- [`2.g.Diagrams/`](2.Technical_Design_Document/2.g.Diagrams/) - Mermaid diagrams and visual documentation
 - [`project-structure.md`](2.Technical_Design_Document/project-structure.md) - Canonical filesystem blueprint
 - [`INFRASTRUCTURE.md`](2.Technical_Design_Document/INFRASTRUCTURE.md) - Infrastructure and deployment documentation
 - [`API_Reference_Generation.md`](2.Technical_Design_Document/API_Reference_Generation.md) - API documentation generation guide
@@ -86,7 +86,7 @@ Located in [`2.Technical_Design_Document/2.f.Architectural_Decision_Documentatio
 #### Policies (`5.Policies/`)
 
 - [`Privacy_Policy.md`](5.Policies/Privacy_Policy.md) - Privacy policy and GDPR compliance
-- [`Terms-and-Conditions.md`](5.Policies/Terms-and-Conditions.md) - Terms of service
+- [`terms-and-conditions.md`](5.Policies/terms-and-conditions.md) - Terms of service
 - [`Cookie-policy.md`](5.Policies/Cookie-policy.md) - Cookie usage policy
 - [`Legal-order.md`](5.Policies/Legal-order.md) - Legal ordering information
 - [`Data_Map.md`](5.Policies/Data_Map.md) - Data mapping and classification
@@ -122,11 +122,11 @@ Located in [`2.Technical_Design_Document/2.f.Architectural_Decision_Documentatio
 
 #### Diagrams
 
-1. Place diagrams in [`2.g.Diagramms/`](2.Technical_Design_Document/2.g.Diagramms/)
+1. Place diagrams in [`2.g.Diagrams/`](2.Technical_Design_Document/2.g.Diagrams/)
 2. Use Mermaid format (`.mmd`) for version-controlled diagrams
 3. Follow naming convention: `<source>_<section>_<slug>.mmd`
    - Example: `prd-6-1-high-level-architecture.mmd`
-4. Update [`diagrams_index.md`](2.Technical_Design_Document/2.g.Diagramms/diagrams_index.md) when adding new diagrams
+4. Update [`diagrams_index.md`](2.Technical_Design_Document/2.g.Diagrams/diagrams_index.md) when adding new diagrams
 
 #### Policies
 
@@ -153,7 +153,7 @@ Located in [`2.Technical_Design_Document/2.f.Architectural_Decision_Documentatio
 - [Contributing Guide](CONTRIBUTING.md) - How to contribute to the project
 - [Glossary](0.Glossary.md) - Terminology reference
 - [ADR Index](2.Technical_Design_Document/2.f.Architectural_Decision_Documentation/ADR_INDEX.md) - All architecture decisions
-- [Diagrams Index](2.Technical_Design_Document/2.g.Diagramms/diagrams_index.md) - Visual documentation
+- [Diagrams Index](2.Technical_Design_Document/2.g.Diagrams/diagrams_index.md) - Visual documentation
 
 ---
 

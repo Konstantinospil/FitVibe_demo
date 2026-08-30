@@ -10,7 +10,7 @@ contact: "kpilpilidis@gmail.com"
 
 ## 1. Purpose and Scope
 
-This policy explains how the FitVibe platform protects member data, how we collaborate with the security community, and the minimum expectations for anyone building or testing the system. It complements the Product Requirements Document (`apps/docs/1. Product Requirements Document.md`) and Technical Design Document (`apps/docs/2. Technical Design Document.md`), which describe the underlying controls in detail.
+This policy explains how the FitVibe platform protects member data, how we collaborate with the security community, and the minimum expectations for anyone building or testing the system. It complements the Product Requirements Document (`docs/1.Product_Requirements/1.Product_Requirements_Document.md`) and Technical Design Document (`docs/2.Technical_Design_Document/`), which describe the underlying controls in detail.
 
 ---
 

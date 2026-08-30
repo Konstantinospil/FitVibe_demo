@@ -1,6 +1,6 @@
 # ADR-007 — Idempotency Policy for Writes
 
-> **File:** docs/adr/ADR-007-idempotency-policy-for-writes.md  
+> **File:** docs/2.Technical_Design_Document/2.f.Architectural_Decision_Documentation/ADR-007-idempotency-policy-for-writes.md  
 > **Purpose:** Prevent duplicate side‑effects on retried client requests and provide deterministic, safe replays.
 
 ---
