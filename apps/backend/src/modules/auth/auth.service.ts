@@ -578,6 +578,32 @@ export async function login(
         );
       }
 
+      // If this attempt just triggered IP lockout, return 429 on this request
+      if (isIPLocked(ipAttempt)) {
+        const remainingSeconds = getRemainingIPLockoutSeconds(ipAttempt);
+        const remainingMinutes = Math.ceil(remainingSeconds / 60);
+        await recordAuditEvent(null, "auth.login_blocked_ip", {
+          ip: ipAddress,
+          remainingSeconds,
+          totalAttemptCount: ipAttempt.total_attempt_count ?? 0,
+          distinctEmailCount: ipAttempt.distinct_email_count ?? 0,
+          requestId: context.requestId ?? null,
+        });
+        throw new HttpError(
+          429,
+          "AUTH_IP_LOCKED",
+          `IP address temporarily locked due to multiple failed login attempts. Try again in ${remainingMinutes} minute${remainingMinutes === 1 ? "" : "s"}.`,
+          {
+            remainingSeconds,
+            lockoutType: "ip",
+            totalAttemptCount: ipAttempt.total_attempt_count ?? 0,
+            distinctEmailCount: ipAttempt.distinct_email_count ?? 0,
+            maxAttempts: getMaxIPAttempts(),
+            maxDistinctEmails: getMaxIPDistinctEmails(),
+          },
+        );
+      }
+
       // Check if we should warn about approaching lockout
       const remainingAccountAttempts = getRemainingAccountAttempts(accountAttemptRecord);
       const remainingIPAttempts = getRemainingIPAttempts(ipAttempt);
@@ -589,7 +615,7 @@ export async function login(
 
       // Include warning in error details if within 3 attempts of lockout
       const errorDetails: Record<string, unknown> = {};
-      if (minRemaining <= 3 && minRemaining > 0) {
+      if (minRemaining <= 2 && minRemaining > 0) {
         errorDetails.warning = true;
         errorDetails.remainingAccountAttempts = remainingAccountAttempts;
         errorDetails.remainingIPAttempts = remainingIPAttempts.remainingAttempts;
@@ -679,6 +705,32 @@ export async function login(
         );
       }
 
+      // If this attempt just triggered IP lockout, return 429 on this request
+      if (isIPLocked(ipAttempt)) {
+        const remainingSeconds = getRemainingIPLockoutSeconds(ipAttempt);
+        const remainingMinutes = Math.ceil(remainingSeconds / 60);
+        await recordAuditEvent(user.id, "auth.login_blocked_ip", {
+          ip: ipAddress,
+          remainingSeconds,
+          totalAttemptCount: ipAttempt.total_attempt_count ?? 0,
+          distinctEmailCount: ipAttempt.distinct_email_count ?? 0,
+          requestId: context.requestId ?? null,
+        });
+        throw new HttpError(
+          429,
+          "AUTH_IP_LOCKED",
+          `IP address temporarily locked due to multiple failed login attempts. Try again in ${remainingMinutes} minute${remainingMinutes === 1 ? "" : "s"}.`,
+          {
+            remainingSeconds,
+            lockoutType: "ip",
+            totalAttemptCount: ipAttempt.total_attempt_count ?? 0,
+            distinctEmailCount: ipAttempt.distinct_email_count ?? 0,
+            maxAttempts: getMaxIPAttempts(),
+            maxDistinctEmails: getMaxIPDistinctEmails(),
+          },
+        );
+      }
+
       await recordAuditEvent(user.id, "auth.login_failed", {
         ip: ipAddress,
         attemptCount: attempt.attempt_count,
@@ -697,7 +749,7 @@ export async function login(
 
       // Include warning in error details if within 3 attempts of lockout
       const errorDetails: Record<string, unknown> = {};
-      if (minRemaining <= 3 && minRemaining > 0) {
+      if (minRemaining <= 2 && minRemaining > 0) {
         errorDetails.warning = true;
         errorDetails.remainingAccountAttempts = remainingAccountAttempts;
         errorDetails.remainingIPAttempts = remainingIPAttempts.remainingAttempts;

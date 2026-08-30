@@ -1,4 +1,6 @@
 process.env.NODE_ENV = "test";
+process.env.READ_ONLY_MODE = "false";
+process.env.DEBUG_AUTH_TOKENS = "true";
 process.env.METRICS_ENABLED = process.env.METRICS_ENABLED ?? "false";
 process.env.CSRF_ENABLED = process.env.CSRF_ENABLED ?? "false";
 process.env.ALLOWED_ORIGINS = process.env.ALLOWED_ORIGINS ?? "http://localhost:5173";

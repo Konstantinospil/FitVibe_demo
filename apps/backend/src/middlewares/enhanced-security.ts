@@ -174,8 +174,26 @@ export function validateForwardedIP(req: Request, res: Response, next: NextFunct
  *
  * SECURITY FIX: ReDoS prevention - Using safer string matching with length limits
  * to avoid polynomial backtracking in regex patterns
+ *
+ * Keys in SENSITIVE_VALUE_KEYS are not checked for command-injection characters
+ * (e.g. $, ;, &, |) so that passwords and tokens containing those symbols are allowed.
  */
 export function detectSuspiciousPatterns(req: Request, res: Response, next: NextFunction) {
+  // Keys whose string values may legitimately contain symbols (passwords, tokens, OTP)
+  // and must not be flagged by the command-injection character check
+  const SENSITIVE_VALUE_KEYS = new Set([
+    "password",
+    "passwordConfirm",
+    "currentPassword",
+    "newPassword",
+    "token",
+    "refreshToken",
+    "code",
+    "totpCode",
+    "otp",
+    "secret",
+  ]);
+
   // SECURITY: Limit input length to prevent ReDoS attacks
   const MAX_CHECK_LENGTH = 10000; // 10KB max per string
 
@@ -196,7 +214,10 @@ export function detectSuspiciousPatterns(req: Request, res: Response, next: Next
   // XSS patterns - Check for specific strings
   const xssPatterns = ["<SCRIPT", "</SCRIPT>", "JAVASCRIPT:", "<IFRAME"];
 
-  const checkString = (value: unknown): boolean => {
+  const checkString = (
+    value: unknown,
+    options: { skipCommandInjectionChars?: boolean } = {},
+  ): boolean => {
     if (typeof value !== "string") {
       return false;
     }
@@ -262,10 +283,12 @@ export function detectSuspiciousPatterns(req: Request, res: Response, next: Next
       return true;
     }
 
-    // Check for command injection characters - Simple character check (no regex)
-    const dangerousChars = [";", "&", "|", "`", "$", "(", ")"];
-    if (dangerousChars.some((char) => trimmed.includes(char))) {
-      return true;
+    // Check for command injection characters - skip for password/token fields
+    if (!options.skipCommandInjectionChars) {
+      const dangerousChars = [";", "&", "|", "`", "$", "(", ")"];
+      if (dangerousChars.some((char) => trimmed.includes(char))) {
+        return true;
+      }
     }
 
     return false;
@@ -274,7 +297,12 @@ export function detectSuspiciousPatterns(req: Request, res: Response, next: Next
   const checkObject = (obj: Record<string, unknown>): boolean => {
     for (const key in obj) {
       const value = obj[key];
-      if (checkString(key) || checkString(value)) {
+      if (checkString(key)) {
+        return true;
+      }
+      const keyLower = key.toLowerCase();
+      const skipCommandInjection = typeof value === "string" && SENSITIVE_VALUE_KEYS.has(keyLower);
+      if (checkString(value, { skipCommandInjectionChars: skipCommandInjection })) {
         return true;
       }
       if (typeof value === "object" && value !== null) {

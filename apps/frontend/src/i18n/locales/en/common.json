@@ -595,5 +595,62 @@
       "cardio": "Cardio",
       "powerEndurance": "Power-Endurance"
     }
+  },
+  "coach": {
+    "dashboard": {
+      "eyebrow": "Coach Dashboard",
+      "title": "Manage Your Athletes",
+      "description": "Create training plans, monitor athlete progress, and assign workouts",
+      "metrics": {
+        "athletes": "Athletes",
+        "activeAssignments": "Active Assignments",
+        "completedSessions": "Completed Sessions",
+        "pendingFeedback": "Pending Feedback"
+      },
+      "tabs": {
+        "overview": "Overview",
+        "workouts": "Workouts",
+        "athletes": "Athletes",
+        "assign": "Assign"
+      },
+      "overview": {
+        "recentActivity": {
+          "title": "Recent Activity",
+          "empty": "No recent activity to display"
+        },
+        "quickActions": {
+          "title": "Quick Actions",
+          "createWorkout": "Create Workout",
+          "assignWorkout": "Assign Workout",
+          "viewAthletes": "View Athletes"
+        }
+      },
+      "workouts": {
+        "title": "Workouts",
+        "create": "Create Workout",
+        "empty": "No workouts created yet",
+        "description": "Create reusable workouts that you can assign to multiple athletes. Workouts can include exercises, sets, reps, and other parameters."
+      },
+      "athletes": {
+        "title": "Athletes",
+        "empty": "No athletes assigned yet. Athletes must grant you access through their settings.",
+        "table": {
+          "athlete": "Athlete",
+          "assigned": "Assigned",
+          "completed": "Completed",
+          "adherence": "Adherence",
+          "status": "Status"
+        }
+      },
+      "assign": {
+        "title": "Assign Workout",
+        "selectWorkout": "Select Workout",
+        "selectWorkoutPlaceholder": "Choose a workout...",
+        "selectAthletes": "Select Athletes",
+        "noAthletes": "No athletes available. Athletes must grant you access first.",
+        "assignmentDate": "Assignment Date",
+        "assignButton": "Assign Workout"
+      }
+    }
   }
 }

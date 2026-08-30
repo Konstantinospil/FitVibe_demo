@@ -4,8 +4,7 @@
  */
 
 import React, { Suspense, lazy } from "react";
-import { BrowserRouter } from "react-router-dom";
-import { StaticRouter } from "react-router-dom/server";
+import { BrowserRouter, StaticRouter } from "react-router-dom";
 import type { QueryClient, DehydratedState } from "@tanstack/react-query";
 import * as AuthContext from "../contexts/AuthContext.js";
 import { ErrorBoundary } from "../components/ErrorBoundary.js";
