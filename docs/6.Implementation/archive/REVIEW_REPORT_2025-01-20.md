@@ -276,7 +276,7 @@ This comprehensive review examined the FitVibe codebase focusing on:
 1. **React Patterns**: ✅ Functional components, hooks
 2. **State Management**: ✅ React Query for server state, Zustand for client state
 3. **Type Safety**: ✅ TypeScript strict mode
-4. **Accessibility**: ✅ WCAG 2.1 AA considerations (labels, ARIA)
+4. **Accessibility**: ✅ WCAG 2.2 AA considerations (labels, ARIA)
 5. **i18n**: ✅ Most text uses i18next
 
 ### ⚠️ Frontend Issues

@@ -477,7 +477,7 @@ export async function create(input: CreateUserInput): Promise<UserRow> {
 - ❌ **Never** skip focus management
 - ✅ **Always** provide ARIA labels and roles
 - ✅ **Always** ensure keyboard navigation
-- ✅ **Always** maintain WCAG 2.1 AA compliance
+- ✅ **Always** maintain WCAG 2.2 AA compliance
 - ✅ **Always** test with screen readers
 - ✅ **Always** provide text alternatives for visual information
 

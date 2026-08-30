@@ -506,7 +506,7 @@ This enhanced comprehensive review examined the FitVibe codebase with deep analy
 3. **Type Safety**: ✅ TypeScript strict mode
    - 15 instances of `any` found (mostly in JSON types - acceptable)
 
-4. **Accessibility**: ✅ WCAG 2.1 AA considerations
+4. **Accessibility**: ✅ WCAG 2.2 AA considerations
    - 37 `aria-label` usages found
    - 26 `role` attributes found
    - Proper semantic HTML

@@ -217,7 +217,7 @@ Activity status is determined through:
 | ----- | --------------------- | ---------------------------------------------------------------- | ---------- | ------------ |
 | E8-A1 | ARIA Labels Audit     | Audit and add missing ARIA labels to all interactive elements    | 2          | All frontend |
 | E8-A2 | Keyboard Navigation   | Ensure all features are keyboard accessible                      | 3          | All frontend |
-| E8-A3 | Color Contrast        | Fix color contrast issues to meet WCAG 2.1 AA standards          | 2          | Frontend     |
+| E8-A3 | Color Contrast        | Fix color contrast issues to meet WCAG 2.2 AA standards          | 2          | Frontend     |
 | E8-A4 | Screen Reader Testing | Test with screen readers and fix issues                          | 3          | All frontend |
 | E8-A5 | Focus Management      | Implement proper focus management for modals and dynamic content | 2          | All frontend |
 | E8-A6 | Accessibility Tests   | Add automated accessibility tests (axe-core) to CI               | 2          | All frontend |
@@ -323,7 +323,7 @@ Activity status is determined through:
 
 ### Description
 
-Update FitVibe's accessibility compliance from WCAG 2.1 AA to WCAG 2.2 AA by implementing the 9 new success criteria introduced in WCAG 2.2 (released October 2023). This epic enhances the existing accessibility work in Epic 8 with the latest standards.
+Update FitVibe's accessibility compliance from WCAG 2.2 AA to WCAG 2.2 AA by implementing the 9 new success criteria introduced in WCAG 2.2 (released October 2023). This epic enhances the existing accessibility work in Epic 8 with the latest standards.
 
 ### Acceptance Criteria
 
