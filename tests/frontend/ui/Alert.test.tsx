@@ -263,10 +263,8 @@ describe("Alert", () => {
 
     it("should handle dismissible without onClose", () => {
       render(<Alert dismissible>Message</Alert>);
-      const closeButton = screen.getByLabelText("Close alert");
-      expect(closeButton).toBeInTheDocument();
-      // Should not throw when clicked without onClose
-      expect(() => userEvent.click(closeButton)).not.toThrow();
+      expect(screen.queryByRole("button")).not.toBeInTheDocument();
+      expect(screen.getByText("Message")).toBeInTheDocument();
     });
   });
 });

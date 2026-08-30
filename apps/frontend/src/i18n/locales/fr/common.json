@@ -7,7 +7,8 @@
     "signOut": "Déconnexion",
     "you": "Vous",
     "activeSession": "Séance active",
-    "skipToContent": "Aller au contenu principal"
+    "skipToContent": "Aller au contenu principal",
+    "back": "Retour"
   },
   "language": {
     "label": "Langue",
@@ -94,6 +95,16 @@
         "stats": "Épinglé • Flux d'équipe",
         "visibility": "private"
       }
+    },
+    "follow": {
+      "follow": "Suivre",
+      "unfollow": "Ne plus suivre",
+      "following": "Abonné",
+      "unfollowed": "Désabonné",
+      "error": {
+        "title": "Impossible de mettre à jour le suivi",
+        "message": "Veuillez réessayer."
+      }
     }
   },
   "footer": {
@@ -119,6 +130,28 @@
     "title": "Politique de confidentialité",
     "description": "Découvrez comment nous collectons, utilisons et protégeons vos données personnelles.",
     "effectiveDate": "Date d'entrée en vigueur"
+  },
+  "contact": {
+    "eyebrow": "Contact",
+    "title": "Nous contacter",
+    "description": "Contactez l'équipe FitVibe.",
+    "content": "Pour toute demande, veuillez nous contacter à contact@fitvibe.example.com.",
+    "form": {
+      "emailLabel": "E-mail",
+      "topicLabel": "Sujet",
+      "messageLabel": "Message",
+      "emailRequired": "L'e-mail est requis",
+      "topicRequired": "Le sujet est requis",
+      "messageRequired": "Le message est requis",
+      "invalidEmail": "Veuillez entrer une adresse e-mail valide",
+      "submit": "Envoyer le message",
+      "submitting": "Envoi en cours...",
+      "success": "Votre message a été envoyé avec succès !",
+      "error": "Échec de l'envoi du message. Veuillez réessayer.",
+      "networkError": "Impossible de se connecter au serveur. Veuillez vérifier votre connexion et réessayer.",
+      "csrfError": "Erreur de jeton de sécurité. Veuillez actualiser la page et réessayer. Si le problème persiste, vérifiez les paramètres de cookies de votre navigateur.",
+      "characters": "caractères"
+    }
   },
   "errors": {
     "TERMS_ACCEPTANCE_REQUIRED": "Vous devez accepter les Conditions générales et la Politique de confidentialité pour créer un compte",
@@ -650,6 +683,41 @@
         "noAthletes": "Aucun athlète disponible. Les athlètes doivent d'abord vous accorder l'accès.",
         "assignmentDate": "Date d'Assignation",
         "assignButton": "Assigner l'Entraînement"
+      }
+    }
+  },
+  "gamification": {
+    "achievement": {
+      "earned": "Succès débloqué"
+    },
+    "badges": {
+      "title": "Badges",
+      "earned": "Obtenus",
+      "catalog": "Catalogue",
+      "noBadges": "Aucun badge obtenu",
+      "noCatalog": "Aucun badge dans le catalogue",
+      "progress": "Progression"
+    },
+    "points": {
+      "total": "Points totaux",
+      "recent": "Récents"
+    },
+    "pointsHistory": "Historique des points",
+    "noPointsHistory": "Pas encore d'historique de points",
+    "noPointsHistoryDescription": "Gagnez des points en terminant des séances et des défis.",
+    "pointsEarned": "Points gagnés",
+    "leaderboard": {
+      "title": "Classement",
+      "global": "Global",
+      "friends": "Amis",
+      "empty": "Aucun classement pour le moment",
+      "badges": "badges",
+      "yourRank": "Votre rang : {{rank}}",
+      "period": {
+        "week": "Semaine",
+        "month": "Mois",
+        "year": "Année",
+        "all": "Tout"
       }
     }
   }

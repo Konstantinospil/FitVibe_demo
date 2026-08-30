@@ -1,5 +1,6 @@
-import React, { createContext, useContext, useState, useCallback } from "react";
+import React, { createContext, useState, useCallback } from "react";
 import { useTranslation } from "react-i18next";
+import { useToast as useAppToast } from "../../contexts/ToastContext";
 
 export type ToastVariant = "success" | "info" | "warning" | "error";
 export type ToastPosition = "top-left" | "top-right" | "bottom-left" | "bottom-right";
@@ -19,7 +20,12 @@ interface ToastContextValue {
   toasts: Toast[];
   addToast: (toast: Omit<Toast, "id">) => void;
   removeToast: (id: string) => void;
-  showToast: (options: { variant?: ToastVariant; title?: string; message?: string }) => void;
+  showToast: (options: {
+    variant?: ToastVariant;
+    title?: string;
+    message?: string;
+    duration?: number;
+  }) => void;
 }
 
 const ToastContext = createContext<ToastContextValue | undefined>(undefined);
@@ -222,11 +228,15 @@ export const ToastProvider: React.FC<{
   }, []);
 
   const showToast = useCallback(
-    (options: { variant?: ToastVariant; title?: string; message?: string }) => {
-      const message = options.message || options.title || "";
+    (options: { variant?: ToastVariant; title?: string; message?: string; duration?: number }) => {
+      const message =
+        options.title && options.message
+          ? `${options.title}: ${options.message}`
+          : options.message || options.title || "";
       addToast({
         message,
         variant: options.variant ?? "info",
+        duration: options.duration,
       });
     },
     [addToast],
@@ -254,9 +264,24 @@ export const ToastProvider: React.FC<{
 };
 
 export const useToast = () => {
-  const context = useContext(ToastContext);
-  if (!context) {
-    throw new Error("useToast must be used within ToastProvider");
-  }
-  return context;
+  const appToast = useAppToast();
+
+  const showToast = useCallback(
+    (options: { variant?: ToastVariant; title?: string; message?: string; duration?: number }) => {
+      const message =
+        options.title && options.message
+          ? `${options.title}: ${options.message}`
+          : options.message || options.title || "";
+      appToast.showToast(options.variant ?? "info", message, options.duration);
+    },
+    [appToast],
+  );
+
+  return {
+    showToast,
+    success: appToast.success,
+    error: appToast.error,
+    warning: appToast.warning,
+    info: appToast.info,
+  };
 };

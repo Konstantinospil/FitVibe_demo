@@ -3,7 +3,6 @@ import { render, screen, fireEvent, cleanup } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import userEvent from "@testing-library/user-event";
 import { FormField } from "../../src/components/ui/FormField";
-import { Input } from "../../src/components/ui/Input";
 
 describe("FormField", () => {
   beforeEach(() => {
@@ -43,24 +42,15 @@ describe("FormField", () => {
       expect(screen.queryByText("Helper")).not.toBeInTheDocument();
     });
 
-    it("should render custom children", () => {
-      render(
-        <FormField label="Custom">
-          <textarea data-testid="custom-input" />
-        </FormField>,
-      );
-      expect(screen.getByTestId("custom-input")).toBeInTheDocument();
-    });
-
-    it("should generate unique id when htmlFor is not provided", () => {
+    it("should generate unique id when id is not provided", () => {
       const { container } = render(<FormField label="Email" />);
       const input = container.querySelector("input");
       expect(input).toHaveAttribute("id");
-      expect(input?.getAttribute("id")).toMatch(/^field-/);
+      expect(input?.getAttribute("id")).toMatch(/^input-/);
     });
 
-    it("should use htmlFor when provided", () => {
-      render(<FormField label="Email" htmlFor="custom-field-id" />);
+    it("should use id when provided", () => {
+      render(<FormField label="Email" id="custom-field-id" />);
       const input = screen.getByRole("textbox");
       expect(input).toHaveAttribute("id", "custom-field-id");
       const label = screen.getByText("Email");
@@ -181,62 +171,36 @@ describe("FormField", () => {
     });
   });
 
-  describe("Custom children", () => {
-    it("should clone children with field props", () => {
-      render(
-        <FormField label="Custom" htmlFor="custom-field">
-          <Input id="custom-input" />
-        </FormField>,
-      );
-      const input = screen.getByRole("textbox");
-      // Should use the field id, not the original input id
-      expect(input).toHaveAttribute("id", "custom-field");
+  describe("Input wrapper", () => {
+    it("forwards id to the nested Input", () => {
+      render(<FormField label="Custom" id="custom-field" />);
+      expect(screen.getByRole("textbox")).toHaveAttribute("id", "custom-field");
     });
 
-    it("should pass aria attributes to custom children", () => {
-      render(
-        <FormField label="Custom" error="Error message">
-          <Input />
-        </FormField>,
-      );
+    it("passes aria attributes for errors", () => {
+      render(<FormField label="Custom" error="Error message" />);
       const input = screen.getByRole("textbox");
       expect(input).toHaveAttribute("aria-invalid", "true");
       expect(input).toHaveAttribute("aria-errormessage");
     });
 
-    it("should merge props with custom children", () => {
-      render(
-        <FormField label="Custom" type="email" placeholder="Enter email">
-          <Input type="text" placeholder="Original" />
-        </FormField>,
-      );
+    it("forwards type and placeholder to the nested Input", () => {
+      render(<FormField label="Custom" type="email" placeholder="Enter email" />);
       const input = screen.getByRole("textbox");
-      // FormField props should override children props
       expect(input).toHaveAttribute("type", "email");
       expect(input).toHaveAttribute("placeholder", "Enter email");
-    });
-
-    it("should handle non-React element children", () => {
-      render(
-        <FormField label="Custom">
-          <div data-testid="non-element">Not a React element</div>
-        </FormField>,
-      );
-      expect(screen.getByTestId("non-element")).toBeInTheDocument();
     });
   });
 
   describe("Styling", () => {
     it("should apply custom className", () => {
-      const { container } = render(<FormField label="Email" className="custom-class" />);
-      const wrapper = container.firstChild as HTMLElement;
-      expect(wrapper).toHaveClass("custom-class");
+      render(<FormField label="Email" className="custom-class" />);
+      expect(screen.getByRole("textbox")).toHaveClass("custom-class");
     });
 
     it("should apply custom style", () => {
-      const { container } = render(<FormField label="Email" style={{ marginTop: "10px" }} />);
-      const wrapper = container.firstChild as HTMLElement;
-      expect(wrapper).toHaveStyle({ marginTop: "10px" });
+      render(<FormField label="Email" style={{ marginTop: "10px" }} />);
+      expect(screen.getByRole("textbox")).toHaveStyle({ marginTop: "10px" });
     });
   });
 

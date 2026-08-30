@@ -1,19 +1,16 @@
-import { render } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
-
-const mockSuccess = vi.fn();
-
-vi.mock("../../src/contexts/ToastContext", () => ({
-  useToast: () => ({
-    success: mockSuccess,
-  }),
-}));
-
 import { AchievementNotification } from "../../src/components/gamification/AchievementNotification";
+
+const badge = {
+  id: "badge-1",
+  code: "first",
+  name: "First Win",
+  description: "Nice!",
+};
 
 describe("AchievementNotification", () => {
   beforeEach(() => {
-    mockSuccess.mockClear();
     vi.useFakeTimers();
   });
 
@@ -21,40 +18,31 @@ describe("AchievementNotification", () => {
     vi.useRealTimers();
   });
 
-  it("shows a toast and calls onDismiss when shown", () => {
+  it("shows the badge and calls onDismiss after the delay", () => {
     const onDismiss = vi.fn();
-    render(
-      <AchievementNotification
-        badge={{
-          code: "first",
-          name: "First Win",
-          description: "Nice!",
-        }}
-        onDismiss={onDismiss}
-      />,
-    );
+    render(<AchievementNotification badge={badge} onDismiss={onDismiss} />);
 
-    expect(mockSuccess).toHaveBeenCalledTimes(1);
+    expect(screen.getByText("First Win")).toBeInTheDocument();
+    expect(screen.getByText("Nice!")).toBeInTheDocument();
+
     vi.advanceTimersByTime(5000);
     expect(onDismiss).toHaveBeenCalledTimes(1);
   });
 
-  it("does nothing when show is false", () => {
+  it("does not auto-dismiss when autoDismiss is false", () => {
     const onDismiss = vi.fn();
-    render(
-      <AchievementNotification
-        badge={{
-          code: "first",
-          name: "First Win",
-          description: "Nice!",
-        }}
-        show={false}
-        onDismiss={onDismiss}
-      />,
-    );
+    render(<AchievementNotification badge={badge} autoDismiss={false} onDismiss={onDismiss} />);
 
-    expect(mockSuccess).not.toHaveBeenCalled();
+    expect(screen.getByText("First Win")).toBeInTheDocument();
     vi.advanceTimersByTime(5000);
     expect(onDismiss).not.toHaveBeenCalled();
+  });
+
+  it("dismisses when the close button is pressed", () => {
+    const onDismiss = vi.fn();
+    render(<AchievementNotification badge={badge} autoDismiss={false} onDismiss={onDismiss} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Close" }));
+    expect(onDismiss).toHaveBeenCalledTimes(1);
   });
 });

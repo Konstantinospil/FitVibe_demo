@@ -24,21 +24,24 @@ export const loadMinimalLoginTranslations = async () => {
 
 // Load full English translations (for other pages)
 const loadFullEnglishTranslations = async () => {
-  const [enCommonModule, enAuthModule, enTermsModule, enPrivacyModule] = await Promise.all([
-    import("./locales/en/common.json"),
-    import("./locales/en/auth.json"),
-    import("./locales/en/terms.json"),
-    import("./locales/en/privacy.json"),
-  ]);
+  const [enCommonModule, enAuthModule, enTermsModule, enPrivacyModule, enCookieModule] =
+    await Promise.all([
+      import("./locales/en/common.json"),
+      import("./locales/en/auth.json"),
+      import("./locales/en/terms.json"),
+      import("./locales/en/privacy.json"),
+      import("./locales/en/cookie.json"),
+    ]);
 
   const enCommon = enCommonModule.default as Record<string, unknown>;
   const enAuth = enAuthModule.default as Record<string, unknown>;
   const enTerms = enTermsModule.default as Record<string, unknown>;
   const enPrivacy = enPrivacyModule.default as Record<string, unknown>;
+  const enCookie = enCookieModule.default as Record<string, unknown>;
 
   return mergeTranslations(
-    mergeTranslations(mergeTranslations(enCommon, enAuth), enTerms),
-    enPrivacy,
+    mergeTranslations(mergeTranslations(mergeTranslations(enCommon, enAuth), enTerms), enPrivacy),
+    { cookie: enCookie },
   );
 };
 
@@ -88,21 +91,24 @@ const loadLanguage = async (lng: SupportedLanguage): Promise<void> => {
       import(`./locales/${lng}/auth.json`),
       import(`./locales/${lng}/terms.json`),
       import(`./locales/${lng}/privacy.json`),
+      import(`./locales/${lng}/cookie.json`),
     ]);
 
     const commonModule = modules[0] as { default: Record<string, unknown> };
     const authModule = modules[1] as { default: Record<string, unknown> };
     const termsModule = modules[2] as { default: Record<string, unknown> };
     const privacyModule = modules[3] as { default: Record<string, unknown> };
+    const cookieModule = modules[4] as { default: Record<string, unknown> };
 
     const common = commonModule.default;
     const auth = authModule.default;
     const terms = termsModule.default;
     const privacy = privacyModule.default;
+    const cookie = cookieModule.default;
 
     const translations = mergeTranslations(
-      mergeTranslations(mergeTranslations(common, auth), terms),
-      privacy,
+      mergeTranslations(mergeTranslations(mergeTranslations(common, auth), terms), privacy),
+      { cookie },
     );
 
     i18n.addResourceBundle(lng, "translation", translations, true, true);
@@ -171,6 +177,8 @@ export const ensurePrivateTranslationsLoaded = async () => {
   // Load full translations when user accesses protected routes (after login)
   await loadFullTranslations();
 };
+
+export const translationsLoadingPromise: Promise<void> = loadFullTranslations();
 
 if (typeof window !== "undefined") {
   i18n.on("languageChanged", (lng) => {

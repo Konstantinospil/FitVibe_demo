@@ -22,7 +22,7 @@ export const AchievementNotification: React.FC<AchievementNotificationProps> = (
   autoDismiss = true,
   dismissDelay = 5000,
 }) => {
-  const { t } = useTranslation("common");
+  const { t } = useTranslation();
   const [isVisible, setIsVisible] = useState(true);
 
   useEffect(() => {

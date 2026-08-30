@@ -88,21 +88,19 @@ export const Modal: React.FC<ModalProps> = ({
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const previousActiveElement = useRef<HTMLElement | null>(null);
 
-  // Focus trap and escape key handling
+  // Focus trap, body-scroll lock, and escape key handling
   useEffect(() => {
     if (!isOpen) {
       return;
     }
 
-    // Store the previously focused element
     previousActiveElement.current = document.activeElement as HTMLElement;
+    document.body.style.overflow = "hidden";
 
-    // Focus the modal
     setTimeout(() => {
       modalRef.current?.focus();
     }, 0);
 
-    // Handle escape key
     const handleEscape = (e: KeyboardEvent) => {
       if (closeOnEscape && e.key === "Escape") {
         onClose();
@@ -114,6 +112,7 @@ export const Modal: React.FC<ModalProps> = ({
     return () => {
       document.body.style.overflow = "";
       document.removeEventListener("keydown", handleEscape);
+      previousActiveElement.current?.focus();
     };
   }, [isOpen, closeOnEscape, onClose]);
 

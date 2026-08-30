@@ -1,26 +1,45 @@
-import { render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
-
-vi.mock("react-i18next", () => ({
-  useTranslation: () => ({
-    t: (_key: string, opts?: { defaultValue?: string }) => opts?.defaultValue ?? _key,
-  }),
-}));
-
+import { render, screen, waitFor } from "@testing-library/react";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { PointsDisplay } from "../../src/components/gamification/PointsDisplay";
 
-describe("PointsDisplay", () => {
-  it("renders points with label by default", () => {
-    render(<PointsDisplay points={1234} />);
+const getPointsBalance = vi.fn();
 
-    expect(screen.getByText("1,234")).toBeInTheDocument();
-    expect(screen.getByText("points")).toBeInTheDocument();
+vi.mock("../../src/services/api", () => ({
+  getPointsBalance: (...args: unknown[]) => getPointsBalance(...args),
+}));
+
+describe("PointsDisplay", () => {
+  beforeEach(() => {
+    getPointsBalance.mockReset();
   });
 
-  it("hides the label when showLabel is false", () => {
-    render(<PointsDisplay points={50} showLabel={false} size="lg" />);
+  it("renders the total points balance", async () => {
+    getPointsBalance.mockResolvedValue({ total: 1234 });
 
-    expect(screen.getByText("50")).toBeInTheDocument();
-    expect(screen.queryByText("points")).not.toBeInTheDocument();
+    render(<PointsDisplay />);
+
+    await waitFor(() => expect(screen.getByText((1234).toLocaleString())).toBeInTheDocument());
+    expect(screen.getByText("Total points")).toBeInTheDocument();
+  });
+
+  it("renders recent events when requested", async () => {
+    getPointsBalance.mockResolvedValue({
+      total: 50,
+      recentEvents: [
+        {
+          id: "evt-1",
+          type: "session",
+          points: 10,
+          description: "Session complete",
+          createdAt: "2024-01-01T00:00:00Z",
+        },
+      ],
+    });
+
+    render(<PointsDisplay showRecentEvents />);
+
+    await waitFor(() => expect(screen.getByText("Session complete")).toBeInTheDocument());
+    expect(screen.getByText("Recent")).toBeInTheDocument();
+    expect(screen.getByText("+10")).toBeInTheDocument();
   });
 });

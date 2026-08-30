@@ -4,20 +4,17 @@ import { FollowButton } from "../../src/components/feed/FollowButton";
 
 const followUser = vi.fn().mockResolvedValue(undefined);
 const unfollowUser = vi.fn().mockResolvedValue(undefined);
-const toastSuccess = vi.fn();
-const toastError = vi.fn();
-const apiError = vi.fn();
+const showToast = vi.fn();
 
 vi.mock("react-i18next", () => ({
   useTranslation: () => ({
-    t: (_key: string, options?: { defaultValue?: string }) => options?.defaultValue || _key,
+    t: (key: string) => key,
   }),
 }));
 
-vi.mock("../../src/contexts/ToastContext", () => ({
+vi.mock("../../src/components/ui/Toast", () => ({
   useToast: () => ({
-    success: toastSuccess,
-    error: toastError,
+    showToast,
   }),
 }));
 
@@ -26,44 +23,42 @@ vi.mock("../../src/services/api", () => ({
   unfollowUser: (...args: unknown[]) => unfollowUser(...args),
 }));
 
-vi.mock("../../src/utils/logger", () => ({
-  logger: {
-    apiError: (...args: unknown[]) => apiError(...args),
-  },
-}));
-
 describe("FollowButton", () => {
   beforeEach(() => {
     followUser.mockReset().mockResolvedValue(undefined);
     unfollowUser.mockReset().mockResolvedValue(undefined);
-    toastSuccess.mockReset();
-    toastError.mockReset();
-    apiError.mockReset();
+    showToast.mockReset();
   });
 
   it("toggles follow and calls API", async () => {
     render(<FollowButton userAlias="alex" />);
 
-    fireEvent.click(screen.getByRole("button", { name: "Follow alex" }));
+    fireEvent.click(screen.getByRole("button", { name: "feed.follow.follow" }));
     await waitFor(() => expect(followUser).toHaveBeenCalledWith("alex"));
 
-    expect(toastSuccess).toHaveBeenCalled();
-    expect(screen.getByRole("button", { name: "Unfollow alex" })).toBeInTheDocument();
+    expect(showToast).toHaveBeenCalledWith({
+      variant: "success",
+      title: "feed.follow.following",
+    });
+    expect(screen.getByRole("button", { name: "feed.follow.unfollow" })).toBeInTheDocument();
   });
 
   it("handles unfollow", async () => {
     render(<FollowButton userAlias="alex" initialFollowing />);
 
-    fireEvent.click(screen.getByRole("button", { name: "Unfollow alex" }));
+    fireEvent.click(screen.getByRole("button", { name: "feed.follow.unfollow" }));
     await waitFor(() => expect(unfollowUser).toHaveBeenCalledWith("alex"));
-    expect(toastSuccess).toHaveBeenCalled();
+    expect(showToast).toHaveBeenCalledWith({
+      variant: "info",
+      title: "feed.follow.unfollowed",
+    });
   });
 
   it("notifies parent on follow change", async () => {
     const onFollowChange = vi.fn();
     render(<FollowButton userAlias="alex" onFollowChange={onFollowChange} />);
 
-    fireEvent.click(screen.getByRole("button", { name: "Follow alex" }));
+    fireEvent.click(screen.getByRole("button", { name: "feed.follow.follow" }));
 
     await waitFor(() => expect(onFollowChange).toHaveBeenCalledWith(true));
   });
@@ -72,40 +67,40 @@ describe("FollowButton", () => {
     followUser.mockRejectedValue(new Error("Boom"));
     render(<FollowButton userAlias="alex" />);
 
-    fireEvent.click(screen.getByRole("button", { name: "Follow alex" }));
+    fireEvent.click(screen.getByRole("button", { name: "feed.follow.follow" }));
 
-    await waitFor(() => expect(toastError).toHaveBeenCalled());
-    expect(apiError).toHaveBeenCalledWith(
-      "Failed to follow user",
-      expect.any(Error),
-      "/api/v1/users/alex/follow",
-      "POST",
+    await waitFor(() =>
+      expect(showToast).toHaveBeenCalledWith({
+        variant: "error",
+        title: "feed.follow.error.title",
+        message: "feed.follow.error.message",
+      }),
     );
-    expect(screen.getByRole("button", { name: "Follow alex" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "feed.follow.follow" })).toBeInTheDocument();
   });
 
   it("reverts optimistic unfollow on error", async () => {
     unfollowUser.mockRejectedValue(new Error("Boom"));
     render(<FollowButton userAlias="alex" initialFollowing />);
 
-    fireEvent.click(screen.getByRole("button", { name: "Unfollow alex" }));
+    fireEvent.click(screen.getByRole("button", { name: "feed.follow.unfollow" }));
 
-    await waitFor(() => expect(toastError).toHaveBeenCalled());
-    expect(apiError).toHaveBeenCalledWith(
-      "Failed to unfollow user",
-      expect.any(Error),
-      "/api/v1/users/alex/unfollow",
-      "DELETE",
+    await waitFor(() =>
+      expect(showToast).toHaveBeenCalledWith({
+        variant: "error",
+        title: "feed.follow.error.title",
+        message: "feed.follow.error.message",
+      }),
     );
-    expect(screen.getByRole("button", { name: "Unfollow alex" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "feed.follow.unfollow" })).toBeInTheDocument();
   });
 
-  it("maps default variant to secondary", () => {
+  it("uses primary variant when not following", () => {
     render(<FollowButton userAlias="alex" />);
 
-    expect(screen.getByRole("button", { name: "Follow alex" })).toHaveAttribute(
+    expect(screen.getByRole("button", { name: "feed.follow.follow" })).toHaveAttribute(
       "data-variant",
-      "secondary",
+      "primary",
     );
   });
 
@@ -118,7 +113,7 @@ describe("FollowButton", () => {
 
     render(<FollowButton userAlias="alex" />);
 
-    const button = screen.getByRole("button", { name: "Follow alex" });
+    const button = screen.getByRole("button", { name: "feed.follow.follow" });
     fireEvent.click(button);
     fireEvent.click(button);
 

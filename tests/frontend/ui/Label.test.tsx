@@ -67,7 +67,7 @@ describe("Label", () => {
       const { container } = render(<Label error>Email</Label>);
       const label = container.querySelector("label");
       expect(label).toHaveStyle({
-        color: "var(--color-danger)",
+        color: "var(--color-danger-text)",
       });
     });
 

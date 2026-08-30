@@ -132,11 +132,8 @@ describe("Select", () => {
         <Select options={defaultOptions} size="sm" onChange={onChange} />,
       );
       const select = container.querySelector("select");
-      // Select has paddingRight override, so check fontSize and that padding is set
-      expect(select).toHaveStyle({
-        fontSize: "var(--font-size-sm)",
-      });
-      expect(select?.style.padding).toBeTruthy();
+      expect(select).toHaveStyle({ fontSize: "var(--font-size-sm)" });
+      expect(select?.style.paddingRight).toBe("calc(var(--space-sm) + 20px + var(--space-xs))");
     });
 
     it("should apply md size styles (default)", () => {
@@ -145,11 +142,8 @@ describe("Select", () => {
         <Select options={defaultOptions} size="md" onChange={onChange} />,
       );
       const select = container.querySelector("select");
-      // Select has paddingRight override, so check fontSize and that padding is set
-      expect(select).toHaveStyle({
-        fontSize: "var(--font-size-md)",
-      });
-      expect(select?.style.padding).toBeTruthy();
+      expect(select).toHaveStyle({ fontSize: "var(--font-size-md)" });
+      expect(select?.style.paddingRight).toBe("calc(var(--space-md) + 20px + var(--space-sm))");
     });
 
     it("should apply lg size styles", () => {
@@ -158,11 +152,8 @@ describe("Select", () => {
         <Select options={defaultOptions} size="lg" onChange={onChange} />,
       );
       const select = container.querySelector("select");
-      // Select has paddingRight override, so check fontSize and that padding is set
-      expect(select).toHaveStyle({
-        fontSize: "var(--font-size-lg)",
-      });
-      expect(select?.style.padding).toBeTruthy();
+      expect(select).toHaveStyle({ fontSize: "var(--font-size-lg)" });
+      expect(select?.style.paddingRight).toBe("calc(var(--space-lg) + 20px + var(--space-md))");
     });
   });
 

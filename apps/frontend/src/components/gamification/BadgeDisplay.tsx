@@ -16,7 +16,7 @@ export interface BadgeDisplayProps {
  * Supports tabbed view for earned vs. all badges.
  */
 export const BadgeDisplay: React.FC<BadgeDisplayProps> = ({ showCatalog = true, onBadgeClick }) => {
-  const { t } = useTranslation("common");
+  const { t } = useTranslation();
   const [earnedBadges, setEarnedBadges] = useState<Badge[]>([]);
   const [catalogBadges, setCatalogBadges] = useState<Badge[]>([]);
   const [isLoadingEarned, setIsLoadingEarned] = useState(true);

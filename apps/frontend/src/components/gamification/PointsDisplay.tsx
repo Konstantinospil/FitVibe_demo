@@ -19,7 +19,7 @@ export const PointsDisplay: React.FC<PointsDisplayProps> = ({
   showRecentEvents = false,
   onLoad,
 }) => {
-  const { t } = useTranslation("common");
+  const { t } = useTranslation();
   const [balance, setBalance] = useState<PointsBalance | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 

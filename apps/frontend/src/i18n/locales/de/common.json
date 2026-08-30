@@ -7,7 +7,8 @@
     "signOut": "Abmelden",
     "you": "Du",
     "activeSession": "Aktive Einheit",
-    "skipToContent": "Zum Hauptinhalt springen"
+    "skipToContent": "Zum Hauptinhalt springen",
+    "back": "Zurück"
   },
   "language": {
     "label": "Sprache",
@@ -94,6 +95,16 @@
         "stats": "Gepinnt @ Team-Feed",
         "visibility": "private"
       }
+    },
+    "follow": {
+      "follow": "Folgen",
+      "unfollow": "Nicht mehr folgen",
+      "following": "Folge ich",
+      "unfollowed": "Nicht mehr gefolgt",
+      "error": {
+        "title": "Folgen konnte nicht aktualisiert werden",
+        "message": "Bitte versuche es erneut."
+      }
     }
   },
   "footer": {
@@ -119,6 +130,28 @@
     "title": "Datenschutzerklärung",
     "description": "Erfahren Sie, wie wir Ihre persönlichen Daten sammeln, verwenden und schützen.",
     "effectiveDate": "Gültigkeitsdatum"
+  },
+  "contact": {
+    "eyebrow": "Kontakt",
+    "title": "Kontaktieren Sie uns",
+    "description": "Kontaktieren Sie das FitVibe-Team.",
+    "content": "Bei Anfragen kontaktieren Sie uns bitte unter contact@fitvibe.example.com.",
+    "form": {
+      "emailLabel": "E-Mail",
+      "topicLabel": "Betreff",
+      "messageLabel": "Nachricht",
+      "emailRequired": "E-Mail ist erforderlich",
+      "topicRequired": "Betreff ist erforderlich",
+      "messageRequired": "Nachricht ist erforderlich",
+      "invalidEmail": "Bitte geben Sie eine gültige E-Mail-Adresse ein",
+      "submit": "Nachricht senden",
+      "submitting": "Wird gesendet...",
+      "success": "Ihre Nachricht wurde erfolgreich gesendet!",
+      "error": "Nachricht konnte nicht gesendet werden. Bitte versuchen Sie es erneut.",
+      "networkError": "Verbindung zum Server nicht möglich. Bitte überprüfen Sie Ihre Verbindung und versuchen Sie es erneut.",
+      "csrfError": "Sicherheitstoken-Fehler. Bitte aktualisieren Sie die Seite und versuchen Sie es erneut. Wenn das Problem weiterhin besteht, überprüfen Sie die Cookie-Einstellungen Ihres Browsers.",
+      "characters": "Zeichen"
+    }
   },
   "errors": {
     "TERMS_ACCEPTANCE_REQUIRED": "Sie müssen die Allgemeinen Geschäftsbedingungen und die Datenschutzerklärung akzeptieren, um ein Konto zu erstellen",
@@ -650,6 +683,41 @@
         "noAthletes": "Keine Athleten verfügbar. Athleten müssen Ihnen zuerst Zugriff gewähren.",
         "assignmentDate": "Zuweisungsdatum",
         "assignButton": "Trainingseinheit zuweisen"
+      }
+    }
+  },
+  "gamification": {
+    "achievement": {
+      "earned": "Erfolg freigeschaltet"
+    },
+    "badges": {
+      "title": "Abzeichen",
+      "earned": "Erhalten",
+      "catalog": "Katalog",
+      "noBadges": "Noch keine Abzeichen erhalten",
+      "noCatalog": "Keine Abzeichen im Katalog",
+      "progress": "Fortschritt"
+    },
+    "points": {
+      "total": "Gesamtpunkte",
+      "recent": "Kürzlich"
+    },
+    "pointsHistory": "Punkteverlauf",
+    "noPointsHistory": "Noch kein Punkteverlauf",
+    "noPointsHistoryDescription": "Verdiene Punkte, indem du Einheiten und Herausforderungen abschließt.",
+    "pointsEarned": "Punkte verdient",
+    "leaderboard": {
+      "title": "Rangliste",
+      "global": "Global",
+      "friends": "Freunde",
+      "empty": "Noch keine Ranglisten",
+      "badges": "Abzeichen",
+      "yourRank": "Dein Rang: {{rank}}",
+      "period": {
+        "week": "Woche",
+        "month": "Monat",
+        "year": "Jahr",
+        "all": "Gesamt"
       }
     }
   }

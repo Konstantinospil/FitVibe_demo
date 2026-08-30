@@ -916,8 +916,8 @@ export async function collectUserData(userId: string): Promise<UserDataExportBun
     db<GenericRow>("session_bookmarks").where({ user_id: userId }),
     db<GenericRow>("feed_reports").where({ reporter_id: userId }),
     db<{ is_enabled: boolean; is_verified: boolean }>("user_2fa_settings")
+      .where("user_id", userId)
       .select("is_enabled", "is_verified")
-      .where({ user_id: userId })
       .first(),
   ]);
   const metrics = {

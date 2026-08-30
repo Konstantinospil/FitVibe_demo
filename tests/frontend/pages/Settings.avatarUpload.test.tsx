@@ -150,28 +150,7 @@ describe("Settings - Avatar Upload (FR-009)", () => {
     // Trigger change event to run handleAvatarFileSelect
     fireEvent.change(fileInput, { target: { files: fileList } });
 
-    // Wait for FileReader to complete and upload button to appear
-    await waitFor(
-      () => {
-        const uploadButtons = screen.getAllByText(/upload/i);
-        expect(Array.from(uploadButtons).find((el) => container.contains(el))).toBeInTheDocument();
-      },
-      { timeout: 2000 },
-    );
-
-    // Re-query the input element and ensure files are set before clicking upload
-    // This is needed because handleAvatarUpload reads from fileInputRef.current.files[0]
-    // and the files property must be available when the upload function accesses it
-    const currentFileInput = container.querySelector("#avatar-upload") as HTMLInputElement;
-    expect(currentFileInput).toBeDefined();
-    Object.defineProperty(currentFileInput, "files", {
-      value: fileList,
-      writable: false,
-      configurable: true,
-    });
-
-    const uploadButtons = screen.getAllByText(/upload/i);
-    const uploadButton = Array.from(uploadButtons).find((el) => container.contains(el))!;
+    const uploadButton = await screen.findByRole("button", { name: /^upload$/i });
     fireEvent.click(uploadButton);
 
     await waitFor(
@@ -283,24 +262,26 @@ describe("Settings - Avatar Upload (FR-009)", () => {
 
     const fileInput = container.querySelector("#avatar-upload") as HTMLInputElement;
     const file = new File(["fake-image-content"], "test.jpg", { type: "image/jpeg" });
-    fireEvent.change(fileInput, { target: { files: [file] } });
-
-    await waitFor(
-      () => {
-        const uploadButtons = screen.getAllByText(/upload/i);
-        expect(Array.from(uploadButtons).find((el) => container.contains(el))).toBeInTheDocument();
+    const fileList = {
+      0: file,
+      length: 1,
+      item: (index: number) => (index === 0 ? file : null),
+      [Symbol.iterator]: function* () {
+        yield file;
       },
-      { timeout: 2000 },
-    );
+    } as FileList;
 
-    const uploadButtons = screen.getAllByText(/upload/i);
-    const uploadButton = Array.from(uploadButtons).find((el) => container.contains(el))!;
+    fireEvent.change(fileInput, { target: { files: fileList } });
+
+    const uploadButton = await screen.findByRole("button", { name: /^upload$/i });
     fireEvent.click(uploadButton);
 
     await waitFor(
       () => {
-        const errorTexts = screen.queryAllByText(/failed to upload|upload failed|error/i);
-        expect(Array.from(errorTexts).find((el) => container.contains(el))).toBeInTheDocument();
+        expect(mockPost).toHaveBeenCalled();
+        expect(
+          screen.getAllByText("Failed to upload avatar. Please try again.").length,
+        ).toBeGreaterThan(0);
       },
       { timeout: 2000 },
     );
@@ -309,7 +290,7 @@ describe("Settings - Avatar Upload (FR-009)", () => {
   it("disables upload button while uploading", async () => {
     const { mockPost } = setupSettingsTests();
     mockPost.mockImplementation(
-      () => new Promise((resolve) => setTimeout(() => resolve({ data: {} }), 100)),
+      () => new Promise((resolve) => setTimeout(() => resolve({ data: {} }), 1500)),
     );
 
     const { container } = renderSettings();
@@ -326,33 +307,12 @@ describe("Settings - Avatar Upload (FR-009)", () => {
     const file = new File(["fake-image-content"], "test.jpg", { type: "image/jpeg" });
     fireEvent.change(fileInput, { target: { files: [file] } });
 
-    // Wait for upload button to appear
-    await waitFor(
-      () => {
-        const uploadButtons = screen.getAllByText(/upload/i);
-        expect(Array.from(uploadButtons).find((el) => container.contains(el))).toBeInTheDocument();
-      },
-      { timeout: 2000 },
-    );
-
-    const uploadButtons = screen.getAllByText(/upload/i);
-    const uploadButton = Array.from(uploadButtons).find((el) => container.contains(el))!;
+    const uploadButton = await screen.findByRole("button", { name: /^upload$/i });
     fireEvent.click(uploadButton);
 
-    // Button should be disabled during upload
-    await waitFor(
-      () => {
-        const currentUploadButtons = screen.getAllByText(/upload/i);
-        const currentButtonText = Array.from(currentUploadButtons).find((el) =>
-          container.contains(el),
-        );
-        expect(currentButtonText).toBeInTheDocument();
-        // Find the parent button element
-        const buttonElement = currentButtonText?.closest("button");
-        expect(buttonElement).toBeDisabled();
-      },
-      { timeout: 2000 },
-    );
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: /^upload$/i })).toBeDisabled();
+    });
   });
 
   it("accepts JPEG, PNG, and WebP formats", async () => {

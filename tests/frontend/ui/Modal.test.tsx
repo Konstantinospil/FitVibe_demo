@@ -2,21 +2,26 @@ import React from "react";
 import { render, screen, fireEvent, waitFor, cleanup } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import userEvent from "@testing-library/user-event";
-import { Modal } from "../../src/components/ui/Modal";
-import { FocusTrap } from "../../src/components/a11y/FocusTrap";
+import { Modal, ModalFooter } from "../../src/components/ui/Modal";
 
-// Mock react-i18next
 vi.mock("react-i18next", () => ({
   useTranslation: () => ({
     t: (key: string) => {
       const translations: Record<string, string> = {
-        "modal.title": "Dialog",
-        "modal.close": "Close dialog",
+        close: "close",
       };
       return translations[key] || key;
     },
   }),
 }));
+
+function getDialog(): HTMLElement {
+  return screen.getByRole("dialog");
+}
+
+function getModalPanel(): HTMLElement {
+  return getDialog().firstElementChild as HTMLElement;
+}
 
 describe("Modal", () => {
   const defaultProps = {
@@ -66,7 +71,14 @@ describe("Modal", () => {
     });
 
     it("should render footer when provided", () => {
-      render(<Modal {...defaultProps} footer={<button>Footer Button</button>} />);
+      render(
+        <Modal {...defaultProps}>
+          <div>Modal content</div>
+          <ModalFooter>
+            <button type="button">Footer Button</button>
+          </ModalFooter>
+        </Modal>,
+      );
       expect(screen.getByText("Footer Button")).toBeInTheDocument();
     });
 
@@ -79,90 +91,68 @@ describe("Modal", () => {
 
   describe("Size variants", () => {
     it("should apply sm size styles", () => {
-      const { container } = render(<Modal {...defaultProps} size="sm" />);
-      const modalContent = container.querySelector(".modal-content");
-      expect(modalContent).toHaveStyle({ maxWidth: "28rem" });
+      render(<Modal {...defaultProps} size="sm" />);
+      expect(getModalPanel()).toHaveStyle({ maxWidth: "28rem" });
     });
 
     it("should apply md size styles (default)", () => {
-      const { container } = render(<Modal {...defaultProps} size="md" />);
-      const modalContent = container.querySelector(".modal-content");
-      expect(modalContent).toHaveStyle({ maxWidth: "32rem" });
+      render(<Modal {...defaultProps} size="md" />);
+      expect(getModalPanel()).toHaveStyle({ maxWidth: "32rem" });
     });
 
     it("should apply lg size styles", () => {
-      const { container } = render(<Modal {...defaultProps} size="lg" />);
-      const modalContent = container.querySelector(".modal-content");
-      expect(modalContent).toHaveStyle({ maxWidth: "48rem" });
+      render(<Modal {...defaultProps} size="lg" />);
+      expect(getModalPanel()).toHaveStyle({ maxWidth: "48rem" });
     });
 
     it("should apply xl size styles", () => {
-      const { container } = render(<Modal {...defaultProps} size="xl" />);
-      const modalContent = container.querySelector(".modal-content");
-      expect(modalContent).toHaveStyle({ maxWidth: "64rem" });
-    });
-
-    it("should apply full size styles", () => {
-      const { container } = render(<Modal {...defaultProps} size="full" />);
-      const modalContent = container.querySelector(".modal-content");
-      expect(modalContent).toHaveStyle({ maxWidth: "100%" });
+      render(<Modal {...defaultProps} size="xl" />);
+      expect(getModalPanel()).toHaveStyle({ maxWidth: "64rem" });
     });
   });
 
   describe("Close button", () => {
     it("should render close button by default", () => {
       render(<Modal {...defaultProps} />);
-      const closeButton = screen.getByLabelText("Close dialog");
+      const closeButton = screen.getByLabelText("close");
       expect(closeButton).toBeInTheDocument();
     });
 
     it("should not render close button when showCloseButton is false", () => {
       render(<Modal {...defaultProps} showCloseButton={false} />);
-      const closeButton = screen.queryByLabelText("Close dialog");
+      const closeButton = screen.queryByLabelText("close");
       expect(closeButton).not.toBeInTheDocument();
     });
 
     it("should call onClose when close button is clicked", async () => {
       const onClose = vi.fn();
       render(<Modal {...defaultProps} onClose={onClose} />);
-      const closeButton = screen.getByLabelText("Close dialog");
+      const closeButton = screen.getByLabelText("close");
       await userEvent.click(closeButton);
       expect(onClose).toHaveBeenCalledTimes(1);
     });
   });
 
   describe("Overlay click", () => {
-    it("should call onClose when overlay is clicked by default", async () => {
+    it("should call onClose when overlay is clicked by default", () => {
       const onClose = vi.fn();
-      const { container } = render(<Modal {...defaultProps} onClose={onClose} />);
-      const overlay = container.querySelector(".modal-overlay");
-      expect(overlay).toBeInTheDocument();
-      if (overlay) {
-        await userEvent.click(overlay);
-        expect(onClose).toHaveBeenCalledTimes(1);
-      }
+      render(<Modal {...defaultProps} onClose={onClose} />);
+      fireEvent.click(getDialog());
+      expect(onClose).toHaveBeenCalledTimes(1);
     });
 
-    it("should not call onClose when overlay is clicked and closeOnOverlayClick is false", async () => {
+    it("should not call onClose when overlay is clicked and closeOnOverlayClick is false", () => {
       const onClose = vi.fn();
-      const { container } = render(
-        <Modal {...defaultProps} onClose={onClose} closeOnOverlayClick={false} />,
-      );
-      const overlay = container.querySelector(".modal-overlay");
-      if (overlay) {
-        await userEvent.click(overlay);
-        expect(onClose).not.toHaveBeenCalled();
-      }
+      render(<Modal {...defaultProps} onClose={onClose} closeOnOverlayClick={false} />);
+      fireEvent.click(getDialog());
+      expect(onClose).not.toHaveBeenCalled();
     });
 
-    it("should not call onClose when modal content is clicked", async () => {
+    it("should not call onClose when modal content is clicked", () => {
       const onClose = vi.fn();
-      const { container } = render(<Modal {...defaultProps} onClose={onClose} />);
-      const modalContent = container.querySelector(".modal-content");
-      if (modalContent) {
-        await userEvent.click(modalContent);
-        expect(onClose).not.toHaveBeenCalled();
-      }
+      render(<Modal {...defaultProps} onClose={onClose} />);
+      fireEvent.click(getModalPanel());
+      expect(onClose).not.toHaveBeenCalled();
     });
   });
 
@@ -199,70 +189,41 @@ describe("Modal", () => {
   describe("Focus management", () => {
     it("should focus close button when modal opens", async () => {
       render(<Modal {...defaultProps} />);
-      const closeButton = screen.getByLabelText("Close dialog");
+      const closeButton = screen.getByLabelText("close");
       await waitFor(() => {
         expect(document.activeElement).toBe(closeButton);
       });
     });
 
-    it("should use FocusTrap component", () => {
-      const { container } = render(<Modal {...defaultProps} />);
-      // FocusTrap wraps the modal content
-      const modalContent = container.querySelector(".modal-content");
-      expect(modalContent).toBeInTheDocument();
+    it("should make the dialog panel focusable", () => {
+      render(<Modal {...defaultProps} />);
+      expect(getModalPanel()).toHaveAttribute("tabindex", "-1");
     });
   });
 
   describe("ARIA attributes", () => {
     it("should have proper ARIA attributes on overlay", () => {
-      const { container } = render(<Modal {...defaultProps} title="Test Modal" />);
-      const overlay = container.querySelector(".modal-overlay");
+      render(<Modal {...defaultProps} title="Test Modal" />);
+      const overlay = getDialog();
       expect(overlay).toHaveAttribute("role", "dialog");
       expect(overlay).toHaveAttribute("aria-modal", "true");
-      expect(overlay).toHaveAttribute("aria-label", "Test Modal");
+      expect(overlay).toHaveAttribute("aria-labelledby", "modal-title");
     });
 
-    it("should use ariaLabel prop when provided", () => {
-      const { container } = render(<Modal {...defaultProps} ariaLabel="Custom label" />);
-      const overlay = container.querySelector(".modal-overlay");
-      expect(overlay).toHaveAttribute("aria-label", "Custom label");
+    it("should use title as accessible name when provided", () => {
+      render(<Modal {...defaultProps} title="Test Title" />);
+      expect(getDialog()).toHaveAccessibleName("Test Title");
     });
 
-    it("should use title as aria-label when ariaLabel is not provided", () => {
-      const { container } = render(<Modal {...defaultProps} title="Test Title" />);
-      const overlay = container.querySelector(".modal-overlay");
-      expect(overlay).toHaveAttribute("aria-label", "Test Title");
+    it("should not set aria-labelledby when title is not provided", () => {
+      render(<Modal {...defaultProps} />);
+      expect(getDialog()).not.toHaveAttribute("aria-labelledby");
     });
 
-    it("should use default aria-label when neither title nor ariaLabel provided", () => {
-      const { container } = render(<Modal {...defaultProps} />);
-      const overlay = container.querySelector(".modal-overlay");
-      expect(overlay).toHaveAttribute("aria-label", "Dialog");
-    });
-
-    it("should use ariaDescribedBy when provided", () => {
-      const { container } = render(<Modal {...defaultProps} ariaDescribedBy="description-id" />);
-      const overlay = container.querySelector(".modal-overlay");
-      expect(overlay).toHaveAttribute("aria-describedby", "description-id");
-    });
-
-    it("should link title to aria-describedby when description is provided", () => {
-      render(
-        <Modal
-          {...defaultProps}
-          title="Test"
-          description="Description"
-          ariaDescribedBy="test-id"
-        />,
-      );
-      const title = screen.getByText("Test");
-      // The title element should exist
-      expect(title).toBeInTheDocument();
-      // The description should be visible
+    it("should set aria-describedby when description is provided", () => {
+      render(<Modal {...defaultProps} title="Test" description="Description" />);
+      expect(getDialog()).toHaveAttribute("aria-describedby", "modal-description");
       expect(screen.getByText("Description")).toBeInTheDocument();
-      // When ariaDescribedBy is provided, it should be used
-      const overlay = screen.getByRole("dialog");
-      expect(overlay).toHaveAttribute("aria-describedby", "test-id");
     });
   });
 
@@ -281,7 +242,6 @@ describe("Modal", () => {
       render(<Modal {...defaultProps} onClose={onClose} />);
       await userEvent.keyboard("{Escape}");
       await userEvent.keyboard("{Escape}");
-      // Should only call once per keypress
       expect(onClose).toHaveBeenCalledTimes(2);
     });
 

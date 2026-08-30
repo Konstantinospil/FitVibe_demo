@@ -7,7 +7,8 @@
     "signOut": "Sign out",
     "you": "You",
     "activeSession": "Active session",
-    "skipToContent": "Skip to main content"
+    "skipToContent": "Skip to main content",
+    "back": "Back"
   },
   "language": {
     "label": "Language",
@@ -94,6 +95,16 @@
         "stats": "Pinned • Team feed",
         "visibility": "private"
       }
+    },
+    "follow": {
+      "follow": "Follow",
+      "unfollow": "Unfollow",
+      "following": "Following",
+      "unfollowed": "Unfollowed",
+      "error": {
+        "title": "Could not update follow",
+        "message": "Please try again."
+      }
     }
   },
   "footer": {
@@ -119,6 +130,28 @@
     "title": "Privacy Policy",
     "description": "Learn how we collect, use, and protect your personal data.",
     "effectiveDate": "Effective date"
+  },
+  "contact": {
+    "eyebrow": "Contact",
+    "title": "Contact Us",
+    "description": "Get in touch with the FitVibe team.",
+    "content": "For inquiries, please contact us at contact@fitvibe.example.com.",
+    "form": {
+      "emailLabel": "Email",
+      "topicLabel": "Topic",
+      "messageLabel": "Message",
+      "emailRequired": "Email is required",
+      "topicRequired": "Topic is required",
+      "messageRequired": "Message is required",
+      "invalidEmail": "Please enter a valid email address",
+      "submit": "Send Message",
+      "submitting": "Sending...",
+      "success": "Your message has been sent successfully!",
+      "error": "Failed to send message. Please try again.",
+      "networkError": "Cannot connect to server. Please check your connection and try again.",
+      "csrfError": "Security token error. Please refresh the page and try again. If the problem persists, check your browser's cookie settings.",
+      "characters": "characters"
+    }
   },
   "errors": {
     "TERMS_ACCEPTANCE_REQUIRED": "You must accept the Terms and Conditions and Privacy Policy to create an account",
@@ -650,6 +683,41 @@
         "noAthletes": "No athletes available. Athletes must grant you access first.",
         "assignmentDate": "Assignment Date",
         "assignButton": "Assign Workout"
+      }
+    }
+  },
+  "gamification": {
+    "achievement": {
+      "earned": "Achievement earned"
+    },
+    "badges": {
+      "title": "Badges",
+      "earned": "Earned",
+      "catalog": "Catalog",
+      "noBadges": "No badges earned yet",
+      "noCatalog": "No badges in the catalog",
+      "progress": "Progress"
+    },
+    "points": {
+      "total": "Total points",
+      "recent": "Recent"
+    },
+    "pointsHistory": "Points history",
+    "noPointsHistory": "No points history yet",
+    "noPointsHistoryDescription": "Earn points by completing sessions and challenges.",
+    "pointsEarned": "Points earned",
+    "leaderboard": {
+      "title": "Leaderboard",
+      "global": "Global",
+      "friends": "Friends",
+      "empty": "No rankings yet",
+      "badges": "badges",
+      "yourRank": "Your rank: {{rank}}",
+      "period": {
+        "week": "Week",
+        "month": "Month",
+        "year": "Year",
+        "all": "All time"
       }
     }
   }

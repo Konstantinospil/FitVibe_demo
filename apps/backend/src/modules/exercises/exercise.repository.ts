@@ -1,6 +1,6 @@
 import type { Knex } from "knex";
 import { db } from "../../db/connection.js";
-import type { Exercise, ExerciseQuery } from "./exercise.types.js";
+import type { Exercise, ExerciseQuery, PaginatedResult } from "./exercise.types.js";
 
 function applyOwnershipFilter(
   query: Knex.QueryBuilder<Exercise, Exercise[]>,
@@ -22,7 +22,11 @@ function applyOwnershipFilter(
   });
 }
 
-export async function listExercises(userId: string, queryParams: ExerciseQuery, isAdmin: boolean) {
+export async function listExercises(
+  userId: string,
+  queryParams: ExerciseQuery,
+  isAdmin: boolean,
+): Promise<PaginatedResult<Exercise>> {
   const {
     q,
     type_code,
@@ -87,7 +91,7 @@ export async function listExercises(userId: string, queryParams: ExerciseQuery, 
     .limit(limit)
     .offset(offset);
 
-  return { data, total, limit, offset };
+  return { data: data as unknown as Exercise[], total, limit, offset };
 }
 
 export async function getExercise(id: string, scopeUserId: string) {

@@ -23,7 +23,7 @@ export const BackButton: React.FC<BackButtonProps> = ({
   size = "md",
   label,
 }) => {
-  const { t } = useTranslation("common");
+  const { t } = useTranslation();
   const navigate = useNavigate();
 
   const handleClick = () => {

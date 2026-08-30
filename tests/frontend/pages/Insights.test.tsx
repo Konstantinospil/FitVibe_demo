@@ -367,7 +367,7 @@ describe("Insights page", () => {
       renderInsights();
 
       expect(screen.getByText("Week 1")).toBeInTheDocument();
-      expect(screen.getByText("50,000 kg")).toBeInTheDocument();
+      expect(screen.getByText(`${(50000).toLocaleString()} kg`)).toBeInTheDocument();
     });
 
     it("should show loading state for metrics", () => {
@@ -945,7 +945,7 @@ describe("Insights page", () => {
     renderInsights();
 
     expect(screen.getByText("Weekly volume")).toBeInTheDocument();
-    expect(screen.getByText("52,300")).toBeInTheDocument();
+    expect(screen.getByText((52300).toLocaleString())).toBeInTheDocument();
   });
 
   it("should show isFetching indicator", () => {

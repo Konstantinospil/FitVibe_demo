@@ -16,7 +16,7 @@ export interface BadgeCardProps {
  * Shows progress if the badge is not yet earned.
  */
 export const BadgeCard: React.FC<BadgeCardProps> = ({ badge, onClick, showProgress = true }) => {
-  const { t } = useTranslation("common");
+  const { t } = useTranslation();
   const isEarned = !!badge.earnedAt;
   const progress =
     badge.progress && badge.maxProgress

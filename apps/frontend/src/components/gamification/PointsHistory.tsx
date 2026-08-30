@@ -16,7 +16,7 @@ export interface PointsHistoryProps {
  * Shows chronological list of points earned with pagination.
  */
 export const PointsHistory: React.FC<PointsHistoryProps> = ({ limit = 20, onLoad }) => {
-  const { t } = useTranslation("common");
+  const { t } = useTranslation();
   const [entries, setEntries] = useState<PointsHistoryEntry[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);

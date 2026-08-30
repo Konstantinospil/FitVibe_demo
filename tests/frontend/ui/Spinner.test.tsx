@@ -49,7 +49,7 @@ describe("Spinner", () => {
       expect(spinner).toHaveStyle({
         width: "1.5rem",
         height: "1.5rem",
-        borderWidth: "2px",
+        borderWidth: "3px",
       });
     });
 
@@ -59,7 +59,7 @@ describe("Spinner", () => {
       expect(spinner).toHaveStyle({
         width: "2rem",
         height: "2rem",
-        borderWidth: "3px",
+        borderWidth: "4px",
       });
     });
   });
@@ -101,15 +101,15 @@ describe("Spinner", () => {
     });
 
     it("should include animation styles", () => {
-      const { container } = render(<Spinner />);
-      const styleElement = container.querySelector("style");
+      render(<Spinner />);
+      const styleElement = document.head.querySelector("style[data-spinner-keyframes]");
       expect(styleElement).toBeInTheDocument();
       expect(styleElement?.textContent).toContain("@keyframes spinner-rotate");
     });
 
     it("should respect prefers-reduced-motion", () => {
-      const { container } = render(<Spinner />);
-      const styleElement = container.querySelector("style");
+      render(<Spinner />);
+      const styleElement = document.head.querySelector("style[data-spinner-keyframes]");
       expect(styleElement?.textContent).toContain("prefers-reduced-motion");
     });
   });

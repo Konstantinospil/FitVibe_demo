@@ -76,6 +76,7 @@ const Settings: React.FC = () => {
   // Avatar upload state
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [avatarError, setAvatarError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -242,6 +243,7 @@ const Settings: React.FC = () => {
     }
 
     setAvatarError(null);
+    setAvatarFile(file);
 
     // Create preview
     const reader = new FileReader();
@@ -252,13 +254,12 @@ const Settings: React.FC = () => {
   };
 
   const handleAvatarUpload = async () => {
-    const fileInput = fileInputRef.current;
-    if (!fileInput?.files?.[0]) {
+    if (!avatarFile) {
       toast.warning(t("settings.profile.avatarNoFile") || "Please select a file to upload.");
       return;
     }
 
-    const file = fileInput.files[0];
+    const file = avatarFile;
     setUploadingAvatar(true);
     setAvatarError(null);
 
@@ -279,6 +280,7 @@ const Settings: React.FC = () => {
       if (response.data?.fileUrl) {
         setAvatarUrl(response.data.fileUrl);
         setAvatarPreview(null);
+        setAvatarFile(null);
         toast.success(t("settings.profile.avatarUploadSuccess") || "Avatar uploaded successfully!");
         // Reload user data to get updated avatar
         await loadUserData();
@@ -294,9 +296,8 @@ const Settings: React.FC = () => {
       toast.error(errorMessage);
     } finally {
       setUploadingAvatar(false);
-      // Reset file input
-      if (fileInput) {
-        fileInput.value = "";
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
       }
     }
   };
@@ -306,6 +307,7 @@ const Settings: React.FC = () => {
       await apiClient.delete("/api/v1/users/me/avatar");
       setAvatarUrl(null);
       setAvatarPreview(null);
+      setAvatarFile(null);
       toast.success(t("settings.profile.avatarDeleteSuccess") || "Avatar deleted successfully!");
       await loadUserData();
     } catch (error) {

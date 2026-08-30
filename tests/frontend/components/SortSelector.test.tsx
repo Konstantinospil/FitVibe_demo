@@ -16,8 +16,10 @@ describe("SortSelector", () => {
       />,
     );
 
-    expect(screen.getByText("Sort by")).toBeInTheDocument();
-    fireEvent.change(screen.getByRole("combobox"), { target: { value: "name" } });
+    expect(screen.getByRole("combobox", { name: "Sort by" })).toBeInTheDocument();
+    fireEvent.change(screen.getByRole("combobox", { name: "Sort by" }), {
+      target: { value: "name" },
+    });
     expect(onChange).toHaveBeenCalledWith("name");
   });
 
@@ -31,6 +33,6 @@ describe("SortSelector", () => {
       />,
     );
 
-    expect(screen.getByText("Order")).toBeInTheDocument();
+    expect(screen.getByRole("combobox", { name: "Order" })).toBeInTheDocument();
   });
 });

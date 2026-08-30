@@ -43,6 +43,11 @@ if (typeof document !== "undefined") {
         transform: rotate(360deg);
       }
     }
+    @media (prefers-reduced-motion: reduce) {
+      [data-spinner-keyframes-target] {
+        animation: none;
+      }
+    }
   `;
   if (!document.head.querySelector("style[data-spinner-keyframes]")) {
     style.setAttribute("data-spinner-keyframes", "true");
@@ -70,6 +75,7 @@ export const Spinner: React.FC<SpinnerProps> = ({
       role="status"
       aria-label={label || "Loading"}
       aria-live="polite"
+      data-spinner-keyframes-target=""
       {...props}
     >
       {label && (
