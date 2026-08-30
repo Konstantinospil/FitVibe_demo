@@ -12,7 +12,7 @@ references:
   - QA Plan §8.1 Backend (API) Test Strategy (Jest + Supertest), §12 Toolchain & Automation
 ---
 
-# Decision
+# ADR-021: Standardize Backend Test Runner on Jest 30 + @swc/jest
 
 **Status: Deferred (2026-08-30).** The backend still runs **Jest 29 + ts-jest**. This ADR remains the intended direction if/when the runner is upgraded.
 

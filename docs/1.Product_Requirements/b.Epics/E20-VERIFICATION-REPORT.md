@@ -199,7 +199,7 @@ This report verifies the Epic structure, document consistency, and implementatio
 - ✅ Testing patterns ✓
 - ✅ Performance monitoring patterns ✓
 
-#### ADR (`docs/2.Technical_Design_Document/2.f.Architectural_Decision_Documentation/ADR-023-database-encryption.md`)
+#### ADR (`docs/2.Technical_Design_Document/2.f.Architectural_Decision_Documentation/ADR-026-database-encryption.md`)
 
 - ✅ Architectural decision documented
 - ✅ Links to Epic E20 ✓

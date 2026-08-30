@@ -5,7 +5,7 @@
 **Requirement ID**: NFR-008  
 **Type**: Non-Functional Requirement  
 **Title**: Database Encryption  
-**Status**: Open  
+**Status**: Progressing  
 **Priority**: High  
 **Gate**: GOLD  
 **Owner**: SEC/ENG  

@@ -72,8 +72,8 @@ Implement comprehensive database encryption to protect data both in transit (TLS
 
 ## Implementation Documents
 
-- [Implementation Plans](../../6.Implementation/plans/E20-database-encryption-implementation-plans.md)
-- [Verification Report](../../6.Implementation/reports/E20-database-encryption-verification-report.md)
+- [Implementation Plans](../../6.Implementation/README.md)
+- [Verification Report](../../6.Implementation/README.md)
 
 ---
 

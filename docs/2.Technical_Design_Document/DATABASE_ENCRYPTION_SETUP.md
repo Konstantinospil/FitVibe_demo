@@ -9,7 +9,7 @@ FitVibe implements comprehensive database encryption:
 - **Encryption in Transit**: TLS/SSL encryption for all database connections
 - **Encryption at Rest**: Encrypted storage volumes for database data
 
-See [ADR-023](../2.f.Architectural_Decision_Documentation/ADR-023-database-encryption.md) for the architectural decision.
+See [ADR-023](../2.f.Architectural_Decision_Documentation/ADR-026-database-encryption.md) for the architectural decision.
 
 ## Encryption in Transit
 
@@ -238,7 +238,7 @@ psql -c "EXPLAIN ANALYZE SELECT * FROM users LIMIT 1000;"
 
 ## Related Documentation
 
-- [ADR-023: Database Encryption](../2.f.Architectural_Decision_Documentation/ADR-023-database-encryption.md)
+- [ADR-023: Database Encryption](../2.f.Architectural_Decision_Documentation/ADR-026-database-encryption.md)
 - [E20: Database Encryption Epic](../../1.Product_Requirements/b.Epics/E20-database-encryption.md)
 - [NFR-008: Database Encryption](../../1.Product_Requirements/a.Requirements/NFR-008-database-encryption.md)
 - [KEY_MANAGEMENT_POLICY.md](../../5.Policies/5.a.Ops/KEY_MANAGEMENT_POLICY.md)

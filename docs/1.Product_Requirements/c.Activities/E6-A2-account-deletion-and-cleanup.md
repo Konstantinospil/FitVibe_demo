@@ -3,7 +3,7 @@
 ---
 
 **Activity ID**: E6-A2  
-**Epic ID**: [E6](../b.Epics/E6-privacy-&-gdpr.md)  
+**Epic ID**: [E6](../b.Epics/E6-privacy-and-gdpr.md)  
 **Title**: Account Deletion & Cleanup  
 **Status**: Open  
 **Difficulty**: 3  
@@ -34,7 +34,7 @@ Implement account deletion & cleanup for Privacy & GDPR. Implement functionality
 
 ### Blocking Dependencies
 
-- [E6: Privacy & GDPR](../b.Epics/E6-privacy-&-gdpr.md): Parent epic
+- [E6: Privacy & GDPR](../b.Epics/E6-privacy-and-gdpr.md): Parent epic
 
 ### Non-Blocking Dependencies
 

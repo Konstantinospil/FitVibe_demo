@@ -44,7 +44,7 @@ Authentication and session management has been fully implemented with the follow
 
 ### Blocking Dependencies
 
-- [E11: Authentication & Registration](../b.Epics/E11-authentication-&-registration.md): Parent epic
+- [E11: Authentication & Registration](../b.Epics/E11-authentication-and-registration.md): Parent epic
 
 ### Non-Blocking Dependencies
 
