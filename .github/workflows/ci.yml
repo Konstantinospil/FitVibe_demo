@@ -24,7 +24,6 @@ env:
   BACKEND_IMAGE: ghcr.io/${{ github.repository_owner }}/fitvibe-backend
   FRONTEND_IMAGE: ghcr.io/${{ github.repository_owner }}/fitvibe-frontend
   NODE_VERSION: "20"
-  PNPM_VERSION: "9.14.4"
   # Disable all caching
   TURBO_TOKEN: ""
   TURBO_REMOTE_CACHE: "false"
@@ -46,8 +45,6 @@ jobs:
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
-        with:
-          version: ${{ env.PNPM_VERSION }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -135,8 +132,6 @@ jobs:
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
-        with:
-          version: ${{ env.PNPM_VERSION }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -234,8 +229,6 @@ jobs:
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
-        with:
-          version: ${{ env.PNPM_VERSION }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -323,8 +316,6 @@ jobs:
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
-        with:
-          version: ${{ env.PNPM_VERSION }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -418,8 +409,6 @@ jobs:
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
-        with:
-          version: ${{ env.PNPM_VERSION }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -504,8 +493,6 @@ jobs:
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
-        with:
-          version: ${{ env.PNPM_VERSION }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -599,8 +586,6 @@ jobs:
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
-        with:
-          version: ${{ env.PNPM_VERSION }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -645,8 +630,6 @@ jobs:
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
-        with:
-          version: ${{ env.PNPM_VERSION }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -740,8 +723,6 @@ jobs:
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
-        with:
-          version: ${{ env.PNPM_VERSION }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -844,8 +825,6 @@ jobs:
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
-        with:
-          version: ${{ env.PNPM_VERSION }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -941,8 +920,6 @@ jobs:
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
-        with:
-          version: ${{ env.PNPM_VERSION }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -1087,8 +1064,6 @@ jobs:
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
-        with:
-          version: ${{ env.PNPM_VERSION }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -1157,7 +1132,7 @@ jobs:
 
       - name: Container vulnerability scan
         timeout-minutes: 10
-        uses: aquasecurity/trivy-action@0.22.0
+        uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # v0.35.0; SHA-pinned after GHSA-69fq-xp46-6x23
         with:
           scan-type: fs
           scan-ref: .
@@ -1258,8 +1233,6 @@ jobs:
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
-        with:
-          version: ${{ env.PNPM_VERSION }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -1363,8 +1336,6 @@ jobs:
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
-        with:
-          version: ${{ env.PNPM_VERSION }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -1424,8 +1395,6 @@ jobs:
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
-        with:
-          version: ${{ env.PNPM_VERSION }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -1489,8 +1458,6 @@ jobs:
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
-        with:
-          version: ${{ env.PNPM_VERSION }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -1590,8 +1557,6 @@ jobs:
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
-        with:
-          version: ${{ env.PNPM_VERSION }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
