@@ -19,7 +19,7 @@ fitvibe/
 ├── infra/                # Docker Compose, Kubernetes, scripts
 ├── tests/                # E2E, integration, performance
 ├── .github/workflows/
-└── package.json          # packageManager: pnpm@10.28.2
+└── package.json          # packageManager: pnpm@10.34.5,
 ```
 
 Identifiers are UUID v4. Role codes: `athlete`, `admin`, `coach`, `support`. A session is a workout.
