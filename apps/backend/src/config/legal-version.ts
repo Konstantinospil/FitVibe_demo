@@ -47,12 +47,10 @@ const getCommonJSDirname = (): string | undefined => {
 const commonJSFilename = getCommonJSFilename();
 const commonJSDirname = getCommonJSDirname();
 
-let currentFilename: string;
 let currentDirname: string;
 
 if (typeof commonJSFilename !== "undefined" && typeof commonJSDirname !== "undefined") {
   // CommonJS environment (Jest tests, tsx dev, compiled code) - use local variables
-  currentFilename = commonJSFilename;
   currentDirname = commonJSDirname;
 } else {
   // ES module environment - use dynamic evaluation to avoid compilation issues
@@ -63,8 +61,7 @@ if (typeof commonJSFilename !== "undefined" && typeof commonJSDirname !== "undef
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
     const metaUrl = getImportMeta();
     // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-    currentFilename = fileURLToPath(metaUrl);
-    currentDirname = dirname(currentFilename);
+    currentDirname = dirname(fileURLToPath(metaUrl));
   } catch {
     // Fallback if dynamic evaluation fails
     throw new Error("Unable to determine file path: import.meta.url is not available");

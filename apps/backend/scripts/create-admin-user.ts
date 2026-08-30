@@ -42,7 +42,7 @@ async function createAdminUser() {
       .first();
 
     if (existingUser) {
-      console.warn(`User ${ADMIN_USERNAME} already exists. Skipping creation.`);
+      console.warn("Admin user already exists. Skipping creation.");
       return;
     }
 
@@ -102,8 +102,6 @@ async function createAdminUser() {
     });
 
     console.warn("✅ Admin user created successfully!");
-    console.warn(`   Username: ${ADMIN_USERNAME}`);
-    console.warn(`   Email: ${ADMIN_EMAIL}`);
     console.warn(`   Role: ${ADMIN_ROLE}`);
   } catch (error) {
     console.error("❌ Error creating admin user:", error);

@@ -764,7 +764,7 @@ const UsersPage: React.FC = () => {
 
           {filteredUsers.length === 0 && (
             <div style={{ color: colors.text, textAlign: "center", padding: "2rem" }}>
-              {isLoading ? "Loading..." : "No users found"}
+              No users found
             </div>
           )}
         </>
