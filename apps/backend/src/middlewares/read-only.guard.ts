@@ -29,6 +29,12 @@ function getUserId(req: Request): string | undefined {
 }
 
 export function readOnlyGuard(req: Request, res: Response, next: NextFunction): void {
+  // In test environment, only bypass when read-only is not explicitly enabled
+  // (so tests can still assert 503 by setting env.readOnlyMode = true)
+  if (process.env.NODE_ENV === "test" && !env.readOnlyMode) {
+    next();
+    return;
+  }
   // Fast path: nothing to enforce
   if (!env.readOnlyMode) {
     next();

@@ -260,3 +260,115 @@ export async function getUserForAdmin(userId: string): Promise<UserSearchResult 
 
   return row ?? null;
 }
+
+/**
+ * Check if an email is currently blacklisted
+ * Returns false if the blacklist table is missing or schema is incompatible (e.g. migrations not run).
+ */
+export async function isEmailBlacklisted(email: string): Promise<boolean> {
+  const normalizedEmail = email.toLowerCase();
+  const now = new Date();
+
+  try {
+    const row = await db<{ id: string }>("blacklist")
+      .where("email", normalizedEmail)
+      .where(function () {
+        this.whereNull("active_to").orWhere("active_to", ">", now);
+      })
+      .where("active_from", "<=", now)
+      .first();
+
+    return !!row;
+  } catch {
+    // Table or column missing (e.g. migration not applied) – treat as not blacklisted
+    return false;
+  }
+}
+
+/**
+ * Add email to blacklist
+ */
+export async function addToBlacklist(
+  email: string,
+  adminId: string,
+  activeTo?: Date | null,
+): Promise<void> {
+  const normalizedEmail = email.toLowerCase();
+  const now = new Date();
+
+  await db("blacklist").insert({
+    email: normalizedEmail,
+    active_from: now,
+    active_to: activeTo || null,
+    created_by: adminId,
+    created_at: now,
+    updated_at: now,
+  });
+}
+
+/**
+ * Remove email from blacklist (set active_to to now)
+ */
+export async function removeFromBlacklist(email: string): Promise<void> {
+  const normalizedEmail = email.toLowerCase();
+  const now = new Date();
+
+  await db("blacklist")
+    .where("email", normalizedEmail)
+    .where(function () {
+      this.whereNull("active_to").orWhere("active_to", ">", now);
+    })
+    .update({
+      active_to: now,
+      updated_at: now,
+    });
+}
+
+export async function countActiveSessions(): Promise<number> {
+  const rows = await db("auth_sessions")
+    .distinct("user_id")
+    .whereNull("revoked_at")
+    .where("expires_at", ">", db.fn.now());
+
+  return rows.length;
+}
+
+export async function countOpenMessages(): Promise<number> {
+  const row = await db("contact_messages")
+    .whereNull("responded_at")
+    .count<{ count: string }>("id as count")
+    .first();
+
+  return Number(row?.count ?? 0);
+}
+
+export async function countPendingReports(): Promise<number> {
+  const row = await db("feed_reports")
+    .where("status", "pending")
+    .count<{ count: string }>("id as count")
+    .first();
+
+  return Number(row?.count ?? 0);
+}
+
+export async function countUnresolvedAuditLogs(): Promise<number> {
+  const row = await db("audit_log")
+    .whereNull("resolved_at")
+    .count<{ count: string }>("id as count")
+    .first();
+
+  return Number(row?.count ?? 0);
+}
+
+/**
+ * Update user deactivated_at timestamp
+ */
+export async function updateUserDeactivatedAt(
+  userId: string,
+  deactivatedAt: Date | null,
+): Promise<void> {
+  await db("users").where("id", userId).update({
+    deactivated_at: deactivatedAt,
+    updated_at: db.fn.now(),
+  });
+}

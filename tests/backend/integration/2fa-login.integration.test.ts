@@ -53,23 +53,27 @@ const mockPending2faRepo = jest.mocked(pending2faRepo);
 const mockBruteforceRepo = jest.mocked(bruteforceRepo);
 
 describe("2-Stage Login Flow (AC-1.6)", () => {
-  const mockUser: AuthUserRecord = {
-    id: "user-123",
-    username: "testuser",
-    display_name: "Test User",
-    locale: "en-US",
-    preferred_lang: "en",
-    primary_email: "test@example.com",
-    email_verified: true,
-    role_code: "athlete",
-    status: "active",
-    created_at: "2024-01-01T00:00:00Z",
-    updated_at: "2024-01-01T00:00:00Z",
-    password_hash: "hashed-password",
-    terms_accepted: true,
-    terms_accepted_at: "2024-01-01T00:00:00Z",
-    terms_version: getCurrentTermsVersion(), // Set current terms version
-  };
+  let mockUser: AuthUserRecord;
+
+  beforeEach(async () => {
+    mockUser = {
+      id: "user-123",
+      username: "testuser",
+      display_name: "Test User",
+      locale: "en-US",
+      preferred_lang: "en",
+      primary_email: "test@example.com",
+      email_verified: true,
+      role_code: "athlete",
+      status: "active",
+      created_at: "2024-01-01T00:00:00Z",
+      updated_at: "2024-01-01T00:00:00Z",
+      password_hash: "hashed-password",
+      terms_accepted: true,
+      terms_accepted_at: "2024-01-01T00:00:00Z",
+      terms_version: await getCurrentTermsVersion(),
+    };
+  });
 
   const loginDto: LoginDTO = {
     email: "test@example.com",
