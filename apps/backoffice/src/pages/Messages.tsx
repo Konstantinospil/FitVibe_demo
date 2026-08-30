@@ -1,0 +1,832 @@
+import React, { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { messagesApi, type ContactMessage } from "../services/api";
+import { useAuthStore } from "../store/auth.store";
+import { useThemeStore } from "../store/theme.store";
+import { useThemeColors } from "../hooks/useThemeColors";
+
+const MessagesPage: React.FC = () => {
+  const theme = useThemeStore((state) => state.theme);
+  const colors = useThemeColors();
+  const [page, setPage] = useState(0);
+  const [unreadOnly, setUnreadOnly] = useState(false);
+  const [openOnly, setOpenOnly] = useState(false);
+  const [selectedMessage, setSelectedMessage] = useState<ContactMessage | null>(null);
+  const [showResponseInput, setShowResponseInput] = useState(false);
+  const [responseText, setResponseText] = useState("");
+  const limit = 50;
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+
+  const { data, isLoading, error } = useQuery({
+    queryKey: ["messages", page, unreadOnly, openOnly],
+    queryFn: () =>
+      messagesApi.list({
+        limit,
+        offset: page * limit,
+        unreadOnly,
+        openOnly,
+      }),
+    enabled: isAuthenticated, // Only run query when authenticated
+  });
+
+  const queryClient = useQueryClient();
+
+  const markReadMutation = useMutation({
+    mutationFn: (messageId: string) => messagesApi.markRead(messageId),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["messages"] });
+    },
+  });
+
+  const handleMarkRead = (messageId: string) => {
+    markReadMutation.mutate(messageId);
+  };
+
+  const handleViewMessage = (message: ContactMessage) => {
+    setSelectedMessage(message);
+    // Mark as read when viewing
+    if (!message.readAt) {
+      handleMarkRead(message.id);
+    }
+  };
+
+  const handleCloseModal = () => {
+    setSelectedMessage(null);
+    setShowResponseInput(false);
+    setResponseText("");
+  };
+
+  const markRespondedMutation = useMutation({
+    mutationFn: (messageId: string) => messagesApi.markResponded(messageId),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["messages"] });
+    },
+  });
+
+  const saveResponseMutation = useMutation({
+    mutationFn: ({ messageId, response }: { messageId: string; response: string }) =>
+      messagesApi.saveResponse(messageId, response),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["messages"] });
+    },
+  });
+
+  const handleReply = (
+    email: string,
+    topic?: string,
+    message?: string,
+    savedResponse?: string | null,
+  ) => {
+    // Construct mailto link with subject and body
+    const subject = topic ? `Re: ${topic}` : "Re: Contact Form Message";
+    let body = "";
+
+    // Include saved response if it exists, otherwise include original message context
+    if (savedResponse) {
+      body = encodeURIComponent(savedResponse);
+    } else if (message) {
+      const bodyText = `--- Original Message ---\n\nFrom: ${email}\nTopic: ${topic || "N/A"}\n\n${message}`;
+      body = encodeURIComponent(bodyText);
+    }
+
+    const mailtoLink = `mailto:${email}?subject=${encodeURIComponent(subject)}${body ? `&body=${body}` : ""}`;
+
+    // Open default email client with pre-filled recipient, subject, and body
+    window.location.href = mailtoLink;
+  };
+
+  const handleMarkResponded = (messageId: string) => {
+    markRespondedMutation.mutate(messageId);
+  };
+
+  const handleSaveResponse = (messageId: string, andSendEmail = false) => {
+    if (!responseText.trim()) {
+      return;
+    }
+    const responseToSave = responseText;
+    saveResponseMutation.mutate(
+      { messageId, response: responseToSave },
+      {
+        onSuccess: () => {
+          // If andSendEmail is true, open mailto after saving with the response text
+          if (andSendEmail && selectedMessage) {
+            // Use setTimeout to ensure state is updated
+            setTimeout(() => {
+              handleReply(
+                selectedMessage.email,
+                selectedMessage.topic,
+                selectedMessage.message,
+                responseToSave,
+              );
+              setShowResponseInput(false);
+              setResponseText("");
+            }, 100);
+          } else {
+            setShowResponseInput(false);
+            setResponseText("");
+          }
+          // Refresh the query to get updated message with response
+          void queryClient.invalidateQueries({ queryKey: ["messages"] });
+        },
+      },
+    );
+  };
+
+  const handleShowResponseInput = () => {
+    // Don't allow editing if response already exists (read-only)
+    if (selectedMessage?.response) {
+      return; // Response is read-only once saved
+    }
+    setShowResponseInput(true);
+    setResponseText("");
+  };
+
+  return (
+    <div>
+      <h1 style={{ color: colors.text, marginBottom: "2rem", fontSize: "2rem" }}>User Messages</h1>
+
+      <div style={{ marginBottom: "2rem", display: "flex", gap: "2rem", flexWrap: "wrap" }}>
+        <label style={{ color: colors.text, display: "flex", alignItems: "center", gap: "0.5rem" }}>
+          <input
+            type="checkbox"
+            checked={unreadOnly}
+            onChange={(e) => {
+              setUnreadOnly(e.target.checked);
+              setPage(0);
+            }}
+            style={{ cursor: "pointer" }}
+          />
+          Show unread only
+        </label>
+        <label style={{ color: colors.text, display: "flex", alignItems: "center", gap: "0.5rem" }}>
+          <input
+            type="checkbox"
+            checked={openOnly}
+            onChange={(e) => {
+              setOpenOnly(e.target.checked);
+              setPage(0);
+            }}
+            style={{ cursor: "pointer" }}
+          />
+          Show open only
+        </label>
+      </div>
+
+      {isLoading ? (
+        <div style={{ color: colors.text }}>Loading...</div>
+      ) : error ? (
+        <div style={{ color: "#9F2406", padding: "2rem" }}>
+          Error loading messages: {error instanceof Error ? error.message : String(error)}
+        </div>
+      ) : !data || !data.messages || data.messages.length === 0 ? (
+        <div style={{ color: colors.text, textAlign: "center", padding: "2rem" }}>
+          No messages found
+          {unreadOnly ? " (unread only)" : ""}
+          {openOnly ? " (open only)" : ""}
+        </div>
+      ) : (
+        <>
+          <div
+            style={{
+              background: colors.surface,
+              borderRadius: "8px",
+              overflowX: "auto",
+              overflowY: "visible",
+              border: `1px solid ${colors.border}`,
+            }}
+          >
+            <table style={{ width: "100%", borderCollapse: "collapse", minWidth: "1200px" }}>
+              <thead>
+                <tr style={{ background: theme === "light" ? "#F5F5F5" : "#1A1A1A" }}>
+                  <th
+                    style={{
+                      padding: "1rem",
+                      textAlign: "left",
+                      color: colors.text,
+                      borderBottom: `1px solid ${colors.border}`,
+                    }}
+                  >
+                    Email
+                  </th>
+                  <th
+                    style={{
+                      padding: "1rem",
+                      textAlign: "left",
+                      color: colors.text,
+                      borderBottom: `1px solid ${colors.border}`,
+                    }}
+                  >
+                    Topic
+                  </th>
+                  <th
+                    style={{
+                      padding: "1rem",
+                      textAlign: "left",
+                      color: colors.text,
+                      borderBottom: `1px solid ${colors.border}`,
+                    }}
+                  >
+                    Message
+                  </th>
+                  <th
+                    style={{
+                      padding: "1rem",
+                      textAlign: "left",
+                      color: colors.text,
+                      borderBottom: `1px solid ${colors.border}`,
+                    }}
+                  >
+                    Received
+                  </th>
+                  <th
+                    style={{
+                      padding: "1rem",
+                      textAlign: "left",
+                      color: colors.text,
+                      borderBottom: `1px solid ${colors.border}`,
+                    }}
+                  >
+                    Responded
+                  </th>
+                  <th
+                    style={{
+                      padding: "1rem",
+                      textAlign: "left",
+                      color: colors.text,
+                      borderBottom: `1px solid ${colors.border}`,
+                    }}
+                  >
+                    Status
+                  </th>
+                  <th
+                    style={{
+                      padding: "1rem",
+                      textAlign: "left",
+                      color: colors.text,
+                      borderBottom: `1px solid ${colors.border}`,
+                    }}
+                  >
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.messages.map((message) => (
+                  <tr
+                    key={message.id}
+                    style={{
+                      borderBottom: `1px solid ${colors.border}`,
+                      background: !message.readAt ? "rgba(251, 149, 29, 0.05)" : "transparent",
+                    }}
+                  >
+                    <td style={{ padding: "1rem", color: colors.text }}>{message.email}</td>
+                    <td style={{ padding: "1rem", color: colors.text }}>{message.topic}</td>
+                    <td style={{ padding: "1rem", color: colors.text, maxWidth: "400px" }}>
+                      <button
+                        onClick={() => handleViewMessage(message)}
+                        style={{
+                          background: "transparent",
+                          border: "none",
+                          color: colors.text,
+                          cursor: "pointer",
+                          textAlign: "left",
+                          width: "100%",
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          whiteSpace: "nowrap",
+                          textDecoration: "underline",
+                        }}
+                        title="Click to view full message"
+                      >
+                        {message.message}
+                      </button>
+                    </td>
+                    <td style={{ padding: "1rem", color: colors.text }}>
+                      {new Date(message.createdAt).toLocaleString()}
+                    </td>
+                    <td style={{ padding: "1rem", color: colors.text }}>
+                      {message.respondedAt ? (
+                        new Date(message.respondedAt).toLocaleString()
+                      ) : (
+                        <span style={{ color: "rgba(255, 255, 255, 0.55)" }}>-</span>
+                      )}
+                    </td>
+                    <td style={{ padding: "1rem", color: colors.text }}>
+                      {message.readAt ? (
+                        <span style={{ color: "rgba(255, 255, 255, 0.55)" }}>Read</span>
+                      ) : (
+                        <span style={{ color: "#FB951D" }}>Unread</span>
+                      )}
+                    </td>
+                    <td style={{ padding: "1rem" }}>
+                      <div
+                        style={{
+                          display: "flex",
+                          gap: "0.5rem",
+                          alignItems: "center",
+                          flexWrap: "wrap",
+                        }}
+                      >
+                        <button
+                          onClick={() => handleViewMessage(message)}
+                          style={{
+                            padding: "0.5rem 1rem",
+                            background: colors.border,
+                            color: colors.text,
+                            border: "none",
+                            borderRadius: "4px",
+                            cursor: "pointer",
+                            fontSize: "0.875rem",
+                            whiteSpace: "nowrap",
+                          }}
+                        >
+                          View
+                        </button>
+                        {!message.respondedAt && (
+                          <>
+                            <button
+                              onClick={() =>
+                                handleReply(
+                                  message.email,
+                                  message.topic,
+                                  message.message,
+                                  message.response,
+                                )
+                              }
+                              style={{
+                                padding: "0.5rem 1rem",
+                                background: colors.border,
+                                color: colors.text,
+                                border: "none",
+                                borderRadius: "4px",
+                                cursor: "pointer",
+                                fontSize: "0.875rem",
+                                whiteSpace: "nowrap",
+                              }}
+                            >
+                              Reply
+                            </button>
+                            <button
+                              onClick={() => handleMarkResponded(message.id)}
+                              disabled={markRespondedMutation.isPending}
+                              style={{
+                                padding: "0.5rem 1rem",
+                                background: "#15523A",
+                                color: colors.text,
+                                border: "none",
+                                borderRadius: "4px",
+                                cursor: "pointer",
+                                fontSize: "0.875rem",
+                                whiteSpace: "nowrap",
+                              }}
+                              title="Mark as responded after sending reply"
+                            >
+                              Mark Responded
+                            </button>
+                          </>
+                        )}
+                        {!message.readAt && (
+                          <button
+                            onClick={() => handleMarkRead(message.id)}
+                            disabled={markReadMutation.isPending}
+                            style={{
+                              padding: "0.5rem 1rem",
+                              background: "#FB951D",
+                              color: colors.text,
+                              border: "none",
+                              borderRadius: "4px",
+                              cursor: "pointer",
+                              fontSize: "0.875rem",
+                              whiteSpace: "nowrap",
+                            }}
+                          >
+                            Mark Read
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {data.messages.length >= limit && (
+            <div style={{ marginTop: "2rem", display: "flex", gap: "1rem", alignItems: "center" }}>
+              <button
+                onClick={() => setPage((p) => Math.max(0, p - 1))}
+                disabled={page === 0}
+                style={{
+                  padding: "0.75rem 1.5rem",
+                  background: page === 0 ? colors.border : colors.accent,
+                  color: colors.text,
+                  border: "none",
+                  borderRadius: "4px",
+                  cursor: page === 0 ? "not-allowed" : "pointer",
+                }}
+              >
+                Previous
+              </button>
+              <span style={{ color: colors.text }}>Page {page + 1}</span>
+              <button
+                onClick={() => setPage((p) => p + 1)}
+                disabled={data.messages.length < limit}
+                style={{
+                  padding: "0.75rem 1.5rem",
+                  background: data.messages.length < limit ? colors.border : colors.accent,
+                  color: colors.text,
+                  border: "none",
+                  borderRadius: "4px",
+                  cursor: data.messages.length < limit ? "not-allowed" : "pointer",
+                }}
+              >
+                Next
+              </button>
+            </div>
+          )}
+        </>
+      )}
+
+      {/* Message Detail Modal */}
+      {selectedMessage && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: "rgba(0, 0, 0, 0.8)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 1000,
+            padding: "2rem",
+          }}
+          onClick={handleCloseModal}
+        >
+          <div
+            style={{
+              background: colors.surface,
+              borderRadius: "8px",
+              border: `1px solid ${colors.border}`,
+              maxWidth: "800px",
+              width: "100%",
+              maxHeight: "90vh",
+              overflow: "auto",
+              padding: "2rem",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "flex-start",
+                marginBottom: "1.5rem",
+              }}
+            >
+              <h2 style={{ color: colors.text, fontSize: "1.5rem", margin: 0 }}>Message Details</h2>
+              <button
+                onClick={handleCloseModal}
+                style={{
+                  background: "transparent",
+                  border: "none",
+                  color: colors.text,
+                  fontSize: "1.5rem",
+                  cursor: "pointer",
+                  padding: "0.25rem 0.5rem",
+                }}
+              >
+                ×
+              </button>
+            </div>
+
+            <div style={{ marginBottom: "1rem" }}>
+              <div
+                style={{
+                  color: "rgba(255, 255, 255, 0.7)",
+                  fontSize: "0.875rem",
+                  marginBottom: "0.25rem",
+                }}
+              >
+                From:
+              </div>
+              <div style={{ color: colors.text, fontSize: "1rem", marginBottom: "1rem" }}>
+                {selectedMessage.email}
+              </div>
+            </div>
+
+            <div style={{ marginBottom: "1rem" }}>
+              <div
+                style={{
+                  color: "rgba(255, 255, 255, 0.7)",
+                  fontSize: "0.875rem",
+                  marginBottom: "0.25rem",
+                }}
+              >
+                Topic:
+              </div>
+              <div style={{ color: colors.text, fontSize: "1rem", marginBottom: "1rem" }}>
+                {selectedMessage.topic}
+              </div>
+            </div>
+
+            <div style={{ marginBottom: "1rem" }}>
+              <div
+                style={{
+                  color: "rgba(255, 255, 255, 0.7)",
+                  fontSize: "0.875rem",
+                  marginBottom: "0.25rem",
+                }}
+              >
+                Date:
+              </div>
+              <div style={{ color: colors.text, fontSize: "1rem", marginBottom: "1rem" }}>
+                {new Date(selectedMessage.createdAt).toLocaleString()}
+              </div>
+            </div>
+
+            <div style={{ marginBottom: "1rem" }}>
+              <div
+                style={{
+                  color: "rgba(255, 255, 255, 0.7)",
+                  fontSize: "0.875rem",
+                  marginBottom: "0.25rem",
+                }}
+              >
+                Status:
+              </div>
+              <div style={{ marginBottom: "1rem" }}>
+                {selectedMessage.readAt ? (
+                  <span style={{ color: "rgba(255, 255, 255, 0.55)" }}>Read</span>
+                ) : (
+                  <span style={{ color: "#FB951D" }}>Unread</span>
+                )}
+              </div>
+            </div>
+
+            <div style={{ marginBottom: "1.5rem" }}>
+              <div
+                style={{
+                  color: "rgba(255, 255, 255, 0.7)",
+                  fontSize: "0.875rem",
+                  marginBottom: "0.5rem",
+                }}
+              >
+                Message:
+              </div>
+              <div
+                style={{
+                  color: colors.text,
+                  fontSize: "1rem",
+                  lineHeight: "1.6",
+                  whiteSpace: "pre-wrap",
+                  wordBreak: "break-word",
+                  background: "#0D1A15",
+                  padding: "1rem",
+                  borderRadius: "4px",
+                  border: `1px solid ${colors.border}`,
+                  minHeight: "200px",
+                  maxHeight: "400px",
+                  overflow: "auto",
+                }}
+              >
+                {selectedMessage.message}
+              </div>
+            </div>
+
+            {selectedMessage.response && (
+              <div style={{ marginBottom: "1.5rem" }}>
+                <div
+                  style={{
+                    color: "rgba(255, 255, 255, 0.7)",
+                    fontSize: "0.875rem",
+                    marginBottom: "0.5rem",
+                  }}
+                >
+                  Recorded Response (read-only):
+                </div>
+                <div
+                  style={{
+                    color: colors.text,
+                    fontSize: "1rem",
+                    lineHeight: "1.6",
+                    whiteSpace: "pre-wrap",
+                    wordBreak: "break-word",
+                    background: theme === "light" ? "#F5F5F5" : "#1A1A1A",
+                    padding: "1rem",
+                    borderRadius: "4px",
+                    border: `1px solid ${colors.border}`,
+                    minHeight: "100px",
+                    maxHeight: "300px",
+                    overflow: "auto",
+                  }}
+                >
+                  {selectedMessage.response}
+                </div>
+              </div>
+            )}
+
+            {showResponseInput && (
+              <div style={{ marginBottom: "1.5rem" }}>
+                <div
+                  style={{
+                    color: "rgba(255, 255, 255, 0.7)",
+                    fontSize: "0.875rem",
+                    marginBottom: "0.5rem",
+                  }}
+                >
+                  Add Response:
+                </div>
+                <textarea
+                  value={responseText}
+                  onChange={(e) => setResponseText(e.target.value)}
+                  placeholder="Enter your response to this message..."
+                  rows={8}
+                  style={{
+                    width: "100%",
+                    padding: "1rem",
+                    background: theme === "light" ? "#F5F5F5" : "#1A1A1A",
+                    border: `1px solid ${colors.border}`,
+                    borderRadius: "4px",
+                    color: colors.text,
+                    fontSize: "1rem",
+                    fontFamily: "inherit",
+                    resize: "vertical",
+                  }}
+                />
+                <div style={{ display: "flex", gap: "1rem", marginTop: "1rem", flexWrap: "wrap" }}>
+                  <button
+                    onClick={() => handleSaveResponse(selectedMessage.id, true)}
+                    disabled={!responseText.trim() || saveResponseMutation.isPending}
+                    style={{
+                      padding: "0.75rem 1.5rem",
+                      background:
+                        responseText.trim() && !saveResponseMutation.isPending
+                          ? colors.accent
+                          : colors.border,
+                      color: colors.text,
+                      border: "none",
+                      borderRadius: "4px",
+                      cursor:
+                        responseText.trim() && !saveResponseMutation.isPending
+                          ? "pointer"
+                          : "not-allowed",
+                      fontSize: "1rem",
+                    }}
+                  >
+                    {saveResponseMutation.isPending ? "Saving..." : "Save & Send Email"}
+                  </button>
+                  <button
+                    onClick={() => handleSaveResponse(selectedMessage.id, false)}
+                    disabled={!responseText.trim() || saveResponseMutation.isPending}
+                    style={{
+                      padding: "0.75rem 1.5rem",
+                      background:
+                        responseText.trim() && !saveResponseMutation.isPending
+                          ? colors.border
+                          : "#1a3d2e",
+                      color: colors.text,
+                      border: "none",
+                      borderRadius: "4px",
+                      cursor:
+                        responseText.trim() && !saveResponseMutation.isPending
+                          ? "pointer"
+                          : "not-allowed",
+                      fontSize: "1rem",
+                    }}
+                  >
+                    {saveResponseMutation.isPending ? "Saving..." : "Save Only"}
+                  </button>
+                  <button
+                    onClick={() => {
+                      setShowResponseInput(false);
+                      setResponseText("");
+                    }}
+                    style={{
+                      padding: "0.75rem 1.5rem",
+                      background: "transparent",
+                      color: colors.text,
+                      border: `1px solid ${colors.border}`,
+                      borderRadius: "4px",
+                      cursor: "pointer",
+                      fontSize: "1rem",
+                    }}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            )}
+
+            <div
+              style={{ display: "flex", gap: "1rem", justifyContent: "flex-end", flexWrap: "wrap" }}
+            >
+              {!selectedMessage.respondedAt && (
+                <>
+                  <button
+                    onClick={() =>
+                      handleReply(
+                        selectedMessage.email,
+                        selectedMessage.topic,
+                        selectedMessage.message,
+                        selectedMessage.response,
+                      )
+                    }
+                    style={{
+                      padding: "0.75rem 1.5rem",
+                      background: colors.border,
+                      color: colors.text,
+                      border: "none",
+                      borderRadius: "4px",
+                      cursor: "pointer",
+                      fontSize: "1rem",
+                    }}
+                  >
+                    Reply via Email
+                  </button>
+                </>
+              )}
+              {!selectedMessage.response && !showResponseInput && (
+                <button
+                  onClick={handleShowResponseInput}
+                  style={{
+                    padding: "0.75rem 1.5rem",
+                    background: colors.border,
+                    color: colors.text,
+                    border: "none",
+                    borderRadius: "4px",
+                    cursor: "pointer",
+                    fontSize: "1rem",
+                  }}
+                >
+                  Record Response
+                </button>
+              )}
+              {selectedMessage.response && (
+                <button
+                  onClick={() =>
+                    handleReply(
+                      selectedMessage.email,
+                      selectedMessage.topic,
+                      selectedMessage.message,
+                      selectedMessage.response,
+                    )
+                  }
+                  style={{
+                    padding: "0.75rem 1.5rem",
+                    background: "#15523A",
+                    color: colors.text,
+                    border: "none",
+                    borderRadius: "4px",
+                    cursor: "pointer",
+                    fontSize: "1rem",
+                  }}
+                >
+                  Send Email with Recorded Response
+                </button>
+              )}
+              {!selectedMessage.readAt && (
+                <button
+                  onClick={() => {
+                    handleMarkRead(selectedMessage.id);
+                    handleCloseModal();
+                  }}
+                  disabled={markReadMutation.isPending}
+                  style={{
+                    padding: "0.75rem 1.5rem",
+                    background: "#FB951D",
+                    color: colors.text,
+                    border: "none",
+                    borderRadius: "4px",
+                    cursor: "pointer",
+                    fontSize: "1rem",
+                  }}
+                >
+                  Mark as Read
+                </button>
+              )}
+              <button
+                onClick={handleCloseModal}
+                style={{
+                  padding: "0.75rem 1.5rem",
+                  background: "transparent",
+                  color: colors.text,
+                  border: `1px solid ${colors.border}`,
+                  borderRadius: "4px",
+                  cursor: "pointer",
+                  fontSize: "1rem",
+                }}
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default MessagesPage;

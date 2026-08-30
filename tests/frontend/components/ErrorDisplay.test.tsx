@@ -1,0 +1,28 @@
+import { fireEvent, render, screen } from "@testing-library/react";
+import { describe, expect, it, vi } from "vitest";
+import { ErrorDisplay } from "../../src/components/utils/ErrorDisplay";
+
+describe("ErrorDisplay", () => {
+  it("renders default title and message", () => {
+    render(<ErrorDisplay message="Something went wrong" />);
+
+    expect(screen.getByText("Error")).toBeInTheDocument();
+    expect(screen.getByText("Something went wrong")).toBeInTheDocument();
+  });
+
+  it("renders retry button when onRetry is provided", () => {
+    const onRetry = vi.fn();
+    render(
+      <ErrorDisplay title="Oops" message="Try again later" onRetry={onRetry} retryLabel="Retry" />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Retry" }));
+    expect(onRetry).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not render retry button when onRetry is missing", () => {
+    render(<ErrorDisplay message="Missing data" />);
+
+    expect(screen.queryByRole("button")).not.toBeInTheDocument();
+  });
+});

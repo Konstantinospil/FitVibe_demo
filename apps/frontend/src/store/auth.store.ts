@@ -15,6 +15,7 @@ import { logger } from "../utils/logger";
 export interface User {
   id: string;
   username: string;
+  displayName?: string | null;
   email: string;
   role?: string;
 }

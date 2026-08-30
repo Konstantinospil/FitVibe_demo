@@ -13,6 +13,7 @@ import { csrfProtection, csrfTokenRoute, validateOrigin } from "./middlewares/cs
 import { httpLogger } from "./middlewares/request-logger.js";
 import { errorHandler } from "./middlewares/error.handler.js";
 import { readOnlyGuard } from "./middlewares/read-only.guard.js";
+import { detectSuspiciousPatterns } from "./middlewares/enhanced-security.js";
 import { metricsMiddleware, metricsRoute } from "./observability/metrics.js";
 import { asyncHandler } from "./utils/async-handler.js";
 
@@ -25,8 +26,13 @@ import { progressRouter } from "./api/progress.routes.js";
 import { pointsRouter } from "./api/points.routes.js";
 import { feedRouter } from "./api/feed.routes.js";
 import { adminRouter } from "./api/admin.routes.js";
+import { contactRouter } from "./api/contact.routes.js";
+import { translationsRouter } from "./api/translations.routes.js";
+import { measurementsRouter } from "./api/measurements.routes.js";
 import healthRouter from "./modules/health/health.router.js";
 import systemRouter from "./modules/system/system.routes.js";
+import { consentRouter } from "./modules/consent/consent.routes.js";
+import { logsRouter } from "./modules/logs/logs.routes.js";
 import { jwksHandler } from "./modules/auth/auth.controller.js";
 
 const app = express();
@@ -154,6 +160,9 @@ if (env.csrf.enabled) {
   app.use(csrfProtection); // CSRF protection applied globally
 }
 
+// Detect suspicious patterns in body/query (SQL injection, XSS) - reject before reaching handlers
+app.use(detectSuspiciousPatterns);
+
 // Apply read-only mode guard to protect against mutations during maintenance
 app.use(readOnlyGuard);
 
@@ -172,8 +181,13 @@ apiRouter.use("/progress", progressRouter);
 apiRouter.use("/points", pointsRouter);
 apiRouter.use("/feed", feedRouter);
 apiRouter.use("/admin", adminRouter);
+apiRouter.use("/contact", contactRouter);
+apiRouter.use("/logs", logsRouter);
 
 apiRouter.use("/system", systemRouter);
+apiRouter.use("/consent", consentRouter);
+apiRouter.use("/translations", translationsRouter);
+apiRouter.use("/measurements", measurementsRouter);
 
 app.use("/api/v1", apiRouter);
 app.use("/health", healthRouter);

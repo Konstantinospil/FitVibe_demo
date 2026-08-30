@@ -89,3 +89,52 @@ export function rateLimitByUser(key: string, points = 60, duration = 60) {
       });
   };
 }
+
+/**
+ * Apply rate limiting by both IP address and email address.
+ * Used for contact form submissions to prevent abuse from both perspectives.
+ * Limits by IP and email independently - if either limit is exceeded, the request is rejected.
+ *
+ * @param key - Rate limiter key prefix
+ * @param points - Maximum requests allowed
+ * @param duration - Time window in seconds
+ */
+export function rateLimitByIPAndEmail(key: string, points = 5, duration = 3600) {
+  return (req: Request, res: Response, next: NextFunction): void => {
+    const ipLimiter = getLimiter(`${key}:ip`, points, duration);
+    const emailLimiter = getLimiter(`${key}:email`, points, duration);
+    const ip = extractClientIpForRateLimit(req);
+    const email =
+      typeof req.body === "object" && req.body !== null && "email" in req.body
+        ? (req.body as { email?: unknown }).email
+        : undefined;
+
+    let normalizedEmail: string | null = null;
+    if (email && typeof email === "string") {
+      const trimmed = email.trim().toLowerCase();
+      if (trimmed.includes("@") && trimmed.length > 0) {
+        normalizedEmail = trimmed;
+      }
+    }
+
+    const ipPromise = ipLimiter.consume(ip);
+    const emailPromise = normalizedEmail
+      ? emailLimiter.consume(`email:${normalizedEmail}`)
+      : Promise.resolve();
+
+    Promise.all([ipPromise, emailPromise])
+      .then(() => next())
+      .catch((rejRes: { msBeforeNext?: number }) => {
+        const retryAfter = Math.ceil((rejRes.msBeforeNext || duration * 1000) / 1000);
+        res.setHeader("Retry-After", retryAfter.toString());
+        res.status(429).json({
+          error: {
+            code: "RATE_LIMITED",
+            message: "Too many contact form submissions. Please try again later.",
+            requestId: res.locals.requestId,
+            retryAfter,
+          },
+        });
+      });
+  };
+}

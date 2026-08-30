@@ -178,6 +178,25 @@ export async function getHealthStatus(): Promise<HealthStatusResponse> {
   return res.data;
 }
 
+export type SubmitContactRequest = {
+  email: string;
+  topic: string;
+  message: string;
+};
+
+export type SubmitContactResponse = {
+  success: boolean;
+  data: {
+    id: string;
+    createdAt: string;
+  };
+};
+
+export async function submitContact(payload: SubmitContactRequest): Promise<SubmitContactResponse> {
+  const res = await rawHttpClient.post<SubmitContactResponse>("/api/v1/contact", payload);
+  return res.data;
+}
+
 export type LoginRequest = {
   email: string;
   password: string;
@@ -387,6 +406,75 @@ export type AcceptTermsResponse = {
 
 export async function acceptTerms(payload: AcceptTermsRequest): Promise<AcceptTermsResponse> {
   const res = await apiClient.post<AcceptTermsResponse>("/api/v1/auth/terms/accept", payload);
+  return res.data;
+}
+
+export type RevokeTermsResponse = {
+  message: string;
+};
+
+export async function revokeTerms(): Promise<RevokeTermsResponse> {
+  const res = await apiClient.post<RevokeTermsResponse>("/api/v1/auth/terms/revoke");
+  return res.data;
+}
+
+export type AcceptPrivacyPolicyRequest = {
+  privacy_policy_accepted: boolean;
+};
+
+export type AcceptPrivacyPolicyResponse = {
+  message: string;
+};
+
+export async function acceptPrivacyPolicy(
+  payload: AcceptPrivacyPolicyRequest,
+): Promise<AcceptPrivacyPolicyResponse> {
+  const res = await apiClient.post<AcceptPrivacyPolicyResponse>(
+    "/api/v1/auth/privacy/accept",
+    payload,
+  );
+  return res.data;
+}
+
+export type RevokePrivacyPolicyResponse = {
+  message: string;
+};
+
+export async function revokePrivacyPolicy(): Promise<RevokePrivacyPolicyResponse> {
+  const res = await apiClient.post<RevokePrivacyPolicyResponse>("/api/v1/auth/privacy/revoke");
+  return res.data;
+}
+
+export interface LegalDocumentsStatus {
+  terms: {
+    accepted: boolean;
+    acceptedAt: string | null;
+    acceptedVersion: string | null;
+    currentVersion: string;
+    needsAcceptance: boolean;
+  };
+  privacy: {
+    accepted: boolean;
+    acceptedAt: string | null;
+    acceptedVersion: string | null;
+    currentVersion: string;
+    needsAcceptance: boolean;
+  };
+}
+
+export async function getLegalDocumentsStatus(): Promise<LegalDocumentsStatus> {
+  const res = await apiClient.get<LegalDocumentsStatus>("/api/v1/auth/legal-documents/status");
+  return res.data;
+}
+
+export interface LegalDocumentVersions {
+  terms: string;
+  privacy: string;
+  cookie: string;
+}
+
+export async function getLegalDocumentVersions(): Promise<LegalDocumentVersions> {
+  const res = await apiClient.get<LegalDocumentVersions>("/api/v1/auth/legal-documents/versions");
   return res.data;
 }
 
@@ -810,6 +898,34 @@ export async function getExerciseBreakdown(params: {
   to?: string; // ISO date string
 }): Promise<ExerciseBreakdown> {
   const res = await apiClient.get<ExerciseBreakdown>("/api/v1/progress/exercises", { params });
+  return res.data;
+}
+
+export interface VibePointsTrendPoint {
+  month: string;
+  points: number;
+}
+
+export interface VibePointsSeries {
+  type_code: string;
+  points: number;
+  trend: VibePointsTrendPoint[];
+}
+
+export interface VibePointsResponse {
+  period_months: number;
+  months: string[];
+  overall: {
+    points: number;
+    trend: VibePointsTrendPoint[];
+  };
+  vibes: VibePointsSeries[];
+}
+
+export async function getVibePoints(periodMonths: number = 12): Promise<VibePointsResponse> {
+  const res = await apiClient.get<VibePointsResponse>("/api/v1/progress/vibes", {
+    params: { months: periodMonths },
+  });
   return res.data;
 }
 

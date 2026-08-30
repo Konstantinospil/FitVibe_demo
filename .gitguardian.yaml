@@ -1,0 +1,9 @@
+# GitGuardian config - exclude test/CI paths where placeholder credentials are used
+# https://docs.gitguardian.com/secrets-detection/customize-detection/exclusion-rules
+version: 2
+
+secret:
+  # Test files and CI workflow use placeholder credentials, not real secrets
+  ignored_paths:
+    - "tests/**"
+    - ".github/workflows/ci.yml"

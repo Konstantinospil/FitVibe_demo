@@ -3,7 +3,7 @@
   "version": "2.0.0",
   "private": true,
   "type": "module",
-  "packageManager": "pnpm@9.14.4",
+  "packageManager": "pnpm@10.28.2",
   "engines": {
     "node": ">=18.19"
   },
@@ -22,8 +22,10 @@
     "test:visual:update": "pnpm --filter @fitvibe/frontend run build && playwright test --config tests/frontend/visual/config/playwright.config.ts --update-snapshots",
     "test:coverage:gate": "node tests/qa/check-coverage.cjs",
     "perf:test": "node tests/perf/run-local-perf.mjs",
+    "perf:lhci": "node tests/perf/run-lhci-local.mjs",
     "qa:summary": "node tests/qa/generate-summary.mjs",
     "i18n:check": "node tests/qa/check-i18n.cjs",
+    "i18n:check:db": "pnpm --filter @fitvibe/backend run db:check-i18n",
     "security:scan": "node tests/security/run-security-checks.mjs",
     "typecheck": "turbo run typecheck",
     "openapi:build": "pnpm --filter @fitvibe/backend run openapi:build",
@@ -62,13 +64,26 @@
   },
   "pnpm": {
     "overrides": {
+      "fast-xml-parser": ">=5.3.6",
+      "diff": "^4.0.4",
+      "lodash-es": "^4.17.23",
+      "lodash": "^4.17.23",
+      "@remix-run/router": "1.23.2",
       "chrome-launcher": "^1.2.1",
+      "preact": "10.28.2",
       "tmp": "^0.2.4",
       "glob": "link:packages/patched-glob",
       "esbuild": "^0.25.0",
       "js-yaml": "^4.1.1",
-      "jws": "^4.0.1",
-      "@smithy/core": "^3.18.7"
+      "jws": "4.0.1",
+      "nodemailer": "7.0.11",
+      "@smithy/core": "^3.18.7",
+      "qs": ">=6.14.2",
+      "express@4": "4.22.0",
+      "minimatch@3.1.2": "3.1.3",
+      "minimatch@5.1.6": "5.1.7",
+      "minimatch@9.0.5": "9.0.6",
+      "ajv": "^6.14.0"
     }
   },
   "overrides": {
