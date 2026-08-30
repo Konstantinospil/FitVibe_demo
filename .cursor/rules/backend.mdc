@@ -1,0 +1,18 @@
+---
+description: Backend modules, Express, Zod, HttpError, Knex, and idempotency
+globs: apps/backend/**/*.ts
+alwaysApply: false
+---
+
+# Backend
+
+Controller → Service → Repository. Keep controllers thin.
+
+Modules: `apps/backend/src/modules/<name>/` with `*.routes.ts`, `*.controller.ts`, `*.service.ts`, `*.repository.ts`, `*.schemas.ts`, `*.types.ts`. Register in `apps/backend/src/modules/index.ts`. Layout: `apps/backend/src/modules/README.md`.
+
+- Wrap handlers with `asyncHandler`. Validate with Zod at the HTTP boundary.
+- Throw `HttpError(status, code, message)` (`apps/backend/src/utils/http.ts`). JSON: `{ error: { code, message, details, requestId } }`.
+- State-changing routes honor `Idempotency-Key` (`apps/backend/src/modules/common/idempotency.service.ts`).
+- `/api/v1/`. Match the module's JSON naming (TDD target camelCase; some routes are snake_case).
+- Knex only (parameterized). Transactions for multi-step writes.
+- Migrations: `apps/backend/src/db/migrations/YYYYMMDDHHMM_description.ts` with `up` and `down`. Never edit a migration that already ran. Apply with `pnpm --filter @fitvibe/backend db:migrate`.

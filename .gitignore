@@ -130,8 +130,13 @@ docker-compose.override.yml
 # --- Documentation: Implementation folder (planning/reviews) ---
 docs/6.Implementation/
 
-# --- Cursor IDE configuration (user-specific, should not be committed) ---
-.cursor/
+# --- Cursor local/runtime config ---
+# Use .cursor/* so rules/skills can be re-included. A trailing slash on .cursor/ blocks un-ignore.
+.cursor/*
+!.cursor/rules/
+!.cursor/rules/**
+!.cursor/skills/
+!.cursor/skills/**
 .cursorrules
 
 # --- Misc ---
