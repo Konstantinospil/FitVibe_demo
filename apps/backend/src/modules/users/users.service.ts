@@ -97,7 +97,7 @@ type UserStateHistoryRow = {
   changed_at: string;
 };
 
-function cloneExportRows(rows: GenericRow[]): GenericRow[] {
+function cloneExportRows<T extends object>(rows: T[]): T[] {
   return rows.map((row) => ({ ...row }));
 }
 
@@ -847,7 +847,9 @@ export async function collectUserData(userId: string): Promise<UserDataExportBun
     throw new HttpError(404, "USER_NOT_FOUND", "USER_NOT_FOUND");
   }
 
-  const contacts = await db<ContactRow>("user_contacts").where({ user_id: userId });
+  const contacts = (await db("user_contacts").where({
+    user_id: userId,
+  })) as unknown as ContactRow[];
   const profileRow = await db<ProfileRow>("profiles")
     .where({ user_id: userId })
     .first<ProfileRow>();
@@ -918,7 +920,11 @@ export async function collectUserData(userId: string): Promise<UserDataExportBun
       .where({ user_id: userId })
       .first(),
   ]);
-  const metrics = { bio: bioValues, perf: perfValues, consents };
+  const metrics = {
+    bio: bioValues as unknown as GenericRow[],
+    perf: perfValues as unknown as GenericRow[],
+    consents: consents as unknown as GenericRow[],
+  };
 
   const sessionIds = sessions.map((session) => session.id);
   const totalPoints = pointsHistory.reduce((sum, record) => sum + Number(record.points ?? 0), 0);
