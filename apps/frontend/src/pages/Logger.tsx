@@ -112,11 +112,11 @@ const Logger: React.FC = () => {
           setSessionVisibility(data.visibility as "private" | "public" | "link");
         }
 
-        // Start session timer if not already started
+        // Start session timer if not already started. Use Date.now() so visual
+        // tests can freeze elapsed time without replacing the Date constructor.
         if (data.status === "planned") {
-          const now = new Date();
+          const now = new Date(Date.now());
           setSessionStartTime(now);
-          // Update session status to in_progress
           await updateSession(sessionId, {
             status: "in_progress",
             started_at: now.toISOString(),
@@ -142,11 +142,12 @@ const Logger: React.FC = () => {
       return;
     }
 
-    sessionIntervalRef.current = setInterval(() => {
-      const now = new Date();
-      const elapsed = Math.floor((now.getTime() - sessionStartTime.getTime()) / 1000);
+    const tick = () => {
+      const elapsed = Math.max(0, Math.floor((Date.now() - sessionStartTime.getTime()) / 1000));
       setSessionElapsedSeconds(elapsed);
-    }, 1000);
+    };
+    tick();
+    sessionIntervalRef.current = setInterval(tick, 1000);
 
     return () => {
       if (sessionIntervalRef.current) {
@@ -365,7 +366,11 @@ const Logger: React.FC = () => {
               <div className="flex flex--align-center flex--gap-15">
                 <div>
                   <div className="text-085 text-secondary mb-025">Session Time</div>
-                  <div className="text-xl font-weight-600" style={{ fontFamily: "monospace" }}>
+                  <div
+                    className="text-xl font-weight-600"
+                    style={{ fontFamily: "monospace" }}
+                    data-testid="session-elapsed-time"
+                  >
                     {formatTime(sessionElapsedSeconds)}
                   </div>
                 </div>

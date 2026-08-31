@@ -61,6 +61,22 @@ export async function prepareVisualPage(
   }
 }
 
+async function waitForVisualAssets(page: Page): Promise<void> {
+  await page.evaluate(async () => {
+    await document.fonts.ready;
+    await Promise.all(
+      [...document.images].map((img) =>
+        img.complete
+          ? Promise.resolve()
+          : new Promise<void>((resolve) => {
+              img.addEventListener("load", () => resolve(), { once: true });
+              img.addEventListener("error", () => resolve(), { once: true });
+            }),
+      ),
+    );
+  });
+}
+
 export async function waitForAppReady(page: Page): Promise<void> {
   await page.waitForLoadState("domcontentloaded");
   await page.locator("#login-shell").waitFor({ state: "detached", timeout: 10_000 });
@@ -68,7 +84,7 @@ export async function waitForAppReady(page: Page): Promise<void> {
   if (bootErrors?.length) {
     throw new Error(`App failed to boot: ${bootErrors.join("; ")}`);
   }
-  await page.evaluate(() => document.fonts.ready);
+  await waitForVisualAssets(page);
 }
 
 export async function capturePageScreenshot(
@@ -81,6 +97,7 @@ export async function capturePageScreenshot(
   if (options?.waitFor) {
     await page.locator(options.waitFor).first().waitFor({ state: "visible", timeout: 15_000 });
   }
+  await waitForVisualAssets(page);
   await page
     .locator('[aria-label="Switch to light mode"], [aria-label="Switch to dark mode"]')
     .first()
@@ -95,6 +112,7 @@ export async function capturePageScreenshot(
     mask: masks,
     fullPage: options?.locator ? false : (options?.fullPage ?? true),
     animations: "disabled",
+    timeout: 15_000,
   });
 }
 

@@ -16,8 +16,8 @@ export async function getDynamicMasks(page: Page) {
     page.locator("[data-testid*='loader'], [data-testid*='spinner'], [aria-label*='loading']"),
     // Live counters
     page.locator("[data-testid*='counter'], [data-testid*='count']"),
-    // Logger elapsed timer ticks independently of Date.now()
-    page.getByText("Session Time", { exact: true }).locator("xpath=following-sibling::*[1]"),
+    // Logger elapsed timer (frozen via Date.now() in visual tests, still masked)
+    page.getByTestId("session-elapsed-time"),
     // User-generated content that may vary
     page.locator("[data-testid*='user-content']"),
   ];

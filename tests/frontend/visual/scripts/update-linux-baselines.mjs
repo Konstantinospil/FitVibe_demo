@@ -4,6 +4,8 @@
  * (same image the CI visual job uses). Does not use docker compose.
  *
  * Requires Docker Desktop. Starts host `vite preview` if port 4173 is free.
+ * Extra argv is forwarded to Playwright (spec files, --project, …).
+ * UPDATE_SNAPSHOTS=none compares without rewriting; default is "changed".
  */
 import { spawn, spawnSync } from "node:child_process";
 import { connect } from "node:net";
@@ -22,7 +24,7 @@ const run = (command, args, options = {}) => {
   const result = spawnSync(command, args, {
     stdio: "inherit",
     cwd: repoRoot,
-    shell: false,
+    shell: process.platform === "win32" && command.endsWith(".cmd"),
     env: { ...process.env, MSYS_NO_PATHCONV: "1", ...options.env },
     ...options,
   });
@@ -94,9 +96,12 @@ run(dockerCmd, [
   "DISABLE_WEBSERVER=true",
   "-e",
   "CI=true",
+  "-e",
+  `UPDATE_SNAPSHOTS=${process.env.UPDATE_SNAPSHOTS || "changed"}`,
   PLAYWRIGHT_IMAGE,
   "bash",
   innerScript,
+  ...process.argv.slice(2),
 ]);
 
 console.log("Linux baselines written next to the specs as *-linux.png");
