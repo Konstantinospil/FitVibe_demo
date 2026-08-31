@@ -16,6 +16,16 @@ export function createTestId(prefix: string = "test"): string {
   return `${prefix}-${Math.random().toString(36).slice(2)}`;
 }
 
+/**
+ * RFC1918 IPv4 unique to this call. Integration tests share one database, so
+ * brute-force counters keyed by IP must not reuse a hardcoded address.
+ */
+export function createTestIp(): string {
+  const octet = (): number => Math.floor(Math.random() * 256);
+  const last = 1 + Math.floor(Math.random() * 254);
+  return `10.${octet()}.${octet()}.${last}`;
+}
+
 export async function wait(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }

@@ -16,6 +16,7 @@ import {
   withDatabaseErrorHandling,
   isDatabaseAvailable,
   ensureUsernameColumnExists,
+  createTestIp,
 } from "../../setup/test-helpers.js";
 import { getCurrentTermsVersion } from "../../../apps/backend/src/config/terms.js";
 
@@ -46,6 +47,7 @@ describe("Integration: Lockout Error Details", () => {
     await withDatabaseErrorHandling(async () => {
       const { env } = await import("../../../apps/backend/src/config/env.js");
       (env as { readOnlyMode: boolean }).readOnlyMode = false;
+      (env as { trustProxy: boolean }).trustProxy = true;
 
       await truncateAll();
       await ensureRolesSeeded();
@@ -67,7 +69,7 @@ describe("Integration: Lockout Error Details", () => {
       }
       const email = "locked@example.com";
       const password = "ValidPassword123!";
-      const ipAddress = "192.168.1.1";
+      const ipAddress = createTestIp();
 
       // Create a valid user
       const passwordHash = await bcrypt.hash(password, 12);
@@ -119,7 +121,7 @@ describe("Integration: Lockout Error Details", () => {
         console.warn("Skipping test: database unavailable");
         return;
       }
-      const ipAddress = "192.168.1.200";
+      const ipAddress = createTestIp();
 
       // Make 4 failed attempts with different emails to approach the 5 distinct email limit
       // (IP lockout triggers at 10 attempts OR 5 distinct emails)
@@ -163,7 +165,7 @@ describe("Integration: Lockout Error Details", () => {
         return;
       }
       const email = "warning@example.com";
-      const ipAddress = "192.168.1.300";
+      const ipAddress = createTestIp();
 
       // Create a valid user
       const passwordHash = await bcrypt.hash("ValidPassword123!", 12);
@@ -213,7 +215,7 @@ describe("Integration: Lockout Error Details", () => {
         return;
       }
       const email = "nowarning@example.com";
-      const ipAddress = "192.168.1.400";
+      const ipAddress = createTestIp();
 
       // Create a valid user
       const passwordHash = await bcrypt.hash("ValidPassword123!", 12);

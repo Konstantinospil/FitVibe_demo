@@ -225,6 +225,19 @@ describe("Auth Repository", () => {
       expect(result).toEqual(mockUser);
       expect(newBuilder.insert).toHaveBeenCalled();
     });
+
+    it("should reject createUser when alias and username are missing", async () => {
+      await expect(
+        authRepository.createUser({
+          id: userId,
+          display_name: "New User",
+          status: "active",
+          role_code: "athlete",
+          password_hash: "hashed",
+          primaryEmail: email,
+        }),
+      ).rejects.toThrow("createUser requires a non-empty alias");
+    });
   });
 
   describe("updateUserStatus", () => {

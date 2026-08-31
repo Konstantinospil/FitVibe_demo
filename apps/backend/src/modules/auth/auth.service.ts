@@ -847,7 +847,9 @@ export async function login(
       ip: context.ip ?? null,
       requestId: context.requestId ?? null,
     });
-    await attachAnonymousConsents(user.id, ipAddress);
+    if (isValidUUID(user.id)) {
+      await attachAnonymousConsents(user.id, ipAddress);
+    }
 
     return {
       requires2FA: false,
@@ -972,7 +974,9 @@ export async function verify2FALogin(
     ip: context.ip ?? null,
     requestId: context.requestId ?? null,
   });
-  await attachAnonymousConsents(user.id, context.ip ?? ipAddress ?? "unknown");
+  if (isValidUUID(user.id)) {
+    await attachAnonymousConsents(user.id, context.ip ?? ipAddress ?? "unknown");
+  }
 
   // Clean up pending session
   await deletePending2FASession(pendingSessionId);

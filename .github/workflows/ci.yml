@@ -796,7 +796,9 @@ jobs:
         env:
           NODE_ENV: test
           CI: "true"
-        run: pnpm --filter @fitvibe/backend exec jest --maxWorkers=2 --testMatch="**/integration/**/*.integration.test.ts" --testPathIgnorePatterns="/node_modules/|verification-resend-limit\\.test\\.ts$|login-enumeration\\.test\\.ts$" --forceExit
+        # maxWorkers=1: these suites truncate a shared Postgres DB and IP-keyed
+        # brute-force counters collide when two workers run in parallel.
+        run: pnpm --filter @fitvibe/backend exec jest --maxWorkers=1 --testMatch="**/integration/**/*.integration.test.ts" --testPathIgnorePatterns="/node_modules/|verification-resend-limit\\.test\\.ts$|login-enumeration\\.test\\.ts$" --forceExit
 
       - name: Job summary
         if: always()
@@ -1011,7 +1013,8 @@ jobs:
         timeout-minutes: 20
         env:
           NODE_ENV: test
-        run: pnpm --filter @fitvibe/backend exec jest --maxWorkers=2 --testMatch="**/integration/**/*.integration.test.ts" --testPathIgnorePatterns="/node_modules/|verification-resend-limit\\.test\\.ts$|login-enumeration\\.test\\.ts$"
+        # Shared test DB cannot be truncated safely by parallel Jest workers.
+        run: pnpm --filter @fitvibe/backend exec jest --maxWorkers=1 --testMatch="**/integration/**/*.integration.test.ts" --testPathIgnorePatterns="/node_modules/|verification-resend-limit\\.test\\.ts$|login-enumeration\\.test\\.ts$"
 
       - name: Job summary
         if: always()

@@ -83,8 +83,14 @@ export async function upsertConsent(
   return toCookieConsent(row);
 }
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 export async function attachAnonymousConsents(userId: string, ipAddress: string): Promise<number> {
   if (!ipAddress || ipAddress === "unknown") {
+    return 0;
+  }
+  // cookie_consents.user_id is uuid; skip placeholders like "user-123"
+  if (!UUID_RE.test(userId)) {
     return 0;
   }
   return db(COOKIE_CONSENTS_TABLE)

@@ -130,4 +130,16 @@ describe("Consent Repository", () => {
       expect(result.id).toBe("consent-2");
     });
   });
+
+  describe("attachAnonymousConsents", () => {
+    it("skips the update when userId is not a UUID", async () => {
+      const dbModule = await import("../../../../apps/backend/src/db/connection.js");
+      const dbFn = dbModule.db as jest.Mock;
+
+      const result = await consentRepository.attachAnonymousConsents("user-123", "203.0.113.1");
+
+      expect(result).toBe(0);
+      expect(dbFn).not.toHaveBeenCalled();
+    });
+  });
 });

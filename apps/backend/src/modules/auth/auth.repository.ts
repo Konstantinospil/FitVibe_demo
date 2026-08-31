@@ -112,7 +112,9 @@ export async function findUserById(id: string): Promise<AuthUserRecord | undefin
 
 export async function createUser(input: {
   id: string;
-  alias: string;
+  alias?: string;
+  /** Accepted as an alias of `alias` so existing callers keep working. */
+  username?: string;
   display_name: string;
   locale?: string;
   preferred_lang?: string;
@@ -125,6 +127,11 @@ export async function createUser(input: {
   terms_accepted_at?: string;
   terms_version?: string;
 }): Promise<AuthUserRecord | undefined> {
+  const alias = (input.alias ?? input.username ?? "").trim();
+  if (!alias) {
+    throw new Error("createUser requires a non-empty alias");
+  }
+
   const now = new Date().toISOString();
   return db.transaction(async (trx) => {
     await trx(USERS_TABLE).insert({
@@ -156,7 +163,7 @@ export async function createUser(input: {
 
     await trx(PROFILES_TABLE).insert({
       user_id: input.id,
-      alias: input.alias,
+      alias,
       alias_changed_at: now,
       visibility: "private",
       created_at: now,

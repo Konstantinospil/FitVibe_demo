@@ -22,6 +22,11 @@ jest.mock("../../../apps/backend/src/modules/auth/auth.repository.js");
 jest.mock("../../../apps/backend/src/modules/auth/twofa.service.js");
 jest.mock("../../../apps/backend/src/modules/auth/pending-2fa.repository.js");
 jest.mock("../../../apps/backend/src/modules/auth/bruteforce.repository.js");
+jest.mock("../../../apps/backend/src/modules/consent/consent.repository.js", () => ({
+  attachAnonymousConsents: jest.fn().mockResolvedValue(0),
+  getConsentByIp: jest.fn(),
+  upsertConsent: jest.fn(),
+}));
 jest.mock("../../../apps/backend/src/db/index.js", () => {
   const mockInsert = jest.fn().mockResolvedValue([]);
   const mockTransaction = jest.fn((callback) => {

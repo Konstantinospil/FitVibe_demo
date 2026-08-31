@@ -24,6 +24,7 @@ import {
   ensureRolesSeeded,
   isDatabaseAvailable,
   ensureUsernameColumnExists,
+  createTestIp,
 } from "../../setup/test-helpers.js";
 import { getCurrentTermsVersion } from "../../../apps/backend/src/config/terms.js";
 import { v4 as uuidv4 } from "uuid";
@@ -56,7 +57,7 @@ describe("Integration: IP-Based Brute Force Protection", () => {
       // Ensure read-only mode is disabled for tests
       const { env } = await import("../../../apps/backend/src/config/env.js");
       (env as { readOnlyMode: boolean }).readOnlyMode = false;
-      // Use X-Forwarded-For in tests so each test's IP (e.g. 192.168.1.200) is used
+      // Use X-Forwarded-For in tests so each test's unique IP is used
       // instead of the shared socket IP (127.0.0.1)
       (env as { trustProxy: boolean }).trustProxy = true;
 
@@ -118,7 +119,7 @@ describe("Integration: IP-Based Brute Force Protection", () => {
         console.warn("Skipping test: database unavailable");
         return;
       }
-      const ipAddress = "192.168.1.100";
+      const ipAddress = createTestIp();
 
       // Make 9 failed attempts with same email (should not lock yet; lockout is at 10 total)
       for (let i = 1; i <= 9; i++) {
@@ -176,7 +177,7 @@ describe("Integration: IP-Based Brute Force Protection", () => {
         console.warn("Skipping test: database unavailable");
         return;
       }
-      const ipAddress = "192.168.1.200";
+      const ipAddress = createTestIp();
 
       // Make 4 failed attempts with different emails (should not lock yet)
       for (let i = 1; i <= 4; i++) {
@@ -222,7 +223,7 @@ describe("Integration: IP-Based Brute Force Protection", () => {
         console.warn("Skipping test: database unavailable");
         return;
       }
-      const ipAddress = "192.168.1.300";
+      const ipAddress = createTestIp();
       const email = "valid@example.com";
       const password = "ValidPassword123!";
 
@@ -283,7 +284,7 @@ describe("Integration: IP-Based Brute Force Protection", () => {
         console.warn("Skipping test: database unavailable");
         return;
       }
-      const ipAddress = "192.168.1.400";
+      const ipAddress = createTestIp();
       const email = "success@example.com";
       const password = "ValidPassword123!";
 
@@ -341,7 +342,7 @@ describe("Integration: IP-Based Brute Force Protection", () => {
         console.warn("Skipping test: database unavailable");
         return;
       }
-      const ipAddress = "192.168.1.500";
+      const ipAddress = createTestIp();
       const email = "mixed@example.com";
       const password = "ValidPassword123!";
 
@@ -408,7 +409,7 @@ describe("Integration: IP-Based Brute Force Protection", () => {
         console.warn("Skipping test: database unavailable");
         return;
       }
-      const ipAddress = "192.168.1.600";
+      const ipAddress = createTestIp();
       const email = "test@example.com";
 
       // Lock the IP first (10 attempts with different emails)
@@ -452,7 +453,7 @@ describe("Integration: IP-Based Brute Force Protection", () => {
         console.warn("Skipping test: database unavailable");
         return;
       }
-      const ipAddress = "192.168.1.700";
+      const ipAddress = createTestIp();
       const email = "account@example.com";
 
       // Make 5 failed attempts with same email (triggers account-level lockout)
@@ -498,7 +499,7 @@ describe("Integration: IP-Based Brute Force Protection", () => {
         console.warn("Skipping test: database unavailable");
         return;
       }
-      const ipAddress = "192.168.1.800";
+      const ipAddress = createTestIp();
 
       // Make 10 attempts
       for (let i = 1; i <= 10; i++) {
@@ -528,7 +529,7 @@ describe("Integration: IP-Based Brute Force Protection", () => {
         console.warn("Skipping test: database unavailable");
         return;
       }
-      const ipAddress = "192.168.1.900";
+      const ipAddress = createTestIp();
       const { clearRateLimiters } =
         await import("../../../apps/backend/src/middlewares/rate-limit.js");
 
@@ -563,7 +564,7 @@ describe("Integration: IP-Based Brute Force Protection", () => {
         console.warn("Skipping test: database unavailable");
         return;
       }
-      const ipAddress = "192.168.1.1000";
+      const ipAddress = createTestIp();
       const { clearRateLimiters } =
         await import("../../../apps/backend/src/middlewares/rate-limit.js");
 
@@ -600,8 +601,8 @@ describe("Integration: IP-Based Brute Force Protection", () => {
         console.warn("Skipping test: database unavailable");
         return;
       }
-      const ip1 = "192.168.1.1100";
-      const ip2 = "192.168.1.1200";
+      const ip1 = createTestIp();
+      const ip2 = createTestIp();
 
       // Make 10 attempts from IP1 (should lock)
       for (let i = 1; i <= 10; i++) {
