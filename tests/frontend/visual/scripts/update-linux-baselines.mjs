@@ -12,6 +12,7 @@ import { fileURLToPath } from "node:url";
 
 const PLAYWRIGHT_IMAGE = "mcr.microsoft.com/playwright:v1.57.0-jammy";
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "../../../..");
+const frontendDir = resolve(repoRoot, "apps/frontend");
 const dockerRepo = repoRoot.replaceAll("\\", "/");
 const innerScript = "/work/tests/frontend/visual/scripts/linux-inner.sh";
 const pnpmCmd = process.platform === "win32" ? "pnpm.cmd" : "pnpm";
@@ -47,8 +48,6 @@ if (!(await isPreviewUp())) {
   const preview = spawn(
     pnpmCmd,
     [
-      "--filter",
-      "@fitvibe/frontend",
       "exec",
       "vite",
       "preview",
@@ -61,7 +60,7 @@ if (!(await isPreviewUp())) {
       "dist/client",
     ],
     {
-      cwd: repoRoot,
+      cwd: frontendDir,
       shell: process.platform === "win32",
       stdio: "ignore",
       detached: true,

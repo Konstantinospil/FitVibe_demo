@@ -4,6 +4,7 @@ import { defineConfig } from "@playwright/test";
 
 const configDir = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(configDir, "../../../..");
+const frontendDir = path.join(repoRoot, "apps/frontend");
 
 const light = { name: "light", colorScheme: "light" as const };
 const dark = { name: "dark", colorScheme: "dark" as const };
@@ -16,7 +17,7 @@ const viewports = [
 ];
 
 const previewCommand =
-  "corepack pnpm --filter @fitvibe/frontend exec vite preview --host 127.0.0.1 --port 4173 --strictPort --outDir dist/client";
+  "corepack pnpm exec vite preview --host 127.0.0.1 --port 4173 --strictPort --outDir dist/client";
 
 export default defineConfig({
   testDir: "../",
@@ -73,7 +74,7 @@ export default defineConfig({
       ? undefined
       : {
           command: previewCommand,
-          cwd: repoRoot,
+          cwd: frontendDir,
           url: "http://127.0.0.1:4173",
           timeout: 120_000,
           reuseExistingServer: true,

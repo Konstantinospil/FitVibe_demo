@@ -1,6 +1,8 @@
+const path = require("node:path");
 const { defineConfig } = require("@playwright/test");
 const DEFAULT_BASE_URL = "http://127.0.0.1:4173";
 const baseURL = process.env.PLAYWRIGHT_BASE_URL || DEFAULT_BASE_URL;
+const frontendDir = path.resolve(__dirname, "../../../apps/frontend");
 
 module.exports = defineConfig({
   testDir: __dirname,
@@ -15,7 +17,8 @@ module.exports = defineConfig({
   },
   webServer: {
     command:
-      "corepack pnpm --filter @fitvibe/frontend exec vite preview --host 127.0.0.1 --port 4173 --strictPort",
+      "corepack pnpm exec vite preview --host 127.0.0.1 --port 4173 --strictPort --outDir dist/client",
+    cwd: frontendDir,
     url: baseURL,
     timeout: 120_000,
     reuseExistingServer: !process.env.CI,

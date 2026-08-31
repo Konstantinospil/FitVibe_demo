@@ -1481,18 +1481,41 @@ jobs:
 
       - name: Start preview server
         timeout-minutes: 10
+        working-directory: apps/frontend
         run: |
-          pnpm --filter @fitvibe/frontend exec vite preview --host 127.0.0.1 --port 4173 --strictPort --outDir dist/client &
-          echo $! > preview-server.pid
-          for i in {1..30}; do
-            if curl -fsS http://127.0.0.1:4173 >/dev/null 2>&1; then
-              echo "Preview server started"
-              exit 0
-            fi
-            sleep 1
-          done
-          echo "Preview server did not start in time" >&2
-          exit 1
+          if [ ! -f dist/client/index.html ]; then
+            echo "Missing dist/client/index.html after build:visual" >&2
+            ls -la dist dist/client 2>/dev/null || true
+            exit 1
+          fi
+          # `pnpm --filter … exec` keeps the workspace root as cwd, so Vite would
+          # preview an empty repo-root dist/client (HTTP 404) while still printing Local.
+          pnpm exec vite preview --host 0.0.0.0 --port 4173 --strictPort --outDir dist/client &
+          echo $! > "${GITHUB_WORKSPACE}/preview-server.pid"
+          python3 - <<'PY'
+          import http.client
+          import sys
+          import time
+
+          last = "no attempt"
+          for _ in range(60):
+              try:
+                  conn = http.client.HTTPConnection("127.0.0.1", 4173, timeout=2)
+                  conn.request("GET", "/")
+                  response = conn.getresponse()
+                  status = response.status
+                  response.read()
+                  conn.close()
+                  if 200 <= status < 400:
+                      print(f"Preview server started (HTTP {status})")
+                      sys.exit(0)
+                  last = f"HTTP {status}"
+              except Exception as exc:
+                  last = str(exc)
+              time.sleep(2)
+          print(f"Preview server did not start in time ({last})", file=sys.stderr)
+          sys.exit(1)
+          PY
 
       - name: Run visual regression tests
         timeout-minutes: 20
