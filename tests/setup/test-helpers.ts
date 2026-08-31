@@ -59,10 +59,13 @@ export async function withTransaction<T>(
 export async function ensureRolesSeeded(): Promise<void> {
   const db = await getDb();
   const ROLES = [
-    { code: "admin", description: "Platform administrator" },
-    { code: "coach", description: "Coach / trainer with team oversight" },
-    { code: "athlete", description: "Individual athlete" },
-    { code: "support", description: "Support staff (nutrition, physio, etc.)" },
+    { code: "admin", description: "Keeps the map: platform steward for the six stories" },
+    {
+      code: "coach",
+      description: "Mentor for a chapter, with the athlete's consent — then you leave",
+    },
+    { code: "athlete", description: "The one who must live all six elemental stories" },
+    { code: "support", description: "Mends the hero: nutrition, physio, and care between quests" },
   ];
 
   try {
@@ -79,6 +82,38 @@ export async function ensureRolesSeeded(): Promise<void> {
 }
 
 /**
+ * Ensure the weight_kg bio attribute exists.
+ * Profile weight updates write to bio_attribute_values and need this catalog row.
+ */
+export async function ensureWeightAttributeSeeded(): Promise<void> {
+  const db = await getDb();
+  try {
+    await db("bio_attributes")
+      .insert({
+        key: "weight_kg",
+        normalized_key: "weight",
+        label: "Weight",
+        unit_type: "weight",
+        granularity: "kg",
+        measurement_system: "metric",
+        min_value_metric: 20,
+        max_value_metric: 400,
+        min_value_imperial: 44.09,
+        max_value_imperial: 881.85,
+        is_default: true,
+      })
+      .onConflict("normalized_key")
+      .ignore();
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    if (errorMessage.includes("does not exist") || errorMessage.includes("relation")) {
+      return;
+    }
+    throw error;
+  }
+}
+
+/**
  * Ensure fitness_levels are seeded in the database.
  * This is needed for integration tests that update user fitness levels.
  * Uses onConflict to safely handle cases where fitness_levels already exist.
@@ -89,7 +124,8 @@ export async function ensureFitnessLevelsSeeded(): Promise<void> {
     { code: "beginner", description: "Getting started with consistent training" },
     { code: "intermediate", description: "Trains 3-4 times per week" },
     { code: "advanced", description: "Highly trained athlete" },
-    { code: "elite", description: "Elite level athlete" },
+    { code: "elite", description: "Lives every story at a high level" },
+    { code: "rehab", description: "Returning from injury / rehab focus" },
   ];
 
   try {
@@ -273,7 +309,8 @@ export async function truncateAll(): Promise<void> {
     // Ignore if we never set replica (or permission denied)
   }
 
-  // Ensure roles and fitness_levels are seeded after truncation (these tables are not truncated)
+  // Ensure lookup catalogs are seeded after truncation (these tables are not truncated)
   await ensureRolesSeeded();
   await ensureFitnessLevelsSeeded();
+  await ensureWeightAttributeSeeded();
 }

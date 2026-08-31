@@ -1,0 +1,398 @@
+[
+  {
+    "code": "first_session",
+    "name": "The First Tale",
+    "description": "Completed your very first training session — the story begins.",
+    "category": "milestone",
+    "icon": "spark",
+    "priority": 10,
+    "criteria": { "completed_sessions": 1 }
+  },
+  {
+    "code": "earth_initiate",
+    "name": "First Root",
+    "description": "Logged a Strength/Earth session and planted your feet.",
+    "category": "milestone",
+    "icon": "earth",
+    "priority": 11,
+    "criteria": { "type_code": "strength", "completed_sessions": 1 }
+  },
+  {
+    "code": "air_initiate",
+    "name": "First Flight",
+    "description": "Logged an Agility/Air session — yield, play, fly.",
+    "category": "milestone",
+    "icon": "air",
+    "priority": 12,
+    "criteria": { "type_code": "agility", "completed_sessions": 1 }
+  },
+  {
+    "code": "water_initiate",
+    "name": "First Tide",
+    "description": "Logged an Endurance/Water session and stayed with the current.",
+    "category": "milestone",
+    "icon": "water",
+    "priority": 13,
+    "criteria": { "type_code": "endurance", "completed_sessions": 1 }
+  },
+  {
+    "code": "fire_initiate",
+    "name": "First Spark",
+    "description": "Logged an Explosivity/Fire session — a spark that became a leap.",
+    "category": "milestone",
+    "icon": "fire",
+    "priority": 14,
+    "criteria": { "type_code": "explosivity", "completed_sessions": 1 }
+  },
+  {
+    "code": "shadow_initiate",
+    "name": "First Riddle",
+    "description": "Logged an Intelligence/Shadow session at the edge of the map.",
+    "category": "milestone",
+    "icon": "shadow",
+    "priority": 15,
+    "criteria": { "type_code": "intelligence", "completed_sessions": 1 }
+  },
+  {
+    "code": "aether_initiate",
+    "name": "First Mending",
+    "description": "Logged a Regeneration/Aether session — the sleep that mends the hero.",
+    "category": "milestone",
+    "icon": "aether",
+    "priority": 16,
+    "criteria": { "type_code": "regeneration", "completed_sessions": 1 }
+  },
+  {
+    "code": "streak_starter",
+    "name": "Streak Starter",
+    "description": "Completed sessions on 3 consecutive days.",
+    "category": "streak",
+    "icon": "flame",
+    "priority": 20,
+    "criteria": { "consecutive_days": 3 }
+  },
+  {
+    "code": "streak_7_day",
+    "name": "7-Day Streak",
+    "description": "Logged at least one session every day for 7 consecutive days.",
+    "category": "streak",
+    "icon": "flame",
+    "priority": 21,
+    "criteria": { "consecutive_days": 7 }
+  },
+  {
+    "code": "streak_30_day",
+    "name": "Month of Showing Up",
+    "description": "Logged at least one session every day for 30 consecutive days.",
+    "category": "streak",
+    "icon": "flame",
+    "priority": 22,
+    "criteria": { "consecutive_days": 30 }
+  },
+  {
+    "code": "session_5",
+    "name": "Five Tales",
+    "description": "Completed 5 training sessions.",
+    "category": "milestone",
+    "icon": "book",
+    "priority": 30,
+    "criteria": { "completed_sessions": 5 }
+  },
+  {
+    "code": "session_10",
+    "name": "Ten Sessions",
+    "description": "Completed 10 training sessions.",
+    "category": "milestone",
+    "icon": "book",
+    "priority": 31,
+    "criteria": { "completed_sessions": 10 }
+  },
+  {
+    "code": "session_25",
+    "name": "Quarter Century",
+    "description": "Completed 25 training sessions.",
+    "category": "milestone",
+    "icon": "book",
+    "priority": 32,
+    "criteria": { "completed_sessions": 25 }
+  },
+  {
+    "code": "session_50",
+    "name": "Fifty Sessions",
+    "description": "Completed 50 training sessions.",
+    "category": "milestone",
+    "icon": "book",
+    "priority": 33,
+    "criteria": { "completed_sessions": 50 }
+  },
+  {
+    "code": "session_100",
+    "name": "Century of Sessions",
+    "description": "Completed 100 training sessions.",
+    "category": "milestone",
+    "icon": "book",
+    "priority": 34,
+    "criteria": { "completed_sessions": 100 }
+  },
+  {
+    "code": "run_5k",
+    "name": "First 5K",
+    "description": "Covered at least 5 kilometers of running in a session.",
+    "category": "distance",
+    "icon": "run",
+    "priority": 40,
+    "criteria": { "run_distance_m": 5000 }
+  },
+  {
+    "code": "run_10k",
+    "name": "10K Run",
+    "description": "Covered at least 10 kilometers of running in a session.",
+    "category": "distance",
+    "icon": "run",
+    "priority": 41,
+    "criteria": { "run_distance_m": 10000 }
+  },
+  {
+    "code": "run_half",
+    "name": "Half Marathon",
+    "description": "Covered at least 21.1 kilometers of running in a session.",
+    "category": "distance",
+    "icon": "run",
+    "priority": 42,
+    "criteria": { "run_distance_m": 21100 }
+  },
+  {
+    "code": "ride_100k",
+    "name": "100K Ride",
+    "description": "Covered at least 100 kilometers of cycling in a session.",
+    "category": "distance",
+    "icon": "bike",
+    "priority": 43,
+    "criteria": { "ride_distance_m": 100000 }
+  },
+  {
+    "code": "row_5k",
+    "name": "5K Row",
+    "description": "Covered at least 5 kilometers of rowing in a session.",
+    "category": "distance",
+    "icon": "row",
+    "priority": 44,
+    "criteria": { "row_distance_m": 5000 }
+  },
+  {
+    "code": "cross_trainer",
+    "name": "Cross-Trainer",
+    "description": "Logged 4 distinct vibes in 7 days — wisdom from many places.",
+    "category": "balance",
+    "icon": "balance",
+    "priority": 50,
+    "criteria": { "distinct_type_codes": 4, "window_days": 7 }
+  },
+  {
+    "code": "all_the_tales",
+    "name": "All the Tales",
+    "description": "Trained all six vibes within 28 days. The whole story.",
+    "category": "balance",
+    "icon": "hexagram",
+    "priority": 51,
+    "criteria": { "all_type_codes": true, "window_days": 28 }
+  },
+  {
+    "code": "dual_duty",
+    "name": "Two Quests",
+    "description": "Completed two sessions in a single UTC day.",
+    "category": "milestone",
+    "icon": "sun",
+    "priority": 52,
+    "criteria": { "sessions_in_calendar_day": 2 }
+  },
+  {
+    "code": "earth_ten",
+    "name": "Ten Roots",
+    "description": "Completed 10 Strength/Earth sessions.",
+    "category": "milestone",
+    "icon": "earth",
+    "priority": 53,
+    "criteria": { "type_code": "strength", "completed_sessions": 10 }
+  },
+  {
+    "code": "air_ten",
+    "name": "Ten Flights",
+    "description": "Completed 10 Agility/Air sessions.",
+    "category": "milestone",
+    "icon": "air",
+    "priority": 54,
+    "criteria": { "type_code": "agility", "completed_sessions": 10 }
+  },
+  {
+    "code": "water_ten",
+    "name": "Ten Tides",
+    "description": "Completed 10 Endurance/Water sessions.",
+    "category": "milestone",
+    "icon": "water",
+    "priority": 55,
+    "criteria": { "type_code": "endurance", "completed_sessions": 10 }
+  },
+  {
+    "code": "fire_ten",
+    "name": "Ten Sparks",
+    "description": "Completed 10 Explosivity/Fire sessions.",
+    "category": "milestone",
+    "icon": "fire",
+    "priority": 56,
+    "criteria": { "type_code": "explosivity", "completed_sessions": 10 }
+  },
+  {
+    "code": "shadow_ten",
+    "name": "Ten Riddles",
+    "description": "Completed 10 Intelligence/Shadow sessions.",
+    "category": "milestone",
+    "icon": "shadow",
+    "priority": 57,
+    "criteria": { "type_code": "intelligence", "completed_sessions": 10 }
+  },
+  {
+    "code": "aether_ten",
+    "name": "Ten Mendings",
+    "description": "Completed 10 Regeneration/Aether sessions.",
+    "category": "milestone",
+    "icon": "aether",
+    "priority": 58,
+    "criteria": { "type_code": "regeneration", "completed_sessions": 10 }
+  },
+  {
+    "code": "mindful_finisher",
+    "name": "Mindful Finisher",
+    "description": "Logged a Regeneration session — close the tale kindly.",
+    "category": "regeneration",
+    "icon": "lotus",
+    "priority": 60,
+    "criteria": { "type_code": "regeneration", "completed_sessions": 1 }
+  },
+  {
+    "code": "aether_streak",
+    "name": "Aether Streak",
+    "description": "Completed 5 Regeneration/Aether sessions.",
+    "category": "regeneration",
+    "icon": "lotus",
+    "priority": 61,
+    "criteria": { "type_code": "regeneration", "completed_sessions": 5 }
+  },
+  {
+    "code": "early_bird",
+    "name": "Early Bird",
+    "description": "Started a session at or before 06:00 UTC.",
+    "category": "milestone",
+    "icon": "sunrise",
+    "priority": 70,
+    "criteria": { "start_hour_lte": 6 }
+  },
+  {
+    "code": "night_owl",
+    "name": "Night Owl",
+    "description": "Started a session at or after 21:00 UTC.",
+    "category": "milestone",
+    "icon": "moon",
+    "priority": 71,
+    "criteria": { "start_hour_gte": 21 }
+  },
+  {
+    "code": "pr_whisperer",
+    "name": "PR Whisperer",
+    "description": "Set your first personal record.",
+    "category": "milestone",
+    "icon": "medal",
+    "priority": 80,
+    "criteria": { "personal_records": 1 }
+  },
+  {
+    "code": "thanks_for_sharing",
+    "name": "Told in the Square",
+    "description": "Shared a session with followers or the public — a tale told on purpose.",
+    "category": "social",
+    "icon": "megaphone",
+    "priority": 90,
+    "criteria": { "visibility": ["public", "followers"] }
+  },
+  {
+    "code": "first_follow",
+    "name": "First Follow",
+    "description": "Followed your first athlete or coach.",
+    "category": "social",
+    "icon": "star",
+    "priority": 91,
+    "criteria": { "follower_count": 1 }
+  },
+  {
+    "code": "onboard_pro",
+    "name": "Onboard Pro",
+    "description": "Publish a structured plan with warm-ups, work, and deloads.",
+    "category": "role",
+    "icon": "clipboard",
+    "priority": 200,
+    "criteria": { "requires": "coaching" }
+  },
+  {
+    "code": "feedback_loop",
+    "name": "Feedback Loop",
+    "description": "Leave detailed post-session notes on 20 athlete workouts.",
+    "category": "role",
+    "icon": "loop",
+    "priority": 201,
+    "criteria": { "requires": "coaching" }
+  },
+  {
+    "code": "privacy_champion",
+    "name": "Privacy Champion",
+    "description": "Complete a GDPR mapping and DSR export drill.",
+    "category": "role",
+    "icon": "lock",
+    "priority": 210,
+    "criteria": { "requires": "admin_ops" }
+  },
+  {
+    "code": "guardian",
+    "name": "Guardian",
+    "description": "Configure RBAC and pass a permission audit.",
+    "category": "role",
+    "icon": "shield",
+    "priority": 211,
+    "criteria": { "requires": "admin_ops" }
+  },
+  {
+    "code": "backup_bard",
+    "name": "Backup Bard",
+    "description": "Restore from backup in a disaster-recovery drill.",
+    "category": "role",
+    "icon": "parachute",
+    "priority": 212,
+    "criteria": { "requires": "admin_ops" }
+  },
+  {
+    "code": "hype_squad",
+    "name": "Hype Squad",
+    "description": "Give 20 likes in a week.",
+    "category": "role",
+    "icon": "spark",
+    "priority": 220,
+    "criteria": { "requires": "social_stats" }
+  },
+  {
+    "code": "commentator",
+    "name": "Commentator",
+    "description": "Leave 10 constructive comments on workouts.",
+    "category": "role",
+    "icon": "comment",
+    "priority": 221,
+    "criteria": { "requires": "social_stats" }
+  },
+  {
+    "code": "starter_pack",
+    "name": "Starter Pack",
+    "description": "Publish a themed workout collection of at least six items.",
+    "category": "role",
+    "icon": "box",
+    "priority": 230,
+    "criteria": { "requires": "curation" }
+  }
+]

@@ -7,6 +7,8 @@ import { seed as seedExerciseTypes } from "../../../../apps/backend/src/db/seeds
 import { seed as seedUsers } from "../../../../apps/backend/src/db/seeds/005_users.js";
 import { seed as seedProfiles } from "../../../../apps/backend/src/db/seeds/Demo Data/006_profiles.js";
 import { seed as seedUserContacts } from "../../../../apps/backend/src/db/seeds/Demo Data/007_user_contacts.js";
+import { seed as seedGlobalExercises } from "../../../../apps/backend/src/db/seeds/008_global_exercises.js";
+import { seed as seedBadgeCatalog } from "../../../../apps/backend/src/db/seeds/009_badge_catalog.js";
 import { seed as seedExercises } from "../../../../apps/backend/src/db/seeds/Demo Data/009_exercises.js";
 import { seed as seedSessions } from "../../../../apps/backend/src/db/seeds/Demo Data/010_sessions.js";
 import { seed as seedSessionExercises } from "../../../../apps/backend/src/db/seeds/Demo Data/011_session_exercises.js";
@@ -96,7 +98,7 @@ describe("database seed modules", () => {
       seedFn: seedRoles,
       table: "roles",
       conflict: "code",
-      strategy: "ignore",
+      strategy: "merge",
       sampleMatcher: { code: "admin" },
     },
     {
@@ -112,7 +114,7 @@ describe("database seed modules", () => {
       seedFn: seedFitnessLevels,
       table: "fitness_levels",
       conflict: "code",
-      strategy: "ignore",
+      strategy: "merge",
       sampleMatcher: { code: "intermediate" },
     },
     {
@@ -120,7 +122,7 @@ describe("database seed modules", () => {
       seedFn: seedExerciseTypes,
       table: "exercise_types",
       conflict: "code",
-      strategy: "ignore",
+      strategy: "merge",
       sampleMatcher: { code: "strength" },
     },
     {
@@ -157,6 +159,45 @@ describe("database seed modules", () => {
       conflict: "id",
       strategy: "ignore",
       sampleMatcher: { type: "email" },
+    },
+    {
+      name: "global exercises",
+      seedFn: seedGlobalExercises,
+      table: "exercises",
+      conflict: "id",
+      strategy: "ignore",
+      assertInsert: (rows) => {
+        expect(rows).toHaveLength(300);
+        const byType = new Map<string, number>();
+        for (const row of rows as Array<{ type_code: string }>) {
+          byType.set(row.type_code, (byType.get(row.type_code) ?? 0) + 1);
+        }
+        for (const code of [
+          "strength",
+          "agility",
+          "endurance",
+          "explosivity",
+          "intelligence",
+          "regeneration",
+        ]) {
+          expect(byType.get(code)).toBe(50);
+        }
+      },
+    },
+    {
+      name: "badge catalog",
+      seedFn: seedBadgeCatalog,
+      table: "badge_catalog",
+      conflict: "code",
+      strategy: "merge",
+      sampleMatcher: { code: "first_session" },
+      assertInsert: (rows) => {
+        expect((rows as unknown[]).length).toBeGreaterThanOrEqual(36);
+        const roleOnly = (rows as Array<{ code: string; criteria: Record<string, unknown> }>).find(
+          (entry) => entry.code === "onboard_pro",
+        );
+        expect(roleOnly?.criteria).toEqual({ requires: "coaching" });
+      },
     },
     {
       name: "exercises",
@@ -276,15 +317,43 @@ describe("database seed modules", () => {
     },
   );
 
-  it("seeds badge catalog and user badges with correct strategies", async () => {
+  it("seeds identity contacts, profiles, and vibe rows from 005_users", async () => {
     const { knex, getChain } = createKnexMock();
+
+    await seedUsers(knex);
+
+    const contacts = getChain("user_contacts");
+    expect(contacts.onConflict).toHaveBeenCalledWith("id");
+    expect(contacts.ignore).toHaveBeenCalled();
+    expect(contacts.insert.mock.calls[0][0]).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ value: "admin@fitvibe.local" }),
+        expect.objectContaining({ value: "jane.doe@example.com" }),
+      ]),
+    );
+
+    const profiles = getChain("profiles");
+    expect(profiles.onConflict).toHaveBeenCalledWith("user_id");
+    expect(profiles.ignore).toHaveBeenCalled();
+    expect(profiles.insert.mock.calls[0][0]).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ alias: "admin", visibility: "private" }),
+        expect.objectContaining({ alias: "jane.doe", visibility: "private" }),
+      ]),
+    );
+
+    const vibes = getChain("user_domain_vibe_levels");
+    expect(vibes.onConflict).toHaveBeenCalledWith(["user_id", "domain_code"]);
+    expect(vibes.ignore).toHaveBeenCalled();
+    expect(vibes.insert.mock.calls[0][0]).toHaveLength(12);
+  });
+
+  it("seeds Jane's first_session award without overwriting the catalog", async () => {
+    const { knex, knexSpy, getChain } = createKnexMock();
 
     await seedBadges(knex);
 
-    const catalogChain = getChain("badge_catalog");
-    expect(catalogChain.insert).toHaveBeenCalled();
-    expect(catalogChain.onConflict).toHaveBeenCalledWith("code");
-    expect(catalogChain.merge).toHaveBeenCalled();
+    expect(knexSpy).not.toHaveBeenCalledWith("badge_catalog");
 
     const badgesChain = getChain("badges");
     expect(badgesChain.insert).toHaveBeenCalled();
@@ -292,5 +361,6 @@ describe("database seed modules", () => {
     expect(badgesChain.ignore).toHaveBeenCalled();
     const insertedBadges = badgesChain.insert.mock.calls[0][0];
     expect(insertedBadges[0]).toHaveProperty("metadata");
+    expect(insertedBadges[0].badge_type).toBe("first_session");
   });
 });

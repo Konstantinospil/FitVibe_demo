@@ -21,8 +21,24 @@ const EXERCISE_TYPES = [
   { code: "rehab", description: "Rehabilitation exercises" },
   { code: "sports", description: "Sports-specific training" },
   { code: "other", description: "Other types of exercise" },
+  {
+    code: "agility",
+    description: "Agility, coordination, and movement skill — yield, play, flight",
+  },
+  {
+    code: "explosivity",
+    description: "Power, sprints, jumps, and throws — the spark that becomes a leap",
+  },
+  {
+    code: "intelligence",
+    description: "Skill, precision, and the inner game — riddles at the edge of the map",
+  },
+  {
+    code: "regeneration",
+    description: "Recovery, mobility, and restoration — the sleep that mends the hero",
+  },
 ];
 
 export async function seed(knex: Knex): Promise<void> {
-  await knex("exercise_types").insert(EXERCISE_TYPES).onConflict("code").ignore();
+  await knex("exercise_types").insert(EXERCISE_TYPES).onConflict("code").merge(["description"]);
 }

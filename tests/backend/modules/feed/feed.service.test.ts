@@ -11,6 +11,9 @@ jest.mock("../../../../apps/backend/src/modules/users/users.repository.js");
 jest.mock("../../../../apps/backend/src/modules/common/audit.util.js", () => ({
   insertAudit: jest.fn().mockResolvedValue(undefined),
 }));
+jest.mock("../../../../apps/backend/src/modules/points/badges.service.js", () => ({
+  evaluateBadgesForFollow: jest.fn().mockResolvedValue([]),
+}));
 
 const mockFeedRepo = jest.mocked(feedRepository);
 const mockSessionsService = jest.mocked(sessionsService);

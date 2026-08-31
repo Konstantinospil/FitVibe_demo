@@ -118,6 +118,7 @@ export interface SessionMetricsSnapshot {
   distanceMeters: number;
   runDistanceMeters: number;
   rideDistanceMeters: number;
+  rowDistanceMeters: number;
 }
 
 export interface BadgeEvaluationResult {

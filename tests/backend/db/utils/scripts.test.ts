@@ -325,7 +325,14 @@ describe("db utils scripts", () => {
 
         // Setup count mock for verification - return correct counts per table
         let callCount = 0;
-        const tableCounts = { roles: 4, genders: 4, fitness_levels: 4, exercise_types: 20 };
+        const tableCounts = {
+          roles: 4,
+          genders: 4,
+          fitness_levels: 5,
+          exercise_types: 24,
+          exercises: 300,
+          badge_catalog: 36,
+        };
         (mockDb as jest.Mock).mockImplementation((table: string) => {
           callCount++;
           const expectedCount = tableCounts[table as keyof typeof tableCounts] ?? 10;
@@ -351,8 +358,10 @@ describe("db utils scripts", () => {
         );
         expect(logger.info).toHaveBeenCalledWith("[db] Verified roles: 4 rows");
         expect(logger.info).toHaveBeenCalledWith("[db] Verified genders: 4 rows");
-        expect(logger.info).toHaveBeenCalledWith("[db] Verified fitness_levels: 4 rows");
-        expect(logger.info).toHaveBeenCalledWith("[db] Verified exercise_types: 20 rows");
+        expect(logger.info).toHaveBeenCalledWith("[db] Verified fitness_levels: 5 rows");
+        expect(logger.info).toHaveBeenCalledWith("[db] Verified exercise_types: 24 rows");
+        expect(logger.info).toHaveBeenCalledWith("[db] Verified exercises: 300 rows");
+        expect(logger.info).toHaveBeenCalledWith("[db] Verified badge_catalog: 36 rows");
         expect(logger.info).toHaveBeenCalledWith("[db] Seeds completed and verified.");
         expect(mockDb.destroy).toHaveBeenCalled();
       });
@@ -363,7 +372,14 @@ describe("db utils scripts", () => {
         (mockDb.schema.hasTable as jest.Mock).mockResolvedValue(true);
 
         // Setup count mock for verification - return correct counts per table
-        const tableCounts = { roles: 4, genders: 4, fitness_levels: 4, exercise_types: 20 };
+        const tableCounts = {
+          roles: 4,
+          genders: 4,
+          fitness_levels: 5,
+          exercise_types: 24,
+          exercises: 300,
+          badge_catalog: 36,
+        };
         (mockDb as jest.Mock).mockImplementation((table: string) => {
           const expectedCount = tableCounts[table as keyof typeof tableCounts] ?? 10;
           return {
@@ -428,7 +444,13 @@ describe("db utils scripts", () => {
           .mockResolvedValueOnce(true); // exercise_types exists
 
         // Setup count for tables that exist (genders won't be called since it doesn't exist)
-        const tableCounts = { roles: 4, fitness_levels: 4, exercise_types: 20 };
+        const tableCounts = {
+          roles: 4,
+          fitness_levels: 5,
+          exercise_types: 24,
+          exercises: 300,
+          badge_catalog: 36,
+        };
         (mockDb as jest.Mock).mockImplementation((table: string) => {
           const expectedCount = tableCounts[table as keyof typeof tableCounts] ?? 10;
           return {

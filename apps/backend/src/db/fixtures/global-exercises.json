@@ -1,0 +1,2702 @@
+[
+  {
+    "id": "77777777-7777-7777-7777-777777777777",
+    "name": "Barbell Back Squat",
+    "type_code": "strength",
+    "muscle_group": "legs",
+    "equipment": "barbell",
+    "tags": ["earth", "strength", "compound", "lower-body"],
+    "description": "Builds squat-pattern strength through the legs and trunk. Plant your feet like the giant who would not be moved."
+  },
+  {
+    "id": "e0100000-0000-4000-8000-000000000002",
+    "name": "Barbell Front Squat",
+    "type_code": "strength",
+    "muscle_group": "legs",
+    "equipment": "barbell",
+    "tags": ["earth", "strength", "compound", "quads"],
+    "description": "Upright squat loading the quads and upper back. Hold the weight the way a sentinel holds the gate."
+  },
+  {
+    "id": "e0100000-0000-4000-8000-000000000003",
+    "name": "Goblet Squat",
+    "type_code": "strength",
+    "muscle_group": "legs",
+    "equipment": "dumbbells",
+    "tags": ["earth", "strength", "squat", "beginner"],
+    "description": "Teaches a deep squat with a single bell at the chest. A small lantern at the heart keeps the giant honest."
+  },
+  {
+    "id": "e0100000-0000-4000-8000-000000000004",
+    "name": "Bulgarian Split Squat",
+    "type_code": "strength",
+    "muscle_group": "legs",
+    "equipment": "dumbbells",
+    "tags": ["earth", "strength", "unilateral", "quads"],
+    "description": "Rear-foot elevated lunge for single-leg strength. One root down, one tale in the air."
+  },
+  {
+    "id": "e0100000-0000-4000-8000-000000000005",
+    "name": "Walking Lunge",
+    "type_code": "strength",
+    "muscle_group": "legs",
+    "equipment": "dumbbells",
+    "tags": ["earth", "strength", "unilateral", "locomotion"],
+    "description": "Alternating lunges that train gait under load. A quest taken one long step at a time."
+  },
+  {
+    "id": "e0100000-0000-4000-8000-000000000006",
+    "name": "Pause Squat",
+    "type_code": "strength",
+    "muscle_group": "legs",
+    "equipment": "barbell",
+    "tags": ["earth", "strength", "compound", "control"],
+    "description": "Squat with a pause in the hole to build patience and power. Wait, listen, then stand — the earth rewards the unhurried."
+  },
+  {
+    "id": "e0100000-0000-4000-8000-000000000007",
+    "name": "Hack Squat",
+    "type_code": "strength",
+    "muscle_group": "legs",
+    "equipment": "machine",
+    "tags": ["earth", "strength", "quads", "machine"],
+    "description": "Machine squat emphasizing quads with a supported back. The hillside that always holds you while you climb."
+  },
+  {
+    "id": "77777777-7777-7777-7777-777777777779",
+    "name": "Conventional Deadlift",
+    "type_code": "strength",
+    "muscle_group": "full_body",
+    "equipment": "barbell",
+    "tags": ["earth", "strength", "compound", "pull", "posterior-chain"],
+    "description": "Foundational pull from the floor for posterior strength. Lift the world the way the first hero lifted the stone."
+  },
+  {
+    "id": "e0100000-0000-4000-8000-000000000009",
+    "name": "Sumo Deadlift",
+    "type_code": "strength",
+    "muscle_group": "legs",
+    "equipment": "barbell",
+    "tags": ["earth", "strength", "compound", "pull"],
+    "description": "Wide-stance deadlift shifting work to hips and quads. A wider stance, a broader kingdom."
+  },
+  {
+    "id": "e0100000-0000-4000-8000-000000000010",
+    "name": "Romanian Deadlift",
+    "type_code": "strength",
+    "muscle_group": "legs",
+    "equipment": "barbell",
+    "tags": ["earth", "strength", "hinge", "hamstrings"],
+    "description": "Hip hinge that loads hamstrings and glutes. Bow to the earth, then stand taller than before."
+  },
+  {
+    "id": "e0100000-0000-4000-8000-000000000011",
+    "name": "Trap Bar Deadlift",
+    "type_code": "strength",
+    "muscle_group": "full_body",
+    "equipment": "other",
+    "tags": ["earth", "strength", "compound", "hinge"],
+    "description": "Hex-bar pull that is kind to the back and honest about the legs. Lift from the middle of the story, not the edge."
+  },
+  {
+    "id": "e0100000-0000-4000-8000-000000000012",
+    "name": "Rack Pull",
+    "type_code": "strength",
+    "muscle_group": "back",
+    "equipment": "barbell",
+    "tags": ["earth", "strength", "partial", "pull"],
+    "description": "Deadlift from blocks to overload the lockout. Start the tale halfway up the mountain."
+  },
+  {
+    "id": "e0100000-0000-4000-8000-000000000013",
+    "name": "Hip Thrust",
+    "type_code": "strength",
+    "muscle_group": "legs",
+    "equipment": "barbell",
+    "tags": ["earth", "strength", "glutes", "hinge"],
+    "description": "Horizontal hip extension for glute strength. The bridge that holds the kingdom's weight."
+  },
+  {
+    "id": "e0100000-0000-4000-8000-000000000014",
+    "name": "Good Morning",
+    "type_code": "strength",
+    "muscle_group": "back",
+    "equipment": "barbell",
+    "tags": ["earth", "strength", "hinge", "posterior-chain"],
+    "description": "Loaded hip hinge with the bar on the back. Bow with a spine like a well-kept spear."
+  },
+  {
+    "id": "77777777-7777-7777-7777-777777777778",
+    "name": "Barbell Bench Press",
+    "type_code": "strength",
+    "muscle_group": "chest",
+    "equipment": "barbell",
+    "tags": ["earth", "strength", "compound", "push"],
+    "description": "Horizontal press for chest, shoulders, and triceps. Press the sky away from the earth."
+  },
+  {
+    "id": "e0100000-0000-4000-8000-000000000016",
+    "name": "Incline Bench Press",
+    "type_code": "strength",
+    "muscle_group": "chest",
+    "equipment": "barbell",
+    "tags": ["earth", "strength", "compound", "upper-chest"],
+    "description": "Press on an incline to bias the upper chest. Aim the press toward the morning sun."
+  },
+  {
+    "id": "e0100000-0000-4000-8000-000000000017",
+    "name": "Dumbbell Bench Press",
+    "type_code": "strength",
+    "muscle_group": "chest",
+    "equipment": "dumbbells",
+    "tags": ["earth", "strength", "push", "unilateral"],
+    "description": "Independent presses that demand stability from each side. Two lanterns, one sky."
+  },
+  {
+    "id": "e0100000-0000-4000-8000-000000000018",
+    "name": "Floor Press",
+    "type_code": "strength",
+    "muscle_group": "chest",
+    "equipment": "barbell",
+    "tags": ["earth", "strength", "partial", "triceps"],
+    "description": "Press from the floor to limit range and load the lockout. The earth itself is your bench."
+  },
+  {
+    "id": "e0100000-0000-4000-8000-000000000019",
+    "name": "Close-Grip Bench Press",
+    "type_code": "strength",
+    "muscle_group": "arms",
+    "equipment": "barbell",
+    "tags": ["earth", "strength", "push", "triceps"],
+    "description": "Narrow press that shifts work to the triceps. A tighter grip, a cleaner ending."
+  },
+  {
+    "id": "e0100000-0000-4000-8000-000000000020",
+    "name": "Push-Up",
+    "type_code": "strength",
+    "muscle_group": "chest",
+    "equipment": "bodyweight",
+    "tags": ["earth", "strength", "push", "bodyweight"],
+    "description": "Classic floor press using only your mass. The first press every hero learns in the dirt."
+  },
+  {
+    "id": "e0100000-0000-4000-8000-000000000021",
+    "name": "Dip",
+    "type_code": "strength",
+    "muscle_group": "chest",
+    "equipment": "bodyweight",
+    "tags": ["earth", "strength", "push", "triceps"],
+    "description": "Vertical press between parallel bars. Lower into the well, then climb out stronger."
+  },
+  {
+    "id": "e0100000-0000-4000-8000-000000000022",
+    "name": "Overhead Press",
+    "type_code": "strength",
+    "muscle_group": "shoulders",
+    "equipment": "barbell",
+    "tags": ["earth", "strength", "compound", "vertical-push"],
+    "description": "Standing press that tests shoulders, triceps, and trunk. Put the sun back where it belongs."
+  },
+  {
+    "id": "e0100000-0000-4000-8000-000000000023",
+    "name": "Dumbbell Shoulder Press",
+    "type_code": "strength",
+    "muscle_group": "shoulders",
+    "equipment": "dumbbells",
+    "tags": ["earth", "strength", "vertical-push"],
+    "description": "Seated or standing presses with independent bells. Two sparks raised to the same height."
+  },
+  {
+    "id": "e0100000-0000-4000-8000-000000000024",
+    "name": "Lateral Raise",
+    "type_code": "strength",
+    "muscle_group": "shoulders",
+    "equipment": "dumbbells",
+    "tags": ["earth", "strength", "isolation", "delts"],
+    "description": "Raises that build the side delts. Widen the silhouette like a cloak in the wind."
+  },
+  {
+    "id": "e0100000-0000-4000-8000-000000000025",
+    "name": "Barbell Bent-Over Row",
+    "type_code": "strength",
+    "muscle_group": "back",
+    "equipment": "barbell",
+    "tags": ["earth", "strength", "compound", "horizontal-pull"],
+    "description": "Hinged row for thickness through the back. Pull the forest toward you."
+  },
+  {
+    "id": "e0100000-0000-4000-8000-000000000026",
+    "name": "Pendlay Row",
+    "type_code": "strength",
+    "muscle_group": "back",
+    "equipment": "barbell",
+    "tags": ["earth", "strength", "pull", "explosive-strength"],
+    "description": "Dead-stop row from the floor each rep. Each pull begins from silence."
+  },
+  {
+    "id": "e0100000-0000-4000-8000-000000000027",
+    "name": "Dumbbell Row",
+    "type_code": "strength",
+    "muscle_group": "back",
+    "equipment": "dumbbells",
+    "tags": ["earth", "strength", "unilateral", "pull"],
+    "description": "Single-arm row for lats and mid-back. One oar, still a whole river."
+  },
+  {
+    "id": "e0100000-0000-4000-8000-000000000028",
+    "name": "Chest-Supported Row",
+    "type_code": "strength",
+    "muscle_group": "back",
+    "equipment": "dumbbells",
+    "tags": ["earth", "strength", "pull", "isolation"],
+    "description": "Row with the chest braced to spare the lower back. Let the earth hold your chest while the back works."
+  },
+  {
+    "id": "e0100000-0000-4000-8000-000000000029",
+    "name": "Pull-Up",
+    "type_code": "strength",
+    "muscle_group": "back",
+    "equipment": "bodyweight",
+    "tags": ["earth", "strength", "vertical-pull", "bodyweight"],
+    "description": "Overhand pull to the bar. Climb the sky the way ivy climbs stone."
+  },
+  {
+    "id": "e0100000-0000-4000-8000-000000000030",
+    "name": "Chin-Up",
+    "type_code": "strength",
+    "muscle_group": "back",
+    "equipment": "bodyweight",
+    "tags": ["earth", "strength", "vertical-pull", "biceps"],
+    "description": "Underhand pull that also loads the biceps. A friendlier grip on the same tall tale."
+  },
+  {
+    "id": "e0100000-0000-4000-8000-000000000031",
+    "name": "Lat Pulldown",
+    "type_code": "strength",
+    "muscle_group": "back",
+    "equipment": "cable",
+    "tags": ["earth", "strength", "vertical-pull", "machine"],
+    "description": "Cable pulldown that teaches the vertical pull. Bring the canopy down to eye level."
+  },
+  {
+    "id": "e0100000-0000-4000-8000-000000000032",
+    "name": "Seated Cable Row",
+    "type_code": "strength",
+    "muscle_group": "back",
+    "equipment": "cable",
+    "tags": ["earth", "strength", "horizontal-pull"],
+    "description": "Seated row with a constant cable line. Row the still lake from a chair of iron."
+  },
+  {
+    "id": "e0100000-0000-4000-8000-000000000033",
+    "name": "Face Pull",
+    "type_code": "strength",
+    "muscle_group": "shoulders",
+    "equipment": "cable",
+    "tags": ["earth", "strength", "rear-delts", "prehab"],
+    "description": "Cable pull to the face for rear delts and cuff. Look the story in the eye and pull it close."
+  },
+  {
+    "id": "e0100000-0000-4000-8000-000000000034",
+    "name": "Barbell Curl",
+    "type_code": "strength",
+    "muscle_group": "arms",
+    "equipment": "barbell",
+    "tags": ["earth", "strength", "isolation", "biceps"],
+    "description": "Standing curl for the biceps. Bend the iron the way a river bends a reed — except you win."
+  },
+  {
+    "id": "e0100000-0000-4000-8000-000000000035",
+    "name": "Hammer Curl",
+    "type_code": "strength",
+    "muscle_group": "arms",
+    "equipment": "dumbbells",
+    "tags": ["earth", "strength", "biceps", "brachialis"],
+    "description": "Neutral-grip curl for arms and grip. Two hammers, no anvil but your own."
+  },
+  {
+    "id": "e0100000-0000-4000-8000-000000000036",
+    "name": "Tricep Pushdown",
+    "type_code": "strength",
+    "muscle_group": "arms",
+    "equipment": "cable",
+    "tags": ["earth", "strength", "isolation", "triceps"],
+    "description": "Cable extension for the triceps. Straighten the tale at the elbow."
+  },
+  {
+    "id": "e0100000-0000-4000-8000-000000000037",
+    "name": "Skull Crusher",
+    "type_code": "strength",
+    "muscle_group": "arms",
+    "equipment": "barbell",
+    "tags": ["earth", "strength", "triceps", "isolation"],
+    "description": "Lying extension that loads the long head. Lower the iron toward the crown, then send it home."
+  },
+  {
+    "id": "e0100000-0000-4000-8000-000000000038",
+    "name": "Leg Press",
+    "type_code": "strength",
+    "muscle_group": "legs",
+    "equipment": "machine",
+    "tags": ["earth", "strength", "quads", "machine"],
+    "description": "Machine press for high-volume leg work. Push the hillside away with both feet."
+  },
+  {
+    "id": "e0100000-0000-4000-8000-000000000039",
+    "name": "Leg Curl",
+    "type_code": "strength",
+    "muscle_group": "legs",
+    "equipment": "machine",
+    "tags": ["earth", "strength", "hamstrings", "isolation"],
+    "description": "Curl that isolates the hamstrings. Fold the back of the leg like a well-kept hinge."
+  },
+  {
+    "id": "e0100000-0000-4000-8000-000000000040",
+    "name": "Leg Extension",
+    "type_code": "strength",
+    "muscle_group": "legs",
+    "equipment": "machine",
+    "tags": ["earth", "strength", "quads", "isolation"],
+    "description": "Machine extension for the quads. Kick the gate open, slowly."
+  },
+  {
+    "id": "e0100000-0000-4000-8000-000000000041",
+    "name": "Standing Calf Raise",
+    "type_code": "strength",
+    "muscle_group": "legs",
+    "equipment": "machine",
+    "tags": ["earth", "strength", "calves", "isolation"],
+    "description": "Raises that load the calves through a full stretch. Rise onto the toes as if greeting a taller friend."
+  },
+  {
+    "id": "e0100000-0000-4000-8000-000000000042",
+    "name": "Plank",
+    "type_code": "strength",
+    "muscle_group": "core",
+    "equipment": "bodyweight",
+    "tags": ["earth", "strength", "isometric", "core"],
+    "description": "Brace the trunk without moving. Become a table the kingdom could dine on."
+  },
+  {
+    "id": "e0100000-0000-4000-8000-000000000043",
+    "name": "Hanging Leg Raise",
+    "type_code": "strength",
+    "muscle_group": "core",
+    "equipment": "bodyweight",
+    "tags": ["earth", "strength", "core", "hip-flexors"],
+    "description": "Raise the legs while hanging from a bar. Fold the map of yourself in the air."
+  },
+  {
+    "id": "e0100000-0000-4000-8000-000000000044",
+    "name": "Cable Crunch",
+    "type_code": "strength",
+    "muscle_group": "core",
+    "equipment": "cable",
+    "tags": ["earth", "strength", "core", "flexion"],
+    "description": "Kneeling crunch against a cable. Bow the ribs toward the earth on purpose."
+  },
+  {
+    "id": "e0100000-0000-4000-8000-000000000045",
+    "name": "Farmer's Carry",
+    "type_code": "strength",
+    "muscle_group": "full_body",
+    "equipment": "other",
+    "tags": ["earth", "strength", "carry", "grip", "strongman"],
+    "description": "Walk with heavy implements in each hand. Carry the harvest without dropping a single year."
+  },
+  {
+    "id": "e0100000-0000-4000-8000-000000000046",
+    "name": "Overhead Carry",
+    "type_code": "strength",
+    "muscle_group": "shoulders",
+    "equipment": "other",
+    "tags": ["earth", "strength", "carry", "stability"],
+    "description": "Walk with a load locked overhead. Keep the sun aloft while you cross the yard."
+  },
+  {
+    "id": "e0100000-0000-4000-8000-000000000047",
+    "name": "Atlas Stone Lift",
+    "type_code": "strength",
+    "muscle_group": "full_body",
+    "equipment": "other",
+    "tags": ["earth", "strength", "strongman", "compound"],
+    "description": "Lap and load a stone to a platform. The round world, lifted onto a shelf."
+  },
+  {
+    "id": "e0100000-0000-4000-8000-000000000048",
+    "name": "Tire Flip",
+    "type_code": "strength",
+    "muscle_group": "full_body",
+    "equipment": "other",
+    "tags": ["earth", "strength", "strongman", "hinge"],
+    "description": "Hinge and punch a large tire over. Turn the moon onto its other face."
+  },
+  {
+    "id": "e0100000-0000-4000-8000-000000000049",
+    "name": "Log Press",
+    "type_code": "strength",
+    "muscle_group": "shoulders",
+    "equipment": "other",
+    "tags": ["earth", "strength", "strongman", "vertical-push"],
+    "description": "Clean and press a log. Raise the fallen tree back toward the canopy."
+  },
+  {
+    "id": "e0100000-0000-4000-8000-000000000050",
+    "name": "Yoke Walk",
+    "type_code": "strength",
+    "muscle_group": "full_body",
+    "equipment": "other",
+    "tags": ["earth", "strength", "strongman", "carry"],
+    "description": "Walk under a heavy yoke across the back. Wear the barn as a cloak and walk."
+  },
+  {
+    "id": "e0200000-0000-4000-8000-000000000001",
+    "name": "Agility Ladder Icky Shuffle",
+    "type_code": "agility",
+    "muscle_group": "legs",
+    "equipment": "other",
+    "tags": ["air", "agility", "ladder", "footwork"],
+    "description": "Lateral in-in-out pattern through a ladder. Feet like a joke the ground almost understands."
+  },
+  {
+    "id": "e0200000-0000-4000-8000-000000000002",
+    "name": "Agility Ladder In-In-Out-Out",
+    "type_code": "agility",
+    "muscle_group": "legs",
+    "equipment": "other",
+    "tags": ["air", "agility", "ladder", "coordination"],
+    "description": "Two-in two-out ladder pattern for rhythm. A small dance that teaches the floor your name."
+  },
+  {
+    "id": "e0200000-0000-4000-8000-000000000003",
+    "name": "High-Knee Ladder Run",
+    "type_code": "agility",
+    "muscle_group": "legs",
+    "equipment": "other",
+    "tags": ["air", "agility", "ladder", "sprint-mechanics"],
+    "description": "One foot per box with high knees. Run through windows that are only painted on."
+  },
+  {
+    "id": "e0200000-0000-4000-8000-000000000004",
+    "name": "Lateral Shuffle",
+    "type_code": "agility",
+    "muscle_group": "legs",
+    "equipment": "bodyweight",
+    "tags": ["air", "agility", "cod", "lateral"],
+    "description": "Side shuffle that trains cutting mechanics. Slide along the wall of the wind."
+  },
+  {
+    "id": "e0200000-0000-4000-8000-000000000005",
+    "name": "Carioca",
+    "type_code": "agility",
+    "muscle_group": "legs",
+    "equipment": "bodyweight",
+    "tags": ["air", "agility", "cod", "hips"],
+    "description": "Crossover step for hips and coordination. Weave a braid with your feet."
+  },
+  {
+    "id": "e0200000-0000-4000-8000-000000000006",
+    "name": "T-Drill",
+    "type_code": "agility",
+    "muscle_group": "legs",
+    "equipment": "other",
+    "tags": ["air", "agility", "cod", "shuttle"],
+    "description": "Sprint, shuffle, and backpedal in a T. Trace the letter that means turn."
+  },
+  {
+    "id": "e0200000-0000-4000-8000-000000000007",
+    "name": "5-10-5 Pro Agility Shuttle",
+    "type_code": "agility",
+    "muscle_group": "legs",
+    "equipment": "other",
+    "tags": ["air", "agility", "cod", "change-of-direction"],
+    "description": "Short shuttle with two cuts. Three dashes, two secrets."
+  },
+  {
+    "id": "e0200000-0000-4000-8000-000000000008",
+    "name": "Cone Weave",
+    "type_code": "agility",
+    "muscle_group": "legs",
+    "equipment": "other",
+    "tags": ["air", "agility", "cod", "slalom"],
+    "description": "Slalom through cones without knocking them. A forest of small trees, none of them hit."
+  },
+  {
+    "id": "e0200000-0000-4000-8000-000000000009",
+    "name": "Figure-8 Drill",
+    "type_code": "agility",
+    "muscle_group": "legs",
+    "equipment": "other",
+    "tags": ["air", "agility", "cod", "curves"],
+    "description": "Run a figure-eight around two marks. Draw infinity until it feels like breathing."
+  },
+  {
+    "id": "e0200000-0000-4000-8000-000000000010",
+    "name": "Reactive Mirror Drill",
+    "type_code": "agility",
+    "muscle_group": "full_body",
+    "equipment": "bodyweight",
+    "tags": ["air", "agility", "reactive", "partner"],
+    "description": "Mirror a partner's cuts and fakes. Be the shadow that arrives first."
+  },
+  {
+    "id": "e0200000-0000-4000-8000-000000000011",
+    "name": "Single-Leg Stand Eyes Closed",
+    "type_code": "agility",
+    "muscle_group": "legs",
+    "equipment": "bodyweight",
+    "tags": ["air", "agility", "balance", "proprioception"],
+    "description": "Balance on one foot with eyes closed. The world is still there when you cannot see it."
+  },
+  {
+    "id": "e0200000-0000-4000-8000-000000000012",
+    "name": "Balance Beam Walk",
+    "type_code": "agility",
+    "muscle_group": "legs",
+    "equipment": "other",
+    "tags": ["air", "agility", "balance", "line"],
+    "description": "Walk a narrow line forward and back. A road the width of a promise."
+  },
+  {
+    "id": "e0200000-0000-4000-8000-000000000013",
+    "name": "Slackline Balance",
+    "type_code": "agility",
+    "muscle_group": "full_body",
+    "equipment": "other",
+    "tags": ["air", "agility", "balance", "unstable"],
+    "description": "Stand or walk a slackline. A river of webbing between two trees."
+  },
+  {
+    "id": "e0200000-0000-4000-8000-000000000014",
+    "name": "Rail Walk",
+    "type_code": "agility",
+    "muscle_group": "legs",
+    "equipment": "other",
+    "tags": ["air", "agility", "balance", "parkour"],
+    "description": "Walk a rail or curb with control. The edge is a teacher with no voice."
+  },
+  {
+    "id": "e0200000-0000-4000-8000-000000000015",
+    "name": "Quadrupedal Walk",
+    "type_code": "agility",
+    "muscle_group": "full_body",
+    "equipment": "bodyweight",
+    "tags": ["air", "agility", "locomotion", "parkour"],
+    "description": "Travel on hands and feet, knees off the ground. Return to the first animal you ever were."
+  },
+  {
+    "id": "e0200000-0000-4000-8000-000000000016",
+    "name": "Bear Crawl",
+    "type_code": "agility",
+    "muscle_group": "full_body",
+    "equipment": "bodyweight",
+    "tags": ["air", "agility", "locomotion", "core"],
+    "description": "Opposite-limb crawl with hips high. A bear that learned manners."
+  },
+  {
+    "id": "e0200000-0000-4000-8000-000000000017",
+    "name": "Crab Walk",
+    "type_code": "agility",
+    "muscle_group": "full_body",
+    "equipment": "bodyweight",
+    "tags": ["air", "agility", "locomotion", "posterior"],
+    "description": "Inverted crawl on hands and feet. The hero who travels looking at the sky."
+  },
+  {
+    "id": "e0200000-0000-4000-8000-000000000018",
+    "name": "Precision Jump",
+    "type_code": "agility",
+    "muscle_group": "legs",
+    "equipment": "bodyweight",
+    "tags": ["air", "agility", "parkour", "accuracy"],
+    "description": "Jump to a small target and stick the landing. Land on the period at the end of the sentence."
+  },
+  {
+    "id": "e0200000-0000-4000-8000-000000000019",
+    "name": "Precision Landing",
+    "type_code": "agility",
+    "muscle_group": "legs",
+    "equipment": "bodyweight",
+    "tags": ["air", "agility", "parkour", "deceleration"],
+    "description": "Absorb a drop onto a small mark. Arrive as if you meant this exact tile."
+  },
+  {
+    "id": "e0200000-0000-4000-8000-000000000020",
+    "name": "Safety Vault",
+    "type_code": "agility",
+    "muscle_group": "full_body",
+    "equipment": "bodyweight",
+    "tags": ["air", "agility", "parkour", "vault"],
+    "description": "One-hand vault that keeps the hips over the obstacle. A polite theft of the space above a wall."
+  },
+  {
+    "id": "e0200000-0000-4000-8000-000000000021",
+    "name": "Monkey Vault",
+    "type_code": "agility",
+    "muscle_group": "full_body",
+    "equipment": "bodyweight",
+    "tags": ["air", "agility", "parkour", "vault"],
+    "description": "Two-hand vault with the body passing between the arms. Borrow the monkey's shortcut."
+  },
+  {
+    "id": "e0200000-0000-4000-8000-000000000022",
+    "name": "Kong Vault",
+    "type_code": "agility",
+    "muscle_group": "full_body",
+    "equipment": "bodyweight",
+    "tags": ["air", "agility", "parkour", "vault"],
+    "description": "Diving two-hand vault for speed over obstacles. Dive through the story, not around it."
+  },
+  {
+    "id": "e0200000-0000-4000-8000-000000000023",
+    "name": "Cat Hang",
+    "type_code": "agility",
+    "muscle_group": "back",
+    "equipment": "bodyweight",
+    "tags": ["air", "agility", "parkour", "grip"],
+    "description": "Hang from a wall edge with feet braced. Become a comma on the face of a cliff."
+  },
+  {
+    "id": "e0200000-0000-4000-8000-000000000024",
+    "name": "Wall Run",
+    "type_code": "agility",
+    "muscle_group": "legs",
+    "equipment": "bodyweight",
+    "tags": ["air", "agility", "parkour", "vertical"],
+    "description": "Run up a wall to gain height. Ask the wall for one extra step."
+  },
+  {
+    "id": "e0200000-0000-4000-8000-000000000025",
+    "name": "Obstacle Flow Line",
+    "type_code": "agility",
+    "muscle_group": "full_body",
+    "equipment": "bodyweight",
+    "tags": ["air", "agility", "parkour", "flow"],
+    "description": "Link vaults, jumps, and crawls into one line. One breath, many doors."
+  },
+  {
+    "id": "e0200000-0000-4000-8000-000000000026",
+    "name": "Cartwheel",
+    "type_code": "agility",
+    "muscle_group": "full_body",
+    "equipment": "bodyweight",
+    "tags": ["air", "agility", "gymnastics", "rotation"],
+    "description": "Sideways rotation with hands on the ground. A wheel made of a person."
+  },
+  {
+    "id": "e0200000-0000-4000-8000-000000000027",
+    "name": "Roundoff",
+    "type_code": "agility",
+    "muscle_group": "full_body",
+    "equipment": "bodyweight",
+    "tags": ["air", "agility", "gymnastics", "power"],
+    "description": "Powerful cartwheel that snaps the feet together. Turn the wheel into a spring."
+  },
+  {
+    "id": "e0200000-0000-4000-8000-000000000028",
+    "name": "Handstand Hold",
+    "type_code": "agility",
+    "muscle_group": "shoulders",
+    "equipment": "bodyweight",
+    "tags": ["air", "agility", "gymnastics", "balance"],
+    "description": "Hold an inverted stand against a wall or free. Stand on the sky's floor."
+  },
+  {
+    "id": "e0200000-0000-4000-8000-000000000029",
+    "name": "Handstand Walk",
+    "type_code": "agility",
+    "muscle_group": "shoulders",
+    "equipment": "bodyweight",
+    "tags": ["air", "agility", "gymnastics", "locomotion"],
+    "description": "Walk on the hands while inverted. A parade the right way up is boring."
+  },
+  {
+    "id": "e0200000-0000-4000-8000-000000000030",
+    "name": "L-Sit",
+    "type_code": "agility",
+    "muscle_group": "core",
+    "equipment": "bodyweight",
+    "tags": ["air", "agility", "gymnastics", "isometric"],
+    "description": "Support hold with legs straight in front. A chair you invent with nothing but tension."
+  },
+  {
+    "id": "e0200000-0000-4000-8000-000000000031",
+    "name": "Hollow Body Hold",
+    "type_code": "agility",
+    "muscle_group": "core",
+    "equipment": "bodyweight",
+    "tags": ["air", "agility", "gymnastics", "shape"],
+    "description": "Supine hollow position for gymnastics tension. Become a boat that does not take on water."
+  },
+  {
+    "id": "e0200000-0000-4000-8000-000000000032",
+    "name": "Arch Body Hold",
+    "type_code": "agility",
+    "muscle_group": "back",
+    "equipment": "bodyweight",
+    "tags": ["air", "agility", "gymnastics", "posterior"],
+    "description": "Prone arch that opposes the hollow. The other half of the boat."
+  },
+  {
+    "id": "e0200000-0000-4000-8000-000000000033",
+    "name": "Ring Support Hold",
+    "type_code": "agility",
+    "muscle_group": "shoulders",
+    "equipment": "other",
+    "tags": ["air", "agility", "gymnastics", "rings"],
+    "description": "Straight-arm support on rings. Two moons that refuse to wobble."
+  },
+  {
+    "id": "e0200000-0000-4000-8000-000000000034",
+    "name": "Kip Swing",
+    "type_code": "agility",
+    "muscle_group": "full_body",
+    "equipment": "other",
+    "tags": ["air", "agility", "gymnastics", "bars"],
+    "description": "Cast and kip rhythm on a bar. Steal height from a swing."
+  },
+  {
+    "id": "e0200000-0000-4000-8000-000000000035",
+    "name": "Muscle-Up",
+    "type_code": "agility",
+    "muscle_group": "back",
+    "equipment": "other",
+    "tags": ["air", "agility", "gymnastics", "pull", "push"],
+    "description": "Pull and transition to a support on bar or rings. Climb through the bar as if it were a window."
+  },
+  {
+    "id": "e0200000-0000-4000-8000-000000000036",
+    "name": "Climbing Traverse",
+    "type_code": "agility",
+    "muscle_group": "full_body",
+    "equipment": "other",
+    "tags": ["air", "agility", "climbing", "lateral"],
+    "description": "Lateral movement on a wall without going up. Walk the cliff the long way."
+  },
+  {
+    "id": "e0200000-0000-4000-8000-000000000037",
+    "name": "Dead Hang",
+    "type_code": "agility",
+    "muscle_group": "back",
+    "equipment": "other",
+    "tags": ["air", "agility", "climbing", "grip"],
+    "description": "Passive hang from a bar for grip and shoulders. Let the earth have your weight, briefly."
+  },
+  {
+    "id": "e0200000-0000-4000-8000-000000000038",
+    "name": "Hangboard Repeaters",
+    "type_code": "agility",
+    "muscle_group": "arms",
+    "equipment": "other",
+    "tags": ["air", "agility", "climbing", "fingers"],
+    "description": "Timed hangs on small edges. Fingers that remember tiny ledges."
+  },
+  {
+    "id": "e0200000-0000-4000-8000-000000000039",
+    "name": "Campus Board Ladder",
+    "type_code": "agility",
+    "muscle_group": "back",
+    "equipment": "other",
+    "tags": ["air", "agility", "climbing", "power"],
+    "description": "Matching and moving on campus rungs. A ladder with no feet allowed."
+  },
+  {
+    "id": "e0200000-0000-4000-8000-000000000040",
+    "name": "Heel Hook Drill",
+    "type_code": "agility",
+    "muscle_group": "legs",
+    "equipment": "other",
+    "tags": ["air", "agility", "climbing", "technique"],
+    "description": "Practice heel hooks on a wall or box. The heel as a secret hand."
+  },
+  {
+    "id": "e0200000-0000-4000-8000-000000000041",
+    "name": "Dyno Practice",
+    "type_code": "agility",
+    "muscle_group": "full_body",
+    "equipment": "other",
+    "tags": ["air", "agility", "climbing", "explosive"],
+    "description": "Dynamic throw to a hold. Leap for a star that is only a hold."
+  },
+  {
+    "id": "e0200000-0000-4000-8000-000000000042",
+    "name": "Three-Ball Cascade Juggle",
+    "type_code": "agility",
+    "muscle_group": "arms",
+    "equipment": "other",
+    "tags": ["air", "agility", "juggling", "coordination"],
+    "description": "Standard three-ball cascade. Three moons that take turns being the sun."
+  },
+  {
+    "id": "e0200000-0000-4000-8000-000000000043",
+    "name": "Juggling Columns",
+    "type_code": "agility",
+    "muscle_group": "arms",
+    "equipment": "other",
+    "tags": ["air", "agility", "juggling", "coordination"],
+    "description": "Balls that rise and fall in columns. Rain that you send back up."
+  },
+  {
+    "id": "e0200000-0000-4000-8000-000000000044",
+    "name": "Devil Sticks",
+    "type_code": "agility",
+    "muscle_group": "arms",
+    "equipment": "other",
+    "tags": ["air", "agility", "juggling", "timing"],
+    "description": "Handsticks tossing a center stick. A baton that refuses to pick a hand."
+  },
+  {
+    "id": "e0200000-0000-4000-8000-000000000045",
+    "name": "BOSU Lateral Hops",
+    "type_code": "agility",
+    "muscle_group": "legs",
+    "equipment": "other",
+    "tags": ["air", "agility", "balance", "plyo-light"],
+    "description": "Side hops onto and off a BOSU. A hill that wobbles on purpose."
+  },
+  {
+    "id": "e0200000-0000-4000-8000-000000000046",
+    "name": "Partner Tag Drill",
+    "type_code": "agility",
+    "muscle_group": "full_body",
+    "equipment": "bodyweight",
+    "tags": ["air", "agility", "reactive", "play"],
+    "description": "Reaction tag in a small space. The oldest game, still a teacher."
+  },
+  {
+    "id": "e0200000-0000-4000-8000-000000000047",
+    "name": "Single-Leg Hops",
+    "type_code": "agility",
+    "muscle_group": "legs",
+    "equipment": "bodyweight",
+    "tags": ["air", "agility", "plyo-light", "unilateral"],
+    "description": "Hops on one foot for control. A sparrow's commute."
+  },
+  {
+    "id": "e0200000-0000-4000-8000-000000000048",
+    "name": "Jump Rope Criss-Cross",
+    "type_code": "agility",
+    "muscle_group": "legs",
+    "equipment": "other",
+    "tags": ["air", "agility", "rope", "coordination"],
+    "description": "Jump rope with crossing arms. A skip that ties a knot in the air."
+  },
+  {
+    "id": "e0200000-0000-4000-8000-000000000049",
+    "name": "Wall Dip",
+    "type_code": "agility",
+    "muscle_group": "arms",
+    "equipment": "bodyweight",
+    "tags": ["air", "agility", "parkour", "push"],
+    "description": "Dip with hands on a wall edge. Press the wall until it becomes a floor."
+  },
+  {
+    "id": "e0200000-0000-4000-8000-000000000050",
+    "name": "Cat Hang Pull-Up",
+    "type_code": "agility",
+    "muscle_group": "back",
+    "equipment": "bodyweight",
+    "tags": ["air", "agility", "parkour", "pull"],
+    "description": "Pull-up from a cat hang on a wall. Climb the comma into a full stop on top."
+  },
+  {
+    "id": "e0300000-0000-4000-8000-000000000001",
+    "name": "Easy Run",
+    "type_code": "endurance",
+    "muscle_group": "legs",
+    "equipment": "other",
+    "tags": ["water", "endurance", "run", "aerobic"],
+    "description": "Easy aerobic run below threshold. A river that is not in a hurry."
+  },
+  {
+    "id": "77777777-7777-7777-7777-777777777780",
+    "name": "Tempo Run 5K",
+    "type_code": "endurance",
+    "muscle_group": "legs",
+    "equipment": "other",
+    "tags": ["water", "endurance", "run", "tempo", "endurance"],
+    "description": "Sustained 5K at threshold pace. Five kilometers of tide that does not break."
+  },
+  {
+    "id": "e0300000-0000-4000-8000-000000000003",
+    "name": "Long Run",
+    "type_code": "endurance",
+    "muscle_group": "legs",
+    "equipment": "other",
+    "tags": ["water", "endurance", "run", "aerobic", "volume"],
+    "description": "Long slow distance to build endurance. The river that outlasts the mountain."
+  },
+  {
+    "id": "e0300000-0000-4000-8000-000000000004",
+    "name": "Run 10K",
+    "type_code": "endurance",
+    "muscle_group": "legs",
+    "equipment": "other",
+    "tags": ["water", "endurance", "run", "distance"],
+    "description": "Ten-kilometer run at a sustainable effort. A longer chapter of the same water."
+  },
+  {
+    "id": "e0300000-0000-4000-8000-000000000005",
+    "name": "Interval Run 400m",
+    "type_code": "endurance",
+    "muscle_group": "legs",
+    "equipment": "other",
+    "tags": ["water", "endurance", "run", "intervals"],
+    "description": "Repeats of 400 m with recovery. Push and pull: a lap of fire, a lap of rain."
+  },
+  {
+    "id": "e0300000-0000-4000-8000-000000000006",
+    "name": "Fartlek Run",
+    "type_code": "endurance",
+    "muscle_group": "legs",
+    "equipment": "other",
+    "tags": ["water", "endurance", "run", "speed-play"],
+    "description": "Unstructured surges inside an easy run. Play tag with your own pace."
+  },
+  {
+    "id": "e0300000-0000-4000-8000-000000000007",
+    "name": "Hill Repeats",
+    "type_code": "endurance",
+    "muscle_group": "legs",
+    "equipment": "other",
+    "tags": ["water", "endurance", "run", "hills"],
+    "description": "Hard efforts up a hill, easy down. Climb the wave, ride the foam home."
+  },
+  {
+    "id": "e0300000-0000-4000-8000-000000000008",
+    "name": "Trail Run",
+    "type_code": "endurance",
+    "muscle_group": "legs",
+    "equipment": "other",
+    "tags": ["water", "endurance", "run", "trail"],
+    "description": "Running on uneven trail. A path that keeps changing its mind."
+  },
+  {
+    "id": "e0300000-0000-4000-8000-000000000009",
+    "name": "Brisk Walk",
+    "type_code": "endurance",
+    "muscle_group": "legs",
+    "equipment": "other",
+    "tags": ["water", "endurance", "walk", "aerobic"],
+    "description": "Fast walking that raises the heart rate. The oldest endurance, still honest."
+  },
+  {
+    "id": "e0300000-0000-4000-8000-000000000010",
+    "name": "Treadmill Incline Walk",
+    "type_code": "endurance",
+    "muscle_group": "legs",
+    "equipment": "machine",
+    "tags": ["water", "endurance", "walk", "incline"],
+    "description": "Steep walking on a treadmill. A hill that you can fold away."
+  },
+  {
+    "id": "e0300000-0000-4000-8000-000000000011",
+    "name": "Hiking",
+    "type_code": "endurance",
+    "muscle_group": "legs",
+    "equipment": "other",
+    "tags": ["water", "endurance", "hike", "outdoor"],
+    "description": "Sustained walking in terrain. A conversation with a long slope."
+  },
+  {
+    "id": "e0300000-0000-4000-8000-000000000012",
+    "name": "Packed Ruck March",
+    "type_code": "endurance",
+    "muscle_group": "full_body",
+    "equipment": "other",
+    "tags": ["water", "endurance", "ruck", "load-carry"],
+    "description": "Walk with a weighted pack. Carry the camp and still arrive."
+  },
+  {
+    "id": "77777777-7777-7777-7777-777777777781",
+    "name": "Endurance Ride 60k",
+    "type_code": "endurance",
+    "muscle_group": "legs",
+    "equipment": "other",
+    "tags": ["water", "endurance", "ride", "cycle", "endurance"],
+    "description": "Steady 60 km ride for aerobic base. A long current you sit on top of."
+  },
+  {
+    "id": "e0300000-0000-4000-8000-000000000014",
+    "name": "Tempo Ride",
+    "type_code": "endurance",
+    "muscle_group": "legs",
+    "equipment": "other",
+    "tags": ["water", "endurance", "ride", "cycle", "tempo"],
+    "description": "Sustained ride at threshold. Pedal a tide that holds its height."
+  },
+  {
+    "id": "e0300000-0000-4000-8000-000000000015",
+    "name": "Indoor Trainer Ride",
+    "type_code": "endurance",
+    "muscle_group": "legs",
+    "equipment": "machine",
+    "tags": ["water", "endurance", "ride", "cycle", "indoor"],
+    "description": "Controlled indoor cycling session. A road that never leaves the room."
+  },
+  {
+    "id": "e0300000-0000-4000-8000-000000000016",
+    "name": "Hill Climb Ride",
+    "type_code": "endurance",
+    "muscle_group": "legs",
+    "equipment": "other",
+    "tags": ["water", "endurance", "ride", "cycle", "hills"],
+    "description": "Seated or standing climbs on the bike. Grind up a river that forgot it was water."
+  },
+  {
+    "id": "e0300000-0000-4000-8000-000000000017",
+    "name": "Century Ride",
+    "type_code": "endurance",
+    "muscle_group": "legs",
+    "equipment": "other",
+    "tags": ["water", "endurance", "ride", "cycle", "distance"],
+    "description": "Approximately 100 km or 100 miles of riding. A day-long current."
+  },
+  {
+    "id": "e0300000-0000-4000-8000-000000000018",
+    "name": "Easy Swim Freestyle",
+    "type_code": "endurance",
+    "muscle_group": "full_body",
+    "equipment": "other",
+    "tags": ["water", "endurance", "swim", "aerobic"],
+    "description": "Easy continuous freestyle. Become a guest of the water."
+  },
+  {
+    "id": "e0300000-0000-4000-8000-000000000019",
+    "name": "Swim Interval Set",
+    "type_code": "endurance",
+    "muscle_group": "full_body",
+    "equipment": "other",
+    "tags": ["water", "endurance", "swim", "intervals"],
+    "description": "Repeats with rest between efforts. Push the length, pull the rest."
+  },
+  {
+    "id": "e0300000-0000-4000-8000-000000000020",
+    "name": "Swim 1500m",
+    "type_code": "endurance",
+    "muscle_group": "full_body",
+    "equipment": "other",
+    "tags": ["water", "endurance", "swim", "distance"],
+    "description": "Continuous or broken 1500 m swim. A metric mile of water."
+  },
+  {
+    "id": "e0300000-0000-4000-8000-000000000021",
+    "name": "Open Water Swim",
+    "type_code": "endurance",
+    "muscle_group": "full_body",
+    "equipment": "other",
+    "tags": ["water", "endurance", "swim", "outdoor"],
+    "description": "Swim in open water with sighting. A story with no lane lines."
+  },
+  {
+    "id": "e0300000-0000-4000-8000-000000000022",
+    "name": "Kickboard Set",
+    "type_code": "endurance",
+    "muscle_group": "legs",
+    "equipment": "other",
+    "tags": ["water", "endurance", "swim", "kick"],
+    "description": "Kick-focused swimming with a board. Let the legs write the whole sentence."
+  },
+  {
+    "id": "e0300000-0000-4000-8000-000000000023",
+    "name": "Pull Buoy Set",
+    "type_code": "endurance",
+    "muscle_group": "arms",
+    "equipment": "other",
+    "tags": ["water", "endurance", "swim", "pull"],
+    "description": "Upper-body swimming with a buoy. Arms that remember they were oars."
+  },
+  {
+    "id": "e0300000-0000-4000-8000-000000000024",
+    "name": "Pool Treading",
+    "type_code": "endurance",
+    "muscle_group": "full_body",
+    "equipment": "other",
+    "tags": ["water", "endurance", "swim", "tread"],
+    "description": "Tread water for time. Stay afloat as a practice, not a panic."
+  },
+  {
+    "id": "e0300000-0000-4000-8000-000000000025",
+    "name": "Rowing Machine 5K",
+    "type_code": "endurance",
+    "muscle_group": "full_body",
+    "equipment": "machine",
+    "tags": ["water", "endurance", "row", "endurance"],
+    "description": "Five-kilometer row at a steady split. A river you invent with a handle."
+  },
+  {
+    "id": "e0300000-0000-4000-8000-000000000026",
+    "name": "Rowing 2000m Test",
+    "type_code": "endurance",
+    "muscle_group": "full_body",
+    "equipment": "machine",
+    "tags": ["water", "endurance", "row", "test"],
+    "description": "All-out or prescribed 2000 m piece. Two kilometers of honest weather."
+  },
+  {
+    "id": "e0300000-0000-4000-8000-000000000027",
+    "name": "Steady Row 20 min",
+    "type_code": "endurance",
+    "muscle_group": "full_body",
+    "equipment": "machine",
+    "tags": ["water", "endurance", "row", "aerobic"],
+    "description": "Twenty minutes of even rowing. A short tide, fully kept."
+  },
+  {
+    "id": "e0300000-0000-4000-8000-000000000028",
+    "name": "Rowing Intervals",
+    "type_code": "endurance",
+    "muscle_group": "full_body",
+    "equipment": "machine",
+    "tags": ["water", "endurance", "row", "intervals"],
+    "description": "Work and rest pieces on the erg. Push the stroke, pull the breath."
+  },
+  {
+    "id": "e0300000-0000-4000-8000-000000000029",
+    "name": "Jump Rope Steady State",
+    "type_code": "endurance",
+    "muscle_group": "legs",
+    "equipment": "other",
+    "tags": ["water", "endurance", "rope", "aerobic"],
+    "description": "Continuous easy skipping. A small rain you make with your feet."
+  },
+  {
+    "id": "e0300000-0000-4000-8000-000000000030",
+    "name": "Elliptical Session",
+    "type_code": "endurance",
+    "muscle_group": "legs",
+    "equipment": "machine",
+    "tags": ["water", "endurance", "machine", "low-impact"],
+    "description": "Low-impact cardio on an elliptical. Running that forgot the ground."
+  },
+  {
+    "id": "e0300000-0000-4000-8000-000000000031",
+    "name": "Stair Climber",
+    "type_code": "endurance",
+    "muscle_group": "legs",
+    "equipment": "machine",
+    "tags": ["water", "endurance", "stairs", "machine"],
+    "description": "Continuous climbing on a stair machine. A tower that never ends, kindly."
+  },
+  {
+    "id": "e0300000-0000-4000-8000-000000000032",
+    "name": "Stair Repeats",
+    "type_code": "endurance",
+    "muscle_group": "legs",
+    "equipment": "other",
+    "tags": ["water", "endurance", "stairs", "intervals"],
+    "description": "Repeats on real stairs. The building as a hill."
+  },
+  {
+    "id": "e0300000-0000-4000-8000-000000000033",
+    "name": "Assault Bike Steady",
+    "type_code": "endurance",
+    "muscle_group": "full_body",
+    "equipment": "machine",
+    "tags": ["water", "endurance", "bike", "aerobic"],
+    "description": "Steady work on an air bike. A wind you pedal into being."
+  },
+  {
+    "id": "e0300000-0000-4000-8000-000000000034",
+    "name": "Assault Bike Intervals",
+    "type_code": "endurance",
+    "muscle_group": "full_body",
+    "equipment": "machine",
+    "tags": ["water", "endurance", "bike", "intervals"],
+    "description": "Hard/easy pieces on the air bike. Gust, then calm."
+  },
+  {
+    "id": "e0300000-0000-4000-8000-000000000035",
+    "name": "Cross-Country Ski Easy",
+    "type_code": "endurance",
+    "muscle_group": "full_body",
+    "equipment": "other",
+    "tags": ["water", "endurance", "ski", "aerobic"],
+    "description": "Easy classic or skate skiing. Write two lines of winter."
+  },
+  {
+    "id": "e0300000-0000-4000-8000-000000000036",
+    "name": "Nordic Walking",
+    "type_code": "endurance",
+    "muscle_group": "legs",
+    "equipment": "other",
+    "tags": ["water", "endurance", "walk", "poles"],
+    "description": "Walking with poles for upper-body drive. Four limbs, one road."
+  },
+  {
+    "id": "e0300000-0000-4000-8000-000000000037",
+    "name": "Aqua Jogging",
+    "type_code": "endurance",
+    "muscle_group": "legs",
+    "equipment": "other",
+    "tags": ["water", "endurance", "run", "pool"],
+    "description": "Running in deep water with a belt. A run the joints cannot hear."
+  },
+  {
+    "id": "e0300000-0000-4000-8000-000000000038",
+    "name": "Dance Cardio",
+    "type_code": "endurance",
+    "muscle_group": "full_body",
+    "equipment": "bodyweight",
+    "tags": ["water", "endurance", "dance", "aerobic"],
+    "description": "Continuous dance for heart rate. A festival that counts as training."
+  },
+  {
+    "id": "e0300000-0000-4000-8000-000000000039",
+    "name": "Kickboxing Endurance Rounds",
+    "type_code": "endurance",
+    "muscle_group": "full_body",
+    "equipment": "bodyweight",
+    "tags": ["water", "endurance", "combat", "rounds"],
+    "description": "Shadow or bag rounds at a sustainable pace. A fight that is really a tide."
+  },
+  {
+    "id": "e0300000-0000-4000-8000-000000000040",
+    "name": "Shadow Boxing Rounds",
+    "type_code": "endurance",
+    "muscle_group": "full_body",
+    "equipment": "bodyweight",
+    "tags": ["water", "endurance", "combat", "cardio"],
+    "description": "Boxing movements without a partner. Spar with the air until it agrees."
+  },
+  {
+    "id": "e0300000-0000-4000-8000-000000000041",
+    "name": "Inline Skating",
+    "type_code": "endurance",
+    "muscle_group": "legs",
+    "equipment": "other",
+    "tags": ["water", "endurance", "skate", "aerobic"],
+    "description": "Continuous skating for endurance. A river on wheels."
+  },
+  {
+    "id": "e0300000-0000-4000-8000-000000000042",
+    "name": "Roller Skiing",
+    "type_code": "endurance",
+    "muscle_group": "full_body",
+    "equipment": "other",
+    "tags": ["water", "endurance", "ski", "dryland"],
+    "description": "Ski technique on pavement. Winter that forgot the snow."
+  },
+  {
+    "id": "e0300000-0000-4000-8000-000000000043",
+    "name": "Kayaking",
+    "type_code": "endurance",
+    "muscle_group": "arms",
+    "equipment": "other",
+    "tags": ["water", "endurance", "paddle", "outdoor"],
+    "description": "Paddling a kayak for time or distance. A needle sewing water to sky."
+  },
+  {
+    "id": "e0300000-0000-4000-8000-000000000044",
+    "name": "Stand-Up Paddleboarding",
+    "type_code": "endurance",
+    "muscle_group": "full_body",
+    "equipment": "other",
+    "tags": ["water", "endurance", "paddle", "balance"],
+    "description": "Paddle while standing on a board. Walk on a river that allows it."
+  },
+  {
+    "id": "e0300000-0000-4000-8000-000000000045",
+    "name": "Circuit Cardio 30 min",
+    "type_code": "endurance",
+    "muscle_group": "full_body",
+    "equipment": "bodyweight",
+    "tags": ["water", "endurance", "circuit", "aerobic"],
+    "description": "Thirty minutes of rotating cardio stations. Many small rivers, one sea."
+  },
+  {
+    "id": "e0300000-0000-4000-8000-000000000046",
+    "name": "Easy Recovery Cycle",
+    "type_code": "endurance",
+    "muscle_group": "legs",
+    "equipment": "other",
+    "tags": ["water", "endurance", "ride", "recovery"],
+    "description": "Very easy spin for blood flow. A trickle, on purpose."
+  },
+  {
+    "id": "e0300000-0000-4000-8000-000000000047",
+    "name": "Spin Class",
+    "type_code": "endurance",
+    "muscle_group": "legs",
+    "equipment": "machine",
+    "tags": ["water", "endurance", "ride", "group"],
+    "description": "Instructor-led indoor cycling. A shared current in a dark room."
+  },
+  {
+    "id": "e0300000-0000-4000-8000-000000000048",
+    "name": "Bike Commute",
+    "type_code": "endurance",
+    "muscle_group": "legs",
+    "equipment": "other",
+    "tags": ["water", "endurance", "ride", "lifestyle"],
+    "description": "Transportation riding logged as training. The errand that became a tide."
+  },
+  {
+    "id": "e0300000-0000-4000-8000-000000000049",
+    "name": "Hiking with Pack",
+    "type_code": "endurance",
+    "muscle_group": "full_body",
+    "equipment": "other",
+    "tags": ["water", "endurance", "hike", "load"],
+    "description": "Hike with extra load in a pack. The mountain plus a little extra story."
+  },
+  {
+    "id": "e0300000-0000-4000-8000-000000000050",
+    "name": "Jump Rope 10 min",
+    "type_code": "endurance",
+    "muscle_group": "legs",
+    "equipment": "other",
+    "tags": ["water", "endurance", "rope", "timed"],
+    "description": "Ten minutes of continuous or broken skipping. A short storm of feet."
+  },
+  {
+    "id": "e0400000-0000-4000-8000-000000000001",
+    "name": "Box Jump",
+    "type_code": "explosivity",
+    "muscle_group": "legs",
+    "equipment": "other",
+    "tags": ["fire", "explosivity", "plyometrics", "jump"],
+    "description": "Jump onto a box and step down. A spark that becomes a leap."
+  },
+  {
+    "id": "e0400000-0000-4000-8000-000000000002",
+    "name": "Depth Jump",
+    "type_code": "explosivity",
+    "muscle_group": "legs",
+    "equipment": "other",
+    "tags": ["fire", "explosivity", "plyometrics", "reactive"],
+    "description": "Drop from a box and rebound immediately. Fall on purpose, then refuse the ground."
+  },
+  {
+    "id": "e0400000-0000-4000-8000-000000000003",
+    "name": "Drop Jump",
+    "type_code": "explosivity",
+    "muscle_group": "legs",
+    "equipment": "other",
+    "tags": ["fire", "explosivity", "plyometrics", "stiffness"],
+    "description": "Drop and jump with a short ground contact. A bounce the floor did not expect."
+  },
+  {
+    "id": "e0400000-0000-4000-8000-000000000004",
+    "name": "Broad Jump",
+    "type_code": "explosivity",
+    "muscle_group": "legs",
+    "equipment": "bodyweight",
+    "tags": ["fire", "explosivity", "plyometrics", "horizontal"],
+    "description": "Standing jump for distance. Steal a piece of the horizon."
+  },
+  {
+    "id": "e0400000-0000-4000-8000-000000000005",
+    "name": "Standing Long Jump",
+    "type_code": "explosivity",
+    "muscle_group": "legs",
+    "equipment": "bodyweight",
+    "tags": ["fire", "explosivity", "plyometrics", "test"],
+    "description": "Measured standing long jump. One spark, one line in the sand."
+  },
+  {
+    "id": "e0400000-0000-4000-8000-000000000006",
+    "name": "Countermovement Jump",
+    "type_code": "explosivity",
+    "muscle_group": "legs",
+    "equipment": "bodyweight",
+    "tags": ["fire", "explosivity", "plyometrics", "vertical"],
+    "description": "Dip and jump for height. Dip to load the spring."
+  },
+  {
+    "id": "e0400000-0000-4000-8000-000000000007",
+    "name": "Squat Jump",
+    "type_code": "explosivity",
+    "muscle_group": "legs",
+    "equipment": "bodyweight",
+    "tags": ["fire", "explosivity", "plyometrics", "vertical"],
+    "description": "Jump from a squat without a big countermovement. Leave the well without looking down."
+  },
+  {
+    "id": "e0400000-0000-4000-8000-000000000008",
+    "name": "Jump Squat",
+    "type_code": "explosivity",
+    "muscle_group": "legs",
+    "equipment": "barbell",
+    "tags": ["fire", "explosivity", "plyometrics", "loaded"],
+    "description": "Squat jump with a light barbell. A giant who learned to bounce."
+  },
+  {
+    "id": "e0400000-0000-4000-8000-000000000009",
+    "name": "Tuck Jump",
+    "type_code": "explosivity",
+    "muscle_group": "legs",
+    "equipment": "bodyweight",
+    "tags": ["fire", "explosivity", "plyometrics", "vertical"],
+    "description": "Jump and tuck the knees. Fold mid-flight like a secret."
+  },
+  {
+    "id": "e0400000-0000-4000-8000-000000000010",
+    "name": "Seated Box Jump",
+    "type_code": "explosivity",
+    "muscle_group": "legs",
+    "equipment": "other",
+    "tags": ["fire", "explosivity", "plyometrics", "static-start"],
+    "description": "Jump to a box from a seated start. No run-up — only will."
+  },
+  {
+    "id": "e0400000-0000-4000-8000-000000000011",
+    "name": "Single-Leg Bound",
+    "type_code": "explosivity",
+    "muscle_group": "legs",
+    "equipment": "bodyweight",
+    "tags": ["fire", "explosivity", "plyometrics", "unilateral"],
+    "description": "Consecutive bounds on one leg. A spark hopping on one match."
+  },
+  {
+    "id": "e0400000-0000-4000-8000-000000000012",
+    "name": "Lateral Bound",
+    "type_code": "explosivity",
+    "muscle_group": "legs",
+    "equipment": "bodyweight",
+    "tags": ["fire", "explosivity", "plyometrics", "lateral"],
+    "description": "Side-to-side bounds. Leap across the crack in the world."
+  },
+  {
+    "id": "e0400000-0000-4000-8000-000000000013",
+    "name": "Skater Jump",
+    "type_code": "explosivity",
+    "muscle_group": "legs",
+    "equipment": "bodyweight",
+    "tags": ["fire", "explosivity", "plyometrics", "lateral"],
+    "description": "Lateral hop sticking each landing. Ice without ice."
+  },
+  {
+    "id": "e0400000-0000-4000-8000-000000000014",
+    "name": "Hurdle Hop",
+    "type_code": "explosivity",
+    "muscle_group": "legs",
+    "equipment": "other",
+    "tags": ["fire", "explosivity", "plyometrics", "rhythm"],
+    "description": "Consecutive hops over low hurdles. A small fence, a large intention."
+  },
+  {
+    "id": "e0400000-0000-4000-8000-000000000015",
+    "name": "Bounding",
+    "type_code": "explosivity",
+    "muscle_group": "legs",
+    "equipment": "bodyweight",
+    "tags": ["fire", "explosivity", "plyometrics", "locomotion"],
+    "description": "Exaggerated running bounds. Running that decided to fly a little."
+  },
+  {
+    "id": "e0400000-0000-4000-8000-000000000016",
+    "name": "Ankle Hops",
+    "type_code": "explosivity",
+    "muscle_group": "legs",
+    "equipment": "bodyweight",
+    "tags": ["fire", "explosivity", "plyometrics", "stiffness"],
+    "description": "Stiff-ankle pogo hops. A drumroll in the calves."
+  },
+  {
+    "id": "e0400000-0000-4000-8000-000000000017",
+    "name": "Jump Lunge",
+    "type_code": "explosivity",
+    "muscle_group": "legs",
+    "equipment": "bodyweight",
+    "tags": ["fire", "explosivity", "plyometrics", "split"],
+    "description": "Switch lunges in the air. Two roots that trade places mid-spark."
+  },
+  {
+    "id": "e0400000-0000-4000-8000-000000000018",
+    "name": "Plyometric Push-Up",
+    "type_code": "explosivity",
+    "muscle_group": "chest",
+    "equipment": "bodyweight",
+    "tags": ["fire", "explosivity", "plyometrics", "upper"],
+    "description": "Push-up that leaves the hands. Press the floor until it lets go."
+  },
+  {
+    "id": "e0400000-0000-4000-8000-000000000019",
+    "name": "Clap Push-Up",
+    "type_code": "explosivity",
+    "muscle_group": "chest",
+    "equipment": "bodyweight",
+    "tags": ["fire", "explosivity", "plyometrics", "upper"],
+    "description": "Push-up with a clap at the top. Applause you give yourself in midair."
+  },
+  {
+    "id": "e0400000-0000-4000-8000-000000000020",
+    "name": "Medicine Ball Slam",
+    "type_code": "explosivity",
+    "muscle_group": "full_body",
+    "equipment": "other",
+    "tags": ["fire", "explosivity", "throw", "power"],
+    "description": "Overhead slam of a medicine ball. Throw the spark into the earth."
+  },
+  {
+    "id": "e0400000-0000-4000-8000-000000000021",
+    "name": "Medicine Ball Chest Pass",
+    "type_code": "explosivity",
+    "muscle_group": "chest",
+    "equipment": "other",
+    "tags": ["fire", "explosivity", "throw", "horizontal"],
+    "description": "Explosive chest pass to a wall or partner. A punch that leaves your hands."
+  },
+  {
+    "id": "e0400000-0000-4000-8000-000000000022",
+    "name": "Rotational Med Ball Throw",
+    "type_code": "explosivity",
+    "muscle_group": "core",
+    "equipment": "other",
+    "tags": ["fire", "explosivity", "throw", "rotation"],
+    "description": "Hip-driven rotational throw. Unwind the torso like a whip of light."
+  },
+  {
+    "id": "e0400000-0000-4000-8000-000000000023",
+    "name": "Underhand Med Ball Throw",
+    "type_code": "explosivity",
+    "muscle_group": "legs",
+    "equipment": "other",
+    "tags": ["fire", "explosivity", "throw", "triple-extension"],
+    "description": "Scoop throw for height or distance. A volcano with manners."
+  },
+  {
+    "id": "e0400000-0000-4000-8000-000000000024",
+    "name": "Overhead Med Ball Throw",
+    "type_code": "explosivity",
+    "muscle_group": "full_body",
+    "equipment": "other",
+    "tags": ["fire", "explosivity", "throw", "overhead"],
+    "description": "Backward or forward overhead throw. Give the ball back to the sky."
+  },
+  {
+    "id": "e0400000-0000-4000-8000-000000000025",
+    "name": "Shot Put Throw",
+    "type_code": "explosivity",
+    "muscle_group": "full_body",
+    "equipment": "other",
+    "tags": ["fire", "explosivity", "throw", "rotation"],
+    "description": "Standing or glide shot put. A stone that wanted to be a comet."
+  },
+  {
+    "id": "e0400000-0000-4000-8000-000000000026",
+    "name": "Power Clean",
+    "type_code": "explosivity",
+    "muscle_group": "full_body",
+    "equipment": "barbell",
+    "tags": ["fire", "explosivity", "olympic", "triple-extension"],
+    "description": "Clean the bar from the floor to the shoulders. Catch lightning on the collarbones."
+  },
+  {
+    "id": "e0400000-0000-4000-8000-000000000027",
+    "name": "Hang Clean",
+    "type_code": "explosivity",
+    "muscle_group": "full_body",
+    "equipment": "barbell",
+    "tags": ["fire", "explosivity", "olympic", "hang"],
+    "description": "Clean from the hang position. Start the spark from the thighs."
+  },
+  {
+    "id": "e0400000-0000-4000-8000-000000000028",
+    "name": "Power Snatch",
+    "type_code": "explosivity",
+    "muscle_group": "full_body",
+    "equipment": "barbell",
+    "tags": ["fire", "explosivity", "olympic", "snatch"],
+    "description": "Snatch the bar overhead in one motion. A single gesture from earth to sky."
+  },
+  {
+    "id": "e0400000-0000-4000-8000-000000000029",
+    "name": "Hang Snatch",
+    "type_code": "explosivity",
+    "muscle_group": "full_body",
+    "equipment": "barbell",
+    "tags": ["fire", "explosivity", "olympic", "hang"],
+    "description": "Snatch from the hang. Steal the overhead without the floor."
+  },
+  {
+    "id": "e0400000-0000-4000-8000-000000000030",
+    "name": "Clean and Jerk",
+    "type_code": "explosivity",
+    "muscle_group": "full_body",
+    "equipment": "barbell",
+    "tags": ["fire", "explosivity", "olympic", "classic"],
+    "description": "Clean then jerk the bar overhead. Two sparks, one bar."
+  },
+  {
+    "id": "e0400000-0000-4000-8000-000000000031",
+    "name": "Split Jerk",
+    "type_code": "explosivity",
+    "muscle_group": "shoulders",
+    "equipment": "barbell",
+    "tags": ["fire", "explosivity", "olympic", "jerk"],
+    "description": "Jerk with a split stance. A lunge that launches the sun."
+  },
+  {
+    "id": "e0400000-0000-4000-8000-000000000032",
+    "name": "Power Jerk",
+    "type_code": "explosivity",
+    "muscle_group": "shoulders",
+    "equipment": "barbell",
+    "tags": ["fire", "explosivity", "olympic", "jerk"],
+    "description": "Jerk with a shallow dip and drive. A shorter fuse, same fireworks."
+  },
+  {
+    "id": "e0400000-0000-4000-8000-000000000033",
+    "name": "Push Press",
+    "type_code": "explosivity",
+    "muscle_group": "shoulders",
+    "equipment": "barbell",
+    "tags": ["fire", "explosivity", "overhead", "leg-drive"],
+    "description": "Dip and drive into an overhead press. Let the legs write the first word of the press."
+  },
+  {
+    "id": "e0400000-0000-4000-8000-000000000034",
+    "name": "Push Jerk",
+    "type_code": "explosivity",
+    "muscle_group": "shoulders",
+    "equipment": "barbell",
+    "tags": ["fire", "explosivity", "overhead", "jerk"],
+    "description": "Dip, drive, and drop under the bar. Meet the bar halfway to heaven."
+  },
+  {
+    "id": "e0400000-0000-4000-8000-000000000035",
+    "name": "High Pull",
+    "type_code": "explosivity",
+    "muscle_group": "full_body",
+    "equipment": "barbell",
+    "tags": ["fire", "explosivity", "olympic", "pull"],
+    "description": "Explosive pull without the catch. A clean that forgot to land."
+  },
+  {
+    "id": "e0400000-0000-4000-8000-000000000036",
+    "name": "Kettlebell Swing",
+    "type_code": "explosivity",
+    "muscle_group": "legs",
+    "equipment": "kettlebell",
+    "tags": ["fire", "explosivity", "ballistic", "hinge"],
+    "description": "Hip-driven swing of a kettlebell. A pendulum of fire between the knees and the sky."
+  },
+  {
+    "id": "e0400000-0000-4000-8000-000000000037",
+    "name": "Kettlebell Snatch",
+    "type_code": "explosivity",
+    "muscle_group": "full_body",
+    "equipment": "kettlebell",
+    "tags": ["fire", "explosivity", "ballistic", "overhead"],
+    "description": "Swing that finishes overhead in one motion. One bell, one orbit."
+  },
+  {
+    "id": "e0400000-0000-4000-8000-000000000038",
+    "name": "Trap Bar Jump",
+    "type_code": "explosivity",
+    "muscle_group": "legs",
+    "equipment": "other",
+    "tags": ["fire", "explosivity", "plyometrics", "loaded"],
+    "description": "Jump while holding a trap bar. A hex of iron that wants to fly."
+  },
+  {
+    "id": "e0400000-0000-4000-8000-000000000039",
+    "name": "Contrast Squat Jump",
+    "type_code": "explosivity",
+    "muscle_group": "legs",
+    "equipment": "barbell",
+    "tags": ["fire", "explosivity", "contrast", "pap"],
+    "description": "Heavy squat then an unloaded jump. A giant, then a spark."
+  },
+  {
+    "id": "e0400000-0000-4000-8000-000000000040",
+    "name": "Sprint 40m",
+    "type_code": "explosivity",
+    "muscle_group": "legs",
+    "equipment": "bodyweight",
+    "tags": ["fire", "explosivity", "sprint", "acceleration"],
+    "description": "Short acceleration sprint. Forty meters of pure yes."
+  },
+  {
+    "id": "e0400000-0000-4000-8000-000000000041",
+    "name": "Sprint 100m",
+    "type_code": "explosivity",
+    "muscle_group": "legs",
+    "equipment": "bodyweight",
+    "tags": ["fire", "explosivity", "sprint", "speed"],
+    "description": "Upright sprint for 100 m. A hundred meters of weather."
+  },
+  {
+    "id": "e0400000-0000-4000-8000-000000000042",
+    "name": "Flying 20s",
+    "type_code": "explosivity",
+    "muscle_group": "legs",
+    "equipment": "bodyweight",
+    "tags": ["fire", "explosivity", "sprint", "max-velocity"],
+    "description": "Build-up then 20 m at max speed. Arrive already burning."
+  },
+  {
+    "id": "e0400000-0000-4000-8000-000000000043",
+    "name": "Hill Sprint",
+    "type_code": "explosivity",
+    "muscle_group": "legs",
+    "equipment": "bodyweight",
+    "tags": ["fire", "explosivity", "sprint", "hills"],
+    "description": "Short sprints up a hill. Run up a wave that does not move."
+  },
+  {
+    "id": "e0400000-0000-4000-8000-000000000044",
+    "name": "10-Yard Acceleration",
+    "type_code": "explosivity",
+    "muscle_group": "legs",
+    "equipment": "bodyweight",
+    "tags": ["fire", "explosivity", "sprint", "start"],
+    "description": "First-step acceleration over 10 yards. The first spark of a longer fire."
+  },
+  {
+    "id": "e0400000-0000-4000-8000-000000000045",
+    "name": "Band-Resisted Sprint",
+    "type_code": "explosivity",
+    "muscle_group": "legs",
+    "equipment": "other",
+    "tags": ["fire", "explosivity", "sprint", "resisted"],
+    "description": "Sprint against a band or sled strap. Run while the story pulls you back."
+  },
+  {
+    "id": "e0400000-0000-4000-8000-000000000046",
+    "name": "Sled Push Sprint",
+    "type_code": "explosivity",
+    "muscle_group": "full_body",
+    "equipment": "other",
+    "tags": ["fire", "explosivity", "sled", "acceleration"],
+    "description": "Push a sled with sprint intent. A wall that you are allowed to move."
+  },
+  {
+    "id": "e0400000-0000-4000-8000-000000000047",
+    "name": "Sled Pull",
+    "type_code": "explosivity",
+    "muscle_group": "legs",
+    "equipment": "other",
+    "tags": ["fire", "explosivity", "sled", "posterior"],
+    "description": "Backward or forward sled pull. Drag the winter behind you."
+  },
+  {
+    "id": "e0400000-0000-4000-8000-000000000048",
+    "name": "Vertical Jump Test",
+    "type_code": "explosivity",
+    "muscle_group": "legs",
+    "equipment": "bodyweight",
+    "tags": ["fire", "explosivity", "test", "jump"],
+    "description": "Measured jump for height. How high the spark reaches today."
+  },
+  {
+    "id": "e0400000-0000-4000-8000-000000000049",
+    "name": "Triple Broad Jump",
+    "type_code": "explosivity",
+    "muscle_group": "legs",
+    "equipment": "bodyweight",
+    "tags": ["fire", "explosivity", "plyometrics", "horizontal"],
+    "description": "Three consecutive broad jumps. Three sparks, one distance."
+  },
+  {
+    "id": "e0400000-0000-4000-8000-000000000050",
+    "name": "Medicine Ball Rotational Slam",
+    "type_code": "explosivity",
+    "muscle_group": "core",
+    "equipment": "other",
+    "tags": ["fire", "explosivity", "throw", "rotation"],
+    "description": "Rotational slam into the floor. A whirlwind that ends in the earth."
+  },
+  {
+    "id": "e0500000-0000-4000-8000-000000000001",
+    "name": "Chess Game",
+    "type_code": "intelligence",
+    "muscle_group": "core",
+    "equipment": "other",
+    "tags": ["shadow", "intelligence", "chess", "strategy"],
+    "description": "Play a full game of chess. A riddle at the edge of the map, sixty-four squares wide."
+  },
+  {
+    "id": "e0500000-0000-4000-8000-000000000002",
+    "name": "Chess Puzzle Session",
+    "type_code": "intelligence",
+    "muscle_group": "core",
+    "equipment": "other",
+    "tags": ["shadow", "intelligence", "chess", "tactics"],
+    "description": "Solve a set of tactical puzzles. Find the hidden door in a still position."
+  },
+  {
+    "id": "e0500000-0000-4000-8000-000000000003",
+    "name": "Blindfold Chess Visualization",
+    "type_code": "intelligence",
+    "muscle_group": "core",
+    "equipment": "other",
+    "tags": ["shadow", "intelligence", "chess", "visualization"],
+    "description": "Visualize moves without a board. Play in the dark on purpose."
+  },
+  {
+    "id": "e0500000-0000-4000-8000-000000000004",
+    "name": "Go Game",
+    "type_code": "intelligence",
+    "muscle_group": "core",
+    "equipment": "other",
+    "tags": ["shadow", "intelligence", "go", "strategy"],
+    "description": "Play a game of Go. Surround emptiness until it becomes territory."
+  },
+  {
+    "id": "e0500000-0000-4000-8000-000000000005",
+    "name": "Tactical Puzzle Set",
+    "type_code": "intelligence",
+    "muscle_group": "core",
+    "equipment": "other",
+    "tags": ["shadow", "intelligence", "tactics", "cognition"],
+    "description": "Mixed tactical problems from sport or board. A handful of locks, one key each."
+  },
+  {
+    "id": "e0500000-0000-4000-8000-000000000006",
+    "name": "Rifle Marksmanship Session",
+    "type_code": "intelligence",
+    "muscle_group": "arms",
+    "equipment": "other",
+    "tags": ["shadow", "intelligence", "shooting", "precision"],
+    "description": "Live or dry practice with a rifle on a range. A straight line from breath to target."
+  },
+  {
+    "id": "e0500000-0000-4000-8000-000000000007",
+    "name": "Pistol Dry-Fire Practice",
+    "type_code": "intelligence",
+    "muscle_group": "arms",
+    "equipment": "other",
+    "tags": ["shadow", "intelligence", "shooting", "dry-fire"],
+    "description": "Unloaded dry-fire for trigger and sights. Aim at nothing and still not miss the ritual."
+  },
+  {
+    "id": "e0500000-0000-4000-8000-000000000008",
+    "name": "Archery Session",
+    "type_code": "intelligence",
+    "muscle_group": "arms",
+    "equipment": "other",
+    "tags": ["shadow", "intelligence", "archery", "precision"],
+    "description": "Shooting arrows at a marked target. A quiet argument with distance."
+  },
+  {
+    "id": "e0500000-0000-4000-8000-000000000009",
+    "name": "Archery Blank Bale",
+    "type_code": "intelligence",
+    "muscle_group": "arms",
+    "equipment": "other",
+    "tags": ["shadow", "intelligence", "archery", "form"],
+    "description": "Form shooting at a blank bale. Forget the gold; keep the line."
+  },
+  {
+    "id": "e0500000-0000-4000-8000-000000000010",
+    "name": "Clay Pigeon Shooting",
+    "type_code": "intelligence",
+    "muscle_group": "full_body",
+    "equipment": "other",
+    "tags": ["shadow", "intelligence", "shooting", "moving-target"],
+    "description": "Shotgun on clay targets. A clay bird, a real decision."
+  },
+  {
+    "id": "e0500000-0000-4000-8000-000000000011",
+    "name": "Air Rifle Standing",
+    "type_code": "intelligence",
+    "muscle_group": "arms",
+    "equipment": "other",
+    "tags": ["shadow", "intelligence", "shooting", "standing"],
+    "description": "Standing air-rifle work. Become a tripod made of patience."
+  },
+  {
+    "id": "e0500000-0000-4000-8000-000000000012",
+    "name": "Sailing Race",
+    "type_code": "intelligence",
+    "muscle_group": "full_body",
+    "equipment": "other",
+    "tags": ["shadow", "intelligence", "sailing", "race"],
+    "description": "Race or timed sailing session. Read wind the way others read maps."
+  },
+  {
+    "id": "e0500000-0000-4000-8000-000000000013",
+    "name": "Sailing Tack Drill",
+    "type_code": "intelligence",
+    "muscle_group": "full_body",
+    "equipment": "other",
+    "tags": ["shadow", "intelligence", "sailing", "drill"],
+    "description": "Repeated tacks and gybes. Turn the boat the way a thought turns."
+  },
+  {
+    "id": "e0500000-0000-4000-8000-000000000014",
+    "name": "Navigation Plotting",
+    "type_code": "intelligence",
+    "muscle_group": "core",
+    "equipment": "other",
+    "tags": ["shadow", "intelligence", "nav", "map"],
+    "description": "Plot a course on a chart. Draw tomorrow on paper before the water does."
+  },
+  {
+    "id": "e0500000-0000-4000-8000-000000000015",
+    "name": "Compass Bearing Drill",
+    "type_code": "intelligence",
+    "muscle_group": "core",
+    "equipment": "other",
+    "tags": ["shadow", "intelligence", "nav", "compass"],
+    "description": "Take and walk bearings. A needle that always knows north."
+  },
+  {
+    "id": "e0500000-0000-4000-8000-000000000016",
+    "name": "Knot Tying Practice",
+    "type_code": "intelligence",
+    "muscle_group": "arms",
+    "equipment": "other",
+    "tags": ["shadow", "intelligence", "knots", "skill"],
+    "description": "Practice essential knots under time. Tie the story so it cannot slip."
+  },
+  {
+    "id": "e0500000-0000-4000-8000-000000000017",
+    "name": "Knot Relay",
+    "type_code": "intelligence",
+    "muscle_group": "arms",
+    "equipment": "other",
+    "tags": ["shadow", "intelligence", "knots", "timed"],
+    "description": "Sequence of knots against the clock. Hands that remember in a hurry."
+  },
+  {
+    "id": "e0500000-0000-4000-8000-000000000018",
+    "name": "Weather Routing Study",
+    "type_code": "intelligence",
+    "muscle_group": "core",
+    "equipment": "other",
+    "tags": ["shadow", "intelligence", "sailing", "study"],
+    "description": "Study forecasts and choose a route. Argue with the sky on paper first."
+  },
+  {
+    "id": "e0500000-0000-4000-8000-000000000019",
+    "name": "Orienteering Course",
+    "type_code": "intelligence",
+    "muscle_group": "legs",
+    "equipment": "other",
+    "tags": ["shadow", "intelligence", "nav", "outdoor"],
+    "description": "Navigate a course with map and compass. A treasure hunt where the treasure is not getting lost."
+  },
+  {
+    "id": "e0500000-0000-4000-8000-000000000020",
+    "name": "Map Reading Hike",
+    "type_code": "intelligence",
+    "muscle_group": "legs",
+    "equipment": "other",
+    "tags": ["shadow", "intelligence", "nav", "hike"],
+    "description": "Hike while navigating from a map. Walk inside a drawing of the land."
+  },
+  {
+    "id": "e0500000-0000-4000-8000-000000000021",
+    "name": "Trail Night Navigation",
+    "type_code": "intelligence",
+    "muscle_group": "legs",
+    "equipment": "other",
+    "tags": ["shadow", "intelligence", "nav", "night"],
+    "description": "Navigate a trail after dark. The map is a lantern."
+  },
+  {
+    "id": "e0500000-0000-4000-8000-000000000022",
+    "name": "Reaction Light Drill",
+    "type_code": "intelligence",
+    "muscle_group": "full_body",
+    "equipment": "other",
+    "tags": ["shadow", "intelligence", "reaction", "lights"],
+    "description": "Respond to light cues with movement. Chase sparks that someone else throws."
+  },
+  {
+    "id": "e0500000-0000-4000-8000-000000000023",
+    "name": "Dual-Task Balance",
+    "type_code": "intelligence",
+    "muscle_group": "legs",
+    "equipment": "other",
+    "tags": ["shadow", "intelligence", "dual-task", "balance"],
+    "description": "Balance while counting or reciting. Stand still and think at the same time."
+  },
+  {
+    "id": "e0500000-0000-4000-8000-000000000024",
+    "name": "N-Back Walking",
+    "type_code": "intelligence",
+    "muscle_group": "legs",
+    "equipment": "other",
+    "tags": ["shadow", "intelligence", "dual-task", "memory"],
+    "description": "Walk while performing an n-back task. Remember the last steps while taking new ones."
+  },
+  {
+    "id": "e0500000-0000-4000-8000-000000000025",
+    "name": "Stroop Agility Drill",
+    "type_code": "intelligence",
+    "muscle_group": "legs",
+    "equipment": "other",
+    "tags": ["shadow", "intelligence", "cognition", "cod"],
+    "description": "Change direction based on conflicting color/word cues. Do what is written, not what is painted."
+  },
+  {
+    "id": "e0500000-0000-4000-8000-000000000026",
+    "name": "Auditory Reaction Drill",
+    "type_code": "intelligence",
+    "muscle_group": "full_body",
+    "equipment": "other",
+    "tags": ["shadow", "intelligence", "reaction", "audio"],
+    "description": "Move on sound cues. The ear starts the sprint."
+  },
+  {
+    "id": "e0500000-0000-4000-8000-000000000027",
+    "name": "Peripheral Vision Drill",
+    "type_code": "intelligence",
+    "muscle_group": "core",
+    "equipment": "other",
+    "tags": ["shadow", "intelligence", "vision", "awareness"],
+    "description": "Track central and peripheral targets. See the edges of the tale."
+  },
+  {
+    "id": "e0500000-0000-4000-8000-000000000028",
+    "name": "Quiet Eye Gaze Training",
+    "type_code": "intelligence",
+    "muscle_group": "core",
+    "equipment": "other",
+    "tags": ["shadow", "intelligence", "vision", "aim"],
+    "description": "Hold a quiet gaze on a target before acting. Look until the shot is already decided."
+  },
+  {
+    "id": "e0500000-0000-4000-8000-000000000029",
+    "name": "Balance Board Chess",
+    "type_code": "intelligence",
+    "muscle_group": "legs",
+    "equipment": "other",
+    "tags": ["shadow", "intelligence", "dual-task", "chess"],
+    "description": "Play chess while balancing. A riddle on a hill that moves."
+  },
+  {
+    "id": "e0500000-0000-4000-8000-000000000030",
+    "name": "Partner Mirror Delay",
+    "type_code": "intelligence",
+    "muscle_group": "full_body",
+    "equipment": "bodyweight",
+    "tags": ["shadow", "intelligence", "dual-task", "partner"],
+    "description": "Copy a partner after a delay. Remember a dance one beat late."
+  },
+  {
+    "id": "e0500000-0000-4000-8000-000000000031",
+    "name": "Pre-Performance Imagery",
+    "type_code": "intelligence",
+    "muscle_group": "core",
+    "equipment": "other",
+    "tags": ["shadow", "intelligence", "imagery", "mental"],
+    "description": "Rehearse the skill with closed eyes. Win once in the dark before the light."
+  },
+  {
+    "id": "e0500000-0000-4000-8000-000000000032",
+    "name": "Video Analysis Review",
+    "type_code": "intelligence",
+    "muscle_group": "core",
+    "equipment": "other",
+    "tags": ["shadow", "intelligence", "analysis", "study"],
+    "description": "Review recorded performance with notes. Watch yourself as a stranger would."
+  },
+  {
+    "id": "e0500000-0000-4000-8000-000000000033",
+    "name": "Playbook Study",
+    "type_code": "intelligence",
+    "muscle_group": "core",
+    "equipment": "other",
+    "tags": ["shadow", "intelligence", "study", "tactics"],
+    "description": "Study patterns, plays, or openings. Learn the roads before the race."
+  },
+  {
+    "id": "e0500000-0000-4000-8000-000000000034",
+    "name": "Decision-Making Small-Sided Game",
+    "type_code": "intelligence",
+    "muscle_group": "full_body",
+    "equipment": "other",
+    "tags": ["shadow", "intelligence", "ssg", "tactics"],
+    "description": "Small-sided game with constrained decisions. A tiny war with kind rules."
+  },
+  {
+    "id": "e0500000-0000-4000-8000-000000000035",
+    "name": "Rock Climbing Route Reading",
+    "type_code": "intelligence",
+    "muscle_group": "core",
+    "equipment": "other",
+    "tags": ["shadow", "intelligence", "climbing", "beta"],
+    "description": "Read a route before climbing it. Solve the wall with your eyes first."
+  },
+  {
+    "id": "e0500000-0000-4000-8000-000000000036",
+    "name": "Boulder Problem Beta",
+    "type_code": "intelligence",
+    "muscle_group": "full_body",
+    "equipment": "other",
+    "tags": ["shadow", "intelligence", "climbing", "bouldering"],
+    "description": "Work the sequence of a boulder problem. A riddle you answer with fingers."
+  },
+  {
+    "id": "e0500000-0000-4000-8000-000000000037",
+    "name": "Fencing Footwork",
+    "type_code": "intelligence",
+    "muscle_group": "legs",
+    "equipment": "other",
+    "tags": ["shadow", "intelligence", "fencing", "footwork"],
+    "description": "Advance, retreat, and lunge drills. A conversation of distances."
+  },
+  {
+    "id": "e0500000-0000-4000-8000-000000000038",
+    "name": "Golf Putting Practice",
+    "type_code": "intelligence",
+    "muscle_group": "arms",
+    "equipment": "other",
+    "tags": ["shadow", "intelligence", "golf", "precision"],
+    "description": "Putting on a green or mat. A quiet roll toward a small yes."
+  },
+  {
+    "id": "e0500000-0000-4000-8000-000000000039",
+    "name": "Disc Golf Putting",
+    "type_code": "intelligence",
+    "muscle_group": "arms",
+    "equipment": "other",
+    "tags": ["shadow", "intelligence", "disc-golf", "precision"],
+    "description": "Putting with a disc. A flying plate and a basket of patience."
+  },
+  {
+    "id": "e0500000-0000-4000-8000-000000000040",
+    "name": "Darts Session",
+    "type_code": "intelligence",
+    "muscle_group": "arms",
+    "equipment": "other",
+    "tags": ["shadow", "intelligence", "darts", "aim"],
+    "description": "Throwing darts at a board. Three chances to tell the truth."
+  },
+  {
+    "id": "e0500000-0000-4000-8000-000000000041",
+    "name": "Billiards Session",
+    "type_code": "intelligence",
+    "muscle_group": "arms",
+    "equipment": "other",
+    "tags": ["shadow", "intelligence", "billiards", "geometry"],
+    "description": "Practice shots on a pool table. Angles that were always there."
+  },
+  {
+    "id": "e0500000-0000-4000-8000-000000000042",
+    "name": "Table Tennis Skill Drills",
+    "type_code": "intelligence",
+    "muscle_group": "arms",
+    "equipment": "other",
+    "tags": ["shadow", "intelligence", "table-tennis", "reaction"],
+    "description": "Multiball or pattern drills. A tiny storm of decisions."
+  },
+  {
+    "id": "e0500000-0000-4000-8000-000000000043",
+    "name": "Rubik's Cube Timed Solves",
+    "type_code": "intelligence",
+    "muscle_group": "arms",
+    "equipment": "other",
+    "tags": ["shadow", "intelligence", "cube", "algorithms"],
+    "description": "Timed cube solves. Unscramble a small universe."
+  },
+  {
+    "id": "e0500000-0000-4000-8000-000000000044",
+    "name": "Memory Palace Walk",
+    "type_code": "intelligence",
+    "muscle_group": "legs",
+    "equipment": "other",
+    "tags": ["shadow", "intelligence", "memory", "loci"],
+    "description": "Walk a route while placing memories. A house in the mind with real floors."
+  },
+  {
+    "id": "e0500000-0000-4000-8000-000000000045",
+    "name": "Juggling Five-Ball",
+    "type_code": "intelligence",
+    "muscle_group": "arms",
+    "equipment": "other",
+    "tags": ["shadow", "intelligence", "juggling", "advanced"],
+    "description": "Cascade with five balls. Five moons, one pair of hands."
+  },
+  {
+    "id": "e0500000-0000-4000-8000-000000000046",
+    "name": "Breath-Hold Visualization",
+    "type_code": "intelligence",
+    "muscle_group": "core",
+    "equipment": "other",
+    "tags": ["shadow", "intelligence", "breath", "focus"],
+    "description": "Calm breath-holds with a visual target. Hold the tide inside."
+  },
+  {
+    "id": "e0500000-0000-4000-8000-000000000047",
+    "name": "Cue Sport Pattern Play",
+    "type_code": "intelligence",
+    "muscle_group": "arms",
+    "equipment": "other",
+    "tags": ["shadow", "intelligence", "billiards", "patterns"],
+    "description": "Run planned patterns on the table. A sentence of balls."
+  },
+  {
+    "id": "e0500000-0000-4000-8000-000000000048",
+    "name": "Strategy Board Game Session",
+    "type_code": "intelligence",
+    "muscle_group": "core",
+    "equipment": "other",
+    "tags": ["shadow", "intelligence", "board-game", "strategy"],
+    "description": "Play a strategy board game logged as training. A war with snacks."
+  },
+  {
+    "id": "e0500000-0000-4000-8000-000000000049",
+    "name": "Dual-Task Dribble",
+    "type_code": "intelligence",
+    "muscle_group": "arms",
+    "equipment": "other",
+    "tags": ["shadow", "intelligence", "dual-task", "ball"],
+    "description": "Dribble while answering questions or cues. Two stories in the hands at once."
+  },
+  {
+    "id": "e0500000-0000-4000-8000-000000000050",
+    "name": "Sequence Recall Obstacle Course",
+    "type_code": "intelligence",
+    "muscle_group": "full_body",
+    "equipment": "other",
+    "tags": ["shadow", "intelligence", "memory", "obstacle"],
+    "description": "Complete obstacles in a remembered order. A maze that lives in working memory."
+  },
+  {
+    "id": "e0600000-0000-4000-8000-000000000001",
+    "name": "Child's Pose",
+    "type_code": "regeneration",
+    "muscle_group": "back",
+    "equipment": "bodyweight",
+    "tags": ["aether", "regeneration", "yoga", "restore"],
+    "description": "Kneeling rest pose with arms reaching or beside the body. The smallest cave, still a shelter."
+  },
+  {
+    "id": "e0600000-0000-4000-8000-000000000002",
+    "name": "Cat-Cow",
+    "type_code": "regeneration",
+    "muscle_group": "back",
+    "equipment": "bodyweight",
+    "tags": ["aether", "regeneration", "yoga", "spine"],
+    "description": "Spinal flexion and extension on all fours. The spine remembers it is a river."
+  },
+  {
+    "id": "e0600000-0000-4000-8000-000000000003",
+    "name": "Downward Dog",
+    "type_code": "regeneration",
+    "muscle_group": "full_body",
+    "equipment": "bodyweight",
+    "tags": ["aether", "regeneration", "yoga", "stretch"],
+    "description": "Inverted V that lengthens calves, hamstrings, and back. A mountain made of breath."
+  },
+  {
+    "id": "e0600000-0000-4000-8000-000000000004",
+    "name": "Pigeon Pose",
+    "type_code": "regeneration",
+    "muscle_group": "legs",
+    "equipment": "bodyweight",
+    "tags": ["aether", "regeneration", "yoga", "hips"],
+    "description": "Hip opener with one leg folded forward. Sit inside a wing."
+  },
+  {
+    "id": "e0600000-0000-4000-8000-000000000005",
+    "name": "Thread the Needle",
+    "type_code": "regeneration",
+    "muscle_group": "back",
+    "equipment": "bodyweight",
+    "tags": ["aether", "regeneration", "yoga", "thoracic"],
+    "description": "Thoracic rotation from all fours. Sew the ribs to a longer day."
+  },
+  {
+    "id": "e0600000-0000-4000-8000-000000000006",
+    "name": "Supine Figure Four",
+    "type_code": "regeneration",
+    "muscle_group": "legs",
+    "equipment": "bodyweight",
+    "tags": ["aether", "regeneration", "yoga", "glutes"],
+    "description": "Lie on the back with an ankle across the knee. A number four that undoes the hips."
+  },
+  {
+    "id": "e0600000-0000-4000-8000-000000000007",
+    "name": "Reclined Twist",
+    "type_code": "regeneration",
+    "muscle_group": "back",
+    "equipment": "bodyweight",
+    "tags": ["aether", "regeneration", "yoga", "twist"],
+    "description": "Supine spinal twist. Wring the day out of the spine."
+  },
+  {
+    "id": "e0600000-0000-4000-8000-000000000008",
+    "name": "Legs Up the Wall",
+    "type_code": "regeneration",
+    "muscle_group": "legs",
+    "equipment": "bodyweight",
+    "tags": ["aether", "regeneration", "yoga", "restore"],
+    "description": "Rest with legs vertical against a wall. Give the blood back to the heart without asking."
+  },
+  {
+    "id": "e0600000-0000-4000-8000-000000000009",
+    "name": "Corpse Pose",
+    "type_code": "regeneration",
+    "muscle_group": "full_body",
+    "equipment": "bodyweight",
+    "tags": ["aether", "regeneration", "yoga", "savasana"],
+    "description": "Supine rest at the end of practice. The sleep that mends the hero, with eyes still open."
+  },
+  {
+    "id": "e0600000-0000-4000-8000-000000000010",
+    "name": "Gentle Sun Salutation",
+    "type_code": "regeneration",
+    "muscle_group": "full_body",
+    "equipment": "bodyweight",
+    "tags": ["aether", "regeneration", "yoga", "flow"],
+    "description": "Slow sun salute without forcing range. Bow to a sun that is not in a hurry."
+  },
+  {
+    "id": "e0600000-0000-4000-8000-000000000011",
+    "name": "Yoga Nidra",
+    "type_code": "regeneration",
+    "muscle_group": "full_body",
+    "equipment": "bodyweight",
+    "tags": ["aether", "regeneration", "yoga", "nidra"],
+    "description": "Guided yogic sleep. A nap that is also a practice."
+  },
+  {
+    "id": "e0600000-0000-4000-8000-000000000012",
+    "name": "Yin Yoga Session",
+    "type_code": "regeneration",
+    "muscle_group": "full_body",
+    "equipment": "bodyweight",
+    "tags": ["aether", "regeneration", "yoga", "yin"],
+    "description": "Long-held floor poses. Stay until the story in the tissue changes."
+  },
+  {
+    "id": "e0600000-0000-4000-8000-000000000013",
+    "name": "Restorative Yoga",
+    "type_code": "regeneration",
+    "muscle_group": "full_body",
+    "equipment": "other",
+    "tags": ["aether", "regeneration", "yoga", "props"],
+    "description": "Supported poses with props. Let the cushions do the holding."
+  },
+  {
+    "id": "e0600000-0000-4000-8000-000000000014",
+    "name": "Hip Flexor Stretch",
+    "type_code": "regeneration",
+    "muscle_group": "legs",
+    "equipment": "bodyweight",
+    "tags": ["aether", "regeneration", "stretch", "hips"],
+    "description": "Kneeling or standing hip-flexor stretch. Open the front of the hip like a gate."
+  },
+  {
+    "id": "e0600000-0000-4000-8000-000000000015",
+    "name": "Hamstring Stretch",
+    "type_code": "regeneration",
+    "muscle_group": "legs",
+    "equipment": "bodyweight",
+    "tags": ["aether", "regeneration", "stretch", "hamstrings"],
+    "description": "Supine or standing hamstring stretch. Unkink the back of the leg."
+  },
+  {
+    "id": "e0600000-0000-4000-8000-000000000016",
+    "name": "Quad Stretch",
+    "type_code": "regeneration",
+    "muscle_group": "legs",
+    "equipment": "bodyweight",
+    "tags": ["aether", "regeneration", "stretch", "quads"],
+    "description": "Standing or side-lying quad stretch. Give the thigh permission to be long."
+  },
+  {
+    "id": "e0600000-0000-4000-8000-000000000017",
+    "name": "Calf Stretch",
+    "type_code": "regeneration",
+    "muscle_group": "legs",
+    "equipment": "bodyweight",
+    "tags": ["aether", "regeneration", "stretch", "calves"],
+    "description": "Wall or step calf stretch. Let the heel remember the ground."
+  },
+  {
+    "id": "e0600000-0000-4000-8000-000000000018",
+    "name": "World's Greatest Stretch",
+    "type_code": "regeneration",
+    "muscle_group": "full_body",
+    "equipment": "bodyweight",
+    "tags": ["aether", "regeneration", "mobility", "flow"],
+    "description": "Lunge, twist, and hamstring sequence. A single pose that visits many rooms."
+  },
+  {
+    "id": "e0600000-0000-4000-8000-000000000019",
+    "name": "Couch Stretch",
+    "type_code": "regeneration",
+    "muscle_group": "legs",
+    "equipment": "other",
+    "tags": ["aether", "regeneration", "stretch", "hip-flexors"],
+    "description": "Rear-foot elevated hip-flexor stretch. The furniture as a teacher."
+  },
+  {
+    "id": "e0600000-0000-4000-8000-000000000020",
+    "name": "90/90 Hip Switch",
+    "type_code": "regeneration",
+    "muscle_group": "legs",
+    "equipment": "bodyweight",
+    "tags": ["aether", "regeneration", "mobility", "hips"],
+    "description": "Seated 90/90 transitions. Turn the hips like two slow doors."
+  },
+  {
+    "id": "e0600000-0000-4000-8000-000000000021",
+    "name": "Thoracic Rotation",
+    "type_code": "regeneration",
+    "muscle_group": "back",
+    "equipment": "bodyweight",
+    "tags": ["aether", "regeneration", "mobility", "t-spine"],
+    "description": "Open-book or quadruped rotations. Let the ribs look over a shoulder."
+  },
+  {
+    "id": "e0600000-0000-4000-8000-000000000022",
+    "name": "Shoulder CARs",
+    "type_code": "regeneration",
+    "muscle_group": "shoulders",
+    "equipment": "bodyweight",
+    "tags": ["aether", "regeneration", "mobility", "cars"],
+    "description": "Controlled articular rotations of the shoulder. Draw a slow halo with the arm."
+  },
+  {
+    "id": "e0600000-0000-4000-8000-000000000023",
+    "name": "Hip CARs",
+    "type_code": "regeneration",
+    "muscle_group": "legs",
+    "equipment": "bodyweight",
+    "tags": ["aether", "regeneration", "mobility", "cars"],
+    "description": "Controlled articular rotations of the hip. A quiet circle the joint already knew."
+  },
+  {
+    "id": "e0600000-0000-4000-8000-000000000024",
+    "name": "Ankle CARs",
+    "type_code": "regeneration",
+    "muscle_group": "legs",
+    "equipment": "bodyweight",
+    "tags": ["aether", "regeneration", "mobility", "cars"],
+    "description": "Controlled articular rotations of the ankle. Write circles with the foot."
+  },
+  {
+    "id": "e0600000-0000-4000-8000-000000000025",
+    "name": "Wrist Mobility Flow",
+    "type_code": "regeneration",
+    "muscle_group": "arms",
+    "equipment": "bodyweight",
+    "tags": ["aether", "regeneration", "mobility", "wrists"],
+    "description": "Flexion, extension, and circles for the wrists. Hands that want another chapter of work."
+  },
+  {
+    "id": "e0600000-0000-4000-8000-000000000026",
+    "name": "Neck Release Sequence",
+    "type_code": "regeneration",
+    "muscle_group": "core",
+    "equipment": "bodyweight",
+    "tags": ["aether", "regeneration", "mobility", "neck"],
+    "description": "Gentle neck mobility and soft tissue. Let the head weigh what it actually weighs."
+  },
+  {
+    "id": "e0600000-0000-4000-8000-000000000027",
+    "name": "Mobility Flow 15 min",
+    "type_code": "regeneration",
+    "muscle_group": "full_body",
+    "equipment": "bodyweight",
+    "tags": ["aether", "regeneration", "mobility", "flow"],
+    "description": "Fifteen-minute joint flow. Oil the hinges of the tale."
+  },
+  {
+    "id": "e0600000-0000-4000-8000-000000000028",
+    "name": "Foam Roll Quads",
+    "type_code": "regeneration",
+    "muscle_group": "legs",
+    "equipment": "other",
+    "tags": ["aether", "regeneration", "smr", "quads"],
+    "description": "Slow rolling of the quadriceps. A rolling pin for the front of the leg."
+  },
+  {
+    "id": "e0600000-0000-4000-8000-000000000029",
+    "name": "Foam Roll Thoracic Spine",
+    "type_code": "regeneration",
+    "muscle_group": "back",
+    "equipment": "other",
+    "tags": ["aether", "regeneration", "smr", "t-spine"],
+    "description": "Roll the upper back over a foam roller. A barrel that teaches the ribs to open."
+  },
+  {
+    "id": "e0600000-0000-4000-8000-000000000030",
+    "name": "Foam Roll Calves",
+    "type_code": "regeneration",
+    "muscle_group": "legs",
+    "equipment": "other",
+    "tags": ["aether", "regeneration", "smr", "calves"],
+    "description": "Roll the calves slowly. Iron the lower legs."
+  },
+  {
+    "id": "e0600000-0000-4000-8000-000000000031",
+    "name": "Foam Roll Glutes",
+    "type_code": "regeneration",
+    "muscle_group": "legs",
+    "equipment": "other",
+    "tags": ["aether", "regeneration", "smr", "glutes"],
+    "description": "Roll the glutes and hip rotators. Sit on a storm until it passes."
+  },
+  {
+    "id": "e0600000-0000-4000-8000-000000000032",
+    "name": "Lacrosse Ball Pec Release",
+    "type_code": "regeneration",
+    "muscle_group": "chest",
+    "equipment": "other",
+    "tags": ["aether", "regeneration", "smr", "pecs"],
+    "description": "Ball work on the pecs against a wall. A small moon for a tight chest."
+  },
+  {
+    "id": "e0600000-0000-4000-8000-000000000033",
+    "name": "Box Breathing",
+    "type_code": "regeneration",
+    "muscle_group": "core",
+    "equipment": "other",
+    "tags": ["aether", "regeneration", "breath", "box"],
+    "description": "Equal inhale, hold, exhale, hold. A square of air."
+  },
+  {
+    "id": "e0600000-0000-4000-8000-000000000034",
+    "name": "4-7-8 Breathing",
+    "type_code": "regeneration",
+    "muscle_group": "core",
+    "equipment": "other",
+    "tags": ["aether", "regeneration", "breath", "downshift"],
+    "description": "Inhale 4, hold 7, exhale 8. A longer goodbye on the exhale."
+  },
+  {
+    "id": "e0600000-0000-4000-8000-000000000035",
+    "name": "Physiological Sigh",
+    "type_code": "regeneration",
+    "muscle_group": "core",
+    "equipment": "other",
+    "tags": ["aether", "regeneration", "breath", "sigh"],
+    "description": "Double inhale and long exhale. Two sips of air, one long letting go."
+  },
+  {
+    "id": "e0600000-0000-4000-8000-000000000036",
+    "name": "Diaphragmatic Breathing",
+    "type_code": "regeneration",
+    "muscle_group": "core",
+    "equipment": "other",
+    "tags": ["aether", "regeneration", "breath", "belly"],
+    "description": "Belly breathing with a quiet chest. Let the belly be the bellows."
+  },
+  {
+    "id": "e0600000-0000-4000-8000-000000000037",
+    "name": "NSDR Protocol",
+    "type_code": "regeneration",
+    "muscle_group": "full_body",
+    "equipment": "other",
+    "tags": ["aether", "regeneration", "nsdr", "restore"],
+    "description": "Non-sleep deep rest lying down. Rest that is not quite sleep, and that is the point."
+  },
+  {
+    "id": "e0600000-0000-4000-8000-000000000038",
+    "name": "Progressive Muscle Relaxation",
+    "type_code": "regeneration",
+    "muscle_group": "full_body",
+    "equipment": "bodyweight",
+    "tags": ["aether", "regeneration", "pmr", "restore"],
+    "description": "Tense and release muscle groups in sequence. Clench the story, then put it down."
+  },
+  {
+    "id": "e0600000-0000-4000-8000-000000000039",
+    "name": "Guided Meditation",
+    "type_code": "regeneration",
+    "muscle_group": "core",
+    "equipment": "other",
+    "tags": ["aether", "regeneration", "meditation", "mind"],
+    "description": "Seated or lying guided sit. A quiet room inside the day."
+  },
+  {
+    "id": "e0600000-0000-4000-8000-000000000040",
+    "name": "Easy Recovery Walk",
+    "type_code": "regeneration",
+    "muscle_group": "legs",
+    "equipment": "other",
+    "tags": ["aether", "regeneration", "walk", "recovery"],
+    "description": "Very easy walk for circulation. A stroll that asks nothing of the hero."
+  },
+  {
+    "id": "e0600000-0000-4000-8000-000000000041",
+    "name": "Easy Recovery Swim",
+    "type_code": "regeneration",
+    "muscle_group": "full_body",
+    "equipment": "other",
+    "tags": ["aether", "regeneration", "swim", "recovery"],
+    "description": "Gentle continuous swim. Float more than you fight."
+  },
+  {
+    "id": "e0600000-0000-4000-8000-000000000042",
+    "name": "Tai Chi Slow Form",
+    "type_code": "regeneration",
+    "muscle_group": "full_body",
+    "equipment": "bodyweight",
+    "tags": ["aether", "regeneration", "taichi", "flow"],
+    "description": "Slow continuous tai chi sequence. A fight that decided to be a garden."
+  },
+  {
+    "id": "e0600000-0000-4000-8000-000000000043",
+    "name": "Qigong Shibashi",
+    "type_code": "regeneration",
+    "muscle_group": "full_body",
+    "equipment": "bodyweight",
+    "tags": ["aether", "regeneration", "qigong", "flow"],
+    "description": "Eighteen-movement qigong set. Eighteen small weathers."
+  },
+  {
+    "id": "e0600000-0000-4000-8000-000000000044",
+    "name": "Gentle Pilates Flow",
+    "type_code": "regeneration",
+    "muscle_group": "core",
+    "equipment": "bodyweight",
+    "tags": ["aether", "regeneration", "pilates", "control"],
+    "description": "Slow pilates sequence for control and breath. A precise kindness to the trunk."
+  },
+  {
+    "id": "e0600000-0000-4000-8000-000000000045",
+    "name": "Contrast Shower",
+    "type_code": "regeneration",
+    "muscle_group": "full_body",
+    "equipment": "other",
+    "tags": ["aether", "regeneration", "hydro", "contrast"],
+    "description": "Alternating warm and cool water. Two seasons in one stall."
+  },
+  {
+    "id": "e0600000-0000-4000-8000-000000000046",
+    "name": "Cold Plunge",
+    "type_code": "regeneration",
+    "muscle_group": "full_body",
+    "equipment": "other",
+    "tags": ["aether", "regeneration", "cold", "recovery"],
+    "description": "Brief cold-water immersion. A short winter you choose."
+  },
+  {
+    "id": "e0600000-0000-4000-8000-000000000047",
+    "name": "Sauna Session",
+    "type_code": "regeneration",
+    "muscle_group": "full_body",
+    "equipment": "other",
+    "tags": ["aether", "regeneration", "heat", "recovery"],
+    "description": "Timed heat exposure in a sauna. A small summer with a door."
+  },
+  {
+    "id": "e0600000-0000-4000-8000-000000000048",
+    "name": "Sleep Wind-Down",
+    "type_code": "regeneration",
+    "muscle_group": "full_body",
+    "equipment": "other",
+    "tags": ["aether", "regeneration", "sleep", "hygiene"],
+    "description": "Screen-down, dim-light wind-down protocol. Close the book before the last page of the day."
+  },
+  {
+    "id": "e0600000-0000-4000-8000-000000000049",
+    "name": "Intermittent Fasting Window",
+    "type_code": "regeneration",
+    "muscle_group": "core",
+    "equipment": "other",
+    "tags": ["aether", "regeneration", "fasting", "protocol"],
+    "description": "Logged fasting window as a duration protocol. A pause in the feast so the tale can digest."
+  },
+  {
+    "id": "e0600000-0000-4000-8000-000000000050",
+    "name": "Open-Mouth Physiological Recovery Breath",
+    "type_code": "regeneration",
+    "muscle_group": "core",
+    "equipment": "other",
+    "tags": ["aether", "regeneration", "breath", "recovery"],
+    "description": "Open-mouth recovery breathing after hard work. Let the fire out without another spark."
+  }
+]

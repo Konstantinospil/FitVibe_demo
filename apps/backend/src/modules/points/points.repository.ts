@@ -48,6 +48,17 @@ function normalizeTagList(value: unknown): string[] {
 }
 
 function toRecord(value: unknown): Record<string, unknown> {
+  if (typeof value === "string") {
+    try {
+      const parsed: unknown = JSON.parse(value);
+      if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+        return parsed as Record<string, unknown>;
+      }
+    } catch {
+      return {};
+    }
+    return {};
+  }
   if (value && typeof value === "object" && !Array.isArray(value)) {
     return value as Record<string, unknown>;
   }
@@ -388,6 +399,90 @@ export async function getCompletedSessionDatesInRange(
   return days;
 }
 
+export async function getCompletedSessionTypeCodeCounts(
+  userId: string,
+  trx?: Knex.Transaction,
+): Promise<Map<string, number>> {
+  const exec = executor(trx);
+  const rows = (await exec("sessions as s")
+    .join("session_exercises as se", "se.session_id", "s.id")
+    .join("exercises as e", "e.id", "se.exercise_id")
+    .where({ "s.owner_id": userId, "s.status": "completed" })
+    .whereNull("s.deleted_at")
+    .whereNotNull("e.type_code")
+    .groupBy("e.type_code")
+    .select("e.type_code as type_code")
+    .countDistinct("s.id as count")) as Array<{ type_code: string; count: string | number }>;
+
+  const map = new Map<string, number>();
+  for (const row of rows) {
+    map.set(row.type_code, Number(row.count));
+  }
+  return map;
+}
+
+export async function getDistinctTypeCodesInWindow(
+  userId: string,
+  from: Date,
+  to: Date,
+  trx?: Knex.Transaction,
+): Promise<Set<string>> {
+  const exec = executor(trx);
+  const rows = await exec("sessions as s")
+    .join("session_exercises as se", "se.session_id", "s.id")
+    .join("exercises as e", "e.id", "se.exercise_id")
+    .where({ "s.owner_id": userId, "s.status": "completed" })
+    .whereNull("s.deleted_at")
+    .whereNotNull("e.type_code")
+    .whereBetween("s.completed_at", [from, to])
+    .distinct<{ type_code: string }[]>("e.type_code as type_code");
+
+  return new Set(rows.map((row) => row.type_code).filter(Boolean));
+}
+
+export async function countCompletedSessionsOnUtcDay(
+  userId: string,
+  dayIso: string,
+  trx?: Knex.Transaction,
+): Promise<number> {
+  const exec = executor(trx);
+  const start = new Date(`${dayIso}T00:00:00.000Z`);
+  const end = new Date(start);
+  end.setUTCDate(end.getUTCDate() + 1);
+  const row = await exec("sessions")
+    .where({ owner_id: userId, status: "completed" })
+    .whereNull("deleted_at")
+    .where("completed_at", ">=", start)
+    .where("completed_at", "<", end)
+    .count<{ count: string | number }>("id as count")
+    .first();
+  const value = row?.count ?? 0;
+  return typeof value === "string" ? Number(value) : Number(value ?? 0);
+}
+
+export async function countPersonalRecords(
+  userId: string,
+  trx?: Knex.Transaction,
+): Promise<number> {
+  const exec = executor(trx);
+  const row = await exec("personal_records")
+    .where({ user_id: userId })
+    .count<{ count: string | number }>("id as count")
+    .first();
+  const value = row?.count ?? 0;
+  return typeof value === "string" ? Number(value) : Number(value ?? 0);
+}
+
+export async function countFollowsByUser(userId: string, trx?: Knex.Transaction): Promise<number> {
+  const exec = executor(trx);
+  const row = await exec("followers")
+    .where({ follower_id: userId })
+    .count<{ count: string | number }>("follower_id as count")
+    .first();
+  const value = row?.count ?? 0;
+  return typeof value === "string" ? Number(value) : Number(value ?? 0);
+}
+
 // Vibe Level Repository Functions
 
 import type {
@@ -510,13 +605,25 @@ export async function updateDomainVibeLevel(
   const exec = executor(trx);
   const now = new Date().toISOString();
 
-  await exec("user_domain_vibe_levels").where({ user_id: userId, domain_code: domainCode }).update({
-    vibe_level: vibeLevel,
-    rating_deviation: ratingDeviation,
-    volatility: volatility,
-    last_updated_at: now,
-    updated_at: now,
-  });
+  await exec("user_domain_vibe_levels")
+    .insert({
+      user_id: userId,
+      domain_code: domainCode,
+      vibe_level: vibeLevel,
+      rating_deviation: ratingDeviation,
+      volatility: volatility,
+      last_updated_at: now,
+      created_at: now,
+      updated_at: now,
+    })
+    .onConflict(["user_id", "domain_code"])
+    .merge({
+      vibe_level: vibeLevel,
+      rating_deviation: ratingDeviation,
+      volatility: volatility,
+      last_updated_at: now,
+      updated_at: now,
+    });
 }
 
 export async function insertVibeLevelChange(

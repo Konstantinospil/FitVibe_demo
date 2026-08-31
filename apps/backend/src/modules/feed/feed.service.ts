@@ -1,5 +1,6 @@
 import { HttpError } from "../../utils/http.js";
 import { insertAudit } from "../common/audit.util.js";
+import { evaluateBadgesForFollow } from "../points/badges.service.js";
 import type { FeedScope, FeedSort } from "./feed.repository.js";
 import {
   findFeedItemById,
@@ -235,6 +236,11 @@ export async function followUserByAlias(
   }
 
   await upsertFollower(followerId, targetUser.id);
+  try {
+    await evaluateBadgesForFollow(followerId);
+  } catch {
+    // Follow succeeds even if badge evaluation fails.
+  }
 
   return { followingId: targetUser.id };
 }

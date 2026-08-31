@@ -5,6 +5,20 @@ import { db } from "../../db/connection.js";
 const USERS_TABLE = "users";
 const CONTACTS_TABLE = "user_contacts";
 const PROFILES_TABLE = "profiles";
+const DOMAIN_VIBE_TABLE = "user_domain_vibe_levels";
+
+const DOMAIN_CODES = [
+  "strength",
+  "agility",
+  "endurance",
+  "explosivity",
+  "intelligence",
+  "regeneration",
+] as const;
+
+const INITIAL_VIBE_LEVEL = 1000.0;
+const INITIAL_RD = 350.0;
+const INITIAL_VOLATILITY = 0.06;
 
 interface RefreshTokenInsert {
   id: string;
@@ -164,11 +178,25 @@ export async function createUser(input: {
     await trx(PROFILES_TABLE).insert({
       user_id: input.id,
       alias,
-      alias_changed_at: now,
+      // Signup assigns the initial alias; the 30-day change window starts on first edit
+      alias_changed_at: null,
       visibility: "private",
       created_at: now,
       updated_at: now,
     });
+
+    await trx(DOMAIN_VIBE_TABLE).insert(
+      DOMAIN_CODES.map((domainCode) => ({
+        user_id: input.id,
+        domain_code: domainCode,
+        vibe_level: INITIAL_VIBE_LEVEL,
+        rating_deviation: INITIAL_RD,
+        volatility: INITIAL_VOLATILITY,
+        last_updated_at: now,
+        created_at: now,
+        updated_at: now,
+      })),
+    );
 
     return userQuery().transacting(trx).where("u.id", input.id).first<AuthUserRecord>();
   });

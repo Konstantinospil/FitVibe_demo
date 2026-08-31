@@ -208,6 +208,8 @@ describe("Auth Repository", () => {
       const newBuilder = createMockQueryBuilder();
       queryBuilders["users"] = newBuilder;
       queryBuilders["user_contacts"] = newBuilder;
+      queryBuilders["profiles"] = newBuilder;
+      queryBuilders["user_domain_vibe_levels"] = newBuilder;
       queryBuilders["users as u"] = newBuilder;
       newBuilder.returning.mockResolvedValueOnce([]); // contacts insert
       newBuilder.first.mockResolvedValue(mockUser); // user query
@@ -224,6 +226,32 @@ describe("Auth Repository", () => {
 
       expect(result).toEqual(mockUser);
       expect(newBuilder.insert).toHaveBeenCalled();
+      expect(newBuilder.insert).toHaveBeenCalledWith(
+        expect.arrayContaining([
+          expect.objectContaining({
+            user_id: userId,
+            domain_code: "strength",
+            vibe_level: 1000,
+            rating_deviation: 350,
+            volatility: 0.06,
+          }),
+          expect.objectContaining({ domain_code: "regeneration" }),
+        ]),
+      );
+      const vibeInsert = newBuilder.insert.mock.calls.find(
+        (call: unknown[]) => Array.isArray(call[0]) && (call[0] as unknown[]).length === 6,
+      );
+      expect(vibeInsert).toBeDefined();
+      expect(
+        (vibeInsert![0] as unknown[]).map((row: { domain_code: string }) => row.domain_code),
+      ).toEqual([
+        "strength",
+        "agility",
+        "endurance",
+        "explosivity",
+        "intelligence",
+        "regeneration",
+      ]);
     });
 
     it("should reject createUser when alias and username are missing", async () => {

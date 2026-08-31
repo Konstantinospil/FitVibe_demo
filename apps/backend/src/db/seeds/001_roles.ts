@@ -1,12 +1,15 @@
 import type { Knex } from "knex";
 
 const ROLES = [
-  { code: "admin", description: "Platform administrator" },
-  { code: "coach", description: "Coach / trainer with team oversight" },
-  { code: "athlete", description: "Individual athlete" },
-  { code: "support", description: "Support staff (nutrition, physio, etc.)" },
+  { code: "admin", description: "Keeps the map: platform steward for the six stories" },
+  {
+    code: "coach",
+    description: "Mentor for a chapter, with the athlete's consent — then you leave",
+  },
+  { code: "athlete", description: "The one who must live all six elemental stories" },
+  { code: "support", description: "Mends the hero: nutrition, physio, and care between quests" },
 ];
 
 export async function seed(knex: Knex): Promise<void> {
-  await knex("roles").insert(ROLES).onConflict("code").ignore();
+  await knex("roles").insert(ROLES).onConflict("code").merge(["description"]);
 }

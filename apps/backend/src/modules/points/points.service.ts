@@ -80,6 +80,8 @@ function getFitnessAdjustment(level?: string | null): number {
       return 15;
     case "advanced":
       return 4;
+    case "elite":
+      return 2;
     case "intermediate":
       return 8;
     default:
@@ -188,6 +190,7 @@ function computeSessionMetrics(
   let totalDistanceMeters = 0;
   let runDistanceMeters = 0;
   let rideDistanceMeters = 0;
+  let rowDistanceMeters = 0;
 
   for (const exercise of session.exercises ?? []) {
     if (exercise.actual?.rpe !== undefined && exercise.actual?.rpe !== null) {
@@ -200,6 +203,7 @@ function computeSessionMetrics(
       tags.some(
         (tag) => tag.toLowerCase().includes("ride") || tag.toLowerCase().includes("cycle"),
       ) || (metadata?.type_code ?? "").toLowerCase() === "cycling";
+    const isRow = tags.some((tag) => tag.toLowerCase().includes("row"));
 
     if (exercise.actual?.distance !== undefined && exercise.actual.distance !== null) {
       const meters = Number(exercise.actual.distance) * 1000;
@@ -209,6 +213,9 @@ function computeSessionMetrics(
       }
       if (isRide) {
         rideDistanceMeters += meters;
+      }
+      if (isRow) {
+        rowDistanceMeters += meters;
       }
     }
 
@@ -225,6 +232,9 @@ function computeSessionMetrics(
         if (isRide) {
           rideDistanceMeters += meters;
         }
+        if (isRow) {
+          rowDistanceMeters += meters;
+        }
       }
     }
   }
@@ -239,6 +249,7 @@ function computeSessionMetrics(
     distanceMeters: totalDistanceMeters,
     runDistanceMeters,
     rideDistanceMeters,
+    rowDistanceMeters,
   };
 }
 

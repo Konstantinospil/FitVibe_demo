@@ -237,6 +237,32 @@ export function detectSessionDomains(
     });
   }
 
+  // Catalog vibe type_codes credit the matching domain when metrics did not already.
+  const vibeTypeCodes: DomainCode[] = [
+    "strength",
+    "agility",
+    "endurance",
+    "explosivity",
+    "intelligence",
+    "regeneration",
+  ];
+  const credited = new Set(impacts.map((impact) => impact.domain));
+  for (const typeCode of new Set(metrics.exerciseTypes)) {
+    if (!(vibeTypeCodes as string[]).includes(typeCode)) {
+      continue;
+    }
+    const domain = typeCode as DomainCode;
+    if (credited.has(domain)) {
+      continue;
+    }
+    impacts.push({
+      domain,
+      impact: 0.85,
+      reason: `Catalog vibe: ${domain}`,
+    });
+    credited.add(domain);
+  }
+
   // Normalize: ensure at least one domain gets credit
   if (impacts.length === 0) {
     impacts.push({

@@ -32,8 +32,10 @@ export async function seedAll(): Promise<void> {
     const criticalSeeds = [
       { table: "roles", minCount: 4 },
       { table: "genders", minCount: 4 },
-      { table: "fitness_levels", minCount: 4 },
-      { table: "exercise_types", minCount: 20 },
+      { table: "fitness_levels", minCount: 5 },
+      { table: "exercise_types", minCount: 24 },
+      { table: "exercises", minCount: 300 },
+      { table: "badge_catalog", minCount: 36 },
     ];
 
     for (const { table, minCount } of criticalSeeds) {

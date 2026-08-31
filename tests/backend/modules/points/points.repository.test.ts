@@ -19,6 +19,14 @@ function createMockQueryBuilder(defaultValue: unknown = null) {
     insert: jest.fn().mockReturnThis(),
     returning: jest.fn().mockResolvedValue([]),
     update: jest.fn().mockResolvedValue(1),
+    onConflict: jest.fn().mockReturnThis(),
+    merge: jest.fn().mockReturnThis(),
+    ignore: jest.fn().mockReturnThis(),
+    join: jest.fn().mockReturnThis(),
+    groupBy: jest.fn().mockReturnThis(),
+    countDistinct: jest.fn().mockReturnThis(),
+    distinct: jest.fn().mockReturnThis(),
+    whereNotNull: jest.fn().mockReturnThis(),
     sum: jest.fn().mockReturnThis(),
     count: jest.fn().mockReturnThis(),
     limit: jest.fn().mockReturnThis(),
@@ -652,6 +660,33 @@ describe("Points Repository", () => {
       await pointsRepository.getCompletedSessionDatesInRange(userId, startDate, endDate, mockTrx);
 
       expect(newBuilder.where).toHaveBeenCalled();
+    });
+  });
+
+  describe("updateDomainVibeLevel", () => {
+    it("upserts vibe level on user_id and domain_code", async () => {
+      const newBuilder = createMockQueryBuilder();
+      queryBuilders["user_domain_vibe_levels"] = newBuilder;
+
+      await pointsRepository.updateDomainVibeLevel(userId, "strength", 1100, 200, 0.05);
+
+      expect(newBuilder.insert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          user_id: userId,
+          domain_code: "strength",
+          vibe_level: 1100,
+          rating_deviation: 200,
+          volatility: 0.05,
+        }),
+      );
+      expect(newBuilder.onConflict).toHaveBeenCalledWith(["user_id", "domain_code"]);
+      expect(newBuilder.merge).toHaveBeenCalledWith(
+        expect.objectContaining({
+          vibe_level: 1100,
+          rating_deviation: 200,
+          volatility: 0.05,
+        }),
+      );
     });
   });
 });

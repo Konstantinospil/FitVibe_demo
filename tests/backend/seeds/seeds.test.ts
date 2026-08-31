@@ -148,28 +148,32 @@ describeFn("database seeds", () => {
         const admin = await client("roles").where({ code: "admin" }).first();
         expect(admin).toBeDefined();
         expect(admin.code).toBe("admin");
-        expect(admin.description).toBe("Platform administrator");
+        expect(admin.description).toBe("Keeps the map: platform steward for the six stories");
       });
 
       it("inserts coach role", async () => {
         const coach = await client("roles").where({ code: "coach" }).first();
         expect(coach).toBeDefined();
         expect(coach.code).toBe("coach");
-        expect(coach.description).toBe("Coach / trainer with team oversight");
+        expect(coach.description).toBe(
+          "Mentor for a chapter, with the athlete's consent — then you leave",
+        );
       });
 
       it("inserts athlete role", async () => {
         const athlete = await client("roles").where({ code: "athlete" }).first();
         expect(athlete).toBeDefined();
         expect(athlete.code).toBe("athlete");
-        expect(athlete.description).toBe("Individual athlete");
+        expect(athlete.description).toBe("The one who must live all six elemental stories");
       });
 
       it("inserts support role", async () => {
         const support = await client("roles").where({ code: "support" }).first();
         expect(support).toBeDefined();
         expect(support.code).toBe("support");
-        expect(support.description).toBe("Support staff (nutrition, physio, etc.)");
+        expect(support.description).toBe(
+          "Mends the hero: nutrition, physio, and care between quests",
+        );
       });
 
       it("has timestamps on role records", async () => {
@@ -223,7 +227,7 @@ describeFn("database seeds", () => {
     describe("fitness_levels seed", () => {
       it("inserts all fitness level records", async () => {
         const fitnessLevels = await client("fitness_levels").select("*");
-        expect(fitnessLevels.length).toBeGreaterThanOrEqual(4);
+        expect(fitnessLevels.length).toBeGreaterThanOrEqual(5);
       });
 
       it("inserts beginner level", async () => {
@@ -247,6 +251,13 @@ describeFn("database seeds", () => {
         expect(advanced.description).toBe("Highly trained athlete");
       });
 
+      it("inserts elite level", async () => {
+        const elite = await client("fitness_levels").where({ code: "elite" }).first();
+        expect(elite).toBeDefined();
+        expect(elite.code).toBe("elite");
+        expect(elite.description).toBe("Lives every story at a high level");
+      });
+
       it("inserts rehab level", async () => {
         const rehab = await client("fitness_levels").where({ code: "rehab" }).first();
         expect(rehab).toBeDefined();
@@ -264,7 +275,7 @@ describeFn("database seeds", () => {
     describe("exercise_types seed", () => {
       it("inserts all exercise type records", async () => {
         const exerciseTypes = await client("exercise_types").select("*");
-        expect(exerciseTypes.length).toBeGreaterThanOrEqual(20);
+        expect(exerciseTypes.length).toBeGreaterThanOrEqual(24);
       });
 
       it("inserts strength type", async () => {
@@ -314,6 +325,14 @@ describeFn("database seeds", () => {
         expect(crossfit).toBeDefined();
         expect(crossfit.code).toBe("crossfit");
         expect(crossfit.description).toBe("CrossFit workouts");
+      });
+
+      it("inserts vibe type codes", async () => {
+        for (const code of ["agility", "explosivity", "intelligence", "regeneration"]) {
+          const row = await client("exercise_types").where({ code }).first();
+          expect(row).toBeDefined();
+          expect(row.code).toBe(code);
+        }
       });
 
       it("inserts rehab type", async () => {
@@ -374,6 +393,103 @@ describeFn("database seeds", () => {
         expect(admin?.updated_at).toBeDefined();
         expect(new Date(admin?.created_at as string | number | Date)).toBeInstanceOf(Date);
         expect(new Date(admin?.updated_at as string | number | Date)).toBeInstanceOf(Date);
+      });
+
+      it("inserts verified login contacts for seed users", async () => {
+        const adminContact = await client("user_contacts")
+          .where({ user_id: ADMIN_ID, type: "email" })
+          .first();
+        expect(adminContact).toBeDefined();
+        expect(adminContact.value).toBe("admin@fitvibe.local");
+        expect(adminContact.is_verified).toBe(true);
+
+        const athleteContact = await client("user_contacts")
+          .where({ user_id: ATHLETE_ID, type: "email" })
+          .first();
+        expect(athleteContact).toBeDefined();
+        expect(athleteContact.value).toBe("jane.doe@example.com");
+        expect(athleteContact.is_verified).toBe(true);
+      });
+
+      it("inserts private profiles for seed users", async () => {
+        const adminProfile = await client("profiles").where({ user_id: ADMIN_ID }).first();
+        expect(adminProfile.alias).toBe("admin");
+        expect(adminProfile.visibility).toBe("private");
+
+        const athleteProfile = await client("profiles").where({ user_id: ATHLETE_ID }).first();
+        expect(athleteProfile.alias).toBe("jane.doe");
+        expect(athleteProfile.visibility).toBe("private");
+      });
+
+      it("inserts six starting vibe rows per seed user", async () => {
+        const expected = [
+          "strength",
+          "agility",
+          "endurance",
+          "explosivity",
+          "intelligence",
+          "regeneration",
+        ];
+        for (const userId of [ADMIN_ID, ATHLETE_ID]) {
+          const rows = await client("user_domain_vibe_levels").where({ user_id: userId });
+          expect(rows).toHaveLength(6);
+          expect(rows.map((row: { domain_code: string }) => row.domain_code).sort()).toEqual(
+            [...expected].sort(),
+          );
+          for (const row of rows) {
+            expect(Number(row.vibe_level)).toBe(1000);
+            expect(Number(row.rating_deviation)).toBe(350);
+            expect(Number(row.volatility)).toBeCloseTo(0.06);
+          }
+        }
+      });
+    });
+
+    describe("exercise catalog seed", () => {
+      it("inserts 300 global exercises, 50 per vibe", async () => {
+        const exercises = await client("exercises")
+          .whereNull("owner_id")
+          .where({ is_public: true });
+        expect(exercises.length).toBeGreaterThanOrEqual(300);
+
+        const vibeCodes = [
+          "strength",
+          "agility",
+          "endurance",
+          "explosivity",
+          "intelligence",
+          "regeneration",
+        ];
+        for (const typeCode of vibeCodes) {
+          const count = await client("exercises")
+            .where({ type_code: typeCode })
+            .count("id as count")
+            .first();
+          expect(Number(count?.count)).toBeGreaterThanOrEqual(50);
+        }
+      });
+    });
+
+    describe("badge catalog seed", () => {
+      it("inserts earnable athlete badges and catalog-only role badges", async () => {
+        const badges = await client("badge_catalog").select("*");
+        expect(badges.length).toBeGreaterThanOrEqual(36);
+
+        const firstSession = await client("badge_catalog").where({ code: "first_session" }).first();
+        expect(firstSession).toBeDefined();
+        const firstCriteria =
+          typeof firstSession.criteria === "string"
+            ? JSON.parse(firstSession.criteria)
+            : firstSession.criteria;
+        expect(firstCriteria).toEqual({ completed_sessions: 1 });
+
+        const earth = await client("badge_catalog").where({ code: "earth_initiate" }).first();
+        expect(earth).toBeDefined();
+
+        const onboard = await client("badge_catalog").where({ code: "onboard_pro" }).first();
+        const onboardCriteria =
+          typeof onboard.criteria === "string" ? JSON.parse(onboard.criteria) : onboard.criteria;
+        expect(onboardCriteria.requires).toBe("coaching");
       });
     });
 

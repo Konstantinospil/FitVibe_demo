@@ -3,26 +3,141 @@ import type { Knex } from "knex";
 
 import {
   countCompletedSessions,
+  countCompletedSessionsOnUtcDay,
+  countFollowsByUser,
+  countPersonalRecords,
   getBadgeCatalog,
   getCompletedSessionDatesInRange,
+  getCompletedSessionTypeCodeCounts,
+  getDistinctTypeCodesInWindow,
   getUserBadgeCodes,
   insertBadgeAward,
 } from "./points.repository.js";
-import type { BadgeEvaluationResult, SessionMetricsSnapshot } from "./points.types.js";
+import type {
+  BadgeCatalogEntry,
+  BadgeEvaluationResult,
+  SessionMetricsSnapshot,
+} from "./points.types.js";
 import type { SessionWithExercises } from "../sessions/sessions.types.js";
+import { criteriaMet, type BadgeCriteriaContext } from "./badge-criteria.js";
 
-const BADGE_CODES = {
-  FIRST_SESSION: "first_session",
-  STREAK_7_DAY: "streak_7_day",
-  RUN_10K: "run_10k",
-  RIDE_100K: "ride_100k",
-} as const;
+const STREAK_LOOKBACK_DAYS = 30;
+const DISTINCT_WINDOWS = [7, 28];
 
 function truncateIsoDate(date: Date): string {
   return date.toISOString().slice(0, 10);
 }
 
-interface BadgeEvaluationParams {
+function startHourUtc(session: SessionWithExercises): number | null {
+  if (!session.started_at) {
+    return null;
+  }
+  const started = new Date(session.started_at);
+  if (Number.isNaN(started.getTime())) {
+    return null;
+  }
+  return started.getUTCHours();
+}
+
+function windowStart(completedAt: Date, days: number): Date {
+  const start = new Date(completedAt);
+  start.setUTCDate(start.getUTCDate() - (days - 1));
+  start.setUTCHours(0, 0, 0, 0);
+  return start;
+}
+
+async function awardMatching(
+  catalog: Map<string, BadgeCatalogEntry>,
+  owned: Set<string>,
+  ctx: BadgeCriteriaContext,
+  metadata: Record<string, unknown>,
+  trx?: Knex.Transaction,
+  predicate?: (entry: BadgeCatalogEntry) => boolean,
+): Promise<BadgeEvaluationResult[]> {
+  const awarded: BadgeEvaluationResult[] = [];
+  for (const entry of catalog.values()) {
+    if (owned.has(entry.code)) {
+      continue;
+    }
+    if (predicate && !predicate(entry)) {
+      continue;
+    }
+    if (!criteriaMet(entry.criteria, ctx)) {
+      continue;
+    }
+    await insertBadgeAward(
+      {
+        id: uuidv4(),
+        user_id: ctx.userId,
+        badge_type: entry.code,
+        metadata,
+        awarded_at: ctx.completedAt,
+      },
+      trx,
+    );
+    owned.add(entry.code);
+    awarded.push({ badgeCode: entry.code, metadata });
+  }
+  return awarded;
+}
+
+async function buildContext(
+  userId: string,
+  completedAt: Date,
+  metrics: SessionMetricsSnapshot,
+  visibility: string,
+  startHour: number | null,
+  trx?: Knex.Transaction,
+): Promise<BadgeCriteriaContext> {
+  const streakFrom = windowStart(completedAt, STREAK_LOOKBACK_DAYS);
+  const [
+    completedSessions,
+    typeCodeSessionCounts,
+    completedDates,
+    personalRecordCount,
+    followerCount,
+  ] = await Promise.all([
+    countCompletedSessions(userId, trx),
+    getCompletedSessionTypeCodeCounts(userId, trx),
+    getCompletedSessionDatesInRange(userId, streakFrom, completedAt, trx),
+    countPersonalRecords(userId, trx),
+    countFollowsByUser(userId, trx),
+  ]);
+
+  const distinctTypeCodesByWindow = new Map<number, Set<string>>();
+  await Promise.all(
+    DISTINCT_WINDOWS.map(async (days) => {
+      const from = windowStart(completedAt, days);
+      const codes = await getDistinctTypeCodesInWindow(userId, from, completedAt, trx);
+      distinctTypeCodesByWindow.set(days, codes);
+    }),
+  );
+
+  const sessionsInCalendarDay = await countCompletedSessionsOnUtcDay(
+    userId,
+    truncateIsoDate(completedAt),
+    trx,
+  );
+
+  return {
+    completedSessions,
+    typeCodeSessionCounts,
+    distinctTypeCodesByWindow,
+    completedDates,
+    completedAt,
+    runDistanceMeters: metrics.runDistanceMeters,
+    rideDistanceMeters: metrics.rideDistanceMeters,
+    rowDistanceMeters: metrics.rowDistanceMeters,
+    sessionsInCalendarDay,
+    startHourUtc: startHour,
+    visibility,
+    personalRecordCount,
+    followerCount,
+    userId,
+  };
+}
+
+interface SessionEvalParams {
   session: SessionWithExercises;
   metrics: SessionMetricsSnapshot;
   trx: Knex.Transaction;
@@ -32,89 +147,54 @@ export async function evaluateBadgesForSession({
   session,
   metrics,
   trx,
-}: BadgeEvaluationParams): Promise<BadgeEvaluationResult[]> {
+}: SessionEvalParams): Promise<BadgeEvaluationResult[]> {
   const completedAt = new Date(session.completed_at ?? new Date());
   const catalog = await getBadgeCatalog(trx);
   const owned = await getUserBadgeCodes(session.owner_id, trx);
-  const awarded: BadgeEvaluationResult[] = [];
+  const ctx = await buildContext(
+    session.owner_id,
+    completedAt,
+    metrics,
+    session.visibility ?? "private",
+    startHourUtc(session),
+    trx,
+  );
 
-  async function enqueueAward(badgeCode: string, metadata: Record<string, unknown>): Promise<void> {
-    if (owned.has(badgeCode)) {
-      return;
-    }
-    if (!catalog.has(badgeCode)) {
-      return;
-    }
-    await insertBadgeAward(
-      {
-        id: uuidv4(),
-        user_id: session.owner_id,
-        badge_type: badgeCode,
-        metadata,
-        awarded_at: completedAt,
-      },
-      trx,
-    );
-    owned.add(badgeCode);
-    awarded.push({ badgeCode, metadata });
-  }
-
-  if (!owned.has(BADGE_CODES.FIRST_SESSION)) {
-    const completedCount = await countCompletedSessions(session.owner_id, trx);
-    if (completedCount === 1) {
-      await enqueueAward(BADGE_CODES.FIRST_SESSION, {
-        session_id: session.id,
-        awarded_at: completedAt.toISOString(),
-      });
-    }
-  }
-
-  if (!owned.has(BADGE_CODES.STREAK_7_DAY)) {
-    const streakLength = 7;
-    const endDate = truncateIsoDate(completedAt);
-    const streakStart = new Date(completedAt);
-    streakStart.setUTCDate(streakStart.getUTCDate() - (streakLength - 1));
-    streakStart.setUTCHours(0, 0, 0, 0);
-
-    const streakDays = await getCompletedSessionDatesInRange(
-      session.owner_id,
-      streakStart,
-      completedAt,
-      trx,
-    );
-    let streakMet = true;
-    const cursor = new Date(streakStart);
-    while (cursor <= completedAt) {
-      if (!streakDays.has(truncateIsoDate(cursor))) {
-        streakMet = false;
-        break;
-      }
-      cursor.setUTCDate(cursor.getUTCDate() + 1);
-    }
-
-    if (streakMet) {
-      await enqueueAward(BADGE_CODES.STREAK_7_DAY, {
-        session_id: session.id,
-        streak_days: streakLength,
-        start_date: truncateIsoDate(streakStart),
-        end_date: endDate,
-      });
-    }
-  }
-
-  if (!owned.has(BADGE_CODES.RUN_10K) && metrics.runDistanceMeters >= 10_000) {
-    await enqueueAward(BADGE_CODES.RUN_10K, {
+  return awardMatching(
+    catalog,
+    owned,
+    ctx,
+    {
       session_id: session.id,
-      distance_m: Math.round(metrics.runDistanceMeters),
-    });
-  }
+      awarded_at: completedAt.toISOString(),
+    },
+    trx,
+    (entry) => !("follower_count" in entry.criteria && Object.keys(entry.criteria).length === 1),
+  );
+}
 
-  if (!owned.has(BADGE_CODES.RIDE_100K) && metrics.rideDistanceMeters >= 100_000) {
-    await enqueueAward(BADGE_CODES.RIDE_100K, {
-      session_id: session.id,
-      distance_m: Math.round(metrics.rideDistanceMeters),
-    });
-  }
+export async function evaluateBadgesForFollow(
+  userId: string,
+  trx?: Knex.Transaction,
+): Promise<BadgeEvaluationResult[]> {
+  const completedAt = new Date();
+  const catalog = await getBadgeCatalog(trx);
+  const owned = await getUserBadgeCodes(userId, trx);
+  const emptyMetrics: SessionMetricsSnapshot = {
+    averageRpe: null,
+    distanceMeters: 0,
+    runDistanceMeters: 0,
+    rideDistanceMeters: 0,
+    rowDistanceMeters: 0,
+  };
+  const ctx = await buildContext(userId, completedAt, emptyMetrics, "private", null, trx);
 
-  return awarded;
+  return awardMatching(
+    catalog,
+    owned,
+    ctx,
+    { awarded_at: completedAt.toISOString(), source: "follow" },
+    trx,
+    (entry) => typeof entry.criteria.follower_count === "number",
+  );
 }

@@ -222,6 +222,70 @@ describe("Vibe Level Service", () => {
       expect(intelligenceDomain?.reason).toContain("Skill/mental");
     });
 
+    it("should credit a domain from vibe type_code when metrics do not trigger it", () => {
+      const session: SessionWithExercises = {
+        id: sessionId,
+        owner_id: userId,
+        status: "completed",
+        completed_at: new Date().toISOString(),
+        started_at: new Date(Date.now() - 5 * 60000).toISOString(),
+        exercises: [
+          {
+            id: "ex-1",
+            session_id: sessionId,
+            exercise_id: "strength-catalog",
+            order_index: 0,
+            sets: [],
+          },
+        ],
+      } as SessionWithExercises;
+
+      const exerciseMetadata = new Map<string, ExerciseMetadata>([
+        ["strength-catalog", { id: "strength-catalog", type_code: "strength", tags: [] }],
+      ]);
+      const domains = vibeLevelService.detectSessionDomains(session, exerciseMetadata);
+
+      const strengthDomain = domains.find((d) => d.domain === "strength");
+      expect(strengthDomain).toBeDefined();
+      expect(strengthDomain?.impact).toBe(0.85);
+      expect(strengthDomain?.reason).toContain("Catalog vibe");
+      expect(domains.filter((d) => d.domain === "strength")).toHaveLength(1);
+    });
+
+    it("should not duplicate a domain already credited by metrics", () => {
+      const session: SessionWithExercises = {
+        id: sessionId,
+        owner_id: userId,
+        status: "completed",
+        completed_at: new Date().toISOString(),
+        started_at: new Date(Date.now() - 3600000).toISOString(),
+        exercises: [
+          {
+            id: "ex-1",
+            session_id: sessionId,
+            exercise_id: "strength-catalog",
+            order_index: 0,
+            sets: [
+              {
+                id: "set-1",
+                order_index: 0,
+                weight_kg: 100,
+                reps: 5,
+              },
+            ],
+          },
+        ],
+      } as SessionWithExercises;
+
+      const exerciseMetadata = new Map<string, ExerciseMetadata>([
+        ["strength-catalog", { id: "strength-catalog", type_code: "strength", tags: [] }],
+      ]);
+      const domains = vibeLevelService.detectSessionDomains(session, exerciseMetadata);
+
+      expect(domains.filter((d) => d.domain === "strength")).toHaveLength(1);
+      expect(domains.find((d) => d.domain === "strength")?.reason).toContain("Lifted");
+    });
+
     it("should detect multiple domains in one session", () => {
       const session: SessionWithExercises = {
         id: sessionId,
