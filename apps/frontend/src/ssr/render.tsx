@@ -125,6 +125,7 @@ type ManifestChunk = {
   isEntry?: boolean;
   isDynamicEntry?: boolean;
   file?: string;
+  name?: string;
   css?: string[];
   imports?: string[];
 };
@@ -146,6 +147,12 @@ function findMainChunk(manifest: Record<string, ManifestChunk>): ManifestChunk |
   const mainFromSource = entries.find(([key]) => key.replace(/\\/g, "/").endsWith("src/main.tsx"));
   if (mainFromSource?.[1]?.file) {
     return mainFromSource[1];
+  }
+  const mainByName = entries.find(
+    ([, chunk]) => chunk.name === "main" && Boolean(chunk.file?.endsWith(".js")),
+  );
+  if (mainByName?.[1]?.file) {
+    return mainByName[1];
   }
   return entries.find(([, chunk]) => chunk.isEntry && Boolean(chunk.file))?.[1];
 }
@@ -179,6 +186,11 @@ function getClientAssets(): ClientAssets {
       const importedChunk = manifest[imported];
       if (importedChunk?.css?.length) {
         styles.push(...importedChunk.css);
+      }
+    }
+    for (const chunk of Object.values(manifest)) {
+      if (chunk.file?.endsWith(".css")) {
+        styles.push(chunk.file);
       }
     }
 

@@ -1,8 +1,9 @@
 {
   "ci": {
     "collect": {
-      "url": ["http://127.0.0.1:4173/"],
-      "numberOfRuns": 1
+      "url": ["http://127.0.0.1:4173/login"],
+      "numberOfRuns": 1,
+      "chromeFlags": ["--no-sandbox", "--disable-dev-shm-usage", "--disable-gpu"]
     },
     "assert": {
       "assertions": {
