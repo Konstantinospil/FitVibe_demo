@@ -72,6 +72,9 @@ const ProtectedRoutes: React.FC<ProtectedRoutesProps> = ({
 }) => {
   useEffect(() => {
     void ensurePrivateTranslationsLoaded();
+    void import("../utils/fontLoader").then(({ loadAppFonts }) => {
+      loadAppFonts();
+    });
   }, []);
 
   // Use prop state if provided (from SSR), otherwise try to get from window

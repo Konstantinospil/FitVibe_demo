@@ -1,6 +1,6 @@
 /* Fonts are loaded asynchronously via JavaScript after initial render.
- * Initial render uses system fonts to reduce initial resource size.
- * Custom fonts are injected via fontLoader.ts after page load.
+ * Initial render uses system fonts. Inter woff2 subsets load on public pages;
+ * Roboto Flex loads after authentication (see fontLoader.ts).
  */
 
 :root {

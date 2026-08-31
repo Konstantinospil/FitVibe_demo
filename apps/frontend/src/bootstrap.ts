@@ -48,8 +48,8 @@ if (typeof window !== "undefined" && typeof document !== "undefined") {
     if ("requestIdleCallback" in window) {
       window.requestIdleCallback(
         () => {
-          void import("./utils/fontLoader").then(({ loadFontsAsync }) => {
-            loadFontsAsync();
+          void import("./utils/fontLoader").then(({ loadPublicFonts }) => {
+            loadPublicFonts();
           });
         },
         { timeout: 3000 },
@@ -57,8 +57,8 @@ if (typeof window !== "undefined" && typeof document !== "undefined") {
     } else {
       // Fallback: delay font loading to ensure LCP has occurred
       setTimeout(() => {
-        void import("./utils/fontLoader").then(({ loadFontsAsync }) => {
-          loadFontsAsync();
+        void import("./utils/fontLoader").then(({ loadPublicFonts }) => {
+          loadPublicFonts();
         });
       }, 2000);
     }

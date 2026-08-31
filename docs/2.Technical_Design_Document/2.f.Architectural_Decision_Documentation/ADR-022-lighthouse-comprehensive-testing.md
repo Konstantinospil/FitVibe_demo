@@ -44,7 +44,7 @@ Updated `tests/perf/lighthouserc.json` to include comprehensive category asserti
         "categories:accessibility": ["error", { "minScore": 0.9 }],
         "categories:best-practices": ["error", { "minScore": 0.9 }],
         "categories:seo": ["error", { "minScore": 0.9 }],
-        "resource-summary:total.size": ["error", { "maxNumericValue": 307200 }],
+        "resource-summary:script.size": ["error", { "maxNumericValue": 307200 }],
         "largest-contentful-paint": ["error", { "maxNumericValue": 2500 }]
       }
     }
@@ -128,6 +128,7 @@ pnpm exec lhci autorun --config=tests/perf/lighthouserc.json
 
 ## Status Log
 
-| Version | Date       | Change                                                                 | Author       |
-| ------- | ---------- | ---------------------------------------------------------------------- | ------------ |
-| v1.0    | 2025-01-21 | Initial ADR for comprehensive Lighthouse testing across all categories | AI Assistant |
+| Version | Date       | Change                                                                                                       | Author       |
+| ------- | ---------- | ------------------------------------------------------------------------------------------------------------ | ------------ |
+| v1.0    | 2025-01-21 | Initial ADR for comprehensive Lighthouse testing across all categories                                       | AI Assistant |
+| v1.1    | 2026-09-01 | Size gate is `resource-summary:script.size` ≤307200 (NFR-003 gzip JS), not total page weight including fonts | Engineering  |

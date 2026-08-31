@@ -1,74 +1,83 @@
 /**
- * Asynchronously loads fonts after initial render to improve LCP and reduce initial resource size.
- * This allows the page to render with system fonts first, then enhance with custom fonts.
- * Fonts are injected via a dynamically created stylesheet to avoid counting towards initial resource size.
+ * Deferred, subsetted font loading.
+ * Public routes (login) load Inter woff2 subsets only. Authenticated routes add Roboto Flex.
+ * unicode-range keeps English login on the latin file (~48KB) instead of full variable TTFs.
  */
 
-const FONT_FACES = `
-@font-face {
-  font-family: "Inter";
-  font-style: normal;
-  font-weight: 100 900;
-  font-display: swap;
-  src: url("/fonts/Inter/Inter-VariableFont_opsz,wght.ttf") format("truetype");
-}
+import interLatin from "@fontsource-variable/inter/files/inter-latin-wght-normal.woff2?url";
+import interLatinExt from "@fontsource-variable/inter/files/inter-latin-ext-wght-normal.woff2?url";
+import interGreek from "@fontsource-variable/inter/files/inter-greek-wght-normal.woff2?url";
 
-@font-face {
-  font-family: "Inter";
-  font-style: italic;
-  font-weight: 100 900;
-  font-display: swap;
-  src: url("/fonts/Inter/Inter-Italic-VariableFont_opsz,wght.ttf") format("truetype");
-}
+const LATIN_RANGE =
+  "U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD";
+const LATIN_EXT_RANGE =
+  "U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF";
+const GREEK_RANGE = "U+0370-0377,U+037A-037F,U+0384-038A,U+038C,U+038E-03A1,U+03A3-03FF";
 
+const PUBLIC_FONT_STYLE_ID = "async-fonts";
+const APP_FONT_STYLE_ID = "async-fonts-app";
+
+const fontFace = (family: string, url: string, unicodeRange: string, weight: string): string => `
 @font-face {
-  font-family: "Roboto Flex";
+  font-family: "${family}";
   font-style: normal;
-  font-weight: 100 900;
-  font-stretch: 75% 100%;
+  font-weight: ${weight};
   font-display: swap;
-  src: url("/fonts/Roboto_Flex/RobotoFlex-VariableFont_GRAD,XOPQ,XTRA,YOPQ,YTAS,YTDE,YTFI,YTLC,YTUC,opsz,slnt,wdth,wght.ttf") format("truetype");
+  src: url("${url}") format("woff2-variations");
+  unicode-range: ${unicodeRange};
 }
 `;
 
-/**
- * Loads fonts asynchronously by injecting @font-face rules after initial render.
- * Uses requestIdleCallback if available, otherwise falls back to setTimeout.
- * This prevents fonts from being counted in Lighthouse's initial resource size
- * and ensures fonts don't block LCP (Largest Contentful Paint).
- */
-export const loadFontsAsync = (): void => {
+const PUBLIC_FONT_FACES = [
+  fontFace("Inter", interLatin, LATIN_RANGE, "100 900"),
+  fontFace("Inter", interLatinExt, LATIN_EXT_RANGE, "100 900"),
+  fontFace("Inter", interGreek, GREEK_RANGE, "100 900"),
+].join("");
+
+const injectStyle = (id: string, css: string): void => {
+  if (typeof window === "undefined" || typeof document === "undefined") {
+    return;
+  }
+  if (document.getElementById(id)) {
+    return;
+  }
+  const style = document.createElement("style");
+  style.id = id;
+  style.textContent = css;
+  document.head.appendChild(style);
+  requestAnimationFrame(() => {
+    document.body.classList.add("fonts-loaded");
+  });
+};
+
+const runWhenIdle = (task: () => void): void => {
   if (typeof window === "undefined") {
     return;
   }
-
-  const injectFontFaces = (): void => {
-    // Check if fonts are already loaded
-    if (document.getElementById("async-fonts")) {
-      return;
-    }
-
-    // Create a style element and inject font-face rules
-    const style = document.createElement("style");
-    style.id = "async-fonts";
-    style.textContent = FONT_FACES;
-    // Use non-blocking insertion
-    document.head.appendChild(style);
-
-    // Mark body as fonts-loaded for any conditional styling
-    // Use requestAnimationFrame to ensure this doesn't block rendering
-    requestAnimationFrame(() => {
-      document.body.classList.add("fonts-loaded");
-    });
-  };
-
-  // Defer font loading until after LCP to improve performance metrics
-  // Use requestIdleCallback if available (runs when browser is idle)
-  // Otherwise use setTimeout with a longer delay to ensure LCP has occurred
   if ("requestIdleCallback" in window) {
-    window.requestIdleCallback(injectFontFaces, { timeout: 3000 });
-  } else {
-    // Fallback: wait longer to ensure LCP has occurred (typically 2-3s)
-    setTimeout(injectFontFaces, 2000);
+    window.requestIdleCallback(() => task(), { timeout: 3000 });
+    return;
   }
+  setTimeout(task, 2000);
 };
+
+/**
+ * Inter subsets for login and other public pages. Does not load Roboto Flex.
+ */
+export const loadPublicFonts = (): void => {
+  runWhenIdle(() => injectStyle(PUBLIC_FONT_STYLE_ID, PUBLIC_FONT_FACES));
+};
+
+/**
+ * Roboto Flex heading font for authenticated chrome. Loaded in a separate chunk.
+ */
+export const loadAppFonts = (): void => {
+  runWhenIdle(() => {
+    void import("./appFontLoader.js").then(({ APP_FONT_FACES }) => {
+      injectStyle(APP_FONT_STYLE_ID, APP_FONT_FACES);
+    });
+  });
+};
+
+/** @deprecated Use loadPublicFonts — kept as the bootstrap entry alias. */
+export const loadFontsAsync = loadPublicFonts;

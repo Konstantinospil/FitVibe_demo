@@ -18,6 +18,9 @@ import { useThemeStore } from "./store/theme.store";
 if (typeof document !== "undefined") {
   const initialTheme = useThemeStore.getState().theme;
   document.documentElement.setAttribute("data-theme", initialTheme);
+  void import("./utils/fontLoader").then(({ loadPublicFonts }) => {
+    loadPublicFonts();
+  });
 }
 
 // Hydrate the server-rendered HTML
