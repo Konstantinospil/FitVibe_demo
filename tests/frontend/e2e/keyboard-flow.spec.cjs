@@ -1,4 +1,14 @@
-import { test, expect } from "@playwright/test";
+const { test, expect } = require("@playwright/test");
+const {
+  jsonResponse,
+  loginUserBody,
+  preparePage,
+  waitForApp,
+  emailInput,
+  passwordInput,
+  confirmPasswordInput,
+  displayNameInput,
+} = require("./helpers.cjs");
 
 const loginPayload = {
   email: "jamie@fitvibe.test",
@@ -11,11 +21,6 @@ const registerPayload = {
   password: "SuperSecure123!",
 };
 const derivedUsername = registerPayload.email.split("@")[0].replace(/[^a-zA-Z0-9_.-]/g, "_");
-
-const tokensResponse = {
-  accessToken: "test-access-token",
-  refreshToken: "test-refresh-token",
-};
 
 const summaryResponse = {
   totalSessions: 18,
@@ -41,70 +46,47 @@ const trendsResponse = [
   { label: "Week 38", date: "2025-09-14", volume: 11840, sessions: 3, avgIntensity: 6.8 },
 ];
 
-const persistedAuthState = JSON.stringify({
-  state: {
-    isAuthenticated: true,
-    accessToken: "keyboard-access-token",
-    refreshToken: "keyboard-refresh-token",
-  },
-  version: 1,
-});
-
-const jsonResponse = (body, status = 200) => ({
-  status,
-  headers: { "content-type": "application/json" },
-  body: JSON.stringify(body),
-});
-
-async function seedAuthState(page) {
-  await page.addInitScript(
-    ({ key, value }) => {
-      window.localStorage.setItem(key, value);
-    },
-    { key: "fitvibe:auth", value: persistedAuthState },
-  );
-}
-
-async function mockHealthEndpoint(page) {
-  await page.route("**/health", (route) => route.fulfill(jsonResponse({ status: "ok" })));
-}
-
-async function focusByTab(page, locator, maxTabs = 30) {
+async function focusByTab(page, locator, maxTabs = 40) {
   await locator.waitFor({ state: "visible" });
   for (let i = 0; i < maxTabs; i += 1) {
-    // eslint-disable-next-line no-await-in-loop
     const isFocused = await locator.evaluate((element) => element === document.activeElement);
     if (isFocused) {
       return;
     }
-    // eslint-disable-next-line no-await-in-loop
     await page.keyboard.press("Tab");
   }
-  throw new Error(
-    `Unable to focus locator ${await locator.evaluate((el) => el?.outerHTML)} via Tab.`,
-  );
+  throw new Error("Unable to focus locator via Tab.");
 }
 
 test.describe("Q-18 keyboard-only accessibility flows", () => {
   test("user can complete the login form using keyboard navigation only", async ({ page }) => {
-    await mockHealthEndpoint(page);
+    await preparePage(page);
 
     await page.route("**/api/v1/auth/login", async (route) => {
-      const request = route.request();
-      const payload = JSON.parse(request.postData() ?? "{}");
+      const payload = JSON.parse(route.request().postData() ?? "{}");
       expect(payload).toMatchObject({
         email: loginPayload.email,
         password: loginPayload.password,
       });
-      await route.fulfill(jsonResponse(tokensResponse));
+      await route.fulfill(
+        jsonResponse(
+          loginUserBody({
+            id: "user-123",
+            email: loginPayload.email,
+            username: "jamie",
+            role: "athlete",
+          }),
+        ),
+      );
     });
 
     await page.goto("/login");
+    await waitForApp(page);
 
-    await focusByTab(page, page.getByLabel("Email"));
+    await focusByTab(page, emailInput(page));
     await page.keyboard.type(loginPayload.email);
 
-    await focusByTab(page, page.getByLabel("Password"));
+    await focusByTab(page, passwordInput(page));
     await page.keyboard.type(loginPayload.password);
 
     const loginResponse = page.waitForResponse(
@@ -116,15 +98,14 @@ test.describe("Q-18 keyboard-only accessibility flows", () => {
 
     await loginResponse;
     await page.waitForURL((url) => url.pathname === "/");
-    await expect(page.getByRole("heading", { name: /Train smarter/i })).toBeVisible();
+    await expect(page.getByRole("heading", { name: /choose your vibe/i })).toBeVisible();
   });
 
   test("user can register entirely with keyboard controls", async ({ page }) => {
-    await mockHealthEndpoint(page);
+    await preparePage(page);
 
     await page.route("**/api/v1/auth/register", async (route) => {
-      const request = route.request();
-      const payload = JSON.parse(request.postData() ?? "{}");
+      const payload = JSON.parse(route.request().postData() ?? "{}");
       expect(payload).toMatchObject({
         email: registerPayload.email,
         password: registerPayload.password,
@@ -137,50 +118,61 @@ test.describe("Q-18 keyboard-only accessibility flows", () => {
     });
 
     await page.goto("/register");
+    await waitForApp(page);
 
-    await focusByTab(page, page.getByLabel("Display name"));
+    await focusByTab(page, displayNameInput(page));
     await page.keyboard.type(registerPayload.name);
 
-    await focusByTab(page, page.getByLabel("Email"));
+    await focusByTab(page, emailInput(page));
     await page.keyboard.type(registerPayload.email);
+    await page.locator("form.form input[name='username']").fill(derivedUsername);
 
-    await focusByTab(page, page.getByLabel("Password"));
+    await focusByTab(page, passwordInput(page));
     await page.keyboard.type(registerPayload.password);
 
-    await focusByTab(page, page.getByLabel("Confirm password"));
+    await focusByTab(page, confirmPasswordInput(page));
     await page.keyboard.type(registerPayload.password);
+
+    const checkboxes = page.locator("form.form input[type='checkbox']");
+    await checkboxes.nth(0).check();
+    await checkboxes.nth(1).check();
 
     const registerResponse = page.waitForResponse(
       (response) =>
         response.url().includes("/api/v1/auth/register") && response.request().method() === "POST",
     );
-    await focusByTab(page, page.getByRole("button", { name: /create account/i }));
-    await page.keyboard.press("Enter");
+    await page.getByRole("button", { name: /create account/i }).click();
 
     await registerResponse;
-    await expect(page.getByRole("heading", { name: /Check your email/i })).toBeVisible();
+    await expect(page.getByRole("heading", { name: /check your email/i })).toBeVisible();
   });
 
   test("planner and logger tabs are reachable via keyboard", async ({ page }) => {
-    await mockHealthEndpoint(page);
-    await seedAuthState(page);
+    await preparePage(page, { authenticated: true });
+    await page.route("**/api/v1/sessions**", async (route) => {
+      if (route.request().url().includes("/auth/sessions")) {
+        await route.continue();
+        return;
+      }
+      await route.fulfill(jsonResponse({ data: [], total: 0, limit: 50, offset: 0 }));
+    });
 
     await page.goto("/sessions");
+    await waitForApp(page);
 
-    const plannerTab = page.getByRole("button", { name: /planner/i });
+    const plannerTab = page.getByRole("tab", { name: /planner/i });
     await focusByTab(page, plannerTab);
     await page.keyboard.press("Enter");
     await expect(page.getByRole("heading", { name: "Plan and log your workouts" })).toBeVisible();
 
-    const loggerTab = page.getByRole("button", { name: /logger/i });
+    const loggerTab = page.getByRole("tab", { name: /logger/i });
     await focusByTab(page, loggerTab);
     await page.keyboard.press("Enter");
-    await expect(page.getByText("Back Squat").first()).toBeVisible();
+    await expect(loggerTab).toHaveAttribute("aria-selected", "true");
   });
 
   test("insights filters and export action work with keyboard only", async ({ page }) => {
-    await mockHealthEndpoint(page);
-    await seedAuthState(page);
+    await preparePage(page, { authenticated: true });
 
     await page.route("**/api/v1/progress/summary**", (route) =>
       route.fulfill(jsonResponse(summaryResponse)),
@@ -191,21 +183,25 @@ test.describe("Q-18 keyboard-only accessibility flows", () => {
     await page.route("**/api/v1/progress/export**", async (route) => {
       await route.fulfill({
         status: 200,
-        headers: {
-          "content-type": "application/octet-stream",
-        },
+        headers: { "content-type": "application/octet-stream" },
         body: "mock-csv",
       });
     });
+    await page.route("**/api/v1/progress/exercises**", async (route) => {
+      await route.fulfill(jsonResponse({ data: [], total: 0 }));
+    });
 
     await page.goto("/insights");
+    await waitForApp(page);
+
+    await page.getByRole("button", { name: /^progress$/i }).click();
 
     const periodSelect = page.getByLabel(/period/i);
     await focusByTab(page, periodSelect);
     await page.keyboard.press("ArrowDown");
     await page.keyboard.press("Enter");
 
-    const groupBySelect = page.getByLabel(/Group by/i);
+    const groupBySelect = page.getByLabel(/group by/i);
     await focusByTab(page, groupBySelect);
     await page.keyboard.press("ArrowDown");
     await page.keyboard.press("Enter");

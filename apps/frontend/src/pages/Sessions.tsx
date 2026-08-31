@@ -112,7 +112,7 @@ const Sessions: React.FC = () => {
       description={t("sessions.description")}
     >
       {/* Tab Navigation */}
-      <div className="tabs">
+      <div className="tabs" role="tablist" aria-label={t("sessions.title")}>
         <button
           type="button"
           onClick={() => setActiveTab("planner")}

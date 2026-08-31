@@ -317,9 +317,12 @@ const Register: React.FC = () => {
             disabled={isSubmitting}
           />
         </label>
-        <label className="form-label">
-          <span className="form-label-text">{t("auth.register.usernameLabel")}</span>
+        <div className="form-label">
+          <label htmlFor="register-username" className="form-label-text">
+            {t("auth.register.usernameLabel")}
+          </label>
           <input
+            id="register-username"
             name="username"
             type="text"
             placeholder={t("auth.placeholders.username")}
@@ -338,11 +341,14 @@ const Register: React.FC = () => {
           >
             {t("auth.register.usernameHelp")}
           </small>
-        </label>
-        <label className="form-label">
-          <span className="form-label-text">{t("auth.register.passwordLabel")}</span>
+        </div>
+        <div className="form-label">
+          <label htmlFor="register-password" className="form-label-text">
+            {t("auth.register.passwordLabel")}
+          </label>
           <div className="form-input-wrapper">
             <input
+              id="register-password"
               name="password"
               type={showPassword ? "text" : "password"}
               placeholder={t("auth.placeholders.password")}
@@ -363,11 +369,14 @@ const Register: React.FC = () => {
               {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
             </button>
           </div>
-        </label>
-        <label className="form-label">
-          <span className="form-label-text">{t("auth.register.confirmPasswordLabel")}</span>
+        </div>
+        <div className="form-label">
+          <label htmlFor="register-confirm-password" className="form-label-text">
+            {t("auth.register.confirmPasswordLabel")}
+          </label>
           <div className="form-input-wrapper">
             <input
+              id="register-confirm-password"
               name="confirmPassword"
               type={showConfirmPassword ? "text" : "password"}
               placeholder={t("auth.placeholders.confirmPassword")}
@@ -388,7 +397,7 @@ const Register: React.FC = () => {
               {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
             </button>
           </div>
-        </label>
+        </div>
         <div className="password-requirements">
           <label
             className="checkbox-wrapper"

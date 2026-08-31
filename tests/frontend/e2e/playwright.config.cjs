@@ -6,11 +6,15 @@ const frontendDir = path.resolve(__dirname, "../../../apps/frontend");
 
 module.exports = defineConfig({
   testDir: __dirname,
-  timeout: 60_000,
+  timeout: 30_000,
+  expect: { timeout: 8_000 },
   retries: process.env.CI ? 1 : 0,
+  fullyParallel: true,
   use: {
     baseURL,
     headless: true,
+    actionTimeout: 10_000,
+    navigationTimeout: 15_000,
     screenshot: "only-on-failure",
     trace: "retain-on-failure",
     video: "retain-on-failure",

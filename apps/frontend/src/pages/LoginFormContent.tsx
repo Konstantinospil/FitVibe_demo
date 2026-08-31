@@ -177,10 +177,13 @@ const LoginFormContent: React.FC = () => {
           disabled={isSubmitting}
         />
       </label>
-      <label className="form-label">
-        <span className="form-label-text">{t("auth.login.passwordLabel")}</span>
+      <div className="form-label">
+        <label htmlFor="login-password" className="form-label-text">
+          {t("auth.login.passwordLabel")}
+        </label>
         <div className="form-input-wrapper">
           <input
+            id="login-password"
             name="password"
             type={showPassword ? "text" : "password"}
             placeholder={t("auth.placeholders.password")}
@@ -201,7 +204,7 @@ const LoginFormContent: React.FC = () => {
             {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
           </button>
         </div>
-      </label>
+      </div>
       {error ? (
         <div role="alert" className="form-error">
           {error}

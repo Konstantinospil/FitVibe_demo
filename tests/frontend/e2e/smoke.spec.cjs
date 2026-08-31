@@ -1,6 +1,9 @@
 const { test, expect } = require("@playwright/test");
+const { preparePage, waitForApp } = require("./helpers.cjs");
 
-test("home page renders FitVibe header", async ({ page }) => {
+test("login page renders the FitVibe welcome heading", async ({ page }) => {
+  await preparePage(page);
   await page.goto("/");
-  await expect(page.locator("h1")).toHaveText(/FitVibe/i);
+  await waitForApp(page);
+  await expect(page.getByRole("heading", { name: /welcome back/i })).toBeVisible();
 });
