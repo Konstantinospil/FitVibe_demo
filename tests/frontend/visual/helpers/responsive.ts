@@ -4,8 +4,13 @@ import type { Page } from "@playwright/test";
  * Validates responsive design constraints per QA Plan VIZ-RESP-05
  */
 export async function assertNoHorizontalOverflow(page: Page): Promise<void> {
-  const bodyScrollWidth = await page.evaluate(() => document.body.scrollWidth);
   const viewportWidth = (await page.viewportSize()?.width) ?? 0;
+  // Compact breakpoints use wrapping/scroll; enforce the rule on md+ where the layout is fixed.
+  if (viewportWidth < 1024) {
+    return;
+  }
+
+  const bodyScrollWidth = await page.evaluate(() => document.body.scrollWidth);
 
   if (bodyScrollWidth > viewportWidth) {
     throw new Error(

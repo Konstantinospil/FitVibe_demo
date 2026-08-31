@@ -13,9 +13,11 @@ const ProtectedRoute = lazy(() => import("../components/ProtectedRoute"));
 const AdminRoute = lazy(() => import("../components/AdminRoute"));
 const MainLayout = lazy(() => import("../layouts/MainLayout"));
 const Home = lazy(() => import("../pages/Home"));
+const Dashboard = lazy(() => import("../pages/Dashboard"));
 const Sessions = lazy(() => import("../pages/Sessions"));
 const Planner = lazy(() => import("../pages/Planner"));
 const Logger = lazy(() => import("../pages/Logger"));
+const Feed = lazy(() => import("../pages/Feed"));
 const Insights = lazy(() => import("../pages/Insights"));
 const Profile = lazy(() => import("../pages/Profile"));
 const Settings = lazy(() => import("../pages/Settings"));
@@ -81,9 +83,11 @@ const ProtectedRoutes: React.FC<ProtectedRoutesProps> = ({
         <Route element={<ProtectedRoute />}>
           <Route element={<MainLayout />}>
             <Route index element={<Home />} />
+            <Route path="dashboard" element={<Dashboard />} />
             <Route path="sessions" element={<Sessions />} />
             <Route path="planner" element={<Planner />} />
             <Route path="logger/:sessionId" element={<Logger />} />
+            <Route path="feed" element={<Feed />} />
             <Route path="insights" element={<Insights />} />
             <Route path="profile" element={<Profile />} />
             <Route path="settings" element={<Settings />} />

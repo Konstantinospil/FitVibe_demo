@@ -2,10 +2,22 @@ import type { Page, Route } from "@playwright/test";
 
 const NOW_ISO = "2025-10-01T12:00:00.000Z";
 
+const corsHeaders = (route: Route): Record<string, string> => {
+  const origin = route.request().headers()["origin"] ?? "http://127.0.0.1:4173";
+  return {
+    "access-control-allow-origin": origin,
+    "access-control-allow-credentials": "true",
+    "access-control-allow-methods": "GET,POST,PUT,PATCH,DELETE,OPTIONS",
+    "access-control-allow-headers": "content-type,authorization",
+    vary: "Origin",
+  };
+};
+
 const fulfillJson = (route: Route, data: unknown, status = 200) =>
   route.fulfill({
     status,
     contentType: "application/json",
+    headers: corsHeaders(route),
     body: JSON.stringify(data),
   });
 
@@ -26,9 +38,9 @@ const DEFAULT_USER = {
   username: "ava",
   displayName: "Ava Stone",
   primaryEmail: "ava@example.com",
-  role: "user",
+  role: "athlete",
   email: "ava@example.com",
-  roleCode: "user",
+  roleCode: "athlete",
   status: "active",
   profile: {
     alias: "ava-stone",
@@ -420,49 +432,56 @@ export async function mockCookieConsent(page: Page) {
 }
 
 export async function mockFeed(page: Page) {
-  await page.route("**/api/v1/feed**", async (route) => {
+  await page.route(/\/api\/v1\/feed(\?|$)/, async (route) => {
     if (route.request().method() !== "GET") {
       return route.fallback();
     }
     return fulfillJson(route, {
       items: [
         {
-          id: "feed-1",
+          feedItemId: "feed-1",
+          ownerId: "user-maya",
+          ownerUsername: "maya",
+          ownerDisplayName: "Maya Rivers",
           visibility: "public",
-          createdAt: "2025-09-30T08:15:00.000Z",
-          isLiked: false,
-          likesCount: 18,
+          publishedAt: "2025-09-30T08:15:00.000Z",
           session: {
             id: "session-201",
             title: "Tempo Run",
-            notes: "Felt sharp and steady across every interval.",
-            exerciseCount: 6,
-            totalVolume: 24500,
+            completedAt: "2025-09-30T08:15:00.000Z",
+            points: 120,
           },
-          user: {
-            displayName: "Maya Rivers",
-            username: "maya",
+          stats: {
+            likes: 18,
+            comments: 3,
+            viewerHasLiked: false,
+            viewerHasBookmarked: false,
           },
         },
         {
-          id: "feed-2",
-          visibility: "followers",
-          createdAt: "2025-09-28T16:42:00.000Z",
-          isLiked: true,
-          likesCount: 42,
+          feedItemId: "feed-2",
+          ownerId: "user-noah",
+          ownerUsername: "noah",
+          ownerDisplayName: "Noah Lee",
+          visibility: "public",
+          publishedAt: "2025-09-28T16:42:00.000Z",
           session: {
             id: "session-202",
             title: "Upper Strength",
-            notes: "Push and pull focus with clean tempo.",
-            exerciseCount: 8,
-            totalVolume: 33200,
+            completedAt: "2025-09-28T16:42:00.000Z",
+            points: 210,
           },
-          user: {
-            displayName: "Noah Lee",
-            username: "noah",
+          stats: {
+            likes: 42,
+            comments: 8,
+            viewerHasLiked: true,
+            viewerHasBookmarked: false,
           },
         },
       ],
+      total: 2,
+      limit: 20,
+      offset: 0,
     });
   });
 }
@@ -470,29 +489,38 @@ export async function mockFeed(page: Page) {
 export async function mockSession(page: Page, sessionId = "session-123") {
   const session = {
     id: sessionId,
+    owner_id: "user-123",
     title: "Leg Day Circuit",
-    status: "planned",
+    planned_at: "2025-10-01T09:00:00.000Z",
+    status: "planned" as const,
+    visibility: "private" as const,
+    notes: "Focus on tempo.",
     started_at: null,
+    completed_at: null,
     exercises: [
       {
-        exercise_id: "Back Squat",
+        id: "ex-1",
+        session_id: sessionId,
+        exercise_id: "exercise-squat",
         order_index: 0,
         notes: "Focus on tempo.",
-        sets: [
-          { order_index: 0, reps: 6, weight_kg: 90, rpe: 7, notes: null },
-          { order_index: 1, reps: 6, weight_kg: 95, rpe: 8, notes: null },
-        ],
         planned: { sets: 2, reps: 6, load: 95, rpe: 8, rest: "90 sec" },
+        sets: [
+          { id: "set-1", order_index: 0, reps: 6, weight_kg: 90, rpe: 7, notes: null },
+          { id: "set-2", order_index: 1, reps: 6, weight_kg: 95, rpe: 8, notes: null },
+        ],
       },
       {
-        exercise_id: "Romanian Deadlift",
+        id: "ex-2",
+        session_id: sessionId,
+        exercise_id: "exercise-rdl",
         order_index: 1,
         notes: null,
-        sets: [
-          { order_index: 0, reps: 8, weight_kg: 70, rpe: 7, notes: null },
-          { order_index: 1, reps: 8, weight_kg: 75, rpe: 8, notes: null },
-        ],
         planned: { sets: 2, reps: 8, load: 75, rpe: 8, rest: "90 sec" },
+        sets: [
+          { id: "set-3", order_index: 0, reps: 8, weight_kg: 70, rpe: 7, notes: null },
+          { id: "set-4", order_index: 1, reps: 8, weight_kg: 75, rpe: 8, notes: null },
+        ],
       },
     ],
   };
@@ -507,4 +535,137 @@ export async function mockSession(page: Page, sessionId = "session-123") {
     }
     return route.fallback();
   });
+}
+
+export async function mockProgress(page: Page) {
+  await page.route("**/api/v1/progress/summary**", async (route) => {
+    if (route.request().method() !== "GET") {
+      return route.fallback();
+    }
+    return fulfillJson(route, {
+      totalSessions: 18,
+      totalVolume: 32500,
+      currentStreak: 8,
+      personalRecords: [
+        {
+          exerciseName: "Back squat",
+          value: 180,
+          unit: "kg",
+          achievedAt: "2025-08-20",
+          visibility: "public",
+        },
+        {
+          exerciseName: "Bench press",
+          value: 115,
+          unit: "kg",
+          achievedAt: "2025-09-10",
+          visibility: "public",
+        },
+        {
+          exerciseName: "Deadlift",
+          value: 210,
+          unit: "kg",
+          achievedAt: "2025-09-17",
+          visibility: "public",
+        },
+      ],
+      streakChange: 2,
+      sessionsChange: 1,
+      volumeChange: 1200,
+    });
+  });
+
+  await page.route("**/api/v1/progress/trends**", async (route) => {
+    if (route.request().method() !== "GET") {
+      return route.fallback();
+    }
+    return fulfillJson(route, [
+      { label: "Week 40", date: "2025-09-28", volume: 12500, sessions: 4, avgIntensity: 7 },
+      { label: "Week 39", date: "2025-09-21", volume: 12010, sessions: 4, avgIntensity: 6.5 },
+      { label: "Week 38", date: "2025-09-14", volume: 11840, sessions: 3, avgIntensity: 6.8 },
+    ]);
+  });
+}
+
+export async function mockExercises(page: Page) {
+  await page.route("**/api/v1/exercises**", async (route) => {
+    if (route.request().method() !== "GET") {
+      return route.fallback();
+    }
+    return fulfillJson(route, {
+      data: [
+        {
+          id: "exercise-squat",
+          name: "Back Squat",
+          type_code: "strength",
+          owner_id: null,
+          muscle_group: "legs",
+          equipment: "barbell",
+          tags: ["compound"],
+          is_public: true,
+          description_en: "Barbell back squat",
+          description_de: null,
+        },
+      ],
+      total: 1,
+      limit: 20,
+      offset: 0,
+    });
+  });
+}
+
+export async function mockSessionsList(page: Page) {
+  await page.route(/\/api\/v1\/sessions(\?|$)/, async (route) => {
+    if (route.request().method() !== "GET") {
+      return route.fallback();
+    }
+    return fulfillJson(route, {
+      data: [],
+      total: 0,
+      limit: 20,
+      offset: 0,
+    });
+  });
+}
+
+export async function mockLogout(page: Page) {
+  await page.route("**/api/v1/auth/logout", async (route) => {
+    return fulfillJson(route, { success: true });
+  });
+}
+
+export async function mockAuthRefresh(page: Page) {
+  await page.route("**/api/v1/auth/refresh", async (route) => {
+    return fulfillJson(route, { success: true });
+  });
+}
+
+/**
+ * Installs a catch-all API stub, then overlays page-specific fixtures.
+ * Register this before navigation so unmocked endpoints cannot hang networkidle.
+ */
+export async function installDefaultMocks(page: Page): Promise<void> {
+  await page.route("**/api/**", async (route) => {
+    if (route.request().method() === "OPTIONS") {
+      return route.fulfill({
+        status: 204,
+        headers: corsHeaders(route),
+      });
+    }
+    return fulfillJson(route, {});
+  });
+
+  await mockSystemConfig(page);
+  await mockCurrentUser(page);
+  await mockUserAttributes(page);
+  await mockAuthSessions(page);
+  await mockAuthRefresh(page);
+  await mock2FAStatus(page, false);
+  await mockCookieConsent(page);
+  await mockFeed(page);
+  await mockSession(page);
+  await mockProgress(page);
+  await mockExercises(page);
+  await mockSessionsList(page);
+  await mockLogout(page);
 }

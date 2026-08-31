@@ -1,4 +1,7 @@
-import type { TestInfo } from "@playwright/test";
+import { test, type TestInfo } from "@playwright/test";
+
+export type VisualTheme = "light" | "dark";
+export type VisualViewport = "xs" | "sm" | "md" | "lg";
 
 /**
  * Parses the project name to extract theme and viewport.
@@ -6,8 +9,8 @@ import type { TestInfo } from "@playwright/test";
  * e.g., "ui:light:xs", "ui:dark:lg"
  */
 export function parseProjectName(projectName: string): {
-  theme: "light" | "dark";
-  viewport: "xs" | "sm" | "md" | "lg";
+  theme: VisualTheme;
+  viewport: VisualViewport;
 } {
   const parts = projectName.split(":");
   if (parts.length !== 3 || parts[0] !== "ui") {
@@ -16,8 +19,8 @@ export function parseProjectName(projectName: string): {
     );
   }
 
-  const theme = parts[1] as "light" | "dark";
-  const viewport = parts[2] as "xs" | "sm" | "md" | "lg";
+  const theme = parts[1] as VisualTheme;
+  const viewport = parts[2] as VisualViewport;
 
   if (!["light", "dark"].includes(theme)) {
     throw new Error(`Invalid theme in project name: ${theme}. Expected 'light' or 'dark'`);
@@ -38,12 +41,28 @@ export function parseProjectName(projectName: string): {
  */
 export function shouldRunForProject(
   testInfo: TestInfo,
-  expectedTheme: "light" | "dark",
-  expectedViewport: "xs" | "sm" | "md" | "lg",
+  expectedTheme: VisualTheme,
+  expectedViewport: VisualViewport,
 ): boolean {
-  const projectName = testInfo.project.name;
-  const { theme, viewport } = parseProjectName(projectName);
+  const { theme, viewport } = parseProjectName(testInfo.project.name);
   return theme === expectedTheme && viewport === expectedViewport;
+}
+
+/**
+ * Skip this test unless the Playwright project matches the visual matrix.
+ * Per QA Plan D.3 — not every page is snapshotted at every breakpoint.
+ */
+export function skipUnlessMatrix(
+  testInfo: TestInfo,
+  allowed: { themes?: VisualTheme[]; viewports?: VisualViewport[] },
+): void {
+  const { theme, viewport } = parseProjectName(testInfo.project.name);
+  if (allowed.themes && !allowed.themes.includes(theme)) {
+    test.skip();
+  }
+  if (allowed.viewports && !allowed.viewports.includes(viewport)) {
+    test.skip();
+  }
 }
 
 /**
@@ -51,8 +70,8 @@ export function shouldRunForProject(
  * Useful for conditional logic based on project configuration.
  */
 export function getCurrentProject(testInfo: TestInfo): {
-  theme: "light" | "dark";
-  viewport: "xs" | "sm" | "md" | "lg";
+  theme: VisualTheme;
+  viewport: VisualViewport;
 } {
   return parseProjectName(testInfo.project.name);
 }

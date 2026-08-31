@@ -33,7 +33,7 @@ const indicatorStyle: React.CSSProperties = {
 
 const VisibilityBadge: React.FC<VisibilityBadgeProps> = ({ level, style, ...rest }) => {
   const { t } = useTranslation();
-  const palette = STYLE_MAP[level];
+  const palette = STYLE_MAP[level] ?? STYLE_MAP.private;
 
   return (
     <span

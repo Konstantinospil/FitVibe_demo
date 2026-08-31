@@ -26,6 +26,38 @@ function getHtmlTemplate(): string {
   return readFileSync(templatePath, "utf-8");
 }
 
+function replaceRootContent(template: string, appHtml: string): string {
+  const rootOpen = '<div id="root">';
+  const rootStart = template.indexOf(rootOpen);
+  if (rootStart === -1) {
+    return template;
+  }
+
+  const contentStart = rootStart + rootOpen.length;
+  let depth = 1;
+  let cursor = contentStart;
+
+  while (cursor < template.length && depth > 0) {
+    const nextOpen = template.indexOf("<div", cursor);
+    const nextClose = template.indexOf("</div>", cursor);
+    if (nextClose === -1) {
+      break;
+    }
+    if (nextOpen !== -1 && nextOpen < nextClose) {
+      depth += 1;
+      cursor = nextOpen + 4;
+      continue;
+    }
+    depth -= 1;
+    if (depth === 0) {
+      return `${template.slice(0, rootStart)}<div id="root">${appHtml}</div>${template.slice(nextClose + 6)}`;
+    }
+    cursor = nextClose + 6;
+  }
+
+  return template.replace(rootOpen, `<div id="root">${appHtml}`);
+}
+
 /**
  * Prefetches data for a given route
  * This function determines what queries need to be prefetched based on the URL
@@ -39,7 +71,6 @@ async function prefetchRouteData(queryClient: QueryClient, url: string): Promise
     // Only prefetch for authenticated routes (protected routes)
     // Public routes (login, register, etc.) don't need data prefetching
     if (
-      normalizedPath === "/" ||
       normalizedPath.startsWith("/sessions") ||
       normalizedPath.startsWith("/planner") ||
       normalizedPath.startsWith("/insights") ||
@@ -49,39 +80,8 @@ async function prefetchRouteData(queryClient: QueryClient, url: string): Promise
       normalizedPath.startsWith("/settings")
     ) {
       // Dynamically import API functions to avoid loading them on server if not needed
-      const { listSessions, listExercises, getProgressTrends, getExerciseBreakdown, getFeed } =
+      const { getProgressTrends, getExerciseBreakdown, getFeed } =
         await import("../services/api.js");
-
-      // Prefetch common data for home page
-      if (normalizedPath === "/") {
-        // Calculate date range for sessions (last 30 days)
-        const now = new Date();
-        const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-
-        await Promise.allSettled([
-          // Prefetch sessions for home page
-          queryClient.prefetchQuery({
-            queryKey: [
-              "sessions",
-              "history",
-              { from: thirtyDaysAgo.toISOString(), to: now.toISOString() },
-            ],
-            queryFn: () =>
-              listSessions({
-                planned_from: thirtyDaysAgo.toISOString(),
-                planned_to: now.toISOString(),
-                limit: 100,
-              }),
-            staleTime: 60 * 1000,
-          }),
-          // Prefetch exercises list
-          queryClient.prefetchQuery({
-            queryKey: ["exercises", "all"],
-            queryFn: () => listExercises({ limit: 1000 }),
-            staleTime: 5 * 60 * 1000,
-          }),
-        ]);
-      }
 
       // Prefetch data for insights page
       if (normalizedPath === "/insights" || normalizedPath === "/progress") {
@@ -121,36 +121,73 @@ async function prefetchRouteData(queryClient: QueryClient, url: string): Promise
   }
 }
 
+type ManifestChunk = {
+  isEntry?: boolean;
+  isDynamicEntry?: boolean;
+  file?: string;
+  css?: string[];
+  imports?: string[];
+};
+
+type ClientAssets = {
+  scripts: string[];
+  styles: string[];
+};
+
+const DEV_ASSETS: ClientAssets = { scripts: ["/src/main.tsx"], styles: [] };
+const FALLBACK_ASSETS: ClientAssets = { scripts: ["/assets/js/main.js"], styles: [] };
+
+function toPublicPath(file: string): string {
+  return file.startsWith("/") ? file : `/${file}`;
+}
+
+function findMainChunk(manifest: Record<string, ManifestChunk>): ManifestChunk | undefined {
+  const entries = Object.entries(manifest);
+  const mainFromSource = entries.find(([key]) => key.replace(/\\/g, "/").endsWith("src/main.tsx"));
+  if (mainFromSource?.[1]?.file) {
+    return mainFromSource[1];
+  }
+  return entries.find(([, chunk]) => chunk.isEntry && Boolean(chunk.file))?.[1];
+}
+
 /**
- * Reads Vite manifest.json to get exact bundle paths
+ * Reads Vite manifest.json to get hashed JS/CSS paths for hydration.
  */
-function getManifestPaths(): { main?: string } {
+function getClientAssets(): ClientAssets {
   const isProduction = process.env.NODE_ENV === "production";
   if (!isProduction) {
-    return {};
+    return DEV_ASSETS;
   }
 
   const manifestPath = resolve(root, "dist/client/.vite/manifest.json");
   if (!existsSync(manifestPath)) {
-    return {};
+    return FALLBACK_ASSETS;
   }
 
   try {
     const manifest = JSON.parse(readFileSync(manifestPath, "utf-8")) as Record<
       string,
-      { isEntry?: boolean; file?: string }
+      ManifestChunk
     >;
-    // Find the main entry point
-    const mainEntry = Object.values(manifest).find(
-      (entry) =>
-        typeof entry === "object" && entry !== null && "isEntry" in entry && entry.isEntry === true,
-    );
+    const mainChunk = findMainChunk(manifest);
+    if (!mainChunk?.file) {
+      return FALLBACK_ASSETS;
+    }
+
+    const styles = [...(mainChunk.css ?? [])];
+    for (const imported of mainChunk.imports ?? []) {
+      const importedChunk = manifest[imported];
+      if (importedChunk?.css?.length) {
+        styles.push(...importedChunk.css);
+      }
+    }
 
     return {
-      main: mainEntry?.file ? `/assets/${mainEntry.file}` : undefined,
+      scripts: [toPublicPath(mainChunk.file)],
+      styles: [...new Set(styles.map(toPublicPath))],
     };
   } catch {
-    return {};
+    return FALLBACK_ASSETS;
   }
 }
 
@@ -162,29 +199,18 @@ function getManifestPaths(): { main?: string } {
 export async function renderPage(url: string): Promise<string> {
   // Ensure i18n is initialized and resources are loaded before rendering
   // This is critical for SSR - components using useTranslation need i18n to be ready
-  const { default: i18n } = await import("../i18n/config.js");
+  const { default: i18n, minimalTranslationsReady } = await import("../i18n/config.js");
 
-  // Wait for i18n to be ready (resources loaded)
-  if (!i18n.isInitialized) {
-    await new Promise<void>((resolve) => {
-      if (i18n.isInitialized) {
-        resolve();
-      } else {
-        i18n.on("initialized", () => resolve());
-        // Timeout after 2 seconds to prevent hanging
-        setTimeout(() => resolve(), 2000);
-      }
-    });
-  }
-
-  // Ensure minimal translations are loaded for SSR
-  // Wait for async translation loading to complete
-  // The i18n config already loads minimal translations on initialization
-  await new Promise((resolve) => setTimeout(resolve, 200));
+  await Promise.race([
+    minimalTranslationsReady ?? Promise.resolve(),
+    new Promise<void>((resolve) => {
+      setTimeout(resolve, 2000);
+    }),
+  ]);
 
   // Ensure i18n language is set
   if (i18n.language !== "en") {
-    void i18n.changeLanguage("en");
+    await i18n.changeLanguage("en");
   }
 
   // Create a new QueryClient for this request (SSR best practice)
@@ -214,7 +240,7 @@ export async function renderPage(url: string): Promise<string> {
 
   // Replace the entire root div content with server-rendered app
   // Remove the static login shell and replace with SSR content
-  let html = template.replace(/<div id="root">[\s\S]*?<\/div>/, `<div id="root">${appHtml}</div>`);
+  let html = replaceRootContent(template, appHtml);
 
   // Remove the bootstrap script (not needed for SSR - we hydrate directly)
   html = html.replace(/<script type="module" src="\/src\/bootstrap\.ts"><\/script>/g, "");
@@ -223,26 +249,24 @@ export async function renderPage(url: string): Promise<string> {
   // This allows the client to hydrate the QueryClient with prefetched data
   const dehydratedStateScript = `<script>window.__REACT_QUERY_STATE__ = ${JSON.stringify(dehydratedState)};</script>`;
 
-  // Get hydration script path from manifest.json (Phase 3)
   const isProduction = process.env.NODE_ENV === "production";
-  const manifestPaths = getManifestPaths();
-  const mainScriptPath = isProduction
-    ? manifestPaths.main || "/assets/js/main.js"
-    : "/src/main.tsx";
-  const hydrationScript = `<script type="module" src="${mainScriptPath}"></script>`;
+  const { scripts, styles } = getClientAssets();
+  const hydrationScript = scripts
+    .map((src) => `<script type="module" src="${src}"></script>`)
+    .join("");
+  const styleLinks = styles.map((href) => `<link rel="stylesheet" href="${href}" />`).join("");
+  const modulePreloads = scripts
+    .map((src) => `<link rel="modulepreload" href="${src}" crossorigin="anonymous" />`)
+    .join("");
 
-  // Add resource hints for performance optimization
-  // Preload critical resources to improve LCP and FCP
   const resourceHints = isProduction
     ? `
-    <!-- Preload critical JavaScript for faster hydration -->
-    <link rel="preload" href="${mainScriptPath}" as="script" crossorigin="anonymous" />
-    <!-- Preconnect to same origin for faster resource loading -->
+    ${styleLinks}
+    ${modulePreloads}
     <link rel="preconnect" href="/" />
-    <!-- DNS prefetch for faster external resource resolution if needed -->
     <link rel="dns-prefetch" href="/" />
   `
-    : "";
+    : styleLinks;
 
   // Add Open Graph and Twitter Card meta tags for better SEO
   // These improve Lighthouse SEO score and social sharing

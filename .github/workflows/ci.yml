@@ -1453,6 +1453,11 @@ jobs:
       - frontend_tests
     permissions:
       contents: read
+    # Same Playwright Linux image used by `pnpm test:visual:linux` so font
+    # rasterization matches the committed *-linux.png baselines.
+    container:
+      image: mcr.microsoft.com/playwright:v1.57.0-jammy
+      options: --ipc=host
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -1467,35 +1472,18 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
 
-      - name: Install native canvas prerequisites
-        run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y \
-            build-essential \
-            libcairo2-dev \
-            libpango1.0-dev \
-            libjpeg-dev \
-            libgif-dev \
-            librsvg2-dev \
-            postgresql-client
-
       - name: Install dependencies
         run: pnpm install --frozen-lockfile --no-offline
 
       - name: Build frontend
         timeout-minutes: 10
-        run: pnpm --filter @fitvibe/frontend run build
-
-      - name: Install Playwright browsers
-        timeout-minutes: 10
-        run: pnpm exec playwright install --with-deps chromium
+        run: pnpm --filter @fitvibe/frontend run build:visual
 
       - name: Start preview server
         timeout-minutes: 10
         run: |
-          pnpm --filter @fitvibe/frontend exec vite preview --host 127.0.0.1 --port 4173 --strictPort &
+          pnpm --filter @fitvibe/frontend exec vite preview --host 127.0.0.1 --port 4173 --strictPort --outDir dist/client &
           echo $! > preview-server.pid
-          # Wait for server to be ready
           for i in {1..30}; do
             if curl -fsS http://127.0.0.1:4173 >/dev/null 2>&1; then
               echo "Preview server started"

@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { Home } from "lucide-react";
-import i18n, { translationsLoadingPromise } from "../i18n/config";
+import i18n, { loadFullTranslations } from "../i18n/config";
 import PageIntro from "../components/PageIntro";
 import { Card, CardContent, Button } from "../components/ui";
 import { useAuthStore } from "../store/auth.store";
@@ -60,7 +60,7 @@ const Cookie: React.FC = () => {
     const loadTranslations = async () => {
       try {
         // Wait for the translation loading promise to complete
-        await translationsLoadingPromise;
+        await loadFullTranslations();
 
         // Verify translations are actually loaded
         const testTranslation = i18n.t("cookie.title");

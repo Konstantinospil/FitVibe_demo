@@ -71,6 +71,17 @@ describe("PublicRoutes", () => {
     expect(screen.getByTestId("login-page")).toBeInTheDocument();
   });
 
+  it("should render Login page at /", async () => {
+    render(
+      <MemoryRouter initialEntries={["/"]}>
+        <PublicRoutes />
+      </MemoryRouter>,
+    );
+
+    await screen.findByTestId("login-page");
+    expect(screen.getByTestId("login-page")).toBeInTheDocument();
+  });
+
   it("should render TwoFactorVerificationLogin page at /login/verify-2fa", async () => {
     render(
       <MemoryRouter initialEntries={["/login/verify-2fa"]}>

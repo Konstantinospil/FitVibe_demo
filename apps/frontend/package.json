@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -p tsconfig.build.json && vite build",
+    "build:visual": "node ./scripts/build-visual.mjs",
     "build:client": "USE_REACT=true tsc -p tsconfig.build.json && USE_REACT=true vite build",
     "build:server": "SSR=true vite build --ssr src/ssr/render.tsx",
     "build:static": "tsx scripts/generate-static.ts",

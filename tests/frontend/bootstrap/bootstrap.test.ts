@@ -116,6 +116,7 @@ describe("bootstrap entrypoint", () => {
 
   it("handles all public routes correctly", async () => {
     const publicRoutes = [
+      "/",
       "/login",
       "/register",
       "/forgot-password",

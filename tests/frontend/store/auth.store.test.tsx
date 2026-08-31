@@ -11,7 +11,7 @@ describe("auth store", () => {
   };
 
   beforeEach(() => {
-    // Reset store to initial state
+    window.sessionStorage.clear();
     useAuthStore.setState({
       isAuthenticated: false,
       user: null,
@@ -27,6 +27,7 @@ describe("auth store", () => {
       const state = useAuthStore.getState();
       expect(state.isAuthenticated).toBe(true);
       expect(state.user).toEqual(mockUser);
+      expect(window.sessionStorage.getItem("fitvibe:auth")).toBe("1");
     });
 
     it("should update user data on subsequent signIn", () => {
@@ -62,6 +63,7 @@ describe("auth store", () => {
       const state = useAuthStore.getState();
       expect(state.isAuthenticated).toBe(false);
       expect(state.user).toBeNull();
+      expect(window.sessionStorage.getItem("fitvibe:auth")).toBeNull();
     });
 
     it("should be safe to call signOut when not authenticated", async () => {

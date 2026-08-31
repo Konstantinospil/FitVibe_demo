@@ -45,6 +45,10 @@ vi.mock("../../../apps/frontend/src/pages/Home", () => ({
   default: () => <div>Home Page</div>,
 }));
 
+vi.mock("../../../apps/frontend/src/pages/Dashboard", () => ({
+  default: () => <div>Dashboard Page</div>,
+}));
+
 vi.mock("../../../apps/frontend/src/pages/Sessions", () => ({
   default: () => <div>Sessions Page</div>,
 }));
@@ -55,6 +59,10 @@ vi.mock("../../../apps/frontend/src/pages/Planner", () => ({
 
 vi.mock("../../../apps/frontend/src/pages/Logger", () => ({
   default: () => <div>Logger Page</div>,
+}));
+
+vi.mock("../../../apps/frontend/src/pages/Feed", () => ({
+  default: () => <div>Feed Page</div>,
 }));
 
 vi.mock("../../../apps/frontend/src/pages/Insights", () => ({
@@ -156,6 +164,21 @@ describe("ProtectedRoutes", () => {
     );
   });
 
+  it("should render Dashboard page at /dashboard", async () => {
+    render(
+      <MemoryRouter initialEntries={["/dashboard"]}>
+        <ProtectedRoutes />
+      </MemoryRouter>,
+    );
+
+    await waitFor(
+      () => {
+        expect(screen.getByText("Dashboard Page")).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
+  });
+
   it("should render Sessions page at /sessions", async () => {
     render(
       <MemoryRouter initialEntries={["/sessions"]}>
@@ -196,6 +219,21 @@ describe("ProtectedRoutes", () => {
     await waitFor(
       () => {
         expect(screen.getByText("Logger Page")).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
+  });
+
+  it("should render Feed page at /feed", async () => {
+    render(
+      <MemoryRouter initialEntries={["/feed"]}>
+        <ProtectedRoutes />
+      </MemoryRouter>,
+    );
+
+    await waitFor(
+      () => {
+        expect(screen.getByText("Feed Page")).toBeInTheDocument();
       },
       { timeout: 5000 },
     );

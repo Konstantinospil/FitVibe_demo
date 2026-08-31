@@ -64,6 +64,7 @@ const MainLayout: React.FC = () => {
             alignItems: "center",
             justifyContent: "space-between",
             gap: "2rem",
+            flexWrap: "wrap",
           }}
         >
           <div

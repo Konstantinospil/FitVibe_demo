@@ -129,7 +129,7 @@ const loadLanguage = async (lng: SupportedLanguage): Promise<void> => {
 // Initialize i18n - use initReactI18next for both client and server
 // Components use useTranslation hook which requires the React plugin
 // I18nextProvider will provide the context during SSR
-void i18n.use(initReactI18next).init({
+const i18nReady = i18n.use(initReactI18next).init({
   resources: {},
   lng: FALLBACK_LANGUAGE,
   fallbackLng: FALLBACK_LANGUAGE,
@@ -142,21 +142,19 @@ void i18n.use(initReactI18next).init({
   },
 });
 
-// Load minimal translations immediately for login page
-// Full translations loaded on-demand when user navigates to other pages
-void loadMinimalLoginTranslations().then((minimalTranslations) => {
+// Load minimal translations immediately for login page.
+// Full translations load on-demand after login or on legal pages.
+export const minimalTranslationsReady: Promise<void> = i18nReady.then(async () => {
+  const minimalTranslations = await loadMinimalLoginTranslations();
   i18n.addResourceBundle("en", "translation", minimalTranslations, true, true);
   resources.en = { translation: minimalTranslations };
 
-  // If initial language is not English, load it too
   if (initialLanguage !== "en") {
-    void loadLanguage(initialLanguage).then(() => {
-      void i18n.changeLanguage(initialLanguage);
-    });
-  } else {
-    // Ensure English is set as the language
-    void i18n.changeLanguage("en");
+    await loadLanguage(initialLanguage);
+    await i18n.changeLanguage(initialLanguage);
+    return;
   }
+  await i18n.changeLanguage("en");
 });
 
 // Export function to load full translations when needed (e.g., after login)
@@ -178,7 +176,7 @@ export const ensurePrivateTranslationsLoaded = async () => {
   await loadFullTranslations();
 };
 
-export const translationsLoadingPromise: Promise<void> = loadFullTranslations();
+export const translationsLoadingPromise: Promise<void> = minimalTranslationsReady;
 
 if (typeof window !== "undefined") {
   i18n.on("languageChanged", (lng) => {

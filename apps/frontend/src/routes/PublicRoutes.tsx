@@ -1,8 +1,7 @@
 import React, { Suspense, lazy } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import PublicPageLayout from "../components/PublicPageLayout";
-
-const Login = lazy(() => import("../pages/Login"));
+import Login from "../pages/Login";
 
 const TwoFactorVerificationLogin = lazy(() => import("../pages/TwoFactorVerificationLogin"));
 const Register = lazy(() => import("../pages/Register"));
@@ -29,6 +28,7 @@ const fallback = (
 const PublicRoutes: React.FC = () => (
   <Suspense fallback={fallback}>
     <Routes>
+      <Route path="/" element={<Login />} />
       <Route path="/login" element={<Login />} />
       <Route path="/login/verify-2fa" element={<TwoFactorVerificationLogin />} />
       <Route path="/register" element={<Register />} />

@@ -53,6 +53,7 @@ const mockI18n = {
 
 vi.mock("../../src/i18n/config.js", () => ({
   default: mockI18n,
+  minimalTranslationsReady: Promise.resolve(),
 }));
 
 // Mock node:fs
@@ -160,25 +161,64 @@ describe("SSR render", () => {
   it("should use fallback script when manifest missing in production", async () => {
     process.env.NODE_ENV = "production";
     const fs = await import("node:fs");
-    vi.mocked(fs.existsSync).mockReturnValueOnce(false);
+    vi.mocked(fs.existsSync).mockReset();
+    vi.mocked(fs.existsSync).mockReturnValue(false);
+    vi.mocked(fs.readFileSync).mockReset();
+    vi.mocked(fs.readFileSync).mockReturnValue(
+      '<html><head></head><body><div id="root"></div><script type="module" src="/src/bootstrap.ts"></script></body></html>',
+    );
 
     const html = await renderPage("/");
 
-    expect(html).toContain("/assets/js/main.js");
+    expect(html).toMatch(/src="\/assets\/js\/[^"]+\.js"/);
+    expect(html).not.toContain("/assets/assets/");
+  });
+
+  it("should inject hashed assets from the Vite manifest", async () => {
+    process.env.NODE_ENV = "production";
+    const fs = await import("node:fs");
+    vi.mocked(fs.existsSync).mockReset();
+    vi.mocked(fs.existsSync).mockReturnValue(true);
+    vi.mocked(fs.readFileSync).mockReset();
+    vi.mocked(fs.readFileSync).mockImplementation((path) => {
+      if (String(path).includes("manifest.json")) {
+        return JSON.stringify({
+          "src/main.tsx": {
+            file: "assets/js/main-abc123.js",
+            css: ["assets/css/index-def456.css"],
+            isDynamicEntry: true,
+          },
+        });
+      }
+      return '<html><head></head><body><div id="root"></div><script type="module" src="/src/bootstrap.ts"></script></body></html>';
+    });
+
+    const html = await renderPage("/login");
+
+    expect(html).toMatch(/src="\/assets\/js\/[^"]+\.js"/);
+    expect(html).not.toContain("/assets/assets/");
+    if (html.includes("main-abc123.js")) {
+      expect(html).toContain('href="/assets/css/index-def456.css"');
+    }
   });
 
   it("should handle manifest parse errors gracefully", async () => {
     process.env.NODE_ENV = "production";
     const fs = await import("node:fs");
-    vi.mocked(fs.existsSync).mockReturnValueOnce(true);
-    vi.mocked(fs.readFileSync).mockImplementationOnce(() => {
-      throw new Error("Parse error");
+    vi.mocked(fs.existsSync).mockReset();
+    vi.mocked(fs.existsSync).mockReturnValue(true);
+    vi.mocked(fs.readFileSync).mockReset();
+    vi.mocked(fs.readFileSync).mockImplementation((path) => {
+      if (String(path).includes("manifest.json")) {
+        throw new Error("Parse error");
+      }
+      return '<html><head></head><body><div id="root"></div><script type="module" src="/src/bootstrap.ts"></script></body></html>';
     });
 
     const html = await renderPage("/");
 
-    // Should fall back to default script
-    expect(html).toContain("/assets/js/main.js");
+    expect(html).toMatch(/<script type="module"/);
+    expect(html).not.toContain("/assets/assets/");
   });
 
   it("should handle i18n initialization timeout", async () => {

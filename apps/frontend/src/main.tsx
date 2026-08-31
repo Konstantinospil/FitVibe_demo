@@ -32,20 +32,19 @@ if (!rootElement) {
   throw new Error("Root element not found");
 }
 
-// Check if this is SSR hydration (root already has content) or client-only render
-if (rootElement.hasChildNodes()) {
-  // SSR: Hydrate the existing server-rendered content
-  hydrateRoot(
-    rootElement,
-    <React.StrictMode>
-      <App />
-    </React.StrictMode>,
-  );
+const app = (
+  <React.StrictMode>
+    <App />
+  </React.StrictMode>
+);
+
+// The static #login-shell in index.html is a no-JS fallback, not SSR output.
+// Hydrating the SPA over that markup never matches and leaves the fallback on screen.
+const loginShell = document.getElementById("login-shell");
+const hasSsrMarkup = rootElement.hasChildNodes() && !loginShell;
+
+if (hasSsrMarkup) {
+  hydrateRoot(rootElement, app);
 } else {
-  // Fallback: Client-only render (for development or if SSR fails)
-  createRoot(rootElement).render(
-    <React.StrictMode>
-      <App />
-    </React.StrictMode>,
-  );
+  createRoot(rootElement).render(app);
 }

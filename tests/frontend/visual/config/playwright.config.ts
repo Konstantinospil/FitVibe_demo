@@ -1,4 +1,9 @@
-import { defineConfig, devices } from "@playwright/test";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+import { defineConfig } from "@playwright/test";
+
+const configDir = path.dirname(fileURLToPath(import.meta.url));
+const repoRoot = path.resolve(configDir, "../../../..");
 
 const light = { name: "light", colorScheme: "light" as const };
 const dark = { name: "dark", colorScheme: "dark" as const };
@@ -10,9 +15,17 @@ const viewports = [
   { name: "lg", width: 1280, height: 900 },
 ];
 
+const previewCommand =
+  "corepack pnpm --filter @fitvibe/frontend exec vite preview --host 127.0.0.1 --port 4173 --strictPort --outDir dist/client";
+
 export default defineConfig({
   testDir: "../",
+  testMatch: ["pages/**/*.spec.ts", "components/**/*.spec.ts"],
   outputDir: "../__screenshots__",
+  // OS suffix (win32 / linux) so Windows local runs and Ubuntu Actions do not
+  // compare against each other's font-rasterized pixels.
+  snapshotPathTemplate:
+    "{testDir}/{testFileDir}/{testFileName}-snapshots/{arg}{-projectName}{-snapshotSuffix}{ext}",
   reporter: [
     ["html", { outputFolder: "../../playwright-report/visual", open: "never" }],
     ["list"],
@@ -22,43 +35,45 @@ export default defineConfig({
     baseURL: process.env.APP_URL || "http://127.0.0.1:4173",
     timezoneId: "UTC",
     locale: "en-US",
-    geolocation: { latitude: 52.52, longitude: 13.405 }, // Berlin for consistency
+    geolocation: { latitude: 52.52, longitude: 13.405 },
     colorScheme: "light",
     viewport: { width: 1024, height: 900 },
+    reducedMotion: "reduce",
     video: "off",
     trace: "on-first-retry",
     screenshot: "only-on-failure",
+    snapshotSuffix: process.platform,
   },
   projects: [
     ...[light, dark].flatMap((theme) =>
       viewports.map((vp) => ({
         name: `ui:${theme.name}:${vp.name}`,
         use: {
-          ...devices["Desktop Chrome"],
+          browserName: "chromium" as const,
           colorScheme: theme.colorScheme,
           viewport: { width: vp.width, height: vp.height },
+          reducedMotion: "reduce" as const,
         },
       })),
     ),
   ],
   expect: {
     toHaveScreenshot: {
-      maxDiffPixelRatio: 0.002, // 0.2% as per QA Plan VIZ-SNAP-02
+      maxDiffPixelRatio: 0.002,
       threshold: 0.2,
+      animations: "disabled",
+      timeout: 15_000,
     },
   },
   retries: process.env.CI ? 2 : 0,
+  workers: 1,
   timeout: 60_000,
-  // In CI (GitHub Actions), we build and start the server explicitly, so disable webServer
-  // In local development, webServer will auto-start the preview server
-  // Allow override via DISABLE_WEBSERVER env var for cases where server is started manually
-  // Only disable webServer in actual CI environments (GitHub Actions), not just when CI=1
   webServer:
     process.env.DISABLE_WEBSERVER === "true" || (process.env.CI && process.env.GITHUB_ACTIONS)
       ? undefined
       : {
-          command:
-            "corepack pnpm --filter @fitvibe/frontend exec vite preview --host 127.0.0.1 --port 4173 --strictPort",
+          command: previewCommand,
+          cwd: repoRoot,
           url: "http://127.0.0.1:4173",
           timeout: 120_000,
           reuseExistingServer: true,

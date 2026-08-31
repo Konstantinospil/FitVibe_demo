@@ -166,6 +166,10 @@ export default defineConfig(() => {
         "/api": "http://localhost:4000",
       },
     },
+    preview: {
+      // Allow Docker/CI hosts to hit `vite preview` (Vite 6 blocks unknown Host headers).
+      allowedHosts: true,
+    },
     build: {
       // Optimize build for performance
       minify: "esbuild" as const,
@@ -174,6 +178,7 @@ export default defineConfig(() => {
       sourcemap: false,
       // SSR builds output to dist/server, client builds to dist/client
       outDir: isSSR ? "dist/server" : "dist/client",
+      manifest: !isSSR,
       // Reduce bundle size by optimizing module resolution
       modulePreload: {
         polyfill: false, // Disable module preload polyfill to reduce size
@@ -191,33 +196,11 @@ export default defineConfig(() => {
               if (id.includes("recharts")) {
                 return "charts-vendor";
               }
-              // React and React-DOM are large - split them for better code splitting
-              // React core (smaller, needed for hydration)
-              if (id.includes("react/") && !id.includes("react-dom")) {
-                return "react-core";
-              }
-              // React DOM (larger, needed for rendering)
-              if (id.includes("react-dom")) {
-                return "react-dom-vendor";
-              }
-              // Split Preact into smaller chunks to reduce initial bundle size
-              // Preact core (small, critical for hydration)
-              if (
-                id.includes("node_modules/preact/") &&
-                !id.includes("preact/compat") &&
-                !id.includes("preact/jsx-runtime") &&
-                !id.includes("preact/hooks")
-              ) {
-                return "preact-core";
-              }
-              // Preact hooks (commonly used, but can be separate)
-              if (id.includes("preact/hooks")) {
-                return "preact-hooks";
-              }
-              // Preact compat layer (React compatibility - larger, can be separate)
-              if (id.includes("preact/compat") || id.includes("preact/jsx-runtime")) {
-                return "preact-compat";
-              }
+              // Keep React, React DOM, and Preact in the shared vendor graph.
+              // Splitting them into react-core/preact-* chunks created a circular
+              // vendor <-> react-core import that crashed the production bundle
+              // (`Cannot access 'mp' before initialization`) and left the static
+              // login fallback on screen.
               // React Router - needed for initial routing but can be separate
               if (id.includes("react-router")) {
                 return "router-vendor";

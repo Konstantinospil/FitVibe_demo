@@ -72,6 +72,8 @@ const buildCookie = async (options: BuildOptions = {}) => {
   vi.doMock("../../src/i18n/config", () => ({
     default: i18nMock,
     translationsLoadingPromise,
+    loadFullTranslations: () => translationsLoadingPromise,
+    minimalTranslationsReady: translationsLoadingPromise,
   }));
 
   vi.doMock("react-i18next", () => ({

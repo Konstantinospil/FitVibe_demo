@@ -22,6 +22,13 @@ export interface User {
 
 const AUTH_STORAGE_KEY = "fitvibe:auth";
 
+const hasSessionFlag = (): boolean => {
+  if (typeof window === "undefined" || !window.sessionStorage) {
+    return false;
+  }
+  return window.sessionStorage.getItem(AUTH_STORAGE_KEY) === "1";
+};
+
 const setAuthFlag = (value: boolean) => {
   if (typeof window === "undefined" || !window.sessionStorage) {
     return;
@@ -42,7 +49,9 @@ interface AuthState {
 }
 
 const initialState = {
-  isAuthenticated: false,
+  // bootstrap.ts uses the same session flag to skip the hard redirect to /login.
+  // Keep the React store in sync so a refresh in the same tab stays authenticated.
+  isAuthenticated: hasSessionFlag(),
   user: null,
 };
 
@@ -65,7 +74,7 @@ export const useAuthStore = create<AuthState>()((set) => ({
       logger.apiError("Logout error", error, "/api/v1/auth/logout", "POST");
     }
     setAuthFlag(false);
-    set({ ...initialState });
+    set({ isAuthenticated: false, user: null });
   },
   updateUser: (user) =>
     set((state) => ({
