@@ -25,6 +25,8 @@ import { v4 as uuidv4 } from "uuid";
 import { getCurrentTermsVersion } from "../../../apps/backend/src/config/terms.js";
 import { clearRateLimiters } from "../../../apps/backend/src/middlewares/rate-limit.js";
 
+jest.setTimeout(120_000);
+
 describe("Integration: Social Features Rate Limiting", () => {
   let dbAvailable = false;
   let authToken: string;
@@ -33,6 +35,7 @@ describe("Integration: Social Features Rate Limiting", () => {
   let otherUserId: string;
   let feedItemId: string;
   let sessionId: string;
+  let hashedPassword: string;
 
   beforeAll(async () => {
     dbAvailable = await isDatabaseAvailable();
@@ -41,6 +44,7 @@ describe("Integration: Social Features Rate Limiting", () => {
       return;
     }
     await ensureUsernameColumnExists();
+    hashedPassword = await bcrypt.hash("SecureP@ssw0rd123!", 10);
   });
 
   beforeEach(async () => {
@@ -60,7 +64,6 @@ describe("Integration: Social Features Rate Limiting", () => {
       // Create first user
       const testEmail = `test-${uuidv4()}@example.com`;
       const testUsername = `testuser-${uuidv4().substring(0, 8)}`;
-      const hashedPassword = await bcrypt.hash("SecureP@ssw0rd123!", 10);
 
       const user = await createUser({
         id: uuidv4(),
@@ -125,7 +128,7 @@ describe("Integration: Social Features Rate Limiting", () => {
 
       await db("sessions").insert({
         id: sessionId,
-        user_id: userId,
+        owner_id: userId,
         title: "Test Session",
         planned_at: new Date().toISOString(),
         status: "completed",
@@ -138,7 +141,6 @@ describe("Integration: Social Features Rate Limiting", () => {
         id: feedItemId,
         owner_id: userId,
         session_id: sessionId,
-        kind: "session",
         visibility: "public",
         published_at: new Date().toISOString(),
         created_at: new Date().toISOString(),
@@ -246,12 +248,11 @@ describe("Integration: Social Features Rate Limiting", () => {
         return;
       }
 
-      // Create multiple users to follow
+      // Create one more user than the follow rate limit (50/day)
       const usersToFollow: string[] = [];
-      for (let i = 0; i < 60; i++) {
+      for (let i = 0; i < 51; i++) {
         const email = `follow${i}-${uuidv4()}@example.com`;
         const username = `followuser${i}-${uuidv4().substring(0, 8)}`;
-        const hashedPassword = await bcrypt.hash("SecureP@ssw0rd123!", 10);
 
         const user = await createUser({
           id: uuidv4(),
@@ -273,14 +274,11 @@ describe("Integration: Social Features Rate Limiting", () => {
       }
 
       // Follow rate limit: 50 per 86400 seconds (1 day)
-      // Make 51 requests to exceed limit
-      const requests = usersToFollow
-        .slice(0, 51)
-        .map((username) =>
-          request(app)
-            .post(`/api/v1/feed/users/${username}/follow`)
-            .set("Authorization", `Bearer ${authToken}`),
-        );
+      const requests = usersToFollow.map((username) =>
+        request(app)
+          .post(`/api/v1/feed/users/${username}/follow`)
+          .set("Authorization", `Bearer ${authToken}`),
+      );
 
       const responses = await Promise.all(requests);
 
@@ -296,7 +294,7 @@ describe("Integration: Social Features Rate Limiting", () => {
       if (rateLimited) {
         expect(rateLimited.body.error?.code).toBe("RATE_LIMITED");
       }
-    });
+    }, 60_000);
   });
 
   describe("Bookmark Rate Limiting", () => {

@@ -449,13 +449,13 @@ describe("Integration: Avatar Upload", () => {
       .attach("avatar", imageBuffer, "test-avatar.png");
 
     // Check audit log
-    const auditLogs = await db("audit_logs")
+    const auditLogs = await db("audit_log")
       .where({ actor_user_id: userId, action: "avatar_upload" })
       .orderBy("created_at", "desc")
       .limit(1);
 
     expect(auditLogs.length).toBeGreaterThan(0);
-    expect(auditLogs[0].entity).toBe("user_media");
+    expect(auditLogs[0].entity_type).toBe("user_media");
     expect(auditLogs[0].metadata).toHaveProperty("size");
     expect(auditLogs[0].metadata).toHaveProperty("mime");
   });
@@ -477,13 +477,13 @@ describe("Integration: Avatar Upload", () => {
     await request(app).delete("/api/v1/users/avatar").set("Authorization", `Bearer ${authToken}`);
 
     // Check audit log
-    const auditLogs = await db("audit_logs")
+    const auditLogs = await db("audit_log")
       .where({ actor_user_id: userId, action: "avatar_delete" })
       .orderBy("created_at", "desc")
       .limit(1);
 
     expect(auditLogs.length).toBeGreaterThan(0);
-    expect(auditLogs[0].entity).toBe("user_media");
+    expect(auditLogs[0].entity_type).toBe("user_media");
   });
 
   it("should require authentication for upload", async () => {
@@ -533,4 +533,3 @@ describe("Integration: Avatar Upload", () => {
     expect(responseTime).toBeLessThan(2000); // 2 seconds
   });
 });
-

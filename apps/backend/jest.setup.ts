@@ -11,6 +11,15 @@ process.env.VAULT_ENABLED = process.env.VAULT_ENABLED ?? "false";
 
 jest.setTimeout(1000 * 30);
 
+beforeEach(async () => {
+  try {
+    const { clearRateLimiters } = await import("./src/middlewares/rate-limit.js");
+    clearRateLimiters();
+  } catch {
+    // Ignore if rate-limit can't be imported (unit tests without that module)
+  }
+});
+
 // Pre-import cleanup functions to ensure they're available synchronously
 // This is critical for stopping Prometheus metrics timers
 let stopMetricsCollectionFn: (() => void) | null = null;

@@ -306,7 +306,7 @@ describe("Integration: Profile Editing", () => {
       .limit(1);
 
     expect(auditLogs.length).toBeGreaterThan(0);
-    expect(auditLogs[0].entity).toBe("users");
+    expect(auditLogs[0].entity_type).toBe("users");
     expect(auditLogs[0].entity_id).toBe(userId);
     expect(auditLogs[0].metadata).toHaveProperty("changes");
   });
@@ -331,4 +331,3 @@ describe("Integration: Profile Editing", () => {
     expect(responseTime).toBeLessThan(500);
   });
 });
-

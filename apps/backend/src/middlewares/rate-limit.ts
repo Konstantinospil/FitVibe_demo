@@ -33,8 +33,9 @@ export function clearRateLimiters(): void {
  * @param duration - Time window in seconds
  */
 export function rateLimit(key: string, points = 60, duration = 60) {
-  const limiter = getLimiter(key, points, duration);
   return (req: Request, res: Response, next: NextFunction): void => {
+    // Look up per request so clearRateLimiters() can replace the instance
+    const limiter = getLimiter(key, points, duration);
     const ip = extractClientIpForRateLimit(req);
     limiter
       .consume(ip)
@@ -65,8 +66,9 @@ export function rateLimit(key: string, points = 60, duration = 60) {
  * @param duration - Time window in seconds
  */
 export function rateLimitByUser(key: string, points = 60, duration = 60) {
-  const limiter = getLimiter(`${key}:user`, points, duration);
   return (req: Request, res: Response, next: NextFunction): void => {
+    // Look up per request so clearRateLimiters() can replace the instance
+    const limiter = getLimiter(`${key}:user`, points, duration);
     const userId = req.user?.sub;
     const fallbackIp = extractClientIpForRateLimit(req);
     const identity = userId ? `user:${userId}` : fallbackIp;

@@ -494,6 +494,14 @@ describe("Users Service", () => {
       expect(mockUsersRepo.canChangeAlias).toHaveBeenCalledWith(userId);
       expect(mockUsersRepo.checkAliasAvailable).toHaveBeenCalledWith("newalias", userId);
       expect(mockUsersRepo.updateProfileAlias).toHaveBeenCalledWith(userId, "newalias", {});
+      expect(mockAuditUtil.insertAudit).toHaveBeenCalledWith(
+        expect.objectContaining({
+          actorUserId: userId,
+          entity: "users",
+          action: "profile_update",
+          entityId: userId,
+        }),
+      );
       expect(result.profile?.alias).toBe("newalias");
     });
 

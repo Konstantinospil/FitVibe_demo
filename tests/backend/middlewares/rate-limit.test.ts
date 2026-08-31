@@ -51,6 +51,21 @@ describe("Rate Limiter Middleware", () => {
       expect(mockNext).toHaveBeenCalled();
       expect(mockResponse.status).not.toHaveBeenCalled();
     });
+
+    it("should use a fresh limiter after clearRateLimiters", async () => {
+      const { RateLimiterMemory } = jest.requireMock("rate-limiter-flexible") as {
+        RateLimiterMemory: jest.Mock;
+      };
+      const middleware = rateLimit("test-reset", 10, 60);
+
+      await middleware(mockRequest as Request, mockResponse as Response, mockNext);
+      const callsAfterFirst = RateLimiterMemory.mock.calls.length;
+
+      clearRateLimiters();
+      await middleware(mockRequest as Request, mockResponse as Response, mockNext);
+
+      expect(RateLimiterMemory.mock.calls.length).toBeGreaterThan(callsAfterFirst);
+    });
   });
 
   describe("rateLimitByUser", () => {

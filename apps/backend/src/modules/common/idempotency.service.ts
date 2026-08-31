@@ -96,7 +96,9 @@ export async function resolveIdempotency(
     throw new HttpError(409, "E.IDEMPOTENCY.MISMATCH", "IDEMPOTENCY_MISMATCH");
   }
 
-  if (existing.response_status !== null && existing.response_body !== null) {
+  // Completed requests store a status even when the body is empty (e.g. HTTP 204).
+  // Pending in-flight requests leave response_status null.
+  if (existing.response_status !== null) {
     return {
       type: "replay",
       status: existing.response_status,

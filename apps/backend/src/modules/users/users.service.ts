@@ -524,6 +524,16 @@ export async function updateProfile(userId: string, dto: UpdateProfileDTO): Prom
     }
   });
 
+  if (Object.keys(changes).length > 0) {
+    await insertAudit({
+      actorUserId: userId,
+      entity: "users",
+      action: "profile_update",
+      entityId: userId,
+      metadata: { changes },
+    });
+  }
+
   const updated = await fetchUserWithContacts(userId);
   if (!updated) {
     throw new HttpError(500, "USER_REFRESH_FAILED", "USER_REFRESH_FAILED");

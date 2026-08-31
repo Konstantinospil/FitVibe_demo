@@ -33,6 +33,7 @@ export async function listFeedReports(query: ListReportsQuery): Promise<FeedRepo
     .leftJoin("users as reporter", "fr.reporter_id", "reporter.id")
     .leftJoin("profiles as reporter_profile", "reporter_profile.user_id", "fr.reporter_id")
     .leftJoin("feed_items as fi", "fr.feed_item_id", "fi.id")
+    .leftJoin("sessions as s", "fi.session_id", "s.id")
     .leftJoin("feed_comments as fc", "fr.comment_id", "fc.id")
     .leftJoin("users as content_author_feed", "fi.owner_id", "content_author_feed.id")
     .leftJoin(
@@ -49,8 +50,8 @@ export async function listFeedReports(query: ListReportsQuery): Promise<FeedRepo
     .select(
       db.raw(`
         COALESCE(
-          SUBSTRING(fi.content, 1, 200),
-          SUBSTRING(fc.content, 1, 200)
+          SUBSTRING(s.title, 1, 200),
+          SUBSTRING(fc.body, 1, 200)
         ) as "contentPreview"
       `),
     )
@@ -95,6 +96,7 @@ export async function getFeedReportById(reportId: string): Promise<FeedReport | 
     .leftJoin("users as reporter", "fr.reporter_id", "reporter.id")
     .leftJoin("profiles as reporter_profile", "reporter_profile.user_id", "fr.reporter_id")
     .leftJoin("feed_items as fi", "fr.feed_item_id", "fi.id")
+    .leftJoin("sessions as s", "fi.session_id", "s.id")
     .leftJoin("feed_comments as fc", "fr.comment_id", "fc.id")
     .leftJoin("users as content_author_feed", "fi.owner_id", "content_author_feed.id")
     .leftJoin(
@@ -111,8 +113,8 @@ export async function getFeedReportById(reportId: string): Promise<FeedReport | 
     .select(
       db.raw(`
         COALESCE(
-          SUBSTRING(fi.content, 1, 200),
-          SUBSTRING(fc.content, 1, 200)
+          SUBSTRING(s.title, 1, 200),
+          SUBSTRING(fc.body, 1, 200)
         ) as "contentPreview"
       `),
     )

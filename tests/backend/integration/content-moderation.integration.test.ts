@@ -233,7 +233,7 @@ describe("Integration: Content Moderation", () => {
       .set("Authorization", `Bearer ${admin.accessToken}`);
 
     expect(response.status).toBe(200);
-    expect(Array.isArray(response.body)).toBe(true);
+    expect(Array.isArray(response.body.reports)).toBe(true);
   });
 
   it("should enforce rate limiting on reports", async () => {
@@ -266,4 +266,3 @@ describe("Integration: Content Moderation", () => {
     expect(reports.length).toBe(12);
   });
 });
-

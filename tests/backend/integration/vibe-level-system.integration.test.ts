@@ -32,6 +32,26 @@ import { v4 as uuidv4 } from "uuid";
 import { getCurrentTermsVersion } from "../../../apps/backend/src/config/terms.js";
 import type { SessionWithExercises } from "../../../apps/backend/src/modules/sessions/sessions.types.js";
 
+async function persistSession(session: SessionWithExercises): Promise<void> {
+  await db("sessions").insert({
+    id: session.id,
+    owner_id: session.owner_id,
+    title: session.title ?? "Test Session",
+    planned_at: session.planned_at,
+    started_at: session.started_at ?? null,
+    completed_at: session.completed_at ?? null,
+    status: session.status,
+    visibility: session.visibility,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  });
+}
+
+async function persistAndAward(session: SessionWithExercises) {
+  await persistSession(session);
+  return awardPointsForSession(session);
+}
+
 describe("Integration: Vibe Level System (v2_vibe_lvl)", () => {
   let testUser: { id: string; email: string; password: string };
   let dbAvailable = false;
@@ -172,7 +192,7 @@ describe("Integration: Vibe Level System (v2_vibe_lvl)", () => {
       ],
     };
 
-    const result = await awardPointsForSession(session);
+    const result = await persistAndAward(session);
 
     expect(result.awarded).toBe(true);
     expect(result.pointsAwarded).toBeGreaterThan(0);
@@ -212,7 +232,7 @@ describe("Integration: Vibe Level System (v2_vibe_lvl)", () => {
       ],
     };
 
-    const result = await awardPointsForSession(session);
+    const result = await persistAndAward(session);
 
     expect(result.awarded).toBe(true);
     expect(result.pointsAwarded).toBeGreaterThan(0);
@@ -256,7 +276,7 @@ describe("Integration: Vibe Level System (v2_vibe_lvl)", () => {
       ],
     };
 
-    const result = await awardPointsForSession(session);
+    const result = await persistAndAward(session);
 
     expect(result.awarded).toBe(true);
     expect(result.pointsAwarded).toBeGreaterThan(0);
@@ -302,7 +322,7 @@ describe("Integration: Vibe Level System (v2_vibe_lvl)", () => {
       ],
     };
 
-    await awardPointsForSession(session);
+    await persistAndAward(session);
 
     // Manually set last_updated_at to 2 days ago for strength domain
     await db("user_domain_vibe_levels")
@@ -370,7 +390,7 @@ describe("Integration: Vibe Level System (v2_vibe_lvl)", () => {
       ],
     };
 
-    await awardPointsForSession(session);
+    await persistAndAward(session);
 
     const initialLevel = await getDomainVibeLevel(testUser.id, "strength");
     const initialVibeLevel = initialLevel?.vibe_level ?? 1000;
@@ -521,8 +541,8 @@ describe("Integration: Vibe Level System (v2_vibe_lvl)", () => {
       ],
     });
 
-    const beginnerResult = await awardPointsForSession(createSession(beginnerId));
-    const advancedResult = await awardPointsForSession(createSession(advancedId));
+    const beginnerResult = await persistAndAward(createSession(beginnerId));
+    const advancedResult = await persistAndAward(createSession(advancedId));
 
     // Beginner should get more points for same effort (relative achievement)
     // Use >= to handle edge cases where they might be equal

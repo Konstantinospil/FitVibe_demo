@@ -113,6 +113,43 @@ describe("Idempotency Service", () => {
       }
     });
 
+    it("should return replay when existing record has a status and null body", async () => {
+      const payload = {};
+      const crypto = await import("node:crypto");
+      const requestHash = crypto.createHash("sha256").update(JSON.stringify(payload)).digest("hex");
+
+      const existingRecord = {
+        id: "record-123",
+        request_hash: requestHash,
+        response_status: 204,
+        response_body: null,
+      };
+
+      const mockInsertBuilder = {
+        insert: jest.fn().mockReturnThis(),
+        onConflict: jest.fn().mockReturnThis(),
+        ignore: jest.fn().mockReturnThis(),
+        returning: jest.fn().mockResolvedValue([]),
+      };
+
+      const mockQueryBuilder = {
+        where: jest.fn().mockReturnThis(),
+        first: jest.fn().mockResolvedValue(existingRecord),
+      };
+
+      mockDb
+        .mockReturnValueOnce(mockInsertBuilder as never)
+        .mockReturnValueOnce(mockQueryBuilder as never);
+
+      const result = await idempotencyService.resolveIdempotency(context, payload);
+
+      expect(result.type).toBe("replay");
+      if (result.type === "replay") {
+        expect(result.status).toBe(204);
+        expect(result.body).toBeNull();
+      }
+    });
+
     it("should return pending when existing record has no response", async () => {
       const payload = { title: "Test Session" };
       // Calculate the actual hash that will be computed

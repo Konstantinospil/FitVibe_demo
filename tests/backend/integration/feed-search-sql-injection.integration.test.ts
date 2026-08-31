@@ -127,7 +127,7 @@ describe("Integration: Feed Search SQL Injection Protection", () => {
       return;
     }
 
-    const specialChars = ["%", "_", "'", '"', "\\", "`"];
+    const specialChars = ["%", "_", "'", '"', "\\"];
 
     for (const char of specialChars) {
       const response = await request(app)
@@ -140,6 +140,14 @@ describe("Integration: Feed Search SQL Injection Protection", () => {
       expect(response.body).toHaveProperty("items");
       expect(Array.isArray(response.body.items)).toBe(true);
     }
+
+    // Backtick is treated as command-injection by the security middleware
+    const backtickResponse = await request(app)
+      .get("/api/v1/feed")
+      .set("Authorization", `Bearer ${authToken}`)
+      .query({ q: "test`query" });
+    expect(backtickResponse.status).toBe(400);
+    expect(backtickResponse.body.error?.code).toBe("E.SECURITY.SUSPICIOUS_INPUT");
   });
 
   it("should handle empty and null search queries safely", async () => {
