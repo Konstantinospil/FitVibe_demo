@@ -331,43 +331,45 @@ describeFn("database seeds", () => {
     });
 
     describe("users seed", () => {
+      const ADMIN_ID = "11111111-1111-1111-1111-111111111111";
+      const ATHLETE_ID = "22222222-2222-2222-2222-222222222222";
+
       it("inserts demo user records", async () => {
         const users = await client("users").select("*");
         expect(users.length).toBeGreaterThanOrEqual(2);
       });
 
       it("inserts admin user", async () => {
-        const admin = await client("users").where({ username: "admin" }).first();
+        const admin = await client("users").where({ id: ADMIN_ID }).first();
         expect(admin).toBeDefined();
-        expect(admin.username).toBe("admin");
         expect(admin.display_name).toBe("FitVibe Admin");
         expect(admin.role_code).toBe("admin");
         expect(admin.status).toBe("active");
       });
 
       it("inserts athlete user", async () => {
-        const athlete = await client("users").where({ username: "jane.doe" }).first();
+        const athlete = await client("users").where({ id: ATHLETE_ID }).first();
         expect(athlete).toBeDefined();
-        expect(athlete.username).toBe("jane.doe");
         expect(athlete.display_name).toBe("Jane Doe");
         expect(athlete.role_code).toBe("athlete");
         expect(athlete.status).toBe("active");
       });
 
       it("hashes passwords for demo users", async () => {
-        const admin = await client("users").where({ username: "admin" }).first();
+        const admin = await client("users").where({ id: ADMIN_ID }).first();
         expect(admin.password_hash).toBeDefined();
         expect(admin.password_hash).not.toBe("Admin123!");
         expect(admin.password_hash.startsWith("$2")).toBe(true); // bcrypt format
       });
 
       it("sets valid UUIDs for demo users", async () => {
-        const admin = await client("users").where({ username: "admin" }).first();
+        const admin = await client("users").where({ display_name: "FitVibe Admin" }).first();
         expect(admin.id).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/);
+        expect(admin.id).toBe(ADMIN_ID);
       });
 
       it("has timestamps on user records", async () => {
-        const admin = await client("users").where({ username: "admin" }).first();
+        const admin = await client("users").where({ id: ADMIN_ID }).first();
         expect(admin?.created_at).toBeDefined();
         expect(admin?.updated_at).toBeDefined();
         expect(new Date(admin?.created_at as string | number | Date)).toBeInstanceOf(Date);

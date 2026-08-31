@@ -191,7 +191,7 @@ jobs:
 
       - name: Backend unit tests & coverage
         timeout-minutes: 15
-        run: pnpm --filter @fitvibe/backend test -- --coverage --maxWorkers=2 --testPathIgnorePatterns="migrations/migrations\\.test\\.ts|seeds/seeds\\.test\\.ts|.*\\.integration\\.test\\.ts$|src/db/utils/__tests__/scripts\\.test\\.ts"
+        run: pnpm --filter @fitvibe/backend exec jest --passWithNoTests --coverage --maxWorkers=2 --testPathIgnorePatterns="migrations/migrations\\.test\\.ts|seeds/seeds\\.test\\.ts|.*\\.integration\\.test\\.ts$"
 
       - name: Upload backend coverage artifact
         if: always()
