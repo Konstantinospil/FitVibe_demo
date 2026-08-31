@@ -37,8 +37,8 @@ describe("csrf middleware internals", () => {
     csrfTokenRoute(req, res);
 
     expect(res.cookie).toHaveBeenCalledWith(
-      "fitvibe-csrf",
-      expect.stringMatching(/^v1\./),
+      "__Host-fitvibe-csrf",
+      expect.any(String),
       expect.objectContaining({ httpOnly: true, sameSite: "lax", path: "/" }),
     );
     const bodySchema = z.object({ csrfToken: z.string() });

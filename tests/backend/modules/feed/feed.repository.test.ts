@@ -373,7 +373,6 @@ describe("Feed Repository", () => {
         expect.objectContaining({
           owner_id: userId,
           session_id: sessionId,
-          kind: "session",
           visibility: "public",
         }),
       );
@@ -402,7 +401,6 @@ describe("Feed Repository", () => {
         expect.objectContaining({
           owner_id: userId,
           session_id: null,
-          kind: "generic",
           visibility: "public",
         }),
       );

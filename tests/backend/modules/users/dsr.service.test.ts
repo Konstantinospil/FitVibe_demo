@@ -8,19 +8,22 @@ import type { DeleteSchedule } from "../../../../apps/backend/src/modules/users/
 // Store query builders in module scope for test access
 const queryBuilders: Record<string, any> = {};
 
-function createMockQueryBuilder() {
-  return {
+function createMockQueryBuilder(defaultValue: unknown = []) {
+  return Object.assign(Promise.resolve(defaultValue), {
     where: jest.fn().mockReturnThis(),
+    orWhere: jest.fn().mockReturnThis(),
     andWhere: jest.fn().mockReturnThis(),
     whereIn: jest.fn().mockReturnThis(),
+    whereNotNull: jest.fn().mockReturnThis(),
+    whereRaw: jest.fn().mockReturnThis(),
     first: jest.fn().mockResolvedValue(null),
-    select: jest.fn().mockResolvedValue([]),
+    select: jest.fn().mockReturnThis(),
     pluck: jest.fn().mockResolvedValue([]),
     insert: jest.fn().mockResolvedValue([]),
     update: jest.fn().mockResolvedValue(1),
     delete: jest.fn().mockResolvedValue(1),
     del: jest.fn().mockResolvedValue(1),
-  };
+  });
 }
 
 function createMockTrx() {

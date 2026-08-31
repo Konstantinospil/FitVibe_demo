@@ -760,7 +760,8 @@ describe("Sessions Repository", () => {
 
       await sessionsRepository.replaceSessionExercises(mockTrx, sessionId, exercises);
 
-      expect(mockTrxQueryBuilder.insert).toHaveBeenCalledTimes(2); // session_exercises + actual_attributes
+      // Actual attributes are stored via exercise_sets; the dedicated table was dropped.
+      expect(mockTrxQueryBuilder.insert).toHaveBeenCalledTimes(1);
     });
 
     it("should insert exercise sets", async () => {
@@ -991,12 +992,13 @@ describe("Sessions Repository", () => {
 
       await sessionsRepository.replaceSessionExercises(mockTrx, sessionId, exercises);
 
-      expect(mockTrxQueryBuilder.insert).toHaveBeenCalledTimes(2); // session_exercises + actual_attributes
-      const actualInsertCall = mockTrxQueryBuilder.insert.mock.calls.find((call) =>
-        call[0].some((row: any) => row.recorded_at),
+      expect(mockTrxQueryBuilder.insert).toHaveBeenCalledTimes(1);
+      const recordedAtInsert = mockTrxQueryBuilder.insert.mock.calls.find(
+        (call) =>
+          Array.isArray(call[0]) &&
+          call[0].some((row: { recorded_at?: string }) => row.recorded_at),
       );
-      expect(actualInsertCall).toBeDefined();
-      expect(actualInsertCall[0][0].recorded_at).toBe("2024-01-01T00:00:00Z");
+      expect(recordedAtInsert).toBeUndefined();
     });
   });
 });

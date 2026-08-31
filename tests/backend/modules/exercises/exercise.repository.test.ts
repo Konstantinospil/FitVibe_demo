@@ -39,7 +39,9 @@ jest.mock("../../../../apps/backend/src/db/connection.js", () => {
       queryBuilders[table] = createMockQueryBuilder();
     }
     return queryBuilders[table];
-  }) as jest.Mock;
+  }) as jest.Mock & { raw: jest.Mock };
+
+  mockDbFunction.raw = jest.fn((sql: string) => sql);
 
   return {
     db: mockDbFunction,

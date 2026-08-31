@@ -3,30 +3,37 @@ import { env } from "./config/env.js";
 import { logger } from "./config/logger.js";
 import { initializeSecretsManager } from "./services/secrets.service.js";
 
-const port = env.PORT;
+export function startServer(): Promise<void> {
+  return Promise.resolve().then(() => {
+    const port = env.PORT;
 
-// Initialize secrets manager if enabled
-if (env.vault.enabled) {
-  if (!env.vault.token) {
-    logger.error("[server] VAULT_ENABLED=true but VAULT_TOKEN is not set");
-    process.exit(1);
-  }
+    if (env.vault.enabled) {
+      if (!env.vault.token) {
+        logger.error("[server] VAULT_ENABLED=true but VAULT_TOKEN is not set");
+        process.exit(1);
+      }
 
-  initializeSecretsManager({
-    provider: "vault",
-    vault: {
-      enabled: true,
-      addr: env.vault.addr,
-      token: env.vault.token,
-      namespace: env.vault.namespace,
-    },
+      initializeSecretsManager({
+        provider: "vault",
+        vault: {
+          enabled: true,
+          addr: env.vault.addr,
+          token: env.vault.token,
+          namespace: env.vault.namespace,
+        },
+      });
+
+      logger.info({ vaultAddr: env.vault.addr }, "[server] Secrets manager initialized with Vault");
+    } else {
+      logger.info("[server] Secrets manager disabled - using environment variables");
+    }
+
+    app.listen(port, () => {
+      logger.info({ port }, "FitVibe Backend running");
+    });
   });
-
-  logger.info({ vaultAddr: env.vault.addr }, "[server] Secrets manager initialized with Vault");
-} else {
-  logger.info("[server] Secrets manager disabled - using environment variables");
 }
 
-app.listen(port, () => {
-  logger.info({ port }, "FitVibe Backend running");
-});
+if (process.env.NODE_ENV !== "test" && !process.env.JEST_WORKER_ID) {
+  void startServer();
+}

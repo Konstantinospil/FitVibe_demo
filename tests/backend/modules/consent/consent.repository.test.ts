@@ -1,11 +1,17 @@
+import crypto from "node:crypto";
 import * as consentRepository from "../../../../apps/backend/src/modules/consent/consent.repository.js";
 
 const queryBuilders: Record<string, any> = {};
+
+function hashClientKey(ipAddress: string): string {
+  return crypto.createHash("sha256").update(ipAddress).digest("hex");
+}
 
 function createMockQueryBuilder(defaultValue: unknown = []) {
   const builder = Object.assign(Promise.resolve(defaultValue), {
     select: jest.fn().mockReturnThis(),
     where: jest.fn().mockReturnThis(),
+    orderBy: jest.fn().mockReturnThis(),
     first: jest.fn().mockResolvedValue(null),
     insert: jest.fn().mockReturnThis(),
     onConflict: jest.fn().mockReturnThis(),
@@ -36,19 +42,20 @@ describe("Consent Repository", () => {
 
   describe("getConsentByIp", () => {
     it("returns mapped consent when row exists", async () => {
+      const clientKey = hashClientKey("203.0.113.1");
       const row = {
         id: "consent-1",
-        ip_address: "203.0.113.1",
+        user_id: null,
+        client_key: clientKey,
         consent_version: "2024-06-01",
+        source: "banner",
         essential_cookies: true,
         preferences_cookies: false,
         analytics_cookies: true,
         marketing_cookies: false,
         consent_given_at: "2024-06-10T10:00:00.000Z",
-        last_updated_at: "2024-06-10T10:00:00.000Z",
         user_agent: "UA",
         created_at: "2024-06-10T10:00:00.000Z",
-        updated_at: "2024-06-10T10:00:00.000Z",
       };
 
       const dbModule = await import("../../../../apps/backend/src/db/connection.js");
@@ -60,7 +67,7 @@ describe("Consent Repository", () => {
 
       expect(result).toEqual({
         id: "consent-1",
-        ipAddress: "203.0.113.1",
+        ipAddress: clientKey,
         consentVersion: "2024-06-01",
         essentialCookies: true,
         preferencesCookies: false,
@@ -77,24 +84,26 @@ describe("Consent Repository", () => {
 
   describe("upsertConsent", () => {
     it("inserts and merges consent data", async () => {
+      const clientKey = hashClientKey("203.0.113.2");
       const row = {
         id: "consent-2",
-        ip_address: "203.0.113.2",
+        user_id: null,
+        client_key: clientKey,
         consent_version: "2024-06-01",
+        source: "banner",
         essential_cookies: true,
         preferences_cookies: true,
         analytics_cookies: false,
         marketing_cookies: true,
         consent_given_at: "2024-06-10T10:00:00.000Z",
-        last_updated_at: "2024-06-10T10:00:00.000Z",
         user_agent: "UA",
         created_at: "2024-06-10T10:00:00.000Z",
-        updated_at: "2024-06-10T10:00:00.000Z",
       };
 
       const dbModule = await import("../../../../apps/backend/src/db/connection.js");
       const dbFn = dbModule.db as jest.Mock;
       dbFn("cookie_consents");
+      queryBuilders.cookie_consents.first.mockResolvedValue(null);
       queryBuilders.cookie_consents.returning.mockResolvedValue([row]);
 
       const result = await consentRepository.upsertConsent("203.0.113.2", {
@@ -108,23 +117,14 @@ describe("Consent Repository", () => {
 
       expect(queryBuilders.cookie_consents.insert).toHaveBeenCalledWith(
         expect.objectContaining({
-          ip_address: "203.0.113.2",
+          client_key: clientKey,
           consent_version: "2024-06-01",
           essential_cookies: true,
           preferences_cookies: true,
           analytics_cookies: false,
           marketing_cookies: true,
           user_agent: "UA",
-        }),
-      );
-      expect(queryBuilders.cookie_consents.merge).toHaveBeenCalledWith(
-        expect.objectContaining({
-          consent_version: "2024-06-01",
-          essential_cookies: true,
-          preferences_cookies: true,
-          analytics_cookies: false,
-          marketing_cookies: true,
-          user_agent: "UA",
+          source: "banner",
         }),
       );
       expect(result.id).toBe("consent-2");

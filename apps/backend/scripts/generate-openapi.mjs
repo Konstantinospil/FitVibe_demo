@@ -318,6 +318,12 @@ const schemas = {
     type: "object",
     properties: {
       email: { type: "string", format: "email" },
+      alias: {
+        type: "string",
+        minLength: 3,
+        maxLength: 50,
+        pattern: "^[a-zA-Z0-9_\\-.]+$",
+      },
       username: {
         type: "string",
         minLength: 3,
@@ -348,7 +354,7 @@ const schemas = {
       },
       terms_accepted: { type: "boolean" },
     },
-    required: ["email", "username", "password", "terms_accepted"],
+    required: ["email", "password", "terms_accepted"],
     additionalProperties: false,
   },
   LoginRequest: {

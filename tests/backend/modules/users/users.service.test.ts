@@ -41,6 +41,10 @@ jest.mock("../../../../apps/backend/src/db/connection.js", () => {
       first: jest.fn().mockResolvedValue(null),
       where: jest.fn().mockReturnThis(),
       whereIn: jest.fn().mockReturnThis(),
+      orWhere: jest.fn().mockReturnThis(),
+      leftJoin: jest.fn().mockReturnThis(),
+      join: jest.fn().mockReturnThis(),
+      select: jest.fn().mockReturnThis(),
       orderBy: jest.fn().mockReturnThis(),
       update: jest.fn().mockResolvedValue(1),
       insert: jest.fn().mockResolvedValue([]),
@@ -52,8 +56,10 @@ jest.mock("../../../../apps/backend/src/db/connection.js", () => {
 
   const mockDbFunction = jest.fn(() => mockQueryBuilder) as jest.Mock & {
     transaction: jest.Mock;
+    raw: jest.Mock;
   };
   mockDbFunction.transaction = jest.fn((cb: (trx: unknown) => Promise<void>) => cb({}));
+  mockDbFunction.raw = jest.fn((sql: string) => sql);
 
   return { db: mockDbFunction, mockQueryBuilder };
 });
@@ -63,6 +69,7 @@ const mockDb = jest.mocked(db);
 describe("Users Service", () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockUsersRepo.checkAliasAvailable.mockResolvedValue(true);
   });
 
   describe("createUser", () => {
@@ -330,12 +337,8 @@ describe("Users Service", () => {
         display_name: "Test User",
       } as UserRow);
 
-      mockDb.mockReturnValue({
-        whereRaw: jest.fn().mockReturnThis(),
-        whereNot: jest.fn().mockReturnThis(),
-        first: jest.fn().mockResolvedValue(null),
-      } as never);
-
+      mockUsersRepo.getProfileByUserId.mockResolvedValue(null);
+      mockUsersRepo.updateProfileAlias.mockResolvedValue(1);
       mockUsersRepo.updateUserProfile.mockResolvedValue(1);
       mockUsersRepo.fetchUserWithContacts.mockResolvedValue({
         user: {
@@ -350,7 +353,8 @@ describe("Users Service", () => {
       const result = await usersService.updateProfile(userId, dto);
 
       expect(result.username).toBe("newusername");
-      expect(mockUsersRepo.updateUserProfile).toHaveBeenCalledWith(userId, dto, {});
+      expect(mockUsersRepo.checkAliasAvailable).toHaveBeenCalledWith("newusername", userId);
+      expect(mockUsersRepo.updateProfileAlias).toHaveBeenCalledWith(userId, "newusername", {});
     });
 
     it("should reject invalid username format", async () => {
@@ -379,12 +383,7 @@ describe("Users Service", () => {
         username: "testuser",
         display_name: "Test User",
       } as UserRow);
-
-      mockDb.mockReturnValue({
-        whereRaw: jest.fn().mockReturnThis(),
-        whereNot: jest.fn().mockReturnThis(),
-        first: jest.fn().mockResolvedValue({ id: "other-user" }),
-      } as never);
+      mockUsersRepo.checkAliasAvailable.mockResolvedValue(false);
 
       await expect(usersService.updateProfile(userId, dto)).rejects.toThrow("USER_USERNAME_TAKEN");
     });
@@ -1509,6 +1508,10 @@ describe("Users Service", () => {
     let mockQueryBuilder: {
       where: jest.Mock;
       whereIn: jest.Mock;
+      orWhere: jest.Mock;
+      leftJoin: jest.Mock;
+      join: jest.Mock;
+      select: jest.Mock;
       orderBy: jest.Mock;
       first: jest.Mock;
       pluck: jest.Mock;
@@ -1521,11 +1524,19 @@ describe("Users Service", () => {
       mockQueryBuilder = Object.assign(thenablePromise, {
         where: jest.fn().mockReturnThis(),
         whereIn: jest.fn().mockReturnThis(),
+        orWhere: jest.fn().mockReturnThis(),
+        leftJoin: jest.fn().mockReturnThis(),
+        join: jest.fn().mockReturnThis(),
+        select: jest.fn().mockReturnThis(),
         orderBy: jest.fn().mockReturnThis(),
         first: jest.fn().mockResolvedValue([]),
         pluck: jest.fn().mockResolvedValue([]),
       });
       mockDb.mockReturnValue(mockQueryBuilder as unknown as ReturnType<typeof db>);
+      (mockDb as unknown as { raw: jest.Mock }).raw = jest.fn((sql: string) => sql);
+      (mockDb as unknown as { transaction: jest.Mock }).transaction = jest.fn(
+        (cb: (trx: unknown) => Promise<void>) => cb({}),
+      );
     });
 
     it("should collect all user data successfully", async () => {

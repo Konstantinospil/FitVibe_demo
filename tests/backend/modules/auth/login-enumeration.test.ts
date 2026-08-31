@@ -4,6 +4,27 @@ import * as authRepository from "../../../../apps/backend/src/modules/auth/auth.
 import * as bruteforceRepository from "../../../../apps/backend/src/modules/auth/bruteforce.repository.js";
 import type { AuthUserRecord } from "../../../../apps/backend/src/modules/auth/auth.repository.js";
 
+jest.mock("../../../../apps/backend/src/db/index.js", () => {
+  const builder = {
+    insert: jest.fn().mockResolvedValue([]),
+    where: jest.fn().mockReturnThis(),
+    first: jest.fn().mockResolvedValue(null),
+  };
+  const mockDb = Object.assign(
+    jest.fn(() => builder),
+    {
+      transaction: jest.fn(async (cb: (trx: unknown) => Promise<unknown>) => {
+        const trx = Object.assign(
+          jest.fn(() => builder),
+          builder,
+        );
+        return cb(trx);
+      }),
+    },
+  );
+  return { db: mockDb, default: mockDb };
+});
+
 describe("Q-11 login enumeration protections", () => {
   const findUserByEmailSpy = jest.spyOn(authRepository, "findUserByEmail");
   const compareSpy = jest.spyOn(bcrypt, "compare") as unknown as jest.SpyInstance<

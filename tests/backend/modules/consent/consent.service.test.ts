@@ -123,7 +123,6 @@ describe("Consent Service", () => {
           entityId: "consent-2",
           outcome: "success",
           metadata: expect.objectContaining({
-            ipAddress: "203.0.113.11",
             preferences: {
               essential: true,
               preferences: true,
