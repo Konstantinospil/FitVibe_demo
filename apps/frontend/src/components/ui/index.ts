@@ -7,7 +7,6 @@ export * from "./Badge";
 export * from "./Button";
 export type { ButtonProps } from "./Button";
 export * from "./Card";
-export * from "./Chart";
 export * from "./Checkbox";
 export * from "./FileUpload";
 export * from "./FormField";

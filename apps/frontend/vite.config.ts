@@ -222,13 +222,6 @@ export default defineConfig(() => {
               if (id.includes("axios")) {
                 return "http-vendor";
               }
-              // Icon library - large, can be code-split
-              // Split lucide-react into smaller chunks per icon set
-              if (id.includes("lucide-react")) {
-                // Try to split by icon usage patterns
-                // This will help tree-shaking work better
-                return "icons-vendor";
-              }
               // Date utilities - lazy load (not needed for login)
               if (id.includes("date-fns") || id.includes("dayjs") || id.includes("moment")) {
                 return "date-vendor";

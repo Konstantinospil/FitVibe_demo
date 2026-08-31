@@ -181,18 +181,21 @@ function getClientAssets(): ClientAssets {
       return FALLBACK_ASSETS;
     }
 
-    const styles = [...(mainChunk.css ?? [])];
-    for (const imported of mainChunk.imports ?? []) {
-      const importedChunk = manifest[imported];
-      if (importedChunk?.css?.length) {
-        styles.push(...importedChunk.css);
+    const styles: string[] = [];
+    const seen = new Set<string>();
+    const visit = (chunk: ManifestChunk | undefined) => {
+      if (!chunk?.file || seen.has(chunk.file)) {
+        return;
       }
-    }
-    for (const chunk of Object.values(manifest)) {
-      if (chunk.file?.endsWith(".css")) {
-        styles.push(chunk.file);
+      seen.add(chunk.file);
+      if (chunk.css?.length) {
+        styles.push(...chunk.css);
       }
-    }
+      for (const imported of chunk.imports ?? []) {
+        visit(manifest[imported]);
+      }
+    };
+    visit(mainChunk);
 
     return {
       scripts: [toPublicPath(mainChunk.file)],

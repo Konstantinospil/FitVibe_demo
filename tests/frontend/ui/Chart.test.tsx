@@ -48,7 +48,7 @@ vi.mock("recharts", () => {
   };
 });
 
-import { Chart, ChartTooltip } from "../../src/components/ui";
+import { Chart, ChartTooltip } from "../../src/components/ui/Chart";
 
 const sampleData = [
   { label: "Mon", value: 50 },

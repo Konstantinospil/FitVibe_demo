@@ -2,7 +2,7 @@ import React, { useState, useRef } from "react";
 import { useNavigate, useLocation, NavLink } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { Eye, EyeOff } from "lucide-react";
-import { Button } from "../components/ui";
+import { Button } from "../components/ui/Button";
 import { useAuth } from "../contexts/AuthContext";
 import { login } from "../services/api";
 import { logger } from "../utils/logger.js";
