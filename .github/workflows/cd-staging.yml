@@ -152,7 +152,9 @@ jobs:
 
       - name: Determine release version
         id: version
-        run: echo "value=$(node -p \"require('./apps/backend/package.json').version\")" >> "$GITHUB_OUTPUT"
+        run: |
+          value=$(node -p "require('./apps/backend/package.json').version")
+          echo "value=${value}" >> "$GITHUB_OUTPUT"
 
       - name: Deploy stack
         uses: appleboy/ssh-action@v1.0.3

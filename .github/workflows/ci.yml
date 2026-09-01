@@ -1658,8 +1658,10 @@ jobs:
             echo "Error: package.json files not found" >&2
             exit 1
           fi
-          echo "backend=$(node -p \"require('./apps/backend/package.json').version\")" >> "$GITHUB_OUTPUT"
-          echo "frontend=$(node -p \"require('./apps/frontend/package.json').version\")" >> "$GITHUB_OUTPUT"
+          backend=$(node -p "require('./apps/backend/package.json').version")
+          frontend=$(node -p "require('./apps/frontend/package.json').version")
+          echo "backend=${backend}" >> "$GITHUB_OUTPUT"
+          echo "frontend=${frontend}" >> "$GITHUB_OUTPUT"
 
       - name: Setup QEMU
         uses: docker/setup-qemu-action@v3
