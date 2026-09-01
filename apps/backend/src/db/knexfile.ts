@@ -1,6 +1,7 @@
 import * as dotenv from "dotenv";
 import type { Knex } from "knex";
 import * as path from "node:path";
+import { getSslConfig } from "./ssl-config.js";
 
 dotenv.config();
 
@@ -48,7 +49,7 @@ const config: { [key: string]: Knex.Config } = {
       database: process.env.PGDATABASE,
       user: process.env.PGUSER,
       password: process.env.PGPASSWORD,
-      ssl: process.env.PGSSL === "true" ? { rejectUnauthorized: false } : undefined,
+      ssl: getSslConfig(process.env),
     },
   },
 };

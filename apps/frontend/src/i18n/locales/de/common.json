@@ -26,6 +26,7 @@
   "visibility": {
     "labels": {
       "private": "Privat",
+      "followers": "Nur Follower",
       "link": "Nur mit Link",
       "public": "Öffentlich"
     },
@@ -462,6 +463,42 @@
       "saveError": "Fehler beim Speichern der Präferenzen. Bitte versuche es erneut.",
       "saveButton": "Präferenzen speichern",
       "saving": "Wird gespeichert..."
+    },
+    "privacy": {
+      "title": "Datenschutzeinstellungen",
+      "description": "Steuere, wer deine Inhalte und Profilinformationen sehen kann",
+      "loadError": "Datenschutzeinstellungen konnten nicht geladen werden",
+      "saveError": "Datenschutzeinstellungen konnten nicht gespeichert werden",
+      "saved": "Datenschutzeinstellungen aktualisiert",
+      "savedMessage": "Deine Datenschutzeinstellungen wurden aktualisiert",
+      "defaultVisibility": "Standard-Sichtbarkeit",
+      "defaultVisibilityHelper": "Das ist die Standard-Sichtbarkeit für neue Einheiten",
+      "allowFollowers": "Follower erlauben",
+      "allowFollowersHelper": "Andere Nutzer dürfen dir folgen",
+      "profileVisibility": "Sichtbarkeit der Profilfelder",
+      "showEmail": "E-Mail-Adresse anzeigen",
+      "showEmailHelper": "Deine E-Mail-Adresse auf dem Profil sichtbar machen",
+      "showWeight": "Gewicht anzeigen",
+      "showWeightHelper": "Dein Gewicht auf dem Profil sichtbar machen",
+      "showFitnessLevel": "Fitness-Level anzeigen",
+      "showFitnessLevelHelper": "Dein Fitness-Level auf dem Profil sichtbar machen"
+    },
+    "dataExport": {
+      "export": "Meine Daten exportieren",
+      "title": "Deine Daten exportieren",
+      "description": "Lade eine Kopie deiner in FitVibe gespeicherten personenbezogenen Daten herunter, einschließlich Profil, Einheiten, Übungen und Fortschritt.",
+      "whatIncluded": "Enthalten ist:",
+      "profile": "Profilinformationen",
+      "sessions": "Alle Trainingseinheiten",
+      "exercises": "Übungsbibliothek",
+      "progress": "Fortschritt und Analysedaten",
+      "settings": "Kontoeinstellungen",
+      "processingTime": "Der Export wird sofort als ZIP-Datei heruntergeladen.",
+      "download": "Export herunterladen",
+      "success": "Export gestartet",
+      "successMessage": "Dein Datenexport wurde heruntergeladen",
+      "failed": "Export fehlgeschlagen",
+      "failedMessage": "Daten konnten nicht exportiert werden. Bitte versuche es erneut."
     }
   },
   "common": {

@@ -26,6 +26,7 @@
   "visibility": {
     "labels": {
       "private": "Private",
+      "followers": "Followers only",
       "link": "Link-only",
       "public": "Public"
     },
@@ -474,6 +475,42 @@
       "saveError": "Failed to save preferences. Please try again.",
       "saveButton": "Save Preferences",
       "saving": "Saving..."
+    },
+    "privacy": {
+      "title": "Privacy Settings",
+      "description": "Control who can see your content and profile information",
+      "loadError": "Failed to load privacy settings",
+      "saveError": "Failed to save privacy settings",
+      "saved": "Privacy Settings Updated",
+      "savedMessage": "Your privacy settings have been updated",
+      "defaultVisibility": "Default Visibility",
+      "defaultVisibilityHelper": "This will be the default visibility for new sessions",
+      "allowFollowers": "Allow Followers",
+      "allowFollowersHelper": "Allow other users to follow you",
+      "profileVisibility": "Profile Field Visibility",
+      "showEmail": "Show Email Address",
+      "showEmailHelper": "Make your email address visible on your profile",
+      "showWeight": "Show Weight",
+      "showWeightHelper": "Make your weight visible on your profile",
+      "showFitnessLevel": "Show Fitness Level",
+      "showFitnessLevelHelper": "Make your fitness level visible on your profile"
+    },
+    "dataExport": {
+      "export": "Export My Data",
+      "title": "Export Your Data",
+      "description": "Download a copy of your personal data stored in FitVibe, including profile, sessions, exercises, and progress.",
+      "whatIncluded": "What's included:",
+      "profile": "Profile information",
+      "sessions": "All training sessions",
+      "exercises": "Exercise library",
+      "progress": "Progress and analytics data",
+      "settings": "Account settings",
+      "processingTime": "The export downloads immediately as a ZIP file.",
+      "download": "Download Export",
+      "success": "Export Started",
+      "successMessage": "Your data export has been downloaded",
+      "failed": "Export Failed",
+      "failedMessage": "Failed to export data. Please try again."
     }
   },
   "common": {

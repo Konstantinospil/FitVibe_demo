@@ -18,6 +18,8 @@ import { logger } from "../utils/logger";
 import { useToast } from "../contexts/ToastContext";
 import { ConfirmDialog } from "../components/ConfirmDialog";
 import { SessionManagement } from "../components/SessionManagement";
+import { PrivacySettings } from "../components/profile/PrivacySettings";
+import { DataExportButton } from "../components/profile/DataExportButton";
 
 type SessionVisibility = "private" | "followers" | "link" | "public";
 type Units = "metric" | "imperial";
@@ -1087,6 +1089,19 @@ const Settings: React.FC = () => {
                 </Button>
               </div>
             )}
+          </CardContent>
+        </Card>
+
+        {/* Privacy & export */}
+        <PrivacySettings />
+
+        <Card>
+          <CardHeader>
+            <CardTitle>{t("settings.dataExport.title")}</CardTitle>
+            <CardDescription>{t("settings.dataExport.description")}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <DataExportButton />
           </CardContent>
         </Card>
 

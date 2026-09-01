@@ -26,6 +26,7 @@
   "visibility": {
     "labels": {
       "private": "Privé",
+      "followers": "Abonnés uniquement",
       "link": "Lien uniquement",
       "public": "Public"
     },
@@ -569,6 +570,42 @@
       "saveError": "Échec de l'enregistrement des préférences. Veuillez réessayer.",
       "saveButton": "Enregistrer les Préférences",
       "saving": "Enregistrement..."
+    },
+    "privacy": {
+      "title": "Paramètres de confidentialité",
+      "description": "Contrôlez qui peut voir votre contenu et les informations de votre profil",
+      "loadError": "Impossible de charger les paramètres de confidentialité",
+      "saveError": "Impossible d'enregistrer les paramètres de confidentialité",
+      "saved": "Paramètres de confidentialité mis à jour",
+      "savedMessage": "Vos paramètres de confidentialité ont été mis à jour",
+      "defaultVisibility": "Visibilité par défaut",
+      "defaultVisibilityHelper": "Il s'agira de la visibilité par défaut des nouvelles séances",
+      "allowFollowers": "Autoriser les abonnés",
+      "allowFollowersHelper": "Autoriser d'autres utilisateurs à vous suivre",
+      "profileVisibility": "Visibilité des champs du profil",
+      "showEmail": "Afficher l'adresse e-mail",
+      "showEmailHelper": "Rendre votre adresse e-mail visible sur votre profil",
+      "showWeight": "Afficher le poids",
+      "showWeightHelper": "Rendre votre poids visible sur votre profil",
+      "showFitnessLevel": "Afficher le niveau de forme",
+      "showFitnessLevelHelper": "Rendre votre niveau de forme visible sur votre profil"
+    },
+    "dataExport": {
+      "export": "Exporter mes données",
+      "title": "Exporter vos données",
+      "description": "Téléchargez une copie de vos données personnelles stockées dans FitVibe, y compris le profil, les séances, les exercices et la progression.",
+      "whatIncluded": "Ce qui est inclus :",
+      "profile": "Informations de profil",
+      "sessions": "Toutes les séances d'entraînement",
+      "exercises": "Bibliothèque d'exercises",
+      "progress": "Données de progression et d'analyse",
+      "settings": "Paramètres du compte",
+      "processingTime": "L'export se télécharge immédiatement sous forme de fichier ZIP.",
+      "download": "Télécharger l'export",
+      "success": "Export lancé",
+      "successMessage": "Votre export de données a été téléchargé",
+      "failed": "Échec de l'export",
+      "failedMessage": "Impossible d'exporter les données. Veuillez réessayer."
     }
   },
   "admin": {

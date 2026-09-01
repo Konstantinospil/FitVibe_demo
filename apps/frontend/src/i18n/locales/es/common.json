@@ -26,6 +26,7 @@
   "visibility": {
     "labels": {
       "private": "Privado",
+      "followers": "Solo seguidores",
       "link": "Solo con enlace",
       "public": "Público"
     },
@@ -569,6 +570,42 @@
       "saveError": "Error al guardar preferencias. Por favor, inténtalo de nuevo.",
       "saveButton": "Guardar Preferencias",
       "saving": "Guardando..."
+    },
+    "privacy": {
+      "title": "Ajustes de privacidad",
+      "description": "Controla quién puede ver tu contenido y la información de tu perfil",
+      "loadError": "No se pudieron cargar los ajustes de privacidad",
+      "saveError": "No se pudieron guardar los ajustes de privacidad",
+      "saved": "Ajustes de privacidad actualizados",
+      "savedMessage": "Tus ajustes de privacidad se han actualizado",
+      "defaultVisibility": "Visibilidad predeterminada",
+      "defaultVisibilityHelper": "Esta será la visibilidad predeterminada de las nuevas sesiones",
+      "allowFollowers": "Permitir seguidores",
+      "allowFollowersHelper": "Permitir que otros usuarios te sigan",
+      "profileVisibility": "Visibilidad de campos del perfil",
+      "showEmail": "Mostrar correo electrónico",
+      "showEmailHelper": "Hacer visible tu correo electrónico en el perfil",
+      "showWeight": "Mostrar peso",
+      "showWeightHelper": "Hacer visible tu peso en el perfil",
+      "showFitnessLevel": "Mostrar nivel de fitness",
+      "showFitnessLevelHelper": "Hacer visible tu nivel de fitness en el perfil"
+    },
+    "dataExport": {
+      "export": "Exportar mis datos",
+      "title": "Exporta tus datos",
+      "description": "Descarga una copia de tus datos personales en FitVibe, incluido perfil, sesiones, ejercicios y progreso.",
+      "whatIncluded": "Qué se incluye:",
+      "profile": "Información del perfil",
+      "sessions": "Todas las sesiones de entrenamiento",
+      "exercises": "Biblioteca de ejercicios",
+      "progress": "Datos de progreso y analítica",
+      "settings": "Ajustes de la cuenta",
+      "processingTime": "La exportación se descarga de inmediato como archivo ZIP.",
+      "download": "Descargar exportación",
+      "success": "Exportación iniciada",
+      "successMessage": "Tu exportación de datos se ha descargado",
+      "failed": "Error al exportar",
+      "failedMessage": "No se pudieron exportar los datos. Inténtalo de nuevo."
     }
   },
   "admin": {

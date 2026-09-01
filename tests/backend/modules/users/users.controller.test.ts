@@ -449,6 +449,77 @@ describe("Users Controller", () => {
     });
   });
 
+  describe("getPrivacy", () => {
+    const privacySettings = {
+      defaultVisibility: "private" as const,
+      allowFollowers: true,
+      showEmail: false,
+      showWeight: false,
+      showFitnessLevel: false,
+    };
+
+    it("should return privacy settings", async () => {
+      mockUsersService.getPrivacySettings.mockResolvedValue(privacySettings);
+
+      await usersController.getPrivacy(mockRequest as Request, mockResponse as Response);
+
+      expect(mockUsersService.getPrivacySettings).toHaveBeenCalledWith(userId);
+      expect(mockResponse.json).toHaveBeenCalledWith(privacySettings);
+    });
+
+    it("should return 401 when not authenticated", async () => {
+      mockRequest.user = undefined;
+
+      await usersController.getPrivacy(mockRequest as Request, mockResponse as Response);
+
+      expect(mockResponse.status).toHaveBeenCalledWith(401);
+      expect(mockUsersService.getPrivacySettings).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("updatePrivacy", () => {
+    const privacySettings = {
+      defaultVisibility: "followers" as const,
+      allowFollowers: false,
+      showEmail: true,
+      showWeight: false,
+      showFitnessLevel: false,
+    };
+
+    it("should update privacy settings", async () => {
+      mockRequest.body = { allowFollowers: false, showEmail: true, defaultVisibility: "followers" };
+      mockUsersService.updatePrivacySettings.mockResolvedValue(privacySettings);
+
+      await usersController.updatePrivacy(mockRequest as Request, mockResponse as Response);
+
+      expect(mockUsersService.updatePrivacySettings).toHaveBeenCalledWith(userId, {
+        allowFollowers: false,
+        showEmail: true,
+        defaultVisibility: "followers",
+      });
+      expect(mockResponse.json).toHaveBeenCalledWith(privacySettings);
+    });
+
+    it("should return 400 for an empty body", async () => {
+      mockRequest.body = {};
+
+      await usersController.updatePrivacy(mockRequest as Request, mockResponse as Response);
+
+      expect(mockResponse.status).toHaveBeenCalledWith(400);
+      expect(mockUsersService.updatePrivacySettings).not.toHaveBeenCalled();
+    });
+
+    it("should return 401 when not authenticated", async () => {
+      mockRequest.user = undefined;
+      mockRequest.body = { allowFollowers: true };
+
+      await usersController.updatePrivacy(mockRequest as Request, mockResponse as Response);
+
+      expect(mockResponse.status).toHaveBeenCalledWith(401);
+      expect(mockUsersService.updatePrivacySettings).not.toHaveBeenCalled();
+    });
+  });
+
   describe("getById", () => {
     it("should get user by id successfully", async () => {
       const targetUserId = "user-456";

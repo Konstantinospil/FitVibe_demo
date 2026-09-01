@@ -10,6 +10,9 @@ import {
   disable2FA,
   get2FAStatus,
   listAuthSessions,
+  getPrivacySettings,
+  updatePrivacySettings,
+  exportUserData,
 } from "../../src/services/api";
 import { ToastProvider } from "../../src/contexts/ToastContext";
 import { I18nextProvider } from "react-i18next";
@@ -39,6 +42,9 @@ vi.mock("../../src/services/api", () => ({
   disable2FA: vi.fn(),
   get2FAStatus: vi.fn(),
   listAuthSessions: vi.fn(),
+  getPrivacySettings: vi.fn(),
+  updatePrivacySettings: vi.fn(),
+  exportUserData: vi.fn(),
 }));
 
 // Mock navigate
@@ -136,6 +142,11 @@ void testI18n.use(initReactI18next).init({
         "settings.account.yesDelete": "Yes, Delete My Account",
         "settings.account.confirmDelete": "Delete Account",
         "settings.account.deleteError": "Failed to delete account. Please try again.",
+        "settings.privacy.title": "Privacy Settings",
+        "settings.privacy.description": "Control who can see your content and profile information",
+        "settings.dataExport.title": "Export Your Data",
+        "settings.dataExport.description": "Download a copy of your personal data",
+        "settings.dataExport.export": "Export My Data",
         "common.cancel": "Cancel",
         "common.confirm": "Confirm",
       },
@@ -204,6 +215,21 @@ export const setupSettingsTests = () => {
     message: "2FA disabled successfully",
   });
   vi.mocked(listAuthSessions).mockResolvedValue({ sessions: [] });
+  vi.mocked(getPrivacySettings).mockResolvedValue({
+    defaultVisibility: "private",
+    allowFollowers: true,
+    showEmail: false,
+    showWeight: false,
+    showFitnessLevel: false,
+  });
+  vi.mocked(updatePrivacySettings).mockResolvedValue({
+    defaultVisibility: "private",
+    allowFollowers: true,
+    showEmail: false,
+    showWeight: false,
+    showFitnessLevel: false,
+  });
+  vi.mocked(exportUserData).mockResolvedValue(new Blob(["export"]));
 
   return { mockGet, mockPatch, mockPost, mockDelete };
 };

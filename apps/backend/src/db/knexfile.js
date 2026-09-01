@@ -16,6 +16,7 @@ var __assign =
 Object.defineProperty(exports, "__esModule", { value: true });
 var dotenv_1 = require("dotenv");
 var path = require("node:path");
+var ssl_config_1 = require("./ssl-config.js");
 dotenv_1.default.config();
 var baseDir = path.resolve(__dirname, "..");
 var migrationsDir = path.resolve(baseDir, "db", "migrations");
@@ -56,7 +57,7 @@ var config = {
       database: process.env.PGDATABASE,
       user: process.env.PGUSER,
       password: process.env.PGPASSWORD,
-      ssl: process.env.PGSSL === "true" ? { rejectUnauthorized: false } : undefined,
+      ssl: (0, ssl_config_1.getSslConfig)(process.env),
     },
   }),
 };

@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
+import { FocusTrap } from "../a11y/FocusTrap";
 
 export interface ModalProps {
   isOpen: boolean;
@@ -86,20 +87,13 @@ export const Modal: React.FC<ModalProps> = ({
   const { t } = useTranslation("common");
   const modalRef = useRef<HTMLDivElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
-  const previousActiveElement = useRef<HTMLElement | null>(null);
 
-  // Focus trap, body-scroll lock, and escape key handling
   useEffect(() => {
     if (!isOpen) {
       return;
     }
 
-    previousActiveElement.current = document.activeElement as HTMLElement;
     document.body.style.overflow = "hidden";
-
-    setTimeout(() => {
-      modalRef.current?.focus();
-    }, 0);
 
     const handleEscape = (e: KeyboardEvent) => {
       if (closeOnEscape && e.key === "Escape") {
@@ -112,18 +106,8 @@ export const Modal: React.FC<ModalProps> = ({
     return () => {
       document.body.style.overflow = "";
       document.removeEventListener("keydown", handleEscape);
-      previousActiveElement.current?.focus();
     };
   }, [isOpen, closeOnEscape, onClose]);
-
-  useEffect(() => {
-    if (isOpen && closeButtonRef.current) {
-      // Small delay to ensure modal is rendered
-      setTimeout(() => {
-        closeButtonRef.current?.focus();
-      }, 100);
-    }
-  }, [isOpen]);
 
   if (!isOpen) {
     return null;
@@ -154,65 +138,67 @@ export const Modal: React.FC<ModalProps> = ({
         onClick={(e) => e.stopPropagation()}
         {...props}
       >
-        {(title || showCloseButton) && (
-          <header style={headerStyle}>
-            {title && (
-              <h2
-                id="modal-title"
-                className="text-lg"
-                style={{
-                  margin: 0,
-                  fontWeight: 600,
-                  color: "var(--color-text-primary)",
-                }}
-              >
-                {title}
-              </h2>
-            )}
-            {showCloseButton && (
-              <button
-                ref={closeButtonRef}
-                type="button"
-                onClick={onClose}
-                aria-label={t("close")}
-                style={{
-                  background: "transparent",
-                  border: "none",
-                  color: "var(--color-text-secondary)",
-                  cursor: "pointer",
-                  padding: "var(--space-xs)",
-                  borderRadius: "var(--radius-md)",
-                  transition: "background-color 150ms ease",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = "var(--color-surface-muted)";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = "transparent";
-                }}
-              >
-                <span style={{ fontSize: "1.5rem", lineHeight: 1 }}>×</span>
-              </button>
-            )}
-          </header>
-        )}
-        {description && (
-          <p
-            id="modal-description"
-            className="text-sm"
-            style={{
-              margin: 0,
-              padding: "var(--space-md) var(--space-xl)",
-              color: "var(--color-text-muted)",
-            }}
-          >
-            {description}
-          </p>
-        )}
-        <div style={contentStyle}>{children}</div>
+        <FocusTrap active={isOpen} initialFocus={showCloseButton ? closeButtonRef : undefined}>
+          {(title || showCloseButton) && (
+            <header style={headerStyle}>
+              {title && (
+                <h2
+                  id="modal-title"
+                  className="text-lg"
+                  style={{
+                    margin: 0,
+                    fontWeight: 600,
+                    color: "var(--color-text-primary)",
+                  }}
+                >
+                  {title}
+                </h2>
+              )}
+              {showCloseButton && (
+                <button
+                  ref={closeButtonRef}
+                  type="button"
+                  onClick={onClose}
+                  aria-label={t("close")}
+                  style={{
+                    background: "transparent",
+                    border: "none",
+                    color: "var(--color-text-secondary)",
+                    cursor: "pointer",
+                    padding: "var(--space-xs)",
+                    borderRadius: "var(--radius-md)",
+                    transition: "background-color 150ms ease",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = "var(--color-surface-muted)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = "transparent";
+                  }}
+                >
+                  <span style={{ fontSize: "1.5rem", lineHeight: 1 }}>×</span>
+                </button>
+              )}
+            </header>
+          )}
+          {description && (
+            <p
+              id="modal-description"
+              className="text-sm"
+              style={{
+                margin: 0,
+                padding: "var(--space-md) var(--space-xl)",
+                color: "var(--color-text-muted)",
+              }}
+            >
+              {description}
+            </p>
+          )}
+          <div style={contentStyle}>{children}</div>
+        </FocusTrap>
       </div>
     </div>
   );

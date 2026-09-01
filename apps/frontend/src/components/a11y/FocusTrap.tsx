@@ -3,7 +3,7 @@ import React, { useEffect, useRef } from "react";
 export interface FocusTrapProps {
   children: React.ReactNode;
   active?: boolean;
-  initialFocus?: React.RefObject<HTMLElement>;
+  initialFocus?: React.RefObject<HTMLElement | null>;
 }
 
 /**

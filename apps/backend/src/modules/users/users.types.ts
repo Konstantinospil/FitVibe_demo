@@ -47,6 +47,24 @@ export interface UserDetail extends UserSafe {
   };
 }
 
+export type SessionVisibility = "private" | "followers" | "link" | "public";
+
+export interface PrivacySettings {
+  defaultVisibility: SessionVisibility;
+  allowFollowers: boolean;
+  showEmail: boolean;
+  showWeight: boolean;
+  showFitnessLevel: boolean;
+}
+
+export interface UpdatePrivacyDTO {
+  defaultVisibility?: SessionVisibility;
+  allowFollowers?: boolean;
+  showEmail?: boolean;
+  showWeight?: boolean;
+  showFitnessLevel?: boolean;
+}
+
 export interface UpdateProfileDTO {
   username?: string;
   displayName?: string;

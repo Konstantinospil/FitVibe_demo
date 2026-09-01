@@ -199,6 +199,23 @@ describe("Modal", () => {
       render(<Modal {...defaultProps} />);
       expect(getModalPanel()).toHaveAttribute("tabindex", "-1");
     });
+
+    it("should keep Tab focus inside the modal", async () => {
+      const user = userEvent.setup();
+      render(
+        <Modal {...defaultProps} title="Trapped">
+          <button type="button">Inside</button>
+        </Modal>,
+      );
+      const closeButton = screen.getByLabelText("close");
+      await waitFor(() => {
+        expect(document.activeElement).toBe(closeButton);
+      });
+      await user.tab();
+      expect(document.activeElement).toBe(screen.getByRole("button", { name: "Inside" }));
+      await user.tab();
+      expect(document.activeElement).toBe(closeButton);
+    });
   });
 
   describe("ARIA attributes", () => {

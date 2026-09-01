@@ -1593,4 +1593,41 @@ describe("Users Service", () => {
       await expect(usersService.collectUserData(userId)).rejects.toThrow("USER_NOT_FOUND");
     });
   });
+
+  describe("privacy settings", () => {
+    const userId = "user-123";
+    const settings = {
+      defaultVisibility: "private" as const,
+      allowFollowers: true,
+      showEmail: false,
+      showWeight: false,
+      showFitnessLevel: false,
+    };
+
+    it("should return privacy settings", async () => {
+      mockUsersRepo.getPrivacySettings.mockResolvedValue(settings);
+
+      await expect(usersService.getPrivacySettings(userId)).resolves.toEqual(settings);
+    });
+
+    it("should throw when privacy settings are missing", async () => {
+      mockUsersRepo.getPrivacySettings.mockResolvedValue(undefined);
+
+      await expect(usersService.getPrivacySettings(userId)).rejects.toThrow("USER_NOT_FOUND");
+    });
+
+    it("should persist privacy settings", async () => {
+      mockUsersRepo.updatePrivacySettings.mockResolvedValue({
+        ...settings,
+        allowFollowers: false,
+      });
+
+      await expect(
+        usersService.updatePrivacySettings(userId, { allowFollowers: false }),
+      ).resolves.toEqual({ ...settings, allowFollowers: false });
+      expect(mockUsersRepo.updatePrivacySettings).toHaveBeenCalledWith(userId, {
+        allowFollowers: false,
+      });
+    });
+  });
 });

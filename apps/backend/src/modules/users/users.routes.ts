@@ -16,6 +16,8 @@ import {
   adminChangeStatus,
   adminCreateUser,
   getMetrics,
+  getPrivacy,
+  updatePrivacy,
 } from "./users.controller.js";
 import { requireAuth } from "./users.middleware.js";
 import { requireRole } from "../common/rbac.middleware.js";
@@ -102,6 +104,18 @@ usersRouter.get(
   requireAuth,
   rateLimit("user_export", 2, 3600),
   asyncHandler(exportData),
+);
+usersRouter.get(
+  "/me/privacy",
+  rateLimit("user_privacy_get", 60, 60),
+  requireAuth,
+  asyncHandler(getPrivacy),
+);
+usersRouter.patch(
+  "/me/privacy",
+  rateLimit("user_privacy_update", 20, 60),
+  requireAuth,
+  asyncHandler(updatePrivacy),
 );
 usersRouter.patch(
   "/:id/status",

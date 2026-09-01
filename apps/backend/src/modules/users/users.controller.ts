@@ -16,6 +16,8 @@ import {
   removeContact,
   changeStatus,
   createUser,
+  getPrivacySettings,
+  updatePrivacySettings,
 } from "./users.service.js";
 import { getContactById, getUserMetrics } from "./users.repository.js";
 import { passwordPolicy } from "../auth/auth.schemas.js";
@@ -70,6 +72,18 @@ const changePasswordSchema = z.object({
   currentPassword: z.string().min(12).max(128),
   newPassword: passwordPolicy,
 });
+
+const privacyPatchSchema = z
+  .object({
+    defaultVisibility: z.enum(["private", "public", "link", "followers"]).optional(),
+    allowFollowers: z.boolean().optional(),
+    showEmail: z.boolean().optional(),
+    showWeight: z.boolean().optional(),
+    showFitnessLevel: z.boolean().optional(),
+  })
+  .refine((value) => Object.values(value).some((field) => field !== undefined), {
+    message: "At least one privacy field is required",
+  });
 
 const emailSchema = z.object({
   email: z.string().email().max(254),
@@ -332,6 +346,34 @@ export async function exportData(req: Request, res: Response): Promise<void> {
   archive.pipe(res);
   archive.append(JSON.stringify(data, null, 2), { name: "user_data.json" });
   await archive.finalize();
+}
+
+export async function getPrivacy(req: Request, res: Response): Promise<void> {
+  const userId = req.user?.sub;
+  if (!userId) {
+    res.status(401).json({ error: "Unauthorized" });
+    return;
+  }
+
+  const settings = await getPrivacySettings(userId);
+  res.json(settings);
+}
+
+export async function updatePrivacy(req: Request, res: Response): Promise<void> {
+  const userId = req.user?.sub;
+  if (!userId) {
+    res.status(401).json({ error: "Unauthorized" });
+    return;
+  }
+
+  const parsed = privacyPatchSchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.flatten() });
+    return;
+  }
+
+  const settings = await updatePrivacySettings(userId, parsed.data);
+  res.json(settings);
 }
 
 export async function getById(req: Request, res: Response): Promise<void> {

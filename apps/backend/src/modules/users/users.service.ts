@@ -22,6 +22,8 @@ import {
   canChangeAlias,
   insertUserMetric,
   getLatestUserMetrics,
+  getPrivacySettings as getPrivacySettingsRow,
+  updatePrivacySettings as persistPrivacySettings,
   type ProfileRow,
 } from "./users.repository.js";
 import type {
@@ -34,6 +36,8 @@ import type {
   UserContact,
   UserAvatar,
   UserDataExportBundle,
+  PrivacySettings,
+  UpdatePrivacyDTO,
 } from "./users.types.js";
 import {
   revokeRefreshByUserId,
@@ -1062,4 +1066,23 @@ export async function collectUserData(userId: string): Promise<UserDataExportBun
     media,
     stateHistory,
   };
+}
+
+export async function getPrivacySettings(userId: string): Promise<PrivacySettings> {
+  const settings = await getPrivacySettingsRow(userId);
+  if (!settings) {
+    throw new HttpError(404, "USER_NOT_FOUND", "USER_NOT_FOUND");
+  }
+  return settings;
+}
+
+export async function updatePrivacySettings(
+  userId: string,
+  updates: UpdatePrivacyDTO,
+): Promise<PrivacySettings> {
+  const settings = await persistPrivacySettings(userId, updates);
+  if (!settings) {
+    throw new HttpError(404, "USER_NOT_FOUND", "USER_NOT_FOUND");
+  }
+  return settings;
 }

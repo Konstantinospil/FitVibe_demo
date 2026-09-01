@@ -599,6 +599,8 @@ describe("LoginFormContent", () => {
       await waitFor(
         () => {
           expect(screen.getByText("Account locked")).toBeInTheDocument();
+          expect(screen.getByRole("status")).toBeInTheDocument();
+          expect(screen.getByRole("button", { name: "Sign In" })).toBeDisabled();
         },
         { timeout: 5000 },
       );
@@ -637,6 +639,7 @@ describe("LoginFormContent", () => {
       await waitFor(
         () => {
           expect(screen.getByText("IP address locked")).toBeInTheDocument();
+          expect(screen.getByRole("status")).toBeInTheDocument();
         },
         { timeout: 5000 },
       );
@@ -676,6 +679,46 @@ describe("LoginFormContent", () => {
           // Should show lockout message or default
           const alert = screen.getByRole("alert");
           expect(alert).toBeInTheDocument();
+        },
+        { timeout: 5000 },
+      );
+    });
+
+    it("should show remaining-attempt warning when credentials are invalid", async () => {
+      vi.mocked(api.login).mockRejectedValue({
+        response: {
+          data: {
+            error: {
+              code: "AUTH_INVALID_CREDENTIALS",
+              message: "Invalid credentials",
+              details: {
+                warning: true,
+                remainingAccountAttempts: 2,
+                remainingIPAttempts: 4,
+                remainingIPDistinctEmails: 3,
+                accountAttemptCount: 3,
+                ipTotalAttemptCount: 5,
+                ipDistinctEmailCount: 2,
+              },
+            },
+          },
+        },
+      });
+
+      render(
+        <MemoryRouter>
+          <LoginFormContent />
+        </MemoryRouter>,
+      );
+
+      fireEvent.change(screen.getByLabelText("Email"), { target: { value: "test@example.com" } });
+      fireEvent.change(screen.getByLabelText("Password"), { target: { value: "wrong" } });
+      fireEvent.click(screen.getByRole("button", { name: "Sign In" }));
+
+      await waitFor(
+        () => {
+          const alerts = screen.getAllByRole("alert");
+          expect(alerts.length).toBeGreaterThanOrEqual(2);
         },
         { timeout: 5000 },
       );
