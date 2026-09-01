@@ -199,6 +199,11 @@ describe("SSR render", () => {
     expect(html).not.toContain("/assets/assets/");
     if (html.includes("main-abc123.js")) {
       expect(html).toContain('href="/assets/css/index-def456.css"');
+      expect(html).toContain(
+        'rel="stylesheet" href="/assets/css/index-def456.css" fetchpriority="high"',
+      );
+      expect(html).toContain('src="/assets/js/main-abc123.js" fetchpriority="low"');
+      expect(html).not.toContain("modulepreload");
     }
   });
 

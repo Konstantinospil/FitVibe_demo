@@ -4,23 +4,32 @@ import App from "./App";
 import "./styles/global.css";
 // Suppress console errors in production for Lighthouse compliance
 import "./utils/suppressConsole";
-// i18n is imported - initialization is async via void promises, so it doesn't block rendering
-// Components using translations will wait for i18n to be ready via useTranslation hook
-import "./i18n/config";
+import { minimalTranslationsReady } from "./i18n/config";
 // Theme store is small and needed immediately to prevent FOUC
 import { useThemeStore } from "./store/theme.store";
 
-// Static login shell removal is handled in bootstrap.ts with proper timing
-// to ensure LCP uses the static HTML element
+const schedulePublicFonts = (): void => {
+  const load = (): void => {
+    void import("./utils/fontLoader").then(({ loadPublicFonts }) => {
+      loadPublicFonts();
+    });
+  };
+  if (typeof window === "undefined") {
+    return;
+  }
+  if ("requestIdleCallback" in window) {
+    window.requestIdleCallback(load, { timeout: 4000 });
+    return;
+  }
+  setTimeout(load, 2000);
+};
 
 // Initialize theme on app load (SSR-safe)
 // This is synchronous to prevent flash of unstyled content
 if (typeof document !== "undefined") {
   const initialTheme = useThemeStore.getState().theme;
   document.documentElement.setAttribute("data-theme", initialTheme);
-  void import("./utils/fontLoader").then(({ loadPublicFonts }) => {
-    loadPublicFonts();
-  });
+  schedulePublicFonts();
 }
 
 // Hydrate the server-rendered HTML
@@ -46,8 +55,14 @@ const app = (
 const loginShell = document.getElementById("login-shell");
 const hasSsrMarkup = rootElement.hasChildNodes() && !loginShell;
 
-if (hasSsrMarkup) {
-  hydrateRoot(rootElement, app);
-} else {
+const mount = (): void => {
+  if (hasSsrMarkup) {
+    hydrateRoot(rootElement, app);
+    return;
+  }
   createRoot(rootElement).render(app);
-}
+};
+
+// Keep SSR HTML (the LCP heading) on screen until auth strings are ready so
+// hydration cannot replace the title with untranslated keys.
+void minimalTranslationsReady.then(mount);

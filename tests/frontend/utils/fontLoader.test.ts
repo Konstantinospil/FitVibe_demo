@@ -205,7 +205,7 @@ describe("fontLoader", () => {
     expect(styleElement).toBeInTheDocument();
   });
 
-  it("should use correct font-display swap", () => {
+  it("should use font-display optional so late Inter cannot become LCP", () => {
     const mockRequestIdleCallback = vi.fn((callback: IdleRequestCallback) => {
       setTimeout(() => callback({ didTimeout: false, timeRemaining: () => 16.67 }), 0);
       return 1;
@@ -218,6 +218,7 @@ describe("fontLoader", () => {
     vi.advanceTimersByTime(1);
 
     const styleElement = document.getElementById("async-fonts");
-    expect(styleElement?.textContent).toContain("font-display: swap");
+    expect(styleElement?.textContent).toContain("font-display: optional");
+    expect(styleElement?.textContent).not.toContain("font-display: swap");
   });
 });

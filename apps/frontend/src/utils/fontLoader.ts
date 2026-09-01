@@ -2,6 +2,7 @@
  * Deferred, subsetted font loading.
  * Public routes (login) load Inter woff2 subsets only. Authenticated routes add Roboto Flex.
  * unicode-range keeps English login on the latin file (~48KB) instead of full variable TTFs.
+ * font-display: optional prevents a late Inter swap from becoming the LCP timestamp.
  */
 
 import interLatin from "@fontsource-variable/inter/files/inter-latin-wght-normal.woff2?url";
@@ -22,7 +23,7 @@ const fontFace = (family: string, url: string, unicodeRange: string, weight: str
   font-family: "${family}";
   font-style: normal;
   font-weight: ${weight};
-  font-display: swap;
+  font-display: optional;
   src: url("${url}") format("woff2-variations");
   unicode-range: ${unicodeRange};
 }

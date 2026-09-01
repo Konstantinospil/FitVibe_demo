@@ -6,6 +6,8 @@ interface PageIntroProps {
   title: string;
   description: string;
   children?: React.ReactNode;
+  /** Skip expensive backdrop blur so the heading can paint as LCP sooner. */
+  priorityLcp?: boolean;
 }
 
 // Separate concerns: layout container vs typography
@@ -29,7 +31,13 @@ const accentLineStyle: React.CSSProperties = {
   background: "var(--color-accent)",
 };
 
-const PageIntro: React.FC<PageIntroProps> = ({ eyebrow, title, description, children }) => (
+const PageIntro: React.FC<PageIntroProps> = ({
+  eyebrow,
+  title,
+  description,
+  children,
+  priorityLcp = false,
+}) => (
   <section
     style={{
       flex: 1,
@@ -46,6 +54,7 @@ const PageIntro: React.FC<PageIntroProps> = ({ eyebrow, title, description, chil
         width: "100%",
         padding: "0",
         gap: "0",
+        ...(priorityLcp ? { backdropFilter: "none" } : {}),
       }}
     >
       <CardHeader

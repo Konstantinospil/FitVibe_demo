@@ -59,4 +59,13 @@ describe("PageIntro", () => {
     expect(screen.getByText("Title")).toBeInTheDocument();
     expect(screen.getByText("Description")).toBeInTheDocument();
   });
+
+  it("should skip backdrop blur when priorityLcp is set", () => {
+    const { container } = render(
+      <PageIntro eyebrow="Eyebrow" title="Title" description="Description" priorityLcp />,
+    );
+
+    const article = container.querySelector("article") as HTMLElement;
+    expect(article.style.backdropFilter).toBe("none");
+  });
 });

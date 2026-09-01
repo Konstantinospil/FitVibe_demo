@@ -17,6 +17,7 @@ import {
 } from "./project.js";
 
 const pageErrors = new WeakMap<Page, string[]>();
+const pageAuth = new WeakMap<Page, boolean>();
 
 export async function prepareVisualPage(
   page: Page,
@@ -28,11 +29,21 @@ export async function prepareVisualPage(
   page.setDefaultNavigationTimeout(30_000);
   const errors: string[] = [];
   pageErrors.set(page, errors);
+  pageAuth.set(page, Boolean(options?.authenticated));
   page.on("pageerror", (error) => {
     errors.push(error.message);
     console.warn(`[visual] pageerror: ${error.message}`);
   });
   await freezeTime(page);
+  // Fonts inject on requestIdleCallback (up to 3s). Flush immediately so
+  // screenshots capture Inter / Roboto Flex instead of system fallbacks.
+  await page.addInitScript(() => {
+    const flushIdle = (callback: IdleRequestCallback) =>
+      window.setTimeout(() => {
+        callback({ didTimeout: false, timeRemaining: () => 50 });
+      }, 0);
+    window.requestIdleCallback = flushIdle as typeof window.requestIdleCallback;
+  });
   await page.addInitScript(() => {
     const style = document.createElement("style");
     style.textContent =
@@ -62,7 +73,24 @@ export async function prepareVisualPage(
 }
 
 async function waitForVisualAssets(page: Page): Promise<void> {
-  await page.evaluate(async () => {
+  const authenticated = pageAuth.get(page) ?? false;
+  await page.locator("#async-fonts").waitFor({ state: "attached", timeout: 10_000 });
+  if (authenticated) {
+    await page.locator("#async-fonts-app").waitFor({ state: "attached", timeout: 10_000 });
+  }
+  await page.evaluate(async (loadHeadings: boolean) => {
+    const loadOrTimeout = (spec: string) =>
+      Promise.race([
+        document.fonts.load(spec).then(() => undefined),
+        new Promise<void>((resolve) => {
+          window.setTimeout(resolve, 5_000);
+        }),
+      ]);
+    await document.fonts.ready;
+    await loadOrTimeout("16px Inter");
+    if (loadHeadings) {
+      await loadOrTimeout('700 24px "Roboto Flex"');
+    }
     await document.fonts.ready;
     await Promise.all(
       [...document.images].map((img) =>
@@ -74,7 +102,7 @@ async function waitForVisualAssets(page: Page): Promise<void> {
             }),
       ),
     );
-  });
+  }, authenticated);
 }
 
 export async function waitForAppReady(page: Page): Promise<void> {

@@ -71,7 +71,7 @@ const AuthPageLayout: React.FC<AuthPageLayoutProps> = ({
         <HeaderUtilities />
       </div>
       <div style={{ flex: 1 }}>
-        <PageIntro eyebrow={eyebrow} title={title} description={description}>
+        <PageIntro eyebrow={eyebrow} title={title} description={description} priorityLcp>
           {children}
         </PageIntro>
       </div>
