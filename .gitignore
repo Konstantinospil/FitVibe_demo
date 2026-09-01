@@ -69,6 +69,7 @@ tests/frontend/visual/__screenshots__/
 security-reports/
 .zap/session/
 *.sarif
+osv-report.json
 
 # --- Logs & pids ---
 logs/
