@@ -17,9 +17,9 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  OWNER: ${{ github.repository_owner }}
-  BACKEND_IMAGE_NAME: ${{ github.repository_owner }}/fitvibe-backend
-  FRONTEND_IMAGE_NAME: ${{ github.repository_owner }}/fitvibe-frontend
+  OWNER: ${{ lower(github.repository_owner) }}
+  BACKEND_IMAGE_NAME: ${{ lower(github.repository_owner) }}/fitvibe-backend
+  FRONTEND_IMAGE_NAME: ${{ lower(github.repository_owner) }}/fitvibe-frontend
 
 jobs:
   # ==============================================================================

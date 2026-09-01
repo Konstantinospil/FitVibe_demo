@@ -20,9 +20,9 @@ permissions:
 
 env:
   REGISTRY: ghcr.io
-  OWNER: ${{ github.repository_owner }}
-  BACKEND_IMAGE: ghcr.io/${{ github.repository_owner }}/fitvibe-backend
-  FRONTEND_IMAGE: ghcr.io/${{ github.repository_owner }}/fitvibe-frontend
+  OWNER: ${{ lower(github.repository_owner) }}
+  BACKEND_IMAGE: ghcr.io/${{ lower(github.repository_owner) }}/fitvibe-backend
+  FRONTEND_IMAGE: ghcr.io/${{ lower(github.repository_owner) }}/fitvibe-frontend
   NODE_VERSION: "20"
   # Disable all caching
   TURBO_TOKEN: ""
@@ -1683,7 +1683,7 @@ jobs:
       - name: Build and push backend image
         id: backend
         timeout-minutes: 20
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           file: infra/docker/prod/Dockerfile.backend
@@ -1698,7 +1698,7 @@ jobs:
       - name: Build and push frontend image
         id: frontend
         timeout-minutes: 20
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           file: infra/docker/prod/Dockerfile.frontend
