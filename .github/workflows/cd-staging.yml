@@ -122,7 +122,6 @@ jobs:
           path: artifacts
           run-id: ${{ needs.get-artifacts.outputs.workflow_run_id }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          fail-on-collision: false
 
       - name: Parse image digests
         id: images

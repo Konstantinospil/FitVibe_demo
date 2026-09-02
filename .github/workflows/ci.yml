@@ -197,7 +197,7 @@ jobs:
           name: backend-coverage-${{ github.run_id }}
           path: apps/backend/coverage
           retention-days: 30
-          if-no-files-found: ignore
+          if-no-files-found: error
 
       - name: Job summary
         if: always()
@@ -261,7 +261,7 @@ jobs:
           name: frontend-coverage-${{ github.run_id }}
           path: apps/frontend/coverage
           retention-days: 30
-          if-no-files-found: ignore
+          if-no-files-found: error
 
       - name: Job summary
         if: always()
@@ -419,20 +419,16 @@ jobs:
         run: pnpm install --frozen-lockfile --no-offline
 
       - name: Download backend coverage artifact
-        continue-on-error: true
         uses: actions/download-artifact@v4
         with:
           name: backend-coverage-${{ github.run_id }}
           path: apps/backend/coverage
-          if-no-files-found: ignore
 
       - name: Download frontend coverage artifact
-        continue-on-error: true
         uses: actions/download-artifact@v4
         with:
           name: frontend-coverage-${{ github.run_id }}
           path: apps/frontend/coverage
-          if-no-files-found: ignore
 
       - name: Aggregate coverage files
         timeout-minutes: 5
@@ -454,7 +450,7 @@ jobs:
           name: coverage-${{ github.run_id }}
           path: coverage
           retention-days: 30
-          if-no-files-found: ignore
+          if-no-files-found: error
 
       - name: Upload coverage to Codecov
         if: success() && env.CODECOV_TOKEN != ''
@@ -548,7 +544,7 @@ jobs:
           name: lighthouse-report-${{ github.run_id }}
           path: tests/perf/lhci-output
           retention-days: 30
-          if-no-files-found: ignore
+          if-no-files-found: error
 
       - name: Stop SSR server
         if: always()
@@ -1306,7 +1302,7 @@ jobs:
           path: |
             tests/perf/k6-summary.json
           retention-days: 30
-          if-no-files-found: ignore
+          if-no-files-found: error
 
       - name: Job summary
         if: always()
@@ -1348,28 +1344,22 @@ jobs:
         run: pnpm install --frozen-lockfile --no-offline
 
       - name: Download coverage artifact
-        continue-on-error: true
         uses: actions/download-artifact@v4
         with:
           name: coverage-${{ github.run_id }}
           path: coverage
-          if-no-files-found: ignore
 
       - name: Download performance metrics
-        continue-on-error: true
         uses: actions/download-artifact@v4
         with:
           name: perf-metrics-${{ github.run_id }}
           path: .
-          if-no-files-found: ignore
 
       - name: Download lighthouse report
-        continue-on-error: true
         uses: actions/download-artifact@v4
         with:
           name: lighthouse-report-${{ github.run_id }}
           path: tests/perf/lhci-output
-          if-no-files-found: ignore
 
       - name: Generate QA summary
         timeout-minutes: 5
