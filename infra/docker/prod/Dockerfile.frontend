@@ -6,8 +6,9 @@
 FROM node:20-alpine AS builder
 WORKDIR /app
 
-# 1) Copy workspace manifests needed for dependency resolution
-COPY package.json pnpm-workspace.yaml pnpm-lock.yaml ./
+# 1) Copy workspace manifests needed for dependency resolution.
+#    .pnpmfile.cjs is required: pnpm-lock.yaml stores pnpmfileChecksum.
+COPY package.json pnpm-workspace.yaml pnpm-lock.yaml .npmrc .pnpmfile.cjs ./
 COPY apps/frontend/package.json apps/frontend/
 COPY packages/*/package.json packages/*/
 
@@ -24,41 +25,30 @@ RUN pnpm install --frozen-lockfile --prod=false --offline
 # 5) Build the frontend workspace package (SSR build)
 RUN pnpm --filter @fitvibe/frontend run build:ssr
 
+# 6) Isolate the frontend package + production node_modules
+RUN pnpm deploy --filter @fitvibe/frontend --prod /app/frontend-deploy
+
 # ---------- Runtime Stage ----------
 FROM node:20-alpine AS runtime
 
 WORKDIR /app
 
-# Copy package files
-COPY --from=builder /app/package.json ./
-COPY --from=builder /app/pnpm-lock.yaml ./
-COPY --from=builder /app/pnpm-workspace.yaml ./
-COPY --from=builder /app/apps/frontend/package.json ./apps/frontend/
+COPY --from=builder /app/frontend-deploy/ ./
+# dist/ is gitignored, so pnpm deploy does not include the SSR build output
+COPY --from=builder /app/apps/frontend/dist ./dist
+COPY --from=builder /app/apps/frontend/server.ts ./server.ts
+COPY --from=builder /app/apps/frontend/index.html ./index.html
+COPY --from=builder /app/apps/frontend/src/ssr ./src/ssr
 
-# Install production dependencies + tsx (needed to run server.ts)
-RUN corepack enable && corepack prepare pnpm@10.34.5 --activate && \
-    pnpm install --frozen-lockfile --prod --no-offline && \
-    pnpm add -D tsx --no-offline
+RUN addgroup -S nodeapp && adduser -S nodeapp -G nodeapp && \
+    chown -R nodeapp:nodeapp /app
 
-# Copy built application
-COPY --from=builder /app/apps/frontend/dist ./apps/frontend/dist
-COPY --from=builder /app/apps/frontend/index.html ./apps/frontend/
-# Copy server.ts (will use tsx to run it in production)
-COPY --from=builder /app/apps/frontend/server.ts ./apps/frontend/
-
-# Create non-root user
-RUN addgroup -g 1000 nodejs && \
-    adduser -D -u 1000 -G nodejs nodejs && \
-    chown -R nodejs:nodejs /app
-
-USER nodejs
-
-WORKDIR /app/apps/frontend
+USER nodeapp
 
 EXPOSE 4173
 
 ENV NODE_ENV=production
 ENV PORT=4173
 
-CMD ["pnpm", "exec", "tsx", "server.ts"]
+CMD ["./node_modules/.bin/tsx", "server.ts"]
 ## ===============================================================
