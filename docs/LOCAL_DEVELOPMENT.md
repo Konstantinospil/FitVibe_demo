@@ -283,9 +283,10 @@ For production deployments, SSL/TLS encryption is required for database connecti
 **Environment Variables for SSL:**
 
 - `PGSSL=true` - Enable SSL/TLS for database connections
-- `PGSSL_CA=/path/to/ca-cert.pem` - (Optional) Path to CA certificate
-- `PGSSL_CERT=/path/to/client-cert.pem` - (Optional) Path to client certificate (for mutual TLS)
-- `PGSSL_KEY=/path/to/client-key.pem` - (Optional) Path to client key (for mutual TLS)
+- `PGSSL_REJECT_UNAUTHORIZED=true` - (Optional) Verify the server certificate even when not in production
+- `PGSSL_CA=/path/to/ca-cert.pem` - (Optional) Path or PEM for CA certificate
+- `PGSSL_CERT=/path/to/client-cert.pem` - (Optional) Path or PEM for client certificate (for mutual TLS)
+- `PGSSL_KEY=/path/to/client-key.pem` - (Optional) Path or PEM for client key (for mutual TLS)
 
 **Development (Local):**
 

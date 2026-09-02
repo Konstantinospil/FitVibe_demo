@@ -17,13 +17,14 @@ See [ADR-023](../2.f.Architectural_Decision_Documentation/ADR-026-database-encry
 
 SSL/TLS encryption is controlled via environment variables:
 
-| Variable     | Description                                     | Required | Default |
-| ------------ | ----------------------------------------------- | -------- | ------- |
-| `PGSSL`      | Enable SSL/TLS (`true`/`false`)                 | No       | `false` |
-| `PGSSL_CA`   | Path to CA certificate file                     | No       | -       |
-| `PGSSL_CERT` | Path to client certificate file (mutual TLS)    | No       | -       |
-| `PGSSL_KEY`  | Path to client key file (mutual TLS)            | No       | -       |
-| `NODE_ENV`   | Environment (`production`/`development`/`test`) | Yes      | -       |
+| Variable                    | Description                                                | Required | Default |
+| --------------------------- | ---------------------------------------------------------- | -------- | ------- |
+| `PGSSL`                     | Enable SSL/TLS (`true`/`false`)                            | No       | `false` |
+| `PGSSL_REJECT_UNAUTHORIZED` | Force certificate verification outside production (`true`) | No       | -       |
+| `PGSSL_CA`                  | Path or PEM for CA certificate                             | No       | -       |
+| `PGSSL_CERT`                | Path or PEM for client certificate (mutual TLS)            | No       | -       |
+| `PGSSL_KEY`                 | Path or PEM for client key (mutual TLS)                    | No       | -       |
+| `NODE_ENV`                  | Environment (`production`/`development`/`test`)            | Yes      | -       |
 
 ### Environment-Specific Behavior
 
