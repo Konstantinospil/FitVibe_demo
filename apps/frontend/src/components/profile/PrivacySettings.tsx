@@ -48,7 +48,7 @@ export const PrivacySettings: React.FC<PrivacySettingsProps> = ({ onUpdate }) =>
       }
     };
     void loadSettings();
-  }, []); // Fetch once on mount; error copy is resolved at request time
+  }, [t]);
 
   const handleSave = async () => {
     setIsSaving(true);
