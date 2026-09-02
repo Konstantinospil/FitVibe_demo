@@ -7,7 +7,7 @@ import { useAuth } from "../../../apps/frontend/src/contexts/AuthContext";
 
 vi.mock("../../../apps/frontend/src/contexts/AuthContext");
 vi.mock("../../../apps/frontend/src/i18n/config", () => ({
-  ensurePrivateTranslationsLoaded: vi.fn().mockResolvedValue(undefined),
+  ensurePrivateTranslationsLoaded: vi.fn(() => Promise.resolve()),
 }));
 
 // Mock useAuthStore for AdminRoute component

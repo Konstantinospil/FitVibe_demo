@@ -55,6 +55,15 @@ const mergeTranslations = <T extends Record<string, unknown>, U extends Record<s
 // Resources will be populated after loading translations
 const resources: Partial<Record<SupportedLanguage, { translation: Record<string, unknown> }>> = {};
 
+const RESOURCE_NAMESPACES = ["translation", "common"] as const;
+
+const addAppResourceBundle = (lng: SupportedLanguage, translations: Record<string, unknown>) => {
+  for (const ns of RESOURCE_NAMESPACES) {
+    i18n.addResourceBundle(lng, ns, translations, true, true);
+  }
+  resources[lng] = { translation: translations };
+};
+
 const FALLBACK_LANGUAGE: SupportedLanguage = "en";
 
 const detectLanguage = (): SupportedLanguage => {
@@ -111,8 +120,7 @@ const loadLanguage = async (lng: SupportedLanguage): Promise<void> => {
       { cookie },
     );
 
-    i18n.addResourceBundle(lng, "translation", translations, true, true);
-    resources[lng] = { translation: translations };
+    addAppResourceBundle(lng, translations);
   } catch (error) {
     // Log error but don't fail - fallback to English
     if (process.env.NODE_ENV !== "production") {
@@ -133,6 +141,9 @@ const i18nReady = i18n.use(initReactI18next).init({
   resources: {},
   lng: FALLBACK_LANGUAGE,
   fallbackLng: FALLBACK_LANGUAGE,
+  defaultNS: "translation",
+  fallbackNS: "common",
+  ns: ["translation", "common"],
   interpolation: {
     escapeValue: false,
   },
@@ -146,8 +157,7 @@ const i18nReady = i18n.use(initReactI18next).init({
 // Full translations load on-demand after login or on legal pages.
 export const minimalTranslationsReady: Promise<void> = i18nReady.then(async () => {
   const minimalTranslations = await loadMinimalLoginTranslations();
-  i18n.addResourceBundle("en", "translation", minimalTranslations, true, true);
-  resources.en = { translation: minimalTranslations };
+  addAppResourceBundle("en", minimalTranslations);
 
   if (initialLanguage !== "en") {
     await loadLanguage(initialLanguage);
@@ -164,8 +174,7 @@ export const loadFullTranslations = async (): Promise<void> => {
   }
 
   const fullTranslations = await loadFullEnglishTranslations();
-  i18n.addResourceBundle("en", "translation", fullTranslations, true, true);
-  resources.en = { translation: fullTranslations };
+  addAppResourceBundle("en", fullTranslations);
 };
 
 // Export function to load languages on-demand

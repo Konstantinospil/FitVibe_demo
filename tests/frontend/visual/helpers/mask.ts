@@ -13,7 +13,9 @@ export async function getDynamicMasks(page: Page) {
     // Charts and sparklines
     page.locator("canvas, svg[data-testid*='chart'], [data-testid*='sparkline']"),
     // Animated loaders
-    page.locator("[data-testid*='loader'], [data-testid*='spinner'], [aria-label*='loading']"),
+    page.locator(
+      "[data-testid*='loader'], [data-testid*='spinner'], [data-testid='privacy-settings-loading'], [aria-label*='loading' i], .spinner, [data-spinner-keyframes-target]",
+    ),
     // Live counters
     page.locator("[data-testid*='counter'], [data-testid*='count']"),
     // Logger elapsed timer (frozen via Date.now() in visual tests, still masked)

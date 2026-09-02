@@ -16,7 +16,8 @@
     "german": "German",
     "spanish": "Spanish",
     "french": "French",
-    "greek": "Greek"
+    "greek": "Greek",
+    "select": "Select a language"
   },
   "status": {
     "checking": "Checking server…",
@@ -463,7 +464,22 @@
       "trainingFrequency5Plus": "5+ times per week",
       "weightPlaceholder": "75.5",
       "passwordPlaceholder": "Enter your password",
-      "twoFactorCodePlaceholder": "000000"
+      "twoFactorCodePlaceholder": "Enter 6-digit code",
+      "avatar": "Profile Avatar",
+      "avatarSelect": "Select Image",
+      "avatarUpload": "Upload",
+      "avatarDelete": "Delete",
+      "avatarHelp": "Upload a JPEG, PNG, or WebP image (max 5MB). Recommended size: 256×256 pixels.",
+      "avatarInvalidType": "Invalid file type. Please use JPEG, PNG, or WebP.",
+      "avatarTooLarge": "File is too large. Maximum size is 5MB.",
+      "avatarNoFile": "Please select a file to upload.",
+      "avatarUploadSuccess": "Avatar uploaded successfully!",
+      "avatarUploadError": "Failed to upload avatar. Please try again.",
+      "avatarDeleteSuccess": "Avatar deleted successfully!",
+      "avatarDeleteError": "Failed to delete avatar. Please try again.",
+      "avatarPreviewAlt": "Avatar preview",
+      "avatarAlt": "Profile avatar",
+      "emailUnavailable": "Not available"
     },
     "preferences": {
       "title": "Preferences",
@@ -474,7 +490,13 @@
       "saveSuccess": "Preferences saved successfully!",
       "saveError": "Failed to save preferences. Please try again.",
       "saveButton": "Save Preferences",
-      "saving": "Saving..."
+      "saving": "Saving...",
+      "visibilityPrivate": "Private (only you)",
+      "visibilityFollowers": "Followers",
+      "visibilityLink": "Link only",
+      "visibilityPublic": "Public",
+      "unitsMetric": "Metric (kg, km)",
+      "unitsImperial": "Imperial (lb, mi)"
     },
     "privacy": {
       "title": "Privacy Settings",
@@ -511,6 +533,55 @@
       "successMessage": "Your data export has been downloaded",
       "failed": "Export Failed",
       "failedMessage": "Failed to export data. Please try again."
+    },
+    "introDescription": "Manage your profile, privacy, security, and account settings.",
+    "security": {
+      "title": "Two-Factor Authentication (2FA)",
+      "description": "Add an extra layer of security to your account with 2FA",
+      "disabledHelp": "2FA is currently disabled. Enable it to secure your account with a time-based one-time password (TOTP).",
+      "disabled": "disabled",
+      "enable": "Enable 2FA",
+      "enableError": "Failed to enable 2FA. Please try again.",
+      "scanQr": "Scan this QR code with your authenticator app (Google Authenticator, Authy, etc.):",
+      "qrLoading": "Loading QR Code...",
+      "qrAlt": "2FA QR Code",
+      "enterCode": "Enter the 6-digit code from your app:",
+      "invalidCode": "Please enter a valid 6-digit code",
+      "verifyEnable": "Verify and Enable",
+      "verifyError": "Invalid code. Please try again.",
+      "enabledSuccess": "2FA enabled successfully!",
+      "enabled": "2FA is currently enabled",
+      "enabledHelp": "Your account is protected with two-factor authentication.",
+      "disablePasswordLabel": "Enter your password to disable 2FA",
+      "disable": "Disable 2FA",
+      "disableNeedPassword": "Please enter your password to disable 2FA",
+      "disableError": "Failed to disable 2FA. Please check your password and try again.",
+      "disableSuccess": "2FA disabled successfully",
+      "confirmDisableTitle": "Disable Two-Factor Authentication",
+      "confirmDisableMessage": "Are you sure you want to disable 2FA? This will make your account less secure.",
+      "confirmDisable": "Yes, Disable 2FA",
+      "backupCodes": "Backup Codes",
+      "backupCodesHelp": "Save these backup codes in a secure location. You can use them to access your account if you lose your authenticator device."
+    },
+    "account": {
+      "title": "Danger Zone",
+      "description": "Irreversible actions that will permanently affect your account",
+      "deleteWill": "Deleting your account will:",
+      "deleteItemWorkouts": "Permanently delete all your workout data",
+      "deleteItemSessions": "Remove all your sessions and progress records",
+      "deleteItemProfile": "Delete your profile and account information",
+      "deleteItemUndo": "This action cannot be undone",
+      "deleteAccount": "Delete My Account",
+      "deleteWarning": "⚠️ Warning: This will permanently delete your account",
+      "deletePasswordPrompt": "Please enter your password to confirm account deletion:",
+      "deleteNeedPassword": "Please enter your password to confirm account deletion",
+      "yesDelete": "Yes, Delete My Account",
+      "cancel": "Cancel",
+      "confirmTitle": "Delete Account",
+      "confirmMessage": "This will permanently delete your account and all your data. This action cannot be undone. Are you absolutely sure?",
+      "confirmDelete": "Confirm Delete",
+      "deleteSuccess": "Your account has been scheduled for deletion. You will be logged out now.",
+      "deleteError": "Failed to delete account. Please try again."
     }
   },
   "common": {
@@ -640,7 +711,11 @@
     "create": "Create Exercise",
     "edit": "Edit Exercise",
     "name": "Name",
-    "type": "Type",
+    "type": {
+      "strength": "Strength",
+      "cardio": "Cardio",
+      "powerEndurance": "Power-Endurance"
+    },
     "muscleGroup": "Muscle Group",
     "equipment": "Equipment",
     "description": "Description",
@@ -659,12 +734,7 @@
     "archiveMessage": "Are you sure you want to archive this exercise? It will be hidden from selectors but retained for historical records.",
     "allTypes": "All Types",
     "showArchived": "Show archived",
-    "filterType": "Filter by type",
-    "type": {
-      "strength": "Strength",
-      "cardio": "Cardio",
-      "powerEndurance": "Power-Endurance"
-    }
+    "filterType": "Filter by type"
   },
   "coach": {
     "dashboard": {

@@ -100,6 +100,7 @@ We require a deterministic, secure, and budget-enforcing delivery pipeline. The 
 **Operational**
 
 - Keep lockfiles and base images updated; rotate caches; review budgets quarterly.
+- First-party GitHub Actions JS runtimes must target Node 24 (`actions/checkout@v6`, `actions/setup-node@v6`, `actions/upload-artifact@v7` / `download-artifact@v8`, `pnpm/action-setup@v6`). App Node version is independent and pinned in workflow `NODE_VERSION`.
 - Record baselines for perf to keep regression signal healthy.
 
 ---

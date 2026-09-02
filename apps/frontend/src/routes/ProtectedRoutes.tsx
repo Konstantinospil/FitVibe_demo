@@ -1,4 +1,4 @@
-import React, { Suspense, lazy, useEffect } from "react";
+import React, { Suspense, lazy, useEffect, useState } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import {
   QueryClientProvider,
@@ -70,8 +70,14 @@ const ProtectedRoutes: React.FC<ProtectedRoutesProps> = ({
   queryClient = defaultQueryClient,
   dehydratedState: propDehydratedState,
 }) => {
+  const [translationsReady, setTranslationsReady] = useState(false);
+
   useEffect(() => {
-    void ensurePrivateTranslationsLoaded();
+    void Promise.resolve()
+      .then(() => ensurePrivateTranslationsLoaded())
+      .finally(() => {
+        setTranslationsReady(true);
+      });
     void import("../utils/fontLoader").then(({ loadAppFonts }) => {
       loadAppFonts();
     });
@@ -118,7 +124,9 @@ const ProtectedRoutes: React.FC<ProtectedRoutesProps> = ({
 
   return (
     <QueryClientProvider client={queryClient}>
-      {dehydratedState ? (
+      {!translationsReady ? (
+        fallback
+      ) : dehydratedState ? (
         <HydrationBoundary state={dehydratedState}>{routesContent}</HydrationBoundary>
       ) : (
         routesContent

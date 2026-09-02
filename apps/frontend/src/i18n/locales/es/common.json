@@ -16,7 +16,8 @@
     "german": "Alemán",
     "spanish": "Español",
     "french": "Francés",
-    "greek": "Griego"
+    "greek": "Griego",
+    "select": "Seleccionar un idioma"
   },
   "status": {
     "checking": "Verificando servidor…",
@@ -558,7 +559,22 @@
       "trainingFrequency5Plus": "5+ veces por semana",
       "weightPlaceholder": "75.5",
       "passwordPlaceholder": "Ingresa tu contraseña",
-      "twoFactorCodePlaceholder": "000000"
+      "twoFactorCodePlaceholder": "Introduce el código de 6 dígitos",
+      "avatar": "Avatar de perfil",
+      "avatarSelect": "Seleccionar imagen",
+      "avatarUpload": "Subir",
+      "avatarDelete": "Eliminar",
+      "avatarHelp": "Sube una imagen JPEG, PNG o WebP (máx. 5 MB). Tamaño recomendado: 256×256 píxeles.",
+      "avatarInvalidType": "Tipo de archivo no válido. Usa JPEG, PNG o WebP.",
+      "avatarTooLarge": "El archivo es demasiado grande. El tamaño máximo es 5 MB.",
+      "avatarNoFile": "Selecciona un archivo para subir.",
+      "avatarUploadSuccess": "¡Avatar subido correctamente!",
+      "avatarUploadError": "No se pudo subir el avatar. Inténtalo de nuevo.",
+      "avatarDeleteSuccess": "¡Avatar eliminado correctamente!",
+      "avatarDeleteError": "No se pudo eliminar el avatar. Inténtalo de nuevo.",
+      "avatarPreviewAlt": "Vista previa del avatar",
+      "avatarAlt": "Avatar de perfil",
+      "emailUnavailable": "No disponible"
     },
     "preferences": {
       "title": "Preferencias",
@@ -569,7 +585,13 @@
       "saveSuccess": "¡Preferencias guardadas exitosamente!",
       "saveError": "Error al guardar preferencias. Por favor, inténtalo de nuevo.",
       "saveButton": "Guardar Preferencias",
-      "saving": "Guardando..."
+      "saving": "Guardando...",
+      "visibilityPrivate": "Privado (solo tú)",
+      "visibilityFollowers": "Seguidores",
+      "visibilityLink": "Solo enlace",
+      "visibilityPublic": "Público",
+      "unitsMetric": "Métrico (kg, km)",
+      "unitsImperial": "Imperial (lb, mi)"
     },
     "privacy": {
       "title": "Ajustes de privacidad",
@@ -606,6 +628,55 @@
       "successMessage": "Tu exportación de datos se ha descargado",
       "failed": "Error al exportar",
       "failedMessage": "No se pudieron exportar los datos. Inténtalo de nuevo."
+    },
+    "introDescription": "Gestiona tu perfil, privacidad, seguridad y ajustes de la cuenta.",
+    "security": {
+      "title": "Autenticación de dos factores (2FA)",
+      "description": "Añade una capa extra de seguridad a tu cuenta con 2FA",
+      "disabledHelp": "2FA está desactivada. Actívala para proteger tu cuenta con una contraseña de un solo uso (TOTP).",
+      "disabled": "desactivada",
+      "enable": "Activar 2FA",
+      "enableError": "No se pudo activar 2FA. Inténtalo de nuevo.",
+      "scanQr": "Escanea este código QR con tu app autenticadora (Google Authenticator, Authy, etc.):",
+      "qrLoading": "Cargando código QR...",
+      "qrAlt": "Código QR de 2FA",
+      "enterCode": "Introduce el código de 6 dígitos de tu app:",
+      "invalidCode": "Introduce un código válido de 6 dígitos",
+      "verifyEnable": "Verificar y activar",
+      "verifyError": "Código no válido. Inténtalo de nuevo.",
+      "enabledSuccess": "¡2FA activada correctamente!",
+      "enabled": "2FA está activada",
+      "enabledHelp": "Tu cuenta está protegida con autenticación de dos factores.",
+      "disablePasswordLabel": "Introduce tu contraseña para desactivar 2FA",
+      "disable": "Desactivar 2FA",
+      "disableNeedPassword": "Introduce tu contraseña para desactivar 2FA",
+      "disableError": "No se pudo desactivar 2FA. Comprueba tu contraseña.",
+      "disableSuccess": "2FA desactivada correctamente",
+      "confirmDisableTitle": "Desactivar autenticación de dos factores",
+      "confirmDisableMessage": "¿Seguro que quieres desactivar 2FA? Tu cuenta será menos segura.",
+      "confirmDisable": "Sí, desactivar 2FA",
+      "backupCodes": "Códigos de respaldo",
+      "backupCodesHelp": "Guarda estos códigos en un lugar seguro. Podrás usarlos si pierdes tu dispositivo autenticador."
+    },
+    "account": {
+      "title": "Zona de peligro",
+      "description": "Acciones irreversibles que afectarán tu cuenta de forma permanente",
+      "deleteWill": "Eliminar tu cuenta:",
+      "deleteItemWorkouts": "Eliminará permanentemente todos tus datos de entrenamiento",
+      "deleteItemSessions": "Eliminará todas tus sesiones y registros de progreso",
+      "deleteItemProfile": "Eliminará tu perfil e información de cuenta",
+      "deleteItemUndo": "Esta acción no se puede deshacer",
+      "deleteAccount": "Eliminar mi cuenta",
+      "deleteWarning": "⚠️ Aviso: esto eliminará tu cuenta de forma permanente",
+      "deletePasswordPrompt": "Introduce tu contraseña para confirmar la eliminación de la cuenta:",
+      "deleteNeedPassword": "Introduce tu contraseña para confirmar la eliminación de la cuenta",
+      "yesDelete": "Sí, eliminar mi cuenta",
+      "cancel": "Cancelar",
+      "confirmTitle": "Eliminar cuenta",
+      "confirmMessage": "Esto eliminará permanentemente tu cuenta y todos tus datos. No se puede deshacer. ¿Estás absolutamente seguro?",
+      "confirmDelete": "Confirmar eliminación",
+      "deleteSuccess": "Tu cuenta se ha programado para eliminación. Se cerrará la sesión ahora.",
+      "deleteError": "No se pudo eliminar la cuenta. Inténtalo de nuevo."
     }
   },
   "admin": {
@@ -640,7 +711,11 @@
     "create": "Crear Ejercicio",
     "edit": "Editar Ejercicio",
     "name": "Nombre",
-    "type": "Tipo",
+    "type": {
+      "strength": "Fuerza",
+      "cardio": "Cardio",
+      "powerEndurance": "Fuerza-Resistencia"
+    },
     "muscleGroup": "Grupo Muscular",
     "equipment": "Equipo",
     "description": "Descripción",
@@ -659,12 +734,7 @@
     "archiveMessage": "¿Estás seguro de que quieres archivar este ejercicio? Se ocultará de los selectores pero se conservará para registros históricos.",
     "allTypes": "Todos los Tipos",
     "showArchived": "Mostrar archivados",
-    "filterType": "Filtrar por tipo",
-    "type": {
-      "strength": "Fuerza",
-      "cardio": "Cardio",
-      "powerEndurance": "Fuerza-Resistencia"
-    }
+    "filterType": "Filtrar por tipo"
   },
   "coach": {
     "dashboard": {
