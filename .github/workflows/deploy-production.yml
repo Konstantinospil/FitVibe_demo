@@ -17,9 +17,6 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  OWNER: ${{ lower(github.repository_owner) }}
-  BACKEND_IMAGE_NAME: ${{ lower(github.repository_owner) }}/fitvibe-backend
-  FRONTEND_IMAGE_NAME: ${{ lower(github.repository_owner) }}/fitvibe-frontend
 
 jobs:
   # ==============================================================================
@@ -122,6 +119,12 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Set lowercase GHCR image names
+        run: |
+          owner="$(printf '%s' "${GITHUB_REPOSITORY_OWNER}" | tr '[:upper:]' '[:lower:]')"
+          echo "BACKEND_IMAGE_NAME=${owner}/fitvibe-backend" >> "$GITHUB_ENV"
+          echo "FRONTEND_IMAGE_NAME=${owner}/fitvibe-frontend" >> "$GITHUB_ENV"
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
@@ -171,6 +174,12 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
+      - name: Set lowercase GHCR image names
+        run: |
+          owner="$(printf '%s' "${GITHUB_REPOSITORY_OWNER}" | tr '[:upper:]' '[:lower:]')"
+          echo "BACKEND_IMAGE_NAME=${owner}/fitvibe-backend" >> "$GITHUB_ENV"
+          echo "FRONTEND_IMAGE_NAME=${owner}/fitvibe-frontend" >> "$GITHUB_ENV"
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -283,9 +292,9 @@ jobs:
       - name: Prepare image references
         id: vars
         run: |
-          # Construct full image references with digests from build jobs
-          echo "backend_image=${{ env.REGISTRY }}/${{ env.BACKEND_IMAGE_NAME }}@${{ needs.build-backend.outputs.image-digest }}" >> "$GITHUB_OUTPUT"
-          echo "frontend_image=${{ env.REGISTRY }}/${{ env.FRONTEND_IMAGE_NAME }}@${{ needs.build-frontend.outputs.image-digest }}" >> "$GITHUB_OUTPUT"
+          owner="$(printf '%s' "${GITHUB_REPOSITORY_OWNER}" | tr '[:upper:]' '[:lower:]')"
+          echo "backend_image=${{ env.REGISTRY }}/${owner}/fitvibe-backend@${{ needs.build-backend.outputs.image-digest }}" >> "$GITHUB_OUTPUT"
+          echo "frontend_image=${{ env.REGISTRY }}/${owner}/fitvibe-frontend@${{ needs.build-frontend.outputs.image-digest }}" >> "$GITHUB_OUTPUT"
 
       - name: Deploy PostgreSQL
         run: kubectl apply -f infra/kubernetes/postgres-deployment.yaml

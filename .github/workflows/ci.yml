@@ -20,9 +20,6 @@ permissions:
 
 env:
   REGISTRY: ghcr.io
-  OWNER: ${{ lower(github.repository_owner) }}
-  BACKEND_IMAGE: ghcr.io/${{ lower(github.repository_owner) }}/fitvibe-backend
-  FRONTEND_IMAGE: ghcr.io/${{ lower(github.repository_owner) }}/fitvibe-frontend
   NODE_VERSION: "20"
   # Disable all caching
   TURBO_TOKEN: ""
@@ -1650,6 +1647,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Set lowercase GHCR image names
+        run: |
+          owner="$(printf '%s' "${GITHUB_REPOSITORY_OWNER}" | tr '[:upper:]' '[:lower:]')"
+          echo "OWNER=${owner}" >> "$GITHUB_ENV"
+          echo "BACKEND_IMAGE=ghcr.io/${owner}/fitvibe-backend" >> "$GITHUB_ENV"
+          echo "FRONTEND_IMAGE=ghcr.io/${owner}/fitvibe-frontend" >> "$GITHUB_ENV"
+
       - name: Determine package versions
         id: versions
         timeout-minutes: 2
@@ -1818,6 +1822,13 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Set lowercase GHCR image names
+        run: |
+          owner="$(printf '%s' "${GITHUB_REPOSITORY_OWNER}" | tr '[:upper:]' '[:lower:]')"
+          echo "OWNER=${owner}" >> "$GITHUB_ENV"
+          echo "BACKEND_IMAGE=ghcr.io/${owner}/fitvibe-backend" >> "$GITHUB_ENV"
+          echo "FRONTEND_IMAGE=ghcr.io/${owner}/fitvibe-frontend" >> "$GITHUB_ENV"
 
       - name: Install postgresql-client
         timeout-minutes: 2
