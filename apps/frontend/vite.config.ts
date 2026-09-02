@@ -9,6 +9,7 @@ export default defineConfig(() => {
   const isVitest = process.env.VITEST === "true";
   const isSSR = process.env.SSR === "true";
   const coverageEnabled =
+    process.env.VITEST_COVERAGE === "true" ||
     process.argv.includes("--coverage") ||
     process.argv.some((arg) => arg.startsWith("--coverage="));
   const root = fileURLToPath(new URL(".", import.meta.url));
@@ -150,6 +151,7 @@ export default defineConfig(() => {
         },
       },
       coverage: {
+        ...(coverageEnabled ? { enabled: true as const } : {}),
         provider: "istanbul" as const,
         reporter: ["text", "html", "json", "json-summary", "lcov"],
         include: ["src/**/*.{ts,tsx}"],
