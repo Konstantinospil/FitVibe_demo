@@ -107,4 +107,20 @@ if (result.error) {
   console.error(result.error);
 }
 
+const coverageRequested = passthroughArgs.some(
+  (arg) => arg === "--coverage" || arg.startsWith("--coverage="),
+);
+
+if (coverageRequested) {
+  const summaryPath = join(coverageDir, "coverage-summary.json");
+  const finalPath = join(coverageDir, "coverage-final.json");
+  const lcovPath = join(coverageDir, "lcov.info");
+  if (!existsSync(summaryPath) && !existsSync(finalPath) && !existsSync(lcovPath)) {
+    console.error(
+      `[test] Coverage was requested but no reports were written under ${coverageDir}.`,
+    );
+    process.exit(result.status === 0 ? 1 : (result.status ?? 1));
+  }
+}
+
 process.exit(result.status ?? 1);
