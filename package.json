@@ -118,7 +118,8 @@
       "@opentelemetry/propagator-jaeger": ">=2.9.0",
       "@opentelemetry/sdk-node": ">=0.217.0",
       "ajv": "^6.14.0",
-      "browserslist": ">=4.28.7"
+      "browserslist": ">=4.28.7",
+      "@humanfs/node": ">=0.16.8"
     }
   },
   "overrides": {
