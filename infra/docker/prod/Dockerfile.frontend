@@ -6,6 +6,8 @@
 FROM node:20-alpine AS builder
 WORKDIR /app
 
+ENV HUSKY=0
+
 # 1) Copy workspace manifests needed for dependency resolution.
 #    .pnpmfile.cjs is required: pnpm-lock.yaml stores pnpmfileChecksum.
 COPY package.json pnpm-workspace.yaml pnpm-lock.yaml .npmrc .pnpmfile.cjs ./

@@ -4,6 +4,8 @@ pnpm-store
 pnpm-debug.log
 **/.turbo
 **/dist
+!packages/patched-glob/dist
+!packages/patched-glob/dist/**
 **/.next
 **/coverage
 .DS_Store

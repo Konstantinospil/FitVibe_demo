@@ -41,6 +41,7 @@ out/
 /apps/frontend/dist/
 /packages/*/dist/
 !/packages/patched-glob/dist/
+!/packages/patched-glob/dist/**
 
 # --- Turborepo ---
 .turbo/

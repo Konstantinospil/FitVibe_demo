@@ -1,7 +1,7 @@
 {
   "name": "glob",
   "version": "10.5.1",
-  "description": "Patched glob CLI shipped with FitVibe to mitigate GHSA-5j98-mcp5-4vw2.",
+  "description": "Vendored glob@10.5.0 (GHSA-5j98-mcp5-4vw2) shipped as a workspace override.",
   "license": "ISC",
   "type": "module",
   "bin": "./dist/esm/bin.mjs",

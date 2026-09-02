@@ -1614,10 +1614,12 @@ jobs:
           retention-days: 30
           if-no-files-found: ignore
 
-  build:
-    name: Build & Publish Images
-    runs-on: ubuntu-latest
-    timeout-minutes: 45
+  # Native amd64/arm64 builds. QEMU emulation of `pnpm fetch` on GitHub's
+  # x86_64 runners routinely exceeds the image-build timeout.
+  build-platform:
+    name: Build images (${{ matrix.platform }})
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 35
     needs:
       - quality
       - backend_tests
@@ -1637,6 +1639,104 @@ jobs:
       - i18n
       - contract_tests
       - visual_regression
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/stage')
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+      actions: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: linux/amd64
+            runner: ubuntu-24.04
+          - platform: linux/arm64
+            runner: ubuntu-24.04-arm
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set lowercase GHCR image names
+        run: |
+          owner="$(printf '%s' "${GITHUB_REPOSITORY_OWNER}" | tr '[:upper:]' '[:lower:]')"
+          platform_pair="${{ matrix.platform }}"
+          platform_pair="${platform_pair//\//-}"
+          echo "OWNER=${owner}" >> "$GITHUB_ENV"
+          echo "BACKEND_IMAGE=ghcr.io/${owner}/fitvibe-backend" >> "$GITHUB_ENV"
+          echo "FRONTEND_IMAGE=ghcr.io/${owner}/fitvibe-frontend" >> "$GITHUB_ENV"
+          echo "PLATFORM_PAIR=${platform_pair}" >> "$GITHUB_ENV"
+
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push backend image by digest
+        id: backend
+        timeout-minutes: 25
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: infra/docker/prod/Dockerfile.backend
+          platforms: ${{ matrix.platform }}
+          provenance: true
+          sbom: true
+          tags: ${{ env.BACKEND_IMAGE }}
+          outputs: type=image,push-by-digest=true,name-canonical=true,push=true
+          cache-from: type=gha,scope=backend-${{ env.PLATFORM_PAIR }}
+          cache-to: type=gha,mode=max,scope=backend-${{ env.PLATFORM_PAIR }}
+
+      - name: Build and push frontend image by digest
+        id: frontend
+        timeout-minutes: 25
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: infra/docker/prod/Dockerfile.frontend
+          platforms: ${{ matrix.platform }}
+          provenance: true
+          sbom: true
+          tags: ${{ env.FRONTEND_IMAGE }}
+          outputs: type=image,push-by-digest=true,name-canonical=true,push=true
+          cache-from: type=gha,scope=frontend-${{ env.PLATFORM_PAIR }}
+          cache-to: type=gha,mode=max,scope=frontend-${{ env.PLATFORM_PAIR }}
+
+      - name: Export digests
+        run: |
+          mkdir -p "${RUNNER_TEMP}/backend-digests" "${RUNNER_TEMP}/frontend-digests"
+          backend_digest="${{ steps.backend.outputs.digest }}"
+          frontend_digest="${{ steps.frontend.outputs.digest }}"
+          touch "${RUNNER_TEMP}/backend-digests/${backend_digest#sha256:}"
+          touch "${RUNNER_TEMP}/frontend-digests/${frontend_digest#sha256:}"
+
+      - name: Upload backend digest
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-digests-${{ env.PLATFORM_PAIR }}
+          path: ${{ runner.temp }}/backend-digests/*
+          if-no-files-found: error
+          retention-days: 1
+
+      - name: Upload frontend digest
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-digests-${{ env.PLATFORM_PAIR }}
+          path: ${{ runner.temp }}/frontend-digests/*
+          if-no-files-found: error
+          retention-days: 1
+
+  build:
+    name: Build & Publish Images
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs:
+      - build-platform
     if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/stage')
     permissions:
       contents: read
@@ -1667,15 +1767,22 @@ jobs:
           echo "backend=${backend}" >> "$GITHUB_OUTPUT"
           echo "frontend=${frontend}" >> "$GITHUB_OUTPUT"
 
-      - name: Setup QEMU
-        uses: docker/setup-qemu-action@v3
+      - name: Download backend digests
+        uses: actions/download-artifact@v4
+        with:
+          path: ${{ runner.temp }}/backend-digests
+          pattern: backend-digests-*
+          merge-multiple: true
+
+      - name: Download frontend digests
+        uses: actions/download-artifact@v4
+        with:
+          path: ${{ runner.temp }}/frontend-digests
+          pattern: frontend-digests-*
+          merge-multiple: true
 
       - name: Setup Docker Buildx
         uses: docker/setup-buildx-action@v3
-        with:
-          driver-opts: |
-            image=moby/buildkit:latest
-            network=host
 
       - name: Login to GHCR
         uses: docker/login-action@v3
@@ -1684,35 +1791,50 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build and push backend image
-        id: backend
-        timeout-minutes: 20
-        uses: docker/build-push-action@v7
-        with:
-          context: .
-          file: infra/docker/prod/Dockerfile.backend
-          platforms: linux/amd64,linux/arm64
-          push: true
-          tags: |
-            ${{ env.BACKEND_IMAGE }}:sha-${{ github.sha }}
-            ${{ env.BACKEND_IMAGE }}:v${{ steps.versions.outputs.backend }}
-          provenance: true
-          sbom: true
+      - name: Create multi-arch manifests
+        id: manifests
+        timeout-minutes: 5
+        run: |
+          set -euo pipefail
 
-      - name: Build and push frontend image
-        id: frontend
-        timeout-minutes: 20
-        uses: docker/build-push-action@v7
-        with:
-          context: .
-          file: infra/docker/prod/Dockerfile.frontend
-          platforms: linux/amd64,linux/arm64
-          push: true
-          tags: |
-            ${{ env.FRONTEND_IMAGE }}:sha-${{ github.sha }}
-            ${{ env.FRONTEND_IMAGE }}:v${{ steps.versions.outputs.frontend }}
-          provenance: true
-          sbom: true
+          backend_count=$(find "${RUNNER_TEMP}/backend-digests" -type f | wc -l)
+          frontend_count=$(find "${RUNNER_TEMP}/frontend-digests" -type f | wc -l)
+          if [ "${backend_count}" -lt 2 ] || [ "${frontend_count}" -lt 2 ]; then
+            echo "Expected 2 platform digests per image (amd64 + arm64)." >&2
+            echo "backend=${backend_count} frontend=${frontend_count}" >&2
+            exit 1
+          fi
+
+          backend_refs=""
+          for digest_file in "${RUNNER_TEMP}/backend-digests"/*; do
+            backend_refs="${backend_refs} ${BACKEND_IMAGE}@sha256:$(basename "${digest_file}")"
+          done
+
+          frontend_refs=""
+          for digest_file in "${RUNNER_TEMP}/frontend-digests"/*; do
+            frontend_refs="${frontend_refs} ${FRONTEND_IMAGE}@sha256:$(basename "${digest_file}")"
+          done
+
+          docker buildx imagetools create \
+            -t "${BACKEND_IMAGE}:sha-${GITHUB_SHA}" \
+            -t "${BACKEND_IMAGE}:v${{ steps.versions.outputs.backend }}" \
+            ${backend_refs}
+
+          docker buildx imagetools create \
+            -t "${FRONTEND_IMAGE}:sha-${GITHUB_SHA}" \
+            -t "${FRONTEND_IMAGE}:v${{ steps.versions.outputs.frontend }}" \
+            ${frontend_refs}
+
+          backend_digest=$(docker buildx imagetools inspect "${BACKEND_IMAGE}:sha-${GITHUB_SHA}" | awk '/^Digest:/{print $2; exit}')
+          frontend_digest=$(docker buildx imagetools inspect "${FRONTEND_IMAGE}:sha-${GITHUB_SHA}" | awk '/^Digest:/{print $2; exit}')
+
+          if [ -z "${backend_digest}" ] || [ -z "${frontend_digest}" ]; then
+            echo "Failed to resolve merged image digests" >&2
+            exit 1
+          fi
+
+          echo "backend_digest=${backend_digest}" >> "$GITHUB_OUTPUT"
+          echo "frontend_digest=${frontend_digest}" >> "$GITHUB_OUTPUT"
 
       - name: Install cosign
         uses: sigstore/cosign-installer@v3
@@ -1721,34 +1843,34 @@ jobs:
         timeout-minutes: 5
         env:
           COSIGN_EXPERIMENTAL: "1"
-        run: cosign sign --yes --keyless ${{ env.BACKEND_IMAGE }}@${{ steps.backend.outputs.digest }}
+        run: cosign sign --yes --keyless ${{ env.BACKEND_IMAGE }}@${{ steps.manifests.outputs.backend_digest }}
 
       - name: Sign frontend image
         timeout-minutes: 5
         env:
           COSIGN_EXPERIMENTAL: "1"
-        run: cosign sign --yes --keyless ${{ env.FRONTEND_IMAGE }}@${{ steps.frontend.outputs.digest }}
+        run: cosign sign --yes --keyless ${{ env.FRONTEND_IMAGE }}@${{ steps.manifests.outputs.frontend_digest }}
 
       - name: Generate backend SBOM
         timeout-minutes: 5
         uses: anchore/sbom-action@v0
         with:
-          image: ${{ env.BACKEND_IMAGE }}@${{ steps.backend.outputs.digest }}
+          image: ${{ env.BACKEND_IMAGE }}@${{ steps.manifests.outputs.backend_digest }}
           output-file: sbom-backend.spdx.json
 
       - name: Generate frontend SBOM
         timeout-minutes: 5
         uses: anchore/sbom-action@v0
         with:
-          image: ${{ env.FRONTEND_IMAGE }}@${{ steps.frontend.outputs.digest }}
+          image: ${{ env.FRONTEND_IMAGE }}@${{ steps.manifests.outputs.frontend_digest }}
           output-file: sbom-frontend.spdx.json
 
       - name: Record image digests
         timeout-minutes: 2
         run: |
           printf "backend=%s@%s\nfrontend=%s@%s\n" \
-            "${{ env.BACKEND_IMAGE }}" "${{ steps.backend.outputs.digest }}" \
-            "${{ env.FRONTEND_IMAGE }}" "${{ steps.frontend.outputs.digest }}" > image-digests.txt
+            "${{ env.BACKEND_IMAGE }}" "${{ steps.manifests.outputs.backend_digest }}" \
+            "${{ env.FRONTEND_IMAGE }}" "${{ steps.manifests.outputs.frontend_digest }}" > image-digests.txt
 
       - name: Download OpenAPI artifact
         uses: actions/download-artifact@v4
@@ -1788,8 +1910,8 @@ jobs:
         if: always()
         run: |
           echo "## Build Summary" >> $GITHUB_STEP_SUMMARY
-          echo "- ✅ Backend image: \`${{ env.BACKEND_IMAGE }}@${{ steps.backend.outputs.digest }}\`" >> $GITHUB_STEP_SUMMARY
-          echo "- ✅ Frontend image: \`${{ env.FRONTEND_IMAGE }}@${{ steps.frontend.outputs.digest }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Backend image: \`${{ env.BACKEND_IMAGE }}@${{ steps.manifests.outputs.backend_digest }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Frontend image: \`${{ env.FRONTEND_IMAGE }}@${{ steps.manifests.outputs.frontend_digest }}\`" >> $GITHUB_STEP_SUMMARY
           echo "- ✅ Images signed with cosign" >> $GITHUB_STEP_SUMMARY
           echo "- ✅ SBOMs generated" >> $GITHUB_STEP_SUMMARY
 
