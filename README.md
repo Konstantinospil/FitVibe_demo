@@ -47,7 +47,7 @@ FitVibe V2/
 
 **Backend:**
 
-- Node.js 20 LTS
+- Node.js 24 LTS
 - Express.js
 - Knex.js (SQL query builder)
 - PostgreSQL (≥14, target 16-18)
@@ -70,8 +70,8 @@ FitVibe V2/
 
 ### Prerequisites
 
-- Node.js 20 or newer
-- PNPM 9 (`corepack enable pnpm`)
+- Node.js 24 or newer
+- PNPM 10 (`corepack enable pnpm`)
 - Docker (optional, for local Postgres/NGINX stack)
 - Git with SSH access configured
 

@@ -164,7 +164,7 @@ jobs:
       - uses: pnpm/action-setup@v6
       - uses: actions/setup-node@v6
         with:
-          node-version: "20"
+          node-version: "24"
       - run: pnpm install
       - run: pnpm --filter @fitvibe/backend test tests/backend/db/encryption-performance-benchmark.ts
       - name: Check overhead

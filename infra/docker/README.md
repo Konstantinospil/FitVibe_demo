@@ -85,7 +85,7 @@ Located in `dev/Dockerfile.backend` and `prod/Dockerfile.backend`.
 
 **Key Features:**
 
-- Node.js 20 LTS base image
+- Node.js 24 LTS base image
 - Multi-stage build for optimization
 - TypeScript compilation
 - Production dependencies only in final stage
@@ -97,7 +97,7 @@ Located in `dev/Dockerfile.frontend` and `prod/Dockerfile.frontend`.
 
 **Key Features:**
 
-- Node.js 20 LTS base image
+- Node.js 24 LTS base image
 - Vite build process
 - NGINX for serving static assets
 - Optimized production bundle

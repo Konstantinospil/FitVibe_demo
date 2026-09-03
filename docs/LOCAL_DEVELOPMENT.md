@@ -25,7 +25,7 @@ If you prefer to run the steps manually, follow these instructions:
 ### Prerequisites
 
 1. **PostgreSQL 14+** must be installed and running locally
-2. **Node.js 20+** and **PNPM 9** installed
+2. **Node.js 24+** and **PNPM 10** installed
 3. All dependencies installed: `pnpm install`
 
 ### Step 1: Stop Docker Containers

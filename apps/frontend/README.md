@@ -6,8 +6,8 @@ The frontend is a React 18 application with Server-Side Rendering (SSR) bundled 
 
 ## Prerequisites
 
-- Node.js 20+
-- PNPM 9
+- Node.js 24+
+- PNPM 10
 
 ## Environment
 

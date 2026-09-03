@@ -100,7 +100,7 @@ We require a deterministic, secure, and budget-enforcing delivery pipeline. The 
 **Operational**
 
 - Keep lockfiles and base images updated; rotate caches; review budgets quarterly.
-- First-party GitHub Actions JS runtimes must target Node 24 (`actions/checkout@v6`, `actions/setup-node@v6`, `actions/upload-artifact@v7` / `download-artifact@v8`, `pnpm/action-setup@v6`). App Node version is independent and pinned in workflow `NODE_VERSION`.
+- First-party GitHub Actions JS runtimes must target Node 24 (`actions/checkout@v6`, `actions/setup-node@v6`, `actions/upload-artifact@v7` / `download-artifact@v8`, `pnpm/action-setup@v6`). The **application** runtime is Node 24 LTS (`NODE_VERSION: "24"`, ADR-028).
 - Record baselines for perf to keep regression signal healthy.
 
 ---
@@ -125,6 +125,7 @@ We require a deterministic, secure, and budget-enforcing delivery pipeline. The 
 
 ## Status Log
 
-| Version | Date       | Change                                                                                 | Author   |
-| ------- | ---------- | -------------------------------------------------------------------------------------- | -------- |
-| v1.0    | 2025-10-14 | Initial ADR for CI/CD on GitHub Actions with GHCR, SBOM, provenance, and quality gates | Reviewer |
+| Version | Date       | Change                                                                                 | Author               |
+| ------- | ---------- | -------------------------------------------------------------------------------------- | -------------------- |
+| v1.0    | 2025-10-14 | Initial ADR for CI/CD on GitHub Actions with GHCR, SBOM, provenance, and quality gates | Reviewer             |
+| v1.1    | 2026-09-03 | Record Node 24 action runtimes and application `NODE_VERSION` (ADR-028)                | FitVibe Architecture |

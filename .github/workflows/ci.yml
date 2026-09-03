@@ -20,7 +20,7 @@ permissions:
 
 env:
   REGISTRY: ghcr.io
-  NODE_VERSION: "20"
+  NODE_VERSION: "24"
   # Disable all caching
   TURBO_TOKEN: ""
   TURBO_REMOTE_CACHE: "false"

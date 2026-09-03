@@ -5,7 +5,7 @@
   "type": "module",
   "packageManager": "pnpm@10.34.5",
   "engines": {
-    "node": ">=18.19"
+    "node": ">=24"
   },
   "scripts": {
     "dev": "turbo run dev --parallel",
@@ -42,6 +42,7 @@
     "@lhci/cli": "^0.15.1",
     "@playwright/test": "^1.56.1",
     "@types/jest": "^30.0.0",
+    "@types/node": "^24.13.3",
     "@types/react": "^18.3.26",
     "@types/react-dom": "^18.3.7",
     "istanbul-lib-coverage": "^3.2.2",

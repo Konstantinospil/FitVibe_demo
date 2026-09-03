@@ -2,7 +2,7 @@
 ## FitVibe Backend - Monorepo Build Pipeline (Optimized)
 ## ===============================================================
 
-FROM node:20-alpine AS builder
+FROM node:24-alpine AS builder
 WORKDIR /app
 
 COPY package.json pnpm-workspace.yaml pnpm-lock.yaml ./
@@ -18,7 +18,7 @@ RUN pnpm install --frozen-lockfile --prod=false --offline
 RUN pnpm --filter @fitvibe/backend run build
 RUN pnpm deploy --filter @fitvibe/backend --prod /app/backend-deploy
 
-FROM node:20-alpine AS runtime
+FROM node:24-alpine AS runtime
 WORKDIR /app
 
 # Copy deployed backend

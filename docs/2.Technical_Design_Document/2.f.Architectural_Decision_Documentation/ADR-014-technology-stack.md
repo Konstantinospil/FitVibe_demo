@@ -17,7 +17,7 @@ The product requires a web stack that is type-safe, observable, and CI-friendly 
 
 1. **Languages & Frameworks**
    - **TypeScript** (strict mode) across frontend and backend.
-   - **Backend:** Node.js (LTS) with **Express** + `express-async-errors`.
+   - **Backend:** Node.js **24 LTS** (ADR-028) with **Express** + `express-async-errors`.
    - **Frontend:** **React** + **Vite** + **React Router**; styling with **TailwindCSS**.
    - **Schema/Validation:** **Zod** for input DTOs shared between router and tests.
 
@@ -112,6 +112,7 @@ The product requires a web stack that is type-safe, observable, and CI-friendly 
 
 ## Status Log
 
-| Version | Date       | Change                                                                                        | Author   |
-| ------- | ---------- | --------------------------------------------------------------------------------------------- | -------- |
-| v1.0    | 2025-10-14 | Initial ADR selecting Node/Express, React/Vite, Knex/Postgres, object storage, and CI budgets | Reviewer |
+| Version | Date       | Change                                                                                        | Author               |
+| ------- | ---------- | --------------------------------------------------------------------------------------------- | -------------------- |
+| v1.0    | 2025-10-14 | Initial ADR selecting Node/Express, React/Vite, Knex/Postgres, object storage, and CI budgets | Reviewer             |
+| v1.1    | 2026-09-03 | Pin backend runtime to Node.js 24 LTS (ADR-028)                                               | FitVibe Architecture |
