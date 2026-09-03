@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { BadgeDisplay } from "../../src/components/gamification/BadgeDisplay";
 
@@ -49,5 +49,34 @@ describe("BadgeDisplay", () => {
     render(<BadgeDisplay showCatalog={false} />);
 
     await waitFor(() => expect(screen.getByText("No badges earned yet")).toBeInTheDocument());
+  });
+
+  it("loads catalog badges, handles an empty catalog, and swallows catalog errors", async () => {
+    getUserBadges.mockResolvedValue({ badges: [], total: 0 });
+    getBadgeCatalog.mockRejectedValueOnce(new Error("fail")).mockResolvedValueOnce({
+      badges: [],
+    });
+    const { rerender } = render(<BadgeDisplay />);
+    fireEvent.click(await screen.findByRole("tab", { name: /catalog/i }));
+    await waitFor(() => expect(getBadgeCatalog).toHaveBeenCalled());
+    expect(await screen.findByText("No badges in the catalog")).toBeInTheDocument();
+
+    getBadgeCatalog.mockResolvedValue({
+      badges: [{ id: "c1", code: "cat", name: "Catalog Badge", description: "All" }],
+    });
+    rerender(<BadgeDisplay />);
+  });
+
+  it("renders catalog badges and forwards clicks", async () => {
+    getUserBadges.mockResolvedValue({ badges: [], total: 0 });
+    getBadgeCatalog.mockResolvedValue({
+      badges: [{ id: "c1", code: "cat", name: "Catalog Badge", description: "All" }],
+    });
+    const onBadgeClick = vi.fn();
+    render(<BadgeDisplay onBadgeClick={onBadgeClick} />);
+    fireEvent.click(await screen.findByRole("tab", { name: /catalog/i }));
+    expect(await screen.findByText("Catalog Badge")).toBeInTheDocument();
+    fireEvent.click(screen.getByText("Catalog Badge"));
+    expect(onBadgeClick).toHaveBeenCalled();
   });
 });

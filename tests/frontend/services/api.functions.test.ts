@@ -43,6 +43,40 @@ import {
   disable2FA,
   get2FAStatus,
   getDashboardAnalytics,
+  submitContact,
+  getCurrentUser,
+  updateProfile,
+  acceptTerms,
+  revokeTerms,
+  acceptPrivacyPolicy,
+  revokePrivacyPolicy,
+  getLegalDocumentsStatus,
+  getLegalDocumentVersions,
+  resendVerificationEmail,
+  logout,
+  listAuthSessions,
+  revokeAuthSessions,
+  bookmarkFeedItem,
+  unbookmarkFeedItem,
+  followUser,
+  unfollowUser,
+  getVibePoints,
+  unsuspendUser,
+  getPointsBalance,
+  getPointsHistory,
+  getUserBadges,
+  getBadgeCatalog,
+  getLeaderboard,
+  changePassword,
+  getPrivacySettings,
+  updatePrivacySettings,
+  deleteAccount,
+  exportUserData,
+  getFeedItemComments,
+  addComment,
+  deleteComment,
+  createShareLink,
+  revokeShareLink,
 } from "../../src/services/api";
 
 describe("API Service Functions", () => {
@@ -163,6 +197,71 @@ describe("API Service Functions", () => {
       const result = await getFeed({ scope: "public", limit: 10, offset: 0 });
 
       expect(result).toEqual(mockResponse);
+    });
+
+    it("maps items with sessions, missing titles, and empty sessions", async () => {
+      apiMock.onGet("/api/v1/feed").reply(200, {
+        items: [
+          {
+            feedItemId: "f1",
+            ownerId: "u1",
+            ownerUsername: "alex",
+            ownerDisplayName: "Alex",
+            visibility: "public",
+            publishedAt: "2025-01-01T00:00:00.000Z",
+            session: {
+              id: "s1",
+              title: "Lift",
+              completedAt: "2025-01-01T01:00:00.000Z",
+              points: 10,
+            },
+            stats: { likes: 1, comments: 2, viewerHasLiked: true, viewerHasBookmarked: false },
+          },
+          {
+            feedItemId: "f2",
+            ownerId: "u2",
+            ownerUsername: "sam",
+            ownerDisplayName: "",
+            visibility: "private",
+            publishedAt: null,
+            session: {
+              id: "s2",
+              title: null,
+              completedAt: null,
+              points: null,
+            },
+            stats: { likes: 0, comments: 0, viewerHasLiked: false, viewerHasBookmarked: true },
+          },
+          {
+            feedItemId: "f3",
+            ownerId: "u3",
+            ownerUsername: "pat",
+            ownerDisplayName: "",
+            visibility: "followers",
+            publishedAt: null,
+            session: null,
+            stats: { likes: 0, comments: 0, viewerHasLiked: false, viewerHasBookmarked: false },
+          },
+        ],
+        total: 3,
+        limit: 20,
+        offset: 0,
+      });
+
+      const result = await getFeed();
+
+      expect(result.items[0]).toMatchObject({
+        id: "f1",
+        user: { displayName: "Alex" },
+        session: { id: "s1", title: "Lift", completedAt: "2025-01-01T01:00:00.000Z" },
+        isLiked: true,
+        isBookmarked: false,
+      });
+      expect(result.items[1].user.displayName).toBeUndefined();
+      expect(result.items[1].session.title).toBeUndefined();
+      expect(result.items[1].session.completedAt).toBeUndefined();
+      expect(result.items[2].session.id).toBe("");
+      expect(result.items[2].session.exerciseCount).toBe(0);
     });
   });
 
@@ -767,6 +866,35 @@ describe("API Service Functions", () => {
       expect(result.personalRecords[1].value).toBe("100 kg");
     });
 
+    it("formats positive change trends and missing PR units", async () => {
+      const summaryResponse = {
+        totalSessions: 10,
+        totalVolume: 2500,
+        currentStreak: 5,
+        streakChange: 2,
+        sessionsChange: 4,
+        volumeChange: 1500,
+        personalRecords: [
+          { exerciseName: "Squat", value: 140, unit: null, achievedAt: "2025-02-01" },
+        ],
+      };
+      const trendsResponse: unknown[] = [];
+
+      apiMock
+        .onGet("/api/v1/progress/summary", { params: { period: 30 } })
+        .reply(200, summaryResponse);
+      apiMock
+        .onGet("/api/v1/progress/trends", { params: { period: 30, group_by: "week" } })
+        .reply(200, trendsResponse);
+
+      const result = await getDashboardAnalytics({ range: "4w", grain: "weekly" });
+
+      expect(result.summary[0].trend).toContain("+2 vs last period");
+      expect(result.summary[1].trend).toContain("+4 vs last period");
+      expect(result.summary[2].trend).toContain("+1.5k kg vs last period");
+      expect(result.personalRecords[0].value).toBe("140 kg");
+    });
+
     it("should truncate trends when exceeding MAX_ANALYTIC_ROWS", async () => {
       const summaryResponse = {
         totalSessions: 10,
@@ -817,6 +945,243 @@ describe("API Service Functions", () => {
 
       expect(result.aggregates[0].period).toBe("Week 1");
       expect(result.aggregates[1].period).toBe("Week 2");
+    });
+  });
+
+  const userDetail = {
+    id: "u1",
+    username: "alex",
+    displayName: "Alex",
+    locale: "en",
+    preferredLang: "en",
+    defaultVisibility: "private",
+    units: "metric",
+    role: "athlete",
+    status: "active",
+    createdAt: "2025-01-01T00:00:00.000Z",
+    updatedAt: "2025-01-02T00:00:00.000Z",
+    primaryEmail: "alex@example.com",
+    profile: {
+      alias: "A",
+      bio: "lifter",
+      weight: 80,
+      weightUnit: "kg",
+      fitnessLevel: "intermediate",
+      trainingFrequency: "3_4_per_week",
+    },
+  };
+
+  describe("profile and legal endpoints", () => {
+    it("maps the current user with and without profile fields", async () => {
+      apiMock.onGet("/api/v1/users/me").replyOnce(200, userDetail);
+      await expect(getCurrentUser()).resolves.toMatchObject({
+        id: "u1",
+        email: "alex@example.com",
+        bio: "lifter",
+        alias: "A",
+        weight: 80,
+      });
+
+      apiMock.onGet("/api/v1/users/me").replyOnce(200, {
+        ...userDetail,
+        primaryEmail: null,
+        profile: undefined,
+      });
+      await expect(getCurrentUser()).resolves.toMatchObject({
+        email: undefined,
+        bio: null,
+        alias: null,
+        weight: null,
+        weightUnit: null,
+        fitnessLevel: null,
+        trainingFrequency: null,
+      });
+    });
+
+    it("updates the profile via PUT and maps the response", async () => {
+      apiMock.onPut("/api/v1/users/me").replyOnce(200, userDetail);
+      await expect(updateProfile({ displayName: "Alex" })).resolves.toMatchObject({
+        displayName: "Alex",
+        email: "alex@example.com",
+      });
+
+      apiMock.onPut("/api/v1/users/me").replyOnce(200, {
+        ...userDetail,
+        primaryEmail: "",
+        profile: undefined,
+      });
+      await expect(updateProfile({ displayName: "Alex" })).resolves.toMatchObject({
+        email: undefined,
+        bio: null,
+      });
+    });
+
+    it("covers contact, terms, privacy, and legal document calls", async () => {
+      rawMock.onPost("/api/v1/contact").reply(200, {
+        success: true,
+        data: { id: "c1", createdAt: "2025-01-01T00:00:00.000Z" },
+      });
+      await expect(
+        submitContact({ email: "a@b.c", topic: "help", message: "hi" }),
+      ).resolves.toMatchObject({ success: true });
+
+      apiMock.onPost("/api/v1/auth/terms/accept").reply(200, { message: "ok" });
+      await expect(acceptTerms({ terms_accepted: true })).resolves.toEqual({ message: "ok" });
+      apiMock.onPost("/api/v1/auth/terms/revoke").reply(200, { message: "ok" });
+      await expect(revokeTerms()).resolves.toEqual({ message: "ok" });
+      apiMock.onPost("/api/v1/auth/privacy/accept").reply(200, { message: "ok" });
+      await expect(acceptPrivacyPolicy({ privacy_policy_accepted: true })).resolves.toEqual({
+        message: "ok",
+      });
+      apiMock.onPost("/api/v1/auth/privacy/revoke").reply(200, { message: "ok" });
+      await expect(revokePrivacyPolicy()).resolves.toEqual({ message: "ok" });
+
+      apiMock.onGet("/api/v1/auth/legal-documents/status").reply(200, { terms: {}, privacy: {} });
+      await expect(getLegalDocumentsStatus()).resolves.toEqual({ terms: {}, privacy: {} });
+      apiMock
+        .onGet("/api/v1/auth/legal-documents/versions")
+        .reply(200, { terms: "1", privacy: "1", cookie: "1" });
+      await expect(getLegalDocumentVersions()).resolves.toEqual({
+        terms: "1",
+        privacy: "1",
+        cookie: "1",
+      });
+
+      rawMock.onPost("/api/v1/auth/verify/resend").reply(200, { message: "sent" });
+      await expect(resendVerificationEmail({ email: "a@b.c" })).resolves.toEqual({
+        message: "sent",
+      });
+      rawMock.onPost("/api/v1/auth/logout").reply(204);
+      await expect(logout()).resolves.toBeUndefined();
+    });
+  });
+
+  describe("sessions, social, and account endpoints", () => {
+    it("lists and revokes auth sessions", async () => {
+      apiMock.onGet("/api/v1/auth/sessions").reply(200, { sessions: [] });
+      await expect(listAuthSessions()).resolves.toEqual({ sessions: [] });
+      apiMock.onPost("/api/v1/auth/sessions/revoke").reply(200, { revoked: 1 });
+      await expect(revokeAuthSessions({ sessionId: "s1" })).resolves.toEqual({ revoked: 1 });
+    });
+
+    it("bookmarks, follows, and clones with optional payloads", async () => {
+      apiMock.onPost("/api/v1/feed/item/f1/bookmark").reply(204);
+      await expect(bookmarkFeedItem("f1")).resolves.toBeUndefined();
+      apiMock.onDelete("/api/v1/feed/item/f1/bookmark").reply(204);
+      await expect(unbookmarkFeedItem("f1")).resolves.toBeUndefined();
+      apiMock.onPost("/api/v1/users/u1/follow").reply(204);
+      await expect(followUser("u1")).resolves.toBeUndefined();
+      apiMock.onDelete("/api/v1/users/u1/follow").reply(204);
+      await expect(unfollowUser("u1")).resolves.toBeUndefined();
+
+      apiMock.onPost("/api/v1/sessions/session-1/clone").reply(200, { id: "session-2" });
+      await expect(
+        cloneSession("session-1", { planned_at: "2025-01-03T00:00:00Z" }),
+      ).resolves.toEqual({
+        id: "session-2",
+      });
+
+      apiMock
+        .onPost("/api/v1/admin/users/user-1/suspend")
+        .reply(200, { success: true, message: "ok" });
+      await expect(suspendUser("user-1", { reason: "spam" })).resolves.toEqual({
+        success: true,
+        message: "ok",
+      });
+      apiMock.onPost("/api/v1/admin/users/user-1/ban").reply(200, { success: true, message: "ok" });
+      await expect(banUser("user-1", { reason: "abuse" })).resolves.toEqual({
+        success: true,
+        message: "ok",
+      });
+      apiMock
+        .onPost("/api/v1/admin/users/user-1/activate")
+        .reply(200, { success: true, message: "ok" });
+      await expect(activateUser("user-1", { reason: "appeal" })).resolves.toEqual({
+        success: true,
+        message: "ok",
+      });
+    });
+
+    it("covers points, badges, privacy, comments, and share links", async () => {
+      apiMock
+        .onGet("/api/v1/progress/vibes")
+        .reply(200, { period_months: 12, months: [], overall: {}, vibes: [] });
+      await expect(getVibePoints()).resolves.toMatchObject({ period_months: 12 });
+      await expect(getVibePoints(6)).resolves.toMatchObject({ period_months: 12 });
+
+      apiMock
+        .onPost("/api/v1/admin/users/u1/unsuspend")
+        .reply(200, { success: true, message: "ok" });
+      await expect(unsuspendUser("u1")).resolves.toEqual({ success: true, message: "ok" });
+      await expect(unsuspendUser("u1", { reason: "appeal" })).resolves.toEqual({
+        success: true,
+        message: "ok",
+      });
+
+      apiMock.onGet("/api/v1/points").reply(200, { balance: 10 });
+      await expect(getPointsBalance()).resolves.toEqual({ balance: 10 });
+      apiMock
+        .onGet("/api/v1/points/history")
+        .reply(200, { entries: [], total: 0, limit: 20, offset: 0 });
+      await expect(getPointsHistory({ limit: 10 })).resolves.toMatchObject({ entries: [] });
+      await expect(getPointsHistory()).resolves.toMatchObject({ entries: [] });
+
+      apiMock.onGet("/api/v1/badges").reply(200, { badges: [], total: 0 });
+      await expect(getUserBadges()).resolves.toEqual({ badges: [], total: 0 });
+      apiMock.onGet("/api/v1/badges/catalog").reply(200, { badges: [], total: 0 });
+      await expect(getBadgeCatalog()).resolves.toEqual({ badges: [], total: 0 });
+      apiMock.onGet("/api/v1/leaderboards").reply(200, { entries: [], total: 0 });
+      await expect(getLeaderboard({ type: "global", period: "week" })).resolves.toMatchObject({
+        entries: [],
+      });
+
+      apiMock.onPatch("/api/v1/users/me/password").reply(204);
+      await expect(
+        changePassword({ currentPassword: "a", newPassword: "b" }),
+      ).resolves.toBeUndefined();
+      apiMock.onGet("/api/v1/users/me/privacy").reply(200, {
+        defaultVisibility: "private",
+        allowFollowers: true,
+        showEmail: false,
+        showWeight: false,
+        showFitnessLevel: false,
+      });
+      await expect(getPrivacySettings()).resolves.toMatchObject({ allowFollowers: true });
+      apiMock.onPatch("/api/v1/users/me/privacy").reply(200, {
+        defaultVisibility: "private",
+        allowFollowers: false,
+        showEmail: false,
+        showWeight: false,
+        showFitnessLevel: false,
+      });
+      await expect(updatePrivacySettings({ allowFollowers: false })).resolves.toMatchObject({
+        allowFollowers: false,
+      });
+      apiMock.onDelete("/api/v1/users/me").reply(200, {
+        status: "pending_deletion",
+        scheduledAt: "2025-01-01T00:00:00.000Z",
+        purgeDueAt: "2025-01-31T00:00:00.000Z",
+        backupPurgeDueAt: "2025-02-28T00:00:00.000Z",
+      });
+      await expect(deleteAccount({ password: "x" })).resolves.toMatchObject({
+        status: "pending_deletion",
+      });
+      apiMock.onGet("/api/v1/users/me/export").reply(200, new Blob(["data"]));
+      await expect(exportUserData()).resolves.toBeInstanceOf(Blob);
+
+      apiMock.onGet("/api/v1/feed/f1/comments").reply(200, { comments: [] });
+      await expect(getFeedItemComments("f1", { limit: 10 })).resolves.toEqual({ comments: [] });
+      await expect(getFeedItemComments("f1")).resolves.toEqual({ comments: [] });
+      apiMock.onPost("/api/v1/feed/f1/comments").reply(200, { comment: { id: "c1" } });
+      await expect(addComment("f1", { body: "nice" })).resolves.toEqual({ comment: { id: "c1" } });
+      apiMock.onDelete("/api/v1/feed/comments/c1").reply(204);
+      await expect(deleteComment("c1")).resolves.toBeUndefined();
+      apiMock
+        .onPost("/api/v1/sessions/s1/share")
+        .reply(200, { url: "https://x", token: "t", shareLink: "l" });
+      await expect(createShareLink("s1")).resolves.toMatchObject({ token: "t" });
+      apiMock.onDelete("/api/v1/sessions/s1/share").reply(204);
+      await expect(revokeShareLink("s1")).resolves.toBeUndefined();
     });
   });
 });

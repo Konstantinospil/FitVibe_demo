@@ -188,4 +188,35 @@ describe("LanguageSwitcher", () => {
       { timeout: 2000 },
     );
   });
+
+  it("supports keyboard navigation, unknown locale fallback, and option keyboard select", async () => {
+    const { container } = render(<LanguageSwitcher />);
+    const button =
+      Array.from(screen.getAllByRole("button", { name: /select language/i })).find((btn) =>
+        container.contains(btn),
+      ) || screen.getAllByRole("button", { name: /select language/i })[0];
+
+    fireEvent.keyDown(button, { key: "Escape" });
+    fireEvent.keyDown(button, { key: "ArrowDown" });
+    expect(await screen.findByRole("menu")).toBeInTheDocument();
+
+    fireEvent.keyDown(button, { key: "ArrowDown" });
+    fireEvent.keyDown(button, { key: "ArrowUp" });
+    fireEvent.keyDown(button, { key: "End" });
+    fireEvent.keyDown(button, { key: "Home" });
+    fireEvent.keyDown(button, { key: "x" });
+    await waitFor(() => expect(screen.queryByRole("menu")).not.toBeInTheDocument());
+
+    fireEvent.keyDown(button, { key: "Enter" });
+    expect(await screen.findByRole("menu")).toBeInTheDocument();
+    fireEvent.keyDown(button, { key: "Escape" });
+    await waitFor(() => expect(screen.queryByRole("menu")).not.toBeInTheDocument());
+
+    fireEvent.keyDown(button, { key: " " });
+    const german = await screen.findByRole("menuitemradio", { name: /german/i });
+    fireEvent.mouseEnter(german);
+    fireEvent.focus(german);
+    fireEvent.keyDown(german, { key: "Enter" });
+    await waitFor(() => expect(screen.queryByRole("menu")).not.toBeInTheDocument());
+  });
 });

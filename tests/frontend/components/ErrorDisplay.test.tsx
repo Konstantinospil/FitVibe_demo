@@ -25,4 +25,13 @@ describe("ErrorDisplay", () => {
 
     expect(screen.queryByRole("button")).not.toBeInTheDocument();
   });
+
+  it("renders the compact variant with a retry action", () => {
+    const onRetry = vi.fn();
+    render(<ErrorDisplay variant="compact" message="Network down" onRetry={onRetry} />);
+
+    expect(screen.getByText("Network down")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Retry" }));
+    expect(onRetry).toHaveBeenCalledTimes(1);
+  });
 });

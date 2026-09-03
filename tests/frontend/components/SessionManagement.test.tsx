@@ -931,6 +931,43 @@ describe("SessionManagement", () => {
           isCurrent: false,
           revokedAt: null,
         },
+        {
+          id: "session-3",
+          userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Edg/120.0.0.0",
+          ip: null,
+          createdAt: "not-a-date",
+          expiresAt: "also-bad",
+          isCurrent: false,
+          revokedAt: null,
+        },
+        {
+          id: "session-4",
+          userAgent: "Mozilla/5.0 (X11; Linux x86_64) OPR/80.0.0.0",
+          ip: "10.0.0.4",
+          createdAt: "2024-01-04T00:00:00Z",
+          expiresAt: "2024-01-11T00:00:00Z",
+          isCurrent: false,
+          revokedAt: null,
+        },
+        {
+          id: "session-5",
+          userAgent: "FitVibeCustomAgent/1.0 extra-long-user-agent-value-for-fallback",
+          ip: "10.0.0.5",
+          createdAt: "2024-01-05T00:00:00Z",
+          expiresAt: "2024-01-12T00:00:00Z",
+          isCurrent: false,
+          revokedAt: null,
+        },
+        {
+          id: "session-6",
+          userAgent:
+            "Mozilla/5.0 (Linux; Android 13; Pixel) AppleWebKit/537.36 Mobile Safari/537.36",
+          ip: "10.0.0.6",
+          createdAt: "2024-01-06T00:00:00Z",
+          expiresAt: "2024-01-13T00:00:00Z",
+          isCurrent: false,
+          revokedAt: null,
+        },
       ];
 
       vi.mocked(api.listAuthSessions).mockResolvedValue({ sessions });
@@ -956,10 +993,59 @@ describe("SessionManagement", () => {
       );
       await waitFor(
         () => {
-          expect(screen.getByText("Safari")).toBeInTheDocument();
+          expect(screen.getAllByText("Safari").length).toBeGreaterThan(0);
         },
         { timeout: 3000 },
       );
+      expect(screen.getByText("Edge")).toBeInTheDocument();
+      expect(screen.getByText("Opera")).toBeInTheDocument();
+      expect(screen.getByText(/FitVibeCustomAgent/)).toBeInTheDocument();
+    });
+
+    it("labels android, tablet, and opera sessions without a current session", async () => {
+      vi.mocked(api.listAuthSessions).mockResolvedValue({
+        sessions: [
+          {
+            id: "android",
+            userAgent: "Mozilla/5.0 (Linux; Android 14; Pixel) AppleWebKit/537.36",
+            ip: null,
+            createdAt: "2024-01-01T00:00:00Z",
+            expiresAt: "2024-01-08T00:00:00Z",
+            isCurrent: false,
+            revokedAt: null,
+          },
+          {
+            id: "tablet",
+            userAgent: "Mozilla/5.0 (Linux; Tablet) AppleWebKit/537.36 Firefox/120.0",
+            ip: "10.0.0.8",
+            createdAt: "2024-01-02T00:00:00Z",
+            expiresAt: "2024-01-09T00:00:00Z",
+            isCurrent: false,
+            revokedAt: null,
+          },
+          {
+            id: "opera",
+            userAgent: "Opera/9.80 (Windows NT 6.1) Presto/2.12.388",
+            ip: "10.0.0.9",
+            createdAt: "2024-01-03T00:00:00Z",
+            expiresAt: "2024-01-10T00:00:00Z",
+            isCurrent: false,
+            revokedAt: null,
+          },
+        ],
+      });
+
+      render(
+        <QueryClientProvider client={queryClient}>
+          <SessionManagement />
+        </QueryClientProvider>,
+      );
+
+      await waitFor(() => {
+        expect(screen.getByText("Firefox")).toBeInTheDocument();
+      });
+      expect(screen.getByText("Opera")).toBeInTheDocument();
+      expect(screen.queryByText("Current")).not.toBeInTheDocument();
     });
   });
 });
