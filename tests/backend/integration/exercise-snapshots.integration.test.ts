@@ -16,31 +16,22 @@ import {
   truncateAll,
   ensureRolesSeeded,
   withDatabaseErrorHandling,
-  isDatabaseAvailable,
   ensureUsernameColumnExists,
 } from "../../setup/test-helpers.js";
+import { describeWithTestDatabase } from "../../setup/db-availability.js";
 import { v4 as uuidv4 } from "uuid";
 import { getCurrentTermsVersion } from "../../../apps/backend/src/config/terms.js";
 
-describe("Integration: Exercise Snapshots", () => {
-  let dbAvailable = false;
+describeWithTestDatabase("Integration: Exercise Snapshots", () => {
   let authToken: string;
   let userId: string;
   let exerciseId: string;
 
   beforeAll(async () => {
-    dbAvailable = await isDatabaseAvailable();
-    if (!dbAvailable) {
-      console.warn("\n⚠️  Integration tests will be skipped (database unavailable)");
-      return;
-    }
     await ensureUsernameColumnExists();
   });
 
   beforeEach(async () => {
-    if (!dbAvailable) {
-      return;
-    }
     await withDatabaseErrorHandling(async () => {
       const { env } = await import("../../../apps/backend/src/config/env.js");
       (env as { readOnlyMode: boolean }).readOnlyMode = false;
@@ -118,18 +109,10 @@ describe("Integration: Exercise Snapshots", () => {
   });
 
   afterEach(async () => {
-    if (!dbAvailable) {
-      return;
-    }
     await truncateAll();
   });
 
   it("should store exercise name snapshot when exercise is added to session", async () => {
-    if (!dbAvailable) {
-      console.warn("Skipping test: database unavailable");
-      return;
-    }
-
     // Create a session with the exercise
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
@@ -164,11 +147,6 @@ describe("Integration: Exercise Snapshots", () => {
   });
 
   it("should preserve exercise name snapshot when exercise is modified", async () => {
-    if (!dbAvailable) {
-      console.warn("Skipping test: database unavailable");
-      return;
-    }
-
     // Create a session with the exercise
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
@@ -216,11 +194,6 @@ describe("Integration: Exercise Snapshots", () => {
   });
 
   it("should preserve exercise name snapshot when exercise is archived", async () => {
-    if (!dbAvailable) {
-      console.warn("Skipping test: database unavailable");
-      return;
-    }
-
     // Create a session with the exercise
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
@@ -268,11 +241,6 @@ describe("Integration: Exercise Snapshots", () => {
   });
 
   it("should display snapshot name in session details", async () => {
-    if (!dbAvailable) {
-      console.warn("Skipping test: database unavailable");
-      return;
-    }
-
     // Create a session with the exercise
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
@@ -316,11 +284,6 @@ describe("Integration: Exercise Snapshots", () => {
   });
 
   it("should handle exercises without exercise_id (null exercise_id)", async () => {
-    if (!dbAvailable) {
-      console.warn("Skipping test: database unavailable");
-      return;
-    }
-
     // Create a session with a null exercise_id (manual exercise entry)
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);

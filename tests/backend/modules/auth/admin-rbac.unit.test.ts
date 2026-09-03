@@ -309,27 +309,3 @@ describe("AC-1.7: Admin RBAC Middleware", () => {
     });
   });
 });
-
-describe("AC-1.7: Admin Endpoint Coverage", () => {
-  it("should document admin-only endpoints", () => {
-    // This test serves as documentation of which endpoints require admin role
-    const adminEndpoints = [
-      "POST /api/v1/users",
-      "GET /api/v1/users",
-      "GET /api/v1/users/:id",
-      "PATCH /api/v1/users/:id/status",
-      "POST /api/v1/system/read-only/enable",
-      "POST /api/v1/system/read-only/disable",
-      "POST /api/v1/exercise-types",
-      "PATCH /api/v1/exercise-types/:code",
-      "DELETE /api/v1/exercise-types/:code",
-    ];
-
-    // Verify documentation list is not empty
-    expect(adminEndpoints.length).toBeGreaterThan(0);
-
-    // This test passes to document the expected admin endpoints
-    // Integration tests should verify each of these actually enforces admin role
-    expect(adminEndpoints).toBeDefined();
-  });
-});

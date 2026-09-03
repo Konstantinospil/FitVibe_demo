@@ -4,116 +4,71 @@
  * Tests that feed endpoint meets performance target: p95 ≤400ms
  */
 
-import { describe, it, expect, beforeAll, afterAll } from "@jest/globals";
+import { it, expect, beforeAll, afterAll } from "@jest/globals";
 import request from "supertest";
 import { v4 as uuidv4 } from "uuid";
 import bcrypt from "bcryptjs";
 import app from "../../../apps/backend/src/app.js";
-import db from "../../../apps/backend/src/db/index.js";
 import { createUser } from "../../../apps/backend/src/modules/auth/auth.repository.js";
 import {
   truncateAll,
   ensureRolesSeeded,
-  isDatabaseAvailable,
   ensureUsernameColumnExists,
-  withDatabaseErrorHandling,
 } from "../../setup/test-helpers.js";
+import { describeWithTestDatabase } from "../../setup/db-availability.js";
 
-describe("Performance: Feed Endpoint", () => {
-  let dbAvailable = false;
+describeWithTestDatabase("Performance: Feed Endpoint", () => {
   let authCookie: string;
 
   beforeAll(async () => {
-    dbAvailable = await isDatabaseAvailable();
-    if (!dbAvailable) {
-      console.warn("\n⚠️  Performance tests will be skipped (database unavailable)");
-      return;
+    const dbModule = await import("../../../apps/backend/src/db/index.js");
+    const hasUsersTable = await dbModule.default.schema.hasTable("users");
+    if (!hasUsersTable) {
+      throw new Error("Feed performance tests require migrated tables (users is missing).");
     }
 
-    try {
-      // Check if users table exists before trying to set up
-      const dbModule = await import("../../../apps/backend/src/db/index.js");
-      const hasUsersTable = await dbModule.default.schema.hasTable("users");
-      if (!hasUsersTable) {
-        console.warn(
-          "\n⚠️  Performance tests will be skipped (database tables not available - migrations may not have been run)",
-        );
-        dbAvailable = false;
-        return;
-      }
+    await ensureUsernameColumnExists();
+    await truncateAll();
+    await ensureRolesSeeded();
 
-      await ensureUsernameColumnExists();
-      await truncateAll();
-      await ensureRolesSeeded();
+    const testEmail = `test-${uuidv4()}@example.com`;
+    const testUsername = `testuser-${uuidv4().substring(0, 8)}`;
+    const hashedPassword = await bcrypt.hash("SecureP@ssw0rd123!", 10);
 
-      // Create test user and login
-      const testEmail = `test-${uuidv4()}@example.com`;
-      const testUsername = `testuser-${uuidv4().substring(0, 8)}`;
-      const hashedPassword = await bcrypt.hash("SecureP@ssw0rd123!", 10);
+    await createUser({
+      id: uuidv4(),
+      email: testEmail,
+      username: testUsername,
+      passwordHash: hashedPassword,
+      displayName: "Test User",
+      roleCode: "user",
+      locale: "en",
+      preferredLang: "en",
+      status: "active",
+    });
 
-      const user = await createUser({
-        id: uuidv4(),
-        email: testEmail,
-        username: testUsername,
-        passwordHash: hashedPassword,
-        displayName: "Test User",
-        roleCode: "user",
-        locale: "en",
-        preferredLang: "en",
-        status: "active",
-      });
+    const loginResponse = await request(app).post("/api/v1/auth/login").send({
+      email: testEmail,
+      password: "SecureP@ssw0rd123!",
+    });
 
-      // Login to get auth cookie
-      const loginResponse = await request(app).post("/api/v1/auth/login").send({
-        email: testEmail,
-        password: "SecureP@ssw0rd123!",
-      });
+    if (loginResponse.status !== 200) {
+      throw new Error(
+        `Feed performance tests failed to authenticate (status ${loginResponse.status}).`,
+      );
+    }
 
-      if (loginResponse.status !== 200) {
-        console.warn("\n⚠️  Performance tests will be skipped (failed to authenticate test user)");
-        dbAvailable = false;
-        return;
-      }
-
-      authCookie = loginResponse.headers["set-cookie"]?.[0] || "";
-      if (!authCookie) {
-        console.warn("\n⚠️  Performance tests will be skipped (no auth cookie received)");
-        dbAvailable = false;
-        return;
-      }
-
-      // Note: In a real scenario, you'd set up test data with many feed items
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      if (
-        errorMessage.includes("does not exist") ||
-        errorMessage.includes("relation") ||
-        errorMessage.includes("ECONNREFUSED")
-      ) {
-        console.warn(
-          "\n⚠️  Performance tests will be skipped (database tables not available - migrations may not have been run)",
-        );
-        dbAvailable = false;
-        return;
-      }
-      // For other errors, log but don't fail the test suite
-      console.warn(`\n⚠️  Performance tests will be skipped (setup error: ${errorMessage})`);
-      dbAvailable = false;
+    authCookie = loginResponse.headers["set-cookie"]?.[0] || "";
+    if (!authCookie) {
+      throw new Error("Feed performance tests did not receive an auth cookie.");
     }
   });
 
   afterAll(async () => {
-    if (dbAvailable) {
-      await truncateAll();
-    }
+    await truncateAll();
   });
 
   it("should meet p95 response time target of ≤400ms", async () => {
-    if (!dbAvailable) {
-      console.warn("Skipping test: database unavailable");
-      return;
-    }
-
     // This is a placeholder test structure
     // In a real performance test, you would:
     // 1. Create many feed items (1000+)
@@ -143,11 +98,6 @@ describe("Performance: Feed Endpoint", () => {
   }, 10000); // 10 second timeout for performance test
 
   it("should handle pagination efficiently", async () => {
-    if (!dbAvailable) {
-      console.warn("Skipping test: database unavailable");
-      return;
-    }
-
     // Test that pagination doesn't significantly impact performance
     const offsets = [0, 20, 40, 60, 80];
     const responseTimes: number[] = [];

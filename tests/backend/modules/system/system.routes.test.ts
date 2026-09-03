@@ -3,31 +3,19 @@ import app from "../../../../apps/backend/src/app.js";
 import { env } from "../../../../apps/backend/src/config/env.js";
 import { createAuthToken } from "../../../../apps/backend/src/modules/auth/auth.repository.js";
 import { createUser } from "../../../../apps/backend/src/modules/auth/auth.repository.js";
-import {
-  truncateAll,
-  ensureRolesSeeded,
-  isDatabaseAvailable,
-} from "../../../setup/test-helpers.js";
+import { truncateAll, ensureRolesSeeded } from "../../../setup/test-helpers.js";
+import { describeWithTestDatabase } from "../../../setup/db-availability.js";
 import { getCurrentTermsVersion } from "../../../../apps/backend/src/config/terms.js";
 
-describe("System Routes", () => {
+describeWithTestDatabase("System Routes", () => {
   let adminUser: { id: string; email: string; username: string };
   let adminToken: string;
-  let dbAvailable = false;
 
   beforeAll(async () => {
-    dbAvailable = await isDatabaseAvailable();
-    if (!dbAvailable) {
-      console.warn("\n⚠️  System routes tests will be skipped (database unavailable)");
-      return;
-    }
     await ensureRolesSeeded();
   });
 
   beforeEach(async () => {
-    if (!dbAvailable) {
-      return;
-    }
     try {
       await truncateAll();
       await ensureRolesSeeded();
@@ -52,12 +40,9 @@ describe("System Routes", () => {
         type: "access",
       });
     } catch (error) {
-      // If database operations fail (e.g., tables don't exist), mark as unavailable
       const errorMessage = error instanceof Error ? error.message : String(error);
       if (errorMessage.includes("does not exist") || errorMessage.includes("relation")) {
-        dbAvailable = false;
-        console.warn("\n⚠️  System routes tests will be skipped (database tables not available)");
-        return;
+        throw new Error(`System routes tests require migrated tables: ${errorMessage}`);
       }
       throw error;
     }
@@ -65,9 +50,6 @@ describe("System Routes", () => {
 
   describe("GET /api/v1/system/health", () => {
     it("should return health status", async () => {
-      if (!dbAvailable) {
-        return;
-      }
       const response = await request(app).get("/api/v1/system/health");
 
       expect(response.status).toBe(200);
@@ -82,9 +64,6 @@ describe("System Routes", () => {
 
   describe("GET /api/v1/system/read-only/status", () => {
     it("should return read-only mode status", async () => {
-      if (!dbAvailable) {
-        return;
-      }
       const response = await request(app).get("/api/v1/system/read-only/status");
 
       expect(response.status).toBe(200);
@@ -94,9 +73,6 @@ describe("System Routes", () => {
     });
 
     it("should include maintenance message when in read-only mode", async () => {
-      if (!dbAvailable) {
-        return;
-      }
       const originalReadOnly = env.readOnlyMode;
       (env as { readOnlyMode: boolean }).readOnlyMode = true;
 
@@ -114,9 +90,6 @@ describe("System Routes", () => {
 
   describe("POST /api/v1/system/read-only/enable", () => {
     it("should require authentication", async () => {
-      if (!dbAvailable) {
-        return;
-      }
       const response = await request(app)
         .post("/api/v1/system/read-only/enable")
         .send({ reason: "Test" });
@@ -125,9 +98,6 @@ describe("System Routes", () => {
     });
 
     it("should require admin role", async () => {
-      if (!dbAvailable) {
-        return;
-      }
       // Create regular user
       const regularUser = await createUser({
         email: "user@test.com",
@@ -155,9 +125,6 @@ describe("System Routes", () => {
     });
 
     it("should enable read-only mode", async () => {
-      if (!dbAvailable) {
-        return;
-      }
       const originalReadOnly = env.readOnlyMode;
       (env as { readOnlyMode: boolean }).readOnlyMode = false;
 
@@ -181,9 +148,6 @@ describe("System Routes", () => {
     });
 
     it("should handle missing optional fields", async () => {
-      if (!dbAvailable) {
-        return;
-      }
       const originalReadOnly = env.readOnlyMode;
       (env as { readOnlyMode: boolean }).readOnlyMode = false;
 
@@ -203,9 +167,6 @@ describe("System Routes", () => {
 
   describe("POST /api/v1/system/read-only/disable", () => {
     it("should require authentication", async () => {
-      if (!dbAvailable) {
-        return;
-      }
       const response = await request(app)
         .post("/api/v1/system/read-only/disable")
         .send({ notes: "Test" });
@@ -214,9 +175,6 @@ describe("System Routes", () => {
     });
 
     it("should require admin role", async () => {
-      if (!dbAvailable) {
-        return;
-      }
       const regularUser = await createUser({
         email: "user2@test.com",
         username: "user2",
@@ -243,9 +201,6 @@ describe("System Routes", () => {
     });
 
     it("should disable read-only mode", async () => {
-      if (!dbAvailable) {
-        return;
-      }
       const originalReadOnly = env.readOnlyMode;
       (env as { readOnlyMode: boolean }).readOnlyMode = true;
 
@@ -268,9 +223,6 @@ describe("System Routes", () => {
     });
 
     it("should handle missing optional fields", async () => {
-      if (!dbAvailable) {
-        return;
-      }
       const originalReadOnly = env.readOnlyMode;
       (env as { readOnlyMode: boolean }).readOnlyMode = true;
 
@@ -288,4 +240,3 @@ describe("System Routes", () => {
     });
   });
 });
-

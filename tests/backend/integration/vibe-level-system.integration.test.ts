@@ -25,9 +25,9 @@ import {
   truncateAll,
   ensureRolesSeeded,
   withDatabaseErrorHandling,
-  isDatabaseAvailable,
   ensureUsernameColumnExists,
 } from "../../setup/test-helpers.js";
+import { describeWithTestDatabase } from "../../setup/db-availability.js";
 import { v4 as uuidv4 } from "uuid";
 import { getCurrentTermsVersion } from "../../../apps/backend/src/config/terms.js";
 import type { SessionWithExercises } from "../../../apps/backend/src/modules/sessions/sessions.types.js";
@@ -52,23 +52,14 @@ async function persistAndAward(session: SessionWithExercises) {
   return awardPointsForSession(session);
 }
 
-describe("Integration: Vibe Level System (v2_vibe_lvl)", () => {
+describeWithTestDatabase("Integration: Vibe Level System (v2_vibe_lvl)", () => {
   let testUser: { id: string; email: string; password: string };
-  let dbAvailable = false;
 
   beforeAll(async () => {
-    dbAvailable = await isDatabaseAvailable();
-    if (!dbAvailable) {
-      console.warn("\n⚠️  Integration tests will be skipped (database unavailable)");
-      return;
-    }
     await ensureUsernameColumnExists();
   });
 
   beforeEach(async () => {
-    if (!dbAvailable) {
-      return;
-    }
     await withDatabaseErrorHandling(async () => {
       await truncateAll();
       await ensureRolesSeeded();
@@ -131,17 +122,10 @@ describe("Integration: Vibe Level System (v2_vibe_lvl)", () => {
   });
 
   afterEach(async () => {
-    if (!dbAvailable) {
-      return;
-    }
     await truncateAll();
   });
 
   it("should initialize vibe levels for new user", async () => {
-    if (!dbAvailable) {
-      return;
-    }
-
     const strengthLevel = await getDomainVibeLevel(testUser.id, "strength");
     expect(strengthLevel).toBeDefined();
     expect(strengthLevel?.vibe_level).toBe(1000.0);
@@ -157,10 +141,6 @@ describe("Integration: Vibe Level System (v2_vibe_lvl)", () => {
   });
 
   it("should detect strength domain and update vibe level", async () => {
-    if (!dbAvailable) {
-      return;
-    }
-
     const session: SessionWithExercises = {
       id: uuidv4(),
       owner_id: testUser.id,
@@ -206,10 +186,6 @@ describe("Integration: Vibe Level System (v2_vibe_lvl)", () => {
   });
 
   it("should detect endurance domain from distance", async () => {
-    if (!dbAvailable) {
-      return;
-    }
-
     const session: SessionWithExercises = {
       id: uuidv4(),
       owner_id: testUser.id,
@@ -243,10 +219,6 @@ describe("Integration: Vibe Level System (v2_vibe_lvl)", () => {
   });
 
   it("should detect multiple domains in one session", async () => {
-    if (!dbAvailable) {
-      return;
-    }
-
     const session: SessionWithExercises = {
       id: uuidv4(),
       owner_id: testUser.id,
@@ -292,10 +264,6 @@ describe("Integration: Vibe Level System (v2_vibe_lvl)", () => {
   });
 
   it("should apply rating decay for inactive domains", async () => {
-    if (!dbAvailable) {
-      return;
-    }
-
     // First, update a domain to have a recent timestamp
     const session: SessionWithExercises = {
       id: uuidv4(),
@@ -360,10 +328,6 @@ describe("Integration: Vibe Level System (v2_vibe_lvl)", () => {
   });
 
   it("should not decay recently updated domains", async () => {
-    if (!dbAvailable) {
-      return;
-    }
-
     // Update a domain
     const session: SessionWithExercises = {
       id: uuidv4(),
@@ -403,10 +367,6 @@ describe("Integration: Vibe Level System (v2_vibe_lvl)", () => {
   });
 
   it("should calculate general fitness score correctly", async () => {
-    if (!dbAvailable) {
-      return;
-    }
-
     const { calculateGeneralFitnessScore } =
       await import("../../../apps/backend/src/modules/points/vibe-level.service.js");
 
@@ -431,10 +391,6 @@ describe("Integration: Vibe Level System (v2_vibe_lvl)", () => {
   });
 
   it("should award more points to beginners for same effort", async () => {
-    if (!dbAvailable) {
-      return;
-    }
-
     // Create two users: beginner (low vibe level) and advanced (high vibe level)
     const beginnerId = uuidv4();
     const advancedId = uuidv4();

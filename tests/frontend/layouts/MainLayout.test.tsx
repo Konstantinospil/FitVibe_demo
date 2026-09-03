@@ -33,6 +33,7 @@ vi.mock("react-i18next", () => ({
         "footer.note": "FitVibe",
         "footer.terms": "Terms",
         "footer.privacy": "Privacy",
+        "brand.logoAlt": "FitVibe",
       };
       return translations[key] || key;
     },
@@ -193,10 +194,9 @@ describe("MainLayout", () => {
       </MemoryRouter>,
     );
 
-    const homeLinks = screen.getAllByLabelText("Home");
-    if (homeLinks.length > 0) {
-      fireEvent.click(homeLinks[0]);
-      // Navigation should work (tested via NavLink component)
-    }
+    const homeLink = screen.getByRole("link", { name: "Home" });
+    expect(homeLink).toHaveAttribute("href", "/");
+    fireEvent.click(homeLink);
+    expect(homeLink).toHaveAttribute("aria-current", "page");
   });
 });

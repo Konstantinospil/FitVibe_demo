@@ -366,6 +366,71 @@ const schemas = {
     required: ["email", "password"],
     additionalProperties: false,
   },
+  ForgotPasswordRequest: {
+    type: "object",
+    properties: {
+      email: { type: "string", format: "email" },
+    },
+    required: ["email"],
+  },
+  ResetPasswordRequest: {
+    type: "object",
+    properties: {
+      token: { type: "string", minLength: 1 },
+      newPassword: {
+        type: "string",
+        minLength: 12,
+        maxLength: 128,
+      },
+    },
+    required: ["token", "newPassword"],
+  },
+  ResendVerificationRequest: {
+    type: "object",
+    properties: {
+      email: { type: "string", format: "email" },
+    },
+    required: ["email"],
+  },
+  Verify2FALoginRequest: {
+    type: "object",
+    properties: {
+      pendingSessionId: { type: "string", format: "uuid" },
+      code: { type: "string", minLength: 6, maxLength: 6, pattern: "^\\d+$" },
+    },
+    required: ["pendingSessionId", "code"],
+  },
+  ReportFeedItemRequest: {
+    type: "object",
+    properties: {
+      reason: { type: "string", minLength: 1, maxLength: 200 },
+      details: { type: "string", maxLength: 500 },
+    },
+    required: ["reason"],
+  },
+  CreateUserRequest: {
+    type: "object",
+    properties: {
+      username: { type: "string", minLength: 3, maxLength: 50 },
+      displayName: { type: "string", minLength: 1, maxLength: 120 },
+      email: { type: "string", format: "email", maxLength: 254 },
+      password: { type: "string", minLength: 12, maxLength: 128 },
+      role: { type: "string", minLength: 1, maxLength: 50 },
+      locale: { type: "string", maxLength: 10 },
+      preferredLang: { type: "string", maxLength: 5 },
+      status: { type: "string", enum: ["pending_verification", "active", "archived"] },
+    },
+    required: ["username", "displayName", "email", "password", "role"],
+  },
+  CreateExerciseTypeRequest: {
+    type: "object",
+    properties: {
+      code: { type: "string", minLength: 2, maxLength: 30 },
+      name: { type: "string", minLength: 3, maxLength: 100 },
+      description: { type: "string", maxLength: 255 },
+    },
+    required: ["code", "name"],
+  },
   RefreshRequest: {
     type: "object",
     properties: {
@@ -414,9 +479,18 @@ const schemas = {
   UpdateProfileRequest: {
     type: "object",
     properties: {
-      displayName: { type: "string" },
-      bio: { type: "string", maxLength: 500 },
-      avatarId: { type: "string", format: "uuid" },
+      username: { type: "string", minLength: 3, maxLength: 50 },
+      displayName: { type: "string", minLength: 1, maxLength: 120 },
+      locale: { type: "string", maxLength: 10 },
+      preferredLang: { type: "string", maxLength: 5 },
+      alias: { type: "string", minLength: 3, maxLength: 50 },
+      weight: { type: "number", minimum: 20, maximum: 500 },
+      weightUnit: { type: "string", enum: ["kg", "lb"] },
+      fitnessLevel: { type: "string", enum: ["beginner", "intermediate", "advanced", "elite"] },
+      trainingFrequency: {
+        type: "string",
+        enum: ["rarely", "1_2_per_week", "3_4_per_week", "5_plus_per_week"],
+      },
     },
   },
   UpdatePreferencesRequest: {
@@ -500,15 +574,18 @@ const schemas = {
   SessionCreateRequest: {
     type: "object",
     properties: {
-      planId: { type: "string", format: "uuid", nullable: true },
-      scheduledAt: { type: "string", format: "date-time" },
-      visibility: { type: "string", enum: ["private", "followers", "public"] },
+      plan_id: { type: "string", format: "uuid", nullable: true },
+      title: { type: "string", minLength: 2, maxLength: 100, nullable: true },
+      planned_at: { type: "string", format: "date-time" },
+      visibility: { type: "string", enum: ["private", "public", "link"] },
+      notes: { type: "string", maxLength: 1000, nullable: true },
+      recurrence_rule: { type: "string", maxLength: 255, nullable: true },
       exercises: {
         type: "array",
         items: { $ref: "#/components/schemas/SessionExerciseInput" },
       },
     },
-    required: ["scheduledAt", "visibility"],
+    required: ["planned_at"],
   },
   SessionExerciseInput: {
     type: "object",

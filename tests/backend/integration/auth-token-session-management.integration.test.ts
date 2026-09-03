@@ -19,41 +19,25 @@ import {
   truncateAll,
   ensureRolesSeeded,
   withDatabaseErrorHandling,
-  isDatabaseAvailable,
   ensureUsernameColumnExists,
 } from "../../setup/test-helpers.js";
+import { describeWithTestDatabase } from "../../setup/db-availability.js";
 import { v4 as uuidv4 } from "uuid";
 import { getCurrentTermsVersion } from "../../../apps/backend/src/config/terms.js";
 import type { Cookie } from "supertest";
 
-describe("Integration: Token Refresh, Logout, and Session Management", () => {
+describeWithTestDatabase("Integration: Token Refresh, Logout, and Session Management", () => {
   let userId: string;
   let userEmail: string;
   let userPassword: string;
   let cookies: Cookie[];
-  let dbAvailable = false;
 
   beforeAll(async () => {
-    dbAvailable = await isDatabaseAvailable();
-    if (!dbAvailable) {
-      console.warn("\n⚠️  Integration tests will be skipped (database unavailable)");
-      console.warn("To enable these tests:");
-      console.warn("  1. Start PostgreSQL locally, or");
-      console.warn(
-        "  2. Use Docker Compose: docker compose -f infra/docker/dev/docker-compose.dev.yml up -d db",
-      );
-      console.warn("  3. Set PGHOST, PGPORT, PGUSER, PGPASSWORD, PGDATABASE environment variables");
-      console.warn("");
-      return;
-    }
     // Ensure username column exists before tests run
     await ensureUsernameColumnExists();
   });
 
   beforeEach(async () => {
-    if (!dbAvailable) {
-      return;
-    }
     await withDatabaseErrorHandling(async () => {
       // Ensure read-only mode is disabled for tests
       const { env } = await import("../../../apps/backend/src/config/env.js");
@@ -92,9 +76,6 @@ describe("Integration: Token Refresh, Logout, and Session Management", () => {
   });
 
   afterEach(async () => {
-    if (!dbAvailable) {
-      return;
-    }
     // Ensure cleanup after each test
     await truncateAll();
   });
@@ -120,10 +101,6 @@ describe("Integration: Token Refresh, Logout, and Session Management", () => {
 
   describe("Token Refresh", () => {
     it("should refresh access token and rotate refresh token", async () => {
-      if (!dbAvailable) {
-        console.warn("Skipping test: database unavailable");
-        return;
-      }
       // Login to get initial tokens
       cookies = await loginAndGetCookies();
       expect(cookies.length).toBeGreaterThan(0);
@@ -158,10 +135,6 @@ describe("Integration: Token Refresh, Logout, and Session Management", () => {
     });
 
     it("should reject invalid refresh token", async () => {
-      if (!dbAvailable) {
-        console.warn("Skipping test: database unavailable");
-        return;
-      }
       const invalidResponse = await request(app)
         .post("/api/v1/auth/refresh")
         .set("Cookie", "fitvibe_refresh=invalid-token");
@@ -170,10 +143,6 @@ describe("Integration: Token Refresh, Logout, and Session Management", () => {
     });
 
     it("should detect and revoke reused refresh token", async () => {
-      if (!dbAvailable) {
-        console.warn("Skipping test: database unavailable");
-        return;
-      }
       // Login to get initial tokens
       cookies = await loginAndGetCookies();
       const refreshCookie = cookies.find((c) => c.name === "fitvibe_refresh");
@@ -210,10 +179,6 @@ describe("Integration: Token Refresh, Logout, and Session Management", () => {
 
   describe("Logout", () => {
     it("should logout and invalidate tokens", async () => {
-      if (!dbAvailable) {
-        console.warn("Skipping test: database unavailable");
-        return;
-      }
       // Login to get tokens
       cookies = await loginAndGetCookies();
 
@@ -243,10 +208,6 @@ describe("Integration: Token Refresh, Logout, and Session Management", () => {
     });
 
     it("should handle logout without refresh token gracefully", async () => {
-      if (!dbAvailable) {
-        console.warn("Skipping test: database unavailable");
-        return;
-      }
       const logoutResponse = await request(app).post("/api/v1/auth/logout");
 
       // Should still succeed (no-op)
@@ -256,10 +217,6 @@ describe("Integration: Token Refresh, Logout, and Session Management", () => {
 
   describe("Session Listing", () => {
     it("should list all active sessions for user", async () => {
-      if (!dbAvailable) {
-        console.warn("Skipping test: database unavailable");
-        return;
-      }
       // Login to create a session
       cookies = await loginAndGetCookies();
 
@@ -290,10 +247,6 @@ describe("Integration: Token Refresh, Logout, and Session Management", () => {
     });
 
     it("should require authentication to list sessions", async () => {
-      if (!dbAvailable) {
-        console.warn("Skipping test: database unavailable");
-        return;
-      }
       const listResponse = await request(app).get("/api/v1/auth/sessions");
 
       expect(listResponse.status).toBe(401);
@@ -302,10 +255,6 @@ describe("Integration: Token Refresh, Logout, and Session Management", () => {
 
   describe("Session Revocation", () => {
     it("should revoke a specific session", async () => {
-      if (!dbAvailable) {
-        console.warn("Skipping test: database unavailable");
-        return;
-      }
       // Login to create a session
       cookies = await loginAndGetCookies();
 
@@ -346,10 +295,6 @@ describe("Integration: Token Refresh, Logout, and Session Management", () => {
     });
 
     it("should revoke all other sessions except current", async () => {
-      if (!dbAvailable) {
-        console.warn("Skipping test: database unavailable");
-        return;
-      }
       // Create multiple sessions by logging in multiple times
       const session1Cookies = await loginAndGetCookies();
       const session2Cookies = await loginAndGetCookies();
@@ -394,10 +339,6 @@ describe("Integration: Token Refresh, Logout, and Session Management", () => {
     }, 60000); // 60 second timeout for integration test with multiple operations
 
     it("should revoke all sessions including current", async () => {
-      if (!dbAvailable) {
-        console.warn("Skipping test: database unavailable");
-        return;
-      }
       // Login to create a session
       cookies = await loginAndGetCookies();
 
@@ -418,10 +359,6 @@ describe("Integration: Token Refresh, Logout, and Session Management", () => {
     });
 
     it("should require authentication to revoke sessions", async () => {
-      if (!dbAvailable) {
-        console.warn("Skipping test: database unavailable");
-        return;
-      }
       const revokeResponse = await request(app)
         .post("/api/v1/auth/sessions/revoke")
         .send({ sessionId: "some-session-id" });
@@ -430,10 +367,6 @@ describe("Integration: Token Refresh, Logout, and Session Management", () => {
     });
 
     it("should reject invalid session ID", async () => {
-      if (!dbAvailable) {
-        console.warn("Skipping test: database unavailable");
-        return;
-      }
       cookies = await loginAndGetCookies();
 
       const revokeResponse = await request(app)

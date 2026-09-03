@@ -68,6 +68,8 @@ const updateProfileSchema = z.object({
     .optional(),
 });
 
+export const UpdateProfileSchema = updateProfileSchema;
+
 const changePasswordSchema = z.object({
   currentPassword: z.string().min(12).max(128),
   newPassword: passwordPolicy,
@@ -112,6 +114,8 @@ const createUserSchema = z.object({
   preferredLang: z.string().max(5).optional(),
   status: z.enum(["pending_verification", "active", "archived"]).optional(),
 });
+
+export const CreateUserSchema = createUserSchema;
 
 const statusSchema = z.object({
   status: z.enum(["pending_verification", "active", "archived", "pending_deletion"]),

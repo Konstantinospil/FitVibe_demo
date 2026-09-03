@@ -8,6 +8,8 @@ import reactHooks from "eslint-plugin-react-hooks";
 import jsxA11y from "eslint-plugin-jsx-a11y";
 import importPlugin from "eslint-plugin-import";
 import prettier from "eslint-plugin-prettier";
+import jestPlugin from "eslint-plugin-jest";
+import testingLibrary from "eslint-plugin-testing-library";
 import globals from "globals";
 
 const tsconfigRoot = path.dirname(fileURLToPath(import.meta.url));
@@ -141,6 +143,9 @@ export default tseslint.config(
       "tests/**/*.ts",
       "tests/**/*.tsx",
     ],
+    plugins: {
+      jest: jestPlugin,
+    },
     languageOptions: {
       parserOptions: {
         // Disable type-aware linting for test files
@@ -148,6 +153,23 @@ export default tseslint.config(
       },
     },
     rules: {
+      "jest/expect-expect": ["error", { assertFunctionNames: ["expect", "request", "waitFor"] }],
+      "jest/no-disabled-tests": "off",
+      "no-restricted-syntax": [
+        "error",
+        {
+          selector:
+            "IfStatement[test.type='UnaryExpression'][test.operator='!'][test.argument.name='dbAvailable'][consequent.type='ReturnStatement']",
+          message:
+            "Do not silently return when the test database is down. Use describeWithTestDatabase.",
+        },
+        {
+          selector:
+            "IfStatement[test.type='UnaryExpression'][test.operator='!'][test.argument.name='dbAvailable'][consequent.type='BlockStatement'][consequent.body.length=1][consequent.body.0.type='ReturnStatement']",
+          message:
+            "Do not silently return when the test database is down. Use describeWithTestDatabase.",
+        },
+      ],
       "@typescript-eslint/no-unsafe-assignment": "off",
       "@typescript-eslint/no-unsafe-call": "off",
       "@typescript-eslint/no-unsafe-member-access": "off",
@@ -171,6 +193,20 @@ export default tseslint.config(
       "@typescript-eslint/prefer-return-this-type": "off",
       "@typescript-eslint/restrict-template-expressions": "off",
       "@typescript-eslint/unified-signatures": "off",
+    },
+  },
+  {
+    files: ["**/*.test.tsx", "tests/frontend/**/*.tsx"],
+    plugins: {
+      "testing-library": testingLibrary,
+    },
+    rules: {
+      "testing-library/prefer-presence-queries": "error",
+      "testing-library/prefer-query-by-disappearance": "error",
+      "testing-library/no-await-sync-queries": "error",
+      "testing-library/no-wait-for-side-effects": "off",
+      "testing-library/no-node-access": "off",
+      "testing-library/render-result-naming-convention": "off",
     },
   },
 );

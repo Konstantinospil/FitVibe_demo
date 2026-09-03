@@ -20,38 +20,21 @@ import {
   truncateAll,
   ensureRolesSeeded,
   withDatabaseErrorHandling,
-  isDatabaseAvailable,
   ensureUsernameColumnExists,
 } from "../../setup/test-helpers.js";
+import { describeWithTestDatabase } from "../../setup/db-availability.js";
 import { v4 as uuidv4 } from "uuid";
 import { getCurrentTermsVersion } from "../../../apps/backend/src/config/terms.js";
 
-describe("Integration: Session → Points Flow", () => {
+describeWithTestDatabase("Integration: Session → Points Flow", () => {
   let testUser: { id: string; email: string; password: string; accessToken: string };
 
-  let dbAvailable = false;
-
   beforeAll(async () => {
-    dbAvailable = await isDatabaseAvailable();
-    if (!dbAvailable) {
-      console.warn("\n⚠️  Integration tests will be skipped (database unavailable)");
-      console.warn("To enable these tests:");
-      console.warn("  1. Start PostgreSQL locally, or");
-      console.warn(
-        "  2. Use Docker Compose: docker compose -f infra/docker/dev/docker-compose.dev.yml up -d db",
-      );
-      console.warn("  3. Set PGHOST, PGPORT, PGUSER, PGPASSWORD, PGDATABASE environment variables");
-      console.warn("");
-      return;
-    }
     // Ensure username column exists before tests run
     await ensureUsernameColumnExists();
   });
 
   beforeEach(async () => {
-    if (!dbAvailable) {
-      return;
-    }
     await withDatabaseErrorHandling(async () => {
       // Ensure read-only mode is disabled for tests
       const { env } = await import("../../../apps/backend/src/config/env.js");
@@ -187,17 +170,10 @@ describe("Integration: Session → Points Flow", () => {
   });
 
   afterEach(async () => {
-    if (!dbAvailable) {
-      return;
-    }
     await truncateAll();
   });
 
   it("should award points when session is completed", async () => {
-    if (!dbAvailable) {
-      console.warn("Skipping test: database unavailable");
-      return;
-    }
     // Step 1: Create a session
     const createResponse = await request(app)
       .post("/api/v1/sessions")
@@ -262,10 +238,6 @@ describe("Integration: Session → Points Flow", () => {
   });
 
   it("should not award points for canceled sessions", async () => {
-    if (!dbAvailable) {
-      console.warn("Skipping test: database unavailable");
-      return;
-    }
     // Create a session
     const createResponse = await request(app)
       .post("/api/v1/sessions")
@@ -313,10 +285,6 @@ describe("Integration: Session → Points Flow", () => {
   });
 
   it("should calculate total points correctly across multiple sessions", async () => {
-    if (!dbAvailable) {
-      console.warn("Skipping test: database unavailable");
-      return;
-    }
     // Create and complete multiple sessions
     const sessionIds: string[] = [];
 

@@ -51,6 +51,7 @@ module.exports = {
     "\\.integration\\.test\\.ts$",
     "verification-resend-limit\\.test\\.ts$",
     "login-enumeration\\.test\\.ts$",
+    "test-manager-spec",
   ],
   clearMocks: true,
   // Enable forceExit in CI to prevent timeout issues

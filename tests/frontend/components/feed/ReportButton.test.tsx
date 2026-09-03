@@ -14,10 +14,16 @@ vi.mock("../../src/components/ui/Toast", () => ({
   useToast: () => ({ showToast }),
 }));
 
+const reportFeedItem = vi.fn();
+vi.mock("../../src/services/api", () => ({
+  reportFeedItem: (...args: unknown[]) => reportFeedItem(...args),
+}));
+
 describe("ReportButton", () => {
   beforeEach(() => {
     tState.impl = (key: string) => key;
     showToast.mockReset();
+    reportFeedItem.mockReset().mockResolvedValue(undefined);
     vi.useRealTimers();
   });
 
@@ -47,6 +53,10 @@ describe("ReportButton", () => {
         message: "feed.report.submittedMessage",
       }),
     );
+    expect(reportFeedItem).toHaveBeenCalledWith("item-1", {
+      reason: "spam",
+      details: "Looks like spam",
+    });
     expect(onReported).toHaveBeenCalled();
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });

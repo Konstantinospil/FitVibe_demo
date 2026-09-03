@@ -1,9 +1,6 @@
 import { screen, fireEvent } from "@testing-library/react";
 import { describe, expect, it, vi, beforeEach } from "vitest";
-import {
-  renderLogger,
-  mockSessionData,
-} from "./Logger.test.setup";
+import { renderLogger, mockSessionData } from "./Logger.test.setup";
 import * as api from "../../src/services/api";
 
 // Mock API
@@ -38,13 +35,9 @@ describe("Logger - Exercise Management", () => {
 
     await screen.findByText("Test Workout");
 
-    // Find collapse/expand button
-    const collapseButtons = screen.getAllByLabelText(/Collapse|Expand/i);
-    if (collapseButtons.length > 0) {
-      fireEvent.click(collapseButtons[0]);
-      // Exercise should be collapsed/expanded
-      expect(collapseButtons[0]).toBeInTheDocument();
-    }
+    const collapseButton = screen.getByLabelText(/Collapse|Expand/i);
+    fireEvent.click(collapseButton);
+    expect(collapseButton).toHaveAttribute("aria-label", "Expand");
 
     unmount();
   });
@@ -137,4 +130,3 @@ describe("Logger - Exercise Management", () => {
     });
   });
 });
-

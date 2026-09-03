@@ -5,7 +5,7 @@ import { Mail, CheckCircle, XCircle, RefreshCw } from "lucide-react";
 import { Button } from "../ui/Button";
 import { Card, CardContent } from "../ui/Card";
 import { Alert } from "../ui/Alert";
-import { resendVerificationEmail } from "../../services/api";
+import { resendVerificationEmail, verifyEmailToken } from "../../services/api";
 import { useToast } from "../ui/Toast";
 
 export interface EmailVerificationProps {
@@ -29,18 +29,35 @@ export const EmailVerification: React.FC<EmailVerificationProps> = ({ onVerified
   const token = searchParams.get("token");
 
   useEffect(() => {
-    if (token) {
-      // In a real implementation, this would verify the token with the backend
-      // For now, we'll simulate verification
-      setStatus("verifying");
-      // Simulate API call
-      setTimeout(() => {
-        // In real implementation: await verifyEmail(token)
+    if (!token) {
+      return;
+    }
+
+    let cancelled = false;
+    setStatus("verifying");
+
+    void verifyEmailToken(token)
+      .then(() => {
+        if (cancelled) {
+          return;
+        }
         setStatus("verified");
         onVerified?.();
-      }, 1000);
-    }
-  }, [token, onVerified]);
+      })
+      .catch(() => {
+        if (cancelled) {
+          return;
+        }
+        setStatus("error");
+        setError(
+          t("auth.verification.errorDescription") || "The verification link is invalid or expired",
+        );
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [token, onVerified, t]);
 
   const handleResend = async () => {
     if (!email) {

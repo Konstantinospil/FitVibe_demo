@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { EmailVerification } from "../../src/components/auth/EmailVerification";
 
 const resendVerificationEmail = vi.fn();
+const verifyEmailToken = vi.fn();
 const showToast = vi.fn();
 const navigate = vi.fn();
 const tState = { impl: (key: string) => key };
@@ -24,12 +25,14 @@ vi.mock("../../src/components/ui/Toast", () => ({
 
 vi.mock("../../src/services/api", () => ({
   resendVerificationEmail: (...args: unknown[]) => resendVerificationEmail(...args),
+  verifyEmailToken: (...args: unknown[]) => verifyEmailToken(...args),
 }));
 
 describe("EmailVerification", () => {
   beforeEach(() => {
     tState.impl = (key: string) => key;
     resendVerificationEmail.mockReset().mockResolvedValue(undefined);
+    verifyEmailToken.mockReset().mockResolvedValue(undefined);
     showToast.mockReset();
     navigate.mockReset();
     vi.useRealTimers();
@@ -94,9 +97,8 @@ describe("EmailVerification", () => {
     );
 
     expect(screen.getByText("auth.verification.verifying")).toBeInTheDocument();
-    expect(
-      await screen.findByText("auth.verification.verified", {}, { timeout: 3000 }),
-    ).toBeInTheDocument();
+    expect(await screen.findByText("auth.verification.verified")).toBeInTheDocument();
+    expect(verifyEmailToken).toHaveBeenCalledWith("abc");
     expect(onVerified).toHaveBeenCalled();
 
     fireEvent.click(screen.getByRole("button", { name: "common.continue" }));

@@ -496,6 +496,10 @@ export async function resendVerificationEmail(
   return res.data;
 }
 
+export async function verifyEmailToken(token: string): Promise<void> {
+  await rawHttpClient.get("/api/v1/auth/verify", { params: { token } });
+}
+
 export type ForgotPasswordRequest = {
   email: string;
 };
@@ -812,6 +816,13 @@ export async function unlikeFeedItem(feedItemId: string): Promise<void> {
   await apiClient.delete(`/api/v1/feed/item/${feedItemId}/like`);
 }
 
+export async function reportFeedItem(
+  feedItemId: string,
+  payload: { reason: string; details?: string },
+): Promise<void> {
+  await apiClient.post(`/api/v1/feed/item/${feedItemId}/report`, payload);
+}
+
 export async function bookmarkFeedItem(feedItemId: string): Promise<void> {
   await apiClient.post(`/api/v1/feed/item/${feedItemId}/bookmark`);
 }
@@ -993,6 +1004,38 @@ export interface ExercisesListResponse {
   total: number;
   limit: number;
   offset: number;
+}
+
+export interface CatalogExerciseType {
+  code: string;
+  name: string;
+  description?: string;
+}
+
+export async function listExerciseTypes(): Promise<CatalogExerciseType[]> {
+  const res = await apiClient.get<CatalogExerciseType[]>("/api/v1/exercise-types");
+  return res.data;
+}
+
+export async function createExerciseType(payload: {
+  code: string;
+  name: string;
+  description?: string;
+}): Promise<CatalogExerciseType> {
+  const res = await apiClient.post<CatalogExerciseType>("/api/v1/exercise-types", payload);
+  return res.data;
+}
+
+export async function updateExerciseType(
+  code: string,
+  payload: { name?: string; description?: string },
+): Promise<CatalogExerciseType> {
+  const res = await apiClient.patch<CatalogExerciseType>(`/api/v1/exercise-types/${code}`, payload);
+  return res.data;
+}
+
+export async function deleteExerciseType(code: string): Promise<void> {
+  await apiClient.delete(`/api/v1/exercise-types/${code}`);
 }
 
 export async function listExercises(params?: ExerciseQuery): Promise<ExercisesListResponse> {

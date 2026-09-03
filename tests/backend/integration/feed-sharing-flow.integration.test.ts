@@ -22,38 +22,22 @@ import {
 import {
   truncateAll,
   ensureRolesSeeded,
-  isDatabaseAvailable,
   ensureUsernameColumnExists,
 } from "../../setup/test-helpers.js";
+import { describeWithTestDatabase } from "../../setup/db-availability.js";
 import { v4 as uuidv4 } from "uuid";
 import { getCurrentTermsVersion } from "../../../apps/backend/src/config/terms.js";
 
-describe("Integration: Feed Sharing → Reactions Flow", () => {
+describeWithTestDatabase("Integration: Feed Sharing → Reactions Flow", () => {
   let user1: { id: string; email: string; accessToken: string };
   let user2: { id: string; email: string; accessToken: string };
-  let dbAvailable = false;
 
   beforeAll(async () => {
-    dbAvailable = await isDatabaseAvailable();
-    if (!dbAvailable) {
-      console.warn("\n⚠️  Integration tests will be skipped (database unavailable)");
-      console.warn("To enable these tests:");
-      console.warn("  1. Start PostgreSQL locally, or");
-      console.warn(
-        "  2. Use Docker Compose: docker compose -f infra/docker/dev/docker-compose.dev.yml up -d db",
-      );
-      console.warn("  3. Set PGHOST, PGPORT, PGUSER, PGPASSWORD, PGDATABASE environment variables");
-      console.warn("");
-      return;
-    }
     // Ensure username column exists before tests run
     await ensureUsernameColumnExists();
   });
 
   beforeEach(async () => {
-    if (!dbAvailable) {
-      return;
-    }
     try {
       // Ensure read-only mode is disabled for tests
       const { env } = await import("../../../apps/backend/src/config/env.js");
@@ -345,17 +329,10 @@ describe("Integration: Feed Sharing → Reactions Flow", () => {
   });
 
   afterEach(async () => {
-    if (!dbAvailable) {
-      return;
-    }
     await truncateAll();
   });
 
   it("should allow user to share session and receive reactions", async () => {
-    if (!dbAvailable) {
-      console.warn("Skipping test: database unavailable");
-      return;
-    }
     try {
       // Step 1: User 1 creates and completes a session
       const sessionResponse = await request(app)
@@ -488,10 +465,6 @@ describe("Integration: Feed Sharing → Reactions Flow", () => {
   });
 
   it("should prevent user from reacting to their own post", async () => {
-    if (!dbAvailable) {
-      console.warn("Skipping test: database unavailable");
-      return;
-    }
     // User 1 creates and shares a session
     const sessionResponse = await request(app)
       .post("/api/v1/sessions")
@@ -566,10 +539,6 @@ describe("Integration: Feed Sharing → Reactions Flow", () => {
   });
 
   it("should allow user to bookmark shared sessions", async () => {
-    if (!dbAvailable) {
-      console.warn("Skipping test: database unavailable");
-      return;
-    }
     // User 1 creates and shares a session
     const sessionResponse = await request(app)
       .post("/api/v1/sessions")

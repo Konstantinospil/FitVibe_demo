@@ -1549,20 +1549,15 @@ describe("Progress page", () => {
       // Mock successful response for refetch
       vi.mocked(api.getProgressTrends).mockResolvedValue(mockTrends);
 
-      // Find and click retry button
-      const retryButtons = screen.queryAllByText("Retry");
-      if (retryButtons.length > 0) {
-        const retryButton = retryButtons[0];
-        fireEvent.click(retryButton);
+      const retryButton = await screen.findByRole("button", { name: /retry/i });
+      fireEvent.click(retryButton);
 
-        // Verify refetch was called
-        await waitFor(
-          () => {
-            expect(api.getProgressTrends).toHaveBeenCalledTimes(2);
-          },
-          { timeout: 1000 },
-        );
-      }
+      await waitFor(
+        () => {
+          expect(api.getProgressTrends).toHaveBeenCalledTimes(2);
+        },
+        { timeout: 1000 },
+      );
     });
 
     it("should call refetchExercises when retry button is clicked on exercise breakdown error", async () => {
@@ -1597,21 +1592,15 @@ describe("Progress page", () => {
         period: 30,
       });
 
-      // Find and click retry button in exercise breakdown section
-      const retryButtons = screen.queryAllByText("Retry");
-      if (retryButtons.length > 0) {
-        // Find the retry button in exercise breakdown (should be the last one)
-        const exerciseRetryButton = retryButtons[retryButtons.length - 1];
-        fireEvent.click(exerciseRetryButton);
+      const retryButtons = await screen.findAllByRole("button", { name: /retry/i });
+      fireEvent.click(retryButtons[retryButtons.length - 1]);
 
-        // Verify refetch was called
-        await waitFor(
-          () => {
-            expect(api.getExerciseBreakdown).toHaveBeenCalledTimes(2);
-          },
-          { timeout: 1000 },
-        );
-      }
+      await waitFor(
+        () => {
+          expect(api.getExerciseBreakdown).toHaveBeenCalledTimes(2);
+        },
+        { timeout: 1000 },
+      );
     });
   });
 

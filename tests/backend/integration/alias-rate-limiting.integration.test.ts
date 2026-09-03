@@ -14,30 +14,21 @@ import {
   truncateAll,
   ensureRolesSeeded,
   withDatabaseErrorHandling,
-  isDatabaseAvailable,
   ensureUsernameColumnExists,
 } from "../../setup/test-helpers.js";
+import { describeWithTestDatabase } from "../../setup/db-availability.js";
 import { v4 as uuidv4 } from "uuid";
 import { getCurrentTermsVersion } from "../../../apps/backend/src/config/terms.js";
 
-describe("Integration: Alias Change Rate Limiting", () => {
-  let dbAvailable = false;
+describeWithTestDatabase("Integration: Alias Change Rate Limiting", () => {
   let authToken: string;
   let userId: string;
 
   beforeAll(async () => {
-    dbAvailable = await isDatabaseAvailable();
-    if (!dbAvailable) {
-      console.warn("\n⚠️  Integration tests will be skipped (database unavailable)");
-      return;
-    }
     await ensureUsernameColumnExists();
   });
 
   beforeEach(async () => {
-    if (!dbAvailable) {
-      return;
-    }
     await withDatabaseErrorHandling(async () => {
       const { env } = await import("../../../apps/backend/src/config/env.js");
       (env as { readOnlyMode: boolean }).readOnlyMode = false;
@@ -94,18 +85,10 @@ describe("Integration: Alias Change Rate Limiting", () => {
   });
 
   afterEach(async () => {
-    if (!dbAvailable) {
-      return;
-    }
     await truncateAll();
   });
 
   it("should allow first alias change", async () => {
-    if (!dbAvailable) {
-      console.warn("Skipping test: database unavailable");
-      return;
-    }
-
     const response = await request(app)
       .patch("/api/v1/users/me")
       .set("Authorization", `Bearer ${authToken}`)
@@ -118,11 +101,6 @@ describe("Integration: Alias Change Rate Limiting", () => {
   });
 
   it("should prevent alias change within 30 days", async () => {
-    if (!dbAvailable) {
-      console.warn("Skipping test: database unavailable");
-      return;
-    }
-
     // Set initial alias
     await request(app).patch("/api/v1/users/me").set("Authorization", `Bearer ${authToken}`).send({
       alias: "firstalias",
@@ -143,11 +121,6 @@ describe("Integration: Alias Change Rate Limiting", () => {
   });
 
   it("should allow alias change after 30 days", async () => {
-    if (!dbAvailable) {
-      console.warn("Skipping test: database unavailable");
-      return;
-    }
-
     // Set initial alias
     await request(app).patch("/api/v1/users/me").set("Authorization", `Bearer ${authToken}`).send({
       alias: "firstalias",
@@ -173,11 +146,6 @@ describe("Integration: Alias Change Rate Limiting", () => {
   });
 
   it("should allow changing to the same alias", async () => {
-    if (!dbAvailable) {
-      console.warn("Skipping test: database unavailable");
-      return;
-    }
-
     // Set initial alias
     await request(app).patch("/api/v1/users/me").set("Authorization", `Bearer ${authToken}`).send({
       alias: "myalias",

@@ -8,6 +8,13 @@ import { Spinner } from "../ui/Spinner";
 import { Plus, Edit, Trash2 } from "lucide-react";
 import { EmptyState } from "../utils/EmptyState";
 import { Database } from "lucide-react";
+import {
+  createExerciseType,
+  deleteExerciseType,
+  listExerciseTypes,
+  updateExerciseType,
+  type CatalogExerciseType,
+} from "../../services/api";
 
 export interface ExerciseType {
   id: string;
@@ -20,6 +27,15 @@ export interface ExerciseTypeManagerProps {
   onTypeCreated?: (type: ExerciseType) => void;
   onTypeUpdated?: (type: ExerciseType) => void;
   onTypeDeleted?: (id: string) => void;
+}
+
+function toUiType(record: CatalogExerciseType): ExerciseType {
+  return {
+    id: record.code,
+    code: record.code,
+    nameEn: record.name,
+    descriptionEn: record.description,
+  };
 }
 
 /**
@@ -40,22 +56,30 @@ export const ExerciseTypeManager: React.FC<ExerciseTypeManagerProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-    // In a real implementation, this would call an exercise types API
-    // For now, we'll use placeholder data
-    const loadTypes = () => {
+    let cancelled = false;
+
+    const loadTypes = async () => {
       setIsLoading(true);
       try {
-        // TODO: Replace with actual API call
-        const data: ExerciseType[] = [];
-        setTypes(data);
+        const data = await listExerciseTypes();
+        if (!cancelled) {
+          setTypes(data.map(toUiType));
+        }
       } catch {
-        // Error handling would be done by parent component
+        if (!cancelled) {
+          setTypes([]);
+        }
       } finally {
-        setIsLoading(false);
+        if (!cancelled) {
+          setIsLoading(false);
+        }
       }
     };
 
     void loadTypes();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const handleCreate = () => {
@@ -74,45 +98,48 @@ export const ExerciseTypeManager: React.FC<ExerciseTypeManagerProps> = ({
     setIsModalOpen(true);
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     setIsSubmitting(true);
     try {
-      // TODO: Replace with actual API call
       if (editingType) {
-        // Update existing
-        const updated = { ...editingType, ...formData };
-        setTypes((prev) => prev.map((t) => (t.id === editingType.id ? updated : t)));
-        onTypeUpdated?.(updated);
+        const updated = await updateExerciseType(editingType.code, {
+          name: formData.nameEn,
+          description: formData.descriptionEn || undefined,
+        });
+        const uiType = toUiType(updated);
+        setTypes((prev) => prev.map((item) => (item.id === editingType.id ? uiType : item)));
+        onTypeUpdated?.(uiType);
       } else {
-        // Create new
-        const newType: ExerciseType = {
-          id: `type-${Date.now()}`,
-          ...formData,
-        };
-        setTypes((prev) => [...prev, newType]);
-        onTypeCreated?.(newType);
+        const created = await createExerciseType({
+          code: formData.code,
+          name: formData.nameEn,
+          description: formData.descriptionEn || undefined,
+        });
+        const uiType = toUiType(created);
+        setTypes((prev) => [...prev, uiType]);
+        onTypeCreated?.(uiType);
       }
       setIsModalOpen(false);
       setFormData({ code: "", nameEn: "", descriptionEn: "" });
       setEditingType(null);
     } catch {
-      // Error handling
+      // Error handling is owned by the parent / toast layer when wired.
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
     if (!confirm(t("admin.exerciseTypes.confirmDelete"))) {
       return;
     }
 
     try {
-      // TODO: Replace with actual API call
-      setTypes((prev) => prev.filter((t) => t.id !== id));
+      await deleteExerciseType(id);
+      setTypes((prev) => prev.filter((item) => item.id !== id));
       onTypeDeleted?.(id);
     } catch {
-      // Error handling
+      // Error handling is owned by the parent / toast layer when wired.
     }
   };
 
@@ -200,7 +227,9 @@ export const ExerciseTypeManager: React.FC<ExerciseTypeManagerProps> = ({
                     <Button
                       variant="danger"
                       size="sm"
-                      onClick={() => handleDelete(type.id)}
+                      onClick={() => {
+                        void handleDelete(type.id);
+                      }}
                       leftIcon={<Trash2 size={16} />}
                       aria-label={t("common.delete")}
                     />
@@ -229,6 +258,7 @@ export const ExerciseTypeManager: React.FC<ExerciseTypeManagerProps> = ({
             placeholder={t("admin.exerciseTypes.codePlaceholder")}
             label={t("admin.exerciseTypes.code")}
             required
+            disabled={Boolean(editingType)}
           />
           <Input
             value={formData.nameEn}
@@ -282,7 +312,7 @@ export const ExerciseTypeManager: React.FC<ExerciseTypeManagerProps> = ({
             <Button
               variant="primary"
               onClick={() => {
-                handleSubmit();
+                void handleSubmit();
               }}
               isLoading={isSubmitting}
             >

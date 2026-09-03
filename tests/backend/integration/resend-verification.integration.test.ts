@@ -19,37 +19,20 @@ import {
   truncateAll,
   ensureRolesSeeded,
   withDatabaseErrorHandling,
-  isDatabaseAvailable,
   ensureUsernameColumnExists,
 } from "../../setup/test-helpers.js";
+import { describeWithTestDatabase } from "../../setup/db-availability.js";
 import { clearRateLimiters } from "../../../apps/backend/src/middlewares/rate-limit.js";
 import { v4 as uuidv4 } from "uuid";
 import { getCurrentTermsVersion } from "../../../apps/backend/src/config/terms.js";
 
-describe("Integration: Resend Verification Email", () => {
-  let dbAvailable = false;
-
+describeWithTestDatabase("Integration: Resend Verification Email", () => {
   beforeAll(async () => {
-    dbAvailable = await isDatabaseAvailable();
-    if (!dbAvailable) {
-      console.warn("\n⚠️  Integration tests will be skipped (database unavailable)");
-      console.warn("To enable these tests:");
-      console.warn("  1. Start PostgreSQL locally, or");
-      console.warn(
-        "  2. Use Docker Compose: docker compose -f infra/docker/dev/docker-compose.dev.yml up -d db",
-      );
-      console.warn("  3. Set PGHOST, PGPORT, PGUSER, PGPASSWORD, PGDATABASE environment variables");
-      console.warn("");
-      return;
-    }
     // Ensure username column exists before tests run
     await ensureUsernameColumnExists();
   });
 
   beforeEach(async () => {
-    if (!dbAvailable) {
-      return;
-    }
     await withDatabaseErrorHandling(async () => {
       // Ensure read-only mode is disabled for tests
       const { env } = await import("../../../apps/backend/src/config/env.js");
@@ -66,9 +49,6 @@ describe("Integration: Resend Verification Email", () => {
   });
 
   afterEach(async () => {
-    if (!dbAvailable) {
-      return;
-    }
     // Clear rate limiters after each test to ensure clean state
     clearRateLimiters();
     // Ensure cleanup after each test
@@ -76,10 +56,6 @@ describe("Integration: Resend Verification Email", () => {
   });
 
   it("should resend verification email for pending_verification user", async () => {
-    if (!dbAvailable) {
-      console.warn("Skipping test: database unavailable");
-      return;
-    }
     // Create a pending_verification user
     const userId = uuidv4();
     const email = "pending@example.com";
@@ -122,10 +98,6 @@ describe("Integration: Resend Verification Email", () => {
   });
 
   it("should return success for non-existent email (enumeration protection)", async () => {
-    if (!dbAvailable) {
-      console.warn("Skipping test: database unavailable");
-      return;
-    }
     const response = await request(app).post("/api/v1/auth/verify/resend").send({
       email: "nonexistent@example.com",
     });
@@ -136,10 +108,6 @@ describe("Integration: Resend Verification Email", () => {
   });
 
   it("should return success for already verified user (enumeration protection)", async () => {
-    if (!dbAvailable) {
-      console.warn("Skipping test: database unavailable");
-      return;
-    }
     // Create an active (verified) user
     const userId = uuidv4();
     const email = "verified@example.com";
@@ -168,10 +136,6 @@ describe("Integration: Resend Verification Email", () => {
   });
 
   it("should enforce rate limiting (3 requests per hour)", async () => {
-    if (!dbAvailable) {
-      console.warn("Skipping test: database unavailable");
-      return;
-    }
     // Clear rate limiters at the start of this test to ensure clean state
     clearRateLimiters();
     const userId = uuidv4();
@@ -209,10 +173,6 @@ describe("Integration: Resend Verification Email", () => {
   });
 
   it("should validate email format", async () => {
-    if (!dbAvailable) {
-      console.warn("Skipping test: database unavailable");
-      return;
-    }
     // Clear rate limiters at the start of this test to ensure clean state
     clearRateLimiters();
     const response = await request(app).post("/api/v1/auth/verify/resend").send({
@@ -224,10 +184,6 @@ describe("Integration: Resend Verification Email", () => {
   });
 
   it("should require email field", async () => {
-    if (!dbAvailable) {
-      console.warn("Skipping test: database unavailable");
-      return;
-    }
     // Clear rate limiters at the start of this test to ensure clean state
     clearRateLimiters();
     const response = await request(app).post("/api/v1/auth/verify/resend").send({});
@@ -237,10 +193,6 @@ describe("Integration: Resend Verification Email", () => {
   });
 
   it("should handle multiple resends for same user", async () => {
-    if (!dbAvailable) {
-      console.warn("Skipping test: database unavailable");
-      return;
-    }
     // Clear rate limiters at the start of this test to ensure clean state
     clearRateLimiters();
     const userId = uuidv4();
