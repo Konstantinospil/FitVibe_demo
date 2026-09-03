@@ -4,11 +4,11 @@ import { ExerciseArchiveDialog } from "../../src/components/exercises/ExerciseAr
 
 const deleteExercise = vi.fn();
 const showToast = vi.fn();
+const tState = { impl: (key: string) => key };
+const t = (key: string) => tState.impl(key);
 
 vi.mock("react-i18next", () => ({
-  useTranslation: () => ({
-    t: (key: string) => key,
-  }),
+  useTranslation: () => ({ t }),
 }));
 
 vi.mock("../../src/components/ui/Toast", () => ({
@@ -21,6 +21,7 @@ vi.mock("../../src/services/api", () => ({
 
 describe("ExerciseArchiveDialog", () => {
   beforeEach(() => {
+    tState.impl = (key: string) => key;
     deleteExercise.mockReset().mockResolvedValue(undefined);
     showToast.mockReset();
   });
@@ -74,6 +75,24 @@ describe("ExerciseArchiveDialog", () => {
         title: "exercises.archiveFailed",
         message: "exercises.archiveFailedMessage",
       }),
+    );
+  });
+
+  it("uses English copy when translations are empty", async () => {
+    tState.impl = () => "";
+    render(
+      <ExerciseArchiveDialog exerciseId="ex-1" exerciseName="Squat" isOpen onClose={vi.fn()} />,
+    );
+
+    expect(screen.getByText(/Are you sure you want to archive/)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Archive Exercise" }));
+    await waitFor(() =>
+      expect(showToast).toHaveBeenCalledWith(
+        expect.objectContaining({
+          title: "Exercise Archived",
+          message: "Squat has been archived",
+        }),
+      ),
     );
   });
 });

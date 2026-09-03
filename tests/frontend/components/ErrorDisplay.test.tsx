@@ -34,4 +34,10 @@ describe("ErrorDisplay", () => {
     fireEvent.click(screen.getByRole("button", { name: "Retry" }));
     expect(onRetry).toHaveBeenCalledTimes(1);
   });
+
+  it("renders the compact variant without retry", () => {
+    render(<ErrorDisplay variant="compact" message="Offline" />);
+    expect(screen.getByText("Offline")).toBeInTheDocument();
+    expect(screen.queryByRole("button")).not.toBeInTheDocument();
+  });
 });

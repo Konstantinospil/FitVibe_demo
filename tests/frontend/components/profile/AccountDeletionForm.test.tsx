@@ -8,10 +8,13 @@ const showToast = vi.fn();
 const signOut = vi.fn().mockResolvedValue(undefined);
 const navigate = vi.fn();
 
+const tState = {
+  impl: (key: string) => (key === "settings.accountDeletion.confirmText" ? "DELETE" : key),
+};
+const t = (key: string) => tState.impl(key);
+
 vi.mock("react-i18next", () => ({
-  useTranslation: () => ({
-    t: (key: string) => (key === "settings.accountDeletion.confirmText" ? "DELETE" : key),
-  }),
+  useTranslation: () => ({ t }),
 }));
 
 vi.mock("react-router-dom", async () => {
@@ -33,6 +36,8 @@ vi.mock("../../src/services/api", () => ({
 
 describe("AccountDeletionForm", () => {
   beforeEach(() => {
+    tState.impl = (key: string) =>
+      key === "settings.accountDeletion.confirmText" ? "DELETE" : key;
     deleteAccount.mockReset().mockResolvedValue({ scheduledAt: "2026-01-15T00:00:00.000Z" });
     showToast.mockReset();
     signOut.mockReset().mockResolvedValue(undefined);
@@ -111,5 +116,20 @@ describe("AccountDeletionForm", () => {
 
     fireEvent.change(screen.getByPlaceholderText("DELETE"), { target: { value: "DELETE" } });
     expect(confirm).toBeDisabled();
+  });
+
+  it("uses English copy when translations are empty", () => {
+    tState.impl = () => "";
+    render(
+      <MemoryRouter>
+        <AccountDeletionForm />
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByText("Delete Account")).toBeInTheDocument();
+    expect(screen.getByText("Warning: This action cannot be undone")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Delete My Account" }));
+    expect(screen.getByText("Confirm Account Deletion")).toBeInTheDocument();
+    expect(screen.getByPlaceholderText("DELETE")).toBeInTheDocument();
   });
 });

@@ -1,14 +1,19 @@
 import { fireEvent, render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { RecurrenceEditor } from "../../src/components/sessions/RecurrenceEditor";
 
+const tState = { impl: (key: string) => key };
+const t = (key: string) => tState.impl(key);
+
 vi.mock("react-i18next", () => ({
-  useTranslation: () => ({
-    t: (key: string) => key,
-  }),
+  useTranslation: () => ({ t }),
 }));
 
 describe("RecurrenceEditor", () => {
+  beforeEach(() => {
+    tState.impl = (key: string) => key;
+  });
+
   it("enables recurrence and updates weekly days", () => {
     const onChange = vi.fn();
     render(<RecurrenceEditor onChange={onChange} />);
@@ -90,5 +95,22 @@ describe("RecurrenceEditor", () => {
     fireEvent.change(screen.getByLabelText("recurrence.dayOfMonth"), { target: { value: "" } });
     fireEvent.change(screen.getByLabelText("recurrence.dayOfMonth"), { target: { value: "0" } });
     expect(onChange).not.toHaveBeenCalled();
+  });
+
+  it("renders English fallbacks when translations are empty", () => {
+    tState.impl = () => "";
+    render(<RecurrenceEditor value={{ frequency: "weekly", interval: 1, daysOfWeek: [1] }} />);
+
+    expect(screen.getByText("Recurrence")).toBeInTheDocument();
+    expect(screen.getByLabelText("Repeat this session")).toBeChecked();
+    expect(screen.getByText("weeks")).toBeInTheDocument();
+    expect(screen.getByText("Monday")).toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText("Frequency"), { target: { value: "daily" } });
+    expect(screen.getByText("days")).toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText("Frequency"), { target: { value: "monthly" } });
+    expect(screen.getByText("months")).toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText("Frequency"), { target: { value: "yearly" } });
+    expect(screen.getByText("years")).toBeInTheDocument();
   });
 });

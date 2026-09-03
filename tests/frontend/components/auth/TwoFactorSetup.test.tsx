@@ -6,11 +6,11 @@ const setup2FA = vi.fn();
 const verify2FA = vi.fn();
 const get2FAStatus = vi.fn();
 const showToast = vi.fn();
+const tState = { impl: (key: string) => key };
+const t = (key: string) => tState.impl(key);
 
 vi.mock("react-i18next", () => ({
-  useTranslation: () => ({
-    t: (key: string) => key,
-  }),
+  useTranslation: () => ({ t }),
 }));
 
 vi.mock("../../src/components/ui/Toast", () => ({
@@ -31,6 +31,7 @@ vi.mock("../../src/components/auth/BackupCodesDisplay", () => ({
 
 describe("TwoFactorSetup", () => {
   beforeEach(() => {
+    tState.impl = (key: string) => key;
     setup2FA.mockReset().mockResolvedValue({
       qrCode: "data:image/png;base64,abc",
       secret: "SECRET",
@@ -119,5 +120,13 @@ describe("TwoFactorSetup", () => {
     fireEvent.change(codeInput, { target: { value: "111111" } });
     fireEvent.click(screen.getByRole("button", { name: "auth.2fa.verify" }));
     expect(await screen.findByText("auth.2fa.verificationFailed")).toBeInTheDocument();
+  });
+
+  it("uses English copy when translations are empty", async () => {
+    tState.impl = () => "";
+    render(<TwoFactorSetup onCancel={vi.fn()} />);
+    expect(screen.getByText("Setup Two-Factor Authentication")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Start Setup" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Cancel" })).toBeInTheDocument();
   });
 });

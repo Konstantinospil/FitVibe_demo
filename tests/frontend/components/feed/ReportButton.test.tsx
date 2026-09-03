@@ -3,11 +3,11 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ReportButton } from "../../src/components/feed/ReportButton";
 
 const showToast = vi.fn();
+const tState = { impl: (key: string) => key };
+const t = (key: string) => tState.impl(key);
 
 vi.mock("react-i18next", () => ({
-  useTranslation: () => ({
-    t: (key: string) => key,
-  }),
+  useTranslation: () => ({ t }),
 }));
 
 vi.mock("../../src/components/ui/Toast", () => ({
@@ -16,6 +16,7 @@ vi.mock("../../src/components/ui/Toast", () => ({
 
 describe("ReportButton", () => {
   beforeEach(() => {
+    tState.impl = (key: string) => key;
     showToast.mockReset();
     vi.useRealTimers();
   });
@@ -56,5 +57,19 @@ describe("ReportButton", () => {
     fireEvent.click(screen.getByRole("button", { name: "feed.report.label" }));
     fireEvent.click(screen.getByRole("button", { name: "common.cancel" }));
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  });
+
+  it("uses English copy and a larger size when translations are empty", () => {
+    tState.impl = () => "";
+    render(<ReportButton feedItemId="item-1" size="lg" />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Report content" }));
+    expect(screen.getByText("Report Content")).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "Help us keep the community safe by reporting content that violates our guidelines.",
+      ),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Submit Report" })).toBeDisabled();
   });
 });

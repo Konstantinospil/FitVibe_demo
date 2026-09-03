@@ -6,11 +6,11 @@ import { EmailVerification } from "../../src/components/auth/EmailVerification";
 const resendVerificationEmail = vi.fn();
 const showToast = vi.fn();
 const navigate = vi.fn();
+const tState = { impl: (key: string) => key };
+const t = (key: string) => tState.impl(key);
 
 vi.mock("react-i18next", () => ({
-  useTranslation: () => ({
-    t: (key: string) => key,
-  }),
+  useTranslation: () => ({ t }),
 }));
 
 vi.mock("react-router-dom", async () => {
@@ -28,6 +28,7 @@ vi.mock("../../src/services/api", () => ({
 
 describe("EmailVerification", () => {
   beforeEach(() => {
+    tState.impl = (key: string) => key;
     resendVerificationEmail.mockReset().mockResolvedValue(undefined);
     showToast.mockReset();
     navigate.mockReset();
@@ -100,5 +101,18 @@ describe("EmailVerification", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "common.continue" }));
     expect(navigate).toHaveBeenCalledWith("/");
+  });
+
+  it("uses English copy when translations are empty", () => {
+    tState.impl = () => "";
+    render(
+      <MemoryRouter>
+        <EmailVerification />
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByText("Verify Your Email")).toBeInTheDocument();
+    expect(screen.getByPlaceholderText("Enter your email")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Resend Verification Email" })).toBeInTheDocument();
   });
 });

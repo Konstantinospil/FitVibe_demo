@@ -5,13 +5,12 @@ import { PrivacySettings } from "../../src/components/profile/PrivacySettings";
 const getPrivacySettings = vi.fn();
 const updatePrivacySettings = vi.fn();
 const showToast = vi.fn();
+const tState = { impl: (key: string) => key };
+const t = (key: string) => tState.impl(key);
 
-vi.mock("react-i18next", () => {
-  const t = (key: string) => key;
-  return {
-    useTranslation: () => ({ t }),
-  };
-});
+vi.mock("react-i18next", () => ({
+  useTranslation: () => ({ t }),
+}));
 
 vi.mock("../../src/components/ui/Toast", () => ({
   useToast: () => ({ showToast }),
@@ -32,6 +31,7 @@ const settings = {
 
 describe("PrivacySettings", () => {
   beforeEach(() => {
+    tState.impl = (key: string) => key;
     getPrivacySettings.mockReset().mockResolvedValue(settings);
     updatePrivacySettings.mockReset().mockResolvedValue(settings);
     showToast.mockReset();
@@ -87,5 +87,15 @@ describe("PrivacySettings", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "common.save" }));
     expect(await screen.findByText("settings.privacy.saveError")).toBeInTheDocument();
+  });
+
+  it("uses English copy when translations are empty", async () => {
+    tState.impl = () => "";
+    render(<PrivacySettings />);
+    expect(await screen.findByText("Privacy Settings")).toBeInTheDocument();
+    expect(
+      screen.getByText("Control who can see your content and profile information"),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Save Changes" })).toBeInTheDocument();
   });
 });
