@@ -59,6 +59,9 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
 
       {/* Dialog */}
       <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="confirm-dialog-title"
         style={{
           position: "fixed",
           top: "50%",
@@ -92,6 +95,7 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
           </div>
           <div style={{ flex: 1 }}>
             <h3
+              id="confirm-dialog-title"
               style={{
                 margin: 0,
                 marginBottom: "0.5rem",
