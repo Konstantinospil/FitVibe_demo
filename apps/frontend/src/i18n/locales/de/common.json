@@ -16,7 +16,8 @@
     "german": "Deutsch",
     "spanish": "Spanisch",
     "french": "Französisch",
-    "greek": "Griechisch"
+    "greek": "Griechisch",
+    "select": "Sprache auswählen"
   },
   "status": {
     "checking": "Backend wird geprüft...",
@@ -451,7 +452,22 @@
       "trainingFrequency5Plus": "5+ mal pro Woche",
       "weightPlaceholder": "75.5",
       "passwordPlaceholder": "Gib dein Passwort ein",
-      "twoFactorCodePlaceholder": "000000"
+      "twoFactorCodePlaceholder": "6-stelligen Code eingeben",
+      "avatar": "Profilbild",
+      "avatarSelect": "Bild auswählen",
+      "avatarUpload": "Hochladen",
+      "avatarDelete": "Löschen",
+      "avatarHelp": "Lade ein JPEG-, PNG- oder WebP-Bild hoch (max. 5 MB). Empfohlene Größe: 256×256 Pixel.",
+      "avatarInvalidType": "Ungültiger Dateityp. Bitte JPEG, PNG oder WebP verwenden.",
+      "avatarTooLarge": "Die Datei ist zu groß. Maximale Größe ist 5 MB.",
+      "avatarNoFile": "Bitte wähle eine Datei zum Hochladen aus.",
+      "avatarUploadSuccess": "Profilbild erfolgreich hochgeladen!",
+      "avatarUploadError": "Profilbild konnte nicht hochgeladen werden. Bitte versuche es erneut.",
+      "avatarDeleteSuccess": "Profilbild erfolgreich gelöscht!",
+      "avatarDeleteError": "Profilbild konnte nicht gelöscht werden. Bitte versuche es erneut.",
+      "avatarPreviewAlt": "Profilbild-Vorschau",
+      "avatarAlt": "Profilbild",
+      "emailUnavailable": "Nicht verfügbar"
     },
     "preferences": {
       "title": "Präferenzen",
@@ -462,7 +478,13 @@
       "saveSuccess": "Präferenzen erfolgreich gespeichert!",
       "saveError": "Fehler beim Speichern der Präferenzen. Bitte versuche es erneut.",
       "saveButton": "Präferenzen speichern",
-      "saving": "Wird gespeichert..."
+      "saving": "Wird gespeichert...",
+      "visibilityPrivate": "Privat (nur du)",
+      "visibilityFollowers": "Follower",
+      "visibilityLink": "Nur Link",
+      "visibilityPublic": "Öffentlich",
+      "unitsMetric": "Metrisch (kg, km)",
+      "unitsImperial": "Imperial (lb, mi)"
     },
     "privacy": {
       "title": "Datenschutzeinstellungen",
@@ -499,6 +521,55 @@
       "successMessage": "Dein Datenexport wurde heruntergeladen",
       "failed": "Export fehlgeschlagen",
       "failedMessage": "Daten konnten nicht exportiert werden. Bitte versuche es erneut."
+    },
+    "introDescription": "Verwalte dein Profil, Datenschutz, Sicherheit und Kontoeinstellungen.",
+    "security": {
+      "title": "Zwei-Faktor-Authentifizierung (2FA)",
+      "description": "Schütze dein Konto zusätzlich mit 2FA",
+      "disabledHelp": "2FA ist derzeit deaktiviert. Aktiviere sie, um dein Konto mit einem zeitbasierten Einmalkennwort (TOTP) zu sichern.",
+      "disabled": "deaktiviert",
+      "enable": "2FA aktivieren",
+      "enableError": "2FA konnte nicht aktiviert werden. Bitte versuche es erneut.",
+      "scanQr": "Scanne diesen QR-Code mit deiner Authenticator-App (Google Authenticator, Authy usw.):",
+      "qrLoading": "QR-Code wird geladen...",
+      "qrAlt": "2FA-QR-Code",
+      "enterCode": "Gib den 6-stelligen Code aus deiner App ein:",
+      "invalidCode": "Bitte gib einen gültigen 6-stelligen Code ein",
+      "verifyEnable": "Prüfen und aktivieren",
+      "verifyError": "Ungültiger Code. Bitte versuche es erneut.",
+      "enabledSuccess": "2FA erfolgreich aktiviert!",
+      "enabled": "2FA ist derzeit aktiviert",
+      "enabledHelp": "Dein Konto ist durch Zwei-Faktor-Authentifizierung geschützt.",
+      "disablePasswordLabel": "Gib dein Passwort ein, um 2FA zu deaktivieren",
+      "disable": "2FA deaktivieren",
+      "disableNeedPassword": "Bitte gib dein Passwort ein, um 2FA zu deaktivieren",
+      "disableError": "2FA konnte nicht deaktiviert werden. Bitte prüfe dein Passwort.",
+      "disableSuccess": "2FA erfolgreich deaktiviert",
+      "confirmDisableTitle": "Zwei-Faktor-Authentifizierung deaktivieren",
+      "confirmDisableMessage": "Möchtest du 2FA wirklich deaktivieren? Dein Konto ist dann weniger geschützt.",
+      "confirmDisable": "Ja, 2FA deaktivieren",
+      "backupCodes": "Backup-Codes",
+      "backupCodesHelp": "Bewahre diese Backup-Codes sicher auf. Du kannst sie nutzen, wenn du dein Authenticator-Gerät verlierst."
+    },
+    "account": {
+      "title": "Gefahrenzone",
+      "description": "Unumkehrbare Aktionen, die dein Konto dauerhaft betreffen",
+      "deleteWill": "Das Löschen deines Kontos wird:",
+      "deleteItemWorkouts": "Alle Trainingsdaten dauerhaft löschen",
+      "deleteItemSessions": "Alle Einheiten und Fortschrittsdaten entfernen",
+      "deleteItemProfile": "Profil und Kontoinformationen löschen",
+      "deleteItemUndo": "Diese Aktion kann nicht rückgängig gemacht werden",
+      "deleteAccount": "Mein Konto löschen",
+      "deleteWarning": "⚠️ Warnung: Dadurch wird dein Konto dauerhaft gelöscht",
+      "deletePasswordPrompt": "Bitte gib dein Passwort ein, um die Kontolöschung zu bestätigen:",
+      "deleteNeedPassword": "Bitte gib dein Passwort ein, um die Kontolöschung zu bestätigen",
+      "yesDelete": "Ja, mein Konto löschen",
+      "cancel": "Abbrechen",
+      "confirmTitle": "Konto löschen",
+      "confirmMessage": "Dadurch werden dein Konto und alle Daten dauerhaft gelöscht. Das kann nicht rückgängig gemacht werden. Bist du dir absolut sicher?",
+      "confirmDelete": "Löschen bestätigen",
+      "deleteSuccess": "Dein Konto wurde zur Löschung vorgemerkt. Du wirst jetzt abgemeldet.",
+      "deleteError": "Konto konnte nicht gelöscht werden. Bitte versuche es erneut."
     }
   },
   "common": {
@@ -640,7 +711,11 @@
     "create": "Übung erstellen",
     "edit": "Übung bearbeiten",
     "name": "Name",
-    "type": "Typ",
+    "type": {
+      "strength": "Kraft",
+      "cardio": "Cardio",
+      "powerEndurance": "Kraft-Ausdauer"
+    },
     "muscleGroup": "Muskelgruppe",
     "equipment": "Ausrüstung",
     "description": "Beschreibung",
@@ -659,12 +734,7 @@
     "archiveMessage": "Bist du sicher, dass du diese Übung archivieren möchtest? Sie wird in Selektoren ausgeblendet, aber für historische Aufzeichnungen beibehalten.",
     "allTypes": "Alle Typen",
     "showArchived": "Archivierte anzeigen",
-    "filterType": "Nach Typ filtern",
-    "type": {
-      "strength": "Kraft",
-      "cardio": "Cardio",
-      "powerEndurance": "Kraft-Ausdauer"
-    }
+    "filterType": "Nach Typ filtern"
   },
   "coach": {
     "dashboard": {

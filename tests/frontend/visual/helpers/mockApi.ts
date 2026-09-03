@@ -392,6 +392,27 @@ export async function mock2FAStatus(page: Page, enabled = false) {
   });
 }
 
+const DEFAULT_PRIVACY_SETTINGS = {
+  defaultVisibility: "followers",
+  allowFollowers: true,
+  showEmail: false,
+  showWeight: false,
+  showFitnessLevel: false,
+} as const;
+
+export async function mockPrivacySettings(
+  page: Page,
+  overrides?: Partial<typeof DEFAULT_PRIVACY_SETTINGS>,
+) {
+  await page.route("**/api/v1/users/me/privacy", async (route) => {
+    const method = route.request().method();
+    if (method !== "GET" && method !== "PATCH") {
+      return route.fallback();
+    }
+    return fulfillJson(route, { ...DEFAULT_PRIVACY_SETTINGS, ...overrides });
+  });
+}
+
 export async function mockCookieConsent(page: Page) {
   await page.route("**/api/v1/consent/cookie-status", async (route) => {
     if (route.request().method() !== "GET") {
@@ -661,6 +682,7 @@ export async function installDefaultMocks(page: Page): Promise<void> {
   await mockAuthSessions(page);
   await mockAuthRefresh(page);
   await mock2FAStatus(page, false);
+  await mockPrivacySettings(page);
   await mockCookieConsent(page);
   await mockFeed(page);
   await mockSession(page);

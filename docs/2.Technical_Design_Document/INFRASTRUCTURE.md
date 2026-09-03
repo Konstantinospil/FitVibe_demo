@@ -66,8 +66,8 @@ This document provides comprehensive instructions for deploying FitVibe infrastr
 **For Local Development:**
 
 - Docker 24+ & Docker Compose 2.20+
-- Node.js 20 LTS
-- PNPM 9+
+- Node.js 24 LTS
+- PNPM 10+
 - PostgreSQL 15+ client (`psql`)
 
 **For Kubernetes Deployment:**

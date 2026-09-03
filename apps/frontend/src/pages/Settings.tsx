@@ -228,19 +228,14 @@ const Settings: React.FC = () => {
     // Validate file type
     const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
     if (!allowedTypes.includes(file.type)) {
-      setAvatarError(
-        t("settings.profile.avatarInvalidType") ||
-          "Invalid file type. Please use JPEG, PNG, or WebP.",
-      );
+      setAvatarError(t("settings.profile.avatarInvalidType"));
       return;
     }
 
     // Validate file size (5MB)
     const maxSize = 5 * 1024 * 1024; // 5MB
     if (file.size > maxSize) {
-      setAvatarError(
-        t("settings.profile.avatarTooLarge") || "File is too large. Maximum size is 5MB.",
-      );
+      setAvatarError(t("settings.profile.avatarTooLarge"));
       return;
     }
 
@@ -257,7 +252,7 @@ const Settings: React.FC = () => {
 
   const handleAvatarUpload = async () => {
     if (!avatarFile) {
-      toast.warning(t("settings.profile.avatarNoFile") || "Please select a file to upload.");
+      toast.warning(t("settings.profile.avatarNoFile"));
       return;
     }
 
@@ -283,17 +278,15 @@ const Settings: React.FC = () => {
         setAvatarUrl(response.data.fileUrl);
         setAvatarPreview(null);
         setAvatarFile(null);
-        toast.success(t("settings.profile.avatarUploadSuccess") || "Avatar uploaded successfully!");
+        toast.success(t("settings.profile.avatarUploadSuccess"));
         // Reload user data to get updated avatar
         await loadUserData();
       }
     } catch (error) {
       logger.apiError("Failed to upload avatar", error, "/api/v1/users/me/avatar", "POST");
       const errorMessage =
-        ((error as { response?: { data?: { error?: { message?: string; code?: string } } } })
-          ?.response?.data?.error?.message ??
-          t("settings.profile.avatarUploadError")) ||
-        "Failed to upload avatar. Please try again.";
+        (error as { response?: { data?: { error?: { message?: string; code?: string } } } })
+          ?.response?.data?.error?.message ?? t("settings.profile.avatarUploadError");
       setAvatarError(errorMessage);
       toast.error(errorMessage);
     } finally {
@@ -310,13 +303,11 @@ const Settings: React.FC = () => {
       setAvatarUrl(null);
       setAvatarPreview(null);
       setAvatarFile(null);
-      toast.success(t("settings.profile.avatarDeleteSuccess") || "Avatar deleted successfully!");
+      toast.success(t("settings.profile.avatarDeleteSuccess"));
       await loadUserData();
     } catch (error) {
       logger.apiError("Failed to delete avatar", error, "/api/v1/users/me/avatar", "DELETE");
-      toast.error(
-        t("settings.profile.avatarDeleteError") || "Failed to delete avatar. Please try again.",
-      );
+      toast.error(t("settings.profile.avatarDeleteError"));
     }
   };
 
@@ -329,7 +320,7 @@ const Settings: React.FC = () => {
       setShowTwoFASetup(true);
     } catch (error) {
       logger.apiError("Failed to enable 2FA", error, "/api/v1/auth/2fa/setup", "GET");
-      toast.error("Failed to enable 2FA. Please try again.");
+      toast.error(t("settings.security.enableError"));
     } finally {
       setLoading2FA(false);
     }
@@ -337,7 +328,7 @@ const Settings: React.FC = () => {
 
   const handleVerify2FA = async () => {
     if (twoFACode.length !== 6) {
-      toast.warning("Please enter a valid 6-digit code");
+      toast.warning(t("settings.security.invalidCode"));
       return;
     }
 
@@ -349,10 +340,10 @@ const Settings: React.FC = () => {
       setTwoFACode("");
       setTwoFAQRCode(null);
       setTwoFABackupCodes([]);
-      toast.success("2FA enabled successfully!");
+      toast.success(t("settings.security.enabledSuccess"));
     } catch (error) {
       logger.apiError("Failed to verify 2FA", error, "/api/v1/auth/2fa/verify", "POST");
-      toast.error("Invalid code. Please try again.");
+      toast.error(t("settings.security.verifyError"));
     } finally {
       setLoading2FA(false);
     }
@@ -360,7 +351,7 @@ const Settings: React.FC = () => {
 
   const handleDisable2FA = () => {
     if (!disable2FAPassword) {
-      toast.warning("Please enter your password to disable 2FA");
+      toast.warning(t("settings.security.disableNeedPassword"));
       return;
     }
 
@@ -374,10 +365,10 @@ const Settings: React.FC = () => {
       await disable2FA(disable2FAPassword);
       setTwoFAEnabled(false);
       setDisable2FAPassword("");
-      toast.success("2FA disabled successfully");
+      toast.success(t("settings.security.disableSuccess"));
     } catch (error) {
       logger.apiError("Failed to disable 2FA", error, "/api/v1/auth/2fa/disable", "POST");
-      toast.error("Failed to disable 2FA. Please check your password and try again.");
+      toast.error(t("settings.security.disableError"));
     } finally {
       setLoading2FA(false);
     }
@@ -385,7 +376,7 @@ const Settings: React.FC = () => {
 
   const handleDeleteAccount = () => {
     if (!deleteConfirmPassword) {
-      toast.warning("Please enter your password to confirm account deletion");
+      toast.warning(t("settings.account.deleteNeedPassword"));
       return;
     }
 
@@ -401,7 +392,7 @@ const Settings: React.FC = () => {
         data: { password: deleteConfirmPassword },
       });
 
-      toast.success("Your account has been scheduled for deletion. You will be logged out now.");
+      toast.success(t("settings.account.deleteSuccess"));
       setTimeout(() => {
         void (async () => {
           await signOut();
@@ -410,15 +401,15 @@ const Settings: React.FC = () => {
       }, 2000);
     } catch (error) {
       logger.apiError("Failed to delete account", error, "/api/v1/users/me", "DELETE");
-      toast.error("Failed to delete account. Please try again.");
+      toast.error(t("settings.account.deleteError"));
     }
   };
 
   return (
     <PageIntro
-      eyebrow="Settings"
-      title="Your preferences and account settings"
-      description="Manage your profile, privacy, security, and account settings."
+      eyebrow={t("settings.title")}
+      title={t("settings.description")}
+      description={t("settings.introDescription")}
     >
       <div className="grid grid--gap-15" style={{ maxWidth: "900px" }}>
         {/* Profile Settings */}
@@ -426,16 +417,16 @@ const Settings: React.FC = () => {
           <CardHeader>
             <div className="flex flex--align-center flex--gap-075">
               <User size={20} />
-              <CardTitle>Profile Settings</CardTitle>
+              <CardTitle>{t("settings.profile.title")}</CardTitle>
             </div>
-            <CardDescription>Update your display name and basic information</CardDescription>
+            <CardDescription>{t("settings.profile.description")}</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="grid grid--gap-md">
               {/* Avatar Upload (FR-009) */}
               <div>
                 <label className="form-label-text block mb-05 font-weight-600">
-                  {t("settings.profile.avatar") || "Profile Avatar"}
+                  {t("settings.profile.avatar")}
                 </label>
                 <div
                   style={{
@@ -462,7 +453,7 @@ const Settings: React.FC = () => {
                     {avatarPreview ? (
                       <img
                         src={avatarPreview}
-                        alt="Avatar preview"
+                        alt={t("settings.profile.avatarPreviewAlt")}
                         style={{ width: "100%", height: "100%", objectFit: "cover" }}
                       />
                     ) : avatarUrl ? (
@@ -472,7 +463,7 @@ const Settings: React.FC = () => {
                             ? avatarUrl
                             : `${apiClient.defaults.baseURL}${avatarUrl}`
                         }
-                        alt="Profile avatar"
+                        alt={t("settings.profile.avatarAlt")}
                         style={{ width: "100%", height: "100%", objectFit: "cover" }}
                         onError={() => setAvatarUrl(null)}
                       />
@@ -497,7 +488,7 @@ const Settings: React.FC = () => {
                         leftIcon={<Upload size={16} />}
                         disabled={uploadingAvatar}
                       >
-                        {t("settings.profile.avatarSelect") || "Select Image"}
+                        {t("settings.profile.avatarSelect")}
                       </Button>
                       {avatarPreview && (
                         <Button
@@ -507,7 +498,7 @@ const Settings: React.FC = () => {
                           isLoading={uploadingAvatar}
                           disabled={uploadingAvatar}
                         >
-                          {t("settings.profile.avatarUpload") || "Upload"}
+                          {t("settings.profile.avatarUpload")}
                         </Button>
                       )}
                       {avatarUrl && (
@@ -518,7 +509,7 @@ const Settings: React.FC = () => {
                           leftIcon={<X size={16} />}
                           disabled={uploadingAvatar}
                         >
-                          {t("settings.profile.avatarDelete") || "Delete"}
+                          {t("settings.profile.avatarDelete")}
                         </Button>
                       )}
                     </div>
@@ -533,10 +524,7 @@ const Settings: React.FC = () => {
                         {avatarError}
                       </p>
                     )}
-                    <p className="mt-05 text-085 text-muted">
-                      {t("settings.profile.avatarHelp") ||
-                        "Upload a JPEG, PNG, or WebP image (max 5MB). Recommended size: 256×256 pixels."}
-                    </p>
+                    <p className="mt-05 text-085 text-muted">{t("settings.profile.avatarHelp")}</p>
                   </div>
                 </div>
               </div>
@@ -546,7 +534,7 @@ const Settings: React.FC = () => {
                   htmlFor="display-name"
                   className="form-label-text block mb-05 font-weight-600"
                 >
-                  Display Name
+                  {t("settings.profile.displayName")}
                 </label>
                 <input
                   id="display-name"
@@ -566,7 +554,11 @@ const Settings: React.FC = () => {
                 <input
                   id="email"
                   type="email"
-                  value={loadingUser ? "Loading..." : (userData?.email ?? "Not available")}
+                  value={
+                    loadingUser
+                      ? t("common.loading")
+                      : (userData?.email ?? t("settings.profile.emailUnavailable"))
+                  }
                   disabled
                   className="form-input"
                   style={{
@@ -737,11 +729,9 @@ const Settings: React.FC = () => {
           <CardHeader>
             <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
               <Globe size={20} />
-              <CardTitle>Preferences</CardTitle>
+              <CardTitle>{t("settings.preferences.title")}</CardTitle>
             </div>
-            <CardDescription>
-              Set your default session visibility, units, and language
-            </CardDescription>
+            <CardDescription>{t("settings.preferences.description")}</CardDescription>
           </CardHeader>
           <CardContent>
             <div style={{ display: "grid", gap: "1.5rem" }}>
@@ -755,7 +745,7 @@ const Settings: React.FC = () => {
                     fontWeight: 600,
                   }}
                 >
-                  Default Session Visibility
+                  {t("settings.preferences.defaultVisibility")}
                 </label>
                 <select
                   id="default-visibility"
@@ -771,10 +761,10 @@ const Settings: React.FC = () => {
                     fontSize: "1rem",
                   }}
                 >
-                  <option value="private">Private (only you)</option>
-                  <option value="followers">Followers</option>
-                  <option value="link">Link only</option>
-                  <option value="public">Public</option>
+                  <option value="private">{t("settings.preferences.visibilityPrivate")}</option>
+                  <option value="followers">{t("settings.preferences.visibilityFollowers")}</option>
+                  <option value="link">{t("settings.preferences.visibilityLink")}</option>
+                  <option value="public">{t("settings.preferences.visibilityPublic")}</option>
                 </select>
               </div>
 
@@ -788,7 +778,7 @@ const Settings: React.FC = () => {
                     fontWeight: 600,
                   }}
                 >
-                  Units
+                  {t("settings.preferences.units")}
                 </label>
                 <select
                   id="units"
@@ -804,8 +794,8 @@ const Settings: React.FC = () => {
                     fontSize: "1rem",
                   }}
                 >
-                  <option value="metric">Metric (kg, km)</option>
-                  <option value="imperial">Imperial (lb, mi)</option>
+                  <option value="metric">{t("settings.preferences.unitsMetric")}</option>
+                  <option value="imperial">{t("settings.preferences.unitsImperial")}</option>
                 </select>
               </div>
 
@@ -819,7 +809,7 @@ const Settings: React.FC = () => {
                     fontWeight: 600,
                   }}
                 >
-                  Language
+                  {t("settings.preferences.language")}
                 </label>
                 <select
                   id="locale"
@@ -835,8 +825,8 @@ const Settings: React.FC = () => {
                     fontSize: "1rem",
                   }}
                 >
-                  <option value="en">English</option>
-                  <option value="de">Deutsch (German)</option>
+                  <option value="en">{t("language.english")}</option>
+                  <option value="de">{t("language.german")}</option>
                 </select>
               </div>
             </div>
@@ -886,18 +876,15 @@ const Settings: React.FC = () => {
           <CardHeader>
             <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
               <Shield size={20} />
-              <CardTitle>Two-Factor Authentication (2FA)</CardTitle>
+              <CardTitle>{t("settings.security.title")}</CardTitle>
             </div>
-            <CardDescription>
-              Add an extra layer of security to your account with 2FA
-            </CardDescription>
+            <CardDescription>{t("settings.security.description")}</CardDescription>
           </CardHeader>
           <CardContent>
             {!twoFAEnabled && !showTwoFASetup && (
               <div>
                 <p style={{ marginBottom: "1rem", color: "var(--color-text-secondary)" }}>
-                  2FA is currently <strong>disabled</strong>. Enable it to secure your account with
-                  a time-based one-time password (TOTP).
+                  {t("settings.security.disabledHelp")}
                 </p>
                 <Button
                   variant="primary"
@@ -906,7 +893,7 @@ const Settings: React.FC = () => {
                   disabled={loading2FA}
                   isLoading={loading2FA}
                 >
-                  Enable 2FA
+                  {t("settings.security.enable")}
                 </Button>
               </div>
             )}
@@ -914,7 +901,7 @@ const Settings: React.FC = () => {
             {showTwoFASetup && (
               <div>
                 <p style={{ marginBottom: "1rem", color: "var(--color-text-secondary)" }}>
-                  Scan this QR code with your authenticator app (Google Authenticator, Authy, etc.):
+                  {t("settings.security.scanQr")}
                 </p>
                 <div
                   style={{
@@ -941,11 +928,11 @@ const Settings: React.FC = () => {
                     {twoFAQRCode ? (
                       <img
                         src={twoFAQRCode}
-                        alt="2FA QR Code"
+                        alt={t("settings.security.qrAlt")}
                         style={{ width: "100%", height: "100%", objectFit: "contain" }}
                       />
                     ) : (
-                      <span style={{ color: "#666" }}>Loading QR Code...</span>
+                      <span style={{ color: "#666" }}>{t("settings.security.qrLoading")}</span>
                     )}
                   </div>
                 </div>
@@ -959,7 +946,7 @@ const Settings: React.FC = () => {
                     fontWeight: 600,
                   }}
                 >
-                  Enter the 6-digit code from your app:
+                  {t("settings.security.enterCode")}
                 </label>
                 <div style={{ display: "flex", gap: "0.75rem" }}>
                   <input
@@ -988,7 +975,7 @@ const Settings: React.FC = () => {
                     disabled={twoFACode.length !== 6 || loading2FA}
                     isLoading={loading2FA}
                   >
-                    Verify and Enable
+                    {t("settings.security.verifyEnable")}
                   </Button>
                 </div>
 
@@ -1003,7 +990,7 @@ const Settings: React.FC = () => {
                     }}
                   >
                     <h4 style={{ marginBottom: "0.5rem", fontSize: "0.95rem", fontWeight: 600 }}>
-                      Backup Codes
+                      {t("settings.security.backupCodes")}
                     </h4>
                     <p
                       style={{
@@ -1012,8 +999,7 @@ const Settings: React.FC = () => {
                         color: "var(--color-text-secondary)",
                       }}
                     >
-                      Save these backup codes in a secure location. You can use them to access your
-                      account if you lose your authenticator device.
+                      {t("settings.security.backupCodesHelp")}
                     </p>
                     <div
                       style={{
@@ -1045,10 +1031,10 @@ const Settings: React.FC = () => {
             {twoFAEnabled && (
               <div>
                 <p style={{ marginBottom: "1rem", color: "var(--color-accent)", fontWeight: 600 }}>
-                  ✓ 2FA is currently <strong>enabled</strong>
+                  {t("settings.security.enabled")}
                 </p>
                 <p style={{ marginBottom: "1rem", color: "var(--color-text-secondary)" }}>
-                  Your account is protected with two-factor authentication.
+                  {t("settings.security.enabledHelp")}
                 </p>
                 <div style={{ marginBottom: "1rem" }}>
                   <label
@@ -1060,7 +1046,7 @@ const Settings: React.FC = () => {
                       fontWeight: 600,
                     }}
                   >
-                    Enter your password to disable 2FA
+                    {t("settings.security.disablePasswordLabel")}
                   </label>
                   <input
                     type="password"
@@ -1085,7 +1071,7 @@ const Settings: React.FC = () => {
                   disabled={!disable2FAPassword || loading2FA}
                   isLoading={loading2FA}
                 >
-                  Disable 2FA
+                  {t("settings.security.disable")}
                 </Button>
               </div>
             )}
@@ -1113,17 +1099,17 @@ const Settings: React.FC = () => {
           <CardHeader>
             <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
               <Trash2 size={20} style={{ color: "var(--color-danger)" }} />
-              <CardTitle style={{ color: "var(--color-danger)" }}>Danger Zone</CardTitle>
+              <CardTitle style={{ color: "var(--color-danger)" }}>
+                {t("settings.account.title")}
+              </CardTitle>
             </div>
-            <CardDescription>
-              Irreversible actions that will permanently affect your account
-            </CardDescription>
+            <CardDescription>{t("settings.account.description")}</CardDescription>
           </CardHeader>
           <CardContent>
             {!showDeleteConfirm && (
               <div>
                 <p style={{ marginBottom: "1rem", color: "var(--color-text-secondary)" }}>
-                  Deleting your account will:
+                  {t("settings.account.deleteWill")}
                 </p>
                 <ul
                   style={{
@@ -1132,17 +1118,17 @@ const Settings: React.FC = () => {
                     color: "var(--color-text-secondary)",
                   }}
                 >
-                  <li>Permanently delete all your workout data</li>
-                  <li>Remove all your sessions and progress records</li>
-                  <li>Delete your profile and account information</li>
-                  <li>This action cannot be undone</li>
+                  <li>{t("settings.account.deleteItemWorkouts")}</li>
+                  <li>{t("settings.account.deleteItemSessions")}</li>
+                  <li>{t("settings.account.deleteItemProfile")}</li>
+                  <li>{t("settings.account.deleteItemUndo")}</li>
                 </ul>
                 <Button
                   variant="danger"
                   onClick={() => setShowDeleteConfirm(true)}
                   leftIcon={<Trash2 size={18} />}
                 >
-                  Delete My Account
+                  {t("settings.account.deleteAccount")}
                 </Button>
               </div>
             )}
@@ -1150,10 +1136,10 @@ const Settings: React.FC = () => {
             {showDeleteConfirm && (
               <div>
                 <p style={{ marginBottom: "1rem", color: "var(--color-danger)", fontWeight: 600 }}>
-                  ⚠️ Warning: This will permanently delete your account
+                  {t("settings.account.deleteWarning")}
                 </p>
                 <p style={{ marginBottom: "1rem", color: "var(--color-text-secondary)" }}>
-                  Please enter your password to confirm account deletion:
+                  {t("settings.account.deletePasswordPrompt")}
                 </p>
                 <div style={{ marginBottom: "1rem" }}>
                   <input
@@ -1180,14 +1166,14 @@ const Settings: React.FC = () => {
                       setDeleteConfirmPassword("");
                     }}
                   >
-                    Cancel
+                    {t("settings.account.cancel")}
                   </Button>
                   <Button
                     variant="danger"
                     onClick={() => void handleDeleteAccount()}
                     disabled={!deleteConfirmPassword}
                   >
-                    Yes, Delete My Account
+                    {t("settings.account.yesDelete")}
                   </Button>
                 </div>
               </div>
@@ -1199,10 +1185,10 @@ const Settings: React.FC = () => {
       {/* Confirmation Dialogs */}
       <ConfirmDialog
         isOpen={showDisable2FAConfirm}
-        title="Disable Two-Factor Authentication"
-        message="Are you sure you want to disable 2FA? This will make your account less secure."
-        confirmLabel="Yes, Disable 2FA"
-        cancelLabel="Cancel"
+        title={t("settings.security.confirmDisableTitle")}
+        message={t("settings.security.confirmDisableMessage")}
+        confirmLabel={t("settings.security.confirmDisable")}
+        cancelLabel={t("common.cancel")}
         variant="warning"
         onConfirm={() => void confirmDisable2FA()}
         onCancel={() => setShowDisable2FAConfirm(false)}
@@ -1210,10 +1196,10 @@ const Settings: React.FC = () => {
 
       <ConfirmDialog
         isOpen={showDeleteAccountConfirm}
-        title="Delete Account"
-        message="This will permanently delete your account and all your data. This action cannot be undone. Are you absolutely sure?"
-        confirmLabel="Confirm Delete"
-        cancelLabel="Cancel"
+        title={t("settings.account.confirmTitle")}
+        message={t("settings.account.confirmMessage")}
+        confirmLabel={t("settings.account.confirmDelete")}
+        cancelLabel={t("common.cancel")}
         variant="danger"
         onConfirm={() => void confirmDeleteAccount()}
         onCancel={() => setShowDeleteAccountConfirm(false)}

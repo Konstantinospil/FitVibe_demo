@@ -15,8 +15,8 @@ Thank you for helping improve FitVibe. This guide follows GitHub's recommendatio
 
 ## 2. Prerequisites
 
-- Node.js 20 or newer
-- PNPM 9 (`corepack enable pnpm`)
+- Node.js 24 or newer
+- PNPM 10 (`corepack enable pnpm`)
 - Git with SSH access configured
 - Docker (optional but required for the local Postgres/NGINX stack under `infra/`)
 

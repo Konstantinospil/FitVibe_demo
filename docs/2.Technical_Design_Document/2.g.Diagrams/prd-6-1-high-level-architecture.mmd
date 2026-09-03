@@ -45,7 +45,7 @@ flowchart TB
     %% =========================================================
     %% Backend (Runtime & Framework)
     %% =========================================================
-    subgraph BE[Backend: Node.js 20 + Express]
+    subgraph BE[Backend: Node.js 24 + Express]
         direction TB
         BE_API[Express API Routers<br/>auth • users • exercises • sessions • progress • points • feed]:::core
         BE_SEC[Security: Helmet • CORS allowlist • Rate limiting • CSRF • httpOnly Secure cookies]:::core

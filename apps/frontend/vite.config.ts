@@ -8,6 +8,10 @@ import { resolve as pathResolve } from "node:path";
 export default defineConfig(() => {
   const isVitest = process.env.VITEST === "true";
   const isSSR = process.env.SSR === "true";
+  const coverageEnabled =
+    process.env.VITEST_COVERAGE === "true" ||
+    process.argv.includes("--coverage") ||
+    process.argv.some((arg) => arg.startsWith("--coverage="));
   const root = fileURLToPath(new URL(".", import.meta.url));
   const workspaceRoot = pathResolve(root, "../..");
 
@@ -113,10 +117,10 @@ export default defineConfig(() => {
       teardownTimeout: 15000, // 15 second timeout for teardown (increased for cleanup)
       // Prevent tests from hanging by detecting open handles
       detectOpenHandles: true,
-      // Force exit after tests complete to prevent hanging from open handles
-      // This is safe because we ensure proper cleanup in afterEach hooks
-      forceExit: true,
-      // Force exit after tests to prevent hanging
+      // Force-exit skips Istanbul reporters and leaves only coverage/.tmp,
+      // which GitHub's upload-artifact ignores (hidden files). Keep it off
+      // whenever coverage is collected; CI job timeouts still bound hangs.
+      forceExit: !coverageEnabled,
       forceRerunTriggers: ["**/src/**", "**/tests/**"],
       // Ensure dependencies are resolved correctly for setup files
       // Inline all test dependencies to ensure they're resolved from the correct node_modules
@@ -147,17 +151,16 @@ export default defineConfig(() => {
         },
       },
       coverage: {
+        ...(coverageEnabled ? { enabled: true as const } : {}),
         provider: "istanbul" as const,
-        reporter: ["text", "html", "json", "json-summary"],
+        reporter: ["text", "html", "json", "json-summary", "lcov"],
         include: ["src/**/*.{ts,tsx}"],
         exclude: [...(configDefaults.coverage.exclude || []), "src/main.tsx"],
-        reportsDirectory: "./coverage",
-        // Ensure temp directory is explicitly set and created
-        tempDirectory: "./coverage/.tmp",
-        // Clean coverage directory before running tests
+        reportsDirectory: pathResolve(root, "coverage"),
+        tempDirectory: pathResolve(root, "coverage", ".tmp"),
         clean: true,
-        // Clean on exit to prevent stale files
         cleanOnRerun: true,
+        reportOnFailure: true,
       },
     },
     server: {

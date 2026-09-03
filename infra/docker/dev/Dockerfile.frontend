@@ -3,7 +3,7 @@
 ## ===============================================================
 
 # ---------- Builder Stage ----------
-FROM node:20-alpine AS builder
+FROM node:24-alpine AS builder
 WORKDIR /app
 
 # 1) Copy workspace manifests needed for dependency resolution
@@ -25,7 +25,7 @@ RUN pnpm install --frozen-lockfile --prod=false --offline
 RUN pnpm --filter @fitvibe/frontend run build:ssr
 
 # ---------- Runtime Stage ----------
-FROM node:20-alpine AS runtime
+FROM node:24-alpine AS runtime
 
 WORKDIR /app
 

@@ -160,11 +160,11 @@ jobs:
   benchmark:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v2
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v6
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v6
         with:
-          node-version: "20"
+          node-version: "24"
       - run: pnpm install
       - run: pnpm --filter @fitvibe/backend test tests/backend/db/encryption-performance-benchmark.ts
       - name: Check overhead

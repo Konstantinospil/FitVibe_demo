@@ -4,8 +4,8 @@ The FitVibe backend is an Express API with PostgreSQL persistence managed throug
 
 ## Prerequisites
 
-- Node.js 20+
-- PNPM 9
+- Node.js 24+
+- PNPM 10
 - PostgreSQL 14+ (local or containerised)
 
 ## Environment

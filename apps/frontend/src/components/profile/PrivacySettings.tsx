@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { Button } from "../ui/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/Card";
 import { Select } from "../ui/Select";
+import { Spinner } from "../ui/Spinner";
 import { Switch } from "../ui/Switch";
 import { Alert } from "../ui/Alert";
 import {
@@ -23,7 +24,7 @@ export interface PrivacySettingsProps {
 export const PrivacySettings: React.FC<PrivacySettingsProps> = ({ onUpdate }) => {
   const { t } = useTranslation("common");
   const { showToast } = useToast();
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [settings, setSettings] = useState<PrivacySettingsData>({
@@ -77,10 +78,10 @@ export const PrivacySettings: React.FC<PrivacySettingsProps> = ({ onUpdate }) =>
 
   if (isLoading) {
     return (
-      <Card>
+      <Card data-testid="privacy-settings-loading">
         <CardContent>
           <div style={{ padding: "var(--space-xl)", textAlign: "center" }}>
-            <div className="spinner" />
+            <Spinner label={t("common.loading") || "Loading"} />
           </div>
         </CardContent>
       </Card>
@@ -88,7 +89,7 @@ export const PrivacySettings: React.FC<PrivacySettingsProps> = ({ onUpdate }) =>
   }
 
   return (
-    <Card>
+    <Card data-testid="privacy-settings">
       <CardHeader>
         <CardTitle>{t("settings.privacy.title") || "Privacy Settings"}</CardTitle>
       </CardHeader>

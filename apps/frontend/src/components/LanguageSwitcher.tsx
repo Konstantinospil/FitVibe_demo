@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useLayoutEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { ChevronDown } from "lucide-react";
 
@@ -123,25 +123,19 @@ function supportsEmojiFlag(): boolean {
     return _emojiFlagSupport;
   }
   try {
-    // Some platforms render flag emoji as two regional letters; compare width
+    // Regional-indicator pairs (GB, DE, …) look like two letters when the OS
+    // has no flag emoji. A real flag glyph is ~1em; letter fallback is ~2em.
     const canvas = document.createElement("canvas");
-    canvas.width = 32;
-    canvas.height = 32;
     const ctx = canvas.getContext("2d");
     if (!ctx) {
       _emojiFlagSupport = false;
       return _emojiFlagSupport;
     }
-    ctx.textBaseline = "top";
     ctx.font =
       "16px 'Apple Color Emoji','Segoe UI Emoji','Noto Color Emoji','Twemoji Mozilla',sans-serif";
-    ctx.clearRect(0, 0, 32, 32);
-    ctx.fillText("\uD83C\uDDEC\uD83C\uDDE7", 0, 0);
-    const dataEmoji = canvas.toDataURL();
-    ctx.clearRect(0, 0, 32, 32);
-    ctx.fillText("GB", 0, 0);
-    const dataLetters = canvas.toDataURL();
-    _emojiFlagSupport = dataEmoji !== dataLetters;
+    const flagWidth = ctx.measureText("\uD83C\uDDEC\uD83C\uDDE7").width;
+    const lettersWidth = ctx.measureText("GB").width;
+    _emojiFlagSupport = flagWidth > 0 && lettersWidth > 0 && flagWidth < lettersWidth * 0.8;
     return _emojiFlagSupport;
   } catch {
     _emojiFlagSupport = false;
@@ -194,16 +188,10 @@ const optionStyle: React.CSSProperties = {
 };
 
 function FlagIcon({ option, size = 20 }: { option: LanguageOption; size?: number }) {
-  // SSR-safe: Use state to detect emoji support after mount
   const [supportsEmoji, setSupportsEmoji] = useState<boolean | null>(null);
 
-  useEffect(() => {
-    // Only check emoji support in browser after mount
-    if (typeof document !== "undefined") {
-      setSupportsEmoji(supportsEmojiFlag());
-    } else {
-      setSupportsEmoji(false);
-    }
+  useLayoutEffect(() => {
+    setSupportsEmoji(typeof document !== "undefined" ? supportsEmojiFlag() : false);
   }, []);
 
   // During SSR or before detection, use SVG fallback

@@ -40,7 +40,13 @@ try {
   }
 }
 
+// pnpm `run test -- --coverage` forwards a literal `--`, which makes Vitest
+// treat `--coverage` as a file filter instead of enabling Istanbul.
 const passthroughArgs = process.argv.slice(2).filter((arg) => {
+  if (arg === "--") {
+    return false;
+  }
+
   if (arg === "--runInBand" || arg === "--run-in-band") {
     return false;
   }
@@ -51,6 +57,10 @@ const passthroughArgs = process.argv.slice(2).filter((arg) => {
 
   return true;
 });
+
+const coverageRequested = passthroughArgs.some(
+  (arg) => arg === "--coverage" || arg.startsWith("--coverage="),
+);
 
 const require = createRequire(import.meta.url);
 const vitestPkgPath = require.resolve("vitest/package.json");
@@ -83,6 +93,7 @@ const nodeOptions = hasMemoryLimit
 const env = {
   ...process.env,
   NODE_OPTIONS: nodeOptions,
+  ...(coverageRequested ? { VITEST_COVERAGE: "true" } : {}),
 };
 
 // Also set it directly in the execPath args for better compatibility
@@ -105,6 +116,18 @@ const result = spawnSync(
 
 if (result.error) {
   console.error(result.error);
+}
+
+if (coverageRequested) {
+  const summaryPath = join(coverageDir, "coverage-summary.json");
+  const finalPath = join(coverageDir, "coverage-final.json");
+  const lcovPath = join(coverageDir, "lcov.info");
+  if (!existsSync(summaryPath) && !existsSync(finalPath) && !existsSync(lcovPath)) {
+    console.error(
+      `[test] Coverage was requested but no reports were written under ${coverageDir}.`,
+    );
+    process.exit(result.status === 0 ? 1 : (result.status ?? 1));
+  }
 }
 
 process.exit(result.status ?? 1);
