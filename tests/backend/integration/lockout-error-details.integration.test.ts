@@ -14,36 +14,19 @@ import {
   truncateAll,
   ensureRolesSeeded,
   withDatabaseErrorHandling,
-  isDatabaseAvailable,
   ensureUsernameColumnExists,
   createTestIp,
 } from "../../setup/test-helpers.js";
+import { describeWithTestDatabase } from "../../setup/db-availability.js";
 import { getCurrentTermsVersion } from "../../../apps/backend/src/config/terms.js";
 
-describe("Integration: Lockout Error Details", () => {
-  let dbAvailable = false;
-
+describeWithTestDatabase("Integration: Lockout Error Details", () => {
   beforeAll(async () => {
-    dbAvailable = await isDatabaseAvailable();
-    if (!dbAvailable) {
-      console.warn("\n⚠️  Integration tests will be skipped (database unavailable)");
-      console.warn("To enable these tests:");
-      console.warn("  1. Start PostgreSQL locally, or");
-      console.warn(
-        "  2. Use Docker Compose: docker compose -f infra/docker/dev/docker-compose.dev.yml up -d db",
-      );
-      console.warn("  3. Set PGHOST, PGPORT, PGUSER, PGPASSWORD, PGDATABASE environment variables");
-      console.warn("");
-      return;
-    }
     // Ensure username column exists before tests run
     await ensureUsernameColumnExists();
   });
 
   beforeEach(async () => {
-    if (!dbAvailable) {
-      return;
-    }
     await withDatabaseErrorHandling(async () => {
       const { env } = await import("../../../apps/backend/src/config/env.js");
       (env as { readOnlyMode: boolean }).readOnlyMode = false;
@@ -55,18 +38,11 @@ describe("Integration: Lockout Error Details", () => {
   });
 
   afterEach(async () => {
-    if (!dbAvailable) {
-      return;
-    }
     await truncateAll();
   });
 
   describe("Account Lockout Error Details", () => {
     it("should include structured details in AUTH_ACCOUNT_LOCKED error", async () => {
-      if (!dbAvailable) {
-        console.warn("Skipping test: database unavailable");
-        return;
-      }
       const email = "locked@example.com";
       const password = "ValidPassword123!";
       const ipAddress = createTestIp();
@@ -117,10 +93,6 @@ describe("Integration: Lockout Error Details", () => {
 
   describe("IP Lockout Error Details", () => {
     it("should include structured details in AUTH_IP_LOCKED error", async () => {
-      if (!dbAvailable) {
-        console.warn("Skipping test: database unavailable");
-        return;
-      }
       const ipAddress = createTestIp();
 
       // Make 4 failed attempts with different emails to approach the 5 distinct email limit
@@ -160,10 +132,6 @@ describe("Integration: Lockout Error Details", () => {
 
   describe("Pre-Lockout Warning Details", () => {
     it("should include warning details in AUTH_INVALID_CREDENTIALS when approaching lockout", async () => {
-      if (!dbAvailable) {
-        console.warn("Skipping test: database unavailable");
-        return;
-      }
       const email = "warning@example.com";
       const ipAddress = createTestIp();
 
@@ -210,10 +178,6 @@ describe("Integration: Lockout Error Details", () => {
     });
 
     it("should not include warning details when not approaching lockout", async () => {
-      if (!dbAvailable) {
-        console.warn("Skipping test: database unavailable");
-        return;
-      }
       const email = "nowarning@example.com";
       const ipAddress = createTestIp();
 

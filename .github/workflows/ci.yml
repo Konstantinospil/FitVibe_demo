@@ -63,6 +63,10 @@ jobs:
         timeout-minutes: 10
         run: pnpm lint:check
 
+      - name: Ban silent test returns
+        timeout-minutes: 2
+        run: pnpm test:no-silent-returns
+
       - name: Type check
         timeout-minutes: 10
         run: pnpm typecheck
@@ -188,7 +192,11 @@ jobs:
 
       - name: Backend unit tests & coverage
         timeout-minutes: 15
-        run: pnpm --filter @fitvibe/backend exec jest --passWithNoTests --coverage --maxWorkers=2 --testPathIgnorePatterns="migrations/migrations\\.test\\.ts|seeds/seeds\\.test\\.ts|.*\\.integration\\.test\\.ts$"
+        run: pnpm --filter @fitvibe/backend exec jest --coverage --maxWorkers=2 --testPathIgnorePatterns="migrations/migrations\\.test\\.ts|seeds/seeds\\.test\\.ts|.*\\.integration\\.test\\.ts$" --json --outputFile=coverage/jest-unit.json
+
+      - name: Fail on unexpected skipped tests
+        if: always()
+        run: node tests/qa/assert-no-unexpected-skips.cjs apps/backend/coverage/jest-unit.json
 
       - name: Upload backend coverage artifact
         if: always()
@@ -253,7 +261,11 @@ jobs:
 
       - name: Frontend unit tests & coverage
         timeout-minutes: 10
-        run: pnpm --filter @fitvibe/frontend test -- --coverage --maxWorkers=2
+        run: pnpm --filter @fitvibe/frontend test -- --coverage --maxWorkers=2 --reporter=default --reporter=json --outputFile=coverage/vitest-unit.json
+
+      - name: Fail on unexpected skipped tests
+        if: always()
+        run: node tests/qa/assert-no-unexpected-skips.cjs apps/frontend/coverage/vitest-unit.json
 
       - name: Verify frontend coverage output
         if: always()
@@ -671,8 +683,8 @@ jobs:
             echo "- ⚠️ Schema drift detected between Zod and OpenAPI" >> $GITHUB_STEP_SUMMARY
           fi
 
-  excluded_tests:
-    name: Excluded Tests (Integration & Scripts)
+  integration:
+    name: Backend Integration Tests
     runs-on: ubuntu-latest
     timeout-minutes: 30
     needs:
@@ -805,17 +817,21 @@ jobs:
           CI: "true"
         # maxWorkers=1: these suites truncate a shared Postgres DB and IP-keyed
         # brute-force counters collide when two workers run in parallel.
-        run: pnpm --filter @fitvibe/backend exec jest --maxWorkers=1 --testMatch="**/integration/**/*.integration.test.ts" --testPathIgnorePatterns="/node_modules/|verification-resend-limit\\.test\\.ts$|login-enumeration\\.test\\.ts$" --forceExit
+        run: mkdir -p apps/backend/coverage && pnpm --filter @fitvibe/backend exec jest --maxWorkers=1 --testMatch="**/integration/**/*.integration.test.ts" --testPathIgnorePatterns="/node_modules/|verification-resend-limit\\.test\\.ts$|login-enumeration\\.test\\.ts$" --forceExit --json --outputFile=coverage/jest-integration.json
+
+      - name: Fail on unexpected skipped tests
+        if: always()
+        run: node tests/qa/assert-no-unexpected-skips.cjs apps/backend/coverage/jest-integration.json
 
       - name: Job summary
         if: always()
         run: |
-          echo "## Excluded Tests Summary" >> $GITHUB_STEP_SUMMARY
+          echo "## Integration Tests Summary" >> $GITHUB_STEP_SUMMARY
           if [ "${{ job.status }}" == "success" ]; then
             echo "- ✅ Scripts test passed" >> $GITHUB_STEP_SUMMARY
             echo "- ✅ Integration tests passed" >> $GITHUB_STEP_SUMMARY
           else
-            echo "- ❌ Some excluded tests failed" >> $GITHUB_STEP_SUMMARY
+            echo "- ❌ Integration tests failed" >> $GITHUB_STEP_SUMMARY
           fi
 
   openapi_spec:
@@ -879,159 +895,6 @@ jobs:
           path: apps/backend/openapi/openapi.json
           retention-days: 90
           if-no-files-found: error
-
-  integration:
-    name: Backend Integration Tests
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
-    needs:
-      - backend_tests
-      - frontend_tests
-      - database_tests
-      - excluded_tests
-    permissions:
-      contents: read
-      actions: read
-    services:
-      postgres:
-        image: postgres:16
-        env:
-          POSTGRES_DB: fitvibe
-          POSTGRES_USER: fitvibe
-          POSTGRES_PASSWORD: fitvibe
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd "pg_isready -U fitvibe -d fitvibe"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-      clamav:
-        image: clamav/clamav:latest
-        ports:
-          - 3310:3310
-        env:
-          FRESHCLAM_CHECKS: 0
-        options: >-
-          --health-cmd="clamdscan --version"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-    env:
-      DATABASE_URL: postgresql://fitvibe:fitvibe@127.0.0.1:5432/fitvibe
-      CLAMAV_ENABLED: "true"
-      CLAMAV_HOST: "127.0.0.1"
-      CLAMAV_PORT: "3310"
-      REAL_CLAMD: "1"
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v6
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v6
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-
-      - name: Install native canvas prerequisites
-        run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y \
-            build-essential \
-            libcairo2-dev \
-            libpango1.0-dev \
-            libjpeg-dev \
-            libgif-dev \
-            librsvg2-dev \
-            postgresql-client
-
-      - name: Wait for services
-        timeout-minutes: 10
-        run: |
-          echo "Waiting for PostgreSQL..."
-          for i in {1..30}; do
-            if pg_isready -h 127.0.0.1 -p 5432 -U fitvibe >/dev/null 2>&1; then
-              echo "PostgreSQL is ready"
-
-              break
-            fi
-            if [ $i -eq 30 ]; then
-              echo "PostgreSQL failed to start" >&2
-              exit 1
-            fi
-            sleep 2
-          done
-
-          echo "Waiting for ClamAV..."
-          python3 - <<'PY'
-          import socket, time, sys
-          host = "127.0.0.1"
-          port = 3310
-          for i in range(30):
-              try:
-                  with socket.create_connection((host, port), timeout=2):
-                      print("ClamAV is ready")
-                      sys.exit(0)
-              except OSError:
-                  if i == 29:
-                      print("ClamAV failed to start", file=sys.stderr)
-                      sys.exit(1)
-                  time.sleep(2)
-          PY
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile --no-offline
-
-      - name: Run database migrations
-        timeout-minutes: 10
-        run: pnpm --filter @fitvibe/backend exec tsx src/db/utils/migrateAll.ts
-
-      - name: Verify migrations completed successfully
-        timeout-minutes: 2
-        run: |
-          echo "Verifying critical tables exist..."
-          PGPASSWORD=fitvibe psql -h 127.0.0.1 -p 5432 -U fitvibe -d fitvibe <<EOF
-          DO \$\$
-          DECLARE
-            missing_tables text[];
-          BEGIN
-            SELECT array_agg(t) INTO missing_tables
-            FROM unnest(ARRAY['users', 'profiles', 'sessions', 'feed_items', 'exercises']) t
-            WHERE NOT EXISTS (
-              SELECT 1 FROM information_schema.tables
-              WHERE table_name = t
-            );
-
-            IF array_length(missing_tables, 1) > 0 THEN
-              RAISE EXCEPTION 'Missing critical tables: %', array_to_string(missing_tables, ', ');
-            END IF;
-          END \$\$;
-          EOF
-
-      - name: Seed database
-        timeout-minutes: 10
-        env:
-          NODE_ENV: test
-        run: pnpm --filter @fitvibe/backend exec tsx src/db/utils/seedAll.ts
-
-      - name: Integration tests
-        timeout-minutes: 20
-        env:
-          NODE_ENV: test
-        # Shared test DB cannot be truncated safely by parallel Jest workers.
-        run: pnpm --filter @fitvibe/backend exec jest --maxWorkers=1 --testMatch="**/integration/**/*.integration.test.ts" --testPathIgnorePatterns="/node_modules/|verification-resend-limit\\.test\\.ts$|login-enumeration\\.test\\.ts$"
-
-      - name: Job summary
-        if: always()
-        run: |
-          echo "## Integration Tests Summary" >> $GITHUB_STEP_SUMMARY
-          if [ "${{ job.status }}" == "success" ]; then
-            echo "- ✅ Integration tests passed" >> $GITHUB_STEP_SUMMARY
-          else
-            echo "- ❌ Integration tests failed" >> $GITHUB_STEP_SUMMARY
-          fi
 
   metrics_contract:
     name: Metrics Contract
@@ -1558,6 +1421,64 @@ jobs:
             echo "- ⚠️ Visual differences detected - review screenshots" >> $GITHUB_STEP_SUMMARY
           fi
 
+  e2e_smoke:
+    name: E2E Playwright smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs:
+      - frontend_tests
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Install native canvas prerequisites
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y \
+            build-essential \
+            libcairo2-dev \
+            libpango1.0-dev \
+            libjpeg-dev \
+            libgif-dev \
+            librsvg2-dev \
+            postgresql-client
+
+      - name: Install project dependencies
+        run: pnpm install --frozen-lockfile --no-offline
+
+      - name: Install Playwright browsers
+        timeout-minutes: 10
+        run: pnpm exec playwright install --with-deps
+
+      - name: Build frontend
+        timeout-minutes: 10
+        run: pnpm --filter @fitvibe/frontend exec pnpm run build
+
+      - name: Run Playwright smoke tests
+        timeout-minutes: 10
+        run: pnpm exec playwright test tests/frontend/e2e/smoke.spec.cjs --config tests/frontend/e2e/playwright.config.cjs --reporter=line
+
+      - name: Upload Playwright smoke artifacts
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: playwright-smoke-${{ github.run_id }}
+          path: |
+            playwright-report
+            test-results
+          retention-days: 14
+          if-no-files-found: ignore
+
   e2e:
     name: E2E Playwright
     runs-on: ubuntu-latest
@@ -1601,7 +1522,7 @@ jobs:
         timeout-minutes: 10
         run: pnpm --filter @fitvibe/frontend exec pnpm run build
 
-      - name: Run Playwright smoke tests
+      - name: Run Playwright e2e tests
         timeout-minutes: 15
         run: pnpm exec playwright test --config tests/frontend/e2e/playwright.config.cjs --reporter=line
 
@@ -1628,7 +1549,6 @@ jobs:
       - frontend_tests
       - database_tests
       - coverage
-      - excluded_tests
       - integration
       - metrics_contract
       - accessibility

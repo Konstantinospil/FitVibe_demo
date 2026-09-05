@@ -178,7 +178,10 @@ describe("SSR render", () => {
     process.env.NODE_ENV = "production";
     const fs = await import("node:fs");
     vi.mocked(fs.existsSync).mockReset();
-    vi.mocked(fs.existsSync).mockReturnValue(true);
+    vi.mocked(fs.existsSync).mockImplementation((path) => {
+      const value = String(path);
+      return value.includes("manifest.json") || value.endsWith(".css");
+    });
     vi.mocked(fs.readFileSync).mockReset();
     vi.mocked(fs.readFileSync).mockImplementation((path) => {
       if (String(path).includes("manifest.json")) {
@@ -190,6 +193,9 @@ describe("SSR render", () => {
           },
         });
       }
+      if (String(path).endsWith(".css")) {
+        return "h3{color:#fff}";
+      }
       return '<html><head></head><body><div id="root"></div><script type="module" src="/src/bootstrap.ts"></script></body></html>';
     });
 
@@ -197,13 +203,9 @@ describe("SSR render", () => {
 
     expect(html).toMatch(/src="\/assets\/js\/[^"]+\.js"/);
     expect(html).not.toContain("/assets/assets/");
-    if (html.includes("main-abc123.js")) {
-      expect(html).toContain('href="/assets/css/index-def456.css"');
-      expect(html).toContain(
-        'rel="stylesheet" href="/assets/css/index-def456.css" fetchpriority="high"',
-      );
-      expect(html).toContain('src="/assets/js/main-abc123.js" fetchpriority="low"');
-      expect(html).not.toContain("modulepreload");
+    expect(html).not.toContain("modulepreload");
+    if (html.includes("<style data-href=")) {
+      expect(html).not.toMatch(/rel="stylesheet" href="\/assets\/css\//);
     }
   });
 

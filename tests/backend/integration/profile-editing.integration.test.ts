@@ -23,31 +23,22 @@ import {
   ensureRolesSeeded,
   ensureFitnessLevelsSeeded,
   withDatabaseErrorHandling,
-  isDatabaseAvailable,
   ensureUsernameColumnExists,
 } from "../../setup/test-helpers.js";
+import { describeWithTestDatabase } from "../../setup/db-availability.js";
 import { v4 as uuidv4 } from "uuid";
 import { getCurrentTermsVersion } from "../../../apps/backend/src/config/terms.js";
 import { clearRateLimiters } from "../../../apps/backend/src/middlewares/rate-limit.js";
 
-describe("Integration: Profile Editing", () => {
-  let dbAvailable = false;
+describeWithTestDatabase("Integration: Profile Editing", () => {
   let authToken: string;
   let userId: string;
 
   beforeAll(async () => {
-    dbAvailable = await isDatabaseAvailable();
-    if (!dbAvailable) {
-      console.warn("\n⚠️  Integration tests will be skipped (database unavailable)");
-      return;
-    }
     await ensureUsernameColumnExists();
   });
 
   beforeEach(async () => {
-    if (!dbAvailable) {
-      return;
-    }
     // Clear rate limiters to prevent rate limiting issues between tests
     clearRateLimiters();
     await withDatabaseErrorHandling(async () => {
@@ -99,18 +90,10 @@ describe("Integration: Profile Editing", () => {
   });
 
   afterEach(async () => {
-    if (!dbAvailable) {
-      return;
-    }
     await truncateAll();
   });
 
   it("should update alias successfully", async () => {
-    if (!dbAvailable) {
-      console.warn("Skipping test: database unavailable");
-      return;
-    }
-
     const response = await request(app)
       .patch("/api/v1/users/me")
       .set("Authorization", `Bearer ${authToken}`)
@@ -123,11 +106,6 @@ describe("Integration: Profile Editing", () => {
   });
 
   it("should update weight with unit conversion", async () => {
-    if (!dbAvailable) {
-      console.warn("Skipping test: database unavailable");
-      return;
-    }
-
     // Test weight in kg
     const responseKg = await request(app)
       .patch("/api/v1/users/me")
@@ -155,11 +133,6 @@ describe("Integration: Profile Editing", () => {
   });
 
   it("should update fitness level", async () => {
-    if (!dbAvailable) {
-      console.warn("Skipping test: database unavailable");
-      return;
-    }
-
     const response = await request(app)
       .patch("/api/v1/users/me")
       .set("Authorization", `Bearer ${authToken}`)
@@ -172,11 +145,6 @@ describe("Integration: Profile Editing", () => {
   });
 
   it("should update training frequency", async () => {
-    if (!dbAvailable) {
-      console.warn("Skipping test: database unavailable");
-      return;
-    }
-
     const response = await request(app)
       .patch("/api/v1/users/me")
       .set("Authorization", `Bearer ${authToken}`)
@@ -189,11 +157,6 @@ describe("Integration: Profile Editing", () => {
   });
 
   it("should update multiple profile fields at once", async () => {
-    if (!dbAvailable) {
-      console.warn("Skipping test: database unavailable");
-      return;
-    }
-
     const response = await request(app)
       .patch("/api/v1/users/me")
       .set("Authorization", `Bearer ${authToken}`)
@@ -213,11 +176,6 @@ describe("Integration: Profile Editing", () => {
   });
 
   it("should reject invalid alias format", async () => {
-    if (!dbAvailable) {
-      console.warn("Skipping test: database unavailable");
-      return;
-    }
-
     const response = await request(app)
       .patch("/api/v1/users/me")
       .set("Authorization", `Bearer ${authToken}`)
@@ -229,11 +187,6 @@ describe("Integration: Profile Editing", () => {
   });
 
   it("should reject weight outside valid range", async () => {
-    if (!dbAvailable) {
-      console.warn("Skipping test: database unavailable");
-      return;
-    }
-
     // Test weight too low
     const responseLow = await request(app)
       .patch("/api/v1/users/me")
@@ -258,11 +211,6 @@ describe("Integration: Profile Editing", () => {
   });
 
   it("should reject invalid fitness level", async () => {
-    if (!dbAvailable) {
-      console.warn("Skipping test: database unavailable");
-      return;
-    }
-
     const response = await request(app)
       .patch("/api/v1/users/me")
       .set("Authorization", `Bearer ${authToken}`)
@@ -274,11 +222,6 @@ describe("Integration: Profile Editing", () => {
   });
 
   it("should reject invalid training frequency", async () => {
-    if (!dbAvailable) {
-      console.warn("Skipping test: database unavailable");
-      return;
-    }
-
     const response = await request(app)
       .patch("/api/v1/users/me")
       .set("Authorization", `Bearer ${authToken}`)
@@ -290,11 +233,6 @@ describe("Integration: Profile Editing", () => {
   });
 
   it("should verify audit log entry is created", async () => {
-    if (!dbAvailable) {
-      console.warn("Skipping test: database unavailable");
-      return;
-    }
-
     await request(app).patch("/api/v1/users/me").set("Authorization", `Bearer ${authToken}`).send({
       alias: "audittest",
     });
@@ -312,11 +250,6 @@ describe("Integration: Profile Editing", () => {
   });
 
   it("should respond within 500ms", async () => {
-    if (!dbAvailable) {
-      console.warn("Skipping test: database unavailable");
-      return;
-    }
-
     const startTime = Date.now();
     const response = await request(app)
       .patch("/api/v1/users/me")

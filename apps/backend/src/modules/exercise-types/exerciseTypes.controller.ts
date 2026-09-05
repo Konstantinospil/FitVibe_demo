@@ -9,6 +9,8 @@ const createTypeSchema = z.object({
   description: z.string().max(255).optional(),
 });
 
+export const CreateExerciseTypeSchema = createTypeSchema;
+
 const updateTypeSchema = z.object({
   name: z.string().min(3).max(100).optional(),
   description: z.string().max(255).optional(),

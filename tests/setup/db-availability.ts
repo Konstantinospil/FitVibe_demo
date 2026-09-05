@@ -1,12 +1,29 @@
 import { spawnSync } from "node:child_process";
-import { describe } from "@jest/globals";
+import { describe, it } from "@jest/globals";
 
 type AvailabilityResult = { connectionString: string; isAvailable: boolean };
 
 const dbAvailability: AvailabilityResult = resolveDatabaseConnection();
 
 export const testDatabaseAvailable = dbAvailability.isAvailable;
+export const testDatabaseConnectionString = dbAvailability.connectionString;
+
+const SKIP_REASON =
+  "Test database unavailable. Set TEST_DATABASE_URL or start Postgres (PGHOST, PGPORT, PGUSER, PGPASSWORD, PGDATABASE).";
+
+if (process.env.CI && !testDatabaseAvailable) {
+  throw new Error(`Test database is unavailable in CI. ${SKIP_REASON}`);
+}
+
+if (!testDatabaseAvailable) {
+  console.warn(`\n⚠️  ${SKIP_REASON}\n`);
+}
+
+/** Skip the suite locally when Postgres is down. In CI the import above already threw. */
 export const describeWithTestDatabase = testDatabaseAvailable ? describe : describe.skip;
+
+/** Per-test variant of {@link describeWithTestDatabase}. Prefer suite-level skip. */
+export const itWithTestDatabase = testDatabaseAvailable ? it : it.skip;
 
 function resolveDatabaseConnection(): AvailabilityResult {
   const candidates = collectConnectionCandidates();

@@ -41,6 +41,7 @@ describe("ConfirmDialog", () => {
 
     expect(screen.getByText("Test Title")).toBeInTheDocument();
     expect(screen.getByText("Test Message")).toBeInTheDocument();
+    expect(screen.getByRole("dialog", { name: "Test Title" })).toBeInTheDocument();
   });
 
   it("should use default confirm and cancel labels", () => {

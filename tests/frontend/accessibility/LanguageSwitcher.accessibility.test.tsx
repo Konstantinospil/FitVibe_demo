@@ -1,11 +1,15 @@
 import React from "react";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it, beforeEach } from "vitest";
+import { describe, expect, it, beforeEach, vi } from "vitest";
 import LanguageSwitcher from "../../src/components/LanguageSwitcher";
 import { I18nextProvider } from "react-i18next";
 import i18n from "i18next";
 import { initReactI18next } from "react-i18next";
+
+vi.mock("../../src/i18n/config", () => ({
+  loadLanguageTranslations: vi.fn().mockResolvedValue(undefined),
+}));
 
 // Initialize i18n for tests
 const testI18n = i18n.createInstance();
@@ -121,7 +125,7 @@ describe("LanguageSwitcher Accessibility", () => {
       expect(germanOption).toHaveAttribute("aria-checked", "false");
     });
 
-    it("should update aria-checked when language changes", () => {
+    it("should update aria-checked when language changes", async () => {
       renderWithI18n(<LanguageSwitcher />);
 
       const button = screen.getByRole("button");
@@ -130,7 +134,10 @@ describe("LanguageSwitcher Accessibility", () => {
       const germanOption = screen.getByRole("menuitemradio", { name: /german/i });
       fireEvent.click(germanOption);
 
-      // Reopen to check aria-checked
+      await waitFor(() => {
+        expect(testI18n.language).toBe("de");
+      });
+
       fireEvent.click(button);
 
       const newGermanOption = screen.getByRole("menuitemradio", { name: /deutsch/i });
@@ -183,8 +190,9 @@ describe("LanguageSwitcher Accessibility", () => {
       germanOption.focus();
       await user.keyboard("{Enter}");
 
-      // Verify language changed
-      expect(testI18n.language).toBe("de");
+      await waitFor(() => {
+        expect(testI18n.language).toBe("de");
+      });
     });
 
     it("should allow selecting language with Space key", async () => {
@@ -198,8 +206,9 @@ describe("LanguageSwitcher Accessibility", () => {
       germanOption.focus();
       await user.keyboard(" ");
 
-      // Verify language changed
-      expect(testI18n.language).toBe("de");
+      await waitFor(() => {
+        expect(testI18n.language).toBe("de");
+      });
     });
 
     it("should close dropdown after selection", () => {
@@ -268,7 +277,7 @@ describe("LanguageSwitcher Accessibility", () => {
       expect(flags.length).toBeGreaterThan(0);
     });
 
-    it("should update screen reader announcements when language changes", () => {
+    it("should update screen reader announcements when language changes", async () => {
       renderWithI18n(<LanguageSwitcher />);
 
       const button = screen.getByRole("button");
@@ -277,8 +286,9 @@ describe("LanguageSwitcher Accessibility", () => {
       const germanOption = screen.getByRole("menuitemradio", { name: /german/i });
       fireEvent.click(germanOption);
 
-      // After changing to German, button label should update
-      expect(button).toHaveAttribute("aria-label", "Sprache ändern");
+      await waitFor(() => {
+        expect(button).toHaveAttribute("aria-label", "Sprache ändern");
+      });
     });
   });
 
@@ -442,7 +452,7 @@ describe("LanguageSwitcher Accessibility", () => {
   });
 
   describe("Language switching", () => {
-    it("should change language when option is selected", () => {
+    it("should change language when option is selected", async () => {
       renderWithI18n(<LanguageSwitcher />);
 
       expect(testI18n.language).toBe("en");
@@ -453,29 +463,30 @@ describe("LanguageSwitcher Accessibility", () => {
       const germanOption = screen.getByRole("menuitemradio", { name: /german/i });
       fireEvent.click(germanOption);
 
-      expect(testI18n.language).toBe("de");
+      await waitFor(() => {
+        expect(testI18n.language).toBe("de");
+      });
     });
 
-    it("should update UI text when language changes", () => {
+    it("should update UI text when language changes", async () => {
       renderWithI18n(<LanguageSwitcher />);
 
       const button = screen.getByRole("button");
 
-      // Change to German
       fireEvent.click(button);
       const germanOption = screen.getByRole("menuitemradio", { name: /german/i });
       fireEvent.click(germanOption);
 
-      // Button label should update to German
-      expect(button).toHaveAttribute("aria-label", "Sprache ändern");
+      await waitFor(() => {
+        expect(button).toHaveAttribute("aria-label", "Sprache ändern");
+      });
 
-      // Reopen and check menu items are in German
       fireEvent.click(button);
       expect(screen.getByRole("menuitemradio", { name: /englisch/i })).toBeInTheDocument();
       expect(screen.getByRole("menuitemradio", { name: /deutsch/i })).toBeInTheDocument();
     });
 
-    it("should preserve aria-checked state after language switch", () => {
+    it("should preserve aria-checked state after language switch", async () => {
       renderWithI18n(<LanguageSwitcher />);
 
       const button = screen.getByRole("button");
@@ -484,7 +495,10 @@ describe("LanguageSwitcher Accessibility", () => {
       const germanOption = screen.getByRole("menuitemradio", { name: /german/i });
       fireEvent.click(germanOption);
 
-      // Reopen menu
+      await waitFor(() => {
+        expect(testI18n.language).toBe("de");
+      });
+
       fireEvent.click(button);
 
       const newGermanOption = screen.getByRole("menuitemradio", { name: /deutsch/i });

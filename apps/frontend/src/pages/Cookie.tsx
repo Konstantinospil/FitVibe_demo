@@ -118,11 +118,7 @@ const Cookie: React.FC = () => {
   }
 
   return (
-    <PageIntro
-      eyebrow={t("cookie.eyebrow")}
-      title={t("cookie.policy.title")}
-      description={t("cookie.policy.description")}
-    >
+    <PageIntro title={t("cookie.policy.title")} description={t("cookie.policy.description")}>
       <Card
         style={{
           maxWidth: "900px",

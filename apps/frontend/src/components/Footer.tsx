@@ -1,6 +1,7 @@
 import React from "react";
 import { NavLink } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import BrandLogo from "./BrandLogo";
 
 /**
  * Footer component that appears on all pages.
@@ -27,15 +28,6 @@ export const Footer: React.FC = () => {
     flexDirection: "column",
     gap: "1rem",
     alignItems: "center",
-  };
-
-  const brandStyle: React.CSSProperties = {
-    fontWeight: 600,
-    fontSize: "var(--font-size-sm)",
-    letterSpacing: "var(--letter-spacing-wide)",
-    textTransform: "uppercase",
-    color: "var(--color-text-primary)",
-    marginBottom: "0.5rem",
   };
 
   const linksContainerStyle: React.CSSProperties = {
@@ -70,7 +62,7 @@ export const Footer: React.FC = () => {
   return (
     <footer role="contentinfo" style={footerStyle}>
       <div style={containerStyle}>
-        <div style={brandStyle}>{t("footer.brand", { defaultValue: "FitVibe" })}</div>
+        <BrandLogo size="sm" />
         <nav aria-label={t("footer.navigationLabel", { defaultValue: "Footer navigation" })}>
           <div style={linksContainerStyle}>
             <NavLink

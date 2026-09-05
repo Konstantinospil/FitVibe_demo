@@ -1655,6 +1655,16 @@ describe("Settings", () => {
         },
         { timeout: 5000 },
       );
+
+      // Wait for handleAvatarUpload() to finish before test teardown.
+      await waitFor(
+        () => {
+          const selectButtons = screen.getAllByRole("button", { name: /select image/i });
+          const selectButton = Array.from(selectButtons).find((button) => container.contains(button));
+          expect(selectButton).toBeEnabled();
+        },
+        { timeout: 5000 },
+      );
     });
 
     it("displays existing avatar if available", async () => {
@@ -1832,11 +1842,12 @@ describe("Settings", () => {
     it("disables upload button while uploading", async () => {
       const { container } = renderSettings();
 
+      let resolveUpload!: (value: { data: { fileUrl: string } }) => void;
       mockPost.mockImplementation(
         () =>
-          new Promise((resolve) =>
-            setTimeout(() => resolve({ data: { fileUrl: "test.jpg" } }), 100),
-          ),
+          new Promise((resolve) => {
+            resolveUpload = resolve;
+          }),
       );
 
       // Wait for component to render
@@ -1907,6 +1918,18 @@ describe("Settings", () => {
           );
           expect(buttonAfterClick).toBeDefined();
           expect(buttonAfterClick).toBeDisabled();
+        },
+        { timeout: 5000 },
+      );
+
+      // Resolve the pending request and wait for the component's finally block.
+      resolveUpload({ data: { fileUrl: "test.jpg" } });
+
+      await waitFor(
+        () => {
+          const selectButtons = screen.getAllByRole("button", { name: /select image/i });
+          const selectButton = Array.from(selectButtons).find((button) => container.contains(button));
+          expect(selectButton).toBeEnabled();
         },
         { timeout: 5000 },
       );

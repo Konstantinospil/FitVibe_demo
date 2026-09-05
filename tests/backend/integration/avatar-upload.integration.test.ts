@@ -25,14 +25,13 @@ import {
   truncateAll,
   ensureRolesSeeded,
   withDatabaseErrorHandling,
-  isDatabaseAvailable,
   ensureUsernameColumnExists,
 } from "../../setup/test-helpers.js";
+import { describeWithTestDatabase } from "../../setup/db-availability.js";
 import { v4 as uuidv4 } from "uuid";
 import { getCurrentTermsVersion } from "../../../apps/backend/src/config/terms.js";
 
-describe("Integration: Avatar Upload", () => {
-  let dbAvailable = false;
+describeWithTestDatabase("Integration: Avatar Upload", () => {
   let authToken: string;
   let userId: string;
 
@@ -54,18 +53,10 @@ describe("Integration: Avatar Upload", () => {
   }
 
   beforeAll(async () => {
-    dbAvailable = await isDatabaseAvailable();
-    if (!dbAvailable) {
-      console.warn("\n⚠️  Integration tests will be skipped (database unavailable)");
-      return;
-    }
     await ensureUsernameColumnExists();
   });
 
   beforeEach(async () => {
-    if (!dbAvailable) {
-      return;
-    }
     await withDatabaseErrorHandling(async () => {
       const { env } = await import("../../../apps/backend/src/config/env.js");
       (env as { readOnlyMode: boolean }).readOnlyMode = false;
@@ -114,18 +105,10 @@ describe("Integration: Avatar Upload", () => {
   });
 
   afterEach(async () => {
-    if (!dbAvailable) {
-      return;
-    }
     await truncateAll();
   });
 
   it("should upload avatar successfully", async () => {
-    if (!dbAvailable) {
-      console.warn("Skipping test: database unavailable");
-      return;
-    }
-
     const imageBuffer = await createTestImageBuffer(500, 500, "png");
 
     const response = await request(app)
@@ -143,11 +126,6 @@ describe("Integration: Avatar Upload", () => {
   });
 
   it("should reject upload without file", async () => {
-    if (!dbAvailable) {
-      console.warn("Skipping test: database unavailable");
-      return;
-    }
-
     const response = await request(app)
       .post("/api/v1/users/avatar")
       .set("Authorization", `Bearer ${authToken}`);
@@ -157,11 +135,6 @@ describe("Integration: Avatar Upload", () => {
   });
 
   it("should reject unsupported file type", async () => {
-    if (!dbAvailable) {
-      console.warn("Skipping test: database unavailable");
-      return;
-    }
-
     const pdfBuffer = Buffer.from("%PDF-1.4 fake pdf content");
 
     const response = await request(app)
@@ -175,11 +148,6 @@ describe("Integration: Avatar Upload", () => {
   });
 
   it("should reject file that is too large", async () => {
-    if (!dbAvailable) {
-      console.warn("Skipping test: database unavailable");
-      return;
-    }
-
     // Create a large buffer (6 MB > 5 MB limit)
     const largeBuffer = Buffer.alloc(6 * 1024 * 1024);
 
@@ -194,11 +162,6 @@ describe("Integration: Avatar Upload", () => {
   });
 
   it("should accept JPEG image", async () => {
-    if (!dbAvailable) {
-      console.warn("Skipping test: database unavailable");
-      return;
-    }
-
     const imageBuffer = await createTestImageBuffer(500, 500, "jpeg");
 
     const response = await request(app)
@@ -212,11 +175,6 @@ describe("Integration: Avatar Upload", () => {
   });
 
   it("should accept WebP image", async () => {
-    if (!dbAvailable) {
-      console.warn("Skipping test: database unavailable");
-      return;
-    }
-
     const imageBuffer = await createTestImageBuffer(500, 500, "webp");
 
     const response = await request(app)
@@ -230,11 +188,6 @@ describe("Integration: Avatar Upload", () => {
   });
 
   it("should process and resize image to 256x256", async () => {
-    if (!dbAvailable) {
-      console.warn("Skipping test: database unavailable");
-      return;
-    }
-
     // Create a large image (1000x1000)
     const imageBuffer = await createTestImageBuffer(1000, 1000, "png");
 
@@ -256,11 +209,6 @@ describe("Integration: Avatar Upload", () => {
   });
 
   it("should retrieve uploaded avatar", async () => {
-    if (!dbAvailable) {
-      console.warn("Skipping test: database unavailable");
-      return;
-    }
-
     // Upload avatar first
     const imageBuffer = await createTestImageBuffer(500, 500, "png");
     const uploadResponse = await request(app)
@@ -281,11 +229,6 @@ describe("Integration: Avatar Upload", () => {
   });
 
   it("should return 404 for non-existent avatar", async () => {
-    if (!dbAvailable) {
-      console.warn("Skipping test: database unavailable");
-      return;
-    }
-
     const nonExistentUserId = uuidv4();
     const response = await request(app).get(`/api/v1/users/avatar/${nonExistentUserId}`);
 
@@ -293,11 +236,6 @@ describe("Integration: Avatar Upload", () => {
   });
 
   it("should delete avatar successfully", async () => {
-    if (!dbAvailable) {
-      console.warn("Skipping test: database unavailable");
-      return;
-    }
-
     // Upload avatar first
     const imageBuffer = await createTestImageBuffer(500, 500, "png");
     const uploadResponse = await request(app)
@@ -320,11 +258,6 @@ describe("Integration: Avatar Upload", () => {
   });
 
   it("should handle deleting non-existent avatar gracefully", async () => {
-    if (!dbAvailable) {
-      console.warn("Skipping test: database unavailable");
-      return;
-    }
-
     // Try to delete avatar that doesn't exist
     const deleteResponse = await request(app)
       .delete("/api/v1/users/avatar")
@@ -335,11 +268,6 @@ describe("Integration: Avatar Upload", () => {
   });
 
   it("should replace existing avatar when uploading new one", async () => {
-    if (!dbAvailable) {
-      console.warn("Skipping test: database unavailable");
-      return;
-    }
-
     // Upload first avatar
     const imageBuffer1 = await createTestImageBuffer(500, 500, "png");
     const uploadResponse1 = await request(app)
@@ -366,11 +294,6 @@ describe("Integration: Avatar Upload", () => {
   });
 
   it("should support idempotency for upload", async () => {
-    if (!dbAvailable) {
-      console.warn("Skipping test: database unavailable");
-      return;
-    }
-
     const imageBuffer = await createTestImageBuffer(500, 500, "png");
     const idempotencyKey = `test-key-${uuidv4()}`;
 
@@ -401,11 +324,6 @@ describe("Integration: Avatar Upload", () => {
   });
 
   it("should support idempotency for delete", async () => {
-    if (!dbAvailable) {
-      console.warn("Skipping test: database unavailable");
-      return;
-    }
-
     // Upload avatar first
     const imageBuffer = await createTestImageBuffer(500, 500, "png");
     await request(app)
@@ -436,11 +354,6 @@ describe("Integration: Avatar Upload", () => {
   });
 
   it("should verify audit log entry is created for upload", async () => {
-    if (!dbAvailable) {
-      console.warn("Skipping test: database unavailable");
-      return;
-    }
-
     const imageBuffer = await createTestImageBuffer(500, 500, "png");
 
     await request(app)
@@ -461,11 +374,6 @@ describe("Integration: Avatar Upload", () => {
   });
 
   it("should verify audit log entry is created for delete", async () => {
-    if (!dbAvailable) {
-      console.warn("Skipping test: database unavailable");
-      return;
-    }
-
     // Upload avatar first
     const imageBuffer = await createTestImageBuffer(500, 500, "png");
     await request(app)
@@ -487,11 +395,6 @@ describe("Integration: Avatar Upload", () => {
   });
 
   it("should require authentication for upload", async () => {
-    if (!dbAvailable) {
-      console.warn("Skipping test: database unavailable");
-      return;
-    }
-
     const imageBuffer = await createTestImageBuffer(500, 500, "png");
 
     const response = await request(app)
@@ -502,22 +405,12 @@ describe("Integration: Avatar Upload", () => {
   });
 
   it("should require authentication for delete", async () => {
-    if (!dbAvailable) {
-      console.warn("Skipping test: database unavailable");
-      return;
-    }
-
     const response = await request(app).delete("/api/v1/users/avatar");
 
     expect(response.status).toBe(401);
   });
 
   it("should respond within reasonable time", async () => {
-    if (!dbAvailable) {
-      console.warn("Skipping test: database unavailable");
-      return;
-    }
-
     const imageBuffer = await createTestImageBuffer(500, 500, "png");
 
     const startTime = Date.now();

@@ -156,4 +156,41 @@ describe("ProfileForm", () => {
 
     expect(await screen.findByText("settings.profile.saveError")).toBeInTheDocument();
   });
+
+  it("hydrates flattened profile fields and clears weight", async () => {
+    const { ProfileForm } = await import("../../src/components/profile/ProfileForm");
+    getCurrentUser.mockResolvedValue({
+      displayName: "Alex",
+      bio: "Runner",
+      alias: "alex",
+      weight: 70,
+      weightUnit: "lb",
+      fitnessLevel: "elite",
+      trainingFrequency: "rarely",
+    });
+    updateProfile.mockResolvedValue(undefined);
+
+    render(<ProfileForm />);
+
+    expect(await screen.findByLabelText("settings.profile.displayName")).toHaveValue("Alex");
+    expect(screen.getByLabelText("settings.profile.bio")).toHaveValue("Runner");
+    expect(screen.getByLabelText("settings.profile.alias")).toHaveValue("alex");
+    expect(screen.getByLabelText("settings.profile.weight")).toHaveValue(70);
+    expect(screen.getByLabelText("settings.profile.weightUnit")).toHaveValue("lb");
+    expect(screen.getByLabelText("settings.profile.fitnessLevel")).toHaveValue("elite");
+    expect(screen.getByLabelText("settings.profile.trainingFrequency")).toHaveValue("rarely");
+
+    fireEvent.change(screen.getByLabelText("settings.profile.weight"), { target: { value: "" } });
+    fireEvent.click(screen.getByRole("button", { name: "common.save" }));
+
+    await waitFor(() =>
+      expect(updateProfile).toHaveBeenCalledWith(
+        expect.objectContaining({
+          weight: undefined,
+          weightUnit: "lb",
+          fitnessLevel: "elite",
+        }),
+      ),
+    );
+  });
 });

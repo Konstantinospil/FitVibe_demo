@@ -14,30 +14,21 @@ import {
   truncateAll,
   ensureRolesSeeded,
   withDatabaseErrorHandling,
-  isDatabaseAvailable,
   ensureUsernameColumnExists,
 } from "../../setup/test-helpers.js";
+import { describeWithTestDatabase } from "../../setup/db-availability.js";
 import { v4 as uuidv4 } from "uuid";
 import { getCurrentTermsVersion } from "../../../apps/backend/src/config/terms.js";
 
-describe("Integration: Feed Search SQL Injection Protection", () => {
-  let dbAvailable = false;
+describeWithTestDatabase("Integration: Feed Search SQL Injection Protection", () => {
   let authToken: string;
   let userId: string;
 
   beforeAll(async () => {
-    dbAvailable = await isDatabaseAvailable();
-    if (!dbAvailable) {
-      console.warn("\n⚠️  Integration tests will be skipped (database unavailable)");
-      return;
-    }
     await ensureUsernameColumnExists();
   });
 
   beforeEach(async () => {
-    if (!dbAvailable) {
-      return;
-    }
     await withDatabaseErrorHandling(async () => {
       const { env } = await import("../../../apps/backend/src/config/env.js");
       (env as { readOnlyMode: boolean }).readOnlyMode = false;
@@ -82,18 +73,10 @@ describe("Integration: Feed Search SQL Injection Protection", () => {
   });
 
   afterEach(async () => {
-    if (!dbAvailable) {
-      return;
-    }
     await truncateAll();
   });
 
   it("should safely handle SQL injection attempts in search query", async () => {
-    if (!dbAvailable) {
-      console.warn("Skipping test: database unavailable");
-      return;
-    }
-
     // Test various SQL injection patterns
     const sqlInjectionAttempts = [
       "'; DROP TABLE users; --",
@@ -122,11 +105,6 @@ describe("Integration: Feed Search SQL Injection Protection", () => {
   });
 
   it("should properly escape special characters in search query", async () => {
-    if (!dbAvailable) {
-      console.warn("Skipping test: database unavailable");
-      return;
-    }
-
     const specialChars = ["%", "_", "'", '"', "\\"];
 
     for (const char of specialChars) {
@@ -151,11 +129,6 @@ describe("Integration: Feed Search SQL Injection Protection", () => {
   });
 
   it("should handle empty and null search queries safely", async () => {
-    if (!dbAvailable) {
-      console.warn("Skipping test: database unavailable");
-      return;
-    }
-
     const emptyQueries = ["", "   ", null, undefined];
 
     for (const query of emptyQueries) {

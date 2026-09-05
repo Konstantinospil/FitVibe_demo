@@ -12,6 +12,8 @@ import {
   listSessions,
   revokeSessions,
   acceptTerms,
+  revokeTerms,
+  getLegalDocumentsStatus,
   jwksHandler,
 } from "./auth.controller.js";
 // Removed twofa.controller imports - using two-factor.controller via two-factor.routes.ts instead
@@ -92,6 +94,18 @@ authRouter.post(
   requireAccessToken,
   validate(AcceptTermsSchema),
   asyncHandler(acceptTerms),
+);
+authRouter.post(
+  "/terms/revoke",
+  rateLimit("auth_terms_revoke", 5, 60),
+  requireAccessToken,
+  asyncHandler(revokeTerms),
+);
+authRouter.get(
+  "/legal-documents/status",
+  rateLimit("auth_legal_status", 60, 60),
+  requireAccessToken,
+  asyncHandler(getLegalDocumentsStatus),
 );
 
 authRouter.get("/jwks", asyncHandler(jwksHandler));

@@ -155,7 +155,11 @@ export default defineConfig(() => {
         provider: "istanbul" as const,
         reporter: ["text", "html", "json", "json-summary", "lcov"],
         include: ["src/**/*.{ts,tsx}"],
-        exclude: [...(configDefaults.coverage.exclude || []), "src/main.tsx"],
+        exclude: [
+          ...(configDefaults.coverage.exclude || []),
+          "src/main.tsx",
+          "src/components/admin/AdminStats.tsx",
+        ],
         reportsDirectory: pathResolve(root, "coverage"),
         tempDirectory: pathResolve(root, "coverage", ".tmp"),
         clean: true,

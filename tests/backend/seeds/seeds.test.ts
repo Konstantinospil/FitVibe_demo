@@ -1,7 +1,10 @@
 import path from "node:path";
-import { spawnSync } from "node:child_process";
 import fs from "node:fs";
 import knex from "knex";
+import {
+  describeWithTestDatabase,
+  testDatabaseConnectionString as DATABASE_URL,
+} from "../../setup/db-availability.js";
 
 // Find project root by looking for package.json or going up from test location
 function findProjectRoot(): string {
@@ -24,26 +27,7 @@ function findProjectRoot(): string {
   return path.resolve(__dirname, "../../..");
 }
 
-const { connectionString: DATABASE_URL, isAvailable: isDatabaseAvailable } =
-  resolveDatabaseConnection();
-const describeFn = isDatabaseAvailable ? describe : describe.skip;
-
-// Log skip reason with helpful instructions
-if (!isDatabaseAvailable) {
-  console.warn("\n⚠️  Database seed tests will be skipped (database unavailable)");
-  console.warn("To enable these tests:");
-  console.warn("  1. Set TEST_DATABASE_URL environment variable, or");
-  console.warn("  2. Set PGHOST, PGPORT, PGUSER, PGPASSWORD, PGDATABASE, or");
-  console.warn("  3. Start a local PostgreSQL instance");
-  if (process.env.CI) {
-    console.error("\n❌ ERROR: Database unavailable in CI environment!");
-    console.error("   This indicates a CI configuration issue.");
-    console.error("   Expected: PostgreSQL should be available in CI.");
-  }
-  console.warn("");
-}
-
-describeFn("database seeds", () => {
+describeWithTestDatabase("database seeds", () => {
   let client: knex.Knex | undefined;
 
   beforeAll(async () => {
@@ -515,11 +499,6 @@ describeFn("database seeds", () => {
   });
 });
 
-if (!isDatabaseAvailable) {
-  test.skip("Database unavailable. Set TEST_DATABASE_URL or start a local Postgres instance before running seed tests.", () =>
-    undefined);
-}
-
 async function ensureDatabaseExtensions(admin: knex.Knex): Promise<void> {
   await admin.raw('CREATE EXTENSION IF NOT EXISTS "pgcrypto";');
   // Note: uuid-ossp is not needed - we use gen_random_uuid() from pgcrypto
@@ -578,125 +557,4 @@ async function ensureDatabaseExtensions(admin: knex.Knex): Promise<void> {
       throw error;
     }
   }
-}
-
-function resolveDatabaseConnection(): { connectionString: string; isAvailable: boolean } {
-  const candidates = collectConnectionCandidates();
-  const maxRetries = process.env.CI ? 2 : 1; // Retry once in CI
-
-  for (const candidate of candidates) {
-    // Try with retries
-    for (let attempt = 1; attempt <= maxRetries; attempt++) {
-      const isAvailable = checkDatabaseAvailability(candidate);
-      if (isAvailable) {
-        return { connectionString: candidate, isAvailable };
-      }
-      // Small delay before retry (only in CI)
-      if (attempt < maxRetries && process.env.CI) {
-        // Use a small synchronous delay
-        const start = Date.now();
-        while (Date.now() - start < 1000) {
-          // Busy wait (not ideal but works synchronously)
-        }
-      }
-    }
-  }
-  return { connectionString: candidates[0] ?? "", isAvailable: false };
-}
-
-function collectConnectionCandidates(): string[] {
-  const user = encodeURIComponent(process.env.PGUSER ?? "fitvibe");
-  const password = encodeURIComponent(process.env.PGPASSWORD ?? "fitvibe");
-  const database = process.env.PGDATABASE ?? "fitvibe_db";
-  const port = Number(process.env.PGPORT ?? 5432);
-  const hostCandidates = [
-    process.env.TEST_DATABASE_HOST,
-    process.env.PGHOST,
-    process.env.DB_HOST,
-    process.env.DATABASE_HOST,
-    "localhost",
-    "127.0.0.1",
-    "postgres",
-    "db",
-    "fitvibe-postgres",
-    "fitvibe_db",
-  ].filter(Boolean) as string[];
-
-  const connectionStrings = hostCandidates.map(
-    (host) => `postgresql://${user}:${password}@${host}:${port}/${database}`,
-  );
-
-  const manualSources = [
-    process.env.TEST_DATABASE_URL,
-    process.env.USE_APP_DATABASE_FOR_TESTS === "true" ? process.env.DATABASE_URL : undefined,
-  ];
-  const manual = manualSources.filter((value): value is string => Boolean(value?.trim()));
-
-  const unique = new Set<string>();
-  const ordered = [...manual, ...connectionStrings];
-  return ordered.filter((entry) => {
-    if (!entry) {
-      return false;
-    }
-    if (unique.has(entry)) {
-      return false;
-    }
-    unique.add(entry);
-    return true;
-  });
-}
-
-function checkDatabaseAvailability(connectionString: string): boolean {
-  if (!connectionString) {
-    return false;
-  }
-
-  const timeout = process.env.CI ? 8000 : 5000; // Longer timeout in CI
-  const acquireTimeout = process.env.CI ? 5000 : 2000;
-
-  const probeScript = `
-const knex = require('knex');
-(async () => {
-  let client;
-  try {
-    client = knex({
-      client: 'pg',
-      connection: process.env.__TEST_DB_CONN__,
-      pool: { min: 0, max: 1 },
-      acquireConnectionTimeout: ${acquireTimeout},
-    });
-    
-    // Set a timeout for the connection attempt
-    const timeout = setTimeout(() => {
-      if (client) {
-        client.destroy().catch(() => undefined);
-      }
-      process.exit(1);
-    }, ${process.env.CI ? 6000 : 3000});
-    
-    await client.raw('select 1');
-    clearTimeout(timeout);
-    await client.destroy();
-    process.exit(0);
-  } catch (error) {
-    if (client) {
-      await client.destroy().catch(() => undefined);
-    }
-    process.exit(1);
-  }
-})();`;
-
-  const result = spawnSync(process.execPath, ["-e", probeScript], {
-    env: { ...process.env, __TEST_DB_CONN__: connectionString },
-    stdio: "ignore",
-    timeout: timeout,
-    killSignal: "SIGTERM",
-  });
-
-  // If the process was killed due to timeout, ensure it's terminated
-  if (result.signal) {
-    return false;
-  }
-
-  return result.status === 0;
 }

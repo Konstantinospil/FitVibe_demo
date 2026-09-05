@@ -116,6 +116,40 @@ describe("API client interceptors", () => {
     window.location = originalLocation;
   });
 
+  it("redirects to terms reacceptance when refresh rejects a non-Error TERMS payload", async () => {
+    const originalLocation = window.location;
+    delete (window as { location?: unknown }).location;
+    window.location = { ...originalLocation, href: "" } as Location;
+
+    rawMock.onPost("/api/v1/auth/refresh").reply(() =>
+      Promise.reject({
+        response: { data: { error: { code: "TERMS_VERSION_OUTDATED" } } },
+      }),
+    );
+    apiMock.onGet("/secure").reply(401);
+
+    await expect(apiClient.get("/secure")).rejects.toThrow();
+    expect(window.location.href).toBe("/terms-reacceptance");
+
+    window.location = originalLocation;
+  });
+
+  it("signs out when refresh rejects a non-Error object without a response", async () => {
+    const originalState = useAuthStore.getState();
+    const signOut = vi.fn().mockRejectedValue(new Error("sign-out failed"));
+    useAuthStore.setState({ ...originalState, signOut });
+
+    rawMock.onPost("/api/v1/auth/refresh").reply(() => Promise.reject({ reason: "stale" }));
+    rawMock.onPost("/api/v1/auth/logout").networkError();
+    apiMock.onGet("/secure").reply(401);
+
+    await expect(apiClient.get("/secure")).rejects.toThrow();
+    await new Promise((resolve) => setTimeout(resolve, 10));
+    expect(signOut).toHaveBeenCalled();
+
+    useAuthStore.setState(originalState);
+  });
+
   it("handles refresh failure with non-Axios error", async () => {
     const originalState = useAuthStore.getState();
     const signOut = vi.fn();

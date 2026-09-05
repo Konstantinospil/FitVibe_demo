@@ -6,6 +6,7 @@ import { Modal } from "../ui/Modal";
 import { Select } from "../ui/Select";
 import { Textarea } from "../ui/Textarea";
 import { useToast } from "../ui/Toast";
+import { reportFeedItem } from "../../services/api";
 
 export interface ReportButtonProps {
   feedItemId: string;
@@ -18,7 +19,7 @@ export interface ReportButtonProps {
  * Opens a modal with report reason and optional details.
  */
 export const ReportButton: React.FC<ReportButtonProps> = ({
-  feedItemId: _feedItemId,
+  feedItemId,
   onReported,
   size = "sm",
 }) => {
@@ -47,9 +48,7 @@ export const ReportButton: React.FC<ReportButtonProps> = ({
 
     setIsSubmitting(true);
     try {
-      // In a real implementation, this would call: await reportFeedItem(feedItemId, { reason, details })
-      // For now, simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 500));
+      await reportFeedItem(feedItemId, { reason, details: details || undefined });
       showToast({
         variant: "success",
         title: t("feed.report.submitted") || "Report Submitted",

@@ -582,6 +582,18 @@ small {
   cursor: not-allowed;
 }
 
+/* Hide native steppers so logger set fields stay stable across OS/themes. */
+.logger-set-input {
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
+
+.logger-set-input::-webkit-inner-spin-button,
+.logger-set-input::-webkit-outer-spin-button {
+  appearance: none;
+  margin: 0;
+}
+
 .form-input--password {
   padding-right: 3rem;
 }

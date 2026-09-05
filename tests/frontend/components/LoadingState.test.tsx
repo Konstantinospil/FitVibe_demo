@@ -21,4 +21,9 @@ describe("LoadingState", () => {
 
     expect(screen.queryByText("Loading...")).not.toBeInTheDocument();
   });
+
+  it("renders a full-screen overlay with a message", () => {
+    render(<LoadingState fullScreen message="Please wait" />);
+    expect(screen.getByText("Please wait")).toBeInTheDocument();
+  });
 });

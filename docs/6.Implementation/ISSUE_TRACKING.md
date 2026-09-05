@@ -31,7 +31,7 @@ _No issues yet_
 
 ### Technical Debt
 
-_No issues yet_
+- **TD-ADMIN-STATS-001**: `AdminStats` is quarantined (tests skipped, file excluded from coverage) until an admin stats API exists. Do not re-enable placeholder zeros.
 
 ### Documentation
 

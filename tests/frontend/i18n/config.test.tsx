@@ -29,4 +29,18 @@ describe("i18n config", () => {
   it("ensurePrivateTranslationsLoaded resolves", async () => {
     await expect(ensurePrivateTranslationsLoaded()).resolves.toBeUndefined();
   });
+
+  it("nests terms and privacy JSON so list keys return arrays", async () => {
+    await loadFullTranslations();
+    await loadLanguageTranslations("el");
+
+    const englishTerms = i18n.t("terms.section1.items", { lng: "en", returnObjects: true });
+    const greekTerms = i18n.t("terms.section1.items", { lng: "el", returnObjects: true });
+    const greekPrivacy = i18n.t("privacy.section1.items", { lng: "el", returnObjects: true });
+
+    expect(Array.isArray(englishTerms)).toBe(true);
+    expect(Array.isArray(greekTerms)).toBe(true);
+    expect(Array.isArray(greekPrivacy)).toBe(true);
+    expect((greekTerms as string[]).length).toBeGreaterThan(0);
+  });
 });

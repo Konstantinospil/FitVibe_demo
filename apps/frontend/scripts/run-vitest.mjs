@@ -102,7 +102,7 @@ const nodeArgs = ["--max-old-space-size=6144"];
 // Add --no-watch and --run flags to ensure tests exit cleanly
 // --run ensures tests run once and exit (not in watch mode)
 // This helps prevent hanging processes
-const vitestArgs = ["run", "--passWithNoTests"];
+        const vitestArgs = ["run"];
 // Only add --no-watch if not already in passthrough args
 if (!passthroughArgs.includes("--watch") && !passthroughArgs.includes("-w")) {
   vitestArgs.push("--no-watch");

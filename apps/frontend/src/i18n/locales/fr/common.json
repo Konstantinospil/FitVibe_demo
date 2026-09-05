@@ -19,6 +19,9 @@
     "greek": "Grec",
     "select": "Choisir une langue"
   },
+  "brand": {
+    "logoAlt": "FitVibe"
+  },
   "status": {
     "checking": "Vérification du serveur…",
     "online": "Serveur en ligne",
@@ -380,7 +383,16 @@
     "load": "Charge",
     "repsPlaceholder": "10",
     "weightPlaceholder": "80",
-    "rpePlaceholder": "7"
+    "rpePlaceholder": "7",
+    "visibilitySettings": "Visibilité de la séance",
+    "currentVisibility": "Visibilité actuelle",
+    "visibilityUpdated": "Visibilité de la séance mise à jour",
+    "visibilityUpdateFailed": "Impossible de mettre à jour la visibilité",
+    "visibilityLabel": "Modifier la visibilité de la séance",
+    "visibilityPrivate": "Privée",
+    "visibilityLink": "Lien uniquement",
+    "visibilityPublic": "Publique",
+    "visibilityHelp": "Les séances privées ne sont visibles que par vous. Les séances par lien peuvent être partagées via un lien. Les séances publiques apparaissent dans le fil communautaire."
   },
   "planner": {
     "eyebrow": "Architecture de séance",
@@ -394,7 +406,13 @@
     "weightPlaceholder": "80",
     "rpePlaceholder": "7",
     "speedPlaceholder": "90",
-    "exerciseNotesPlaceholder": "ex. Concentrez-vous sur la forme, tempo plus lent sur les excentriques"
+    "exerciseNotesPlaceholder": "ex. Concentrez-vous sur la forme, tempo plus lent sur les excentriques",
+    "visibility": "Visibilité",
+    "visibilityLabel": "Visibilité de la séance",
+    "visibilityPrivate": "Privée (vous uniquement)",
+    "visibilityLink": "Lien uniquement (non listée)",
+    "visibilityPublic": "Publique (visible dans le fil)",
+    "visibilityHelp": "Les séances privées ne sont visibles que par vous. Les séances par lien peuvent être partagées via un lien. Les séances publiques apparaissent dans le fil communautaire."
   },
   "sessions": {
     "eyebrow": "Gestion de l'entraînement",

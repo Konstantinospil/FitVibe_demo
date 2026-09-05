@@ -98,7 +98,6 @@ const TwoFactorVerificationLogin: React.FC = () => {
 
   return (
     <AuthPageLayout
-      eyebrow={t("auth.twoFactor.eyebrow") || "Two-Factor Authentication"}
       title={t("auth.twoFactor.title") || "Enter Your Code"}
       description={
         t("auth.twoFactor.description") ||

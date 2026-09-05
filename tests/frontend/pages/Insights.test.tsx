@@ -470,7 +470,7 @@ describe("Insights page", () => {
       await waitFor(
         () => {
           // DateRangePicker should be rendered
-          expect(screen.queryByText("Preset")).toBeInTheDocument();
+          expect(screen.getByText("Preset")).toBeInTheDocument();
         },
         { timeout: 5000 },
       );

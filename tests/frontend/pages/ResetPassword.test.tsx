@@ -82,7 +82,6 @@ describe("ResetPassword", () => {
   it("renders reset password form", () => {
     renderWithProviders();
 
-    expect(screen.getByText("Password Reset")).toBeInTheDocument();
     expect(screen.getByText("Reset Your Password")).toBeInTheDocument();
     expect(screen.getByText("Choose a new password for your account")).toBeInTheDocument();
   });

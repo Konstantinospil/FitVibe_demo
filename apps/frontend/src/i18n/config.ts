@@ -17,6 +17,16 @@ export const loadMinimalLoginTranslations = async () => {
       french: "French",
       greek: "Greek",
     },
+    brand: {
+      logoAlt: "FitVibe",
+    },
+    footer: {
+      terms: "Terms and Conditions",
+      privacy: "Privacy Policy",
+      navigationLabel: "Footer navigation",
+      termsAriaLabel: "View Terms and Conditions",
+      privacyAriaLabel: "View Privacy Policy",
+    },
   };
 
   return mergeTranslations(minimalCommon, enAuth);
@@ -40,12 +50,17 @@ const loadFullEnglishTranslations = async () => {
   const enCookie = enCookieModule.default as Record<string, unknown>;
 
   return mergeTranslations(
-    mergeTranslations(mergeTranslations(mergeTranslations(enCommon, enAuth), enTerms), enPrivacy),
+    mergeTranslations(mergeTranslations(mergeTranslations(enCommon, enAuth), { terms: enTerms }), {
+      privacy: enPrivacy,
+    }),
     { cookie: enCookie },
   );
 };
 
 type SupportedLanguage = "en" | "de" | "fr" | "es" | "el";
+
+const isSupportedLanguage = (value: string | null | undefined): value is SupportedLanguage =>
+  value === "en" || value === "de" || value === "fr" || value === "es" || value === "el";
 
 const mergeTranslations = <T extends Record<string, unknown>, U extends Record<string, unknown>>(
   base: T,
@@ -71,13 +86,13 @@ const detectLanguage = (): SupportedLanguage => {
     return FALLBACK_LANGUAGE;
   }
 
-  const stored = window.localStorage.getItem("fitvibe:language") as SupportedLanguage | null;
-  if (stored && stored in resources) {
+  const stored = window.localStorage.getItem("fitvibe:language");
+  if (isSupportedLanguage(stored)) {
     return stored;
   }
 
-  const browser = window.navigator?.language?.slice(0, 2) as SupportedLanguage | undefined;
-  if (browser && browser in resources) {
+  const browser = window.navigator?.language?.slice(0, 2);
+  if (isSupportedLanguage(browser)) {
     return browser;
   }
 
@@ -87,9 +102,14 @@ const detectLanguage = (): SupportedLanguage => {
 const initialLanguage = detectLanguage();
 
 // Load translations on-demand (including English) to reduce initial bundle size
+const hasLegalDocumentBundle = (lng: SupportedLanguage): boolean => {
+  const terms = resources[lng]?.translation?.terms;
+  return Boolean(terms && typeof terms === "object" && "section1" in terms);
+};
+
 const loadLanguage = async (lng: SupportedLanguage): Promise<void> => {
-  if (resources[lng]) {
-    return; // Already loaded
+  if (resources[lng] && hasLegalDocumentBundle(lng)) {
+    return;
   }
 
   try {
@@ -116,7 +136,9 @@ const loadLanguage = async (lng: SupportedLanguage): Promise<void> => {
     const cookie = cookieModule.default;
 
     const translations = mergeTranslations(
-      mergeTranslations(mergeTranslations(mergeTranslations(common, auth), terms), privacy),
+      mergeTranslations(mergeTranslations(mergeTranslations(common, auth), { terms }), {
+        privacy,
+      }),
       { cookie },
     );
 
@@ -169,12 +191,18 @@ export const minimalTranslationsReady: Promise<void> = i18nReady.then(async () =
 
 // Export function to load full translations when needed (e.g., after login)
 export const loadFullTranslations = async (): Promise<void> => {
-  if (resources.en && Object.keys(resources.en.translation).length > 50) {
-    return; // Already loaded full translations
+  if (hasLegalDocumentBundle("en")) {
+    return;
   }
 
   const fullTranslations = await loadFullEnglishTranslations();
   addAppResourceBundle("en", fullTranslations);
+};
+
+export const ensureLegalTranslationsLoaded = async (): Promise<void> => {
+  const code = i18n.language?.slice(0, 2);
+  const lng = isSupportedLanguage(code) ? code : FALLBACK_LANGUAGE;
+  await loadLanguage(lng);
 };
 
 // Export function to load languages on-demand
@@ -190,6 +218,10 @@ export const translationsLoadingPromise: Promise<void> = minimalTranslationsRead
 if (typeof window !== "undefined") {
   i18n.on("languageChanged", (lng) => {
     window.localStorage.setItem("fitvibe:language", lng);
+    const code = lng.slice(0, 2);
+    if (isSupportedLanguage(code)) {
+      document.documentElement.lang = code;
+    }
   });
 }
 

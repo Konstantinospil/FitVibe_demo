@@ -21,4 +21,21 @@ describe("FilterBar", () => {
     const { container } = render(<FilterBar filters={[]} onRemoveFilter={vi.fn()} />);
     expect(container).toBeEmptyDOMElement();
   });
+
+  it("clears all filters when more than one is active", () => {
+    const onClearAll = vi.fn();
+    render(
+      <FilterBar
+        filters={[
+          { key: "status", label: "Status", value: "all" },
+          { key: "type", label: "Type", value: "strength" },
+        ]}
+        onRemoveFilter={vi.fn()}
+        onClearAll={onClearAll}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Clear all" }));
+    expect(onClearAll).toHaveBeenCalled();
+  });
 });

@@ -14,30 +14,21 @@ import {
   truncateAll,
   ensureRolesSeeded,
   withDatabaseErrorHandling,
-  isDatabaseAvailable,
   ensureUsernameColumnExists,
 } from "../../setup/test-helpers.js";
+import { describeWithTestDatabase } from "../../setup/db-availability.js";
 import { v4 as uuidv4 } from "uuid";
 import { getCurrentTermsVersion } from "../../../apps/backend/src/config/terms.js";
 
-describe("Integration: Audit Logging Verification", () => {
-  let dbAvailable = false;
+describeWithTestDatabase("Integration: Audit Logging Verification", () => {
   let authToken: string;
   let userId: string;
 
   beforeAll(async () => {
-    dbAvailable = await isDatabaseAvailable();
-    if (!dbAvailable) {
-      console.warn("\n⚠️  Integration tests will be skipped (database unavailable)");
-      return;
-    }
     await ensureUsernameColumnExists();
   });
 
   beforeEach(async () => {
-    if (!dbAvailable) {
-      return;
-    }
     await withDatabaseErrorHandling(async () => {
       const { env } = await import("../../../apps/backend/src/config/env.js");
       (env as { readOnlyMode: boolean }).readOnlyMode = false;
@@ -94,18 +85,10 @@ describe("Integration: Audit Logging Verification", () => {
   });
 
   afterEach(async () => {
-    if (!dbAvailable) {
-      return;
-    }
     await truncateAll();
   });
 
   it("should create state history entry for alias change", async () => {
-    if (!dbAvailable) {
-      console.warn("Skipping test: database unavailable");
-      return;
-    }
-
     await request(app).patch("/api/v1/users/me").set("Authorization", `Bearer ${authToken}`).send({
       alias: "testalias",
     });
@@ -120,11 +103,6 @@ describe("Integration: Audit Logging Verification", () => {
   });
 
   it("should create state history entry for weight change", async () => {
-    if (!dbAvailable) {
-      console.warn("Skipping test: database unavailable");
-      return;
-    }
-
     // Update weight
     await request(app).patch("/api/v1/users/me").set("Authorization", `Bearer ${authToken}`).send({
       weight: 75.5,
@@ -142,11 +120,6 @@ describe("Integration: Audit Logging Verification", () => {
   });
 
   it("should create state history entry for profile changes", async () => {
-    if (!dbAvailable) {
-      console.warn("Skipping test: database unavailable");
-      return;
-    }
-
     // Update alias
     await request(app).patch("/api/v1/users/me").set("Authorization", `Bearer ${authToken}`).send({
       alias: "newalias",
@@ -166,11 +139,6 @@ describe("Integration: Audit Logging Verification", () => {
   });
 
   it("should log all changed fields in state history", async () => {
-    if (!dbAvailable) {
-      console.warn("Skipping test: database unavailable");
-      return;
-    }
-
     await request(app).patch("/api/v1/users/me").set("Authorization", `Bearer ${authToken}`).send({
       alias: "multialias",
       weight: 80,

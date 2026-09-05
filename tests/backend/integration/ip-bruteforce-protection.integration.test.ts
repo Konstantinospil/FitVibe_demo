@@ -17,42 +17,58 @@ import { createUser } from "../../../apps/backend/src/modules/auth/auth.reposito
 import {
   getFailedAttemptByIP,
   isIPLocked,
-  resetFailedAttemptsByIP,
+  recordFailedAttemptByIP,
 } from "../../../apps/backend/src/modules/auth/bruteforce.repository.js";
+import { clearRateLimiters } from "../../../apps/backend/src/middlewares/rate-limit.js";
 import {
   truncateAll,
   ensureRolesSeeded,
-  isDatabaseAvailable,
   ensureUsernameColumnExists,
   createTestIp,
 } from "../../setup/test-helpers.js";
+import { describeWithTestDatabase } from "../../setup/db-availability.js";
 import { getCurrentTermsVersion } from "../../../apps/backend/src/config/terms.js";
 import { v4 as uuidv4 } from "uuid";
 
-describe("Integration: IP-Based Brute Force Protection", () => {
-  let dbAvailable = false;
+/** Four emails keeps each account under lockout (5) while IP total can reach 10. */
+const ACCOUNT_SAFE_EMAILS = [
+  "ip-a@example.com",
+  "ip-b@example.com",
+  "ip-c@example.com",
+  "ip-d@example.com",
+];
 
-  beforeAll(async () => {
-    dbAvailable = await isDatabaseAvailable();
-    if (!dbAvailable) {
-      console.warn("\n⚠️  Integration tests will be skipped (database unavailable)");
-      console.warn("To enable these tests:");
-      console.warn("  1. Start PostgreSQL locally, or");
-      console.warn(
-        "  2. Use Docker Compose: docker compose -f infra/docker/dev/docker-compose.dev.yml up -d db",
-      );
-      console.warn("  3. Set PGHOST, PGPORT, PGUSER, PGPASSWORD, PGDATABASE environment variables");
-      console.warn("");
-      return;
+async function postLogin(ipAddress: string, email: string, password = "WrongPassword123!") {
+  return request(app)
+    .post("/api/v1/auth/login")
+    .set("X-Forwarded-For", ipAddress)
+    .send({ email, password });
+}
+
+async function failLoginsWithoutAccountLock(ipAddress: string, count: number) {
+  const responses = [];
+  for (let i = 0; i < count; i++) {
+    if (i > 0 && i % 9 === 0) {
+      clearRateLimiters();
     }
+    responses.push(await postLogin(ipAddress, ACCOUNT_SAFE_EMAILS[i % ACCOUNT_SAFE_EMAILS.length]));
+  }
+  return responses;
+}
+
+async function seedIpAttemptCount(ipAddress: string, count: number) {
+  for (let i = 0; i < count; i++) {
+    await recordFailedAttemptByIP(ipAddress, "ip-counter@example.com");
+  }
+}
+
+describeWithTestDatabase("Integration: IP-Based Brute Force Protection", () => {
+  beforeAll(async () => {
     // Ensure username column exists before tests run
     await ensureUsernameColumnExists();
   });
 
   beforeEach(async () => {
-    if (!dbAvailable) {
-      return;
-    }
     try {
       // Ensure read-only mode is disabled for tests
       const { env } = await import("../../../apps/backend/src/config/env.js");
@@ -62,8 +78,6 @@ describe("Integration: IP-Based Brute Force Protection", () => {
       (env as { trustProxy: boolean }).trustProxy = true;
 
       // Clear rate limiters to prevent interference between tests
-      const { clearRateLimiters } =
-        await import("../../../apps/backend/src/middlewares/rate-limit.js");
       clearRateLimiters();
 
       await truncateAll();
@@ -106,33 +120,19 @@ describe("Integration: IP-Based Brute Force Protection", () => {
   });
 
   afterEach(async () => {
-    if (!dbAvailable) {
-      return;
-    }
     await truncateAll();
   });
 
   describe("IP Lockout - Too Many Attempts", () => {
-    // TODO: Skipped - cannot properly test due to account-level lockout interference
-    it.skip("should lock IP after 10 failed login attempts", async () => {
-      if (!dbAvailable) {
-        console.warn("Skipping test: database unavailable");
-        return;
-      }
+    it("should lock IP after 10 failed login attempts", async () => {
       const ipAddress = createTestIp();
 
-      // Make 9 failed attempts with same email (should not lock yet; lockout is at 10 total)
-      for (let i = 1; i <= 9; i++) {
-        const response = await request(app)
-          .post("/api/v1/auth/login")
-          .set("X-Forwarded-For", ipAddress)
-          .send({
-            email: "test@example.com",
-            password: "WrongPassword123!",
-          });
-
-        // Should get 401 (invalid credentials), not 429 (locked)
+      const firstNine = await failLoginsWithoutAccountLock(ipAddress, 9);
+      for (const response of firstNine) {
         expect([401, 429]).toContain(response.status);
+        if (response.status === 429) {
+          expect(response.body.error.code).not.toBe("AUTH_ACCOUNT_LOCKED");
+        }
       }
 
       // Check IP is not locked yet
@@ -145,13 +145,7 @@ describe("Integration: IP-Based Brute Force Protection", () => {
       }
 
       // 10th attempt should trigger IP lockout
-      const response10 = await request(app)
-        .post("/api/v1/auth/login")
-        .set("X-Forwarded-For", ipAddress)
-        .send({
-          email: "test@example.com",
-          password: "WrongPassword123!",
-        });
+      const response10 = await postLogin(ipAddress, ACCOUNT_SAFE_EMAILS[1]);
 
       expect(response10.status).toBe(429);
       expect(response10.body.error.code).toBe("AUTH_IP_LOCKED");
@@ -173,10 +167,6 @@ describe("Integration: IP-Based Brute Force Protection", () => {
     });
 
     it("should lock IP after 5 distinct email attempts", async () => {
-      if (!dbAvailable) {
-        console.warn("Skipping test: database unavailable");
-        return;
-      }
       const ipAddress = createTestIp();
 
       // Make 4 failed attempts with different emails (should not lock yet)
@@ -217,12 +207,7 @@ describe("Integration: IP-Based Brute Force Protection", () => {
       expect(isIPLocked(attempt5)).toBe(true);
     });
 
-    // TODO: Skipped - cannot properly test due to account-level lockout interference
-    it.skip("should prevent login from locked IP even with correct credentials", async () => {
-      if (!dbAvailable) {
-        console.warn("Skipping test: database unavailable");
-        return;
-      }
+    it("should prevent login from locked IP even with correct credentials", async () => {
       const ipAddress = createTestIp();
       const email = "valid@example.com";
       const password = "ValidPassword123!";
@@ -243,24 +228,12 @@ describe("Integration: IP-Based Brute Force Protection", () => {
         terms_version: getCurrentTermsVersion(),
       });
 
-      // Lock the IP by making 10 failed attempts
-      for (let i = 1; i <= 10; i++) {
-        await request(app)
-          .post("/api/v1/auth/login")
-          .set("X-Forwarded-For", ipAddress)
-          .send({
-            email: `test${i}@example.com`,
-            password: "WrongPassword123!",
-          });
-      }
+      await failLoginsWithoutAccountLock(ipAddress, 10);
 
       // Verify IP is locked
       const lockedAttempt = await getFailedAttemptByIP(ipAddress);
       expect(isIPLocked(lockedAttempt)).toBe(true);
 
-      // Clear rate limiters so the next request reaches the handler (auth_login is 10/min per IP)
-      const { clearRateLimiters } =
-        await import("../../../apps/backend/src/middlewares/rate-limit.js");
       clearRateLimiters();
 
       // Try to login with valid credentials from locked IP
@@ -278,12 +251,7 @@ describe("Integration: IP-Based Brute Force Protection", () => {
   });
 
   describe("IP Attempt Reset on Successful Login", () => {
-    // TODO: Skipped - cannot properly test due to account-level lockout interference
-    it.skip("should reset IP attempts on successful login", async () => {
-      if (!dbAvailable) {
-        console.warn("Skipping test: database unavailable");
-        return;
-      }
+    it("should reset IP attempts on successful login", async () => {
       const ipAddress = createTestIp();
       const email = "success@example.com";
       const password = "ValidPassword123!";
@@ -336,12 +304,7 @@ describe("Integration: IP-Based Brute Force Protection", () => {
       expect(afterLogin).toBeNull();
     });
 
-    // TODO: Skipped - cannot properly test due to account-level lockout interference
-    it.skip("should reset IP attempts even if account-level attempts exist", async () => {
-      if (!dbAvailable) {
-        console.warn("Skipping test: database unavailable");
-        return;
-      }
+    it("should reset IP attempts even if account-level attempts exist", async () => {
       const ipAddress = createTestIp();
       const email = "mixed@example.com";
       const password = "ValidPassword123!";
@@ -403,34 +366,17 @@ describe("Integration: IP-Based Brute Force Protection", () => {
   });
 
   describe("IP Protection vs Account Protection", () => {
-    // TODO: Skipped - cannot properly test due to account-level lockout interference
-    it.skip("should check IP lockout before account lockout", async () => {
-      if (!dbAvailable) {
-        console.warn("Skipping test: database unavailable");
-        return;
-      }
+    it("should check IP lockout before account lockout", async () => {
       const ipAddress = createTestIp();
       const email = "test@example.com";
 
-      // Lock the IP first (10 attempts with different emails)
-      for (let i = 1; i <= 10; i++) {
-        await request(app)
-          .post("/api/v1/auth/login")
-          .set("X-Forwarded-For", ipAddress)
-          .send({
-            email: `user${i}@example.com`,
-            password: "WrongPassword123!",
-          });
-      }
+      await failLoginsWithoutAccountLock(ipAddress, 10);
 
       // Verify IP is locked
       const ipAttempt = await getFailedAttemptByIP(ipAddress);
       expect(ipAttempt).not.toBeNull();
       expect(isIPLocked(ipAttempt)).toBe(true);
 
-      // Clear rate limiters so the next request reaches the handler (auth_login is 10/min per IP)
-      const { clearRateLimiters } =
-        await import("../../../apps/backend/src/middlewares/rate-limit.js");
       clearRateLimiters();
 
       // Try to login with a specific email (account-level would not be locked yet)
@@ -447,12 +393,7 @@ describe("Integration: IP-Based Brute Force Protection", () => {
       expect(response.body.error.code).toBe("AUTH_IP_LOCKED");
     });
 
-    // TODO: Skipped - cannot properly test due to account-level lockout interference
-    it.skip("should allow account-level lockout when IP is not locked", async () => {
-      if (!dbAvailable) {
-        console.warn("Skipping test: database unavailable");
-        return;
-      }
+    it("should allow account-level lockout when IP is not locked", async () => {
       const ipAddress = createTestIp();
       const email = "account@example.com";
 
@@ -493,24 +434,10 @@ describe("Integration: IP-Based Brute Force Protection", () => {
   });
 
   describe("Progressive Lockout Durations", () => {
-    // TODO: Skipped - cannot properly test due to account-level lockout interference
-    it.skip("should apply 30-minute lockout for 10 attempts", async () => {
-      if (!dbAvailable) {
-        console.warn("Skipping test: database unavailable");
-        return;
-      }
+    it("should apply 30-minute lockout for 10 attempts", async () => {
       const ipAddress = createTestIp();
 
-      // Make 10 attempts
-      for (let i = 1; i <= 10; i++) {
-        await request(app)
-          .post("/api/v1/auth/login")
-          .set("X-Forwarded-For", ipAddress)
-          .send({
-            email: `test${i}@example.com`,
-            password: "WrongPassword123!",
-          });
-      }
+      await failLoginsWithoutAccountLock(ipAddress, 10);
 
       const attempt = await getFailedAttemptByIP(ipAddress);
       expect(attempt).not.toBeNull();
@@ -523,29 +450,10 @@ describe("Integration: IP-Based Brute Force Protection", () => {
       expect(diffMinutes).toBeLessThanOrEqual(31);
     });
 
-    // TODO: Skipped - cannot properly test due to account-level lockout interference
-    it.skip("should apply 2-hour lockout for 20 attempts", async () => {
-      if (!dbAvailable) {
-        console.warn("Skipping test: database unavailable");
-        return;
-      }
+    it("should apply 2-hour lockout for 20 attempts", async () => {
       const ipAddress = createTestIp();
-      const { clearRateLimiters } =
-        await import("../../../apps/backend/src/middlewares/rate-limit.js");
 
-      // Make 20 attempts (clear rate limit after 10 so all reach the handler)
-      for (let i = 1; i <= 20; i++) {
-        if (i === 11) {
-          clearRateLimiters();
-        }
-        await request(app)
-          .post("/api/v1/auth/login")
-          .set("X-Forwarded-For", ipAddress)
-          .send({
-            email: `test${i}@example.com`,
-            password: "WrongPassword123!",
-          });
-      }
+      await seedIpAttemptCount(ipAddress, 20);
 
       const attempt = await getFailedAttemptByIP(ipAddress);
       expect(attempt).not.toBeNull();
@@ -558,29 +466,10 @@ describe("Integration: IP-Based Brute Force Protection", () => {
       expect(diffHours).toBeLessThanOrEqual(2.1);
     });
 
-    // TODO: Skipped - cannot properly test due to account-level lockout interference
-    it.skip("should apply 24-hour lockout for 50 attempts", async () => {
-      if (!dbAvailable) {
-        console.warn("Skipping test: database unavailable");
-        return;
-      }
+    it("should apply 24-hour lockout for 50 attempts", async () => {
       const ipAddress = createTestIp();
-      const { clearRateLimiters } =
-        await import("../../../apps/backend/src/middlewares/rate-limit.js");
 
-      // Make 50 attempts (clear rate limit every 10 so all reach the handler)
-      for (let i = 1; i <= 50; i++) {
-        if (i === 11 || i === 21 || i === 31 || i === 41) {
-          clearRateLimiters();
-        }
-        await request(app)
-          .post("/api/v1/auth/login")
-          .set("X-Forwarded-For", ipAddress)
-          .send({
-            email: `test${i}@example.com`,
-            password: "WrongPassword123!",
-          });
-      }
+      await seedIpAttemptCount(ipAddress, 50);
 
       const attempt = await getFailedAttemptByIP(ipAddress);
       expect(attempt).not.toBeNull();
@@ -595,36 +484,12 @@ describe("Integration: IP-Based Brute Force Protection", () => {
   });
 
   describe("Different IP Addresses", () => {
-    // TODO: Skipped - cannot properly test due to account-level lockout interference
-    it.skip("should track attempts separately for different IPs", async () => {
-      if (!dbAvailable) {
-        console.warn("Skipping test: database unavailable");
-        return;
-      }
+    it("should track attempts separately for different IPs", async () => {
       const ip1 = createTestIp();
       const ip2 = createTestIp();
 
-      // Make 10 attempts from IP1 (should lock)
-      for (let i = 1; i <= 10; i++) {
-        await request(app)
-          .post("/api/v1/auth/login")
-          .set("X-Forwarded-For", ip1)
-          .send({
-            email: `test${i}@example.com`,
-            password: "WrongPassword123!",
-          });
-      }
-
-      // Make 5 attempts from IP2 (should not lock)
-      for (let i = 1; i <= 5; i++) {
-        await request(app)
-          .post("/api/v1/auth/login")
-          .set("X-Forwarded-For", ip2)
-          .send({
-            email: `test${i}@example.com`,
-            password: "WrongPassword123!",
-          });
-      }
+      await failLoginsWithoutAccountLock(ip1, 10);
+      await failLoginsWithoutAccountLock(ip2, 4);
 
       // Verify IP1 is locked
       const attempt1 = await getFailedAttemptByIP(ip1);

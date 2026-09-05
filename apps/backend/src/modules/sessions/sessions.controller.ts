@@ -84,6 +84,8 @@ const createSchema = z.object({
   exercises: z.array(sessionExerciseSchema).max(50).optional(),
 });
 
+export const CreateSessionSchema = createSchema;
+
 const updateSchema = z
   .object({
     plan_id: z.string().uuid().nullable().optional(),

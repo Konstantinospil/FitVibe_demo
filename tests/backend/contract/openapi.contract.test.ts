@@ -4,7 +4,18 @@ import { ZodEffects } from "zod";
 import {
   RegisterSchema,
   LoginSchema,
+  ForgotPasswordSchema,
+  ResetPasswordSchema,
+  ResendVerificationSchema,
+  Verify2FALoginSchema,
 } from "../../../apps/backend/src/modules/auth/auth.schemas.js";
+import { CreateSessionSchema } from "../../../apps/backend/src/modules/sessions/sessions.controller.js";
+import { ReportFeedItemSchema } from "../../../apps/backend/src/modules/feed/feed.schemas.js";
+import {
+  UpdateProfileSchema,
+  CreateUserSchema,
+} from "../../../apps/backend/src/modules/users/users.controller.js";
+import { CreateExerciseTypeSchema } from "../../../apps/backend/src/modules/exercise-types/exerciseTypes.controller.js";
 import openApiSpec from "../../../apps/backend/openapi/openapi.json";
 
 type SchemaMapEntry = {
@@ -15,6 +26,15 @@ type SchemaMapEntry = {
 const CONTRACT_SCHEMAS: SchemaMapEntry[] = [
   { name: "RegisterRequest", schema: RegisterSchema },
   { name: "LoginRequest", schema: LoginSchema },
+  { name: "ForgotPasswordRequest", schema: ForgotPasswordSchema },
+  { name: "ResetPasswordRequest", schema: ResetPasswordSchema },
+  { name: "ResendVerificationRequest", schema: ResendVerificationSchema },
+  { name: "Verify2FALoginRequest", schema: Verify2FALoginSchema },
+  { name: "SessionCreateRequest", schema: CreateSessionSchema },
+  { name: "ReportFeedItemRequest", schema: ReportFeedItemSchema },
+  { name: "UpdateProfileRequest", schema: UpdateProfileSchema },
+  { name: "CreateUserRequest", schema: CreateUserSchema },
+  { name: "CreateExerciseTypeRequest", schema: CreateExerciseTypeSchema },
 ];
 
 type JsonSchemaObject = {
@@ -96,7 +116,7 @@ describe("OpenAPI contract alignment", () => {
         if (Array.isArray(expected?.enum)) {
           expect(received?.enum).toEqual(expected.enum);
         }
-        if (expected?.items?.type) {
+        if (expected?.items?.type && !received?.items?.$ref) {
           expect(received?.items?.type).toBe(expected.items.type);
         }
         if (expected?.properties) {

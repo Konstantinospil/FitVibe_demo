@@ -20,36 +20,27 @@ import {
 import {
   truncateAll,
   ensureRolesSeeded,
-  isDatabaseAvailable,
   ensureUsernameColumnExists,
   withDatabaseErrorHandling,
 } from "../../setup/test-helpers.js";
+import { describeWithTestDatabase } from "../../setup/db-availability.js";
 import { v4 as uuidv4 } from "uuid";
 import { getCurrentTermsVersion } from "../../../apps/backend/src/config/terms.js";
 
-describe("Integration: Content Moderation", () => {
+describeWithTestDatabase("Integration: Content Moderation", () => {
   // Increase timeout for integration tests with multiple operations
   jest.setTimeout(60000);
 
   let user1: { id: string; email: string; accessToken: string };
   let user2: { id: string; email: string; accessToken: string };
   let admin: { id: string; email: string; accessToken: string };
-  let dbAvailable = false;
-  let feedItemId: string | undefined;
+  let feedItemId: string;
 
   beforeAll(async () => {
-    dbAvailable = await isDatabaseAvailable();
-    if (!dbAvailable) {
-      console.warn("\n⚠️  Integration tests will be skipped (database unavailable)");
-      return;
-    }
     await ensureUsernameColumnExists();
   });
 
   beforeEach(async () => {
-    if (!dbAvailable) {
-      return;
-    }
     await withDatabaseErrorHandling(async () => {
       const { env } = await import("../../../apps/backend/src/config/env.js");
       (env as { readOnlyMode: boolean }).readOnlyMode = false;
@@ -170,32 +161,20 @@ describe("Integration: Content Moderation", () => {
         .set("Authorization", `Bearer ${user2.accessToken}`);
 
       const feedItems = feedResponse.body.items || [];
-      if (feedItems.length > 0) {
-        feedItemId = feedItems[0].feedItemId;
-      } else {
-        feedItemId = undefined;
+      if (feedItems.length === 0) {
+        throw new Error(
+          "Content moderation setup did not produce a feed item; tests cannot run without one.",
+        );
       }
+      feedItemId = feedItems[0].feedItemId;
     }, "content moderation beforeEach");
   });
 
   afterEach(async () => {
-    if (!dbAvailable) {
-      return;
-    }
     await truncateAll();
   });
 
   it("should allow users to report feed items", async () => {
-    if (!dbAvailable) {
-      console.warn("Skipping test: database unavailable");
-      return;
-    }
-
-    if (!feedItemId) {
-      console.warn("Skipping test: no feed item available");
-      return;
-    }
-
     const response = await request(app)
       .post(`/api/v1/feed/item/${feedItemId}/report`)
       .set("Authorization", `Bearer ${user2.accessToken}`)
@@ -208,16 +187,6 @@ describe("Integration: Content Moderation", () => {
   });
 
   it("should show reports in admin moderation queue", async () => {
-    if (!dbAvailable) {
-      console.warn("Skipping test: database unavailable");
-      return;
-    }
-
-    if (!feedItemId) {
-      console.warn("Skipping test: no feed item available");
-      return;
-    }
-
     // Create a report
     await request(app)
       .post(`/api/v1/feed/item/${feedItemId}/report`)
@@ -237,16 +206,6 @@ describe("Integration: Content Moderation", () => {
   });
 
   it("should enforce rate limiting on reports", async () => {
-    if (!dbAvailable) {
-      console.warn("Skipping test: database unavailable");
-      return;
-    }
-
-    if (!feedItemId) {
-      console.warn("Skipping test: no feed item available");
-      return;
-    }
-
     // Try to create more than 10 reports (rate limit is 10 per day)
     const reports = [];
     for (let i = 0; i < 12; i++) {

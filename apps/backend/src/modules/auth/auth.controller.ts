@@ -12,6 +12,8 @@ import {
   listSessions as doListSessions,
   revokeSessions as doRevokeSessions,
   acceptTerms as doAcceptTerms,
+  revokeTerms as doRevokeTerms,
+  getLegalDocumentsStatus as doGetLegalDocumentsStatus,
 } from "./auth.service.js";
 import { env, JWKS } from "../../config/env.js";
 import {
@@ -532,6 +534,40 @@ export async function acceptTerms(req: Request, res: Response, next: NextFunctio
     AcceptTermsSchema.parse(req.body); // Validate payload
     await doAcceptTerms(userId);
     res.status(200).json({ message: "Terms accepted successfully" });
+    return;
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function revokeTerms(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    const authUser = getAuthenticatedUser(req);
+    const userId = authUser?.sub;
+    if (!userId) {
+      throw new HttpError(401, "UNAUTHENTICATED", "UNAUTHENTICATED");
+    }
+    await doRevokeTerms(userId);
+    res.status(200).json({ message: "Terms consent revoked" });
+    return;
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function getLegalDocumentsStatus(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> {
+  try {
+    const authUser = getAuthenticatedUser(req);
+    const userId = authUser?.sub;
+    if (!userId) {
+      throw new HttpError(401, "UNAUTHENTICATED", "UNAUTHENTICATED");
+    }
+    const status = await doGetLegalDocumentsStatus(userId);
+    res.status(200).json(status);
     return;
   } catch (error) {
     next(error);

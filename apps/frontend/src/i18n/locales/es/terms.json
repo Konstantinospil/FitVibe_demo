@@ -96,5 +96,18 @@
   "section16": {
     "title": "16. Contacto",
     "content": "Las preguntas sobre estos Términos pueden enviarse a legal@fitvibe.example.com."
+  },
+  "consent": {
+    "accept": "Aceptar los Términos y Condiciones",
+    "accepting": "Aceptando…",
+    "acceptError": "No se pudieron aceptar los Términos y Condiciones. Por favor, inténtalo de nuevo.",
+    "revoke": "Revocar consentimiento",
+    "revokeError": "No se pudo revocar el consentimiento de los Términos y Condiciones. Por favor, inténtalo de nuevo.",
+    "revokeConfirm": {
+      "title": "¿Revocar el consentimiento de los Términos?",
+      "message": "Si revocas tu consentimiento, ya no podrás usar FitVibe. Se cerrará tu sesión y deberás aceptar de nuevo los Términos y Condiciones para continuar.",
+      "confirm": "Revocar consentimiento y cerrar sesión",
+      "cancel": "Volver"
+    }
   }
 }

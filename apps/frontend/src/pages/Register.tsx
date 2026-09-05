@@ -144,7 +144,6 @@ const Register: React.FC = () => {
   if (success) {
     return (
       <AuthPageLayout
-        eyebrow={t("auth.register.eyebrow")}
         title={t("auth.register.successTitle")}
         description={t("auth.register.successDescription")}
       >
@@ -277,11 +276,7 @@ const Register: React.FC = () => {
   }
 
   return (
-    <AuthPageLayout
-      eyebrow={t("auth.register.eyebrow")}
-      title={t("auth.register.title")}
-      description={t("auth.register.description")}
-    >
+    <AuthPageLayout title={t("auth.register.title")} description={t("auth.register.description")}>
       <form
         ref={formRef}
         onSubmit={(e) => {

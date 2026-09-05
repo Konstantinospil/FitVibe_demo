@@ -331,10 +331,14 @@ test.describe("Authentication Flows (FR-002)", () => {
       await page.goto("/settings");
       await waitForApp(page);
       await page.getByRole("button", { name: /revoke.*others|auth\.sessions\.revokeOthers/i }).click();
+      const confirmDialog = page.getByRole("dialog");
+      await expect(confirmDialog).toBeVisible();
       const revokeResponse = page.waitForResponse((response) =>
         response.url().includes("/api/v1/auth/sessions/revoke"),
       );
-      await page.getByRole("button", { name: /revoke others|auth\.sessions\.revokeOthers/i }).last().click();
+      await confirmDialog
+        .getByRole("button", { name: /revoke.*others|auth\.sessions\.revokeOthers/i })
+        .click();
       await revokeResponse;
       expect(revokeCallCount).toBeGreaterThan(0);
     });
@@ -357,10 +361,12 @@ test.describe("Authentication Flows (FR-002)", () => {
       await page.goto("/settings");
       await waitForApp(page);
       await page.getByRole("button", { name: /revoke all sessions|auth\.sessions\.revokeAll/i }).click();
+      const confirmDialog = page.getByRole("dialog");
+      await expect(confirmDialog).toBeVisible();
       const revokeResponse = page.waitForResponse((response) =>
         response.url().includes("/api/v1/auth/sessions/revoke"),
       );
-      await page.getByRole("button", { name: /revoke all|auth\.sessions\.revokeAll/i }).last().click();
+      await confirmDialog.getByRole("button", { name: /revoke all|auth\.sessions\.revokeAll/i }).click();
       await revokeResponse;
       expect(revokeCallCount).toBeGreaterThan(0);
     });

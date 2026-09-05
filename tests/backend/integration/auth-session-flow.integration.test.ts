@@ -21,36 +21,19 @@ import {
   truncateAll,
   ensureRolesSeeded,
   withDatabaseErrorHandling,
-  isDatabaseAvailable,
   ensureUsernameColumnExists,
 } from "../../setup/test-helpers.js";
+import { describeWithTestDatabase } from "../../setup/db-availability.js";
 import { v4 as uuidv4 } from "uuid";
 import { getCurrentTermsVersion } from "../../../apps/backend/src/config/terms.js";
 
-describe("Integration: Auth → Session Flow", () => {
-  let dbAvailable = false;
-
+describeWithTestDatabase("Integration: Auth → Session Flow", () => {
   beforeAll(async () => {
-    dbAvailable = await isDatabaseAvailable();
-    if (!dbAvailable) {
-      console.warn("\n⚠️  Integration tests will be skipped (database unavailable)");
-      console.warn("To enable these tests:");
-      console.warn("  1. Start PostgreSQL locally, or");
-      console.warn(
-        "  2. Use Docker Compose: docker compose -f infra/docker/dev/docker-compose.dev.yml up -d db",
-      );
-      console.warn("  3. Set PGHOST, PGPORT, PGUSER, PGPASSWORD, PGDATABASE environment variables");
-      console.warn("");
-      return;
-    }
     // Ensure username column exists before tests run
     await ensureUsernameColumnExists();
   });
 
   beforeEach(async () => {
-    if (!dbAvailable) {
-      return;
-    }
     await withDatabaseErrorHandling(async () => {
       // Ensure read-only mode is disabled for tests
       const { env } = await import("../../../apps/backend/src/config/env.js");
@@ -64,18 +47,11 @@ describe("Integration: Auth → Session Flow", () => {
   });
 
   afterEach(async () => {
-    if (!dbAvailable) {
-      return;
-    }
     // Ensure cleanup after each test
     await truncateAll();
   });
 
   it("should complete full flow: register → verify → login → create session", async () => {
-    if (!dbAvailable) {
-      console.warn("Skipping test: database unavailable");
-      return;
-    }
     // Step 1: Register a new user via API
     const registerResponse = await request(app).post("/api/v1/auth/register").send({
       email: "testuser@example.com",
@@ -167,10 +143,6 @@ describe("Integration: Auth → Session Flow", () => {
   });
 
   it("should handle login failure with incorrect password", async () => {
-    if (!dbAvailable) {
-      console.warn("Skipping test: database unavailable");
-      return;
-    }
     // Create a verified user directly in database
     const userId = uuidv4();
     const passwordHash = await bcrypt.hash("CorrectPassword123!", 12);
@@ -239,10 +211,6 @@ describe("Integration: Auth → Session Flow", () => {
   });
 
   it("should prevent creating session without authentication", async () => {
-    if (!dbAvailable) {
-      console.warn("Skipping test: database unavailable");
-      return;
-    }
     const sessionResponse = await request(app).post("/api/v1/sessions").send({
       title: "Unauthorized Session",
       scheduledAt: new Date().toISOString(),

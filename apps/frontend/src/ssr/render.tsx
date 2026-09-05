@@ -12,6 +12,7 @@ import { createQueryClient } from "../lib/queryClient.js";
 import { readFileSync, existsSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
+import { styleTagsFor } from "./inlineStyles.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -266,16 +267,13 @@ export async function renderPage(url: string): Promise<string> {
 
   const isProduction = process.env.NODE_ENV === "production";
   const { scripts, styles } = getClientAssets();
-  // CSS is the LCP-critical resource for the SSR login heading. Do not
-  // modulepreload JS in <head> — that contends with CSS on Slow 4G.
+  // Do not modulepreload JS in <head> — that contends with first paint on Slow 4G.
   const hydrationScript = scripts
     .map((src) => `<script type="module" src="${src}" fetchpriority="low"></script>`)
     .join("");
-  const styleLinks = styles
-    .map((href) => `<link rel="stylesheet" href="${href}" fetchpriority="high" />`)
-    .join("");
+  const styleTags = styleTagsFor(styles, resolve(root, "dist/client"));
 
-  const resourceHints = isProduction ? `\n    ${styleLinks}\n  ` : styleLinks;
+  const resourceHints = isProduction ? `\n    ${styleTags}\n  ` : styleTags;
 
   // Add Open Graph and Twitter Card meta tags for better SEO
   // These improve Lighthouse SEO score and social sharing

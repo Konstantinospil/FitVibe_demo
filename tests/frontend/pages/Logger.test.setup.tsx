@@ -32,6 +32,16 @@ void testI18n.use(initReactI18next).init({
         "logger.repsPlaceholder": "Reps",
         "logger.weightPlaceholder": "Weight",
         "logger.rpePlaceholder": "RPE",
+        "logger.visibilitySettings": "Session Visibility",
+        "logger.currentVisibility": "Current visibility",
+        "logger.visibilityUpdated": "Session visibility updated",
+        "logger.visibilityUpdateFailed": "Failed to update visibility",
+        "logger.visibilityLabel": "Change session visibility",
+        "logger.visibilityPrivate": "Private",
+        "logger.visibilityLink": "Link only",
+        "logger.visibilityPublic": "Public",
+        "logger.visibilityHelp":
+          "Private sessions are only visible to you. Link sessions can be shared via link. Public sessions appear in the community feed.",
       },
     },
   },
@@ -74,4 +84,3 @@ export const mockSessionData = {
     },
   ],
 };
-

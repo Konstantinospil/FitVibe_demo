@@ -77,7 +77,6 @@ describe("TwoFactorVerificationLogin", () => {
   it("renders 2FA verification form", () => {
     renderWithProviders();
 
-    expect(screen.getByText("Two-Factor Authentication")).toBeInTheDocument();
     expect(screen.getByText("Enter Your Code")).toBeInTheDocument();
     expect(
       screen.getByText("Enter the 6-digit code from your authenticator app"),

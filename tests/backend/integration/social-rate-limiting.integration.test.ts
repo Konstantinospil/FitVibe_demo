@@ -18,17 +18,16 @@ import {
   truncateAll,
   ensureRolesSeeded,
   withDatabaseErrorHandling,
-  isDatabaseAvailable,
   ensureUsernameColumnExists,
 } from "../../setup/test-helpers.js";
+import { describeWithTestDatabase } from "../../setup/db-availability.js";
 import { v4 as uuidv4 } from "uuid";
 import { getCurrentTermsVersion } from "../../../apps/backend/src/config/terms.js";
 import { clearRateLimiters } from "../../../apps/backend/src/middlewares/rate-limit.js";
 
 jest.setTimeout(120_000);
 
-describe("Integration: Social Features Rate Limiting", () => {
-  let dbAvailable = false;
+describeWithTestDatabase("Integration: Social Features Rate Limiting", () => {
   let authToken: string;
   let userId: string;
   let otherUserToken: string;
@@ -38,19 +37,11 @@ describe("Integration: Social Features Rate Limiting", () => {
   let hashedPassword: string;
 
   beforeAll(async () => {
-    dbAvailable = await isDatabaseAvailable();
-    if (!dbAvailable) {
-      console.warn("\n⚠️  Integration tests will be skipped (database unavailable)");
-      return;
-    }
     await ensureUsernameColumnExists();
     hashedPassword = await bcrypt.hash("SecureP@ssw0rd123!", 10);
   });
 
   beforeEach(async () => {
-    if (!dbAvailable) {
-      return;
-    }
     await withDatabaseErrorHandling(async () => {
       // Clear rate limiters to ensure fresh state
       clearRateLimiters();
@@ -150,20 +141,12 @@ describe("Integration: Social Features Rate Limiting", () => {
   });
 
   afterEach(async () => {
-    if (!dbAvailable) {
-      return;
-    }
     clearRateLimiters();
     await truncateAll();
   });
 
   describe("Like/Unlike Rate Limiting", () => {
     it("should enforce rate limit on likes", async () => {
-      if (!dbAvailable) {
-        console.warn("Skipping test: database unavailable");
-        return;
-      }
-
       // Feed like rate limit: 100 per 300 seconds
       // Make 101 requests to exceed limit
       const requests = Array.from({ length: 101 }, () =>
@@ -188,11 +171,6 @@ describe("Integration: Social Features Rate Limiting", () => {
     });
 
     it("should include Retry-After header in rate limit response", async () => {
-      if (!dbAvailable) {
-        console.warn("Skipping test: database unavailable");
-        return;
-      }
-
       // Exceed rate limit
       for (let i = 0; i < 101; i++) {
         await request(app)
@@ -212,11 +190,6 @@ describe("Integration: Social Features Rate Limiting", () => {
 
   describe("Comment Creation Rate Limiting", () => {
     it("should enforce rate limit on comment creation", async () => {
-      if (!dbAvailable) {
-        console.warn("Skipping test: database unavailable");
-        return;
-      }
-
       // Comment creation rate limit: 20 per 3600 seconds (1 hour)
       // Make 21 requests to exceed limit
       const requests = Array.from({ length: 21 }, (_, i) =>
@@ -243,11 +216,6 @@ describe("Integration: Social Features Rate Limiting", () => {
 
   describe("Follow Rate Limiting", () => {
     it("should enforce rate limit on follows", async () => {
-      if (!dbAvailable) {
-        console.warn("Skipping test: database unavailable");
-        return;
-      }
-
       // Create one more user than the follow rate limit (50/day)
       const usersToFollow: string[] = [];
       for (let i = 0; i < 51; i++) {
@@ -299,11 +267,6 @@ describe("Integration: Social Features Rate Limiting", () => {
 
   describe("Bookmark Rate Limiting", () => {
     it("should enforce rate limit on bookmarks", async () => {
-      if (!dbAvailable) {
-        console.warn("Skipping test: database unavailable");
-        return;
-      }
-
       // Bookmark rate limit: 100 per 300 seconds
       // Make 101 requests to exceed limit
       const requests = Array.from({ length: 101 }, () =>
@@ -329,11 +292,6 @@ describe("Integration: Social Features Rate Limiting", () => {
 
   describe("Rate Limit Error Response", () => {
     it("should return proper error structure when rate limited", async () => {
-      if (!dbAvailable) {
-        console.warn("Skipping test: database unavailable");
-        return;
-      }
-
       // Exceed rate limit
       for (let i = 0; i < 101; i++) {
         await request(app)

@@ -1,4 +1,4 @@
-import React, { createContext, useState, useCallback } from "react";
+import React, { createContext, useState, useCallback, useContext } from "react";
 import { useTranslation } from "react-i18next";
 import { useToast as useAppToast } from "../../contexts/ToastContext";
 
@@ -284,4 +284,12 @@ export const useToast = () => {
     warning: appToast.warning,
     info: appToast.info,
   };
+};
+
+export const useUiToastContext = (): ToastContextValue => {
+  const context = useContext(ToastContext);
+  if (!context) {
+    throw new Error("useUiToastContext must be used within ToastProvider");
+  }
+  return context;
 };

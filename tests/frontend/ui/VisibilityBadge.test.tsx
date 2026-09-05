@@ -16,4 +16,9 @@ describe("VisibilityBadge", () => {
     expect(screen.getByText(/Link-only/i)).toBeInTheDocument();
     expect(screen.getByText(/Public/i)).toBeInTheDocument();
   });
+
+  it("falls back to the private palette for unknown levels", () => {
+    render(<VisibilityBadge level={"secret" as never} />);
+    expect(screen.getByText(/visibility.labels.secret|secret/i)).toBeInTheDocument();
+  });
 });

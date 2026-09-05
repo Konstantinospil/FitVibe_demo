@@ -4,11 +4,20 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import userEvent from "@testing-library/user-event";
 import LanguageSwitcher from "../../src/components/LanguageSwitcher";
 
+const { changeLanguage, loadLanguageTranslations } = vi.hoisted(() => ({
+  changeLanguage: vi.fn().mockResolvedValue(undefined),
+  loadLanguageTranslations: vi.fn().mockResolvedValue(undefined),
+}));
+
+vi.mock("../../src/i18n/config", () => ({
+  loadLanguageTranslations,
+}));
+
 vi.mock("react-i18next", () => ({
   useTranslation: () => ({
     i18n: {
       language: "en",
-      changeLanguage: vi.fn(),
+      changeLanguage,
     },
     t: (key: string) => {
       const translations: Record<string, string> = {
@@ -27,8 +36,9 @@ vi.mock("react-i18next", () => ({
 
 describe("LanguageSwitcher", () => {
   beforeEach(() => {
-    // Reset document state
     document.body.innerHTML = "";
+    changeLanguage.mockClear();
+    loadLanguageTranslations.mockClear();
   });
 
   afterEach(() => {
@@ -187,5 +197,68 @@ describe("LanguageSwitcher", () => {
       },
       { timeout: 2000 },
     );
+  });
+
+  it("supports keyboard navigation, unknown locale fallback, and option keyboard select", async () => {
+    const { container } = render(<LanguageSwitcher />);
+    const button =
+      Array.from(screen.getAllByRole("button", { name: /select language/i })).find((btn) =>
+        container.contains(btn),
+      ) || screen.getAllByRole("button", { name: /select language/i })[0];
+
+    fireEvent.keyDown(button, { key: "Escape" });
+    fireEvent.keyDown(button, { key: "ArrowDown" });
+    expect(await screen.findByRole("menu")).toBeInTheDocument();
+
+    fireEvent.keyDown(button, { key: "ArrowDown" });
+    fireEvent.keyDown(button, { key: "ArrowUp" });
+    fireEvent.keyDown(button, { key: "End" });
+    fireEvent.keyDown(button, { key: "Home" });
+    fireEvent.keyDown(button, { key: "x" });
+    await waitFor(() => expect(screen.queryByRole("menu")).not.toBeInTheDocument());
+
+    fireEvent.keyDown(button, { key: "Enter" });
+    expect(await screen.findByRole("menu")).toBeInTheDocument();
+    fireEvent.keyDown(button, { key: "Escape" });
+    await waitFor(() => expect(screen.queryByRole("menu")).not.toBeInTheDocument());
+
+    fireEvent.keyDown(button, { key: " " });
+    const german = await screen.findByRole("menuitemradio", { name: /german/i });
+    fireEvent.mouseEnter(german);
+    fireEvent.focus(german);
+    fireEvent.keyDown(german, { key: "Enter" });
+    await waitFor(() => expect(screen.queryByRole("menu")).not.toBeInTheDocument());
+  });
+
+  it("renders a Greek flag with canton and cross", async () => {
+    const { container } = render(<LanguageSwitcher />);
+    const button =
+      Array.from(screen.getAllByRole("button", { name: /select language/i })).find((btn) =>
+        container.contains(btn),
+      ) || screen.getAllByRole("button", { name: /select language/i })[0];
+
+    fireEvent.click(button);
+    const greek = await screen.findByRole("menuitemradio", { name: /greek/i });
+    const flag = greek.querySelector("svg");
+    expect(flag).toHaveAttribute("viewBox", "0 0 27 18");
+    expect(flag?.querySelector('rect[width="10"][height="10"]')).toBeInTheDocument();
+    expect(flag?.querySelector('rect[width="2"][height="10"]')).toBeInTheDocument();
+  });
+
+  it("loads locale files before changing language", async () => {
+    const { container } = render(<LanguageSwitcher />);
+    const button =
+      Array.from(screen.getAllByRole("button", { name: /select language/i })).find((btn) =>
+        container.contains(btn),
+      ) || screen.getAllByRole("button", { name: /select language/i })[0];
+
+    fireEvent.click(button);
+    const german = await screen.findByRole("menuitemradio", { name: /german/i });
+    fireEvent.click(german);
+
+    await waitFor(() => {
+      expect(loadLanguageTranslations).toHaveBeenCalledWith("de");
+      expect(changeLanguage).toHaveBeenCalledWith("de");
+    });
   });
 });
