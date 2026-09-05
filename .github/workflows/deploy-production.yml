@@ -30,12 +30,12 @@ jobs:
       security-events: write
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0 # Full history for secrets scanning
 
       - name: Run Gitleaks (secrets scan)
-        uses: gitleaks/gitleaks-action@v2
+        uses: gitleaks/gitleaks-action@v3
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -75,13 +75,13 @@ jobs:
       contents: read
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Setup PNPM
         uses: pnpm/action-setup@v6
 
       - name: Setup Node.js
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v7
         with:
           node-version: "24"
           cache: "pnpm"
@@ -115,7 +115,7 @@ jobs:
       image-digest: ${{ steps.build.outputs.digest }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Set lowercase GHCR image names
         run: |
@@ -124,10 +124,10 @@ jobs:
           echo "FRONTEND_IMAGE_NAME=${owner}/fitvibe-frontend" >> "$GITHUB_ENV"
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@v4
 
       - name: Log in to GitHub Container Registry
-        uses: docker/login-action@v3
+        uses: docker/login-action@v4
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
@@ -135,7 +135,7 @@ jobs:
 
       - name: Extract metadata
         id: meta
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@v6
         with:
           images: ${{ env.REGISTRY }}/${{ env.BACKEND_IMAGE_NAME }}
           tags: |
@@ -147,7 +147,7 @@ jobs:
 
       - name: Build and push
         id: build
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v7
         with:
           context: .
           file: infra/docker/prod/Dockerfile.backend
@@ -171,7 +171,7 @@ jobs:
       image-digest: ${{ steps.build.outputs.digest }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Set lowercase GHCR image names
         run: |
@@ -180,10 +180,10 @@ jobs:
           echo "FRONTEND_IMAGE_NAME=${owner}/fitvibe-frontend" >> "$GITHUB_ENV"
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@v4
 
       - name: Log in to GitHub Container Registry
-        uses: docker/login-action@v3
+        uses: docker/login-action@v4
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
@@ -191,7 +191,7 @@ jobs:
 
       - name: Extract metadata
         id: meta
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@v6
         with:
           images: ${{ env.REGISTRY }}/${{ env.FRONTEND_IMAGE_NAME }}
           tags: |
@@ -202,7 +202,7 @@ jobs:
 
       - name: Build and push
         id: build
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v7
         with:
           context: .
           file: infra/docker/prod/Dockerfile.frontend
@@ -230,13 +230,13 @@ jobs:
       url: https://fitvibe.com
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Setup PNPM
         uses: pnpm/action-setup@v6
 
       - name: Setup Node.js
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v7
         with:
           node-version: "24"
           cache: "pnpm"
@@ -266,10 +266,10 @@ jobs:
       id-token: write
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Configure kubectl
-        uses: azure/k8s-set-context@v3
+        uses: azure/k8s-set-context@v5
         with:
           method: kubeconfig
           kubeconfig: ${{ secrets.KUBE_CONFIG }}
@@ -332,7 +332,7 @@ jobs:
       contents: read
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Wait for deployment to stabilize
         run: sleep 30
@@ -363,7 +363,7 @@ jobs:
       deployments: write
     steps:
       - name: Send Slack notification
-        uses: slackapi/slack-github-action@v1
+        uses: slackapi/slack-github-action@v4
         with:
           webhook-url: ${{ secrets.SLACK_WEBHOOK_URL }}
           payload: |
@@ -381,7 +381,7 @@ jobs:
             }
 
       - name: Create GitHub deployment
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         with:
           script: |
             await github.rest.repos.createDeploymentStatus({
