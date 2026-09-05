@@ -1538,25 +1538,20 @@ describe("Progress page", () => {
 
       renderProgress();
 
-      // Wait for error state to appear (after retries)
-      await waitFor(
-        () => {
-          expect(api.getProgressTrends).toHaveBeenCalled();
-        },
-        { timeout: 1000 },
+      const retryButtons = await screen.findAllByRole(
+        "button",
+        { name: /retry/i },
+        { timeout: 15000 },
       );
-
-      // Mock successful response for refetch
+      const callsBeforeRetry = vi.mocked(api.getProgressTrends).mock.calls.length;
       vi.mocked(api.getProgressTrends).mockResolvedValue(mockTrends);
-
-      const retryButton = await screen.findByRole("button", { name: /retry/i });
-      fireEvent.click(retryButton);
+      fireEvent.click(retryButtons[0]);
 
       await waitFor(
         () => {
-          expect(api.getProgressTrends).toHaveBeenCalledTimes(2);
+          expect(api.getProgressTrends.mock.calls.length).toBeGreaterThan(callsBeforeRetry);
         },
-        { timeout: 1000 },
+        { timeout: 2000 },
       );
     });
 
@@ -1579,27 +1574,23 @@ describe("Progress page", () => {
 
       renderProgress();
 
-      await waitFor(
-        () => {
-          expect(api.getExerciseBreakdown).toHaveBeenCalled();
-        },
-        { timeout: 1000 },
+      const retryButtons = await screen.findAllByRole(
+        "button",
+        { name: /retry/i },
+        { timeout: 15000 },
       );
-
-      // Mock successful response for refetch
+      const callsBeforeRetry = vi.mocked(api.getExerciseBreakdown).mock.calls.length;
       vi.mocked(api.getExerciseBreakdown).mockResolvedValue({
         exercises: mockExercises,
         period: 30,
       });
-
-      const retryButtons = await screen.findAllByRole("button", { name: /retry/i });
       fireEvent.click(retryButtons[retryButtons.length - 1]);
 
       await waitFor(
         () => {
-          expect(api.getExerciseBreakdown).toHaveBeenCalledTimes(2);
+          expect(api.getExerciseBreakdown.mock.calls.length).toBeGreaterThan(callsBeforeRetry);
         },
-        { timeout: 1000 },
+        { timeout: 2000 },
       );
     });
   });

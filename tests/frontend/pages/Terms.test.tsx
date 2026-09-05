@@ -1,12 +1,44 @@
 import React from "react";
-import { render, screen } from "@testing-library/react";
-import { describe, it, expect, vi } from "vitest";
+import { render, screen, waitFor, fireEvent } from "@testing-library/react";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import { MemoryRouter } from "react-router-dom";
 import Terms from "../../src/pages/Terms";
+import { ToastProvider } from "../../src/contexts/ToastContext";
+
+const { authState, acceptTerms, revokeTerms, getLegalDocumentsStatus, mockNavigate } = vi.hoisted(
+  () => ({
+    authState: {
+      isAuthenticated: false,
+      signOut: vi.fn(),
+    },
+    acceptTerms: vi.fn(),
+    revokeTerms: vi.fn(),
+    getLegalDocumentsStatus: vi.fn(),
+    mockNavigate: vi.fn(),
+  }),
+);
 
 vi.mock("../../src/i18n/config", () => ({
   ensureLegalTranslationsLoaded: vi.fn().mockResolvedValue(undefined),
 }));
+
+vi.mock("../../src/store/auth.store", () => ({
+  useAuthStore: vi.fn((selector: (state: typeof authState) => unknown) => selector(authState)),
+}));
+
+vi.mock("../../src/services/api", () => ({
+  acceptTerms,
+  revokeTerms,
+  getLegalDocumentsStatus,
+}));
+
+vi.mock("react-router-dom", async () => {
+  const actual = await vi.importActual<typeof import("react-router-dom")>("react-router-dom");
+  return {
+    ...actual,
+    useNavigate: () => mockNavigate,
+  };
+});
 
 vi.mock("react-i18next", () => ({
   useTranslation: () => ({
@@ -89,6 +121,17 @@ vi.mock("react-i18next", () => ({
         "terms.section16.title": "16. Contact",
         "terms.section16.content":
           "Questions about these Terms can be sent to legal@fitvibe.example.com.",
+        "terms.consent.accept": "Accept Terms and Conditions",
+        "terms.consent.accepting": "Accepting…",
+        "terms.consent.acceptError": "Failed to accept the Terms and Conditions. Please try again.",
+        "terms.consent.revoke": "Revoke consent",
+        "terms.consent.revokeError":
+          "Failed to revoke Terms and Conditions consent. Please try again.",
+        "terms.consent.revokeConfirm.title": "Revoke Terms consent?",
+        "terms.consent.revokeConfirm.message":
+          "Revoking your consent means you will no longer be able to use FitVibe.",
+        "terms.consent.revokeConfirm.confirm": "Revoke consent and log out",
+        "terms.consent.revokeConfirm.cancel": "Back",
       };
       const value = translations[key];
       if (options?.returnObjects && value && typeof value === "object" && !Array.isArray(value)) {
@@ -102,13 +145,27 @@ vi.mock("react-i18next", () => ({
   }),
 }));
 
-describe("Terms page", () => {
-  it("should render terms and conditions content", () => {
-    render(
+const renderTerms = () =>
+  render(
+    <ToastProvider>
       <MemoryRouter>
         <Terms />
-      </MemoryRouter>,
-    );
+      </MemoryRouter>
+    </ToastProvider>,
+  );
+
+describe("Terms page", () => {
+  beforeEach(() => {
+    authState.isAuthenticated = false;
+    authState.signOut = vi.fn();
+    acceptTerms.mockReset().mockResolvedValue({ message: "ok" });
+    revokeTerms.mockReset().mockResolvedValue({ message: "ok" });
+    getLegalDocumentsStatus.mockReset();
+    mockNavigate.mockReset();
+  });
+
+  it("should render terms and conditions content", () => {
+    renderTerms();
 
     expect(screen.getByText("Terms and Conditions")).toBeInTheDocument();
     expect(screen.getByText("Terms of service")).toBeInTheDocument();
@@ -116,22 +173,14 @@ describe("Terms page", () => {
   });
 
   it("should display effective date", () => {
-    render(
-      <MemoryRouter>
-        <Terms />
-      </MemoryRouter>,
-    );
+    renderTerms();
 
     expect(screen.getByText(/Effective Date/i)).toBeInTheDocument();
     expect(screen.getByText(/2024-06-01/i)).toBeInTheDocument();
   });
 
   it("should render terms sections", () => {
-    render(
-      <MemoryRouter>
-        <Terms />
-      </MemoryRouter>,
-    );
+    renderTerms();
 
     expect(screen.getByText("1. Eligibility and account registration")).toBeInTheDocument();
     expect(screen.getByText("2. License grant and intellectual property")).toBeInTheDocument();
@@ -139,23 +188,65 @@ describe("Terms page", () => {
   });
 
   it("should render health and safety notice", () => {
-    render(
-      <MemoryRouter>
-        <Terms />
-      </MemoryRouter>,
-    );
+    renderTerms();
 
     expect(screen.getByText("5. Health and safety notice")).toBeInTheDocument();
   });
 
   it("should render contact information", () => {
-    render(
-      <MemoryRouter>
-        <Terms />
-      </MemoryRouter>,
-    );
+    renderTerms();
 
     const emailElements = screen.getAllByText(/legal@fitvibe.example.com/i);
     expect(emailElements.length).toBeGreaterThan(0);
+  });
+
+  it("should accept terms when the authenticated user has not accepted yet", async () => {
+    authState.isAuthenticated = true;
+    getLegalDocumentsStatus.mockResolvedValue({
+      terms: {
+        accepted: false,
+        acceptedAt: null,
+        acceptedVersion: null,
+        currentVersion: "1.0.0",
+        needsAcceptance: true,
+      },
+    });
+
+    renderTerms();
+
+    const acceptButton = await screen.findByRole("button", { name: "Accept Terms and Conditions" });
+    fireEvent.click(acceptButton);
+
+    await waitFor(() => {
+      expect(acceptTerms).toHaveBeenCalledWith({ terms_accepted: true });
+    });
+    expect(mockNavigate).toHaveBeenCalledWith("/", { replace: true });
+  });
+
+  it("should revoke terms consent and sign the user out", async () => {
+    authState.isAuthenticated = true;
+    getLegalDocumentsStatus.mockResolvedValue({
+      terms: {
+        accepted: true,
+        acceptedAt: "2024-06-01T00:00:00.000Z",
+        acceptedVersion: "1.0.0",
+        currentVersion: "1.0.0",
+        needsAcceptance: false,
+      },
+    });
+
+    renderTerms();
+
+    const revokeButton = await screen.findByRole("button", { name: "Revoke consent" });
+    fireEvent.click(revokeButton);
+
+    const confirmButton = await screen.findByRole("button", { name: "Revoke consent and log out" });
+    fireEvent.click(confirmButton);
+
+    await waitFor(() => {
+      expect(revokeTerms).toHaveBeenCalled();
+    });
+    expect(authState.signOut).toHaveBeenCalled();
+    expect(mockNavigate).toHaveBeenCalledWith("/login", { replace: true });
   });
 });

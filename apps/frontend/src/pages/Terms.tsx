@@ -261,8 +261,53 @@ const Terms: React.FC = () => {
             <h2 className="section-title">{t("terms.section16.title")}</h2>
             <p className="section-text">{t("terms.section16.content")}</p>
           </section>
+
+          {isAuthenticated && termsStatus && !termsStatus.accepted && (
+            <div
+              className="flex flex--center"
+              style={{
+                marginTop: "var(--space-xl)",
+                paddingTop: "var(--space-xl)",
+                borderTop: "1px solid var(--color-border)",
+              }}
+            >
+              <Button variant="primary" onClick={() => void handleAccept()} disabled={isWorking}>
+                {isWorking ? t("terms.consent.accepting") : t("terms.consent.accept")}
+              </Button>
+            </div>
+          )}
+
+          {isAuthenticated && termsStatus?.accepted && (
+            <div
+              className="flex flex--center"
+              style={{
+                marginTop: "var(--space-xl)",
+                paddingTop: "var(--space-xl)",
+                borderTop: "1px solid var(--color-border)",
+              }}
+            >
+              <Button
+                variant="secondary"
+                onClick={() => setShowRevokeConfirm(true)}
+                disabled={isWorking}
+              >
+                {t("terms.consent.revoke")}
+              </Button>
+            </div>
+          )}
         </CardContent>
       </Card>
+
+      <ConfirmDialog
+        isOpen={showRevokeConfirm}
+        title={t("terms.consent.revokeConfirm.title")}
+        message={t("terms.consent.revokeConfirm.message")}
+        confirmLabel={t("terms.consent.revokeConfirm.confirm")}
+        cancelLabel={t("terms.consent.revokeConfirm.cancel")}
+        variant="warning"
+        onConfirm={() => void handleRevoke()}
+        onCancel={() => setShowRevokeConfirm(false)}
+      />
     </PageIntro>
   );
 };
