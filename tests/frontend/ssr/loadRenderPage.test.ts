@@ -2,12 +2,33 @@
  * SSR production render-bundle loader
  */
 
-import { describe, it, expect } from "vitest";
-import { fileURLToPath } from "node:url";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import { loadProductionRenderPage } from "../../src/ssr/loadRenderPage.js";
 
 const fixturesRoot = resolve(dirname(fileURLToPath(import.meta.url)), "fixtures");
+
+function writeRenderBundle(bundleName: string, source: string): string {
+  const bundleRoot = resolve(fixturesRoot, bundleName);
+  const serverDir = resolve(bundleRoot, "dist/server");
+  mkdirSync(serverDir, { recursive: true });
+  writeFileSync(resolve(serverDir, "render-testbundle.js"), source, "utf8");
+  return bundleRoot;
+}
+
+beforeAll(() => {
+  writeRenderBundle(
+    "valid-bundle",
+    "export async function renderPage(url) { return 'html:' + url; }\n",
+  );
+  writeRenderBundle("no-export", "export const unused = true;\n");
+});
+
+afterAll(() => {
+  rmSync(fixturesRoot, { recursive: true, force: true });
+});
 
 describe("loadProductionRenderPage", () => {
   it("should load renderPage from the hashed SSR bundle", async () => {
