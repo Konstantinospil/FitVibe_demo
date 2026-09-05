@@ -17,7 +17,7 @@ services:
       - "80:80"
 
   db:
-    image: postgres:16-alpine
+    image: postgres:18-alpine
     security_opt:
       - no-new-privileges:true
     user: "999:999" # postgres user
