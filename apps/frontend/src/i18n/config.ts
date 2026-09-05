@@ -20,6 +20,13 @@ export const loadMinimalLoginTranslations = async () => {
     brand: {
       logoAlt: "FitVibe",
     },
+    footer: {
+      terms: "Terms and Conditions",
+      privacy: "Privacy Policy",
+      navigationLabel: "Footer navigation",
+      termsAriaLabel: "View Terms and Conditions",
+      privacyAriaLabel: "View Privacy Policy",
+    },
   };
 
   return mergeTranslations(minimalCommon, enAuth);

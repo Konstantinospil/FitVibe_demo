@@ -385,7 +385,13 @@
     "weightPlaceholder": "80",
     "rpePlaceholder": "7",
     "speedPlaceholder": "90",
-    "exerciseNotesPlaceholder": "z.B., Fokus auf Form, langsameres Tempo bei Exzentrik"
+    "exerciseNotesPlaceholder": "z.B., Fokus auf Form, langsameres Tempo bei Exzentrik",
+    "visibility": "Sichtbarkeit",
+    "visibilityLabel": "Sichtbarkeit der Einheit",
+    "visibilityPrivate": "Privat (nur du)",
+    "visibilityLink": "Nur Link (nicht gelistet)",
+    "visibilityPublic": "Öffentlich (im Feed sichtbar)",
+    "visibilityHelp": "Private Einheiten sind nur für dich sichtbar. Link-Einheiten können per Link geteilt werden. Öffentliche Einheiten erscheinen im Community-Feed."
   },
   "sessions": {
     "eyebrow": "Training-Management",

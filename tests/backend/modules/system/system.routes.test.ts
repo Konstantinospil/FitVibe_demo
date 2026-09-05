@@ -1,14 +1,53 @@
+import { v4 as uuidv4 } from "uuid";
 import request from "supertest";
 import app from "../../../../apps/backend/src/app.js";
 import { env } from "../../../../apps/backend/src/config/env.js";
-import { createAuthToken } from "../../../../apps/backend/src/modules/auth/auth.repository.js";
-import { createUser } from "../../../../apps/backend/src/modules/auth/auth.repository.js";
+import {
+  createUser,
+  type AuthUserRecord,
+} from "../../../../apps/backend/src/modules/auth/auth.repository.js";
+import { signAccessToken } from "../../../../apps/backend/src/services/tokens.js";
 import { truncateAll, ensureRolesSeeded } from "../../../setup/test-helpers.js";
 import { describeWithTestDatabase } from "../../../setup/db-availability.js";
 import { getCurrentTermsVersion } from "../../../../apps/backend/src/config/terms.js";
 
+async function seedUser(params: {
+  email: string;
+  username: string;
+  displayName: string;
+  roleCode: string;
+}): Promise<AuthUserRecord> {
+  const now = new Date().toISOString();
+  const user = await createUser({
+    id: uuidv4(),
+    username: params.username,
+    display_name: params.displayName,
+    status: "active",
+    role_code: params.roleCode,
+    password_hash: "hashed",
+    primaryEmail: params.email,
+    emailVerified: true,
+    terms_accepted: true,
+    terms_accepted_at: now,
+    terms_version: getCurrentTermsVersion(),
+  });
+  if (!user) {
+    throw new Error(`Failed to create user ${params.email}`);
+  }
+  return user;
+}
+
+function tokenFor(user: AuthUserRecord): string {
+  return signAccessToken({
+    sub: user.id,
+    username: user.username,
+    role: user.role_code,
+    sid: uuidv4(),
+  });
+}
+
 describeWithTestDatabase("System Routes", () => {
-  let adminUser: { id: string; email: string; username: string };
+  let adminUser: AuthUserRecord;
   let adminToken: string;
 
   beforeAll(async () => {
@@ -20,28 +59,16 @@ describeWithTestDatabase("System Routes", () => {
       await truncateAll();
       await ensureRolesSeeded();
 
-      // Create admin user
-      adminUser = await createUser({
+      adminUser = await seedUser({
         email: "admin@test.com",
         username: "admin",
-        password_hash: "hashed",
-        email_verified: true,
-        status: "active",
-        role_code: "admin",
-        terms_accepted: true,
-        terms_version: getCurrentTermsVersion(),
+        displayName: "Admin",
+        roleCode: "admin",
       });
-
-      // Create auth token for admin
-      const sessionId = "test-session-id";
-      adminToken = await createAuthToken({
-        userId: adminUser.id,
-        sessionId,
-        type: "access",
-      });
+      adminToken = tokenFor(adminUser);
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
-      if (errorMessage.includes("does not exist") || errorMessage.includes("relation")) {
+      if (errorMessage.includes("does not exist")) {
         throw new Error(`System routes tests require migrated tables: ${errorMessage}`);
       }
       throw error;
@@ -98,27 +125,16 @@ describeWithTestDatabase("System Routes", () => {
     });
 
     it("should require admin role", async () => {
-      // Create regular user
-      const regularUser = await createUser({
+      const regularUser = await seedUser({
         email: "user@test.com",
         username: "user",
-        password_hash: "hashed",
-        email_verified: true,
-        status: "active",
-        role_code: "athlete",
-        terms_accepted: true,
-        terms_version: getCurrentTermsVersion(),
-      });
-
-      const regularToken = await createAuthToken({
-        userId: regularUser.id,
-        sessionId: "test-session",
-        type: "access",
+        displayName: "Athlete",
+        roleCode: "athlete",
       });
 
       const response = await request(app)
         .post("/api/v1/system/read-only/enable")
-        .set("Authorization", `Bearer ${regularToken}`)
+        .set("Authorization", `Bearer ${tokenFor(regularUser)}`)
         .send({ reason: "Test" });
 
       expect(response.status).toBe(403);
@@ -175,26 +191,16 @@ describeWithTestDatabase("System Routes", () => {
     });
 
     it("should require admin role", async () => {
-      const regularUser = await createUser({
+      const regularUser = await seedUser({
         email: "user2@test.com",
         username: "user2",
-        password_hash: "hashed",
-        email_verified: true,
-        status: "active",
-        role_code: "athlete",
-        terms_accepted: true,
-        terms_version: getCurrentTermsVersion(),
-      });
-
-      const regularToken = await createAuthToken({
-        userId: regularUser.id,
-        sessionId: "test-session",
-        type: "access",
+        displayName: "Athlete Two",
+        roleCode: "athlete",
       });
 
       const response = await request(app)
         .post("/api/v1/system/read-only/disable")
-        .set("Authorization", `Bearer ${regularToken}`)
+        .set("Authorization", `Bearer ${tokenFor(regularUser)}`)
         .send({ notes: "Test" });
 
       expect(response.status).toBe(403);

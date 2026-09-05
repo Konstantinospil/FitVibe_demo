@@ -10,6 +10,7 @@ import { v4 as uuidv4 } from "uuid";
 import bcrypt from "bcryptjs";
 import app from "../../../apps/backend/src/app.js";
 import { createUser } from "../../../apps/backend/src/modules/auth/auth.repository.js";
+import { getCurrentTermsVersion } from "../../../apps/backend/src/config/terms.js";
 import {
   truncateAll,
   ensureRolesSeeded,
@@ -18,7 +19,7 @@ import {
 import { describeWithTestDatabase } from "../../setup/db-availability.js";
 
 describeWithTestDatabase("Performance: Feed Endpoint", () => {
-  let authCookie: string;
+  let authToken: string;
 
   beforeAll(async () => {
     const dbModule = await import("../../../apps/backend/src/db/index.js");
@@ -33,23 +34,32 @@ describeWithTestDatabase("Performance: Feed Endpoint", () => {
 
     const testEmail = `test-${uuidv4()}@example.com`;
     const testUsername = `testuser-${uuidv4().substring(0, 8)}`;
-    const hashedPassword = await bcrypt.hash("SecureP@ssw0rd123!", 10);
+    const password = "SecureP@ssw0rd123!";
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const now = new Date().toISOString();
 
-    await createUser({
+    const user = await createUser({
       id: uuidv4(),
-      email: testEmail,
       username: testUsername,
-      passwordHash: hashedPassword,
-      displayName: "Test User",
-      roleCode: "user",
-      locale: "en",
-      preferredLang: "en",
+      display_name: "Test User",
+      password_hash: hashedPassword,
+      primaryEmail: testEmail,
+      emailVerified: true,
+      role_code: "athlete",
+      locale: "en-US",
+      preferred_lang: "en",
       status: "active",
+      terms_accepted: true,
+      terms_accepted_at: now,
+      terms_version: getCurrentTermsVersion(),
     });
+    if (!user) {
+      throw new Error("Feed performance tests failed to create a user.");
+    }
 
     const loginResponse = await request(app).post("/api/v1/auth/login").send({
       email: testEmail,
-      password: "SecureP@ssw0rd123!",
+      password,
     });
 
     if (loginResponse.status !== 200) {
@@ -58,9 +68,9 @@ describeWithTestDatabase("Performance: Feed Endpoint", () => {
       );
     }
 
-    authCookie = loginResponse.headers["set-cookie"]?.[0] || "";
-    if (!authCookie) {
-      throw new Error("Feed performance tests did not receive an auth cookie.");
+    authToken = loginResponse.body.tokens?.accessToken ?? "";
+    if (!authToken) {
+      throw new Error("Feed performance tests did not receive an access token.");
     }
   });
 
@@ -81,7 +91,7 @@ describeWithTestDatabase("Performance: Feed Endpoint", () => {
     const startTime = Date.now();
     const response = await request(app)
       .get("/api/v1/feed")
-      .set("Cookie", authCookie || "")
+      .set("Authorization", `Bearer ${authToken}`)
       .query({ limit: 20 });
 
     const responseTime = Date.now() - startTime;
@@ -106,7 +116,7 @@ describeWithTestDatabase("Performance: Feed Endpoint", () => {
       const startTime = Date.now();
       const response = await request(app)
         .get("/api/v1/feed")
-        .set("Cookie", authCookie || "")
+        .set("Authorization", `Bearer ${authToken}`)
         .query({ limit: 20, offset });
 
       const responseTime = Date.now() - startTime;

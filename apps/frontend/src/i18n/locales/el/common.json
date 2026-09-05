@@ -397,7 +397,13 @@
     "weightPlaceholder": "80",
     "rpePlaceholder": "7",
     "speedPlaceholder": "90",
-    "exerciseNotesPlaceholder": "π.χ., Εστίαση στη μορφή, πιο αργό tempo σε εκκεντρικά"
+    "exerciseNotesPlaceholder": "π.χ., Εστίαση στη μορφή, πιο αργό tempo σε εκκεντρικά",
+    "visibility": "Ορατότητα",
+    "visibilityLabel": "Ορατότητα συνεδρίας",
+    "visibilityPrivate": "Ιδιωτική (μόνο εσύ)",
+    "visibilityLink": "Μόνο σύνδεσμος (μη καταχωρημένη)",
+    "visibilityPublic": "Δημόσια (ορατή στο feed)",
+    "visibilityHelp": "Οι ιδιωτικές συνεδρίες είναι ορατές μόνο σε εσένα. Οι συνεδρίες με σύνδεσμο μπορούν να κοινοποιηθούν μέσω συνδέσμου. Οι δημόσιες συνεδρίες εμφανίζονται στο κοινοτικό feed."
   },
   "sessions": {
     "eyebrow": "Διαχείριση προπόνησης",

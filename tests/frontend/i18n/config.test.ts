@@ -349,6 +349,8 @@ describe("i18n config", () => {
       // Should have language labels
       expect(translations).toHaveProperty("language");
       expect(translations.language).toHaveProperty("label");
+      expect(translations).toHaveProperty("footer");
+      expect(translations.footer).toHaveProperty("terms", "Terms and Conditions");
 
       // Should have auth translations merged
       expect(Object.keys(translations).length).toBeGreaterThan(1);

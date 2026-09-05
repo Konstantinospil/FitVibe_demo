@@ -397,7 +397,13 @@
     "weightPlaceholder": "80",
     "rpePlaceholder": "7",
     "speedPlaceholder": "90",
-    "exerciseNotesPlaceholder": "e.g., Focus on form, slower tempo on eccentrics"
+    "exerciseNotesPlaceholder": "e.g., Focus on form, slower tempo on eccentrics",
+    "visibility": "Visibility",
+    "visibilityLabel": "Session visibility",
+    "visibilityPrivate": "Private (only you)",
+    "visibilityLink": "Link only (unlisted)",
+    "visibilityPublic": "Public (visible in feed)",
+    "visibilityHelp": "Private sessions are only visible to you. Link sessions can be shared via link. Public sessions appear in the community feed."
   },
   "sessions": {
     "eyebrow": "Training management",

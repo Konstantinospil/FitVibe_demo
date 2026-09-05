@@ -397,7 +397,13 @@
     "weightPlaceholder": "80",
     "rpePlaceholder": "7",
     "speedPlaceholder": "90",
-    "exerciseNotesPlaceholder": "p. ej., Enfócate en la forma, tempo más lento en excéntricos"
+    "exerciseNotesPlaceholder": "p. ej., Enfócate en la forma, tempo más lento en excéntricos",
+    "visibility": "Visibilidad",
+    "visibilityLabel": "Visibilidad de la sesión",
+    "visibilityPrivate": "Privada (solo tú)",
+    "visibilityLink": "Solo enlace (no listada)",
+    "visibilityPublic": "Pública (visible en el feed)",
+    "visibilityHelp": "Las sesiones privadas solo son visibles para ti. Las sesiones con enlace se pueden compartir mediante un enlace. Las sesiones públicas aparecen en el feed de la comunidad."
   },
   "sessions": {
     "eyebrow": "Gestión de entrenamiento",
