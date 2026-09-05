@@ -28,7 +28,7 @@ spec:
             - ALL
       containers:
         - name: postgres
-          image: postgres:15-alpine
+          image: postgres:18-alpine
           imagePullPolicy: IfNotPresent
           securityContext:
             allowPrivilegeEscalation: false
