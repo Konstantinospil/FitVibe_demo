@@ -7,11 +7,7 @@ const Login: React.FC = () => {
   const { t } = useTranslation();
 
   return (
-    <AuthPageLayout
-      eyebrow={t("auth.login.eyebrow")}
-      title={t("auth.login.title")}
-      description={t("auth.login.description")}
-    >
+    <AuthPageLayout title={t("auth.login.title")} description={t("auth.login.description")}>
       <LoginFormContent />
     </AuthPageLayout>
   );

@@ -19,6 +19,9 @@
     "greek": "Griego",
     "select": "Seleccionar un idioma"
   },
+  "brand": {
+    "logoAlt": "FitVibe"
+  },
   "status": {
     "checking": "Verificando servidor…",
     "online": "Servidor en línea",

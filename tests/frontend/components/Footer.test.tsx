@@ -19,6 +19,7 @@ vi.mock("react-i18next", () => ({
         "footer.privacy": "Privacy Policy",
         "footer.termsAriaLabel": "View Terms and Conditions",
         "footer.privacyAriaLabel": "View Privacy Policy",
+        "brand.logoAlt": "FitVibe",
       };
       return translations[key] || options?.defaultValue || key;
     },
@@ -38,10 +39,10 @@ describe("Footer", () => {
     vi.clearAllMocks();
   });
 
-  it("should render footer with brand name", () => {
+  it("should render footer with brand logo", () => {
     renderFooter();
 
-    expect(screen.getByText("FitVibe")).toBeInTheDocument();
+    expect(screen.getByRole("img", { name: "FitVibe" })).toBeInTheDocument();
   });
 
   it("should render footer with semantic HTML", () => {
@@ -196,7 +197,7 @@ describe("Footer", () => {
     expect(container).toBeInTheDocument();
 
     // Check that brand exists
-    const brand = screen.getByText("FitVibe");
+    const brand = screen.getByRole("img", { name: "FitVibe" });
     expect(brand).toBeInTheDocument();
   });
 

@@ -1,6 +1,7 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
 import PageIntro from "../components/PageIntro";
+import PublicReturnButton from "../components/PublicReturnButton";
 import { Card, CardContent } from "../components/ui";
 
 const contentStyle: React.CSSProperties = {
@@ -17,9 +18,9 @@ const Impressum: React.FC = () => {
 
   return (
     <PageIntro
-      eyebrow={t("impressum.eyebrow")}
       title={t("impressum.title")}
       description={t("impressum.description")}
+      actions={<PublicReturnButton />}
     >
       <Card
         style={{

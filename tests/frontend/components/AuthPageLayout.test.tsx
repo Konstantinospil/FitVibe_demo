@@ -4,6 +4,10 @@ import { describe, it, expect, vi, afterEach } from "vitest";
 import { MemoryRouter } from "react-router-dom";
 import AuthPageLayout from "../../src/components/AuthPageLayout";
 
+vi.mock("../../src/i18n/config", () => ({
+  loadLanguageTranslations: vi.fn().mockResolvedValue(undefined),
+}));
+
 describe("AuthPageLayout", () => {
   afterEach(() => {
     cleanup();
@@ -15,6 +19,7 @@ describe("AuthPageLayout", () => {
         const translations: Record<string, string> = {
           "footer.terms": "Terms",
           "footer.privacy": "Privacy",
+          "brand.logoAlt": "FitVibe",
         };
         return translations[key] || key;
       },
@@ -31,10 +36,10 @@ describe("AuthPageLayout", () => {
     },
   }));
 
-  it("should render with eyebrow, title, and description", () => {
+  it("should render with title and description", () => {
     render(
       <MemoryRouter>
-        <AuthPageLayout eyebrow="Test" title="Test Title" description="Test Description">
+        <AuthPageLayout title="Test Title" description="Test Description">
           <div>Test Content</div>
         </AuthPageLayout>
       </MemoryRouter>,
@@ -43,12 +48,13 @@ describe("AuthPageLayout", () => {
     expect(screen.getByText("Test Title")).toBeInTheDocument();
     expect(screen.getByText("Test Description")).toBeInTheDocument();
     expect(screen.getByText("Test Content")).toBeInTheDocument();
+    expect(screen.getAllByRole("img", { name: "FitVibe" }).length).toBeGreaterThanOrEqual(1);
   });
 
   it("should render footer links", () => {
     const { container } = render(
       <MemoryRouter>
-        <AuthPageLayout eyebrow="Test" title="Test Title" description="Test Description">
+        <AuthPageLayout title="Test Title" description="Test Description">
           <div>Content</div>
         </AuthPageLayout>
       </MemoryRouter>,
@@ -66,7 +72,7 @@ describe("AuthPageLayout", () => {
   it("should render header utilities after idle task", () => {
     render(
       <MemoryRouter>
-        <AuthPageLayout eyebrow="Test" title="Test Title" description="Test Description">
+        <AuthPageLayout title="Test Title" description="Test Description">
           <div>Content</div>
         </AuthPageLayout>
       </MemoryRouter>,

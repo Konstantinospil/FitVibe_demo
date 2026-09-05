@@ -61,7 +61,6 @@ const ResetPassword: React.FC = () => {
   if (success) {
     return (
       <AuthPageLayout
-        eyebrow={t("resetPassword.eyebrow")}
         title={t("resetPassword.titleSuccess")}
         description={t("resetPassword.descSuccess")}
       >
@@ -71,11 +70,7 @@ const ResetPassword: React.FC = () => {
   }
 
   return (
-    <AuthPageLayout
-      eyebrow={t("resetPassword.eyebrow")}
-      title={t("resetPassword.title")}
-      description={t("resetPassword.description")}
-    >
+    <AuthPageLayout title={t("resetPassword.title")} description={t("resetPassword.description")}>
       <form
         ref={formRef}
         onSubmit={(e) => {

@@ -96,5 +96,18 @@
   "section16": {
     "title": "16. Kontakt",
     "content": "Fragen zu diesen AGB können an legal@fitvibe.example.com gesendet werden."
+  },
+  "consent": {
+    "accept": "AGB akzeptieren",
+    "accepting": "Wird akzeptiert…",
+    "acceptError": "Die AGB konnten nicht akzeptiert werden. Bitte versuchen Sie es erneut.",
+    "revoke": "Zustimmung widerrufen",
+    "revokeError": "Die Zustimmung zu den AGB konnte nicht widerrufen werden. Bitte versuchen Sie es erneut.",
+    "revokeConfirm": {
+      "title": "Zustimmung zu den AGB widerrufen?",
+      "message": "Wenn Sie Ihre Zustimmung widerrufen, können Sie FitVibe nicht mehr verwenden. Sie werden abgemeldet und müssen die AGB erneut akzeptieren, um fortzufahren.",
+      "confirm": "Zustimmung widerrufen und abmelden",
+      "cancel": "Zurück"
+    }
   }
 }

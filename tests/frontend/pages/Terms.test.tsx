@@ -4,10 +4,16 @@ import { describe, it, expect, vi } from "vitest";
 import { MemoryRouter } from "react-router-dom";
 import Terms from "../../src/pages/Terms";
 
+vi.mock("../../src/i18n/config", () => ({
+  ensureLegalTranslationsLoaded: vi.fn().mockResolvedValue(undefined),
+}));
+
 vi.mock("react-i18next", () => ({
   useTranslation: () => ({
+    i18n: { language: "en" },
     t: (key: string, options?: { returnObjects?: boolean }) => {
       const translations: Record<string, string | string[] | Record<string, unknown>> = {
+        "navigation.back": "Back",
         "terms.eyebrow": "Terms",
         "terms.title": "Terms and Conditions",
         "terms.description": "Terms of service",
@@ -106,6 +112,7 @@ describe("Terms page", () => {
 
     expect(screen.getByText("Terms and Conditions")).toBeInTheDocument();
     expect(screen.getByText("Terms of service")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Back" })).toBeInTheDocument();
   });
 
   it("should display effective date", () => {

@@ -8,6 +8,7 @@ vi.mock("react-i18next", () => ({
   useTranslation: () => ({
     t: (key: string) => {
       const translations: Record<string, string> = {
+        "navigation.back": "Back",
         "impressum.eyebrow": "Legal",
         "impressum.title": "Impressum",
         "impressum.description": "Legal information",
@@ -33,17 +34,7 @@ describe("Impressum page", () => {
     expect(screen.getByText("Impressum")).toBeInTheDocument();
     expect(screen.getByText("Legal information")).toBeInTheDocument();
     expect(screen.getByText("Company information and legal details go here.")).toBeInTheDocument();
-  });
-
-  it("should display eyebrow text", () => {
-    render(
-      <MemoryRouter>
-        <Impressum />
-      </MemoryRouter>,
-    );
-
-    // Use getAllByText due to test isolation
-    const legalTexts = screen.getAllByText("Legal");
-    expect(legalTexts.length).toBeGreaterThan(0);
+    expect(screen.queryByText("Legal")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Back" })).toBeInTheDocument();
   });
 });

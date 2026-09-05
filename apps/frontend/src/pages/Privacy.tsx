@@ -1,16 +1,25 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import PageIntro from "../components/PageIntro";
+import PublicReturnButton from "../components/PublicReturnButton";
 import { Card, CardContent } from "../components/ui";
+import { ensureLegalTranslationsLoaded } from "../i18n/config";
+import { asTranslationList } from "../i18n/lists";
+
+type PrivacyNamedItem = { title: string; content: string };
 
 const Privacy: React.FC = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+
+  useEffect(() => {
+    void ensureLegalTranslationsLoaded();
+  }, [i18n.language]);
 
   return (
     <PageIntro
-      eyebrow={t("privacy.eyebrow")}
       title={t("privacy.title")}
       description={t("privacy.description")}
+      actions={<PublicReturnButton />}
     >
       <Card
         style={{
@@ -37,7 +46,7 @@ const Privacy: React.FC = () => {
             <h2 className="section-title">{t("privacy.section1.title")}</h2>
             <p className="section-text">{t("privacy.section1.subtitle")}</p>
             <ul className="list">
-              {(t("privacy.section1.items", { returnObjects: true }) as string[]).map(
+              {asTranslationList<string>(t("privacy.section1.items", { returnObjects: true })).map(
                 (item: string, index: number) => (
                   <li
                     key={index}
@@ -386,7 +395,7 @@ const Privacy: React.FC = () => {
             <h2 className="section-title">{t("privacy.section4.title")}</h2>
             <p className="section-text">{t("privacy.section4.subtitle")}</p>
             <ul className="list">
-              {(t("privacy.section4.items", { returnObjects: true }) as string[]).map(
+              {asTranslationList<string>(t("privacy.section4.items", { returnObjects: true })).map(
                 (item: string, index: number) => (
                   <li
                     key={index}
@@ -402,7 +411,7 @@ const Privacy: React.FC = () => {
             <h2 className="section-title">{t("privacy.section5.title")}</h2>
             <p className="section-text">{t("privacy.section5.subtitle")}</p>
             <ul className="list">
-              {(t("privacy.section5.items", { returnObjects: true }) as string[]).map(
+              {asTranslationList<string>(t("privacy.section5.items", { returnObjects: true })).map(
                 (item: string, index: number) => (
                   <li key={index} className="list-item">
                     {item}
@@ -416,12 +425,9 @@ const Privacy: React.FC = () => {
             <h2 className="section-title">{t("privacy.section6.title")}</h2>
             <p className="section-text">{t("privacy.section6.subtitle")}</p>
             <ul className="list">
-              {(
-                t("privacy.section6.items", { returnObjects: true }) as Array<{
-                  title: string;
-                  content: string;
-                }>
-              ).map((item: { title: string; content: string }, index: number) => (
+              {asTranslationList<PrivacyNamedItem>(
+                t("privacy.section6.items", { returnObjects: true }),
+              ).map((item, index) => (
                 <li key={index} className="list-item">
                   <strong>{item.title}</strong> {item.content}
                 </li>
@@ -433,7 +439,7 @@ const Privacy: React.FC = () => {
             <h2 className="section-title">{t("privacy.section7.title")}</h2>
             <p className="section-text">{t("privacy.section7.subtitle")}</p>
             <ul className="list">
-              {(t("privacy.section7.items", { returnObjects: true }) as string[]).map(
+              {asTranslationList<string>(t("privacy.section7.items", { returnObjects: true })).map(
                 (item: string, index: number) => (
                   <li key={index} className="list-item">
                     {item}
@@ -452,12 +458,9 @@ const Privacy: React.FC = () => {
             />
             <p className="section-text">{t("privacy.section8.subtitle")}</p>
             <ul className="list">
-              {(
-                t("privacy.section8.items", { returnObjects: true }) as Array<{
-                  title: string;
-                  content: string;
-                }>
-              ).map((item: { title: string; content: string }, index: number) => (
+              {asTranslationList<PrivacyNamedItem>(
+                t("privacy.section8.items", { returnObjects: true }),
+              ).map((item, index) => (
                 <li key={index} className="list-item">
                   <strong>{item.title}</strong> {item.content}
                 </li>
@@ -470,7 +473,7 @@ const Privacy: React.FC = () => {
             <p className="section-text">{t("privacy.section9.paragraph1")}</p>
             <p className="section-text">{t("privacy.section9.paragraph2")}</p>
             <ul className="list">
-              {(t("privacy.section9.items", { returnObjects: true }) as string[]).map(
+              {asTranslationList<string>(t("privacy.section9.items", { returnObjects: true })).map(
                 (item: string, index: number) => (
                   <li key={index} className="list-item">
                     {item}
@@ -486,12 +489,9 @@ const Privacy: React.FC = () => {
             <p className="section-text">{t("privacy.section10.paragraph1")}</p>
             <p className="section-text">{t("privacy.section10.paragraph2")}</p>
             <ul className="list">
-              {(
-                t("privacy.section10.items", { returnObjects: true }) as Array<{
-                  title: string;
-                  content: string;
-                }>
-              ).map((item: { title: string; content: string }, index: number) => (
+              {asTranslationList<PrivacyNamedItem>(
+                t("privacy.section10.items", { returnObjects: true }),
+              ).map((item, index) => (
                 <li key={index} className="list-item">
                   <strong>{item.title}</strong> {item.content}
                 </li>
@@ -504,7 +504,7 @@ const Privacy: React.FC = () => {
             <h2 className="section-title">{t("privacy.section11.title")}</h2>
             <p className="section-text">{t("privacy.section11.subtitle")}</p>
             <ul className="list">
-              {(t("privacy.section11.items", { returnObjects: true }) as string[]).map(
+              {asTranslationList<string>(t("privacy.section11.items", { returnObjects: true })).map(
                 (item: string, index: number) => (
                   <li key={index} className="list-item">
                     {item}
@@ -519,12 +519,9 @@ const Privacy: React.FC = () => {
             <h2 className="section-title">{t("privacy.section12.title")}</h2>
             <p className="section-text">{t("privacy.section12.subtitle")}</p>
             <ul className="list">
-              {(
-                t("privacy.section12.items", { returnObjects: true }) as Array<{
-                  title: string;
-                  content: string;
-                }>
-              ).map((item: { title: string; content: string }, index: number) => (
+              {asTranslationList<PrivacyNamedItem>(
+                t("privacy.section12.items", { returnObjects: true }),
+              ).map((item, index) => (
                 <li key={index} className="list-item">
                   <strong>{item.title}</strong> {item.content}
                 </li>
@@ -542,7 +539,7 @@ const Privacy: React.FC = () => {
               dangerouslySetInnerHTML={{ __html: t("privacy.section13.subtitle") }}
             />
             <ul className="list">
-              {(t("privacy.section13.items", { returnObjects: true }) as string[]).map(
+              {asTranslationList<string>(t("privacy.section13.items", { returnObjects: true })).map(
                 (item: string, index: number) => (
                   <li key={index} className="list-item">
                     {item}
@@ -566,7 +563,7 @@ const Privacy: React.FC = () => {
             <h2 className="section-title">{t("privacy.section15.title")}</h2>
             <p className="section-text">{t("privacy.section15.paragraph1")}</p>
             <ul className="list">
-              {(t("privacy.section15.items", { returnObjects: true }) as string[]).map(
+              {asTranslationList<string>(t("privacy.section15.items", { returnObjects: true })).map(
                 (item: string, index: number) => (
                   <li key={index} className="list-item">
                     {item}

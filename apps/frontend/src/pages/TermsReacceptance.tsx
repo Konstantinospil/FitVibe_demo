@@ -55,7 +55,6 @@ const TermsReacceptance: React.FC = () => {
 
   return (
     <AuthPageLayout
-      eyebrow={t("auth.termsReacceptance.eyebrow")}
       title={t("auth.termsReacceptance.title")}
       description={t("auth.termsReacceptance.description")}
     >

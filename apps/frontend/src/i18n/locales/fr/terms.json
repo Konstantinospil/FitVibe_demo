@@ -96,5 +96,18 @@
   "section16": {
     "title": "16. Contact",
     "content": "Les questions concernant ces Conditions peuvent être envoyées à legal@fitvibe.example.com."
+  },
+  "consent": {
+    "accept": "Accepter les conditions générales",
+    "accepting": "Acceptation…",
+    "acceptError": "Impossible d’accepter les conditions générales. Veuillez réessayer.",
+    "revoke": "Révoquer le consentement",
+    "revokeError": "Impossible de révoquer le consentement aux conditions générales. Veuillez réessayer.",
+    "revokeConfirm": {
+      "title": "Révoquer le consentement aux conditions ?",
+      "message": "Révoquer votre consentement signifie que vous ne pourrez plus utiliser FitVibe. Vous serez déconnecté et devrez accepter à nouveau les conditions générales pour continuer.",
+      "confirm": "Révoquer le consentement et se déconnecter",
+      "cancel": "Retour"
+    }
   }
 }

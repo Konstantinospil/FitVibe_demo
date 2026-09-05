@@ -2,12 +2,14 @@ import React from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui";
 
 interface PageIntroProps {
-  eyebrow: string;
+  eyebrow?: string;
   title: string;
   description: string;
   children?: React.ReactNode;
   /** Skip expensive backdrop blur so the heading can paint as LCP sooner. */
   priorityLcp?: boolean;
+  brand?: React.ReactNode;
+  actions?: React.ReactNode;
 }
 
 // Separate concerns: layout container vs typography
@@ -37,6 +39,8 @@ const PageIntro: React.FC<PageIntroProps> = ({
   description,
   children,
   priorityLcp = false,
+  brand,
+  actions,
 }) => (
   <section
     style={{
@@ -63,10 +67,24 @@ const PageIntro: React.FC<PageIntroProps> = ({
           gap: "1rem",
         }}
       >
-        <span style={eyebrowContainerStyle}>
-          <span style={accentLineStyle} aria-hidden="true" />
-          <span style={eyebrowTextStyle}>{eyebrow}</span>
-        </span>
+        {brand ? (
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "center",
+              width: "100%",
+              marginBottom: "0.5rem",
+            }}
+          >
+            {brand}
+          </div>
+        ) : null}
+        {eyebrow ? (
+          <span style={eyebrowContainerStyle}>
+            <span style={accentLineStyle} aria-hidden="true" />
+            <span style={eyebrowTextStyle}>{eyebrow}</span>
+          </span>
+        ) : null}
         <CardTitle
           style={{
             fontSize: "clamp(2rem, 4vw, 2.8rem)",
@@ -85,6 +103,17 @@ const PageIntro: React.FC<PageIntroProps> = ({
           {description}
         </CardDescription>
       </CardHeader>
+      {actions ? (
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            padding: "0 clamp(1.5rem, 4vw, 3rem) 1rem",
+          }}
+        >
+          {actions}
+        </div>
+      ) : null}
       {children ? (
         <CardContent
           style={{

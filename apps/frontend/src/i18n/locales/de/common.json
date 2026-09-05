@@ -19,6 +19,9 @@
     "greek": "Griechisch",
     "select": "Sprache auswählen"
   },
+  "brand": {
+    "logoAlt": "FitVibe"
+  },
   "status": {
     "checking": "Backend wird geprüft...",
     "online": "Backend verfügbar",

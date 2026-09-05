@@ -96,5 +96,18 @@
   "section16": {
     "title": "16. Contact",
     "content": "Questions about these Terms can be sent to legal@fitvibe.example.com."
+  },
+  "consent": {
+    "accept": "Accept Terms and Conditions",
+    "accepting": "Accepting…",
+    "acceptError": "Failed to accept the Terms and Conditions. Please try again.",
+    "revoke": "Revoke consent",
+    "revokeError": "Failed to revoke Terms and Conditions consent. Please try again.",
+    "revokeConfirm": {
+      "title": "Revoke Terms consent?",
+      "message": "Revoking your consent means you will no longer be able to use FitVibe. You will be logged out and must accept the Terms and Conditions again to continue.",
+      "confirm": "Revoke consent and log out",
+      "cancel": "Back"
+    }
   }
 }

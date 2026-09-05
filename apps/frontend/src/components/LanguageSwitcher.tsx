@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect, useLayoutEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { ChevronDown } from "lucide-react";
+import { loadLanguageTranslations } from "../i18n/config";
 
 /**
  * Reliable flag rendering:
@@ -89,17 +90,20 @@ const EsFlag: React.FC<{ size?: number; style?: React.CSSProperties }> = ({ size
 const ElFlag: React.FC<{ size?: number; style?: React.CSSProperties }> = ({ size = 20, style }) => (
   <svg
     width={size}
-    height={(size * 3) / 5}
-    viewBox="0 0 3 2"
+    height={(size * 2) / 3}
+    viewBox="0 0 27 18"
     xmlns="http://www.w3.org/2000/svg"
     aria-hidden="true"
     style={{ display: "inline-block", verticalAlign: "-0.2em", borderRadius: 2, ...style }}
   >
-    <rect width="3" height="2" fill="#0D5EAF" />
-    <rect width="3" height="0.2857" fill="#FFFFFF" />
-    <rect width="3" height="0.2857" y="0.5714" fill="#FFFFFF" />
-    <rect width="3" height="0.2857" y="1.1429" fill="#FFFFFF" />
-    <rect width="3" height="0.2857" y="1.7143" fill="#FFFFFF" />
+    <rect width="27" height="18" fill="#0D5EAF" />
+    <rect y="2" width="27" height="2" fill="#FFFFFF" />
+    <rect y="6" width="27" height="2" fill="#FFFFFF" />
+    <rect y="10" width="27" height="2" fill="#FFFFFF" />
+    <rect y="14" width="27" height="2" fill="#FFFFFF" />
+    <rect width="10" height="10" fill="#0D5EAF" />
+    <rect x="4" width="2" height="10" fill="#FFFFFF" />
+    <rect y="4" width="10" height="2" fill="#FFFFFF" />
   </svg>
 );
 
@@ -221,6 +225,7 @@ const LanguageSwitcher: React.FC = () => {
   const dropdownRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const [focusedIndex, setFocusedIndex] = useState<number>(-1);
+  const [isChanging, setIsChanging] = useState(false);
   const activeLanguage = (i18n.language?.slice(0, 2) || "en") as LangCode;
 
   // Fallback to 'en' if language is not in LANGUAGES
@@ -233,13 +238,23 @@ const LanguageSwitcher: React.FC = () => {
 
   const handleLanguageChange = React.useCallback(
     (code: LangCode) => {
-      void i18n.changeLanguage(code);
+      if (isChanging) {
+        return;
+      }
       setIsOpen(false);
       setFocusedIndex(-1);
-      // Return focus to button after selection
-      buttonRef.current?.focus();
+      setIsChanging(true);
+      void (async () => {
+        try {
+          await loadLanguageTranslations(code);
+          await i18n.changeLanguage(code);
+        } finally {
+          setIsChanging(false);
+          buttonRef.current?.focus();
+        }
+      })();
     },
-    [i18n],
+    [i18n, isChanging],
   );
 
   // Close dropdown when clicking outside
@@ -349,6 +364,7 @@ const LanguageSwitcher: React.FC = () => {
         aria-label={t("language.label")}
         aria-expanded={isOpen}
         aria-haspopup="menu"
+        aria-busy={isChanging}
       >
         <FlagIcon option={currentLanguage} size={24} />
         <ChevronDown size={14} style={{ opacity: 0.7 }} />
@@ -383,6 +399,7 @@ const LanguageSwitcher: React.FC = () => {
               role="menuitemradio"
               aria-checked={option.code === validLanguage}
               tabIndex={index === focusedIndex ? 0 : -1}
+              disabled={isChanging}
             >
               <FlagIcon option={option} size={20} />
               <span>{t(option.labelKey)}</span>

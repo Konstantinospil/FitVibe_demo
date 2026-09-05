@@ -4,8 +4,13 @@ import { describe, it, expect, vi } from "vitest";
 import { MemoryRouter } from "react-router-dom";
 import Privacy from "../../src/pages/Privacy";
 
+vi.mock("../../src/i18n/config", () => ({
+  ensureLegalTranslationsLoaded: vi.fn().mockResolvedValue(undefined),
+}));
+
 vi.mock("react-i18next", () => ({
   useTranslation: () => ({
+    i18n: { language: "en" },
     t: (key: string, options?: { returnObjects?: boolean }) => {
       // Handle array/object translations when returnObjects is true
       if (options?.returnObjects) {
@@ -38,6 +43,7 @@ vi.mock("react-i18next", () => ({
       }
 
       const translations: Record<string, string> = {
+        "navigation.back": "Back",
         "privacy.eyebrow": "Privacy",
         "privacy.title": "Privacy Policy",
         "privacy.description": "How we handle your data",
@@ -84,6 +90,7 @@ describe("Privacy page", () => {
 
     expect(screen.getByText("Privacy Policy")).toBeInTheDocument();
     expect(screen.getByText("How we handle your data")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Back" })).toBeInTheDocument();
   });
 
   it("should display effective date", () => {

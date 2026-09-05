@@ -38,7 +38,6 @@ const ForgotPassword: React.FC = () => {
   if (success) {
     return (
       <AuthPageLayout
-        eyebrow={t("forgotPassword.eyebrow")}
         title={t("forgotPassword.titleSuccess")}
         description={t("forgotPassword.descSuccess")}
       >
@@ -53,11 +52,7 @@ const ForgotPassword: React.FC = () => {
   }
 
   return (
-    <AuthPageLayout
-      eyebrow={t("forgotPassword.eyebrow")}
-      title={t("forgotPassword.title")}
-      description={t("forgotPassword.description")}
-    >
+    <AuthPageLayout title={t("forgotPassword.title")} description={t("forgotPassword.description")}>
       <form
         ref={formRef}
         onSubmit={(e) => {
