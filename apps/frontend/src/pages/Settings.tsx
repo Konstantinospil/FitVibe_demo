@@ -170,6 +170,19 @@ const Settings: React.FC = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const saveSuccessTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const deleteRedirectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (saveSuccessTimeoutRef.current) {
+        clearTimeout(saveSuccessTimeoutRef.current);
+      }
+      if (deleteRedirectTimeoutRef.current) {
+        clearTimeout(deleteRedirectTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const handleSavePreferences = async () => {
     setIsSaving(true);
@@ -205,7 +218,13 @@ const Settings: React.FC = () => {
       await apiClient.patch("/api/v1/users/me", payload);
 
       setSaveSuccess(true);
-      setTimeout(() => setSaveSuccess(false), 3000);
+      if (saveSuccessTimeoutRef.current) {
+        clearTimeout(saveSuccessTimeoutRef.current);
+      }
+      saveSuccessTimeoutRef.current = setTimeout(() => {
+        setSaveSuccess(false);
+        saveSuccessTimeoutRef.current = null;
+      }, 3000);
       // Reload user data to get updated profile
       await loadUserData();
     } catch (error) {
@@ -393,7 +412,11 @@ const Settings: React.FC = () => {
       });
 
       toast.success(t("settings.account.deleteSuccess"));
-      setTimeout(() => {
+      if (deleteRedirectTimeoutRef.current) {
+        clearTimeout(deleteRedirectTimeoutRef.current);
+      }
+      deleteRedirectTimeoutRef.current = setTimeout(() => {
+        deleteRedirectTimeoutRef.current = null;
         void (async () => {
           await signOut();
           void navigate("/");
