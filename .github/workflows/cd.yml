@@ -46,7 +46,7 @@ jobs:
     steps:
       - name: Find latest successful CI run
         id: find
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         with:
           script: |
             // Determine which branch we're looking for
@@ -121,7 +121,7 @@ jobs:
           echo "✅ Repository verified: ${{ github.event.workflow_run.repository.full_name }}"
 
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           repository: ${{ github.repository }}
           ref: ${{ github.event.workflow_run.head_sha || github.ref }}
@@ -200,7 +200,7 @@ jobs:
         run: cosign verify --keyless ${{ steps.vars.outputs.frontend_image }}
 
       - name: Deploy
-        uses: appleboy/ssh-action@v1.0.3
+        uses: appleboy/ssh-action@v1.2.5
         with:
           host: ${{ secrets.PROD_HOST }}
           username: ${{ secrets.PROD_USER }}

@@ -29,7 +29,7 @@ jobs:
     steps:
       - name: Find CI workflow run ID
         id: find
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         with:
           script: |
             // For workflow_run events, use the existing workflow run ID
@@ -89,7 +89,7 @@ jobs:
           echo "✅ Repository verified: ${{ github.event.workflow_run.repository.full_name }}"
 
       - name: Checkout revision
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           repository: ${{ github.repository }}
           ref: ${{ github.event.workflow_run.head_sha || github.sha }}
@@ -156,7 +156,7 @@ jobs:
           echo "value=${value}" >> "$GITHUB_OUTPUT"
 
       - name: Deploy stack
-        uses: appleboy/ssh-action@v1.0.3
+        uses: appleboy/ssh-action@v1.2.5
         with:
           host: ${{ secrets.STAGING_HOST }}
           username: ${{ secrets.STAGING_USER }}
