@@ -3,6 +3,7 @@
  * Serves the React app with server-side rendering
  */
 
+import "./scripts/register-static-assets.js";
 import express, {
   type Request,
   type Response,
@@ -12,8 +13,8 @@ import express, {
 import compression from "compression";
 import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
-import { readdirSync } from "node:fs";
 import { isCacheableRoute, getCachedHtml, setCachedHtml } from "./src/ssr/cache.js";
+import { loadProductionRenderPage } from "./src/ssr/loadRenderPage.js";
 import { recordSSRMetric } from "./src/ssr/metrics.js";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -50,24 +51,9 @@ const getRenderPage = async (): Promise<(url: string) => Promise<string>> => {
   }
 
   if (isProduction) {
-    // In production, find the render bundle file (has hash in name)
     try {
-      const serverDir = resolve(root, "dist/server");
-      const files = readdirSync(serverDir);
-      const renderFile = files.find((f) => f.startsWith("render-") && f.endsWith(".js"));
-      if (renderFile) {
-        // Use file:// URL for proper ESM resolution
-        const renderPath = resolve(serverDir, renderFile);
-        const module = (await import(`file://${renderPath}`)) as {
-          renderPage?: (url: string) => Promise<string>;
-        };
-        if (typeof module.renderPage === "function") {
-          renderPageCache = module.renderPage;
-          return renderPageCache;
-        }
-        throw new Error("renderPage is not a function in production bundle");
-      }
-      throw new Error("Render file not found");
+      renderPageCache = await loadProductionRenderPage(root);
+      return renderPageCache;
     } catch (error) {
       console.error("Failed to load production render bundle:", error);
       // Fallback to source if built file not found
