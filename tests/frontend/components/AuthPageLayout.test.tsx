@@ -48,7 +48,11 @@ describe("AuthPageLayout", () => {
     expect(screen.getByText("Test Title")).toBeInTheDocument();
     expect(screen.getByText("Test Description")).toBeInTheDocument();
     expect(screen.getByText("Test Content")).toBeInTheDocument();
-    expect(screen.getAllByRole("img", { name: "FitVibe" }).length).toBeGreaterThanOrEqual(1);
+    const logos = screen.getAllByRole("img", { name: "FitVibe" });
+    expect(logos.length).toBeGreaterThanOrEqual(2);
+    expect(logos[0]).toHaveAttribute("fetchpriority", "high");
+    expect(logos[0]).toHaveAttribute("loading", "eager");
+    expect(logos[1]).toHaveAttribute("loading", "lazy");
   });
 
   it("should render footer links", () => {

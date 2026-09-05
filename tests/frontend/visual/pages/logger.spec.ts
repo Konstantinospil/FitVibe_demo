@@ -6,6 +6,8 @@ test.describe("Logger Page Visual Tests", () => {
     await openAuthenticatedPage(page, testInfo, "/logger/session-123", {
       viewports: ["sm", "md"],
     });
-    await capturePageScreenshot(page, testInfo, "logger", { waitFor: "text=Session Time" });
+    await capturePageScreenshot(page, testInfo, "logger", {
+      waitFor: "text=Session Visibility",
+    });
   });
 });

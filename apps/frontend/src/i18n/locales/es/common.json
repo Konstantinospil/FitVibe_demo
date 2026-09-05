@@ -383,7 +383,16 @@
     "load": "Carga",
     "repsPlaceholder": "10",
     "weightPlaceholder": "80",
-    "rpePlaceholder": "7"
+    "rpePlaceholder": "7",
+    "visibilitySettings": "Visibilidad de la sesión",
+    "currentVisibility": "Visibilidad actual",
+    "visibilityUpdated": "Visibilidad de la sesión actualizada",
+    "visibilityUpdateFailed": "No se pudo actualizar la visibilidad",
+    "visibilityLabel": "Cambiar la visibilidad de la sesión",
+    "visibilityPrivate": "Privada",
+    "visibilityLink": "Solo enlace",
+    "visibilityPublic": "Pública",
+    "visibilityHelp": "Las sesiones privadas solo son visibles para ti. Las sesiones con enlace se pueden compartir mediante un enlace. Las sesiones públicas aparecen en el feed de la comunidad."
   },
   "planner": {
     "eyebrow": "Arquitectura de sesión",

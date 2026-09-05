@@ -686,7 +686,16 @@
     "load": "Last",
     "repsPlaceholder": "10",
     "weightPlaceholder": "80",
-    "rpePlaceholder": "7"
+    "rpePlaceholder": "7",
+    "visibilitySettings": "Sichtbarkeit der Einheit",
+    "currentVisibility": "Aktuelle Sichtbarkeit",
+    "visibilityUpdated": "Sichtbarkeit der Einheit aktualisiert",
+    "visibilityUpdateFailed": "Sichtbarkeit konnte nicht aktualisiert werden",
+    "visibilityLabel": "Sichtbarkeit der Einheit ändern",
+    "visibilityPrivate": "Privat",
+    "visibilityLink": "Nur Link",
+    "visibilityPublic": "Öffentlich",
+    "visibilityHelp": "Private Einheiten sind nur für dich sichtbar. Link-Einheiten können per Link geteilt werden. Öffentliche Einheiten erscheinen im Community-Feed."
   },
   "admin": {
     "userManagement": {

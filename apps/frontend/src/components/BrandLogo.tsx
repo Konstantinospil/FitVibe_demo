@@ -1,8 +1,8 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
 import { useThemeStore } from "../store/theme.store";
-import logoFull from "../assets/logo_full.png";
-import logoFullDark from "../assets/logo_full_dark.png";
+import logoFull from "../assets/logo_full.webp";
+import logoFullDark from "../assets/logo_full_dark.webp";
 
 type BrandLogoSize = "sm" | "lg";
 
@@ -43,9 +43,10 @@ const BrandLogo: React.FC<BrandLogoProps> = ({ size = "lg", priority = false }) 
       alt={t("brand.logoAlt")}
       width={dims.width}
       height={dims.height}
-      decoding="async"
+      decoding={priority ? "sync" : "async"}
+      loading={priority ? "eager" : "lazy"}
       style={SIZE_STYLES[size]}
-      {...(priority ? { fetchPriority: "high" as const } : {})}
+      {...(priority ? { fetchpriority: "high" } : {})}
     />
   );
 };

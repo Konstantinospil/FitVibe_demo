@@ -383,7 +383,16 @@
     "load": "Charge",
     "repsPlaceholder": "10",
     "weightPlaceholder": "80",
-    "rpePlaceholder": "7"
+    "rpePlaceholder": "7",
+    "visibilitySettings": "Visibilité de la séance",
+    "currentVisibility": "Visibilité actuelle",
+    "visibilityUpdated": "Visibilité de la séance mise à jour",
+    "visibilityUpdateFailed": "Impossible de mettre à jour la visibilité",
+    "visibilityLabel": "Modifier la visibilité de la séance",
+    "visibilityPrivate": "Privée",
+    "visibilityLink": "Lien uniquement",
+    "visibilityPublic": "Publique",
+    "visibilityHelp": "Les séances privées ne sont visibles que par vous. Les séances par lien peuvent être partagées via un lien. Les séances publiques apparaissent dans le fil communautaire."
   },
   "planner": {
     "eyebrow": "Architecture de séance",

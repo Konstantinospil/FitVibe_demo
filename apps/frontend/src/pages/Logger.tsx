@@ -312,7 +312,7 @@ const Logger: React.FC = () => {
         visibility: newVisibility,
       });
       setSessionVisibility(newVisibility);
-      toast.success(t("logger.visibilityUpdated") || "Session visibility updated");
+      toast.success(t("logger.visibilityUpdated"));
     } catch (error) {
       logger.apiError(
         "Failed to update session visibility",
@@ -320,7 +320,7 @@ const Logger: React.FC = () => {
         `/api/v1/sessions/${sessionId}`,
         "PATCH",
       );
-      toast.error(t("logger.visibilityUpdateFailed") || "Failed to update visibility");
+      toast.error(t("logger.visibilityUpdateFailed"));
     } finally {
       setIsUpdatingVisibility(false);
     }
@@ -362,7 +362,7 @@ const Logger: React.FC = () => {
         {/* Session Info Bar */}
         <Card>
           <CardContent>
-            <div className="flex flex--align-center flex--justify-between flex--gap-md">
+            <div className="flex flex--align-center flex--justify-between flex--wrap flex--gap-md">
               <div className="flex flex--align-center flex--gap-15">
                 <div>
                   <div className="text-085 text-secondary mb-025">Session Time</div>
@@ -431,14 +431,14 @@ const Logger: React.FC = () => {
           <CardHeader>
             <div className="flex flex--align-center flex--gap-sm">
               <Eye size={20} />
-              <CardTitle>{t("logger.visibilitySettings") || "Session Visibility"}</CardTitle>
+              <CardTitle>{t("logger.visibilitySettings")}</CardTitle>
             </div>
           </CardHeader>
           <CardContent>
-            <div className="flex flex--align-center flex--justify-between flex--gap-md">
+            <div className="flex flex--align-center flex--justify-between flex--wrap flex--gap-md">
               <div>
                 <div className="text-085 text-secondary mb-025">
-                  {t("logger.currentVisibility") || "Current visibility"}
+                  {t("logger.currentVisibility")}
                 </div>
                 <VisibilityBadge level={sessionVisibility} />
               </div>
@@ -453,17 +453,14 @@ const Logger: React.FC = () => {
                   background: "var(--color-surface)",
                   minWidth: "150px",
                 }}
-                aria-label={t("logger.visibilityLabel") || "Change session visibility"}
+                aria-label={t("logger.visibilityLabel")}
               >
-                <option value="private">{t("logger.visibilityPrivate") || "Private"}</option>
-                <option value="link">{t("logger.visibilityLink") || "Link only"}</option>
-                <option value="public">{t("logger.visibilityPublic") || "Public"}</option>
+                <option value="private">{t("logger.visibilityPrivate")}</option>
+                <option value="link">{t("logger.visibilityLink")}</option>
+                <option value="public">{t("logger.visibilityPublic")}</option>
               </select>
             </div>
-            <p className="mt-05 text-085 text-muted">
-              {t("logger.visibilityHelp") ||
-                "Private sessions are only visible to you. Link sessions can be shared via link. Public sessions appear in the community feed."}
-            </p>
+            <p className="mt-05 text-085 text-muted">{t("logger.visibilityHelp")}</p>
           </CardContent>
         </Card>
 
@@ -535,7 +532,7 @@ const Logger: React.FC = () => {
                           padding: "0.75rem",
                           background: set.completed
                             ? "rgba(52, 211, 153, 0.08)"
-                            : "rgba(15, 23, 42, 0.4)",
+                            : "var(--color-surface-muted)",
                           borderRadius: "12px",
                           border: `1px solid ${set.completed ? "rgba(52, 211, 153, 0.3)" : "var(--color-border)"}`,
                           alignItems: "center",
@@ -554,6 +551,7 @@ const Logger: React.FC = () => {
                           }
                           placeholder={t("logger.repsPlaceholder")}
                           disabled={set.completed}
+                          className="logger-set-input"
                           style={{
                             padding: "0.6rem",
                             borderRadius: "8px",
@@ -578,6 +576,7 @@ const Logger: React.FC = () => {
                           }
                           placeholder={t("logger.weightPlaceholder")}
                           disabled={set.completed}
+                          className="logger-set-input"
                           style={{
                             padding: "0.6rem",
                             borderRadius: "8px",
@@ -603,6 +602,7 @@ const Logger: React.FC = () => {
                           }}
                           placeholder={t("logger.rpePlaceholder")}
                           disabled={set.completed}
+                          className="logger-set-input"
                           style={{
                             padding: "0.6rem",
                             borderRadius: "8px",
@@ -646,7 +646,7 @@ const Logger: React.FC = () => {
         {/* Bottom Actions */}
         <Card>
           <CardContent>
-            <div style={{ display: "flex", gap: "1rem", justifyContent: "space-between" }}>
+            <div className="flex flex--wrap flex--justify-between flex--gap-md">
               <Button variant="secondary" onClick={() => void navigate("/sessions")}>
                 Save & Exit
               </Button>

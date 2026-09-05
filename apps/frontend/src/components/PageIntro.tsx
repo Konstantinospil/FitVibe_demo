@@ -90,6 +90,13 @@ const PageIntro: React.FC<PageIntroProps> = ({
             fontSize: "clamp(2rem, 4vw, 2.8rem)",
             lineHeight: 1.15,
             letterSpacing: "-0.015em",
+            ...(priorityLcp
+              ? {
+                  color: "var(--color-text-primary, #FFFFFF)",
+                  fontFamily:
+                    '"Segoe UI", -apple-system, BlinkMacSystemFont, system-ui, sans-serif',
+                }
+              : {}),
           }}
         >
           {title}

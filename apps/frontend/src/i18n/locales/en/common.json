@@ -383,7 +383,16 @@
     "load": "Load",
     "repsPlaceholder": "10",
     "weightPlaceholder": "80",
-    "rpePlaceholder": "7"
+    "rpePlaceholder": "7",
+    "visibilitySettings": "Session Visibility",
+    "currentVisibility": "Current visibility",
+    "visibilityUpdated": "Session visibility updated",
+    "visibilityUpdateFailed": "Failed to update visibility",
+    "visibilityLabel": "Change session visibility",
+    "visibilityPrivate": "Private",
+    "visibilityLink": "Link only",
+    "visibilityPublic": "Public",
+    "visibilityHelp": "Private sessions are only visible to you. Link sessions can be shared via link. Public sessions appear in the community feed."
   },
   "planner": {
     "eyebrow": "Session architecture",

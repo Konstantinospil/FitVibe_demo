@@ -383,7 +383,16 @@
     "load": "Φορτίο",
     "repsPlaceholder": "10",
     "weightPlaceholder": "80",
-    "rpePlaceholder": "7"
+    "rpePlaceholder": "7",
+    "visibilitySettings": "Ορατότητα συνεδρίας",
+    "currentVisibility": "Τρέχουσα ορατότητα",
+    "visibilityUpdated": "Η ορατότητα της συνεδρίας ενημερώθηκε",
+    "visibilityUpdateFailed": "Αποτυχία ενημέρωσης ορατότητας",
+    "visibilityLabel": "Αλλαγή ορατότητας συνεδρίας",
+    "visibilityPrivate": "Ιδιωτική",
+    "visibilityLink": "Μόνο σύνδεσμος",
+    "visibilityPublic": "Δημόσια",
+    "visibilityHelp": "Οι ιδιωτικές συνεδρίες είναι ορατές μόνο σε εσένα. Οι συνεδρίες με σύνδεσμο μπορούν να κοινοποιηθούν μέσω συνδέσμου. Οι δημόσιες συνεδρίες εμφανίζονται στο κοινοτικό feed."
   },
   "planner": {
     "eyebrow": "Αρχιτεκτονική συνεδρίας",
