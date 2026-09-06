@@ -6,24 +6,24 @@ import { useAuthStore } from "../store/auth.store";
 // Use full URL in production or when VITE_API_URL is explicitly set
 // SSR-safe: Check if we're on the server (Node.js) - use process.env, otherwise use import.meta.env
 const getApiUrl = () => {
-  // Server-side (Node.js): use process.env
+  // During server-side rendering, backend is reachable through
+  // Docker's internal network.
   if (typeof window === "undefined") {
-    return process.env.VITE_API_URL || process.env.API_URL || "http://localhost:4000";
+    return process.env.VITE_API_URL || process.env.API_URL || "http://backend:4000";
   }
 
-  // Client-side: use Vite's import.meta.env (replaced at build time)
-  // Use try-catch as a safety net in case import.meta.env is not available
-  try {
-    const viteEnv = import.meta.env;
-    if (viteEnv && typeof viteEnv === "object" && "VITE_API_URL" in viteEnv) {
-      return viteEnv.VITE_API_URL || (viteEnv.DEV ? "" : "http://localhost:4000");
-    }
-  } catch {
-    // Fallback if import.meta.env access fails (shouldn't happen in browser)
+  // Explicit build-time configuration takes precedence.
+  if (import.meta.env.VITE_API_URL) {
+    return import.meta.env.VITE_API_URL;
   }
 
-  // Fallback for client-side
-  return "http://localhost:4000";
+  // Vite development server uses its development proxy.
+  if (import.meta.env.DEV) {
+    return "";
+  }
+
+  // Production browser: backend runs on the same Pi on port 4000.
+  return `${window.location.protocol}//${window.location.hostname}:4000`;
 };
 
 const API_URL = getApiUrl();
