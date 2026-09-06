@@ -1,190 +1,181 @@
 name: CD
 
 on:
-  push:
-    branches: ["main"]
   workflow_run:
     workflows: ["CI"]
-    types:
-      - completed
+    types: [completed]
   workflow_dispatch:
     inputs:
-      backend_digest:
-        description: "Backend image digest (sha256:...)"
-        required: true
-      frontend_digest:
-        description: "Frontend image digest (sha256:...)"
-        required: true
-      release_tag:
-        description: "Semantic version to deploy (e.g. v1.2.3)"
-        required: true
-      previous_backend_digest:
-        description: "Optional fallback backend digest for rollback"
+      ci_run_id:
+        description: "Optional successful main CI run ID; leave empty to deploy the latest successful main CI run"
         required: false
+        type: string
+
+concurrency:
+  group: production-deploy
+  cancel-in-progress: false
 
 permissions:
   contents: read
-  id-token: write
+  actions: read
 
 env:
   REGISTRY: ghcr.io
+  PROD_SOURCE_DIR: ${{ vars.PROD_SOURCE_DIR || '/srv/containers/FitVibe_demo' }}
+  PROD_STACK_DIR: ${{ vars.PROD_STACK_DIR || '/srv/stacks/fitvibe' }}
 
 jobs:
-  get-artifacts:
-    name: Get CI Artifacts
+  resolve_ci:
+    name: Resolve successful main CI run
     runs-on: ubuntu-latest
     if: >
-      (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
-      (github.event_name == 'workflow_run' &&
-       github.event.workflow_run.head_branch == 'main' &&
-       github.event.workflow_run.event == 'push')
+      github.event_name == 'workflow_dispatch' ||
+      (
+        github.event_name == 'workflow_run' &&
+        github.event.workflow_run.conclusion == 'success' &&
+        github.event.workflow_run.event == 'push' &&
+        github.event.workflow_run.head_branch == 'main' &&
+        github.event.workflow_run.repository.full_name == github.repository
+      )
     outputs:
-      workflow_run_id: ${{ steps.find.outputs.run_id }}
+      run_id: ${{ steps.resolve.outputs.run_id }}
+      head_sha: ${{ steps.resolve.outputs.head_sha }}
+    steps:
+      - name: Resolve CI run
+        id: resolve
+        uses: actions/github-script@v9
+        with:
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const requested = '${{ inputs.ci_run_id }}'.trim();
+
+            let run;
+
+            if (context.eventName === 'workflow_run') {
+              run = context.payload.workflow_run;
+            } else if (requested) {
+              if (!/^\d+$/.test(requested)) {
+                core.setFailed('ci_run_id must be a numeric GitHub Actions run ID.');
+                return;
+              }
+
+              const response = await github.rest.actions.getWorkflowRun({
+                owner,
+                repo,
+                run_id: Number(requested),
+              });
+              run = response.data;
+            } else {
+              const response = await github.rest.actions.listWorkflowRuns({
+                owner,
+                repo,
+                workflow_id: 'ci.yml',
+                branch: 'main',
+                event: 'push',
+                status: 'success',
+                per_page: 1,
+              });
+              run = response.data.workflow_runs[0];
+            }
+
+            if (!run) {
+              core.setFailed('No successful CI run on main was found.');
+              return;
+            }
+
+            const runRepository = run.repository?.full_name;
+            if (runRepository && runRepository !== context.payload.repository.full_name) {
+              core.setFailed(`Refusing CI run from another repository: ${runRepository}`);
+              return;
+            }
+
+            if (run.name !== 'CI' && !String(run.path || '').endsWith('/ci.yml')) {
+              core.setFailed(`Run ${run.id} is not the CI workflow.`);
+              return;
+            }
+
+            if (run.head_branch !== 'main') {
+              core.setFailed(`Run ${run.id} belongs to branch "${run.head_branch}", not main.`);
+              return;
+            }
+
+            if (run.event !== 'push') {
+              core.setFailed(`Run ${run.id} was triggered by "${run.event}", not a push.`);
+              return;
+            }
+
+            if (run.conclusion !== 'success') {
+              core.setFailed(`Run ${run.id} did not complete successfully.`);
+              return;
+            }
+
+            core.setOutput('run_id', String(run.id));
+            core.setOutput('head_sha', run.head_sha);
+
+  deploy:
+    name: Deploy successful main build
+    runs-on: ubuntu-latest
+    needs: [resolve_ci]
+    environment:
+      name: production
     permissions:
       contents: read
       actions: read
     steps:
-      - name: Find latest successful CI run
-        id: find
-        uses: actions/github-script@v9
-        with:
-          script: |
-            // Determine which branch we're looking for
-            const targetBranch = '${{ github.event.workflow_run.head_branch || github.ref_name }}';
-
-            // Only look for CI runs on main or stage, never dev
-            if (targetBranch === 'dev') {
-              core.setFailed('CD workflow should not run for dev branch. Only CI should run for dev.');
-              return;
-            }
-
-            // For production deployments (main branch), ONLY use main branch CI runs
-            // Production must not use artifacts from stage branch to ensure code has been tested on main
-            if (targetBranch === 'main') {
-              const { data: mainRuns } = await github.rest.actions.listWorkflowRuns({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                workflow_id: 'ci.yml',
-                branch: 'main',
-                status: 'success',
-                per_page: 1
-              });
-
-              if (mainRuns.workflow_runs.length > 0) {
-                core.setOutput('run_id', mainRuns.workflow_runs[0].id);
-                return;
-              }
-
-              // Production deployments require successful CI on main branch
-              // Do NOT fallback to stage branch - this ensures production only deploys code that passed main CI
-              core.setFailed(`No successful CI run found on main branch. Production deployments require successful CI on main branch. Please ensure CI has run successfully on main before deploying to production.`);
-              return;
-            }
-
-            // For other branches (should not reach here since job only runs for main, but included for safety)
-            core.setFailed(`Unexpected target branch: ${targetBranch}. CD workflow should only run for main branch.`);
-
-  deploy:
-    name: Deploy to Production
-    runs-on: ubuntu-latest
-    needs: [get-artifacts]
-    if: >
-      always() &&
-      (
-        (github.event_name == 'workflow_dispatch') ||
-        (needs.get-artifacts.result == 'success' && (github.event_name == 'push' || github.event_name == 'workflow_run'))
-      ) &&
-      (
-        (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
-        (github.event_name == 'workflow_run' &&
-         github.event.workflow_run.conclusion == 'success' &&
-         github.event.workflow_run.event == 'push' &&
-         github.event.workflow_run.head_branch != 'dev' &&
-         github.event.workflow_run.head_branch != 'stage' &&
-         github.event.workflow_run.head_branch == 'main') ||
-        github.event_name == 'workflow_dispatch'
-      )
-    environment:
-      name: production
-    steps:
-      - name: Verify workflow run repository
-        if: github.event_name == 'workflow_run'
-        run: |
-          # SECURITY: Verify that the workflow run is from the same repository
-          # This prevents checkout of untrusted code from external repositories
-          if [ "${{ github.event.workflow_run.repository.full_name }}" != "${{ github.repository }}" ]; then
-            echo "❌ Security check failed: Workflow run is from a different repository"
-            echo "Expected: ${{ github.repository }}"
-            echo "Got: ${{ github.event.workflow_run.repository.full_name }}"
-            exit 1
-          fi
-          echo "✅ Repository verified: ${{ github.event.workflow_run.repository.full_name }}"
-
-      - name: Checkout
+      - name: Checkout deployed revision
         uses: actions/checkout@v7
         with:
-          repository: ${{ github.repository }}
-          ref: ${{ github.event.workflow_run.head_sha || github.ref }}
+          ref: ${{ needs.resolve_ci.outputs.head_sha }}
           persist-credentials: false
           fetch-depth: 1
 
       - name: Download container artifacts from CI
-        if: github.event_name != 'workflow_dispatch'
         uses: actions/download-artifact@v8
         with:
-          name: container-artifacts-${{ needs.get-artifacts.outputs.workflow_run_id || github.run_id }}
+          name: container-artifacts-${{ needs.resolve_ci.outputs.run_id }}
           path: artifacts
-          run-id: ${{ needs.get-artifacts.outputs.workflow_run_id || github.run_id }}
+          run-id: ${{ needs.resolve_ci.outputs.run_id }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Prepare deployment values
-        id: vars
+      - name: Validate deployment artifacts
+        id: deployment
         shell: bash
         run: |
+          set -euo pipefail
+
+          digest_file="artifacts/image-digests.txt"
+          if [[ ! -f "${digest_file}" ]]; then
+            echo "Missing ${digest_file} in CI artifacts." >&2
+            exit 1
+          fi
+
+          backend="$(sed -n 's/^backend=//p' "${digest_file}" | head -n 1)"
+          frontend="$(sed -n 's/^frontend=//p' "${digest_file}" | head -n 1)"
           owner="$(printf '%s' "${GITHUB_REPOSITORY_OWNER}" | tr '[:upper:]' '[:lower:]')"
-          prefix="${{ env.REGISTRY }}/${owner}"
 
-          # Handle manual workflow_dispatch with user-provided inputs
-          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
-            echo "Using manual deployment inputs from workflow_dispatch"
-            echo "backend_image=${prefix}/fitvibe-backend@${{ inputs.backend_digest }}" >> "$GITHUB_OUTPUT"
-            echo "frontend_image=${prefix}/fitvibe-frontend@${{ inputs.frontend_digest }}" >> "$GITHUB_OUTPUT"
-            if [ -n "${{ inputs.previous_backend_digest }}" ]; then
-              echo "rollback_image=${prefix}/fitvibe-backend@${{ inputs.previous_backend_digest }}" >> "$GITHUB_OUTPUT"
-            else
-              echo "rollback_image=" >> "$GITHUB_OUTPUT"
-            fi
-            echo "release_tag=${{ inputs.release_tag }}" >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
-
-          # For push or workflow_run events, get digests from CI artifacts
-          if [ "${{ github.event_name }}" == "push" ] || [ "${{ github.event_name }}" == "workflow_run" ]; then
-            if [ ! -f artifacts/image-digests.txt ]; then
-              echo "⚠️ Could not find image digests from CI artifacts: artifacts/image-digests.txt does not exist." >&2
+          case "${backend}" in
+            "${REGISTRY}/${owner}/fitvibe-backend@sha256:"*) ;;
+            *)
+              echo "Unexpected backend image reference: ${backend}" >&2
               exit 1
-            fi
+              ;;
+          esac
 
-            backend=$(grep '^backend=' artifacts/image-digests.txt | cut -d= -f2)
-            frontend=$(grep '^frontend=' artifacts/image-digests.txt | cut -d= -f2)
-
-            if [[ -z "$backend" || -z "$frontend" ]]; then
-              echo "⚠️ Could not find image digests from CI artifacts: missing backend or frontend digest in artifacts/image-digests.txt." >&2
+          case "${frontend}" in
+            "${REGISTRY}/${owner}/fitvibe-frontend@sha256:"*) ;;
+            *)
+              echo "Unexpected frontend image reference: ${frontend}" >&2
               exit 1
-            fi
+              ;;
+          esac
 
-            echo "backend_image=$backend" >> "$GITHUB_OUTPUT"
-            echo "frontend_image=$frontend" >> "$GITHUB_OUTPUT"
-            echo "rollback_image=" >> "$GITHUB_OUTPUT"
-            # Get version from package.json
-            version=$(node -p "require('./apps/backend/package.json').version")
-            echo "release_tag=v$version" >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
+          version="$(node -p "require('./apps/backend/package.json').version")"
 
-          # Should not reach here, but handle unknown event types gracefully
-          echo "⚠️ Unsupported event type: ${{ github.event_name }}" >&2
-          exit 1
+          echo "backend_image=${backend}" >> "${GITHUB_OUTPUT}"
+          echo "frontend_image=${frontend}" >> "${GITHUB_OUTPUT}"
+          echo "stack_version=v${version}" >> "${GITHUB_OUTPUT}"
+          echo "deploy_sha=${{ needs.resolve_ci.outputs.head_sha }}" >> "${GITHUB_OUTPUT}"
 
       - name: Install cosign
         uses: sigstore/cosign-installer@v3
@@ -194,54 +185,117 @@ jobs:
           cosign verify
           --certificate-identity "https://github.com/${{ github.repository }}/.github/workflows/ci.yml@refs/heads/main"
           --certificate-oidc-issuer "https://token.actions.githubusercontent.com"
-          ${{ steps.vars.outputs.backend_image }}
+          ${{ steps.deployment.outputs.backend_image }}
 
       - name: Verify frontend signature
         run: >
           cosign verify
           --certificate-identity "https://github.com/${{ github.repository }}/.github/workflows/ci.yml@refs/heads/main"
           --certificate-oidc-issuer "https://token.actions.githubusercontent.com"
-          ${{ steps.vars.outputs.frontend_image }}
+          ${{ steps.deployment.outputs.frontend_image }}
 
-      - name: Deploy
+      - name: Connect runner to Tailscale
+        uses: tailscale/github-action@v4
+        with:
+          oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
+          oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
+          tags: tag:ci
+          ping: ${{ secrets.PROD_HOST }}
+
+      - name: Deploy to production host
         uses: appleboy/ssh-action@v1.2.5
         with:
           host: ${{ secrets.PROD_HOST }}
           username: ${{ secrets.PROD_USER }}
           key: ${{ secrets.SSH_KEY }}
-          envs: BACKEND_IMAGE,FRONTEND_IMAGE,ROLLBACK_IMAGE,STACK_VERSION
+          envs: BACKEND_IMAGE,FRONTEND_IMAGE,STACK_VERSION,DEPLOY_SHA,PROD_SOURCE_DIR,PROD_STACK_DIR
           script: |
-            set -eo pipefail
+            set -eu
 
-            cd ~/fitvibe
+            : "${BACKEND_IMAGE:?BACKEND_IMAGE is required}"
+            : "${FRONTEND_IMAGE:?FRONTEND_IMAGE is required}"
+            : "${STACK_VERSION:?STACK_VERSION is required}"
+            : "${DEPLOY_SHA:?DEPLOY_SHA is required}"
+            : "${PROD_SOURCE_DIR:?PROD_SOURCE_DIR is required}"
+            : "${PROD_STACK_DIR:?PROD_STACK_DIR is required}"
 
-            export BACKEND_IMAGE="${BACKEND_IMAGE}"
-            export FRONTEND_IMAGE="${FRONTEND_IMAGE}"
-            export STACK_VERSION="${STACK_VERSION}"
-
-            compose="docker compose -f infra/docker/prod/docker-compose.prod.yml"
-
-            deploy_stack() {
-              $compose pull backend frontend
-              $compose up -d --remove-orphans
-              $compose exec -T backend node dist/db/utils/migrateAll.js
-              $compose exec -T backend node dist/db/utils/postDeploy.js
-              $compose exec -T backend node dist/db/utils/verifyIntegrity.js
-              curl -fsS http://127.0.0.1:4000/health
-              curl -fsS http://127.0.0.1:4000/metrics
-            }
-
-            if ! deploy_stack; then
-              echo "Deployment failed, initiating rollback..." >&2
-              if [ -n "${ROLLBACK_IMAGE}" ]; then
-                export BACKEND_IMAGE="${ROLLBACK_IMAGE}"
-                $compose pull backend
-                $compose up -d --remove-orphans
-              fi
+            if [ ! -d "${PROD_SOURCE_DIR}/.git" ]; then
+              echo "Production source repository not found at ${PROD_SOURCE_DIR}" >&2
               exit 1
             fi
+
+            if [ ! -f "${PROD_STACK_DIR}/compose.yml" ]; then
+              echo "Production compose file not found at ${PROD_STACK_DIR}/compose.yml" >&2
+              exit 1
+            fi
+
+            if [ ! -f "${PROD_STACK_DIR}/.env" ]; then
+              echo "Production environment file not found at ${PROD_STACK_DIR}/.env" >&2
+              exit 1
+            fi
+
+            cd "${PROD_SOURCE_DIR}"
+            git fetch --prune origin main
+
+            if ! git cat-file -e "${DEPLOY_SHA}^{commit}" 2>/dev/null; then
+              echo "Deployment commit ${DEPLOY_SHA} is not available after fetching main." >&2
+              exit 1
+            fi
+
+            if ! git merge-base --is-ancestor "${DEPLOY_SHA}" origin/main; then
+              echo "Deployment commit ${DEPLOY_SHA} is not part of origin/main." >&2
+              exit 1
+            fi
+
+            git checkout -B main "${DEPLOY_SHA}"
+
+            cd "${PROD_STACK_DIR}"
+            export BACKEND_IMAGE FRONTEND_IMAGE STACK_VERSION
+
+            compose() {
+              docker compose --env-file .env -f compose.yml "$@"
+            }
+
+            compose config --quiet
+
+            resolved_images="$(compose config --images)"
+            if ! printf '%s\n' "${resolved_images}" | grep -Fx "${BACKEND_IMAGE}" >/dev/null; then
+              echo "compose.yml does not resolve backend to ${BACKEND_IMAGE}." >&2
+              echo "The production stack must consume the BACKEND_IMAGE variable from CD." >&2
+              exit 1
+            fi
+            if ! printf '%s\n' "${resolved_images}" | grep -Fx "${FRONTEND_IMAGE}" >/dev/null; then
+              echo "compose.yml does not resolve frontend to ${FRONTEND_IMAGE}." >&2
+              echo "The production stack must consume the FRONTEND_IMAGE variable from CD." >&2
+              exit 1
+            fi
+
+            compose pull backend frontend
+            compose up -d --remove-orphans
+
+            compose exec -T backend node dist/db/utils/migrateAll.js
+            compose exec -T backend node dist/db/utils/postDeploy.js
+            compose exec -T backend node dist/db/utils/verifyIntegrity.js
+
+            attempt=1
+            until curl -fsS http://127.0.0.1:4000/health >/dev/null; do
+              if [ "${attempt}" -ge 24 ]; then
+                echo "Backend health check failed after 120 seconds." >&2
+                compose ps
+                compose logs --tail=200 backend frontend
+                exit 1
+              fi
+              attempt=$((attempt + 1))
+              sleep 5
+            done
+
+            curl -fsS http://127.0.0.1:4000/metrics >/dev/null
+            curl -fsS http://127.0.0.1/ >/dev/null
+            compose ps
         env:
-          BACKEND_IMAGE: ${{ steps.vars.outputs.backend_image }}
-          FRONTEND_IMAGE: ${{ steps.vars.outputs.frontend_image }}
-          ROLLBACK_IMAGE: ${{ steps.vars.outputs.rollback_image }}
-          STACK_VERSION: ${{ steps.vars.outputs.release_tag || inputs.release_tag }}
+          BACKEND_IMAGE: ${{ steps.deployment.outputs.backend_image }}
+          FRONTEND_IMAGE: ${{ steps.deployment.outputs.frontend_image }}
+          STACK_VERSION: ${{ steps.deployment.outputs.stack_version }}
+          DEPLOY_SHA: ${{ steps.deployment.outputs.deploy_sha }}
+          PROD_SOURCE_DIR: ${{ env.PROD_SOURCE_DIR }}
+          PROD_STACK_DIR: ${{ env.PROD_STACK_DIR }}
