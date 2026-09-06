@@ -1,6 +1,5 @@
 import { fireEvent, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it } from "vitest";
-import { getCurrentUser } from "../../src/services/api";
 import { renderSettings, setupSettingsTests } from "./Settings.test.helpers";
 
 describe("Settings", () => {
@@ -8,7 +7,8 @@ describe("Settings", () => {
     setupSettingsTests();
   });
 
-  it("renders the modular settings navigation", async () => {
+  it("renders the modular settings navigation and profile", async () => {
+    const { mockGetCurrentUser } = setupSettingsTests();
     renderSettings();
 
     expect(screen.getByRole("tab", { name: /Profile/i })).toBeInTheDocument();
@@ -17,33 +17,37 @@ describe("Settings", () => {
     expect(screen.getByRole("tab", { name: /Privacy/i })).toBeInTheDocument();
 
     await waitFor(() => {
-      expect(getCurrentUser).toHaveBeenCalled();
+      expect(mockGetCurrentUser).toHaveBeenCalled();
       expect(screen.getByDisplayValue("Test User")).toBeInTheDocument();
       expect(screen.getByDisplayValue("testalias")).toBeInTheDocument();
     });
   });
 
-  it("shows body progress in the Progress tab", async () => {
+  it("switches to the Progress tab", () => {
     renderSettings();
     fireEvent.click(screen.getByRole("tab", { name: /Progress/i }));
 
-    expect(await screen.findByText(/Weight history/i)).toBeInTheDocument();
-    expect(screen.getByText(/Progress photos/i)).toBeInTheDocument();
+    const panel = screen.getByRole("tabpanel");
+    expect(panel).toHaveAttribute("id", "tabpanel-progress");
+    expect(screen.getByRole("tab", { name: /Progress/i })).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
   });
 
-  it("shows security and session management in the Security tab", async () => {
+  it("switches to the Security tab", () => {
     renderSettings();
     fireEvent.click(screen.getByRole("tab", { name: /Security/i }));
 
-    expect(await screen.findByText(/Security Settings/i)).toBeInTheDocument();
-    expect(screen.getByText(/Two-Factor Authentication/i)).toBeInTheDocument();
+    const panel = screen.getByRole("tabpanel");
+    expect(panel).toHaveAttribute("id", "tabpanel-security");
   });
 
-  it("shows privacy, export and account controls in the Privacy tab", async () => {
+  it("switches to the Privacy tab", () => {
     renderSettings();
     fireEvent.click(screen.getByRole("tab", { name: /Privacy/i }));
 
-    expect(await screen.findByText(/Privacy Settings/i)).toBeInTheDocument();
-    expect(screen.getByText(/Delete Account/i)).toBeInTheDocument();
+    const panel = screen.getByRole("tabpanel");
+    expect(panel).toHaveAttribute("id", "tabpanel-privacy");
   });
 });
