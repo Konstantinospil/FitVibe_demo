@@ -19,8 +19,8 @@
     "test:e2e:smoke": "pnpm --filter @fitvibe/frontend run build && playwright test tests/frontend/e2e/smoke.spec.cjs --config tests/frontend/e2e/playwright.config.cjs --reporter=line",
     "test:contract": "pnpm -w openapi:build && pnpm --filter @fitvibe/backend exec jest tests/backend/contract/openapi.contract.test.ts --maxWorkers=1",
     "test:integration": "RUN_INTEGRATION_TESTS=1 pnpm --filter @fitvibe/backend exec jest --runInBand --testMatch=\"**/integration/**/*.test.ts\" --testPathIgnorePatterns=\"/node_modules/|verification-resend-limit\\.test\\.ts$|login-enumeration\\.test\\.ts$\"",
-    "test:visual": "pnpm --filter @fitvibe/frontend run build:visual && playwright test --config tests/frontend/visual/config/playwright.config.ts",
-    "test:visual:update": "pnpm --filter @fitvibe/frontend run build:visual && playwright test --config tests/frontend/visual/config/playwright.config.ts --update-snapshots",
+    "test:visual": "node tests/frontend/visual/scripts/update-linux-baselines.mjs",
+    "test:visual:update": "node tests/frontend/visual/scripts/update-linux-baselines.mjs --update",
     "test:visual:linux": "node tests/frontend/visual/scripts/update-linux-baselines.mjs",
     "test:coverage:gate": "node tests/qa/check-coverage.cjs",
     "perf:test": "node tests/perf/run-local-perf.mjs",
@@ -37,7 +37,8 @@
     "secrets:rotate": "pnpm --filter @fitvibe/backend run db:rotate-secrets",
     "clean": "rimraf node_modules .turbo && pnpm install",
     "prepare": "husky install",
-    "fmt": "prettier \"**/*.{ts,tsx,js,jsx,cjs,mjs,json,md,yml,yaml}\" --write"
+    "fmt": "prettier \"**/*.{ts,tsx,js,jsx,cjs,mjs,json,md,yml,yaml}\" --write",
+    "test:visual:update:linux": "node tests/frontend/visual/scripts/update-linux-baselines.mjs --update"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.13.0",
