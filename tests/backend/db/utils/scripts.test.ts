@@ -384,6 +384,9 @@ describe("db utils scripts", () => {
           exercise_types: 24,
           exercises: 300,
           badge_catalog: 36,
+          bio_attributes: 11,
+          perf_attributes: 12,
+          translations: 1,
         };
         (mockDb as jest.Mock).mockImplementation((table: string) => {
           const expectedCount = tableCounts[table as keyof typeof tableCounts] ?? 10;
