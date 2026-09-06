@@ -1661,7 +1661,7 @@ jobs:
       - build-platform
     if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/stage')
     permissions:
-      contents: read
+      contents: write
       packages: write
       id-token: write
       actions: read
@@ -1815,13 +1815,15 @@ jobs:
         uses: ncipollo/release-action@v1
         with:
           tag: v${{ steps.versions.outputs.backend }}
+          commit: ${{ github.sha }}
           name: Release v${{ steps.versions.outputs.backend }}
           body: |
             - Backend image: ${{ env.BACKEND_IMAGE }}:v${{ steps.versions.outputs.backend }}
             - Frontend image: ${{ env.FRONTEND_IMAGE }}:v${{ steps.versions.outputs.frontend }}
           draft: false
           prerelease: false
-          artifacts: container-artifacts-${{ github.run_id }}
+          artifacts: "sbom-backend.spdx.json,sbom-frontend.spdx.json,image-digests.txt,artifacts/openapi/openapi.json"
+          artifactErrorsFailBuild: true
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Job summary
