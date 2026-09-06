@@ -52,7 +52,6 @@ vi.mock("react-i18next", () => ({
   }),
 }));
 
-import { createTestQueryClient } from "../helpers/testQueryClient";
 
 const wrapper = ({ children }: { children: React.ReactNode }) => {
   const queryClient = createTestQueryClient();
