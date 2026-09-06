@@ -15,11 +15,13 @@ export default defineConfig(() => {
   const root = fileURLToPath(new URL(".", import.meta.url));
   const workspaceRoot = pathResolve(root, "../..");
 
-  // Allow thread count to be configured via environment variable
-  // Default to 4 threads for local development, CI can override with fewer threads
-  const maxThreads = process.env.VITEST_MAX_THREADS
-    ? parseInt(process.env.VITEST_MAX_THREADS, 10)
-    : 4;
+  // Vitest 4 removed poolOptions/maxThreads. Limit workers with maxWorkers instead.
+  // Keep the old env var as a temporary compatibility fallback.
+  const maxWorkers = process.env.VITEST_MAX_WORKERS
+    ? parseInt(process.env.VITEST_MAX_WORKERS, 10)
+    : process.env.VITEST_MAX_THREADS
+      ? parseInt(process.env.VITEST_MAX_THREADS, 10)
+      : 4;
 
   // For SSR, we need React (not Preact) since we're using react-dom/server
   // For tests, we use React
@@ -95,18 +97,11 @@ export default defineConfig(() => {
         "../../tests/frontend/e2e/**",
       ],
       css: true,
-      pool: "threads",
-      poolOptions: {
-        threads: {
-          // Enable parallel test execution for faster test runs
-          // Use multiple threads to balance speed and resource usage
-          // Vitest will auto-detect optimal thread count if not specified
-          minThreads: 1,
-          maxThreads: maxThreads, // Configurable via VITEST_MAX_THREADS env var (default: 4)
-          // Use isolate: true to ensure test isolation and prevent shared state issues
-          isolate: true,
-        },
-      },
+      // Vitest 4 defaults to forks; use it explicitly because it is more robust
+      // for jsdom-heavy suites on Windows than the old threads pool.
+      pool: "forks",
+      maxWorkers,
+      isolate: true,
       // Enable test-level parallelization within files (use with caution if tests share state)
       sequence: {
         shuffle: false,

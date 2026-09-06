@@ -1,6 +1,4 @@
-import { zodToJsonSchema } from "zod-to-json-schema";
-import type { ZodTypeAny } from "zod";
-import { ZodEffects } from "zod";
+import { z, type ZodTypeAny } from "zod";
 import {
   RegisterSchema,
   LoginSchema,
@@ -43,39 +41,17 @@ type JsonSchemaObject = {
 };
 
 function extractSchemaFromZod(entry: SchemaMapEntry): JsonSchemaObject {
-  // Unwrap ZodEffects (from .refine(), .superRefine(), etc.) to get the inner schema
-  // zodToJsonSchema should handle this, but we'll unwrap manually to ensure properties are extracted
-  let schemaToConvert = entry.schema;
-  // Check if this is a ZodEffects wrapper by looking at _def.typeName
-  if (
-    (schemaToConvert as any)._def?.typeName === "ZodEffects" &&
-    (schemaToConvert as any)._def?.schema
-  ) {
-    schemaToConvert = (schemaToConvert as any)._def.schema;
-  }
+  const result = z.toJSONSchema(entry.schema, {
+    target: "openapi-3.0",
+    io: "input",
+    unrepresentable: "any",
+  }) as JsonSchemaObject;
 
-  const result = zodToJsonSchema(schemaToConvert, entry.name, {
-    target: "openApi3",
-    effectStrategy: "input", // Use input strategy to focus on the base schema structure
-  });
-  // zodToJsonSchema can return the schema directly or wrapped in definitions/components
-  let definition: JsonSchemaObject;
-  if ((result as any).definitions?.[entry.name]) {
-    definition = (result as any).definitions[entry.name];
-  } else if ((result as any).components?.schemas?.[entry.name]) {
-    definition = (result as any).components.schemas[entry.name];
-  } else if ((result as any).$defs?.[entry.name]) {
-    definition = (result as any).$defs[entry.name];
-  } else {
-    // Schema is returned directly
-    definition = result as JsonSchemaObject;
-  }
   return {
-    properties: definition.properties ?? {},
-    required: definition.required ?? [],
+    properties: result.properties ?? {},
+    required: result.required ?? [],
   };
 }
-
 function extractSchemaFromOpenApi(name: string): JsonSchemaObject {
   const schema = (openApiSpec as any).components?.schemas?.[name];
   if (!schema) {

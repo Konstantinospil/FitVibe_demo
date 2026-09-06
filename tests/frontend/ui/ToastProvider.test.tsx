@@ -1,5 +1,5 @@
 import { fireEvent, render, screen, act } from "@testing-library/react";
-import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
+import { describe, expect, it, vi, afterEach } from "vitest";
 import { ToastProvider, useUiToastContext } from "../../src/components/ui/Toast";
 
 vi.mock("react-i18next", () => ({
@@ -53,9 +53,6 @@ function Probe() {
 }
 
 describe("ToastProvider local context", () => {
-  beforeEach(() => {
-    vi.useFakeTimers();
-  });
   afterEach(() => {
     vi.useRealTimers();
   });
@@ -65,6 +62,8 @@ describe("ToastProvider local context", () => {
   });
 
   it("adds, auto-dismisses, and supports actions", () => {
+    vi.useFakeTimers();
+
     render(
       <ToastProvider position="top-right">
         <Probe />

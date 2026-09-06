@@ -5,14 +5,14 @@
  *
  * Requires Docker Desktop. Starts host `vite preview` if port 4173 is free.
  * Extra argv is forwarded to Playwright (spec files, --project, …).
- * UPDATE_SNAPSHOTS=none compares without rewriting; default is "changed".
+ * Compares Linux baselines by default. Pass --update to rewrite changed Linux baselines.
  */
 import { spawn, spawnSync } from "node:child_process";
 import { connect } from "node:net";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
-const PLAYWRIGHT_IMAGE = "mcr.microsoft.com/playwright:v1.57.0-jammy";
+const PLAYWRIGHT_IMAGE = "mcr.microsoft.com/playwright:v1.63.0-jammy";
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "../../../..");
 const frontendDir = resolve(repoRoot, "apps/frontend");
 const dockerRepo = repoRoot.replaceAll("\\", "/");
@@ -80,7 +80,14 @@ if (!(await isPreviewUp())) {
   }
 }
 
-console.log(`Updating Linux visual baselines with ${PLAYWRIGHT_IMAGE}…`);
+const cliArgs = process.argv.slice(2);
+const updateRequested = cliArgs.includes("--update");
+const playwrightArgs = cliArgs.filter((arg) => arg !== "--update");
+const updateSnapshots = updateRequested ? "changed" : "none";
+
+console.log(
+  `${updateRequested ? "Updating" : "Comparing"} Linux visual baselines with ${PLAYWRIGHT_IMAGE}…`,
+);
 run(dockerCmd, [
   "run",
   "--rm",
@@ -97,11 +104,15 @@ run(dockerCmd, [
   "-e",
   "CI=true",
   "-e",
-  `UPDATE_SNAPSHOTS=${process.env.UPDATE_SNAPSHOTS || "changed"}`,
+  `UPDATE_SNAPSHOTS=${updateSnapshots}`,
   PLAYWRIGHT_IMAGE,
   "bash",
   innerScript,
-  ...process.argv.slice(2),
+  ...playwrightArgs,
 ]);
 
-console.log("Linux baselines written next to the specs as *-linux.png");
+console.log(
+  updateRequested
+    ? "Linux baselines written next to the specs as *-linux.png"
+    : "Linux visual comparison completed without rewriting baselines",
+);

@@ -19,33 +19,21 @@ Playwright projects (`ui:{theme}:{viewport}`) drive the matrix. Each spec has on
 ### Local Development
 
 ```bash
-# Build frontend first
-pnpm --filter @fitvibe/frontend run build
-
-# Run visual tests
+# Run the same Linux Chromium visual comparison used by CI
 pnpm test:visual
-
-# Or directly with Playwright
-pnpm exec playwright test --config tests/frontend/visual/config/playwright.config.ts
 ```
 
-Baselines are OS-specific (`-win32` / `-linux`). GitHub Actions compares against **Linux Chromium** files. `pnpm test:visual` on Windows uses the `-win32` files and will not match CI.
+`pnpm test:visual` always runs inside the pinned Playwright Linux Docker image, even when invoked from Windows. This avoids host-OS font and rendering differences.
 
 ### Updating Baselines
 
-**Windows (local only):**
+**Linux baseline update** — Playwright Docker image, not Compose:
 
 ```bash
 pnpm test:visual:update
 ```
 
-**Linux (what CI uses)** — Playwright Docker image, not Compose:
-
-```bash
-pnpm test:visual:linux
-```
-
-That runs `mcr.microsoft.com/playwright:v1.57.0-jammy` (same image as the `visual_regression` job) and writes `*-linux.png` next to the specs. Commit those files for Actions to pass.
+The comparison and update commands both run `mcr.microsoft.com/playwright:v1.63.0-jammy`, the same image as the `visual_regression` CI job. The update command rewrites `*-linux.png` files; commit them only after reviewing and approving the visual changes.
 
 **Important**: Baseline updates require design approval and should include before/after screenshots in the PR description.
 
@@ -131,7 +119,7 @@ test.describe("My Page Visual Tests", () => {
 
 ### Screenshots Not Matching Locally
 
-Windows and macOS font rendering differs from CI. Use `pnpm test:visual:linux` when updating baselines that Actions will compare.
+Windows and macOS font rendering differs from CI, so the project deliberately runs visual comparisons in the Linux Playwright container. Use `pnpm test:visual` to compare and `pnpm test:visual:update` only when intentionally accepting new Linux baselines.
 
 ## References
 

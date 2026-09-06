@@ -1,0 +1,117 @@
+name: Refresh Logger Linux Baselines
+
+on:
+  push:
+    branches: ["dev"]
+    paths:
+      - ".github/workflows/refresh-logger-baselines.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  refresh:
+    name: Refresh Logger Linux Baselines
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    container:
+      image: mcr.microsoft.com/playwright:v1.63.0-jammy
+      options: --ipc=host
+
+    steps:
+      - name: Checkout dev
+        uses: actions/checkout@v7
+        with:
+          ref: dev
+          fetch-depth: 0
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile --no-offline
+
+      - name: Build visual frontend
+        run: pnpm --filter @fitvibe/frontend run build:visual
+
+      - name: Start preview server
+        shell: bash
+        run: |
+          cd apps/frontend
+          pnpm exec vite preview --host 0.0.0.0 --port 4173 --strictPort --outDir dist/client >/tmp/fitvibe-preview.log 2>&1 &
+          echo $! >/tmp/fitvibe-preview.pid
+          for i in {1..30}; do
+            if curl -fsS http://127.0.0.1:4173 >/dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          cat /tmp/fitvibe-preview.log
+          exit 1
+
+      - name: Refresh only failing Logger baselines
+        env:
+          APP_URL: http://127.0.0.1:4173
+          DISABLE_WEBSERVER: "true"
+          CI: "true"
+        run: |
+          pnpm exec playwright test tests/frontend/visual/pages/logger.spec.ts \
+            --config tests/frontend/visual/config/playwright.config.ts \
+            --project="ui:light:sm" \
+            --project="ui:light:md" \
+            --update-snapshots=changed
+
+      - name: Commit refreshed Linux baselines via GitHub API
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          node --input-type=module <<'NODE'
+          import { readFile } from "node:fs/promises";
+
+          const repo = process.env.GITHUB_REPOSITORY;
+          const token = process.env.GH_TOKEN;
+          const branch = "dev";
+          const files = [
+            "tests/frontend/visual/pages/logger.spec.ts-snapshots/logger-ui-light-sm-linux.png",
+            "tests/frontend/visual/pages/logger.spec.ts-snapshots/logger-ui-light-md-linux.png",
+          ];
+
+          const headers = {
+            Accept: "application/vnd.github+json",
+            Authorization: `Bearer ${token}`,
+            "X-GitHub-Api-Version": "2022-11-28",
+            "Content-Type": "application/json",
+          };
+
+          for (const path of files) {
+            const getUrl = `https://api.github.com/repos/${repo}/contents/${path}?ref=${branch}`;
+            const current = await fetch(getUrl, { headers });
+            if (!current.ok) {
+              throw new Error(`Failed to read ${path}: ${current.status} ${await current.text()}`);
+            }
+            const { sha } = await current.json();
+            const content = (await readFile(path)).toString("base64");
+
+            const put = await fetch(`https://api.github.com/repos/${repo}/contents/${path}`, {
+              method: "PUT",
+              headers,
+              body: JSON.stringify({
+                message: "test(visual): refresh Logger Linux baseline for Playwright 1.63",
+                content,
+                sha,
+                branch,
+              }),
+            });
+            if (!put.ok) {
+              throw new Error(`Failed to update ${path}: ${put.status} ${await put.text()}`);
+            }
+            const result = await put.json();
+            console.log(`Updated ${path} in commit ${result.commit.sha}`);
+          }
+          NODE

@@ -13,12 +13,12 @@ import {
 const periodEnum = z
   .enum(["7", "30", "90"])
   .transform((v) => parseInt(v, 10))
-  .default("30");
+  .default(30);
 const groupByEnum = z.enum(["day", "week"]);
 const monthsEnum = z
   .enum(["3", "6", "12", "18", "24"])
   .transform((v) => parseInt(v, 10))
-  .default("12");
+  .default(12);
 
 function requireUserId(req: Request, res: Response): string | null {
   const userId = req.user?.sub;
@@ -66,7 +66,7 @@ export async function exercisesHandler(req: Request, res: Response): Promise<voi
   const periodEnum90 = z
     .enum(["7", "30", "90"])
     .transform((v) => parseInt(v, 10))
-    .default("90");
+    .default(90);
   const parsed = z.object({ period: periodEnum90 }).safeParse(req.query);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.flatten() });
