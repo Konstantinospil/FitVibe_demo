@@ -63,6 +63,47 @@ export const apiClient = axios.create(baseConfig);
 // Separate client without interceptors to avoid circular refresh attempts.
 export const rawHttpClient = axios.create(baseConfig);
 
+const csrfClient = axios.create(baseConfig);
+
+let cachedCsrfToken: string | null = null;
+let csrfTokenPromise: Promise<string> | null = null;
+
+async function getCsrfToken(): Promise<string> {
+  if (cachedCsrfToken) {
+    return cachedCsrfToken;
+  }
+
+  if (!csrfTokenPromise) {
+    csrfTokenPromise = csrfClient
+      .get<{ csrfToken: string }>("/api/v1/csrf-token")
+      .then((response) => {
+        cachedCsrfToken = response.data.csrfToken;
+        return response.data.csrfToken;
+      })
+      .finally(() => {
+        csrfTokenPromise = null;
+      });
+  }
+
+  return csrfTokenPromise;
+}
+
+async function attachCsrfToken(config: InternalAxiosRequestConfig) {
+  const method = (config.method ?? "get").toLowerCase();
+
+  if (!["post", "put", "patch", "delete"].includes(method)) {
+    return config;
+  }
+
+  const csrfToken = await getCsrfToken();
+  config.headers.set("X-CSRF-Token", csrfToken);
+
+  return config;
+}
+
+apiClient.interceptors.request.use(attachCsrfToken);
+rawHttpClient.interceptors.request.use(attachCsrfToken);
+
 let isRefreshing = false;
 
 type QueueEntry = {
