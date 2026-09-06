@@ -23,6 +23,7 @@ import {
   verify2FA,
 } from "../../src/services/api";
 import { ToastProvider } from "../../src/contexts/ToastContext";
+import { AuthProvider } from "../../src/contexts/AuthContext";
 import { I18nextProvider, initReactI18next } from "react-i18next";
 import i18n from "i18next";
 import { QueryClientProvider } from "@tanstack/react-query";
@@ -102,9 +103,11 @@ export const renderSettings = () => {
     <QueryClientProvider client={queryClient}>
       <I18nextProvider i18n={testI18n}>
         <ToastProvider>
-          <MemoryRouter>
-            <Settings />
-          </MemoryRouter>
+          <AuthProvider>
+            <MemoryRouter>
+              <Settings />
+            </MemoryRouter>
+          </AuthProvider>
         </ToastProvider>
       </I18nextProvider>
     </QueryClientProvider>,
