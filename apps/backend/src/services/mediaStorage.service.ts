@@ -69,11 +69,7 @@ export async function saveUserAvatarFile(userId: string, buffer: Buffer, mimeTyp
   };
 }
 
-export async function saveUserProgressPhotoFile(
-  userId: string,
-  buffer: Buffer,
-  mimeType: string,
-) {
+export async function saveUserProgressPhotoFile(userId: string, buffer: Buffer, mimeType: string) {
   const ext = extensionFromMime(mimeType) || ".bin";
   const dir = path.join(STORAGE_ROOT, "progress", userId);
   await ensureDir(dir);
