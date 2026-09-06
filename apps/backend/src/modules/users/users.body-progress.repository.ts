@@ -112,7 +112,7 @@ export async function addBodyProgressPhoto(
     target_type: TARGET_TYPE,
     target_id: id,
     storage_key: storageKey,
-    file_url: `/users/me/body-progress/photo/${id}`,
+    file_url: `/api/v1/users/me/body-progress/photo/${id}`,
     mime_type: mimeType,
     media_type: "image",
     bytes,
