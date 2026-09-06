@@ -89,7 +89,7 @@
       "chrome-launcher": "^1.2.1",
       "preact": "10.28.2",
       "tmp": "^0.2.7",
-      "glob": "link:packages/patched-glob",
+      "glob": "10.5.0",
       "extract-zip": "link:packages/patched-extract-zip",
       "esbuild": "^0.25.0",
       "js-yaml": ">=4.3.1",
