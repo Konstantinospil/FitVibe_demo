@@ -25,11 +25,9 @@ export async function listBodyWeights(userId: string, limit = 50): Promise<BodyW
     .whereNull("v.deactivated_at")
     .orderBy("v.measured_at", "desc")
     .limit(limit)
-    .select<Array<{ id: string; value_number: string | number; measured_at: string }>>(
-      "v.id",
-      "v.value_number",
-      "v.measured_at",
-    );
+    .select<
+      Array<{ id: string; value_number: string | number; measured_at: string }>
+    >("v.id", "v.value_number", "v.measured_at");
 
   return rows.map((row) => ({
     id: row.id,
@@ -124,14 +122,11 @@ export async function addBodyProgressPhoto(
 export async function getBodyProgressPhoto(
   userId: string,
   id: string,
-): Promise<
-  | {
-      id: string;
-      storageKey: string;
-      mimeType: string | null;
-    }
-  | null
-> {
+): Promise<{
+  id: string;
+  storageKey: string;
+  mimeType: string | null;
+} | null> {
   const row = await db("media")
     .where({ id, owner_id: userId, target_type: TARGET_TYPE })
     .first<{ id: string; storage_key: string; mime_type: string | null }>();
