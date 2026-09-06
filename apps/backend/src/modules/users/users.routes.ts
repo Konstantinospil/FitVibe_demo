@@ -23,6 +23,7 @@ import { requireAuth } from "./users.middleware.js";
 import { requireRole } from "../common/rbac.middleware.js";
 import { rateLimit } from "../common/rateLimiter.js";
 import { usersAvatarRouter } from "./users.avatar.routes.js";
+import { usersBodyProgressRouter } from "./users.body-progress.routes.js";
 import { asyncHandler } from "../../utils/async-handler.js";
 import {
   followUserHandler,
@@ -34,6 +35,7 @@ import {
 export const usersRouter = Router();
 
 usersRouter.use(usersAvatarRouter);
+usersRouter.use(usersBodyProgressRouter);
 
 usersRouter.get("/me", rateLimit("user_me", 60, 60), requireAuth, asyncHandler(me));
 usersRouter.patch("/me", rateLimit("user_update", 20, 60), requireAuth, asyncHandler(updateMe));
