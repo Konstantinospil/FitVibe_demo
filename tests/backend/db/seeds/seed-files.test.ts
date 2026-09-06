@@ -134,14 +134,15 @@ describe("database seed modules", () => {
       sampleMatcher: { id: ADMIN_ID },
       assertInsert: (rows) => {
         const hashMock = bcrypt.hash as jest.MockedFunction<typeof bcrypt.hash>;
-        expect(hashMock).toHaveBeenNthCalledWith(1, "Admin123!", 12);
-        expect(hashMock).toHaveBeenNthCalledWith(2, "Athlete123!", 12);
+        expect(hashMock).toHaveBeenCalledTimes(1);
+        expect(hashMock).toHaveBeenCalledWith("admin", 12);
+        expect(rows).toHaveLength(1);
         const row = (rows as Array<{ id?: string; password_hash?: string }>).find(
           (entry) => entry.id === ADMIN_ID,
         ) as {
           password_hash: string;
         };
-        expect(row.password_hash).toBe("hashed-Admin123!");
+        expect(row.password_hash).toBe("hashed-admin");
       },
     },
     {
@@ -317,7 +318,7 @@ describe("database seed modules", () => {
     },
   );
 
-  it("seeds identity contacts, profiles, and vibe rows from 005_users", async () => {
+  it("seeds only the bootstrap admin identity from 005_users", async () => {
     const { knex, getChain } = createKnexMock();
 
     await seedUsers(knex);
@@ -325,27 +326,21 @@ describe("database seed modules", () => {
     const contacts = getChain("user_contacts");
     expect(contacts.onConflict).toHaveBeenCalledWith("id");
     expect(contacts.ignore).toHaveBeenCalled();
-    expect(contacts.insert.mock.calls[0][0]).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({ value: "admin@fitvibe.local" }),
-        expect.objectContaining({ value: "jane.doe@example.com" }),
-      ]),
-    );
+    expect(contacts.insert.mock.calls[0][0]).toEqual([
+      expect.objectContaining({ value: "admin@fitvibe.local" }),
+    ]);
 
     const profiles = getChain("profiles");
     expect(profiles.onConflict).toHaveBeenCalledWith("user_id");
     expect(profiles.ignore).toHaveBeenCalled();
-    expect(profiles.insert.mock.calls[0][0]).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({ alias: "admin", visibility: "private" }),
-        expect.objectContaining({ alias: "jane.doe", visibility: "private" }),
-      ]),
-    );
+    expect(profiles.insert.mock.calls[0][0]).toEqual([
+      expect.objectContaining({ alias: "admin", visibility: "private" }),
+    ]);
 
     const vibes = getChain("user_domain_vibe_levels");
     expect(vibes.onConflict).toHaveBeenCalledWith(["user_id", "domain_code"]);
     expect(vibes.ignore).toHaveBeenCalled();
-    expect(vibes.insert.mock.calls[0][0]).toHaveLength(12);
+    expect(vibes.insert.mock.calls[0][0]).toHaveLength(6);
   });
 
   it("seeds Jane's first_session award without overwriting the catalog", async () => {

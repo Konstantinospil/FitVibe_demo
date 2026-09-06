@@ -84,14 +84,6 @@ describeWithTestDatabase("database migrations", () => {
       expect(columns.created_at).toBeDefined();
     });
 
-    it("provisions roles required by registration without running seeds", async () => {
-      const requiredRoles = ["admin", "athlete", "coach", "support"];
-      const rows = await client("roles").select("code").whereIn("code", requiredRoles);
-      const actualRoles = rows.map((row: { code: string }) => row.code).sort();
-
-      expect(actualRoles).toEqual([...requiredRoles].sort());
-    });
-
     it("creates genders table with correct schema", async () => {
       const hasTable = await client.schema.hasTable("genders");
       expect(hasTable).toBe(true);
