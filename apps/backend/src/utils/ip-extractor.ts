@@ -9,18 +9,17 @@
  * - Always validate IP format
  */
 
+import { isIP } from "node:net";
 import type { Request } from "express";
 import { env } from "../config/env.js";
 
-const IP_V4_REGEX =
-  /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
-const IP_V6_REGEX = /^(?:[0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}$/;
-
 /**
- * Validates if a string is a valid IP address (IPv4 or IPv6)
+ * Validates if a string is a valid IP address (IPv4 or IPv6).
+ * Node's parser supports compressed IPv6 and IPv4-mapped IPv6 addresses,
+ * which are common for requests coming through Docker networking.
  */
 function isValidIP(ip: string): boolean {
-  return IP_V4_REGEX.test(ip) || IP_V6_REGEX.test(ip) || ip === "::1" || ip === "::ffff:127.0.0.1";
+  return isIP(ip) !== 0;
 }
 
 /**
