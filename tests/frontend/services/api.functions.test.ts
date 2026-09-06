@@ -1000,13 +1000,13 @@ describe("API Service Functions", () => {
     });
 
     it("updates the profile via PUT and maps the response", async () => {
-      apiMock.onPut("/api/v1/users/me").replyOnce(200, userDetail);
+      apiMock.onPatch("/api/v1/users/me").replyOnce(200, userDetail);
       await expect(updateProfile({ displayName: "Alex" })).resolves.toMatchObject({
         displayName: "Alex",
         email: "alex@example.com",
       });
 
-      apiMock.onPut("/api/v1/users/me").replyOnce(200, {
+      apiMock.onPatch("/api/v1/users/me").replyOnce(200, {
         ...userDetail,
         primaryEmail: "",
         profile: undefined,
@@ -1136,7 +1136,7 @@ describe("API Service Functions", () => {
         entries: [],
       });
 
-      apiMock.onPatch("/api/v1/users/me/password").reply(204);
+      apiMock.onPost("/api/v1/users/change-password").reply(204);
       await expect(
         changePassword({ currentPassword: "a", newPassword: "b" }),
       ).resolves.toBeUndefined();
