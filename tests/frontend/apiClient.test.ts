@@ -18,6 +18,7 @@ describe("apiClient authentication flow", () => {
   beforeEach(async () => {
     apiMock = new MockAdapter(apiClient);
     rawMock = new MockAdapter(rawHttpClient);
+    rawMock.onGet("/api/v1/csrf-token").reply(200, { csrfToken: "test-csrf-token" });
     
     // Mock logout endpoint to prevent 404 errors during cleanup
     rawMock.onPost("/api/v1/auth/logout").reply(200);

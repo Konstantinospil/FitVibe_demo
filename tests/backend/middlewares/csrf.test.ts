@@ -45,6 +45,7 @@ describe("CSRF Middleware", () => {
 
   beforeEach(() => {
     (env as { isProduction: boolean }).isProduction = false;
+    (env as { COOKIE_SECURE: boolean }).COOKIE_SECURE = false;
 
     mockRequest = {
       method: "POST",
@@ -193,15 +194,15 @@ describe("CSRF Middleware", () => {
       expect(mockResponse.cookie).not.toHaveBeenCalled();
     });
 
-    it("should set secure flag in production", () => {
-      (env as { isProduction: boolean }).isProduction = true;
+    it("should use a secure __Host cookie when COOKIE_SECURE is enabled", () => {
+      (env as { COOKIE_SECURE: boolean }).COOKIE_SECURE = true;
       mockRequest.method = "GET";
       mockRequest.cookies = {};
 
       csrfProtection(mockRequest as Request, mockResponse as Response, mockNext);
 
       expect(mockResponse.cookie).toHaveBeenCalledWith(
-        CSRF_COOKIE,
+        "__Host-fitvibe-csrf",
         expect.any(String),
         expect.objectContaining({
           secure: true,

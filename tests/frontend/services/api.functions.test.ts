@@ -86,6 +86,7 @@ describe("API Service Functions", () => {
   beforeEach(() => {
     apiMock = new MockAdapter(apiClient);
     rawMock = new MockAdapter(rawHttpClient);
+    rawMock.onGet("/api/v1/csrf-token").reply(200, { csrfToken: "test-csrf-token" });
   });
 
   afterEach(() => {

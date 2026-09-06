@@ -10,11 +10,11 @@ import { env } from "../config/env.js";
 import { HttpError } from "../utils/http.js";
 
 const tokens = new Tokens();
-const CSRF_COOKIE_SECURE = env.COOKIE_SECURE;
-const CSRF_COOKIE_NAME = CSRF_COOKIE_SECURE
-  ? "__Host-fitvibe-csrf"
-  : "fitvibe-csrf";
 const SAFE_METHODS = new Set(["GET", "HEAD", "OPTIONS"]);
+
+function getCsrfCookieName(): string {
+  return env.COOKIE_SECURE ? "__Host-fitvibe-csrf" : "fitvibe-csrf";
+}
 
 type CsrfRequest = Request & {
   csrfToken?: () => string;
@@ -26,8 +26,9 @@ function ensureSecret(req: CsrfRequest, res: Response): string {
     return req._csrfSecret;
   }
 
+  const cookieName = getCsrfCookieName();
   const existing =
-    typeof req.cookies?.[CSRF_COOKIE_NAME] === "string" ? req.cookies[CSRF_COOKIE_NAME] : null;
+    typeof req.cookies?.[cookieName] === "string" ? req.cookies[cookieName] : null;
   const secret = existing || tokens.secretSync();
 
   if (!existing) {
@@ -38,10 +39,10 @@ function ensureSecret(req: CsrfRequest, res: Response): string {
     // The cookie is protected by HttpOnly (no JS access), Secure (HTTPS only), and SameSite (CSRF protection).
     // codeql[js/clear-text-storage-of-sensitive-data]: false positive - HttpOnly + Secure + SameSite cookie is secure
     /* codeql-disable-next-line js/clear-text-storage-of-sensitive-data */
-    res.cookie(CSRF_COOKIE_NAME, secret, {
+    res.cookie(cookieName, secret, {
       httpOnly: true, // Prevents JavaScript access (XSS protection)
       sameSite: "lax", // CSRF protection
-      secure: CSRF_COOKIE_SECURE, // HTTPS-only in production
+      secure: env.COOKIE_SECURE, // HTTPS-only when secure cookies are enabled
       path: "/",
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     });
