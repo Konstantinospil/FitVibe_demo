@@ -367,7 +367,7 @@ export async function getCurrentUser(): Promise<UserProfile> {
  * Update user profile
  */
 export async function updateProfile(payload: UpdateProfileRequest): Promise<UserProfile> {
-  const res = await apiClient.put<UserDetail>("/api/v1/users/me", payload);
+  const res = await apiClient.patch<UserDetail>("/api/v1/users/me", payload);
   const data = res.data;
   return {
     id: data.id,
@@ -389,6 +389,57 @@ export async function updateProfile(payload: UpdateProfileRequest): Promise<User
     createdAt: data.createdAt,
     updatedAt: data.updatedAt,
   };
+}
+
+
+export interface BodyWeightEntry {
+  id: string;
+  weightKg: number;
+  measuredAt: string;
+}
+
+export interface BodyProgressPhoto {
+  id: string;
+  fileUrl: string;
+  mimeType: string | null;
+  bytes: number | null;
+  createdAt: string;
+}
+
+export interface BodyProgressResponse {
+  weights: BodyWeightEntry[];
+  photos: BodyProgressPhoto[];
+}
+
+export async function getBodyProgress(): Promise<BodyProgressResponse> {
+  const res = await apiClient.get<BodyProgressResponse>("/api/v1/users/me/body-progress");
+  return res.data;
+}
+
+export async function addBodyWeight(payload: {
+  weightKg: number;
+  measuredAt?: string;
+}): Promise<BodyWeightEntry> {
+  const res = await apiClient.post<BodyWeightEntry>(
+    "/api/v1/users/me/body-progress/weight",
+    payload,
+  );
+  return res.data;
+}
+
+export async function uploadBodyProgressPhoto(file: File): Promise<BodyProgressPhoto> {
+  const formData = new FormData();
+  formData.append("photo", file);
+  const res = await apiClient.post<BodyProgressPhoto>(
+    "/api/v1/users/me/body-progress/photo",
+    formData,
+    { headers: { "Content-Type": "multipart/form-data" } },
+  );
+  return res.data;
+}
+
+export async function deleteBodyProgressPhoto(id: string): Promise<void> {
+  await apiClient.delete(`/api/v1/users/me/body-progress/photo/${id}`);
 }
 
 export type LoginResponse =
