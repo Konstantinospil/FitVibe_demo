@@ -45,7 +45,7 @@ pnpm test:visual:update
 pnpm test:visual:linux
 ```
 
-That runs `mcr.microsoft.com/playwright:v1.57.0-jammy` (same image as the `visual_regression` job) and writes `*-linux.png` next to the specs. Commit those files for Actions to pass.
+That runs `mcr.microsoft.com/playwright:v1.63.0-jammy` (same image as the `visual_regression` job) and writes `*-linux.png` next to the specs. Commit those files for Actions to pass.
 
 **Important**: Baseline updates require design approval and should include before/after screenshots in the PR description.
 
