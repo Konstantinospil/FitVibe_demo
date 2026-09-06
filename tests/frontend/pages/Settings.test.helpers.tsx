@@ -178,5 +178,10 @@ export const setupSettingsTests = () => {
     mockPatch: vi.mocked(apiClient.patch),
     mockPost: vi.mocked(apiClient.post),
     mockDelete: vi.mocked(apiClient.delete),
+    mockGetCurrentUser: vi.mocked(getCurrentUser),
+    mockUpdateProfile: vi.mocked(updateProfile),
+    mockGet2FAStatus: vi.mocked(get2FAStatus),
+    mockGetPrivacySettings: vi.mocked(getPrivacySettings),
+    mockGetBodyProgress: vi.mocked(getBodyProgress),
   };
 };
