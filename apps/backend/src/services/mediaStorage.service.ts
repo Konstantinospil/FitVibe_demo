@@ -69,6 +69,24 @@ export async function saveUserAvatarFile(userId: string, buffer: Buffer, mimeTyp
   };
 }
 
+export async function saveUserProgressPhotoFile(
+  userId: string,
+  buffer: Buffer,
+  mimeType: string,
+) {
+  const ext = extensionFromMime(mimeType) || ".bin";
+  const dir = path.join(STORAGE_ROOT, "progress", userId);
+  await ensureDir(dir);
+  const fileName = `${crypto.randomUUID()}${ext}`;
+  const fullPath = path.join(dir, fileName);
+  await fs.writeFile(fullPath, buffer);
+  const storageKey = normalizeKey("progress", userId, fileName);
+  return {
+    storageKey,
+    bytes: buffer.length,
+  };
+}
+
 export async function readStorageObject(storageKey: string): Promise<Buffer> {
   const fullPath = resolveStoragePath(storageKey);
   return fs.readFile(fullPath);
