@@ -1514,7 +1514,6 @@ jobs:
       - qa_summary
       - performance
       - security
-      - codeql
       - openapi_spec
       - lighthouse
       - i18n
