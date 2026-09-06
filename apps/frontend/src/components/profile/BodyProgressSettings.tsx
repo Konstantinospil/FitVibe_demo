@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Camera, Trash2, TrendingUp } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import {
@@ -26,7 +26,7 @@ export const BodyProgressSettings: React.FC = () => {
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const load = async () => {
+  const load = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
@@ -38,11 +38,11 @@ export const BodyProgressSettings: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [t]);
 
   useEffect(() => {
     void load();
-  }, []);
+  }, [load]);
 
   const latestWeight = useMemo(() => weights[0]?.weightKg ?? null, [weights]);
 
