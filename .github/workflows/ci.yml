@@ -1320,7 +1320,7 @@ jobs:
     # Same Playwright Linux image used by `pnpm test:visual:linux` so font
     # rasterization matches the committed *-linux.png baselines.
     container:
-      image: mcr.microsoft.com/playwright:v1.57.0-jammy
+      image: mcr.microsoft.com/playwright:v1.63.0-jammy
       options: --ipc=host
     steps:
       - name: Checkout
