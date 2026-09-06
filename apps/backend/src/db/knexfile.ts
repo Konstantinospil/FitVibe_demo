@@ -14,10 +14,10 @@ const shared: Partial<Knex.Config> = {
   pool: { min: 2, max: 10 },
   migrations: {
     tableName: "knex_migrations",
-    extension: "ts",
+    loadExtensions: [".js", ".ts"],
     directory: migrationsDir,
   },
-  seeds: { extension: "ts", directory: seedsDir },
+  seeds: { loadExtensions: [".js", ".ts"], directory: seedsDir },
 };
 
 const config: { [key: string]: Knex.Config } = {
