@@ -1,6 +1,5 @@
 import { fireEvent, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it } from "vitest";
-import { updateProfile } from "../../src/services/api";
 import { renderSettings, setupSettingsTests } from "./Settings.test.helpers";
 
 describe("Settings - Profile Fields", () => {
@@ -14,13 +13,14 @@ describe("Settings - Profile Fields", () => {
   });
 
   it("saves profile changes through the profile API", async () => {
+    const { mockUpdateProfile } = setupSettingsTests();
     renderSettings();
     const displayName = await screen.findByDisplayValue("Test User");
     fireEvent.change(displayName, { target: { value: "Updated User" } });
-    fireEvent.click(screen.getByRole("button", { name: /Save Changes/i }));
+    fireEvent.click(screen.getByRole("button", { name: /save/i }));
 
     await waitFor(() => {
-      expect(updateProfile).toHaveBeenCalledWith(
+      expect(mockUpdateProfile).toHaveBeenCalledWith(
         expect.objectContaining({ displayName: "Updated User" }),
       );
     });
