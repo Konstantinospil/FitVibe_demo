@@ -24,14 +24,14 @@ function flattenObject(obj: Record<string, unknown>, prefix = ""): Record<string
 }
 
 function loadTranslationFile(language: string, namespace: string): Record<string, string> {
-  const filePath = path.join(
-    __dirname,
-    "../../../../frontend/src/i18n/locales",
-    language,
-    `${namespace}.json`,
-  );
+  const relativeFile = path.join(language, `${namespace}.json`);
+  const candidates = [
+    path.join(__dirname, "../../../../frontend/src/i18n/locales", relativeFile),
+    path.join(__dirname, "../i18n-locales", relativeFile),
+  ];
+  const filePath = candidates.find((candidate) => fs.existsSync(candidate));
 
-  if (!fs.existsSync(filePath)) {
+  if (!filePath) {
     return {};
   }
 

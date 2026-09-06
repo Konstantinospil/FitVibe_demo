@@ -271,6 +271,7 @@ jobs:
             compose up -d --remove-orphans
 
             compose exec -T backend node dist/db/utils/migrateAll.js
+            compose exec -T backend node dist/db/utils/seedAll.js
             compose exec -T backend node dist/db/utils/postDeploy.js
             compose exec -T backend node dist/db/utils/verifyIntegrity.js
 
