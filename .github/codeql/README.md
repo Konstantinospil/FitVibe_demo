@@ -33,11 +33,12 @@ The single authoritative CodeQL workflow is:
 
 CodeQL is intentionally separate from `.github/workflows/ci.yml`.
 
-The workflow analyzes these supported languages independently through a matrix:
+The workflow analyzes the production/runtime languages relevant to this repository independently through a matrix:
 
 - JavaScript / TypeScript: `javascript-typescript`
-- Python: `python`
 - GitHub Actions workflows: `actions`
+
+Python is intentionally not part of the CodeQL matrix. The repository currently has no product Python code: all Python files are development/tooling code under `.cursor/` or documentation helpers under `docs/`. Those files should be covered by their own linting/tests rather than product CodeQL scanning.
 
 It runs on:
 
@@ -73,7 +74,7 @@ Disable GitHub CodeQL Default setup under **Settings** → **Code security and a
 ### A language is not being analyzed
 
 Check the `strategy.matrix.language` values in `.github/workflows/security-scan.yml`.
-The current intended set is `javascript-typescript`, `python`, and `actions`.
+The current intended set is `javascript-typescript` and `actions`.
 
 ### Syntax or extraction errors
 
