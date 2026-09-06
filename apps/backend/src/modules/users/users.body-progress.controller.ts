@@ -117,7 +117,7 @@ export async function uploadBodyProgressPhotoHandler(
 
   res.status(201).json({
     id: record.id,
-    fileUrl: `/users/me/body-progress/photo/${record.id}`,
+    fileUrl: `/api/v1/users/me/body-progress/photo/${record.id}`,
     mimeType: "image/jpeg",
     bytes: file.bytes,
     createdAt: record.createdAt,
