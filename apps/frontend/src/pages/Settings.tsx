@@ -13,11 +13,7 @@ import {
   SettingsTabs,
 } from "../components/profile";
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/Card";
-import {
-  apiClient,
-  getCurrentUser,
-  type UserProfile,
-} from "../services/api";
+import { apiClient, getCurrentUser, type UserProfile } from "../services/api";
 import { logger } from "../utils/logger";
 
 const Settings: React.FC = () => {
