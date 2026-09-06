@@ -4,6 +4,7 @@ import { HttpError } from "../../../apps/backend/src/utils/http.js";
 jest.mock("../../../apps/backend/src/config/env.js", () => ({
   env: {
     isProduction: false,
+    COOKIE_SECURE: false,
   },
 }));
 
@@ -14,7 +15,7 @@ import {
 } from "../../../apps/backend/src/middlewares/csrf.js";
 import { env } from "../../../apps/backend/src/config/env.js";
 
-const CSRF_COOKIE = "__Host-fitvibe-csrf";
+const CSRF_COOKIE = "fitvibe-csrf";
 
 function issueCsrfToken() {
   const req = {
