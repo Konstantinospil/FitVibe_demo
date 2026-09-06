@@ -43,8 +43,7 @@ jobs:
     steps:
       - name: Resolve CI run
         id: resolve
-        uses: actions/github-script@v9
-        with:
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9with:
           script: |
             const owner = context.repo.owner;
             const repo = context.repo.repo;
@@ -123,16 +122,8 @@ jobs:
       contents: read
       actions: read
     steps:
-      - name: Checkout deployed revision
-        uses: actions/checkout@v7
-        with:
-          ref: ${{ needs.resolve_ci.outputs.head_sha }}
-          persist-credentials: false
-          fetch-depth: 1
-
       - name: Download container artifacts from CI
-        uses: actions/download-artifact@v8
-        with:
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8with:
           name: container-artifacts-${{ needs.resolve_ci.outputs.run_id }}
           path: artifacts
           run-id: ${{ needs.resolve_ci.outputs.run_id }}
@@ -152,6 +143,7 @@ jobs:
 
           backend="$(sed -n 's/^backend=//p' "${digest_file}" | head -n 1)"
           frontend="$(sed -n 's/^frontend=//p' "${digest_file}" | head -n 1)"
+          stack_version="$(sed -n 's/^stack_version=//p' "${digest_file}" | head -n 1)"
           owner="$(printf '%s' "${GITHUB_REPOSITORY_OWNER}" | tr '[:upper:]' '[:lower:]')"
 
           case "${backend}" in
@@ -170,17 +162,18 @@ jobs:
               ;;
           esac
 
-          version="$(node -p "require('./apps/backend/package.json').version")"
+          if [[ ! "${stack_version}" =~ ^v[0-9]+\.[0-9]+\.[0-9]+([-.][0-9A-Za-z.-]+)?$ ]]; then
+            echo "Unexpected stack version: ${stack_version}" >&2
+            exit 1
+          fi
 
           echo "backend_image=${backend}" >> "${GITHUB_OUTPUT}"
           echo "frontend_image=${frontend}" >> "${GITHUB_OUTPUT}"
-          echo "stack_version=v${version}" >> "${GITHUB_OUTPUT}"
+          echo "stack_version=${stack_version}" >> "${GITHUB_OUTPUT}"
           echo "deploy_sha=${{ needs.resolve_ci.outputs.head_sha }}" >> "${GITHUB_OUTPUT}"
 
       - name: Install cosign
-        uses: sigstore/cosign-installer@v3
-
-      - name: Verify backend signature
+        uses: sigstore/cosign-installer@398d4b0eeef1380460a10c8013a76f728fb906ac # v3- name: Verify backend signature
         run: >
           cosign verify
           --certificate-identity "https://github.com/${{ github.repository }}/.github/workflows/ci.yml@refs/heads/main"
@@ -195,16 +188,14 @@ jobs:
           ${{ steps.deployment.outputs.frontend_image }}
 
       - name: Connect runner to Tailscale
-        uses: tailscale/github-action@v4
-        with:
+        uses: tailscale/github-action@306e68a486fd2350f2bfc3b19fcd143891a4a2d8 # v4with:
           oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
           oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
           tags: tag:ci
           ping: ${{ secrets.PROD_HOST }}
 
       - name: Deploy to production host
-        uses: appleboy/ssh-action@v1.2.5
-        with:
+        uses: appleboy/ssh-action@0ff4204d59e8e51228ff73bce53f80d53301dee2 # v1.2.5with:
           host: ${{ secrets.PROD_HOST }}
           username: ${{ secrets.PROD_USER }}
           key: ${{ secrets.SSH_KEY }}
