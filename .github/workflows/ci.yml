@@ -1763,15 +1763,11 @@ jobs:
 
       - name: Sign backend image
         timeout-minutes: 5
-        env:
-          COSIGN_EXPERIMENTAL: "1"
-        run: cosign sign --yes --keyless ${{ env.BACKEND_IMAGE }}@${{ steps.manifests.outputs.backend_digest }}
+        run: cosign sign --yes ${{ env.BACKEND_IMAGE }}@${{ steps.manifests.outputs.backend_digest }}
 
       - name: Sign frontend image
         timeout-minutes: 5
-        env:
-          COSIGN_EXPERIMENTAL: "1"
-        run: cosign sign --yes --keyless ${{ env.FRONTEND_IMAGE }}@${{ steps.manifests.outputs.frontend_digest }}
+        run: cosign sign --yes ${{ env.FRONTEND_IMAGE }}@${{ steps.manifests.outputs.frontend_digest }}
 
       - name: Generate backend SBOM
         timeout-minutes: 5
