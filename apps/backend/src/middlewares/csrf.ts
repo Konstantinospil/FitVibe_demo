@@ -10,7 +10,10 @@ import { env } from "../config/env.js";
 import { HttpError } from "../utils/http.js";
 
 const tokens = new Tokens();
-const CSRF_COOKIE_NAME = "__Host-fitvibe-csrf";
+const CSRF_COOKIE_SECURE = env.COOKIE_SECURE;
+const CSRF_COOKIE_NAME = CSRF_COOKIE_SECURE
+  ? "__Host-fitvibe-csrf"
+  : "fitvibe-csrf";
 const SAFE_METHODS = new Set(["GET", "HEAD", "OPTIONS"]);
 
 type CsrfRequest = Request & {
@@ -38,7 +41,7 @@ function ensureSecret(req: CsrfRequest, res: Response): string {
     res.cookie(CSRF_COOKIE_NAME, secret, {
       httpOnly: true, // Prevents JavaScript access (XSS protection)
       sameSite: "lax", // CSRF protection
-      secure: env.isProduction, // HTTPS-only in production
+      secure: CSRF_COOKIE_SECURE, // HTTPS-only in production
       path: "/",
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     });
