@@ -9,7 +9,7 @@ export interface SettingsTabsProps {
   value?: SettingsTabValue;
   onValueChange?: (value: SettingsTabValue) => void;
   profileContent: React.ReactNode;
-  progressContent: React.ReactNode;
+  progressContent?: React.ReactNode;
   securityContent: React.ReactNode;
   privacyContent: React.ReactNode;
 }
