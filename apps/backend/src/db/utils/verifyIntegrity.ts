@@ -40,6 +40,7 @@ const TABLES = [
 ];
 
 const VIEWS = ["session_summary", "weekly_aggregates", "mv_leaderboard"];
+const REQUIRED_ROLES = ["admin", "athlete", "coach", "support"] as const;
 
 async function verify(): Promise<void> {
   try {
@@ -48,6 +49,14 @@ async function verify(): Promise<void> {
       const exists = await db.schema.hasTable(table);
       logger.info(`${table.padEnd(40)} ${exists ? "present" : "missing"}`);
     }
+    const roleRows = await db("roles").select("code").whereIn("code", [...REQUIRED_ROLES]);
+    const presentRoles = new Set(roleRows.map((row: { code: string }) => row.code));
+    const missingRoles = REQUIRED_ROLES.filter((role) => !presentRoles.has(role));
+    if (missingRoles.length > 0) {
+      throw new Error(`Missing required application roles: ${missingRoles.join(", ")}`);
+    }
+    logger.info("Required application roles verified");
+
     for (const view of VIEWS) {
       const result = await db
         .select("matviewname")
