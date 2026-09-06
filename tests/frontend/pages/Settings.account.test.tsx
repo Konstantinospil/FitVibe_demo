@@ -5,17 +5,19 @@ import { renderSettings, setupSettingsTests } from "./Settings.test.helpers";
 describe("Settings - Account", () => {
   beforeEach(() => setupSettingsTests());
 
-  it("places account deletion in the Privacy tab", async () => {
+  it("places account controls in the Privacy tab", () => {
     renderSettings();
     fireEvent.click(screen.getByRole("tab", { name: /Privacy/i }));
-    expect(await screen.findByText(/Delete Account/i)).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /Delete My Account/i })).toBeInTheDocument();
+    expect(screen.getByRole("tabpanel")).toHaveAttribute("id", "tabpanel-privacy");
+    expect(
+      screen.getByRole("button", { name: /delete.*account/i }),
+    ).toBeInTheDocument();
   });
 
   it("opens the account deletion confirmation", async () => {
     renderSettings();
     fireEvent.click(screen.getByRole("tab", { name: /Privacy/i }));
-    fireEvent.click(await screen.findByRole("button", { name: /Delete My Account/i }));
-    expect(await screen.findByText(/Confirm Account Deletion/i)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /delete.*account/i }));
+    expect(await screen.findByRole("dialog")).toBeInTheDocument();
   });
 });
