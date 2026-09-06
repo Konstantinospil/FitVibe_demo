@@ -56,6 +56,18 @@ describe("ip-extractor", () => {
         expect(ip).toBe("::ffff:127.0.0.1");
       });
 
+      it("should accept IPv4-mapped IPv6 addresses from Docker networking", () => {
+        mockRequest.socket = { remoteAddress: "::ffff:172.18.0.1" };
+        const ip = extractClientIp(mockRequest as Request);
+        expect(ip).toBe("::ffff:172.18.0.1");
+      });
+
+      it("should accept compressed IPv6 addresses", () => {
+        mockRequest.socket = { remoteAddress: "2001:db8::1" };
+        const ip = extractClientIp(mockRequest as Request);
+        expect(ip).toBe("2001:db8::1");
+      });
+
       it("should fallback to req.ip when socket.remoteAddress is undefined", () => {
         mockRequest.socket = undefined;
         mockRequest.ip = "10.0.0.1";
