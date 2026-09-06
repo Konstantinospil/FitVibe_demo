@@ -332,6 +332,9 @@ describe("db utils scripts", () => {
           exercise_types: 24,
           exercises: 300,
           badge_catalog: 36,
+          bio_attributes: 11,
+          perf_attributes: 12,
+          translations: 1,
         };
         (mockDb as jest.Mock).mockImplementation((table: string) => {
           callCount++;
@@ -362,7 +365,9 @@ describe("db utils scripts", () => {
         expect(logger.info).toHaveBeenCalledWith("[db] Verified exercise_types: 24 rows");
         expect(logger.info).toHaveBeenCalledWith("[db] Verified exercises: 300 rows");
         expect(logger.info).toHaveBeenCalledWith("[db] Verified badge_catalog: 36 rows");
-        expect(logger.info).toHaveBeenCalledWith("[db] Seeds completed and verified.");
+        expect(logger.info).toHaveBeenCalledWith(
+          "[db] Production-safe seeds completed and verified.",
+        );
         expect(mockDb.destroy).toHaveBeenCalled();
       });
 
@@ -391,7 +396,7 @@ describe("db utils scripts", () => {
 
         await seedAll();
 
-        expect(logger.info).toHaveBeenCalledWith("[db] No new seeds to apply.");
+        expect(logger.info).toHaveBeenCalledWith("[db] No seed files were applied.");
         expect(mockDb.destroy).toHaveBeenCalled();
       });
 
@@ -433,40 +438,25 @@ describe("db utils scripts", () => {
         expect(mockDb.destroy).toHaveBeenCalled();
       });
 
-      it("skips verification for tables that don't exist", async () => {
-        const { logger } = await import("../../../../apps/backend/src/config/logger.js");
+      it("throws when a required seed table does not exist", async () => {
         const mockSeedFiles = ["001_roles.ts"];
         (mockDb.seed.run as jest.Mock).mockResolvedValue([mockSeedFiles]);
         (mockDb.schema.hasTable as jest.Mock)
-          .mockResolvedValueOnce(true) // roles exists
-          .mockResolvedValueOnce(false) // genders doesn't exist - should skip
-          .mockResolvedValueOnce(true) // fitness_levels exists
-          .mockResolvedValueOnce(true); // exercise_types exists
+          .mockResolvedValueOnce(true)
+          .mockResolvedValueOnce(false);
 
-        // Setup count for tables that exist (genders won't be called since it doesn't exist)
-        const tableCounts = {
-          roles: 4,
-          fitness_levels: 5,
-          exercise_types: 24,
-          exercises: 300,
-          badge_catalog: 36,
-        };
-        (mockDb as jest.Mock).mockImplementation((table: string) => {
-          const expectedCount = tableCounts[table as keyof typeof tableCounts] ?? 10;
-          return {
-            count: jest.fn().mockReturnValue({
-              first: jest.fn().mockResolvedValue({ count: String(expectedCount) }),
-            }),
-          };
-        });
+        (mockDb as jest.Mock).mockImplementation((table: string) => ({
+          count: jest.fn().mockReturnValue({
+            first: jest.fn().mockResolvedValue({ count: table === "roles" ? "4" : "10" }),
+          }),
+        }));
 
-        await seedAll();
+        await expect(seedAll()).rejects.toThrow(
+          "Seed verification failed: required table genders is missing",
+        );
 
-        // Should verify roles but skip genders
         expect(mockDb.schema.hasTable).toHaveBeenCalledWith("roles");
         expect(mockDb.schema.hasTable).toHaveBeenCalledWith("genders");
-        // genders verification should be skipped (no count call for non-existent table)
-        expect(logger.info).toHaveBeenCalledWith("[db] Verified roles: 4 rows");
         expect(mockDb.destroy).toHaveBeenCalled();
       });
 

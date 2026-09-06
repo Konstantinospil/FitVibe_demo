@@ -102,11 +102,13 @@ async function verify(): Promise<void> {
 
     const admin = await db("users")
       .where({ id: ADMIN_ID, role_code: "admin", status: "active" })
-      .first();
-    const adminProfile = await db("profiles").where({ user_id: ADMIN_ID, alias: "admin" }).first();
+      .first<{ id: string }>();
+    const adminProfile = await db("profiles")
+      .where({ user_id: ADMIN_ID, alias: "admin" })
+      .first<{ user_id: string }>();
     const adminContact = await db("user_contacts")
       .where({ user_id: ADMIN_ID, type: "email", is_primary: true, is_verified: true })
-      .first();
+      .first<{ id: string }>();
 
     if (!admin || !adminProfile || !adminContact) {
       throw new Error("Bootstrap administrator is missing or incomplete");
