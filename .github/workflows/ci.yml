@@ -1689,6 +1689,27 @@ jobs:
           echo "backend=${backend}" >> "$GITHUB_OUTPUT"
           echo "frontend=${frontend}" >> "$GITHUB_OUTPUT"
 
+      - name: Determine release eligibility
+        id: release_guard
+        timeout-minutes: 2
+        run: |
+          set -euo pipefail
+
+          if [ "${GITHUB_REF}" != "refs/heads/main" ]; then
+            echo "should_release=false" >> "$GITHUB_OUTPUT"
+            echo "Semantic version tags are only published from main."
+            exit 0
+          fi
+
+          tag="v${{ steps.versions.outputs.backend }}"
+          if git ls-remote --exit-code --tags origin "refs/tags/${tag}" >/dev/null 2>&1; then
+            echo "should_release=false" >> "$GITHUB_OUTPUT"
+            echo "Release tag ${tag} already exists; keeping it immutable."
+          else
+            echo "should_release=true" >> "$GITHUB_OUTPUT"
+            echo "Release tag ${tag} does not exist; this build may publish it."
+          fi
+
       - name: Download backend digests
         uses: actions/download-artifact@v8
         with:
@@ -1737,14 +1758,20 @@ jobs:
             frontend_refs="${frontend_refs} ${FRONTEND_IMAGE}@sha256:$(basename "${digest_file}")"
           done
 
+          backend_tags=(-t "${BACKEND_IMAGE}:sha-${GITHUB_SHA}")
+          frontend_tags=(-t "${FRONTEND_IMAGE}:sha-${GITHUB_SHA}")
+
+          if [ "${{ steps.release_guard.outputs.should_release }}" = "true" ]; then
+            backend_tags+=(-t "${BACKEND_IMAGE}:v${{ steps.versions.outputs.backend }}")
+            frontend_tags+=(-t "${FRONTEND_IMAGE}:v${{ steps.versions.outputs.frontend }}")
+          fi
+
           docker buildx imagetools create \
-            -t "${BACKEND_IMAGE}:sha-${GITHUB_SHA}" \
-            -t "${BACKEND_IMAGE}:v${{ steps.versions.outputs.backend }}" \
+            "${backend_tags[@]}" \
             ${backend_refs}
 
           docker buildx imagetools create \
-            -t "${FRONTEND_IMAGE}:sha-${GITHUB_SHA}" \
-            -t "${FRONTEND_IMAGE}:v${{ steps.versions.outputs.frontend }}" \
+            "${frontend_tags[@]}" \
             ${frontend_refs}
 
           backend_digest=$(docker buildx imagetools inspect "${BACKEND_IMAGE}:sha-${GITHUB_SHA}" | awk '/^Digest:/ && !digest {digest=$2} END {print digest}')
@@ -1805,11 +1832,11 @@ jobs:
             sbom-frontend.spdx.json
             image-digests.txt
             artifacts/openapi/openapi.json
-          retention-days: 365
+          retention-days: 90
           if-no-files-found: error
 
       - name: Create Release
-        if: github.ref == 'refs/heads/main'
+        if: github.ref == 'refs/heads/main' && steps.release_guard.outputs.should_release == 'true'
         id: create_release
         timeout-minutes: 5
         uses: ncipollo/release-action@v1
