@@ -27,20 +27,8 @@ COPY --from=builder /app/backend-deploy/ ./
 # Override package.json with backend's version (which has type: commonjs)
 COPY --from=builder /app/apps/backend/package.json ./package.json
 
-# Copy workspace files needed for pnpm to resolve the glob override
-COPY --from=builder /app/pnpm-workspace.yaml ./pnpm-workspace.yaml
-COPY --from=builder /app/pnpm-lock.yaml ./pnpm-lock.yaml
-
-# Install production dependencies
-# Note: Use --no-frozen-lockfile to allow override resolution
-RUN corepack enable && corepack prepare pnpm@10.34.5 --activate && \
-    # Install all production dependencies (pnpm overrides should handle glob via link:packages/patched-glob)
-    pnpm install --prod --no-frozen-lockfile --no-optional || \
-    npm install --production --no-optional || true && \
-    # Ensure minimatch is available (required by glob/patched-glob)
-    if [ ! -d node_modules/.pnpm/minimatch* ] && [ ! -d node_modules/minimatch ]; then \
-      npm install minimatch@^9.0.4 --save-prod || true; \
-    fi
+# Fail during image build if the deployed production dependency graph is incomplete.
+RUN node -e "require('archiver'); console.log('archiver runtime dependencies OK')"
 
 RUN addgroup -S nodeapp && adduser -S nodeapp -G nodeapp
 USER nodeapp
