@@ -92,9 +92,11 @@ function currentSessionId(req: Request): string | null {
 }
 
 function buildAuthContext(req: Request, res: Response): LoginContext {
+  const clientIp = extractClientIp(req);
   return {
     userAgent: req.get("user-agent") ?? null,
-    ip: extractClientIp(req),
+    // PostgreSQL inet columns accept real IP addresses or NULL, never sentinel strings.
+    ip: clientIp === "unknown" ? null : clientIp,
     requestId: req.requestId ?? res.locals.requestId ?? null,
   };
 }
