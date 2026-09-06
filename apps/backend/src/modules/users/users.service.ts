@@ -411,6 +411,11 @@ export async function updateProfile(userId: string, dto: UpdateProfileDTO): Prom
     };
   }
 
+  const profileBeforeUpdate = await getProfileByUserId(userId);
+  if (dto.bio !== undefined && dto.bio !== (profileBeforeUpdate?.bio ?? "")) {
+    changes.bio = { old: profileBeforeUpdate?.bio ?? null, next: dto.bio };
+  }
+
   // Handle alias update
   if (dto.alias !== undefined) {
     const normalizedAlias = dto.alias.trim();
@@ -504,6 +509,13 @@ export async function updateProfile(userId: string, dto: UpdateProfileDTO): Prom
     // Update user profile fields
     if (Object.keys(patch).length > 0) {
       await updateUserProfile(userId, patch, trx);
+    }
+
+    if (dto.bio !== undefined) {
+      await db("profiles").where({ user_id: userId }).update({
+        bio: dto.bio,
+        updated_at: new Date().toISOString(),
+      });
     }
 
     // Update alias in profiles table
