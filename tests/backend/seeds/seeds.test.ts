@@ -335,11 +335,9 @@ describeWithTestDatabase("database seeds", () => {
 
     describe("users seed", () => {
       const ADMIN_ID = "11111111-1111-1111-1111-111111111111";
-      const ATHLETE_ID = "22222222-2222-2222-2222-222222222222";
-
-      it("inserts demo user records", async () => {
+      it("inserts only the bootstrap administrator", async () => {
         const users = await client("users").select("*");
-        expect(users.length).toBeGreaterThanOrEqual(2);
+        expect(users).toHaveLength(1);
       });
 
       it("inserts admin user", async () => {
@@ -350,18 +348,10 @@ describeWithTestDatabase("database seeds", () => {
         expect(admin.status).toBe("active");
       });
 
-      it("inserts athlete user", async () => {
-        const athlete = await client("users").where({ id: ATHLETE_ID }).first();
-        expect(athlete).toBeDefined();
-        expect(athlete.display_name).toBe("Jane Doe");
-        expect(athlete.role_code).toBe("athlete");
-        expect(athlete.status).toBe("active");
-      });
-
       it("hashes passwords for demo users", async () => {
         const admin = await client("users").where({ id: ADMIN_ID }).first();
         expect(admin.password_hash).toBeDefined();
-        expect(admin.password_hash).not.toBe("Admin123!");
+        expect(admin.password_hash).not.toBe("admin");
         expect(admin.password_hash.startsWith("$2")).toBe(true); // bcrypt format
       });
 
@@ -387,22 +377,12 @@ describeWithTestDatabase("database seeds", () => {
         expect(adminContact.value).toBe("admin@fitvibe.local");
         expect(adminContact.is_verified).toBe(true);
 
-        const athleteContact = await client("user_contacts")
-          .where({ user_id: ATHLETE_ID, type: "email" })
-          .first();
-        expect(athleteContact).toBeDefined();
-        expect(athleteContact.value).toBe("jane.doe@example.com");
-        expect(athleteContact.is_verified).toBe(true);
       });
 
       it("inserts private profiles for seed users", async () => {
         const adminProfile = await client("profiles").where({ user_id: ADMIN_ID }).first();
         expect(adminProfile.alias).toBe("admin");
         expect(adminProfile.visibility).toBe("private");
-
-        const athleteProfile = await client("profiles").where({ user_id: ATHLETE_ID }).first();
-        expect(athleteProfile.alias).toBe("jane.doe");
-        expect(athleteProfile.visibility).toBe("private");
       });
 
       it("inserts six starting vibe rows per seed user", async () => {
@@ -414,17 +394,15 @@ describeWithTestDatabase("database seeds", () => {
           "intelligence",
           "regeneration",
         ];
-        for (const userId of [ADMIN_ID, ATHLETE_ID]) {
-          const rows = await client("user_domain_vibe_levels").where({ user_id: userId });
-          expect(rows).toHaveLength(6);
-          expect(rows.map((row: { domain_code: string }) => row.domain_code).sort()).toEqual(
-            [...expected].sort(),
-          );
-          for (const row of rows) {
-            expect(Number(row.vibe_level)).toBe(1000);
-            expect(Number(row.rating_deviation)).toBe(350);
-            expect(Number(row.volatility)).toBeCloseTo(0.06);
-          }
+        const rows = await client("user_domain_vibe_levels").where({ user_id: ADMIN_ID });
+        expect(rows).toHaveLength(6);
+        expect(rows.map((row: { domain_code: string }) => row.domain_code).sort()).toEqual(
+          [...expected].sort(),
+        );
+        for (const row of rows) {
+          expect(Number(row.vibe_level)).toBe(1000);
+          expect(Number(row.rating_deviation)).toBe(350);
+          expect(Number(row.volatility)).toBeCloseTo(0.06);
         }
       });
     });
