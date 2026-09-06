@@ -27,8 +27,7 @@ function ensureSecret(req: CsrfRequest, res: Response): string {
   }
 
   const cookieName = getCsrfCookieName();
-  const existing =
-    typeof req.cookies?.[cookieName] === "string" ? req.cookies[cookieName] : null;
+  const existing = typeof req.cookies?.[cookieName] === "string" ? req.cookies[cookieName] : null;
   const secret = existing || tokens.secretSync();
 
   if (!existing) {

@@ -30,6 +30,9 @@ const loginUserBody = (user = TEST_USER) => ({
 });
 
 async function installCommonMocks(page) {
+  await page.route("**/api/v1/csrf-token", async (route) => {
+    await route.fulfill(jsonResponse({ csrfToken: "test-csrf-token" }));
+  });
   await page.route("**/health", async (route) => {
     await route.fulfill(jsonResponse({ status: "ok" }));
   });
