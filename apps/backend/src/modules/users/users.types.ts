@@ -68,6 +68,7 @@ export interface UpdatePrivacyDTO {
 export interface UpdateProfileDTO {
   username?: string;
   displayName?: string;
+  bio?: string;
   locale?: string;
   preferredLang?: string;
   defaultVisibility?: string;
