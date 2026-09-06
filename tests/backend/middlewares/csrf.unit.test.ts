@@ -4,6 +4,7 @@ import { z } from "zod";
 jest.mock("../../../apps/backend/src/config/env.js", () => ({
   env: {
     isProduction: false,
+    COOKIE_SECURE: false,
     csrf: {
       cookieKey: Buffer.alloc(32, 1),
     },
@@ -37,7 +38,7 @@ describe("csrf middleware internals", () => {
     csrfTokenRoute(req, res);
 
     expect(res.cookie).toHaveBeenCalledWith(
-      "__Host-fitvibe-csrf",
+      "fitvibe-csrf",
       expect.any(String),
       expect.objectContaining({ httpOnly: true, sameSite: "lax", path: "/" }),
     );
