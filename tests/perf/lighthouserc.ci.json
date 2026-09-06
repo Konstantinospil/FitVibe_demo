@@ -2,7 +2,7 @@
   "ci": {
     "collect": {
       "url": ["http://127.0.0.1:4173/login"],
-      "numberOfRuns": 1,
+      "numberOfRuns": 3,
       "chromeFlags": [
         "--no-sandbox",
         "--disable-setuid-sandbox",
