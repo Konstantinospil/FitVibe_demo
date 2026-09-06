@@ -1693,7 +1693,7 @@ export interface ChangePasswordRequest {
 }
 
 export async function changePassword(payload: ChangePasswordRequest): Promise<void> {
-  await apiClient.patch("/api/v1/users/me/password", payload);
+  await apiClient.post("/api/v1/users/change-password", payload);
 }
 
 export interface PrivacySettings {
