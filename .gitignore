@@ -136,6 +136,7 @@ docs/6.Implementation/*
 # --- Cursor IDE configuration (personal, not part of the app) ---
 .cursor/
 .cursorrules
+.cursorignore
 
 # --- Misc ---
 # Keep Husky hooks committed; do NOT ignore .husky/
