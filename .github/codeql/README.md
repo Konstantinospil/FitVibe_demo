@@ -4,38 +4,57 @@ This directory contains the advanced CodeQL configuration for FitVibe security s
 
 ## Configuration
 
-The `codeql-config.yml` file:
+The `codeql-config.yml` file is the authoritative CodeQL analysis configuration. It:
 
-- Uses `security-and-quality` query suite
-- Suppresses known false positives (CSRF middleware, rate limiting)
-- Excludes test files and config files from security scans
+- Uses the `security-and-quality` query suite.
+- Suppresses reviewed false positives for CSRF middleware and rate limiting.
+- Excludes test files and selected config files from security scans.
 
-## Important: Repository Settings
+The workflow does not repeat the query-suite selection; it references this file with
+`config-file: ./.github/codeql/codeql-config.yml`.
 
-**⚠️ CRITICAL**: The default CodeQL setup must be **disabled** in GitHub repository settings when using this advanced configuration.
+## Repository Settings
 
-### To Fix "CodeQL analyses from advanced configurations cannot be processed" Error:
+GitHub CodeQL **Default setup must be disabled** while this repository uses the advanced workflow.
 
-1. Go to repository **Settings** → **Code security and analysis**
-2. Find **CodeQL analysis** section
-3. Click **Disable** to turn off the default setup
-4. Ensure your workflows use the advanced configuration (see below)
+In GitHub:
 
-## Workflows Using This Config
+1. Open **Settings** → **Code security and analysis**.
+2. Find **CodeQL analysis**.
+3. Disable **Default setup**.
 
-Both workflows use the same advanced configuration:
+This prevents default and advanced CodeQL configurations from overlapping.
 
-- `.github/workflows/ci.yml` - CodeQL job in CI pipeline
-- `.github/workflows/security-scan.yml` - Scheduled security scans
+## Workflow
 
-Both must use `config-file: ./.github/codeql/codeql-config.yml` in the `github/codeql-action/init` step.
+The single authoritative CodeQL workflow is:
+
+- `.github/workflows/security-scan.yml`
+
+CodeQL is intentionally separate from `.github/workflows/ci.yml`.
+
+The workflow analyzes these supported languages independently through a matrix:
+
+- JavaScript / TypeScript: `javascript-typescript`
+- Python: `python`
+- GitHub Actions workflows: `actions`
+
+It runs on:
+
+- Pushes to `main`, `dev`, and `stage`.
+- Pull requests targeting `main`, `dev`, and `stage`.
+- A weekly scheduled scan on Monday at 03:00 UTC.
+- Manual `workflow_dispatch` runs.
+
+The scheduled scan is retained so newly added CodeQL queries can detect issues even when
+the repository source has not changed.
 
 ## Query Filters
 
 ### Suppressed False Positives
 
-1. **js/missing-csrf-middleware**: CSRF is applied globally in `app.ts` after cookieParser
-2. **js/missing-rate-limiting**: Global rate limiting is applied in `app.ts` (line 83)
+1. **js/missing-csrf-middleware**: CSRF is applied globally in `app.ts` after `cookieParser`.
+2. **js/missing-rate-limiting**: Global rate limiting is applied in `app.ts`.
 
 ### Excluded Paths
 
@@ -47,14 +66,17 @@ The following paths are excluded from CodeQL analysis:
 
 ## Troubleshooting
 
-### Error: "CodeQL analyses from advanced configurations cannot be processed when the default setup is enabled"
+### "CodeQL analyses from advanced configurations cannot be processed when the default setup is enabled"
 
-**Solution**: Disable the default CodeQL setup in repository Settings → Code security and analysis.
+Disable GitHub CodeQL Default setup under **Settings** → **Code security and analysis**.
 
-### Error: "Could not process some files due to syntax errors"
+### A language is not being analyzed
 
-Check the CodeQL logs for specific file paths. Common causes:
+Check the `strategy.matrix.language` values in `.github/workflows/security-scan.yml`.
+The current intended set is `javascript-typescript`, `python`, and `actions`.
 
-- Syntax errors in JavaScript/TypeScript files
-- Unsupported language features
-- Files that should be excluded (add to `paths-ignore` if appropriate)
+### Syntax or extraction errors
+
+Inspect the failed matrix job for the affected language. If a file should not be analyzed,
+add a narrowly scoped exclusion to `codeql-config.yml` rather than duplicating configuration
+inside the workflow.
