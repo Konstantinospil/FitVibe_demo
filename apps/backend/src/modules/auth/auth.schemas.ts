@@ -42,7 +42,9 @@ export const RegisterSchema = z
   });
 
 export const LoginSchema = z.object({
-  email: z.string().email(),
+  // Field name stays "email" for API compatibility, but login accepts either
+  // the primary email address or the profile alias (for example "admin").
+  email: z.string().trim().min(1).max(254),
   password: z.string().min(1),
 });
 

@@ -440,7 +440,7 @@ export async function login(
   // Start timing for enumeration protection (AC-1.12)
   const startTime = Date.now();
 
-  const identifier = dto.email.toLowerCase();
+  const identifier = dto.email.trim().toLowerCase();
   const ipAddress = context.ip ?? "unknown";
   const userAgent = sanitizeUserAgent(context.userAgent);
 
@@ -501,7 +501,9 @@ export async function login(
       );
     }
 
-    const user = await findUserByEmail(identifier);
+    const user = identifier.includes("@")
+      ? await findUserByEmail(identifier)
+      : await findUserByUsername(identifier);
     if (!user || user.status !== "active") {
       await bcrypt.compare(dto.password, DUMMY_PASSWORD_HASH);
 

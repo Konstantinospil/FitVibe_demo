@@ -198,13 +198,13 @@ const LoginFormContent: React.FC = () => {
         <span className="form-label-text">{t("auth.login.emailLabel")}</span>
         <input
           name="email"
-          type="email"
+          type="text"
           placeholder={t("auth.placeholders.email")}
           className="form-input"
           required
           value={email}
           onChange={(event) => setEmail(event.target.value)}
-          autoComplete="email"
+          autoComplete="username"
           disabled={isSubmitting || Boolean(lockout)}
         />
       </label>
