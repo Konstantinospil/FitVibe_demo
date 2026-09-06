@@ -360,7 +360,7 @@ const schemas = {
   LoginRequest: {
     type: "object",
     properties: {
-      email: { type: "string", format: "email" },
+      email: { type: "string", minLength: 1, maxLength: 254 },
       password: { type: "string", minLength: 1 },
     },
     required: ["email", "password"],

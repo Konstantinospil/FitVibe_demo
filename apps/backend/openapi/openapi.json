@@ -820,7 +820,8 @@
         "properties": {
           "email": {
             "type": "string",
-            "format": "email"
+            "minLength": 1,
+            "maxLength": 254
           },
           "password": {
             "type": "string",
