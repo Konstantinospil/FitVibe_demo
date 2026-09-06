@@ -43,7 +43,8 @@ jobs:
     steps:
       - name: Resolve CI run
         id: resolve
-        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9with:
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9
+        with:
           script: |
             const owner = context.repo.owner;
             const repo = context.repo.repo;
@@ -123,7 +124,8 @@ jobs:
       actions: read
     steps:
       - name: Download container artifacts from CI
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8with:
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        with:
           name: container-artifacts-${{ needs.resolve_ci.outputs.run_id }}
           path: artifacts
           run-id: ${{ needs.resolve_ci.outputs.run_id }}
@@ -173,7 +175,9 @@ jobs:
           echo "deploy_sha=${{ needs.resolve_ci.outputs.head_sha }}" >> "${GITHUB_OUTPUT}"
 
       - name: Install cosign
-        uses: sigstore/cosign-installer@398d4b0eeef1380460a10c8013a76f728fb906ac # v3- name: Verify backend signature
+        uses: sigstore/cosign-installer@398d4b0eeef1380460a10c8013a76f728fb906ac # v3
+
+      - name: Verify backend signature
         run: >
           cosign verify
           --certificate-identity "https://github.com/${{ github.repository }}/.github/workflows/ci.yml@refs/heads/main"
@@ -188,14 +192,16 @@ jobs:
           ${{ steps.deployment.outputs.frontend_image }}
 
       - name: Connect runner to Tailscale
-        uses: tailscale/github-action@306e68a486fd2350f2bfc3b19fcd143891a4a2d8 # v4with:
+        uses: tailscale/github-action@306e68a486fd2350f2bfc3b19fcd143891a4a2d8 # v4
+        with:
           oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
           oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
           tags: tag:ci
           ping: ${{ secrets.PROD_HOST }}
 
       - name: Deploy to production host
-        uses: appleboy/ssh-action@0ff4204d59e8e51228ff73bce53f80d53301dee2 # v1.2.5with:
+        uses: appleboy/ssh-action@0ff4204d59e8e51228ff73bce53f80d53301dee2 # v1.2.5
+        with:
           host: ${{ secrets.PROD_HOST }}
           username: ${{ secrets.PROD_USER }}
           key: ${{ secrets.SSH_KEY }}
