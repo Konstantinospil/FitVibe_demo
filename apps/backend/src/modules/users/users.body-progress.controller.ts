@@ -68,10 +68,7 @@ export async function addBodyWeightHandler(req: Request, res: Response): Promise
   res.status(201).json(entry);
 }
 
-export async function uploadBodyProgressPhotoHandler(
-  req: Request,
-  res: Response,
-): Promise<void> {
+export async function uploadBodyProgressPhotoHandler(req: Request, res: Response): Promise<void> {
   const userId = req.user?.sub;
   if (!userId) {
     res.status(401).json({ error: "Unauthorized" });
@@ -147,10 +144,7 @@ export async function getBodyProgressPhotoHandler(req: Request, res: Response): 
   }
 }
 
-export async function deleteBodyProgressPhotoHandler(
-  req: Request,
-  res: Response,
-): Promise<void> {
+export async function deleteBodyProgressPhotoHandler(req: Request, res: Response): Promise<void> {
   const userId = req.user?.sub;
   if (!userId) {
     res.status(401).json({ error: "Unauthorized" });
