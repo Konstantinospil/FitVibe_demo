@@ -393,7 +393,6 @@ export async function updateProfile(payload: UpdateProfileRequest): Promise<User
   };
 }
 
-
 export interface BodyWeightEntry {
   id: string;
   weightKg: number;
