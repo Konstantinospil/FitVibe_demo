@@ -66,18 +66,52 @@ jobs:
             --project="ui:light:md" \
             --update-snapshots=changed
 
-      - name: Commit refreshed Linux baselines
+      - name: Commit refreshed Linux baselines via GitHub API
         shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          cd /__w/FitVibe_demo/FitVibe_demo
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add \
-            tests/frontend/visual/pages/logger.spec.ts-snapshots/logger-ui-light-sm-linux.png \
-            tests/frontend/visual/pages/logger.spec.ts-snapshots/logger-ui-light-md-linux.png
-          if git diff --cached --quiet; then
-            echo "No baseline changes produced"
-            exit 0
-          fi
-          git commit -m "test(visual): refresh Logger Linux baselines for Playwright 1.63"
-          git push origin HEAD:dev
+          node --input-type=module <<'NODE'
+          import { readFile } from "node:fs/promises";
+
+          const repo = process.env.GITHUB_REPOSITORY;
+          const token = process.env.GH_TOKEN;
+          const branch = "dev";
+          const files = [
+            "tests/frontend/visual/pages/logger.spec.ts-snapshots/logger-ui-light-sm-linux.png",
+            "tests/frontend/visual/pages/logger.spec.ts-snapshots/logger-ui-light-md-linux.png",
+          ];
+
+          const headers = {
+            Accept: "application/vnd.github+json",
+            Authorization: `Bearer ${token}`,
+            "X-GitHub-Api-Version": "2022-11-28",
+            "Content-Type": "application/json",
+          };
+
+          for (const path of files) {
+            const getUrl = `https://api.github.com/repos/${repo}/contents/${path}?ref=${branch}`;
+            const current = await fetch(getUrl, { headers });
+            if (!current.ok) {
+              throw new Error(`Failed to read ${path}: ${current.status} ${await current.text()}`);
+            }
+            const { sha } = await current.json();
+            const content = (await readFile(path)).toString("base64");
+
+            const put = await fetch(`https://api.github.com/repos/${repo}/contents/${path}`, {
+              method: "PUT",
+              headers,
+              body: JSON.stringify({
+                message: "test(visual): refresh Logger Linux baseline for Playwright 1.63",
+                content,
+                sha,
+                branch,
+              }),
+            });
+            if (!put.ok) {
+              throw new Error(`Failed to update ${path}: ${put.status} ${await put.text()}`);
+            }
+            const result = await put.json();
+            console.log(`Updated ${path} in commit ${result.commit.sha}`);
+          }
+          NODE
