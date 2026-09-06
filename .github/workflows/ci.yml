@@ -1747,8 +1747,8 @@ jobs:
             -t "${FRONTEND_IMAGE}:v${{ steps.versions.outputs.frontend }}" \
             ${frontend_refs}
 
-          backend_digest=$(docker buildx imagetools inspect "${BACKEND_IMAGE}:sha-${GITHUB_SHA}" | awk '/^Digest:/{print $2; exit}')
-          frontend_digest=$(docker buildx imagetools inspect "${FRONTEND_IMAGE}:sha-${GITHUB_SHA}" | awk '/^Digest:/{print $2; exit}')
+          backend_digest=$(docker buildx imagetools inspect "${BACKEND_IMAGE}:sha-${GITHUB_SHA}" | awk '/^Digest:/ && !digest {digest=$2} END {print digest}')
+          frontend_digest=$(docker buildx imagetools inspect "${FRONTEND_IMAGE}:sha-${GITHUB_SHA}" | awk '/^Digest:/ && !digest {digest=$2} END {print digest}')
 
           if [ -z "${backend_digest}" ] || [ -z "${frontend_digest}" ]; then
             echo "Failed to resolve merged image digests" >&2
