@@ -2,17 +2,25 @@ import { render } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { vi } from "vitest";
 import Settings from "../../src/pages/Settings";
-import { useAuthStore } from "../../src/store/auth.store";
 import {
+  addBodyWeight,
   apiClient,
-  setup2FA,
-  verify2FA,
+  changePassword,
+  deleteAccount,
+  deleteBodyProgressPhoto,
   disable2FA,
-  get2FAStatus,
-  listAuthSessions,
-  getPrivacySettings,
-  updatePrivacySettings,
   exportUserData,
+  get2FAStatus,
+  getBodyProgress,
+  getCurrentUser,
+  getPrivacySettings,
+  listAuthSessions,
+  revokeAuthSessions,
+  setup2FA,
+  updatePrivacySettings,
+  updateProfile,
+  uploadBodyProgressPhoto,
+  verify2FA,
 } from "../../src/services/api";
 import { ToastProvider } from "../../src/contexts/ToastContext";
 import { I18nextProvider, initReactI18next } from "react-i18next";
@@ -22,62 +30,60 @@ import { createTestQueryClient } from "../helpers/testQueryClient";
 import enCommon from "../../src/i18n/locales/en/common.json";
 import enAuth from "../../src/i18n/locales/en/auth.json";
 
-// Mock auth store
-vi.mock("../../src/store/auth.store", () => ({
-  useAuthStore: vi.fn(),
-}));
-
-// Mock API client
 vi.mock("../../src/services/api", () => ({
   apiClient: {
     get: vi.fn(),
     patch: vi.fn(),
     post: vi.fn(),
     delete: vi.fn(),
-    defaults: {
-      baseURL: "http://localhost:3000",
-    },
+    defaults: { baseURL: "http://localhost:3000" },
   },
+  getCurrentUser: vi.fn(),
+  updateProfile: vi.fn(),
+  changePassword: vi.fn(),
   setup2FA: vi.fn(),
   verify2FA: vi.fn(),
   disable2FA: vi.fn(),
   get2FAStatus: vi.fn(),
   listAuthSessions: vi.fn(),
+  revokeAuthSessions: vi.fn(),
   getPrivacySettings: vi.fn(),
   updatePrivacySettings: vi.fn(),
   exportUserData: vi.fn(),
+  deleteAccount: vi.fn(),
+  getBodyProgress: vi.fn(),
+  addBodyWeight: vi.fn(),
+  uploadBodyProgressPhoto: vi.fn(),
+  deleteBodyProgressPhoto: vi.fn(),
 }));
 
-// Mock navigate
 export const mockNavigate = vi.fn();
 vi.mock("react-router-dom", async () => {
   const actual = await vi.importActual("react-router-dom");
-  return {
-    ...actual,
-    useNavigate: () => mockNavigate,
-  };
+  return { ...actual, useNavigate: () => mockNavigate };
 });
 
 export const mockUserData = {
   id: "user-1",
-  email: "user@example.com",
   username: "testuser",
-  roleCode: "athlete",
+  displayName: "Test User",
+  email: "user@example.com",
+  alias: "testalias",
+  bio: "Training consistently",
+  avatarUrl: null,
+  weight: 75.5,
+  weightUnit: "kg",
+  fitnessLevel: "intermediate",
+  trainingFrequency: "3_4_per_week",
+  locale: "en",
+  preferredLang: "en",
+  defaultVisibility: "private",
+  units: "metric",
+  role: "athlete",
   status: "active",
-  profile: {
-    alias: "testalias",
-    bio: null,
-    weight: 75.5,
-    weightUnit: "kg",
-    fitnessLevel: "intermediate",
-    trainingFrequency: "3_4_per_week",
-  },
 };
 
-export const mockSignOut = vi.fn();
-
 const enResources = { ...enCommon, ...enAuth };
-
 const testI18n = i18n.createInstance();
 void testI18n.use(initReactI18next).init({
   lng: "en",
@@ -85,20 +91,14 @@ void testI18n.use(initReactI18next).init({
   defaultNS: "translation",
   fallbackNS: "common",
   ns: ["translation", "common"],
-  resources: {
-    en: {
-      translation: enResources,
-      common: enResources,
-    },
-  },
+  resources: { en: { translation: enResources, common: enResources } },
   interpolation: { escapeValue: false },
   react: { useSuspense: false },
 });
 
-// Helper to render Settings with all required providers
 export const renderSettings = () => {
   const queryClient = createTestQueryClient();
-  const result = render(
+  return render(
     <QueryClientProvider client={queryClient}>
       <I18nextProvider i18n={testI18n}>
         <ToastProvider>
@@ -109,53 +109,26 @@ export const renderSettings = () => {
       </I18nextProvider>
     </QueryClientProvider>,
   );
-  // Store queryClient on result for cleanup if needed
-  (result as any).queryClient = queryClient;
-  return result;
 };
 
-// Setup function for tests
 export const setupSettingsTests = () => {
-  const mockGet = vi.mocked(apiClient.get);
-  const mockPatch = vi.mocked(apiClient.patch);
-  const mockPost = vi.mocked(apiClient.post);
-  const mockDelete = vi.mocked(apiClient.delete);
-
   vi.clearAllMocks();
   mockNavigate.mockClear();
 
-  vi.mocked(useAuthStore).mockReturnValue({
-    isAuthenticated: true,
-    user: {
-      id: "user-1",
-      username: "testuser",
-      email: "user@example.com",
-      role: "athlete",
-      isVerified: true,
-      createdAt: new Date().toISOString(),
-    },
-    signIn: vi.fn(),
-    signOut: mockSignOut,
-    updateUser: vi.fn(),
-  });
-
-  mockGet.mockResolvedValue({ data: mockUserData });
-  mockPatch.mockResolvedValue({ data: {} });
-  mockPost.mockResolvedValue({ data: {} });
-  mockDelete.mockResolvedValue({ data: {} });
+  vi.mocked(getCurrentUser).mockResolvedValue(mockUserData);
+  vi.mocked(updateProfile).mockImplementation(async (payload) => ({ ...mockUserData, ...payload }));
+  vi.mocked(changePassword).mockResolvedValue(undefined);
   vi.mocked(get2FAStatus).mockResolvedValue({ enabled: false });
   vi.mocked(setup2FA).mockResolvedValue({
     qrCode: "data:image/png;base64,mock-qr-code",
     secret: "mock-secret",
-    backupCodes: ["CODE1", "CODE2", "CODE3", "CODE4", "CODE5"],
+    backupCodes: ["CODE1", "CODE2", "CODE3"],
     message: "2FA setup initiated",
   });
   vi.mocked(verify2FA).mockResolvedValue({ success: true, message: "2FA enabled successfully" });
-  vi.mocked(disable2FA).mockResolvedValue({
-    success: true,
-    message: "2FA disabled successfully",
-  });
+  vi.mocked(disable2FA).mockResolvedValue({ success: true, message: "2FA disabled successfully" });
   vi.mocked(listAuthSessions).mockResolvedValue({ sessions: [] });
+  vi.mocked(revokeAuthSessions).mockResolvedValue({ revoked: 0 });
   vi.mocked(getPrivacySettings).mockResolvedValue({
     defaultVisibility: "private",
     allowFollowers: true,
@@ -163,14 +136,44 @@ export const setupSettingsTests = () => {
     showWeight: false,
     showFitnessLevel: false,
   });
-  vi.mocked(updatePrivacySettings).mockResolvedValue({
-    defaultVisibility: "private",
-    allowFollowers: true,
-    showEmail: false,
-    showWeight: false,
-    showFitnessLevel: false,
-  });
+  vi.mocked(updatePrivacySettings).mockImplementation(async (payload) => ({
+    defaultVisibility: payload.defaultVisibility ?? "private",
+    allowFollowers: payload.allowFollowers ?? true,
+    showEmail: payload.showEmail ?? false,
+    showWeight: payload.showWeight ?? false,
+    showFitnessLevel: payload.showFitnessLevel ?? false,
+  }));
   vi.mocked(exportUserData).mockResolvedValue(new Blob(["export"]));
+  vi.mocked(deleteAccount).mockResolvedValue({
+    status: "pending_deletion",
+    scheduledAt: new Date().toISOString(),
+    purgeDueAt: new Date().toISOString(),
+    backupPurgeDueAt: new Date().toISOString(),
+  });
+  vi.mocked(getBodyProgress).mockResolvedValue({ weights: [], photos: [] });
+  vi.mocked(addBodyWeight).mockResolvedValue({
+    id: "weight-1",
+    weightKg: 80,
+    measuredAt: new Date().toISOString(),
+  });
+  vi.mocked(uploadBodyProgressPhoto).mockResolvedValue({
+    id: "photo-1",
+    fileUrl: "/api/v1/users/me/body-progress/photo/photo-1",
+    mimeType: "image/jpeg",
+    bytes: 1024,
+    createdAt: new Date().toISOString(),
+  });
+  vi.mocked(deleteBodyProgressPhoto).mockResolvedValue(undefined);
 
-  return { mockGet, mockPatch, mockPost, mockDelete };
+  vi.mocked(apiClient.get).mockResolvedValue({ data: mockUserData });
+  vi.mocked(apiClient.patch).mockResolvedValue({ data: mockUserData });
+  vi.mocked(apiClient.post).mockResolvedValue({ data: {} });
+  vi.mocked(apiClient.delete).mockResolvedValue({ data: {} });
+
+  return {
+    mockGet: vi.mocked(apiClient.get),
+    mockPatch: vi.mocked(apiClient.patch),
+    mockPost: vi.mocked(apiClient.post),
+    mockDelete: vi.mocked(apiClient.delete),
+  };
 };
