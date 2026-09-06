@@ -36,6 +36,7 @@ const usernameSchema = z
 const updateProfileSchema = z.object({
   username: usernameSchema.optional(),
   displayName: z.string().min(1).max(120).optional(),
+  bio: z.string().max(500).optional(),
   locale: z.string().max(10).optional(),
   preferredLang: z.string().max(5).optional(),
   alias: z
