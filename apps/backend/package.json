@@ -6,7 +6,7 @@
   "main": "dist/server.js",
   "scripts": {
     "dev": "tsx watch src/server.ts",
-    "build": "tsc -p tsconfig.json",
+    "build": "tsc -p tsconfig.json && node scripts/copy-runtime-assets.mjs",
     "start": "node dist/server.js",
     "lint": "eslint \"src\" \"../../tests/backend\" --max-warnings=0",
     "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.test.json",
