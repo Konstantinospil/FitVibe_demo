@@ -613,6 +613,31 @@ export async function updateProfileAlias(
   });
 }
 
+export async function updateProfileBio(
+  userId: string,
+  bio: string,
+  trx?: Knex.Transaction,
+): Promise<number> {
+  const exec = withDb(trx);
+  const now = new Date().toISOString();
+  const existing = await exec<ProfileRow>(PROFILES_TABLE).where({ user_id: userId }).first();
+
+  if (existing) {
+    return exec(PROFILES_TABLE).where({ user_id: userId }).update({
+      bio,
+      updated_at: now,
+    });
+  }
+
+  return exec(PROFILES_TABLE).insert({
+    user_id: userId,
+    bio,
+    visibility: "private",
+    created_at: now,
+    updated_at: now,
+  });
+}
+
 /**
  * Check if user can change alias (rate limiting: max 1 per 30 days)
  * @returns true if alias change is allowed, false if rate limited
