@@ -481,6 +481,7 @@ const schemas = {
     properties: {
       username: { type: "string", minLength: 3, maxLength: 50 },
       displayName: { type: "string", minLength: 1, maxLength: 120 },
+      bio: { type: "string", maxLength: 500 },
       locale: { type: "string", maxLength: 10 },
       preferredLang: { type: "string", maxLength: 5 },
       alias: { type: "string", minLength: 3, maxLength: 50 },
