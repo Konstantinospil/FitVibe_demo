@@ -19,6 +19,7 @@ import {
   getProfileByUserId,
   checkAliasAvailable,
   updateProfileAlias,
+  updateProfileBio,
   canChangeAlias,
   insertUserMetric,
   getLatestUserMetrics,
@@ -412,9 +413,11 @@ export async function updateProfile(userId: string, dto: UpdateProfileDTO): Prom
   }
 
   if (dto.bio !== undefined) {
-    const profileBeforeUpdate = await getProfileByUserId(userId);
-    if (dto.bio !== (profileBeforeUpdate?.bio ?? "")) {
-      changes.bio = { old: profileBeforeUpdate?.bio ?? null, next: dto.bio };
+    const profile = await getProfileByUserId(userId);
+    const currentBio = profile?.bio ?? null;
+    if (dto.bio !== currentBio) {
+      patch.bio = dto.bio;
+      changes.bio = { old: currentBio, next: dto.bio };
     }
   }
 
@@ -513,11 +516,8 @@ export async function updateProfile(userId: string, dto: UpdateProfileDTO): Prom
       await updateUserProfile(userId, patch, trx);
     }
 
-    if (dto.bio !== undefined) {
-      await db("profiles").where({ user_id: userId }).update({
-        bio: dto.bio,
-        updated_at: new Date().toISOString(),
-      });
+    if (patch.bio !== undefined) {
+      await updateProfileBio(userId, patch.bio, trx);
     }
 
     // Update alias in profiles table
