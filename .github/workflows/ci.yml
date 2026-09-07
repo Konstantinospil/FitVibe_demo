@@ -1346,7 +1346,19 @@ jobs:
           APP_URL: "http://127.0.0.1:4173"
           CI: "true"
           DISABLE_WEBSERVER: "true"
-        run: pnpm exec playwright test --config tests/frontend/visual/config/playwright.config.ts
+        # CI is comparison-only: committed baselines are never rewritten.
+        run: pnpm test:visual:ci
+
+      - name: Verify visual baselines were not modified
+        if: always()
+        run: |
+          baseline_changes="$(git status --porcelain --untracked-files=all -- tests/frontend/visual | grep -- '-snapshots/' || true)"
+          if [ -n "$baseline_changes" ]; then
+            echo "::error::Visual regression CI modified or created baseline snapshots."
+            echo "$baseline_changes"
+            echo "Baseline updates must be performed explicitly with: pnpm test:visual:update"
+            exit 1
+          fi
 
       - name: Stop preview server
         if: always()
@@ -1362,6 +1374,7 @@ jobs:
         with:
           name: visual-regression-${{ github.run_id }}
           path: |
+            # Playwright stores actual/expected/diff screenshots and traces here.
             tests/frontend/visual/__screenshots__
             playwright-report/visual
             test-results/visual-junit.xml
