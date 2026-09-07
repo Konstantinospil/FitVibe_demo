@@ -20,6 +20,7 @@
     "test:contract": "pnpm -w openapi:build && pnpm --filter @fitvibe/backend exec jest tests/backend/contract/openapi.contract.test.ts --maxWorkers=1",
     "test:integration": "RUN_INTEGRATION_TESTS=1 pnpm --filter @fitvibe/backend exec jest --runInBand --testMatch=\"**/integration/**/*.test.ts\" --testPathIgnorePatterns=\"/node_modules/|verification-resend-limit\\.test\\.ts$|login-enumeration\\.test\\.ts$\"",
     "test:visual": "node tests/frontend/visual/scripts/update-linux-baselines.mjs",
+    "test:visual:ci": "playwright test --config tests/frontend/visual/config/playwright.config.ts --update-snapshots=none",
     "test:visual:update": "node tests/frontend/visual/scripts/update-linux-baselines.mjs --update",
     "test:visual:linux": "node tests/frontend/visual/scripts/update-linux-baselines.mjs",
     "test:coverage:gate": "node tests/qa/check-coverage.cjs",
