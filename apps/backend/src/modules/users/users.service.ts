@@ -411,9 +411,11 @@ export async function updateProfile(userId: string, dto: UpdateProfileDTO): Prom
     };
   }
 
-  const profileBeforeUpdate = await getProfileByUserId(userId);
-  if (dto.bio !== undefined && dto.bio !== (profileBeforeUpdate?.bio ?? "")) {
-    changes.bio = { old: profileBeforeUpdate?.bio ?? null, next: dto.bio };
+  if (dto.bio !== undefined) {
+    const profileBeforeUpdate = await getProfileByUserId(userId);
+    if (dto.bio !== (profileBeforeUpdate?.bio ?? "")) {
+      changes.bio = { old: profileBeforeUpdate?.bio ?? null, next: dto.bio };
+    }
   }
 
   // Handle alias update
