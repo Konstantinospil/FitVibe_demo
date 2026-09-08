@@ -421,6 +421,15 @@ export async function updateProfile(userId: string, dto: UpdateProfileDTO): Prom
     };
   }
 
+  if (dto.bio !== undefined) {
+    const profile = await getProfileByUserId(userId);
+    const currentBio = profile?.bio ?? null;
+    if (dto.bio !== currentBio) {
+      patch.bio = dto.bio;
+      changes.bio = { old: currentBio, next: dto.bio };
+    }
+  }
+
   // Handle alias update
   if (dto.alias !== undefined) {
     const normalizedAlias = dto.alias.trim();

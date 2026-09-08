@@ -24,6 +24,14 @@ usersAvatarRouter.post(
   asyncHandler(uploadAvatarHandler),
 );
 
+usersAvatarRouter.post(
+  "/me/avatar",
+  rateLimit("user_avatar_upload_me", 5, 60),
+  requireAuth,
+  upload.single("avatar"),
+  asyncHandler(uploadAvatarHandler),
+);
+
 usersAvatarRouter.get(
   "/avatar/:id",
   rateLimit("user_avatar_get", 60, 60),
@@ -33,6 +41,13 @@ usersAvatarRouter.get(
 usersAvatarRouter.delete(
   "/avatar",
   rateLimit("user_avatar_delete", 10, 60),
+  requireAuth,
+  asyncHandler(deleteAvatarHandler),
+);
+
+usersAvatarRouter.delete(
+  "/me/avatar",
+  rateLimit("user_avatar_delete_me", 10, 60),
   requireAuth,
   asyncHandler(deleteAvatarHandler),
 );

@@ -5,3 +5,5 @@ export * from "./SecuritySettings";
 export * from "./PrivacySettings";
 export * from "./AccountDeletionForm";
 export * from "./DataExportButton";
+
+export * from "./BodyProgressSettings";

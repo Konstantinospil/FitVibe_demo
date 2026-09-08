@@ -90,7 +90,7 @@ const paths = {
         401: jsonContent("#/components/schemas/ErrorResponse"),
       },
     },
-    put: {
+    patch: {
       summary: "Update profile",
       tags: ["Users"],
       security: [bearerAuth],

@@ -5,7 +5,7 @@ test.describe("Settings Page Visual Tests", () => {
   test("settings", async ({ page }, testInfo) => {
     await openAuthenticatedPage(page, testInfo, "/settings", { viewports: ["sm", "md"] });
     await capturePageScreenshot(page, testInfo, "settings", {
-      waitFor: "[data-testid='privacy-settings']",
+      waitFor: "text=Profile Settings",
     });
   });
 });

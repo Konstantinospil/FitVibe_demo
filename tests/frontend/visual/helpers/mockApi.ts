@@ -666,6 +666,18 @@ export async function mockAuthRefresh(page: Page) {
  * Register this before navigation so unmocked endpoints cannot hang networkidle.
  */
 export async function installDefaultMocks(page: Page): Promise<void> {
+  // Keep avatar rendering deterministic and independent of external network access.
+  await page.route("https://example.com/avatar.png", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "image/svg+xml",
+      body: `<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256">
+        <rect width="256" height="256" fill="#167c5a"/>
+        <text x="128" y="145" text-anchor="middle" font-family="Arial, sans-serif" font-size="82" font-weight="700" fill="#ffffff">AS</text>
+      </svg>`,
+    });
+  });
+
   await page.route("**/api/**", async (route) => {
     if (route.request().method() === "OPTIONS") {
       return route.fulfill({

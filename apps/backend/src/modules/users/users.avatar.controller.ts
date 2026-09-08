@@ -109,7 +109,7 @@ export async function uploadAvatarHandler(req: Request, res: Response): Promise<
       .toBuffer();
 
     const fileMeta = await saveUserAvatarFile(userId, processed, "image/png");
-    const publicUrl = `/users/avatar/${userId}`;
+    const publicUrl = `/api/v1/users/avatar/${userId}`;
     const { previousKey, record } = await saveUserAvatarMetadata(userId, {
       storageKey: fileMeta.storageKey,
       fileUrl: publicUrl,
@@ -196,7 +196,7 @@ export async function uploadAvatarHandler(req: Request, res: Response): Promise<
     .toBuffer();
 
   const fileMeta = await saveUserAvatarFile(userId, processed, "image/png");
-  const publicUrl = `/users/avatar/${userId}`;
+  const publicUrl = `/api/v1/users/avatar/${userId}`;
   const { previousKey, record } = await saveUserAvatarMetadata(userId, {
     storageKey: fileMeta.storageKey,
     fileUrl: publicUrl,

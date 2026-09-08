@@ -118,7 +118,7 @@ describeWithTestDatabase("Integration: Avatar Upload", () => {
 
     expect(response.status).toBe(201);
     expect(response.body.success).toBe(true);
-    expect(response.body.fileUrl).toBe(`/users/avatar/${userId}`);
+    expect(response.body.fileUrl).toBe(`/api/v1/users/avatar/${userId}`);
     expect(response.body.mimeType).toBe("image/png");
     expect(response.body.bytes).toBeGreaterThan(0);
     expect(response.body.preview).toContain("data:image/png;base64,");

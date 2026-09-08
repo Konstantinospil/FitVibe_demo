@@ -497,7 +497,15 @@
       "avatarDeleteError": "Failed to delete avatar. Please try again.",
       "avatarPreviewAlt": "Avatar preview",
       "avatarAlt": "Profile avatar",
-      "emailUnavailable": "Not available"
+      "emailUnavailable": "Not available",
+      "bio": "Bio",
+      "bioPlaceholder": "Tell us about yourself",
+      "saved": "Profile Updated",
+      "savedMessage": "Your profile has been updated successfully",
+      "saveError": "Failed to save profile",
+      "loadError": "Failed to load profile",
+      "fitnessLevelPlaceholder": "Select fitness level",
+      "trainingFrequencyPlaceholder": "Select training frequency"
     },
     "preferences": {
       "title": "Preferences",

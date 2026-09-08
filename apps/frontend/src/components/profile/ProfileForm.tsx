@@ -102,28 +102,28 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({ onSave }) => {
   };
 
   const fitnessLevelOptions = [
-    { value: "beginner", label: t("settings.profile.fitnessLevel.beginner") || "Beginner" },
+    { value: "beginner", label: t("settings.profile.fitnessLevelBeginner") || "Beginner" },
     {
       value: "intermediate",
-      label: t("settings.profile.fitnessLevel.intermediate") || "Intermediate",
+      label: t("settings.profile.fitnessLevelIntermediate") || "Intermediate",
     },
-    { value: "advanced", label: t("settings.profile.fitnessLevel.advanced") || "Advanced" },
-    { value: "elite", label: t("settings.profile.fitnessLevel.elite") || "Elite" },
+    { value: "advanced", label: t("settings.profile.fitnessLevelAdvanced") || "Advanced" },
+    { value: "elite", label: t("settings.profile.fitnessLevelElite") || "Elite" },
   ];
 
   const trainingFrequencyOptions = [
-    { value: "rarely", label: t("settings.profile.trainingFrequency.rarely") || "Rarely" },
+    { value: "rarely", label: t("settings.profile.trainingFrequencyRarely") || "Rarely" },
     {
       value: "1_2_per_week",
-      label: t("settings.profile.trainingFrequency.1_2_per_week") || "1-2 times per week",
+      label: t("settings.profile.trainingFrequency1_2") || "1-2 times per week",
     },
     {
       value: "3_4_per_week",
-      label: t("settings.profile.trainingFrequency.3_4_per_week") || "3-4 times per week",
+      label: t("settings.profile.trainingFrequency3_4") || "3-4 times per week",
     },
     {
       value: "5_plus_per_week",
-      label: t("settings.profile.trainingFrequency.5_plus_per_week") || "5+ times per week",
+      label: t("settings.profile.trainingFrequency5Plus") || "5+ times per week",
     },
   ];
 
@@ -167,7 +167,7 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({ onSave }) => {
             onChange={(e) => setFormData({ ...formData, alias: e.target.value })}
             placeholder={t("settings.profile.aliasPlaceholder") || "Your alias (URL-friendly)"}
             helperText={
-              t("settings.profile.aliasHelper") ||
+              t("settings.profile.aliasHelp") ||
               "3-50 characters, letters, numbers, underscores, dots, or dashes"
             }
             maxLength={50}

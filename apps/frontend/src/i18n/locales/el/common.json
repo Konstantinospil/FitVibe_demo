@@ -602,7 +602,15 @@
       "avatarDeleteError": "Αποτυχία διαγραφής avatar. Δοκιμάστε ξανά.",
       "avatarPreviewAlt": "Προεπισκόπηση avatar",
       "avatarAlt": "Avatar προφίλ",
-      "emailUnavailable": "Μη διαθέσιμο"
+      "emailUnavailable": "Μη διαθέσιμο",
+      "bio": "Βιογραφικό",
+      "bioPlaceholder": "Πες μας λίγα πράγματα για εσένα",
+      "saved": "Το προφίλ ενημερώθηκε",
+      "savedMessage": "Το προφίλ σας ενημερώθηκε επιτυχώς",
+      "saveError": "Αποτυχία αποθήκευσης προφίλ",
+      "loadError": "Αποτυχία φόρτωσης προφίλ",
+      "fitnessLevelPlaceholder": "Επιλέξτε επίπεδο φυσικής κατάστασης",
+      "trainingFrequencyPlaceholder": "Επιλέξτε συχνότητα προπόνησης"
     },
     "preferences": {
       "title": "Προτιμήσεις",

@@ -592,7 +592,15 @@
       "avatarDeleteError": "Échec de la suppression de l'avatar. Veuillez réessayer.",
       "avatarPreviewAlt": "Aperçu de l'avatar",
       "avatarAlt": "Avatar de profil",
-      "emailUnavailable": "Non disponible"
+      "emailUnavailable": "Non disponible",
+      "bio": "Biographie",
+      "bioPlaceholder": "Parlez-nous de vous",
+      "saved": "Profil mis à jour",
+      "savedMessage": "Votre profil a été mis à jour avec succès",
+      "saveError": "Échec de l'enregistrement du profil",
+      "loadError": "Échec du chargement du profil",
+      "fitnessLevelPlaceholder": "Sélectionnez le niveau de fitness",
+      "trainingFrequencyPlaceholder": "Sélectionnez la fréquence d'entraînement"
     },
     "preferences": {
       "title": "Préférences",

@@ -79,8 +79,11 @@ Visual regression tests run automatically in CI:
 
 - Job: `visual_regression`
 - Runs after: `quality` and `frontend_tests`
-- Fails if: maxDiffPixelRatio > 0.2% or any unapproved visual diff
-- Artifacts: Screenshots and diffs uploaded for review
+- Command: `pnpm test:visual:ci`
+- Snapshot mode: comparison-only (`--update-snapshots=none`)
+- Fails if: maxDiffPixelRatio > 0.2%, any unapproved visual diff, or CI modifies/creates a baseline snapshot
+- Artifacts: actual/expected/diff screenshots, traces, HTML report, and JUnit output are uploaded for review
+- Baseline updates are never performed or committed by CI; use `pnpm test:visual:update` explicitly and commit approved `*-linux.png` files
 
 ## Adding New Visual Tests
 
@@ -88,7 +91,7 @@ Visual regression tests run automatically in CI:
 2. Use `openAuthenticatedPage` / `openPublicPage` and `capturePageScreenshot`
 3. Pass `skipUnlessMatrix` viewports (and themes) that match QA Plan D.3
 4. Wait for a stable selector so loading skeletons are not snapshotted
-5. Update Linux baseline screenshots (`pnpm test:visual:linux`) and commit them
+5. Update Linux baseline screenshots explicitly (`pnpm test:visual:update`), review the diffs, and commit the approved baselines
 
 Example:
 

@@ -592,7 +592,15 @@
       "avatarDeleteError": "No se pudo eliminar el avatar. Inténtalo de nuevo.",
       "avatarPreviewAlt": "Vista previa del avatar",
       "avatarAlt": "Avatar de perfil",
-      "emailUnavailable": "No disponible"
+      "emailUnavailable": "No disponible",
+      "bio": "Biografía",
+      "bioPlaceholder": "Cuéntanos sobre ti",
+      "saved": "Perfil actualizado",
+      "savedMessage": "Tu perfil se ha actualizado correctamente",
+      "saveError": "No se pudo guardar el perfil",
+      "loadError": "No se pudo cargar el perfil",
+      "fitnessLevelPlaceholder": "Selecciona el nivel de fitness",
+      "trainingFrequencyPlaceholder": "Selecciona la frecuencia de entrenamiento"
     },
     "preferences": {
       "title": "Preferencias",
