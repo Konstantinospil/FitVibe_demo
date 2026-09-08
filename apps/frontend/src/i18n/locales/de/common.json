@@ -476,7 +476,15 @@
       "avatarDeleteError": "Profilbild konnte nicht gelöscht werden. Bitte versuche es erneut.",
       "avatarPreviewAlt": "Profilbild-Vorschau",
       "avatarAlt": "Profilbild",
-      "emailUnavailable": "Nicht verfügbar"
+      "emailUnavailable": "Nicht verfügbar",
+      "bio": "Biografie",
+      "bioPlaceholder": "Erzähle etwas über dich",
+      "saved": "Profil aktualisiert",
+      "savedMessage": "Dein Profil wurde erfolgreich aktualisiert",
+      "saveError": "Profil konnte nicht gespeichert werden",
+      "loadError": "Profil konnte nicht geladen werden",
+      "fitnessLevelPlaceholder": "Fitness-Level auswählen",
+      "trainingFrequencyPlaceholder": "Trainingshäufigkeit auswählen"
     },
     "preferences": {
       "title": "Präferenzen",
