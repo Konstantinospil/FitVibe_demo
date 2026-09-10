@@ -68,6 +68,18 @@ const mockSessionsList = async (page, sessions = []) => {
     );
   });
 };
+const openSessionManagement = async (page) => {
+  await page.goto("/settings");
+  await waitForApp(page);
+
+  const securityTab = page.getByRole("tab", { name: /^security$/i });
+  await expect(securityTab).toBeVisible();
+  await securityTab.click();
+
+  await expect(
+    page.getByRole("tabpanel", { name: /^security$/i }),
+  ).toBeVisible();
+};
 
 test.describe("Authentication Flows (FR-002)", () => {
   test.beforeEach(async ({ page }) => {
@@ -263,8 +275,7 @@ test.describe("Authentication Flows (FR-002)", () => {
       }, "fitvibe:auth");
       await mockSessionsList(page);
 
-      await page.goto("/settings");
-      await waitForApp(page);
+      await openSessionManagement(page);
       await expect(page.getByText(/192\.168\.1\.1/).first()).toBeVisible();
     });
 
@@ -303,8 +314,7 @@ test.describe("Authentication Flows (FR-002)", () => {
         await route.fulfill(jsonResponse({ revoked: 1 }));
       });
 
-      await page.goto("/settings");
-      await waitForApp(page);
+      await openSessionManagement(page);
       const revokeResponse = page.waitForResponse((response) =>
         response.url().includes("/api/v1/auth/sessions/revoke"),
       );
@@ -328,8 +338,7 @@ test.describe("Authentication Flows (FR-002)", () => {
         await route.fulfill(jsonResponse({ revoked: 1 }));
       });
 
-      await page.goto("/settings");
-      await waitForApp(page);
+      await openSessionManagement(page);
       await page.getByRole("button", { name: /revoke.*others|auth\.sessions\.revokeOthers/i }).click();
       const confirmDialog = page.getByRole("dialog");
       await expect(confirmDialog).toBeVisible();
@@ -358,8 +367,7 @@ test.describe("Authentication Flows (FR-002)", () => {
         await route.fulfill(jsonResponse({ revoked: 2 }));
       });
 
-      await page.goto("/settings");
-      await waitForApp(page);
+      await openSessionManagement(page);
       await page.getByRole("button", { name: /revoke all sessions|auth\.sessions\.revokeAll/i }).click();
       const confirmDialog = page.getByRole("dialog");
       await expect(confirmDialog).toBeVisible();
