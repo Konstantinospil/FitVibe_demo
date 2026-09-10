@@ -395,6 +395,15 @@ export async function updateProfile(userId: string, dto: UpdateProfileDTO): Prom
     };
   }
 
+  if (dto.bio !== undefined) {
+    const profile = await getProfileByUserId(userId);
+    const currentBio = profile?.bio ?? null;
+    if (dto.bio !== currentBio) {
+      patch.bio = dto.bio;
+      changes.bio = { old: currentBio, next: dto.bio };
+    }
+  }
+
   const userWithPrefs = user as { default_visibility?: string; units?: string };
   if (dto.defaultVisibility && dto.defaultVisibility !== userWithPrefs.default_visibility) {
     patch.defaultVisibility = dto.defaultVisibility;
