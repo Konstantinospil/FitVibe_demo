@@ -22,7 +22,6 @@
     "db:import-translations": "tsx src/db/scripts/import-translations.ts"
   },
   "dependencies": {
-    "@fitvibe/types": "workspace:*",
     "@aws-sdk/client-secrets-manager": "^3.1125.0",
     "@opentelemetry/api": "^1.9.1",
     "@opentelemetry/auto-instrumentations-node": "^0.80.0",
