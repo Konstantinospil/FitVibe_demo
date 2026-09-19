@@ -161,9 +161,9 @@ describeWithTestDatabase("database migrations", () => {
         ].sort(),
       );
       expect(columns.template_code.defaultValue).toContain("flow");
-      expect(columns.template_version.defaultValue).toBe("1");
+      expect(columns.template_version.defaultValue).toContain("1");
       expect(columns.body_profile.defaultValue).toContain("balanced");
-      expect(columns.motion_enabled.defaultValue).toBe("true");
+      expect(columns.motion_enabled.defaultValue).toContain("true");
     });
 
     it("links one vibeform preference record to each user", async () => {

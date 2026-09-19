@@ -836,7 +836,7 @@
                   "man",
                   "woman",
                   "diverse",
-                  "na"
+                  "prefer_not_to_say"
                 ]
               },
               "weight_kg": {
@@ -846,12 +846,23 @@
               },
               "fitness_level": {
                 "type": "string",
-                "maxLength": 50
+                "enum": [
+                  "beginner",
+                  "intermediate",
+                  "advanced",
+                  "elite",
+                  "rehab"
+                ]
+              },
+              "date_of_birth": {
+                "type": "string",
+                "format": "date"
               },
               "age": {
-                "type": "number",
+                "type": "integer",
                 "minimum": 13,
-                "maximum": 120
+                "maximum": 120,
+                "deprecated": true
               }
             },
             "additionalProperties": false

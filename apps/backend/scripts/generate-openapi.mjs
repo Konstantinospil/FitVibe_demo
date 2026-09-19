@@ -345,10 +345,17 @@ const schemas = {
         type: "object",
         properties: {
           display_name: { type: "string", minLength: 1, maxLength: 100 },
-          sex: { type: "string", enum: ["man", "woman", "diverse", "na"] },
+          sex: {
+            type: "string",
+            enum: ["man", "woman", "diverse", "prefer_not_to_say"],
+          },
           weight_kg: { type: "number", minimum: 20, maximum: 500 },
-          fitness_level: { type: "string", maxLength: 50 },
-          age: { type: "number", minimum: 13, maximum: 120 },
+          fitness_level: {
+            type: "string",
+            enum: ["beginner", "intermediate", "advanced", "elite", "rehab"],
+          },
+          date_of_birth: { type: "string", format: "date" },
+          age: { type: "integer", minimum: 13, maximum: 120, deprecated: true },
         },
         additionalProperties: false,
       },
