@@ -42,8 +42,6 @@ export interface VibeformRenderParameters {
   };
 }
 
-export type VibeformCssVariables = Record<`--vibeform-${string}`, string | number>;
-
 const DEFAULT_SCORE = 0.5;
 const PROFILE_BALANCE: Record<VibeformBodyProfile, number> = {
   "shoulder-dominant": 1,
@@ -142,36 +140,5 @@ export function calculateVibeformParameters(
       pulseDurationSeconds: round(lerp(5.5, 3.5, regeneration)),
       pulseAmplitude: round(lerp(0.01, 0.035, regeneration)),
     },
-  };
-}
-
-/**
- * Optional adapter for SVG components that express the common contract with
- * CSS custom properties. Keeping this separate makes the calculator portable.
- */
-export function toVibeformCssVariables(parameters: VibeformRenderParameters): VibeformCssVariables {
-  const { geometry, colors, motion } = parameters;
-
-  return {
-    "--vibeform-height-scale": geometry.heightScale,
-    "--vibeform-stroke-scale": geometry.strokeScale,
-    "--vibeform-upper-scale": geometry.upperScale,
-    "--vibeform-lower-scale": geometry.lowerScale,
-    "--vibeform-shoulder-scale": geometry.shoulderScale,
-    "--vibeform-hip-scale": geometry.hipScale,
-    "--vibeform-curve-tension": geometry.curveTension,
-    "--vibeform-asymmetry": geometry.asymmetry,
-    "--vibeform-flare": geometry.flare,
-    "--vibeform-continuity": geometry.continuity,
-    "--vibeform-forward-lean": `${geometry.forwardLeanDeg}deg`,
-    "--vibeform-head-color": colors.head,
-    "--vibeform-agility-color": colors.agility.oklch,
-    "--vibeform-agility-weight": colors.agility.weight,
-    "--vibeform-explosivity-color": colors.explosivity.oklch,
-    "--vibeform-explosivity-weight": colors.explosivity.weight,
-    "--vibeform-endurance-color": colors.endurance.oklch,
-    "--vibeform-endurance-weight": colors.endurance.weight,
-    "--vibeform-pulse-duration": `${motion.pulseDurationSeconds}s`,
-    "--vibeform-pulse-amplitude": motion.pulseAmplitude,
   };
 }
