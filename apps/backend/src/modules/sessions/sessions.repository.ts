@@ -36,6 +36,17 @@ export interface SessionExerciseUpsertInput {
   sets: SessionExerciseSetUpsert[];
 }
 
+export interface RegionalTrainingLoadWindow {
+  from: string | Date;
+  to: string | Date;
+}
+
+export interface RegionalTrainingLoad {
+  upper: number;
+  lower: number;
+  fullBody: number;
+}
+
 function executor(trx?: Knex.Transaction) {
   return trx ?? db;
 }
@@ -479,4 +490,48 @@ export async function listSessionSets(sessionId: string, trx?: Knex.Transaction)
       { column: "se.order_index", order: "asc" },
       { column: "s.order_index", order: "asc" },
     ]);
+}
+
+/**
+ * Counts completed exercise occurrences by body region in the supplied window.
+ * Core and unknown muscle groups are intentionally neutral; full-body work is
+ * returned separately so that the Vibeform service can allocate it later.
+ */
+export async function getRegionalTrainingLoad(
+  userId: string,
+  window: RegionalTrainingLoadWindow,
+  trx?: Knex.Transaction,
+): Promise<RegionalTrainingLoad> {
+  const result = await executor(trx).raw<{
+    rows: Array<{ upper: number | string; lower: number | string; full_body: number | string }>;
+  }>(
+    `
+      SELECT
+        COUNT(se.id) FILTER (
+          WHERE LOWER(TRIM(e.muscle_group)) IN ('chest', 'back', 'shoulders', 'arms')
+        ) AS upper,
+        COUNT(se.id) FILTER (
+          WHERE LOWER(TRIM(e.muscle_group)) = 'legs'
+        ) AS lower,
+        COUNT(se.id) FILTER (
+          WHERE LOWER(TRIM(e.muscle_group)) = 'full_body'
+        ) AS full_body
+      FROM sessions s
+      INNER JOIN session_exercises se ON se.session_id = s.id
+      LEFT JOIN exercises e ON e.id = se.exercise_id
+      WHERE s.owner_id = ?
+        AND s.status = 'completed'
+        AND s.completed_at IS NOT NULL
+        AND s.deleted_at IS NULL
+        AND s.completed_at BETWEEN ? AND ?
+    `,
+    [userId, window.from, window.to],
+  );
+  const row = result.rows?.[0];
+
+  return {
+    upper: Number(row?.upper ?? 0),
+    lower: Number(row?.lower ?? 0),
+    fullBody: Number(row?.full_body ?? 0),
+  };
 }
