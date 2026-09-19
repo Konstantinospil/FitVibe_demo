@@ -13,9 +13,10 @@ const balancedMetrics: VibeformMetrics = {
   explosivity: 0.5,
   endurance: 0.5,
   strength: 0.5,
+  upperBodyStrength: 0.5,
+  lowerBodyStrength: 0.5,
   bmi: 22,
   heightCm: 175,
-  bodyProfile: "balanced",
 };
 
 describe("Vibeform manipulation", () => {
@@ -36,6 +37,17 @@ describe("Vibeform manipulation", () => {
     const solid = calculateVibeformParameters({ ...balancedMetrics, bmi: 32 });
 
     expect(solid.geometry.strokeScale).toBeGreaterThan(lean.geometry.strokeScale);
+  });
+
+  it("uses neutral physical proportions when measurements are unavailable", () => {
+    const parameters = calculateVibeformParameters({
+      ...balancedMetrics,
+      bmi: null,
+      heightCm: null,
+    });
+
+    expect(parameters.geometry.strokeScale).toBeGreaterThan(0.85);
+    expect(parameters.geometry.heightScale).toBe(1);
   });
 
   it("applies regional strength without changing the opposite region", () => {

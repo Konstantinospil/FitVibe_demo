@@ -1,22 +1,17 @@
-export type VibeformBodyProfile = "shoulder-dominant" | "balanced" | "hip-dominant";
+import type {
+  VibeformBodyProfile,
+  VibeformMetrics,
+  VibeformPreferences,
+} from "../../../../../packages/types/src/vibeform";
+
+export type { VibeformBodyProfile, VibeformMetrics };
 
 /**
  * Capability values are normalized to the inclusive range 0..1.
  * BMI and height retain their familiar units at the API boundary.
  */
-export interface VibeformMetrics {
-  intelligence: number;
-  regeneration: number;
-  agility: number;
-  explosivity: number;
-  endurance: number;
-  strength: number;
-  bmi: number;
-  heightCm?: number;
-  upperBodyStrength?: number;
-  lowerBodyStrength?: number;
-  bodyProfile?: VibeformBodyProfile;
-}
+export type VibeformManipulationInput = VibeformMetrics &
+  Partial<Pick<VibeformPreferences, "bodyProfile">>;
 
 export interface VibeformColor {
   /** CSS Color 4 value; supported by current evergreen browsers. */
@@ -60,11 +55,11 @@ const PROFILE_BALANCE: Record<VibeformBodyProfile, number> = {
   "hip-dominant": -1,
 };
 
-function finiteOr(value: number | undefined, fallback: number): number {
+function finiteOr(value: number | null | undefined, fallback: number): number {
   return typeof value === "number" && Number.isFinite(value) ? value : fallback;
 }
 
-export function clamp01(value: number | undefined, fallback = DEFAULT_SCORE): number {
+export function clamp01(value: number | null | undefined, fallback = DEFAULT_SCORE): number {
   return Math.min(1, Math.max(0, finiteOr(value, fallback)));
 }
 
@@ -81,12 +76,12 @@ function round(value: number, decimals = 3): number {
  * Maps BMI onto a bounded visual mass score. The broad input limits are
  * deliberate: BMI influences the artwork, but never labels or judges a body.
  */
-export function normalizeBmi(bmi: number): number {
+export function normalizeBmi(bmi: number | null): number {
   const boundedBmi = Math.min(40, Math.max(16, finiteOr(bmi, 22)));
   return (boundedBmi - 16) / 24;
 }
 
-function normalizeHeight(heightCm: number | undefined): number {
+function normalizeHeight(heightCm: number | null | undefined): number {
   const boundedHeight = Math.min(200, Math.max(150, finiteOr(heightCm, 175)));
   return (boundedHeight - 150) / 50;
 }
@@ -100,7 +95,9 @@ function color(lightness: number, chroma: number, hue: number): string {
  * Vibeform SVG templates. Outputs are intentionally constrained so a template
  * remains legible at every valid combination of inputs.
  */
-export function calculateVibeformParameters(metrics: VibeformMetrics): VibeformRenderParameters {
+export function calculateVibeformParameters(
+  metrics: VibeformManipulationInput,
+): VibeformRenderParameters {
   const intelligence = clamp01(metrics.intelligence);
   const regeneration = clamp01(metrics.regeneration);
   const agility = clamp01(metrics.agility);
