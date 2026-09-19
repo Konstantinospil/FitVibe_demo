@@ -1,3 +1,4 @@
+import { describe, expect, it } from "vitest";
 import {
   calculateVibeformParameters,
   clamp01,
@@ -13,8 +14,8 @@ const balancedMetrics: VibeformMetrics = {
   explosivity: 0.5,
   endurance: 0.5,
   strength: 0.5,
-  upperBodyStrength: 0.5,
-  lowerBodyStrength: 0.5,
+  upperBodyLoad: 0.5,
+  lowerBodyLoad: 0.5,
   bmi: 22,
   heightCm: 175,
 };
@@ -53,13 +54,13 @@ describe("Vibeform manipulation", () => {
   it("applies regional strength without changing the opposite region", () => {
     const upperFocused = calculateVibeformParameters({
       ...balancedMetrics,
-      upperBodyStrength: 1,
-      lowerBodyStrength: 0,
+      upperBodyLoad: 1,
+      lowerBodyLoad: 0,
     });
     const lowerFocused = calculateVibeformParameters({
       ...balancedMetrics,
-      upperBodyStrength: 0,
-      lowerBodyStrength: 1,
+      upperBodyLoad: 0,
+      lowerBodyLoad: 1,
     });
 
     expect(upperFocused.geometry.upperScale).toBeGreaterThan(lowerFocused.geometry.upperScale);

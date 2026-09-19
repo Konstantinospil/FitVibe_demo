@@ -880,12 +880,12 @@
             "minimum": 0,
             "maximum": 1
           },
-          "upperBodyStrength": {
+          "upperBodyLoad": {
             "type": "number",
             "minimum": 0,
             "maximum": 1
           },
-          "lowerBodyStrength": {
+          "lowerBodyLoad": {
             "type": "number",
             "minimum": 0,
             "maximum": 1
@@ -904,8 +904,8 @@
           "explosivity",
           "endurance",
           "strength",
-          "upperBodyStrength",
-          "lowerBodyStrength",
+          "upperBodyLoad",
+          "lowerBodyLoad",
           "bmi",
           "heightCm"
         ],

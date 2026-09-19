@@ -1,45 +1,19 @@
-export const VIBEFORM_BODY_PROFILES = ["shoulder-dominant", "balanced", "hip-dominant"] as const;
+import type { VibeformPreferences } from "@fitvibe/types";
 
-export type VibeformBodyProfile = (typeof VIBEFORM_BODY_PROFILES)[number];
+export type {
+  UpdateVibeformPreferencesInput,
+  VibeformBodyProfile,
+  VibeformMetrics,
+  VibeformPreferences,
+  VibeformProfile,
+  VibeformTemplateCode,
+} from "@fitvibe/types";
+
+export const VIBEFORM_BODY_PROFILES = ["shoulder-dominant", "balanced", "hip-dominant"] as const;
 
 export const VIBEFORM_TEMPLATE_VERSIONS = {
   flow: 1,
 } as const;
-
-export type VibeformTemplateCode = keyof typeof VIBEFORM_TEMPLATE_VERSIONS;
-
-export interface VibeformPreferences {
-  templateCode: VibeformTemplateCode;
-  templateVersion: number;
-  bodyProfile: VibeformBodyProfile;
-  motionEnabled: boolean;
-}
-
-export interface VibeformMetrics {
-  intelligence: number;
-  regeneration: number;
-  agility: number;
-  explosivity: number;
-  endurance: number;
-  strength: number;
-  upperBodyStrength: number;
-  lowerBodyStrength: number;
-  bmi: number | null;
-  heightCm: number | null;
-}
-
-export interface VibeformProfile {
-  preferences: VibeformPreferences;
-  metrics: VibeformMetrics;
-  calculationVersion: string;
-  calculatedAt: string;
-}
-
-export interface UpdateVibeformPreferencesInput {
-  templateCode?: VibeformTemplateCode;
-  bodyProfile?: VibeformBodyProfile;
-  motionEnabled?: boolean;
-}
 
 export interface VibeformPreferenceRow {
   user_id: string;

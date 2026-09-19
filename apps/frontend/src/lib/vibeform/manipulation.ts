@@ -1,8 +1,4 @@
-import type {
-  VibeformBodyProfile,
-  VibeformMetrics,
-  VibeformPreferences,
-} from "../../../../../packages/types/src/vibeform";
+import type { VibeformBodyProfile, VibeformMetrics, VibeformPreferences } from "@fitvibe/types";
 
 export type { VibeformBodyProfile, VibeformMetrics };
 
@@ -104,8 +100,8 @@ export function calculateVibeformParameters(
   const explosivity = clamp01(metrics.explosivity);
   const endurance = clamp01(metrics.endurance);
   const strength = clamp01(metrics.strength);
-  const upperStrength = clamp01(metrics.upperBodyStrength, strength);
-  const lowerStrength = clamp01(metrics.lowerBodyStrength, strength);
+  const upperLoad = clamp01(metrics.upperBodyLoad, strength);
+  const lowerLoad = clamp01(metrics.lowerBodyLoad, strength);
   const mass = normalizeBmi(metrics.bmi);
   const height = normalizeHeight(metrics.heightCm);
   const profile = PROFILE_BALANCE[metrics.bodyProfile ?? "balanced"];
@@ -117,8 +113,8 @@ export function calculateVibeformParameters(
     geometry: {
       heightScale: round(lerp(0.92, 1.08, height)),
       strokeScale: round(lerp(0.85, 1.2, mass)),
-      upperScale: round(lerp(0.92, 1.16, upperStrength)),
-      lowerScale: round(lerp(0.92, 1.16, lowerStrength)),
+      upperScale: round(lerp(0.92, 1.16, upperLoad)),
+      lowerScale: round(lerp(0.92, 1.16, lowerLoad)),
       shoulderScale: round(1 + profile * 0.06),
       hipScale: round(1 - profile * 0.06),
       curveTension: round(lerp(0.35, 0.8, agility)),

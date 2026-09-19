@@ -1,7 +1,8 @@
 export type VibeformBodyProfile = "shoulder-dominant" | "balanced" | "hip-dominant";
+export type VibeformTemplateCode = "flow";
 
 export interface VibeformPreferences {
-  templateCode: string;
+  templateCode: VibeformTemplateCode;
   templateVersion: number;
   bodyProfile: VibeformBodyProfile;
   motionEnabled: boolean;
@@ -18,10 +19,16 @@ export interface VibeformMetrics {
   explosivity: number;
   endurance: number;
   strength: number;
-  upperBodyStrength: number;
-  lowerBodyStrength: number;
+  upperBodyLoad: number;
+  lowerBodyLoad: number;
   bmi: number | null;
   heightCm: number | null;
+}
+
+export interface UpdateVibeformPreferencesInput {
+  templateCode?: VibeformTemplateCode;
+  bodyProfile?: VibeformBodyProfile;
+  motionEnabled?: boolean;
 }
 
 export interface VibeformProfile {

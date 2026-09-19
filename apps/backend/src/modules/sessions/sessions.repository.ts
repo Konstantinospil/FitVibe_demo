@@ -41,10 +41,11 @@ export interface RegionalTrainingLoadWindow {
   to: string | Date;
 }
 
-export interface RegionalTrainingLoad {
-  upper: number;
-  lower: number;
-  fullBody: number;
+export interface RegionalStrengthStimulus {
+  region: "upper" | "lower" | "fullBody";
+  completedAt: string;
+  setCount: number;
+  averageRpe: number | null;
 }
 
 function executor(trx?: Knex.Transaction) {
@@ -493,45 +494,59 @@ export async function listSessionSets(sessionId: string, trx?: Knex.Transaction)
 }
 
 /**
- * Counts completed exercise occurrences by body region in the supplied window.
- * Core and unknown muscle groups are intentionally neutral; full-body work is
- * returned separately so that the Vibeform service can allocate it later.
+ * Returns completed strength work by body region for service-layer weighting.
+ * Core and unknown muscle groups are intentionally neutral. Full-body work is
+ * kept separate so the consuming calculation can allocate it explicitly.
  */
-export async function getRegionalTrainingLoad(
+export async function listRegionalStrengthStimuli(
   userId: string,
   window: RegionalTrainingLoadWindow,
   trx?: Knex.Transaction,
-): Promise<RegionalTrainingLoad> {
+): Promise<RegionalStrengthStimulus[]> {
   const result = await executor(trx).raw<{
-    rows: Array<{ upper: number | string; lower: number | string; full_body: number | string }>;
+    rows: Array<{
+      region: "upper" | "lower" | "fullBody";
+      completed_at: string | Date;
+      set_count: number | string;
+      average_rpe: number | string | null;
+    }>;
   }>(
     `
       SELECT
-        COUNT(se.id) FILTER (
-          WHERE LOWER(TRIM(e.muscle_group)) IN ('chest', 'back', 'shoulders', 'arms')
-        ) AS upper,
-        COUNT(se.id) FILTER (
-          WHERE LOWER(TRIM(e.muscle_group)) = 'legs'
-        ) AS lower,
-        COUNT(se.id) FILTER (
-          WHERE LOWER(TRIM(e.muscle_group)) = 'full_body'
-        ) AS full_body
+        CASE
+          WHEN LOWER(TRIM(e.muscle_group)) IN ('chest', 'back', 'shoulders', 'arms')
+            THEN 'upper'
+          WHEN LOWER(TRIM(e.muscle_group)) = 'legs'
+            THEN 'lower'
+          WHEN LOWER(TRIM(e.muscle_group)) = 'full_body'
+            THEN 'fullBody'
+        END AS region,
+        s.completed_at,
+        GREATEST(COUNT(es.id), 1) AS set_count,
+        AVG(es.rpe) FILTER (WHERE es.rpe BETWEEN 1 AND 10) AS average_rpe
       FROM sessions s
       INNER JOIN session_exercises se ON se.session_id = s.id
-      LEFT JOIN exercises e ON e.id = se.exercise_id
+      INNER JOIN exercises e ON e.id = se.exercise_id
+      LEFT JOIN exercise_sets es ON es.session_exercise_id = se.id
       WHERE s.owner_id = ?
         AND s.status = 'completed'
         AND s.completed_at IS NOT NULL
         AND s.deleted_at IS NULL
         AND s.completed_at BETWEEN ? AND ?
+        AND e.type_code = 'strength'
+        AND LOWER(TRIM(e.muscle_group)) IN (
+          'chest', 'back', 'shoulders', 'arms', 'legs', 'full_body'
+        )
+      GROUP BY se.id, e.muscle_group, s.completed_at
     `,
     [userId, window.from, window.to],
   );
-  const row = result.rows?.[0];
 
-  return {
-    upper: Number(row?.upper ?? 0),
-    lower: Number(row?.lower ?? 0),
-    fullBody: Number(row?.full_body ?? 0),
-  };
+  return (result.rows ?? []).map((row) => ({
+    region: row.region,
+    completedAt:
+      row.completed_at instanceof Date ? row.completed_at.toISOString() : row.completed_at,
+    setCount: Number(row.set_count),
+    averageRpe: row.average_rpe === null ? null : Number(row.average_rpe),
+  }));
 }

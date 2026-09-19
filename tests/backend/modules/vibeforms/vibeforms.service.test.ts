@@ -101,12 +101,17 @@ describe("Vibeform profile service", () => {
         ["strength", { vibe_level: 3000 }],
       ]) as never,
     );
-    mockedSessionsRepository.getRegionalTrainingLoad.mockResolvedValue({
-      upper: 10,
-      lower: 20,
-      fullBody: 4,
-    });
     const now = new Date("2026-09-19T18:00:00.000Z");
+    mockedSessionsRepository.listRegionalStrengthStimuli.mockResolvedValue([
+      { region: "upper", completedAt: now.toISOString(), setCount: 36, averageRpe: 10 },
+      { region: "lower", completedAt: now.toISOString(), setCount: 72, averageRpe: null },
+      {
+        region: "fullBody",
+        completedAt: "2026-08-08T18:00:00.000Z",
+        setCount: 72,
+        averageRpe: 10,
+      },
+    ]);
 
     await expect(getVibeformProfile(userId, now)).resolves.toEqual({
       preferences: {
@@ -122,15 +127,15 @@ describe("Vibeform profile service", () => {
         explosivity: 0.6,
         endurance: 0.8,
         strength: 1,
-        upperBodyStrength: 0.5,
-        lowerBodyStrength: 11 / 12,
+        upperBodyLoad: 0.75,
+        lowerBodyLoad: 1,
         bmi: 25,
         heightCm: 180,
       },
-      calculationVersion: "1",
+      calculationVersion: "2",
       calculatedAt: now.toISOString(),
     });
-    expect(mockedSessionsRepository.getRegionalTrainingLoad).toHaveBeenCalledWith(userId, {
+    expect(mockedSessionsRepository.listRegionalStrengthStimuli).toHaveBeenCalledWith(userId, {
       from: new Date("2026-06-27T18:00:00.000Z"),
       to: now,
     });
@@ -139,18 +144,14 @@ describe("Vibeform profile service", () => {
   it("uses initial Vibe levels and nullable body metrics when source rows are absent", async () => {
     mockedMeasurementsRepository.getLatestBioValuesByKeys.mockResolvedValue({});
     mockedPointsRepository.getAllDomainVibeLevels.mockResolvedValue(new Map());
-    mockedSessionsRepository.getRegionalTrainingLoad.mockResolvedValue({
-      upper: 0,
-      lower: 0,
-      fullBody: 0,
-    });
+    mockedSessionsRepository.listRegionalStrengthStimuli.mockResolvedValue([]);
 
     const profile = await getVibeformProfile(userId, new Date("2026-09-19T00:00:00.000Z"));
 
     expect(profile.metrics.bmi).toBeNull();
     expect(profile.metrics.heightCm).toBeNull();
     expect(profile.metrics.strength).toBeCloseTo(900 / 2900);
-    expect(profile.metrics.upperBodyStrength).toBe(0);
+    expect(profile.metrics.upperBodyLoad).toBe(0);
   });
 
   it("clamps Vibe levels outside the supported rating range", () => {
