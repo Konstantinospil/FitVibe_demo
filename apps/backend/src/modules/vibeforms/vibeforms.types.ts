@@ -15,6 +15,26 @@ export interface VibeformPreferences {
   motionEnabled: boolean;
 }
 
+export interface VibeformMetrics {
+  intelligence: number;
+  regeneration: number;
+  agility: number;
+  explosivity: number;
+  endurance: number;
+  strength: number;
+  upperBodyStrength: number;
+  lowerBodyStrength: number;
+  bmi: number | null;
+  heightCm: number | null;
+}
+
+export interface VibeformProfile {
+  preferences: VibeformPreferences;
+  metrics: VibeformMetrics;
+  calculationVersion: string;
+  calculatedAt: string;
+}
+
 export interface UpdateVibeformPreferencesInput {
   templateCode?: VibeformTemplateCode;
   bodyProfile?: VibeformBodyProfile;

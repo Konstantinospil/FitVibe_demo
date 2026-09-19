@@ -1,4 +1,8 @@
 import { UpdateVibeformPreferencesSchema } from "./vibeforms.schemas.js";
+import { getLatestBioValuesByKeys } from "../measurements/measurements.repository.js";
+import { getAllDomainVibeLevels } from "../points/points.repository.js";
+import type { DomainCode } from "../points/points.types.js";
+import { getRegionalTrainingLoad } from "../sessions/sessions.repository.js";
 import {
   DEFAULT_VIBEFORM_PREFERENCES,
   VIBEFORM_BODY_PROFILES,
@@ -7,9 +11,47 @@ import {
   type VibeformBodyProfile,
   type VibeformPreferenceRow,
   type VibeformPreferences,
+  type VibeformMetrics,
+  type VibeformProfile,
   type VibeformTemplateCode,
 } from "./vibeforms.types.js";
 import { findVibeformPreferences, upsertVibeformPreferences } from "./vibeforms.repository.js";
+
+export const VIBEFORM_CALCULATION_VERSION = "1";
+export const VIBEFORM_TRAINING_WINDOW_WEEKS = 12;
+export const VIBEFORM_REGIONAL_LOAD_SATURATION = 24;
+
+const MIN_VIBE_LEVEL = 100;
+const MAX_VIBE_LEVEL = 3000;
+const INITIAL_VIBE_LEVEL = 1000;
+const MILLISECONDS_PER_WEEK = 7 * 24 * 60 * 60 * 1000;
+
+function clamp01(value: number): number {
+  return Math.min(1, Math.max(0, value));
+}
+
+export function normalizeVibeLevel(level: number): number {
+  return clamp01((level - MIN_VIBE_LEVEL) / (MAX_VIBE_LEVEL - MIN_VIBE_LEVEL));
+}
+
+function normalizeRegionalLoad(load: number): number {
+  return clamp01(load / VIBEFORM_REGIONAL_LOAD_SATURATION);
+}
+
+function calculateBmi(weightKg?: number, heightCm?: number): number | null {
+  if (!weightKg || !heightCm || weightKg <= 0 || heightCm <= 0) {
+    return null;
+  }
+  const heightM = heightCm / 100;
+  return Math.round((weightKg / heightM ** 2) * 100) / 100;
+}
+
+function getNormalizedDomainLevel(
+  levels: Awaited<ReturnType<typeof getAllDomainVibeLevels>>,
+  domain: DomainCode,
+): number {
+  return normalizeVibeLevel(levels.get(domain)?.vibe_level ?? INITIAL_VIBE_LEVEL);
+}
 
 function isTemplateCode(value: string): value is VibeformTemplateCode {
   return Object.hasOwn(VIBEFORM_TEMPLATE_VERSIONS, value);
@@ -51,4 +93,41 @@ export async function updateVibeformPreferences(
     motionEnabled: update.motionEnabled ?? current.motionEnabled,
   };
   return toPreferences(await upsertVibeformPreferences(userId, next));
+}
+
+export async function getVibeformProfile(
+  userId: string,
+  now: Date = new Date(),
+): Promise<VibeformProfile> {
+  const to = new Date(now);
+  const from = new Date(to.getTime() - VIBEFORM_TRAINING_WINDOW_WEEKS * MILLISECONDS_PER_WEEK);
+
+  const [preferences, bioValues, domainLevels, regionalLoad] = await Promise.all([
+    getVibeformPreferences(userId),
+    getLatestBioValuesByKeys(userId, ["weight_kg", "height_cm"] as const),
+    getAllDomainVibeLevels(userId),
+    getRegionalTrainingLoad(userId, { from, to }),
+  ]);
+
+  const heightCm = bioValues.height_cm?.valueNumber ?? null;
+  const fullBodyShare = regionalLoad.fullBody / 2;
+  const metrics: VibeformMetrics = {
+    intelligence: getNormalizedDomainLevel(domainLevels, "intelligence"),
+    regeneration: getNormalizedDomainLevel(domainLevels, "regeneration"),
+    agility: getNormalizedDomainLevel(domainLevels, "agility"),
+    explosivity: getNormalizedDomainLevel(domainLevels, "explosivity"),
+    endurance: getNormalizedDomainLevel(domainLevels, "endurance"),
+    strength: getNormalizedDomainLevel(domainLevels, "strength"),
+    upperBodyStrength: normalizeRegionalLoad(regionalLoad.upper + fullBodyShare),
+    lowerBodyStrength: normalizeRegionalLoad(regionalLoad.lower + fullBodyShare),
+    bmi: calculateBmi(bioValues.weight_kg?.valueNumber, heightCm ?? undefined),
+    heightCm,
+  };
+
+  return {
+    preferences,
+    metrics,
+    calculationVersion: VIBEFORM_CALCULATION_VERSION,
+    calculatedAt: to.toISOString(),
+  };
 }
