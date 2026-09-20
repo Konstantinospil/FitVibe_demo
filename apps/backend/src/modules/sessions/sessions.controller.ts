@@ -193,10 +193,9 @@ export async function createSessionHandler(req: Request, res: Response): Promise
   }
 
   const handled = await handleIdempotentRequest(req, res, userId, parsed.data, async () => {
-      const body = await createOne(userId, parsed.data);
-      return { status: 201, body };
-    },
-  );
+    const body = await createOne(userId, parsed.data);
+    return { status: 201, body };
+  });
 
   if (!handled) {
     const body = await createOne(userId, parsed.data);
@@ -245,10 +244,9 @@ export async function cloneSessionHandler(req: Request, res: Response): Promise<
     userId,
     { source_id: req.params.id, ...parsed.data },
     async () => {
-      const body = await cloneOne(userId, req.params.id, parsed.data);
-      return { status: 201, body };
-    },
-  );
+    const body = await cloneOne(userId, req.params.id, parsed.data);
+    return { status: 201, body };
+  });
 
   if (!handled) {
     const body = await cloneOne(userId, req.params.id, parsed.data);
