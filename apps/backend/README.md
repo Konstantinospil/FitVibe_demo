@@ -89,6 +89,6 @@ The backend groups domain logic into modular verticals. The table below lists ea
 | System         | Administrative health and read-only mode controls used for maintenance operations.                            | `src/modules/system/system.routes.ts`                |
 | Common         | Shared middleware and utilities such as idempotency handling, RBAC, rate limiting, and auditing.              | `src/modules/common/`                                |
 
-See `src/modules/index.ts` for how these routers are mounted under the versioned API path.
+See `src/app.ts` for the canonical runtime route composition. Files under `src/api/` are thin re-exports that keep route imports consistent while domain routers remain under `src/modules/`.
 
 For detailed information about the module architecture, patterns, and how to add new modules, see [`src/modules/README.md`](src/modules/README.md).
