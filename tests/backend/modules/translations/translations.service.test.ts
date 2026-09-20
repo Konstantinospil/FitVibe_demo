@@ -91,7 +91,7 @@ describe("translations service", () => {
     expect(updateMeasurementAttributeLabel).toHaveBeenCalledWith("height", "Height");
     expect(insertAudit).toHaveBeenCalledWith({
       actorUserId: null,
-      entity: "measurement_attributes",
+      entityType: "measurement_attributes",
       action: "rename",
       entityId: "height",
       metadata: {
@@ -136,7 +136,7 @@ describe("translations service", () => {
     expect(updateMeasurementAttributeLabel).toHaveBeenCalledWith("height", "Height Updated");
     expect(insertAudit).toHaveBeenCalledWith({
       actorUserId: null,
-      entity: "measurement_attributes",
+      entityType: "measurement_attributes",
       action: "rename",
       entityId: "height",
       metadata: {
@@ -165,7 +165,7 @@ describe("translations service", () => {
     expect(updateMeasurementAttributeLabel).toHaveBeenCalledWith("weight", "Weight");
     expect(insertAudit).toHaveBeenCalledWith({
       actorUserId: null,
-      entity: "measurement_attributes",
+      entityType: "measurement_attributes",
       action: "rename",
       entityId: "weight",
       metadata: {
