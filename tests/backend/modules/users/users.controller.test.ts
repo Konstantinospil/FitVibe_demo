@@ -852,7 +852,7 @@ describe("Users Controller", () => {
     it("should change status successfully without idempotency", async () => {
       const targetUserId = "user-456";
       const statusData = {
-        status: "archived" as const,
+        status: "suspended" as const,
       };
 
       const mockProfile = {
