@@ -109,11 +109,7 @@ type LoginInput = z.infer<typeof LoginSchema>;
 type ForgotPasswordInput = z.infer<typeof ForgotPasswordSchema>;
 type ResetPasswordInput = z.infer<typeof ResetPasswordSchema>;
 
-export async function register(
-  req: Request,
-  res: Response,
-  next: NextFunction,
-): Promise<void> {
+export async function register(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     const payload: RegisterInput = RegisterSchema.parse(req.body);
     const scopeUserId = `anon:${payload.email}`;
@@ -130,13 +126,10 @@ export async function register(
       return response;
     };
 
-    const handled = await handleIdempotentRequest(
-      req,
-      res,
-      scopeUserId,
-      payload,
-      async () => ({ status: 202, body: await execute() }),
-    );
+    const handled = await handleIdempotentRequest(req, res, scopeUserId, payload, async () => ({
+      status: 202,
+      body: await execute(),
+    }));
 
     if (!handled) {
       res.status(202).json(await execute());
@@ -351,13 +344,10 @@ export async function forgotPassword(
       return response;
     };
 
-    const handled = await handleIdempotentRequest(
-      req,
-      res,
-      scopeUserId,
-      payload,
-      async () => ({ status: 202, body: await execute() }),
-    );
+    const handled = await handleIdempotentRequest(req, res, scopeUserId, payload, async () => ({
+      status: 202,
+      body: await execute(),
+    }));
 
     if (!handled) {
       res.status(202).json(await execute());
