@@ -857,7 +857,7 @@ describe("Users Controller", () => {
 
       const mockProfile = {
         id: targetUserId,
-        status: "archived",
+        status: "suspended",
       };
 
       mockRequest.params = { id: targetUserId };
@@ -868,7 +868,7 @@ describe("Users Controller", () => {
 
       await usersController.adminChangeStatus(mockRequest as Request, mockResponse as Response);
 
-      expect(mockUsersService.changeStatus).toHaveBeenCalledWith(userId, targetUserId, "archived");
+      expect(mockUsersService.changeStatus).toHaveBeenCalledWith(userId, targetUserId, "suspended");
       expect(mockResponse.json).toHaveBeenCalledWith(mockProfile);
     });
 
