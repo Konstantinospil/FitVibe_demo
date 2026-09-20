@@ -220,6 +220,21 @@ describe("enhanced security middleware", () => {
     expect(res.status).not.toHaveBeenCalled();
   });
 
+  it("allows free-form body text that contains ordinary punctuation", () => {
+    const req: TypedRequest = {
+      query: {},
+      params: {},
+      body: { bio: "Running (easy) & cycling; recovery $ matters" },
+    } as unknown as TypedRequest;
+    const res = createMockRes();
+    const next = jest.fn();
+
+    detectSuspiciousPatterns(req as unknown as Request, res, next);
+
+    expect(next).toHaveBeenCalled();
+    expect(res.status).not.toHaveBeenCalled();
+  });
+
   it("applies no-cache headers", () => {
     const res = createMockRes();
     noCacheHeaders({} as TypedRequest as Request, res, jest.fn());
