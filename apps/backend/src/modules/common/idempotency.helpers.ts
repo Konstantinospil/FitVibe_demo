@@ -127,7 +127,11 @@ export async function handleIdempotentRequest<T>(
     // Replay previous response
     res.set("Idempotency-Key", key);
     res.set("Idempotent-Replayed", "true");
-    res.status(resolution.status).json(resolution.body);
+    if (resolution.status === 204) {
+      res.status(204).send();
+    } else {
+      res.status(resolution.status).json(resolution.body);
+    }
     return true;
   }
 
@@ -143,7 +147,11 @@ export async function handleIdempotentRequest<T>(
 
   // Send response
   res.set("Idempotency-Key", key);
-  res.status(result.status).json(result.body);
+  if (result.status === 204) {
+    res.status(204).send();
+  } else {
+    res.status(result.status).json(result.body);
+  }
   return true;
 }
 
