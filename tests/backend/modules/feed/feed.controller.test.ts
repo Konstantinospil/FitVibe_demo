@@ -238,7 +238,6 @@ describe("Feed Controller", () => {
     it("should like feed item successfully", async () => {
       mockRequest.params = { feedItemId };
       mockRequest.method = "POST";
-      mockIdempotencyHelpers.handleIdempotentRequest.mockResolvedValue(false);
       const mockResult = { liked: true };
       mockFeedService.likeFeedItem.mockResolvedValue(mockResult);
 
@@ -262,7 +261,6 @@ describe("Feed Controller", () => {
     it("should unlike feed item successfully", async () => {
       mockRequest.params = { feedItemId };
       mockRequest.method = "DELETE";
-      mockIdempotencyHelpers.handleIdempotentRequest.mockResolvedValue(false);
       const mockResult = { liked: false };
       mockFeedService.unlikeFeedItem.mockResolvedValue(mockResult);
 
@@ -407,7 +405,6 @@ describe("Feed Controller", () => {
       mockRequest.params = { feedItemId };
       mockRequest.body = { body: commentBody };
       mockRequest.method = "POST";
-      mockIdempotencyHelpers.handleIdempotentRequest.mockResolvedValue(false);
       const mockComment = { id: "comment-1", body: commentBody };
       mockFeedService.createComment.mockResolvedValue(mockComment);
 
@@ -422,7 +419,6 @@ describe("Feed Controller", () => {
       mockRequest.params = { feedItemId };
       mockRequest.body = { body: 123 };
       mockRequest.method = "POST";
-      mockIdempotencyHelpers.handleIdempotentRequest.mockResolvedValue(false);
       const mockComment = { id: "comment-1", body: "123" };
       mockFeedService.createComment.mockResolvedValue(mockComment);
 
