@@ -234,6 +234,49 @@ describe("idempotency.helpers", () => {
       );
     });
 
+    it("should preserve 204 semantics for new and replayed requests", async () => {
+      (mockRequest.get as jest.Mock).mockReturnValue("idempotency-key-204");
+      mockIdempotencyService.resolveIdempotency.mockResolvedValueOnce({
+        type: "new",
+        recordId: "record-204",
+      });
+
+      const handler = jest.fn().mockResolvedValue({ status: 204, body: null });
+
+      await idempotencyHelpers.handleIdempotentRequest(
+        mockRequest as Request,
+        mockResponse as Response,
+        userId,
+        {},
+        handler,
+      );
+
+      expect(mockResponse.status).toHaveBeenCalledWith(204);
+      expect(mockResponse.send).toHaveBeenCalledWith();
+      expect(mockResponse.json).not.toHaveBeenCalled();
+
+      jest.clearAllMocks();
+      (mockRequest.get as jest.Mock).mockReturnValue("idempotency-key-204");
+      mockIdempotencyService.resolveIdempotency.mockResolvedValueOnce({
+        type: "replay",
+        status: 204,
+        body: null,
+      });
+
+      await idempotencyHelpers.handleIdempotentRequest(
+        mockRequest as Request,
+        mockResponse as Response,
+        userId,
+        {},
+        handler,
+      );
+
+      expect(handler).not.toHaveBeenCalled();
+      expect(mockResponse.status).toHaveBeenCalledWith(204);
+      expect(mockResponse.send).toHaveBeenCalledWith();
+      expect(mockResponse.json).not.toHaveBeenCalled();
+    });
+
     it("should replay idempotent request", async () => {
       (mockRequest.get as jest.Mock).mockReturnValue("idempotency-key-123");
       mockRequest.baseUrl = "/api/v1";
