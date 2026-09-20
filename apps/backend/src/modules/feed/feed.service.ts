@@ -315,7 +315,7 @@ export async function likeFeedItem(
 
   await insertAudit({
     actorUserId: userId,
-    entity: "feed_items",
+    entityType: "feed_items",
     action: "feed.like",
     entityId: feedItemId,
     metadata: {
@@ -339,7 +339,7 @@ export async function unlikeFeedItem(
   if (removed > 0) {
     await insertAudit({
       actorUserId: userId,
-      entity: "feed_items",
+      entityType: "feed_items",
       action: "feed.unlike",
       entityId: feedItemId,
       metadata: {
@@ -362,7 +362,7 @@ export async function bookmarkSession(
 
   await insertAudit({
     actorUserId: userId,
-    entity: "sessions",
+    entityType: "sessions",
     action: "feed.bookmark",
     entityId: sessionId,
     metadata: {
@@ -384,7 +384,7 @@ export async function removeBookmark(
   if (removed > 0) {
     await insertAudit({
       actorUserId: userId,
-      entity: "sessions",
+      entityType: "sessions",
       action: "feed.unbookmark",
       entityId: sessionId,
       metadata: {
@@ -507,7 +507,7 @@ export async function createComment(
 
   await insertAudit({
     actorUserId: userId,
-    entity: "feed_items",
+    entityType: "feed_items",
     action: "feed.comment",
     entityId: feedItemId,
     metadata: {
@@ -546,7 +546,7 @@ export async function deleteComment(
   await softDeleteComment(commentId);
   await insertAudit({
     actorUserId: userId,
-    entity: "feed_items",
+    entityType: "feed_items",
     action: "feed.comment.delete",
     entityId: comment.feed_item_id,
     metadata: {
@@ -573,7 +573,7 @@ export async function blockUserByAlias(
 
   await insertAudit({
     actorUserId: blockerId,
-    entity: "users",
+    entityType: "users",
     action: "feed.block",
     entityId: target.id,
   });
@@ -597,7 +597,7 @@ export async function unblockUserByAlias(
 
   await insertAudit({
     actorUserId: blockerId,
-    entity: "users",
+    entityType: "users",
     action: "feed.unblock",
     entityId: target.id,
   });
@@ -626,7 +626,7 @@ export async function reportFeedItem(
 
   await insertAudit({
     actorUserId: reporterId,
-    entity: "feed_items",
+    entityType: "feed_items",
     action: "feed.report.item",
     entityId: feedItemId,
     metadata: {
@@ -663,7 +663,7 @@ export async function reportComment(
 
   await insertAudit({
     actorUserId: reporterId,
-    entity: "feed_items",
+    entityType: "feed_items",
     action: "feed.report.comment",
     entityId: comment.feed_item_id,
     metadata: {
@@ -749,7 +749,7 @@ export async function publishSession(
 
   await insertAudit({
     actorUserId: userId,
-    entity: "feed_items",
+    entityType: "feed_items",
     action: "feed.publish",
     entityId: feedItem.id,
     metadata: {

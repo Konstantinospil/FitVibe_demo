@@ -2,17 +2,14 @@ import type { Request, Response } from "express";
 import * as exerciseController from "../../../../apps/backend/src/modules/exercises/exercise.controller.js";
 import * as exerciseService from "../../../../apps/backend/src/modules/exercises/exercise.service.js";
 import * as idempotencyService from "../../../../apps/backend/src/modules/common/idempotency.service.js";
-import * as idempotencyHelpers from "../../../../apps/backend/src/modules/common/idempotency.helpers.js";
 import { HttpError } from "../../../../apps/backend/src/utils/http.js";
 
 // Mock dependencies
 jest.mock("../../../../apps/backend/src/modules/exercises/exercise.service.js");
 jest.mock("../../../../apps/backend/src/modules/common/idempotency.service.js");
-jest.mock("../../../../apps/backend/src/modules/common/idempotency.helpers.js");
 
 const mockExerciseService = jest.mocked(exerciseService);
 const mockIdempotencyService = jest.mocked(idempotencyService);
-const mockIdempotencyHelpers = jest.mocked(idempotencyHelpers);
 
 describe("Exercise Controller", () => {
   let mockRequest: Partial<Request>;
@@ -290,7 +287,6 @@ describe("Exercise Controller", () => {
 
       mockRequest.body = exerciseData;
       mockRequest.method = "POST";
-      mockIdempotencyHelpers.getIdempotencyKey.mockReturnValue(null);
       mockExerciseService.createOne.mockResolvedValue(mockExercise);
 
       await exerciseController.createExerciseHandler(
@@ -320,8 +316,7 @@ describe("Exercise Controller", () => {
 
       mockRequest.body = exerciseData;
       mockRequest.method = "POST";
-      mockIdempotencyHelpers.getIdempotencyKey.mockReturnValue("idempotency-key-123");
-      mockIdempotencyHelpers.getRouteTemplate.mockReturnValue("/api/v1/exercises");
+      (mockRequest.get as jest.Mock).mockReturnValue("idempotency-key-123");
       mockIdempotencyService.resolveIdempotency.mockResolvedValue({
         type: "new",
         recordId: "record-123",
@@ -360,8 +355,7 @@ describe("Exercise Controller", () => {
 
       mockRequest.body = exerciseData;
       mockRequest.method = "POST";
-      mockIdempotencyHelpers.getIdempotencyKey.mockReturnValue("idempotency-key-123");
-      mockIdempotencyHelpers.getRouteTemplate.mockReturnValue("/api/v1/exercises");
+      (mockRequest.get as jest.Mock).mockReturnValue("idempotency-key-123");
       mockIdempotencyService.resolveIdempotency.mockResolvedValue({
         type: "replay",
         status: 201,
@@ -434,7 +428,6 @@ describe("Exercise Controller", () => {
       mockRequest.user = { sub: userId, role: "admin" };
       mockRequest.body = exerciseData;
       mockRequest.method = "POST";
-      mockIdempotencyHelpers.getIdempotencyKey.mockReturnValue(null);
       mockExerciseService.createOne.mockResolvedValue(mockExercise);
 
       await exerciseController.createExerciseHandler(
@@ -465,7 +458,6 @@ describe("Exercise Controller", () => {
       mockRequest.params = { id: exerciseId };
       mockRequest.body = updateData;
       mockRequest.method = "PUT";
-      mockIdempotencyHelpers.getIdempotencyKey.mockReturnValue(null);
       mockExerciseService.updateOne.mockResolvedValue(mockExercise);
 
       await exerciseController.updateExerciseHandler(
@@ -500,8 +492,7 @@ describe("Exercise Controller", () => {
       mockRequest.params = { id: exerciseId };
       mockRequest.body = updateData;
       mockRequest.method = "PUT";
-      mockIdempotencyHelpers.getIdempotencyKey.mockReturnValue("idempotency-key-123");
-      mockIdempotencyHelpers.getRouteTemplate.mockReturnValue("/api/v1/exercises/:id");
+      (mockRequest.get as jest.Mock).mockReturnValue("idempotency-key-123");
       mockIdempotencyService.resolveIdempotency.mockResolvedValue({
         type: "new",
         recordId: "record-123",
@@ -540,8 +531,7 @@ describe("Exercise Controller", () => {
       mockRequest.params = { id: exerciseId };
       mockRequest.body = updateData;
       mockRequest.method = "PUT";
-      mockIdempotencyHelpers.getIdempotencyKey.mockReturnValue("idempotency-key-123");
-      mockIdempotencyHelpers.getRouteTemplate.mockReturnValue("/api/v1/exercises/:id");
+      (mockRequest.get as jest.Mock).mockReturnValue("idempotency-key-123");
       mockIdempotencyService.resolveIdempotency.mockResolvedValue({
         type: "replay",
         status: 200,
@@ -610,7 +600,6 @@ describe("Exercise Controller", () => {
       mockRequest.params = { id: exerciseId };
       mockRequest.body = updateData;
       mockRequest.method = "PUT";
-      mockIdempotencyHelpers.getIdempotencyKey.mockReturnValue(null);
       mockExerciseService.updateOne.mockResolvedValue(mockExercise);
 
       await exerciseController.updateExerciseHandler(
@@ -631,7 +620,6 @@ describe("Exercise Controller", () => {
     it("should delete exercise successfully without idempotency", async () => {
       mockRequest.params = { id: exerciseId };
       mockRequest.method = "DELETE";
-      mockIdempotencyHelpers.getIdempotencyKey.mockReturnValue(null);
       mockExerciseService.archiveOne.mockResolvedValue(undefined);
 
       await exerciseController.deleteExerciseHandler(
@@ -647,8 +635,7 @@ describe("Exercise Controller", () => {
     it("should delete exercise with idempotency key", async () => {
       mockRequest.params = { id: exerciseId };
       mockRequest.method = "DELETE";
-      mockIdempotencyHelpers.getIdempotencyKey.mockReturnValue("idempotency-key-123");
-      mockIdempotencyHelpers.getRouteTemplate.mockReturnValue("/api/v1/exercises/:id");
+      (mockRequest.get as jest.Mock).mockReturnValue("idempotency-key-123");
       mockIdempotencyService.resolveIdempotency.mockResolvedValue({
         type: "new",
         recordId: "record-123",
@@ -672,8 +659,7 @@ describe("Exercise Controller", () => {
     it("should replay idempotent delete request", async () => {
       mockRequest.params = { id: exerciseId };
       mockRequest.method = "DELETE";
-      mockIdempotencyHelpers.getIdempotencyKey.mockReturnValue("idempotency-key-123");
-      mockIdempotencyHelpers.getRouteTemplate.mockReturnValue("/api/v1/exercises/:id");
+      (mockRequest.get as jest.Mock).mockReturnValue("idempotency-key-123");
       mockIdempotencyService.resolveIdempotency.mockResolvedValue({
         type: "replay",
         status: 204,
@@ -709,7 +695,6 @@ describe("Exercise Controller", () => {
       mockRequest.user = { sub: userId, role: "admin" };
       mockRequest.params = { id: exerciseId };
       mockRequest.method = "DELETE";
-      mockIdempotencyHelpers.getIdempotencyKey.mockReturnValue(null);
       mockExerciseService.archiveOne.mockResolvedValue(undefined);
 
       await exerciseController.deleteExerciseHandler(

@@ -2,14 +2,12 @@ import type { NextFunction, Request, Response } from "express";
 import * as authController from "../../../../apps/backend/src/modules/auth/auth.controller.js";
 import * as authService from "../../../../apps/backend/src/modules/auth/auth.service.js";
 import * as idempotencyService from "../../../../apps/backend/src/modules/common/idempotency.service.js";
-import * as idempotencyHelpers from "../../../../apps/backend/src/modules/common/idempotency.helpers.js";
 import * as tokensService from "../../../../apps/backend/src/services/tokens.js";
 import { HttpError } from "../../../../apps/backend/src/utils/http.js";
 
 // Mock dependencies
 jest.mock("../../../../apps/backend/src/modules/auth/auth.service.js");
 jest.mock("../../../../apps/backend/src/modules/common/idempotency.service.js");
-jest.mock("../../../../apps/backend/src/modules/common/idempotency.helpers.js");
 jest.mock("../../../../apps/backend/src/services/tokens.js");
 jest.mock("../../../../apps/backend/src/services/mailer.service.js", () => ({
   mailerService: {
@@ -41,7 +39,6 @@ jest.mock("../../../../apps/backend/src/config/env.js", () => ({
 
 const mockAuthService = jest.mocked(authService);
 const mockIdempotencyService = jest.mocked(idempotencyService);
-const mockIdempotencyHelpers = jest.mocked(idempotencyHelpers);
 const mockTokensService = jest.mocked(tokensService);
 
 describe("Auth Controller", () => {
@@ -94,7 +91,6 @@ describe("Auth Controller", () => {
 
       mockRequest.body = registerData;
       (mockRequest.get as jest.Mock).mockReturnValue(undefined); // No idempotency key
-      mockIdempotencyHelpers.getIdempotencyKey.mockReturnValue(null);
       mockAuthService.register.mockResolvedValue({
         verificationToken: "verification-token",
         user: {
@@ -130,8 +126,7 @@ describe("Auth Controller", () => {
       };
 
       mockRequest.body = registerData;
-      mockIdempotencyHelpers.getIdempotencyKey.mockReturnValue("idempotency-key");
-      mockIdempotencyHelpers.getRouteTemplate.mockReturnValue("/auth/register");
+      (mockRequest.get as jest.Mock).mockReturnValue("idempotency-key");
       mockIdempotencyService.resolveIdempotency.mockResolvedValue({
         type: "replay",
         status: 202,
@@ -156,8 +151,7 @@ describe("Auth Controller", () => {
       };
 
       mockRequest.body = registerData;
-      mockIdempotencyHelpers.getIdempotencyKey.mockReturnValue("idempotency-key");
-      mockIdempotencyHelpers.getRouteTemplate.mockReturnValue("/auth/register");
+      (mockRequest.get as jest.Mock).mockReturnValue("idempotency-key");
       mockIdempotencyService.resolveIdempotency.mockResolvedValue({
         type: "new",
         recordId: "record-123",
@@ -192,7 +186,6 @@ describe("Auth Controller", () => {
       };
 
       mockRequest.body = registerData;
-      mockIdempotencyHelpers.getIdempotencyKey.mockReturnValue(null);
       const error = new HttpError(400, "VALIDATION_ERROR", "Invalid email");
       mockAuthService.register.mockRejectedValue(error);
 
@@ -485,7 +478,6 @@ describe("Auth Controller", () => {
     it("should request password reset without idempotency", async () => {
       const email = "test@example.com";
       mockRequest.body = { email };
-      mockIdempotencyHelpers.getIdempotencyKey.mockReturnValue(null);
       mockAuthService.requestPasswordReset.mockResolvedValue({
         resetToken: "reset-token",
       });
@@ -510,8 +502,7 @@ describe("Auth Controller", () => {
     it("should handle idempotency replay for password reset", async () => {
       const email = "test@example.com";
       mockRequest.body = { email };
-      mockIdempotencyHelpers.getIdempotencyKey.mockReturnValue("idempotency-key");
-      mockIdempotencyHelpers.getRouteTemplate.mockReturnValue("/auth/password/forgot");
+      (mockRequest.get as jest.Mock).mockReturnValue("idempotency-key");
       mockIdempotencyService.resolveIdempotency.mockResolvedValue({
         type: "replay",
         status: 202,

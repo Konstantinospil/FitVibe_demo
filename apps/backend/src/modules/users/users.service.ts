@@ -331,7 +331,7 @@ export async function createUser(
 
   await insertAudit({
     actorUserId,
-    entity: "users",
+    entityType: "users",
     action: "create",
     entityId: userId,
     metadata: {
@@ -556,7 +556,7 @@ export async function updateProfile(userId: string, dto: UpdateProfileDTO): Prom
   if (Object.keys(changes).length > 0) {
     await insertAudit({
       actorUserId: userId,
-      entity: "users",
+      entityType: "users",
       action: "profile_update",
       entityId: userId,
       metadata: { changes },
@@ -590,7 +590,7 @@ export async function updatePassword(userId: string, dto: ChangePasswordDTO): Pr
   await revokeRefreshByUserId(userId);
   await insertAudit({
     actorUserId: userId,
-    entity: "users",
+    entityType: "users",
     action: "password_change",
     entityId: userId,
     metadata: { rotatedSessions: true },
@@ -622,7 +622,7 @@ export async function changeStatus(
 
   await insertAudit({
     actorUserId,
-    entity: "users",
+    entityType: "users",
     action: "status_change",
     entityId: userId,
     metadata: { from: user.status, to: nextStatus },
@@ -659,7 +659,7 @@ export async function requestAccountDeletion(
     await revokeRefreshByUserId(userId);
     await insertAudit({
       actorUserId: userId,
-      entity: "users",
+      entityType: "users",
       action: "delete_request",
       entityId: userId,
       metadata: {},
@@ -718,7 +718,7 @@ export async function requestContactVerification(
 
   await insertAudit({
     actorUserId: userId,
-    entity: "user_contacts",
+    entityType: "user_contacts",
     action: "verification_token_requested",
     entityId: contactId,
     metadata: { type: contact.type },
@@ -749,7 +749,7 @@ export async function updatePrimaryEmail(userId: string, email: string): Promise
 
   await insertAudit({
     actorUserId: userId,
-    entity: "user_contacts",
+    entityType: "user_contacts",
     action: "email_upsert",
     entityId: userId,
     metadata: { email: trimmed },
@@ -788,7 +788,7 @@ export async function updatePhoneNumber(
 
   await insertAudit({
     actorUserId: userId,
-    entity: "user_contacts",
+    entityType: "user_contacts",
     action: "phone_upsert",
     entityId: userId,
     metadata: { phone: trimmed, isRecovery },
@@ -838,7 +838,7 @@ export async function verifyContact(
 
   await insertAudit({
     actorUserId: userId,
-    entity: "user_contacts",
+    entityType: "user_contacts",
     action: "contact_verify",
     entityId: contactId,
     metadata: { type: contact.type },
@@ -862,7 +862,7 @@ export async function removeContact(userId: string, contactId: string): Promise<
   await deleteContact(userId, contactId);
   await insertAudit({
     actorUserId: userId,
-    entity: "user_contacts",
+    entityType: "user_contacts",
     action: "contact_remove",
     entityId: contactId,
     metadata: { type: contact.type },

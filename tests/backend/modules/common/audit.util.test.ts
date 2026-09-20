@@ -36,7 +36,7 @@ describe("audit.util", () => {
   describe("insertAudit", () => {
     it("should insert audit log", async () => {
       const payload = {
-        actorUserId: "user-123",
+        actorUserId: "11111111-1111-4111-8111-111111111111",
         entityType: "session",
         action: "create",
         entityId: "session-123",
@@ -50,7 +50,7 @@ describe("audit.util", () => {
       expect(mockedDb).toHaveBeenCalledWith("audit_log");
       expect(mockQueryBuilder.insert).toHaveBeenCalledWith(
         expect.objectContaining({
-          actor_user_id: "user-123",
+          actor_user_id: "11111111-1111-4111-8111-111111111111",
           entity_type: "session",
           action: "create",
           entity_id: "session-123",
@@ -62,32 +62,16 @@ describe("audit.util", () => {
       );
     });
 
-    it("should use entityType over entity", async () => {
-      const payload = {
+    it("should normalize invalid actor IDs to null", async () => {
+      await auditUtil.insertAudit({
+        actorUserId: "not-a-uuid",
         entityType: "session",
-        entity: "old-entity",
         action: "create",
-      };
-
-      await auditUtil.insertAudit(payload);
+      });
 
       expect(mockQueryBuilder.insert).toHaveBeenCalledWith(
         expect.objectContaining({
-          entity_type: "session",
-        }),
-      );
-    });
-
-    it("should use entity when entityType not provided", async () => {
-      const payload = {
-        entity: "session",
-        action: "create",
-      };
-
-      await auditUtil.insertAudit(payload);
-
-      expect(mockQueryBuilder.insert).toHaveBeenCalledWith(
-        expect.objectContaining({
+          actor_user_id: null,
           entity_type: "session",
         }),
       );
@@ -112,20 +96,6 @@ describe("audit.util", () => {
       );
     });
 
-    it("should log warning when entityType missing", async () => {
-      const payload = {
-        action: "create",
-      };
-
-      await auditUtil.insertAudit(payload);
-
-      expect(mockedLogger.warn).toHaveBeenCalledWith(
-        { action: "create" },
-        "[AUDIT] missing entityType",
-      );
-      expect(mockQueryBuilder.insert).not.toHaveBeenCalled();
-    });
-
     it("should handle insert errors", async () => {
       const payload = {
         action: "create",
@@ -145,11 +115,11 @@ describe("audit.util", () => {
   });
 
   describe("logAudit", () => {
-    it("should log audit with all fields", async () => {
+    it("should normalize an invalid actor ID while logging all fields", async () => {
       const payload = {
         action: "update",
         entityType: "user",
-        entityId: "user-123",
+        entityId: "11111111-1111-4111-8111-111111111111",
         userId: "actor-123",
         outcome: "success",
         requestId: "req-123",
@@ -160,10 +130,10 @@ describe("audit.util", () => {
 
       expect(mockQueryBuilder.insert).toHaveBeenCalledWith(
         expect.objectContaining({
-          actor_user_id: "actor-123",
+          actor_user_id: null,
           entity_type: "user",
           action: "update",
-          entity_id: "user-123",
+          entity_id: "11111111-1111-4111-8111-111111111111",
           outcome: "success",
           request_id: "req-123",
           metadata: { key: "value" },

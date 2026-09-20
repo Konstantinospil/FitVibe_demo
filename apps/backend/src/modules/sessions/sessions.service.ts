@@ -353,7 +353,7 @@ export async function createOne(
 
   await insertAudit({
     actorUserId: userId,
-    entity: "sessions",
+    entityType: "sessions",
     action: "create",
     entityId: sessionId,
     metadata: {
@@ -542,7 +542,7 @@ export async function updateOne(
 
   await insertAudit({
     actorUserId: userId,
-    entity: "sessions",
+    entityType: "sessions",
     action: "update",
     entityId: id,
     metadata: {
@@ -632,7 +632,7 @@ export async function cloneOne(
 
   await insertAudit({
     actorUserId: userId,
-    entity: "sessions",
+    entityType: "sessions",
     action: "clone",
     entityId: sessionId,
     metadata: {
@@ -800,7 +800,7 @@ export async function applyRecurrence(
 
   await insertAudit({
     actorUserId: userId,
-    entity: "sessions",
+    entityType: "sessions",
     action: "recurrence_create",
     entityId: sourceId,
     metadata: {
@@ -841,7 +841,7 @@ export async function cancelOne(userId: string, id: string): Promise<void> {
 
   await insertAudit({
     actorUserId: userId,
-    entity: "sessions",
+    entityType: "sessions",
     action: "cancel",
     entityId: id,
   });

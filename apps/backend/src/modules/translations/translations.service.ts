@@ -88,7 +88,7 @@ export async function createTranslationService(
       await updateMeasurementAttributeLabel(key, dto.value);
       await insertAudit({
         actorUserId: userId ?? null,
-        entity: "measurement_attributes",
+        entityType: "measurement_attributes",
         action: "rename",
         entityId: key,
         metadata: { namespace: dto.namespace, key_path: dto.key_path, label: dto.value },
@@ -134,7 +134,7 @@ export async function updateTranslationService(
       await updateMeasurementAttributeLabel(key, dto.value);
       await insertAudit({
         actorUserId: userId ?? null,
-        entity: "measurement_attributes",
+        entityType: "measurement_attributes",
         action: "rename",
         entityId: key,
         metadata: { namespace, key_path: keyPath, label: dto.value },
@@ -174,7 +174,7 @@ export async function bulkUpdateTranslationService(
     await updateMeasurementAttributeLabel(key, enValue);
     await insertAudit({
       actorUserId: userId ?? null,
-      entity: "measurement_attributes",
+      entityType: "measurement_attributes",
       action: "rename",
       entityId: key,
       metadata: { namespace: dto.namespace, key_path: dto.key_path, label: enValue },

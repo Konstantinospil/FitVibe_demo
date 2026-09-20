@@ -234,6 +234,49 @@ describe("idempotency.helpers", () => {
       );
     });
 
+    it("should preserve 204 semantics for new and replayed requests", async () => {
+      (mockRequest.get as jest.Mock).mockReturnValue("idempotency-key-204");
+      mockIdempotencyService.resolveIdempotency.mockResolvedValueOnce({
+        type: "new",
+        recordId: "record-204",
+      });
+
+      const handler = jest.fn().mockResolvedValue({ status: 204, body: null });
+
+      await idempotencyHelpers.handleIdempotentRequest(
+        mockRequest as Request,
+        mockResponse as Response,
+        userId,
+        {},
+        handler,
+      );
+
+      expect(mockResponse.status).toHaveBeenCalledWith(204);
+      expect(mockResponse.send).toHaveBeenCalledWith();
+      expect(mockResponse.json).not.toHaveBeenCalled();
+
+      jest.clearAllMocks();
+      (mockRequest.get as jest.Mock).mockReturnValue("idempotency-key-204");
+      mockIdempotencyService.resolveIdempotency.mockResolvedValueOnce({
+        type: "replay",
+        status: 204,
+        body: null,
+      });
+
+      await idempotencyHelpers.handleIdempotentRequest(
+        mockRequest as Request,
+        mockResponse as Response,
+        userId,
+        {},
+        handler,
+      );
+
+      expect(handler).not.toHaveBeenCalled();
+      expect(mockResponse.status).toHaveBeenCalledWith(204);
+      expect(mockResponse.send).toHaveBeenCalledWith();
+      expect(mockResponse.json).not.toHaveBeenCalled();
+    });
+
     it("should replay idempotent request", async () => {
       (mockRequest.get as jest.Mock).mockReturnValue("idempotency-key-123");
       mockRequest.baseUrl = "/api/v1";
@@ -265,60 +308,4 @@ describe("idempotency.helpers", () => {
     });
   });
 
-  describe("withIdempotency", () => {
-    it("should handle request with authentication and idempotency", async () => {
-      mockRequest.user = { sub: userId, role: "athlete" };
-      (mockRequest.get as jest.Mock).mockReturnValue("idempotency-key-123");
-      mockRequest.baseUrl = "/api/v1";
-      mockRequest.route = { path: "/sessions" };
-      mockRequest.method = "POST";
-
-      mockIdempotencyService.resolveIdempotency.mockResolvedValue({
-        type: "new",
-        recordId: "record-123",
-      });
-
-      const handler = jest.fn().mockResolvedValue({ status: 201, body: { id: "123" } });
-
-      const result = await idempotencyHelpers.withIdempotency(
-        mockRequest as Request,
-        mockResponse as Response,
-        { title: "Test" },
-        handler,
-      );
-
-      expect(result).toEqual({ handled: true, userId });
-      expect(handler).toHaveBeenCalledWith(userId);
-    });
-
-    it("should return handled false when no idempotency key", async () => {
-      mockRequest.user = { sub: userId, role: "athlete" };
-      (mockRequest.get as jest.Mock).mockReturnValue(null);
-
-      const handler = jest.fn().mockResolvedValue({ status: 201, body: { id: "123" } });
-
-      const result = await idempotencyHelpers.withIdempotency(
-        mockRequest as Request,
-        mockResponse as Response,
-        { title: "Test" },
-        handler,
-      );
-
-      expect(result).toEqual({ handled: false, userId });
-      expect(handler).not.toHaveBeenCalled();
-    });
-
-    it("should throw error when not authenticated", async () => {
-      mockRequest.user = undefined;
-
-      await expect(
-        idempotencyHelpers.withIdempotency(
-          mockRequest as Request,
-          mockResponse as Response,
-          {},
-          jest.fn(),
-        ),
-      ).rejects.toThrow(HttpError);
-    });
-  });
 });

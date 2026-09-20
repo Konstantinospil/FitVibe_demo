@@ -1,10 +1,8 @@
 import { Queue, Worker, type Job, type JobsOptions, type ConnectionOptions } from "bullmq";
 import type { Redis } from "ioredis";
 import { logger } from "../../config/logger.js";
-import { runRetentionSweep } from "../../services/retention.service.js";
-import { evaluateStreakBonus } from "../../modules/points/streaks.service.js";
-import { evaluateSeasonalEvents } from "../../modules/points/seasonal-events.service.js";
-import db from "../../db/index.js";
+import { env } from "../../config/env.js";
+import { executeSharedJob, SHARED_JOB_TYPES, type SharedJobType } from "./job.handlers.js";
 
 /**
  * Job payload interface for type safety
@@ -29,10 +27,10 @@ export class BullMQQueueService {
       this.connection = redisConnection as ConnectionOptions;
     } else {
       this.connection = {
-        host: process.env.REDIS_HOST ?? "localhost",
-        port: parseInt(process.env.REDIS_PORT ?? "6379", 10),
-        password: process.env.REDIS_PASSWORD,
-        db: parseInt(process.env.REDIS_DB ?? "0", 10),
+        host: env.redis.host,
+        port: env.redis.port,
+        password: env.redis.password,
+        db: env.redis.db,
         maxRetriesPerRequest: null, // Required for BullMQ
       };
     }
@@ -45,12 +43,7 @@ export class BullMQQueueService {
    * Initialize BullMQ queues for each job type
    */
   private initializeQueues(): void {
-    const jobTypes = [
-      "retention.sweep",
-      "leaderboard.refresh",
-      "points.streaks.evaluate",
-      "points.seasonal_events.evaluate",
-    ];
+    const jobTypes = SHARED_JOB_TYPES;
 
     for (const jobType of jobTypes) {
       const queue = new Queue(jobType, {
@@ -81,62 +74,16 @@ export class BullMQQueueService {
    * Start workers to process jobs from each queue
    */
   private startWorkers(): void {
-    this.startWorker("retention.sweep", async (job) => {
-      logger.info({ jobId: job.id }, "[bullmq] Processing retention sweep");
-      const summary = await runRetentionSweep();
-      logger.info({ summary, jobId: job.id }, "[bullmq] Retention sweep completed");
-      return summary;
-    });
-
-    this.startWorker("leaderboard.refresh", async (job) => {
-      logger.info({ jobId: job.id }, "[bullmq] Processing leaderboard refresh");
-      await db.raw("SELECT public.refresh_session_summary(TRUE);");
-      await db.raw("REFRESH MATERIALIZED VIEW mv_leaderboard;");
-      logger.info({ jobId: job.id }, "[bullmq] Leaderboard refresh completed");
-      return { success: true };
-    });
-
-    this.startWorker("points.streaks.evaluate", async (job) => {
-      logger.debug({ jobId: job.id, data: job.data }, "[bullmq] Processing streak evaluation");
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-      const { userId, sessionId, completedAt } = job.data;
-
-      if (
-        typeof userId !== "string" ||
-        typeof sessionId !== "string" ||
-        typeof completedAt !== "string"
-      ) {
-        throw new Error("Invalid streak evaluation job payload");
-      }
-
-      const result = await evaluateStreakBonus(userId, sessionId, completedAt);
-      logger.info(
-        { userId, sessionId, ...result, jobId: job.id },
-        "[bullmq] Streak evaluation completed",
-      );
-      return result;
-    });
-
-    this.startWorker("points.seasonal_events.evaluate", async (job) => {
-      logger.debug({ jobId: job.id, data: job.data }, "[bullmq] Processing seasonal events");
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-      const { userId, sessionId, completedAt } = job.data;
-
-      if (
-        typeof userId !== "string" ||
-        typeof sessionId !== "string" ||
-        typeof completedAt !== "string"
-      ) {
-        throw new Error("Invalid seasonal events job payload");
-      }
-
-      const result = await evaluateSeasonalEvents(userId, sessionId, completedAt);
-      logger.info(
-        { userId, sessionId, ...result, jobId: job.id },
-        "[bullmq] Seasonal events evaluation completed",
-      );
-      return result;
-    });
+    for (const jobType of SHARED_JOB_TYPES) {
+      this.startWorker(jobType, async (job) => {
+        logger.debug({ jobId: job.id, jobType, data: job.data }, "[bullmq] Processing shared job");
+        const payload =
+          typeof job.data === "object" && job.data !== null
+            ? (job.data as Record<string, unknown>)
+            : {};
+        return executeSharedJob(jobType as SharedJobType, payload);
+      });
+    }
   }
 
   /**
@@ -145,10 +92,10 @@ export class BullMQQueueService {
   private startWorker(queueName: string, processor: (job: Job) => Promise<unknown>): void {
     const worker = new Worker(queueName, processor, {
       connection: this.connection,
-      concurrency: parseInt(process.env.BULLMQ_CONCURRENCY ?? "5", 10),
+      concurrency: env.bullmq.concurrency,
       limiter: {
-        max: parseInt(process.env.BULLMQ_RATE_LIMIT_MAX ?? "100", 10),
-        duration: parseInt(process.env.BULLMQ_RATE_LIMIT_DURATION ?? "60000", 10),
+        max: env.bullmq.rateLimitMax,
+        duration: env.bullmq.rateLimitDuration,
       },
     });
 
@@ -344,7 +291,7 @@ let bullMQService: BullMQQueueService | null = null;
  * Only creates if REDIS_ENABLED=true in environment
  */
 export function getBullMQService(): BullMQQueueService | null {
-  if (process.env.REDIS_ENABLED !== "true") {
+  if (!env.redis.enabled) {
     return null;
   }
 
