@@ -55,7 +55,7 @@ export async function addType(
   if (userId) {
     await insertAudit({
       actorUserId: userId,
-      entity: "exercise_types",
+      entityType: "exercise_types",
       action: "create",
       entityId: dto.code,
       metadata: { code: dto.code },
@@ -78,7 +78,7 @@ export async function editType(
   if (userId) {
     await insertAudit({
       actorUserId: userId,
-      entity: "exercise_types",
+      entityType: "exercise_types",
       action: "update",
       entityId: code,
       metadata: { code },
@@ -97,7 +97,7 @@ export async function removeType(code: string, userId?: string): Promise<void> {
   if (userId) {
     await insertAudit({
       actorUserId: userId,
-      entity: "exercise_types",
+      entityType: "exercise_types",
       action: "delete",
       entityId: code,
       metadata: { code },
