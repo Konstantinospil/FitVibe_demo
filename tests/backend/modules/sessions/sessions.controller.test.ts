@@ -2,17 +2,14 @@ import type { Request, Response } from "express";
 import * as sessionsController from "../../../../apps/backend/src/modules/sessions/sessions.controller.js";
 import * as sessionsService from "../../../../apps/backend/src/modules/sessions/sessions.service.js";
 import * as idempotencyService from "../../../../apps/backend/src/modules/common/idempotency.service.js";
-import * as idempotencyHelpers from "../../../../apps/backend/src/modules/common/idempotency.helpers.js";
 import { HttpError } from "../../../../apps/backend/src/utils/http.js";
 
 // Mock dependencies
 jest.mock("../../../../apps/backend/src/modules/sessions/sessions.service.js");
 jest.mock("../../../../apps/backend/src/modules/common/idempotency.service.js");
-jest.mock("../../../../apps/backend/src/modules/common/idempotency.helpers.js");
 
 const mockSessionsService = jest.mocked(sessionsService);
 const mockIdempotencyService = jest.mocked(idempotencyService);
-const mockIdempotencyHelpers = jest.mocked(idempotencyHelpers);
 
 describe("Sessions Controller", () => {
   let mockRequest: Partial<Request>;
@@ -102,7 +99,6 @@ describe("Sessions Controller", () => {
 
       mockRequest.body = sessionData;
       mockRequest.method = "POST";
-      mockIdempotencyHelpers.getIdempotencyKey.mockReturnValue(null);
       mockSessionsService.createOne.mockResolvedValue(mockSession as never);
 
       await sessionsController.createSessionHandler(
@@ -132,7 +128,6 @@ describe("Sessions Controller", () => {
       mockRequest.body = sessionData;
       mockRequest.method = "POST";
       (mockRequest.get as jest.Mock).mockReturnValue("idempotency-key-123");
-      mockIdempotencyHelpers.getRouteTemplate.mockReturnValue("/api/v1/sessions");
       mockIdempotencyService.resolveIdempotency.mockResolvedValue({
         type: "new",
         recordId: "record-123",
@@ -155,7 +150,6 @@ describe("Sessions Controller", () => {
     it("should return 400 for invalid body", async () => {
       mockRequest.body = { title: "" }; // Invalid: empty title
       mockRequest.method = "POST";
-      mockIdempotencyHelpers.getIdempotencyKey.mockReturnValue(null);
 
       await sessionsController.createSessionHandler(
         mockRequest as Request,
@@ -269,7 +263,6 @@ describe("Sessions Controller", () => {
       mockRequest.params = { id: sessionId };
       mockRequest.body = {};
       mockRequest.method = "POST";
-      mockIdempotencyHelpers.getIdempotencyKey.mockReturnValue(null);
       mockSessionsService.cloneOne.mockResolvedValue(mockClonedSession as never);
 
       await sessionsController.cloneSessionHandler(
@@ -297,7 +290,6 @@ describe("Sessions Controller", () => {
       mockRequest.body = { title: "Cloned Session" };
       mockRequest.method = "POST";
       (mockRequest.get as jest.Mock).mockReturnValue("idempotency-key-123");
-      mockIdempotencyHelpers.getRouteTemplate.mockReturnValue("/api/v1/sessions/:id/clone");
       mockIdempotencyService.resolveIdempotency.mockResolvedValue({
         type: "new",
         recordId: "record-123",
@@ -321,7 +313,6 @@ describe("Sessions Controller", () => {
       mockRequest.params = { id: sessionId };
       mockRequest.body = { title: "" }; // Invalid: empty title
       mockRequest.method = "POST";
-      mockIdempotencyHelpers.getIdempotencyKey.mockReturnValue(null);
 
       await sessionsController.cloneSessionHandler(
         mockRequest as Request,
@@ -364,7 +355,6 @@ describe("Sessions Controller", () => {
       mockRequest.params = { id: sessionId };
       mockRequest.body = { occurrences: 3, offset_days: 7 };
       mockRequest.method = "POST";
-      mockIdempotencyHelpers.getIdempotencyKey.mockReturnValue(null);
       mockSessionsService.applyRecurrence.mockResolvedValue(mockSessions as never);
 
       await sessionsController.applyRecurrenceHandler(
@@ -401,7 +391,6 @@ describe("Sessions Controller", () => {
       mockRequest.body = { occurrences: 3, offset_days: 7 };
       mockRequest.method = "POST";
       (mockRequest.get as jest.Mock).mockReturnValue("idempotency-key-123");
-      mockIdempotencyHelpers.getRouteTemplate.mockReturnValue("/api/v1/sessions/:id/recurrence");
       mockIdempotencyService.resolveIdempotency.mockResolvedValue({
         type: "new",
         recordId: "record-123",
@@ -425,7 +414,6 @@ describe("Sessions Controller", () => {
       mockRequest.params = { id: sessionId };
       mockRequest.body = { occurrences: -1 }; // Invalid: negative occurrences
       mockRequest.method = "POST";
-      mockIdempotencyHelpers.getIdempotencyKey.mockReturnValue(null);
 
       await sessionsController.applyRecurrenceHandler(
         mockRequest as Request,
