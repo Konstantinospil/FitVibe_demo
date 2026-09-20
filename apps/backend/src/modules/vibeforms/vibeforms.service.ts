@@ -136,7 +136,11 @@ export async function getVibeformProfile(
     listRegionalStrengthStimuli(userId, { from, to }),
   ]);
 
-  const heightCm = bioValues.height_cm?.valueNumber ?? null;
+  const measuredHeight = bioValues.height_cm?.valueNumber;
+  const heightCm =
+    typeof measuredHeight === "number" && Number.isFinite(measuredHeight) && measuredHeight > 0
+      ? measuredHeight
+      : null;
   const regionalLoad = effectiveRegionalLoads(regionalStimuli, to);
   const fullBodyShare = regionalLoad.fullBody / 2;
   const metrics: VibeformMetrics = {

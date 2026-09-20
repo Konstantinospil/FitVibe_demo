@@ -20,7 +20,21 @@ export function FlowVibeform({
       style={{ ...variables, ...style }}
       {...svgProps}
     >
+      <style>{`
+        .vibeform-pulse {
+          animation: vibeform-pulse var(--vibeform-pulse-duration) ease-in-out infinite;
+          transform-box: fill-box;
+          transform-origin: center;
+        }
+        @keyframes vibeform-pulse {
+          50% { scale: calc(1 + var(--vibeform-pulse-amplitude)); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .vibeform-pulse { animation: none; }
+        }
+      `}</style>
       <g
+        className={motionEnabled ? "vibeform-pulse" : undefined}
         transform={`translate(120 160) rotate(${geometry.forwardLeanDeg}) scale(1 ${geometry.heightScale}) translate(-120 -160)`}
       >
         <circle cx="120" cy="48" r="23" fill={colors.head} />

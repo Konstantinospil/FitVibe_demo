@@ -192,6 +192,32 @@ describeWithTestDatabase("database migrations", () => {
       );
     });
 
+    it("enforces Vibeform cascade deletion and supported body profiles", async () => {
+      const foreignKey = await client.raw(`
+        SELECT rc.delete_rule
+        FROM information_schema.referential_constraints rc
+        WHERE rc.constraint_schema = 'tmp_migration_test'
+          AND rc.constraint_name = 'user_vibeform_preferences_user_id_foreign'
+      `);
+      expect(foreignKey.rows).toEqual(
+        expect.arrayContaining([expect.objectContaining({ delete_rule: "CASCADE" })]),
+      );
+
+      const checks = await client.raw(`
+        SELECT pg_get_constraintdef(c.oid) AS definition
+        FROM pg_constraint c
+        JOIN pg_class t ON t.oid = c.conrelid
+        JOIN pg_namespace n ON n.oid = t.relnamespace
+        WHERE n.nspname = 'tmp_migration_test'
+          AND t.relname = 'user_vibeform_preferences'
+          AND c.contype = 'c'
+      `);
+      const definitions = checks.rows.map((row: { definition: string }) => row.definition).join(" ");
+      expect(definitions).toContain("shoulder-dominant");
+      expect(definitions).toContain("balanced");
+      expect(definitions).toContain("hip-dominant");
+    });
+
     it("creates sessions table with correct schema", async () => {
       const hasTable = await client.schema.hasTable("sessions");
       expect(hasTable).toBe(true);

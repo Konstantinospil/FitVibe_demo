@@ -44,10 +44,10 @@ describe("Vibeform API", () => {
   });
 
   it("updates preferences without sending calculated metrics", async () => {
-    vi.spyOn(apiClient, "patch").mockResolvedValue({ data: profile });
+    vi.spyOn(apiClient, "put").mockResolvedValue({ data: profile.preferences });
 
     await updateMyVibeformPreferences({ motionEnabled: false });
-    expect(apiClient.patch).toHaveBeenCalledWith("/api/v1/vibeforms/me", {
+    expect(apiClient.put).toHaveBeenCalledWith("/api/v1/vibeforms/me/preferences", {
       motionEnabled: false,
     });
   });
@@ -73,5 +73,30 @@ describe("Vibeform rendering boundary", () => {
     expect(svg.props["aria-label"]).toBe("Athlete");
     expect(svg.props["data-vibeform-template"]).toBe("flow");
     expect(svg.props["data-motion-enabled"]).toBe(false);
+    expect(svg.props.children[1].props.className).toBeUndefined();
+    expect(svg.props.children[0].props.children).toContain("prefers-reduced-motion");
+  });
+
+  it("falls back safely when a stale profile names an unavailable template", () => {
+    const staleProfile = {
+      ...profile,
+      preferences: { ...profile.preferences, templateCode: "retired-template" },
+    } as unknown as VibeformProfile;
+
+    const container = VibeformRenderer({ profile: staleProfile });
+    const template = container.props.children;
+    const svg = template.type(template.props);
+
+    expect(container.props["data-vibeform-template-fallback"]).toBe(true);
+    expect(svg.props["data-vibeform-template"]).toBe("flow");
+  });
+
+  it("clamps malformed API scores without interpreting another backend scale", () => {
+    const malformed = {
+      ...profile,
+      metrics: { ...profile.metrics, intelligence: 100, agility: -4 },
+    };
+
+    expect(adaptVibeformProfile(malformed)).toMatchObject({ intelligence: 1, agility: 0 });
   });
 });

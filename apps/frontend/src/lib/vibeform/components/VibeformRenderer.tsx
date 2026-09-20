@@ -16,17 +16,20 @@ export function VibeformRenderer({
 }: VibeformRendererProps) {
   const input = adaptVibeformProfile(profile);
   const parameters = calculateVibeformParameters(input);
+  const requestedTemplate = profile.preferences.templateCode as string;
+  const usesFallback = requestedTemplate !== "flow";
 
-  switch (profile.preferences.templateCode) {
-    case "flow":
-      return (
-        <div {...containerProps} data-vibeform-version={profile.preferences.templateVersion}>
-          <FlowVibeform
-            parameters={parameters}
-            motionEnabled={profile.preferences.motionEnabled}
-            aria-label={accessibleLabel}
-          />
-        </div>
-      );
-  }
+  return (
+    <div
+      {...containerProps}
+      data-vibeform-version={profile.preferences.templateVersion}
+      data-vibeform-template-fallback={usesFallback || undefined}
+    >
+      <FlowVibeform
+        parameters={parameters}
+        motionEnabled={profile.preferences.motionEnabled}
+        aria-label={accessibleLabel}
+      />
+    </div>
+  );
 }

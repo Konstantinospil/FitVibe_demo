@@ -158,4 +158,56 @@ describe("Vibeform profile service", () => {
     expect(normalizeVibeLevel(-100)).toBe(0);
     expect(normalizeVibeLevel(3100)).toBe(1);
   });
+
+  it.each([
+    ["no training", [], 0, 0],
+    [
+      "upper-body training",
+      [{ region: "upper", completedAt: "2026-09-19T00:00:00.000Z", setCount: 72, averageRpe: null }],
+      1,
+      0,
+    ],
+    [
+      "lower-body training",
+      [{ region: "lower", completedAt: "2026-09-19T00:00:00.000Z", setCount: 72, averageRpe: null }],
+      0,
+      1,
+    ],
+    [
+      "full-body training",
+      [
+        {
+          region: "fullBody",
+          completedAt: "2026-09-19T00:00:00.000Z",
+          setCount: 72,
+          averageRpe: null,
+        },
+      ],
+      0.5,
+      0.5,
+    ],
+  ] as const)("allocates %s without leaking load between regions", async (_name, stimuli, upper, lower) => {
+    mockedMeasurementsRepository.getLatestBioValuesByKeys.mockResolvedValue({});
+    mockedPointsRepository.getAllDomainVibeLevels.mockResolvedValue(new Map());
+    mockedSessionsRepository.listRegionalStrengthStimuli.mockResolvedValue([...stimuli]);
+
+    const result = await getVibeformProfile(userId, new Date("2026-09-19T00:00:00.000Z"));
+
+    expect(result.metrics.upperBodyLoad).toBe(upper);
+    expect(result.metrics.lowerBodyLoad).toBe(lower);
+  });
+
+  it("keeps invalid physical measurements nullable instead of fabricating body data", async () => {
+    mockedMeasurementsRepository.getLatestBioValuesByKeys.mockResolvedValue({
+      weight_kg: { key: "weight_kg", valueNumber: 0, measuredAt: "2026-09-19T00:00:00Z" },
+      height_cm: { key: "height_cm", valueNumber: -10, measuredAt: "2026-09-19T00:00:00Z" },
+    });
+    mockedPointsRepository.getAllDomainVibeLevels.mockResolvedValue(new Map());
+    mockedSessionsRepository.listRegionalStrengthStimuli.mockResolvedValue([]);
+
+    const result = await getVibeformProfile(userId, new Date("2026-09-19T00:00:00.000Z"));
+
+    expect(result.metrics.bmi).toBeNull();
+    expect(result.metrics.heightCm).toBeNull();
+  });
 });

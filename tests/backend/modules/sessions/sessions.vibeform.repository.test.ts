@@ -57,6 +57,7 @@ describe("listRegionalStrengthStimuli", () => {
     expect(mockRaw.mock.calls[0]?.[0]).toEqual(expect.stringContaining("e.type_code = 'strength'"));
     expect(mockRaw.mock.calls[0]?.[0]).toEqual(expect.stringContaining("exercise_sets"));
     expect(mockRaw.mock.calls[0]?.[0]).toEqual(expect.stringContaining("'full_body'"));
+    expect(mockRaw.mock.calls[0]?.[0]).not.toEqual(expect.stringContaining("'core'"));
   });
 
   it("returns no stimuli when there are no matching exercises", async () => {

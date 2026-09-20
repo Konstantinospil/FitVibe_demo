@@ -1,4 +1,8 @@
-import type { UpdateVibeformPreferencesInput, VibeformProfile } from "@fitvibe/types";
+import type {
+  UpdateVibeformPreferencesInput,
+  VibeformPreferences,
+  VibeformProfile,
+} from "@fitvibe/types";
 import { apiClient } from "../../services/api";
 
 const VIBEFORM_PROFILE_PATH = "/api/v1/vibeforms/me";
@@ -10,7 +14,10 @@ export async function getMyVibeformProfile(): Promise<VibeformProfile> {
 
 export async function updateMyVibeformPreferences(
   preferences: UpdateVibeformPreferencesInput,
-): Promise<VibeformProfile> {
-  const response = await apiClient.patch<VibeformProfile>(VIBEFORM_PROFILE_PATH, preferences);
+): Promise<VibeformPreferences> {
+  const response = await apiClient.put<VibeformPreferences>(
+    `${VIBEFORM_PROFILE_PATH}/preferences`,
+    preferences,
+  );
   return response.data;
 }

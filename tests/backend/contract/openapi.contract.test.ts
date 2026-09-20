@@ -105,4 +105,19 @@ describe("OpenAPI contract alignment", () => {
       }
     });
   }
+
+  it("keeps calculated Vibeform fields read-only on the preference update operation", () => {
+    const operation = (openApiSpec as any).paths?.["/vibeforms/me/preferences"]?.put;
+    const requestReference =
+      operation?.requestBody?.content?.["application/json"]?.schema?.$ref;
+    const requestSchema = (openApiSpec as any).components.schemas.UpdateVibeformPreferencesRequest;
+
+    expect(requestReference).toBe("#/components/schemas/UpdateVibeformPreferencesRequest");
+    expect(Object.keys(requestSchema.properties).sort()).toEqual(
+      ["bodyProfile", "motionEnabled", "templateCode"].sort(),
+    );
+    expect(requestSchema.additionalProperties).toBe(false);
+    expect(requestSchema.properties).not.toHaveProperty("metrics");
+    expect(requestSchema.properties).not.toHaveProperty("calculationVersion");
+  });
 });

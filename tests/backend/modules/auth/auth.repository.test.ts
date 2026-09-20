@@ -264,6 +264,9 @@ describe("Auth Repository", () => {
         "intelligence",
         "regeneration",
       ]);
+      expect((db as unknown as jest.Mock).mock.calls.flat()).not.toContain(
+        "user_vibeform_preferences",
+      );
     });
 
     it("should store registration weight in the existing bio attribute history", async () => {

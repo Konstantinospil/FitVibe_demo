@@ -33,6 +33,16 @@ describe("Vibeform preference repository", () => {
     expect(queryBuilder.where).toHaveBeenCalledWith({ user_id: userId });
   });
 
+  it("scopes every preference read to the requested user", async () => {
+    queryBuilder.first.mockResolvedValue(null);
+
+    await findVibeformPreferences("user-a");
+    await findVibeformPreferences("user-b");
+
+    expect(queryBuilder.where).toHaveBeenNthCalledWith(1, { user_id: "user-a" });
+    expect(queryBuilder.where).toHaveBeenNthCalledWith(2, { user_id: "user-b" });
+  });
+
   it("upserts a complete preference record by user", async () => {
     const row = {
       user_id: userId,

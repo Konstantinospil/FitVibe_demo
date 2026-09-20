@@ -25,4 +25,14 @@ describe("UpdateVibeformPreferencesSchema", () => {
     expect(UpdateVibeformPreferencesSchema.safeParse({}).success).toBe(false);
     expect(UpdateVibeformPreferencesSchema.safeParse({ strokeWidth: 2 }).success).toBe(false);
   });
+
+  it.each([
+    { strength: 0.8 },
+    { upperBodyLoad: 0.5 },
+    { bmi: 24 },
+    { calculationVersion: "999" },
+    { renderParameters: { strokeScale: 2 } },
+  ])("rejects calculated or renderer-owned input %j", (input) => {
+    expect(UpdateVibeformPreferencesSchema.safeParse(input).success).toBe(false);
+  });
 });
