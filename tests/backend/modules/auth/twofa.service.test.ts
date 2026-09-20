@@ -1,4 +1,4 @@
-import * as twofaService from "../../../../apps/backend/src/modules/auth/twofa.service.js";
+import * as twofaService from "../../../../apps/backend/src/modules/auth/two-factor.service.js";
 import { HttpError } from "../../../../apps/backend/src/utils/http.js";
 import bcrypt from "bcryptjs";
 import { authenticator } from "@otplib/preset-default";
