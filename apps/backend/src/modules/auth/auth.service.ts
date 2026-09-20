@@ -83,7 +83,6 @@ import {
   getMaxIPAttempts,
   getMaxIPDistinctEmails,
 } from "./bruteforce.repository.js";
-import { logger } from "../../config/logger.js";
 import { insertAudit } from "../common/audit.util.js";
 
 const ACCESS_TTL = env.ACCESS_TOKEN_TTL;
@@ -125,10 +124,7 @@ function sanitizeUserAgent(userAgent?: string | null): string | null {
 }
 
 function isValidUUID(value: string | null): boolean {
-  return Boolean(
-    value &&
-      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value),
-  );
+  return Boolean(value && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value));
 }
 
 /**
