@@ -66,9 +66,18 @@ export async function listFeedSessions({
   }
 
   query
-    .select<
-      FeedItemWithSessionRow[]
-    >([`${FEED_ITEMS_TABLE}.id as feed_item_id`, `${FEED_ITEMS_TABLE}.owner_id`, `${PROFILES_TABLE}.alias as owner_username`, `${USERS_TABLE}.display_name as owner_display_name`, `${FEED_ITEMS_TABLE}.visibility`, `${FEED_ITEMS_TABLE}.published_at`, `${SESSIONS_TABLE}.id as session_id`, `${SESSIONS_TABLE}.title as session_title`, `${SESSIONS_TABLE}.completed_at as session_completed_at`, `${SESSIONS_TABLE}.points as session_points`])
+    .select<FeedItemWithSessionRow[]>([
+      `${FEED_ITEMS_TABLE}.id as feed_item_id`,
+      `${FEED_ITEMS_TABLE}.owner_id`,
+      `${PROFILES_TABLE}.alias as owner_username`,
+      `${USERS_TABLE}.display_name as owner_display_name`,
+      `${FEED_ITEMS_TABLE}.visibility`,
+      `${FEED_ITEMS_TABLE}.published_at`,
+      `${SESSIONS_TABLE}.id as session_id`,
+      `${SESSIONS_TABLE}.title as session_title`,
+      `${SESSIONS_TABLE}.completed_at as session_completed_at`,
+      `${SESSIONS_TABLE}.points as session_points`,
+    ])
     .whereNull(`${FEED_ITEMS_TABLE}.deleted_at`);
 
   // Apply search query if provided
@@ -727,9 +736,13 @@ export async function getLeaderboardRows({
   const periodStartExpr = db.raw("date_trunc(?, now())::date", [period]);
 
   const query = db(LEADERBOARD_TABLE)
-    .select<
-      LeaderboardRow[]
-    >(["user_id", "alias as username", "display_name", "points", "badges_count"])
+    .select<LeaderboardRow[]>([
+      "user_id",
+      "alias as username",
+      "display_name",
+      "points",
+      "badges_count",
+    ])
     .where({ period_type: period })
     .andWhere("period_start", "=", periodStartExpr)
     .orderBy("points", "desc")

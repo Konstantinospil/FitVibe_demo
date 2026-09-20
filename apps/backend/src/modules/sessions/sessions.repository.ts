@@ -36,6 +36,18 @@ export interface SessionExerciseUpsertInput {
   sets: SessionExerciseSetUpsert[];
 }
 
+export interface RegionalTrainingLoadWindow {
+  from: string | Date;
+  to: string | Date;
+}
+
+export interface RegionalStrengthStimulus {
+  region: "upper" | "lower" | "fullBody";
+  completedAt: string;
+  setCount: number;
+  averageRpe: number | null;
+}
+
 function executor(trx?: Knex.Transaction) {
   return trx ?? db;
 }
@@ -222,9 +234,24 @@ export async function getSessionWithDetails(
     .leftJoin("planned_exercise_attributes as plan", "plan.session_exercise_id", "se.id")
     .where("se.session_id", id)
     .orderBy("se.order_index", "asc")
-    .select<
-      SessionExerciseRow[]
-    >(["se.id as id", "se.session_id as session_id", "se.exercise_id as exercise_id", "se.exercise_name as exercise_name", "se.order_index as order_index", "se.notes as notes", "se.created_at as created_at", "se.updated_at as updated_at", "plan.sets as planned_sets", "plan.reps as planned_reps", "plan.load as planned_load", "plan.distance as planned_distance", "plan.duration as planned_duration", "plan.rpe as planned_rpe", "plan.rest as planned_rest", "plan.extras as planned_extras"]);
+    .select<SessionExerciseRow[]>([
+      "se.id as id",
+      "se.session_id as session_id",
+      "se.exercise_id as exercise_id",
+      "se.exercise_name as exercise_name",
+      "se.order_index as order_index",
+      "se.notes as notes",
+      "se.created_at as created_at",
+      "se.updated_at as updated_at",
+      "plan.sets as planned_sets",
+      "plan.reps as planned_reps",
+      "plan.load as planned_load",
+      "plan.distance as planned_distance",
+      "plan.duration as planned_duration",
+      "plan.rpe as planned_rpe",
+      "plan.rest as planned_rest",
+      "plan.extras as planned_extras",
+    ]);
 
   const exerciseIds = exerciseRows.map((row) => row.id);
 
@@ -479,4 +506,62 @@ export async function listSessionSets(sessionId: string, trx?: Knex.Transaction)
       { column: "se.order_index", order: "asc" },
       { column: "s.order_index", order: "asc" },
     ]);
+}
+
+/**
+ * Returns completed strength work by body region for service-layer weighting.
+ * Core and unknown muscle groups are intentionally neutral. Full-body work is
+ * kept separate so the consuming calculation can allocate it explicitly.
+ */
+export async function listRegionalStrengthStimuli(
+  userId: string,
+  window: RegionalTrainingLoadWindow,
+  trx?: Knex.Transaction,
+): Promise<RegionalStrengthStimulus[]> {
+  const result = await executor(trx).raw<{
+    rows: Array<{
+      region: "upper" | "lower" | "fullBody";
+      completed_at: string | Date;
+      set_count: number | string;
+      average_rpe: number | string | null;
+    }>;
+  }>(
+    `
+      SELECT
+        CASE
+          WHEN LOWER(TRIM(e.muscle_group)) IN ('chest', 'back', 'shoulders', 'arms')
+            THEN 'upper'
+          WHEN LOWER(TRIM(e.muscle_group)) = 'legs'
+            THEN 'lower'
+          WHEN LOWER(TRIM(e.muscle_group)) = 'full_body'
+            THEN 'fullBody'
+        END AS region,
+        s.completed_at,
+        GREATEST(COUNT(es.id), 1) AS set_count,
+        AVG(es.rpe) FILTER (WHERE es.rpe BETWEEN 1 AND 10) AS average_rpe
+      FROM sessions s
+      INNER JOIN session_exercises se ON se.session_id = s.id
+      INNER JOIN exercises e ON e.id = se.exercise_id
+      LEFT JOIN exercise_sets es ON es.session_exercise_id = se.id
+      WHERE s.owner_id = ?
+        AND s.status = 'completed'
+        AND s.completed_at IS NOT NULL
+        AND s.deleted_at IS NULL
+        AND s.completed_at BETWEEN ? AND ?
+        AND e.type_code = 'strength'
+        AND LOWER(TRIM(e.muscle_group)) IN (
+          'chest', 'back', 'shoulders', 'arms', 'legs', 'full_body'
+        )
+      GROUP BY se.id, e.muscle_group, s.completed_at
+    `,
+    [userId, window.from, window.to],
+  );
+
+  return (result.rows ?? []).map((row) => ({
+    region: row.region,
+    completedAt:
+      row.completed_at instanceof Date ? row.completed_at.toISOString() : row.completed_at,
+    setCount: Number(row.set_count),
+    averageRpe: row.average_rpe === null ? null : Number(row.average_rpe),
+  }));
 }

@@ -48,18 +48,11 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({ onSave }) => {
           weightUnit: (profile.weightUnit as "kg" | "lb") || "kg",
           fitnessLevel:
             (profile.fitnessLevel as
-              | "beginner"
-              | "intermediate"
-              | "advanced"
-              | "elite"
-              | undefined) ?? undefined,
+              "beginner" | "intermediate" | "advanced" | "elite" | undefined) ?? undefined,
           trainingFrequency:
             (profile.trainingFrequency as
-              | "rarely"
-              | "1_2_per_week"
-              | "3_4_per_week"
-              | "5_plus_per_week"
-              | undefined) ?? undefined,
+              "rarely" | "1_2_per_week" | "3_4_per_week" | "5_plus_per_week" | undefined) ??
+            undefined,
         });
       } catch (err) {
         const errorMessage = getErrorMessageSync(

@@ -144,6 +144,80 @@ describeWithTestDatabase("database migrations", () => {
       expect(columns.updated_at).toBeDefined();
     });
 
+    it("creates user_vibeform_preferences with only durable user choices", async () => {
+      const hasTable = await client.schema.hasTable("user_vibeform_preferences");
+      expect(hasTable).toBe(true);
+
+      const columns = await client("user_vibeform_preferences").columnInfo();
+      expect(Object.keys(columns).sort()).toEqual(
+        [
+          "body_profile",
+          "created_at",
+          "motion_enabled",
+          "template_code",
+          "template_version",
+          "updated_at",
+          "user_id",
+        ].sort(),
+      );
+      expect(columns.template_code.defaultValue).toContain("flow");
+      expect(columns.template_version.defaultValue).toContain("1");
+      expect(columns.body_profile.defaultValue).toContain("balanced");
+      expect(columns.motion_enabled.defaultValue).toContain("true");
+    });
+
+    it("links one vibeform preference record to each user", async () => {
+      const constraints = await client.raw(`
+        SELECT tc.constraint_type, kcu.column_name, ccu.table_name AS foreign_table_name
+        FROM information_schema.table_constraints AS tc
+        LEFT JOIN information_schema.key_column_usage AS kcu
+          ON tc.constraint_name = kcu.constraint_name
+          AND tc.table_schema = kcu.table_schema
+        LEFT JOIN information_schema.constraint_column_usage AS ccu
+          ON ccu.constraint_name = tc.constraint_name
+          AND ccu.table_schema = tc.table_schema
+        WHERE tc.table_schema = 'tmp_migration_test'
+          AND tc.table_name = 'user_vibeform_preferences'
+      `);
+
+      expect(constraints.rows).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ constraint_type: "PRIMARY KEY", column_name: "user_id" }),
+          expect.objectContaining({
+            constraint_type: "FOREIGN KEY",
+            column_name: "user_id",
+            foreign_table_name: "users",
+          }),
+        ]),
+      );
+    });
+
+    it("enforces Vibeform cascade deletion and supported body profiles", async () => {
+      const foreignKey = await client.raw(`
+        SELECT rc.delete_rule
+        FROM information_schema.referential_constraints rc
+        WHERE rc.constraint_schema = 'tmp_migration_test'
+          AND rc.constraint_name = 'user_vibeform_preferences_user_id_foreign'
+      `);
+      expect(foreignKey.rows).toEqual(
+        expect.arrayContaining([expect.objectContaining({ delete_rule: "CASCADE" })]),
+      );
+
+      const checks = await client.raw(`
+        SELECT pg_get_constraintdef(c.oid) AS definition
+        FROM pg_constraint c
+        JOIN pg_class t ON t.oid = c.conrelid
+        JOIN pg_namespace n ON n.oid = t.relnamespace
+        WHERE n.nspname = 'tmp_migration_test'
+          AND t.relname = 'user_vibeform_preferences'
+          AND c.contype = 'c'
+      `);
+      const definitions = checks.rows.map((row: { definition: string }) => row.definition).join(" ");
+      expect(definitions).toContain("shoulder-dominant");
+      expect(definitions).toContain("balanced");
+      expect(definitions).toContain("hip-dominant");
+    });
+
     it("creates sessions table with correct schema", async () => {
       const hasTable = await client.schema.hasTable("sessions");
       expect(hasTable).toBe(true);

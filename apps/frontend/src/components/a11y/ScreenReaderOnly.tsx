@@ -2,7 +2,7 @@ import React from "react";
 
 export interface ScreenReaderOnlyProps {
   children: React.ReactNode;
-  as?: keyof JSX.IntrinsicElements;
+  as?: keyof React.JSX.IntrinsicElements;
 }
 
 /**

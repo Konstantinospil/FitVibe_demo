@@ -14,7 +14,9 @@ export interface DropdownMenuItem {
 export interface DropdownMenuProps {
   items: DropdownMenuItem[];
   onSelect?: (value: string) => void;
-  trigger?: React.ReactNode;
+  trigger?: React.ReactElement<
+    React.HTMLAttributes<HTMLElement> & React.RefAttributes<HTMLElement>
+  >;
   position?: "top" | "bottom" | "left" | "right";
   align?: "start" | "center" | "end";
 }
@@ -144,7 +146,7 @@ export const DropdownMenu: React.FC<DropdownMenuProps> = ({
   return (
     <>
       {trigger ? (
-        React.cloneElement(trigger as React.ReactElement, {
+        React.cloneElement(trigger, {
           ref: triggerRef,
           onClick: handleToggle,
           "aria-expanded": isOpen,

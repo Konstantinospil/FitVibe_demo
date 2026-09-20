@@ -6,6 +6,9 @@
     "jsx": "react-jsx",
     "moduleResolution": "bundler",
     "baseUrl": "src",
+    "paths": {
+      "@fitvibe/types": ["../../../packages/types/src/vibeform.d.ts"]
+    },
     "esModuleInterop": true,
     "skipLibCheck": true,
     "strict": true,

@@ -33,9 +33,14 @@ export async function applyVibeLevelDecay(): Promise<void> {
 
   const staleRatings = await db<StaleRatingRow>("user_domain_vibe_levels")
     .where("last_updated_at", "<", oneDayAgo.toISOString())
-    .select<
-      StaleRatingRow[]
-    >(["user_id", "domain_code", "vibe_level", "rating_deviation", "volatility", "last_updated_at"]);
+    .select<StaleRatingRow[]>([
+      "user_id",
+      "domain_code",
+      "vibe_level",
+      "rating_deviation",
+      "volatility",
+      "last_updated_at",
+    ]);
 
   logger.info({ count: staleRatings.length }, "[vibe-level-decay] Found domains requiring decay");
 

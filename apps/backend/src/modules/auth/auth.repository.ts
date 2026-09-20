@@ -6,6 +6,8 @@ const USERS_TABLE = "users";
 const CONTACTS_TABLE = "user_contacts";
 const PROFILES_TABLE = "profiles";
 const DOMAIN_VIBE_TABLE = "user_domain_vibe_levels";
+const BIO_ATTRIBUTES_TABLE = "bio_attributes";
+const BIO_ATTRIBUTE_VALUES_TABLE = "bio_attribute_values";
 
 const DOMAIN_CODES = [
   "strength",
@@ -140,6 +142,10 @@ export async function createUser(input: {
   terms_accepted?: boolean;
   terms_accepted_at?: string;
   terms_version?: string;
+  gender_code?: "man" | "woman" | "diverse" | "prefer_not_to_say";
+  fitness_level_code?: "beginner" | "intermediate" | "advanced" | "elite" | "rehab";
+  date_of_birth?: string;
+  weight_kg?: number;
 }): Promise<AuthUserRecord | undefined> {
   const alias = (input.alias ?? input.username ?? "").trim();
   if (!alias) {
@@ -181,9 +187,30 @@ export async function createUser(input: {
       // Signup assigns the initial alias; the 30-day change window starts on first edit
       alias_changed_at: null,
       visibility: "private",
+      gender_code: input.gender_code ?? null,
+      fitness_level_code: input.fitness_level_code ?? null,
+      date_of_birth: input.date_of_birth ?? null,
       created_at: now,
       updated_at: now,
     });
+
+    if (input.weight_kg !== undefined) {
+      const attribute = await trx(BIO_ATTRIBUTES_TABLE)
+        .where({ key: "weight_kg" })
+        .first<{ id: string }>();
+      if (!attribute) {
+        throw new Error("Required bio attribute weight_kg is not configured");
+      }
+
+      await trx(BIO_ATTRIBUTE_VALUES_TABLE).insert({
+        id: crypto.randomUUID(),
+        user_id: input.id,
+        attribute_id: attribute.id,
+        value_number: input.weight_kg,
+        measured_at: now,
+        created_at: now,
+      });
+    }
 
     await trx(DOMAIN_VIBE_TABLE).insert(
       DOMAIN_CODES.map((domainCode) => ({

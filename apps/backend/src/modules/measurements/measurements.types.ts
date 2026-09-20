@@ -1,13 +1,6 @@
 export type MeasurementSystem = "metric" | "imperial";
 export type MeasurementUnitType =
-  | "length"
-  | "weight"
-  | "volume"
-  | "ratio"
-  | "count"
-  | "time"
-  | "power"
-  | "percentage";
+  "length" | "weight" | "volume" | "ratio" | "count" | "time" | "power" | "percentage";
 
 export type DerivedOperator = "ratio";
 

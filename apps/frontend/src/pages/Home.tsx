@@ -14,12 +14,7 @@ import {
 import { logger } from "../utils/logger";
 
 type VibeKey =
-  | "strength"
-  | "agility"
-  | "endurance"
-  | "explosivity"
-  | "intelligence"
-  | "regeneration";
+  "strength" | "agility" | "endurance" | "explosivity" | "intelligence" | "regeneration";
 
 type Vibe = {
   key: VibeKey;

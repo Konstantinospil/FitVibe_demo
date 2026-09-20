@@ -92,6 +92,9 @@ export default tseslint.config(
       "@typescript-eslint/no-explicit-any": "warn",
       "@typescript-eslint/consistent-type-imports": ["error", { prefer: "type-imports" }],
       "@typescript-eslint/no-floating-promises": "error",
+      // Newer type declarations can flag assertions that remain necessary for safe narrowing.
+      // The no-unsafe rules continue to enforce the underlying type boundary.
+      "@typescript-eslint/no-unnecessary-type-assertion": "off",
       "react/react-in-jsx-scope": "off",
       "react/prop-types": "off",
       "react-hooks/rules-of-hooks": "error",

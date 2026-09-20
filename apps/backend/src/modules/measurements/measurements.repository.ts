@@ -37,6 +37,12 @@ export interface MeasurementValueRow {
   created_at: string;
 }
 
+export interface LatestBioValue {
+  key: string;
+  valueNumber: number;
+  measuredAt: string;
+}
+
 export interface MeasurementSelectionRow {
   user_id: string;
   attribute_id: string;
@@ -142,6 +148,47 @@ export async function listLatestAttributeValues(category: "bio" | "perf", userId
     [userId],
   );
   return result.rows ?? [];
+}
+
+/**
+ * Returns the latest active biological measurement for each requested key.
+ * Missing or deactivated measurements are omitted from the result.
+ */
+export async function getLatestBioValuesByKeys<K extends string>(
+  userId: string,
+  keys: readonly K[],
+): Promise<Partial<Record<K, LatestBioValue>>> {
+  if (keys.length === 0) {
+    return {};
+  }
+
+  const result = await db.raw<{
+    rows: Array<{ key: K; value_number: number | string; measured_at: string }>;
+  }>(
+    `
+      SELECT DISTINCT ON (a.key)
+        a.key,
+        v.value_number,
+        v.measured_at
+      FROM bio_attribute_values v
+      INNER JOIN bio_attributes a ON a.id = v.attribute_id
+      WHERE v.user_id = ?
+        AND a.key = ANY(?::text[])
+        AND v.deactivated_at IS NULL
+        AND a.deactivated_at IS NULL
+      ORDER BY a.key, v.measured_at DESC, v.created_at DESC
+    `,
+    [userId, [...keys]],
+  );
+
+  return (result.rows ?? []).reduce<Partial<Record<K, LatestBioValue>>>((values, row) => {
+    values[row.key] = {
+      key: row.key,
+      valueNumber: Number(row.value_number),
+      measuredAt: row.measured_at,
+    };
+    return values;
+  }, {});
 }
 
 export async function insertAttributeValue(

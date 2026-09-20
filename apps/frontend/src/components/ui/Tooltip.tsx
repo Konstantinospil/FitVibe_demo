@@ -2,7 +2,9 @@ import React, { useState, useRef, useEffect } from "react";
 
 export interface TooltipProps {
   content: React.ReactNode;
-  children: React.ReactElement;
+  children: React.ReactElement<
+    React.HTMLAttributes<HTMLElement> & React.RefAttributes<HTMLElement>
+  >;
   position?: "top" | "bottom" | "left" | "right";
   delay?: number;
 }
@@ -21,7 +23,7 @@ export const Tooltip: React.FC<TooltipProps> = ({
   const [tooltipStyle, setTooltipStyle] = useState<React.CSSProperties>({});
   const triggerRef = useRef<HTMLElement>(null);
   const tooltipRef = useRef<HTMLDivElement>(null);
-  const timeoutRef = useRef<NodeJS.Timeout>();
+  const timeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
 
   const updatePosition = () => {
     if (!triggerRef.current || !tooltipRef.current) {

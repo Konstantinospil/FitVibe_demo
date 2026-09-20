@@ -15,21 +15,28 @@ const aliasSchema = z
   .max(50)
   .regex(/^[a-zA-Z0-9_\-.]+$/, "usernameFormat");
 
+const registerProfileSchema = z
+  .object({
+    display_name: z.string().min(1).max(100).optional(),
+    sex: z.enum(["man", "woman", "diverse", "prefer_not_to_say"]).optional(),
+    weight_kg: z.number().min(20).max(500).optional(),
+    fitness_level: z.enum(["beginner", "intermediate", "advanced", "elite", "rehab"]).optional(),
+    date_of_birth: z.string().date().optional(),
+    /** @deprecated Send date_of_birth instead. */
+    age: z.number().int().min(13).max(120).optional(),
+  })
+  .refine((profile) => !(profile.date_of_birth && profile.age !== undefined), {
+    message: "DATE_OF_BIRTH_AGE_CONFLICT",
+    path: ["date_of_birth"],
+  });
+
 export const RegisterSchema = z
   .object({
     email: z.string().email(),
     alias: aliasSchema.optional(),
     username: aliasSchema.optional(),
     password: passwordPolicy,
-    profile: z
-      .object({
-        display_name: z.string().min(1).max(100).optional(),
-        sex: z.enum(["man", "woman", "diverse", "na"]).optional(),
-        weight_kg: z.number().min(20).max(500).optional(),
-        fitness_level: z.string().max(50).optional(),
-        age: z.number().min(13).max(120).optional(),
-      })
-      .optional(),
+    profile: registerProfileSchema.optional(),
     terms_accepted: z.boolean(),
   })
   .refine((data) => Boolean((data.alias ?? data.username)?.trim()), {

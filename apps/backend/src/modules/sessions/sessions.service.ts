@@ -386,8 +386,7 @@ export async function createOne(
   if (!created) {
     // Log additional context for debugging
     const sessionExists = (await db("sessions").where({ id: sessionId }).first()) as
-      | { owner_id: string }
-      | undefined;
+      { owner_id: string } | undefined;
     const errorDetails: Record<string, unknown> = {
       sessionId,
       userId,
