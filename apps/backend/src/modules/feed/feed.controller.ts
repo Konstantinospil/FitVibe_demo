@@ -406,10 +406,7 @@ export async function getLeaderboardHandler(req: Request, res: Response): Promis
   res.json({ leaderboard, scope, period });
 }
 
-export async function cloneSessionFromFeedHandler(
-  req: Request,
-  res: Response,
-): Promise<void> {
+export async function cloneSessionFromFeedHandler(req: Request, res: Response): Promise<void> {
   const userId = req.user?.sub;
   if (!userId) {
     throw new HttpError(401, "E.UNAUTHENTICATED", "UNAUTHENTICATED");
