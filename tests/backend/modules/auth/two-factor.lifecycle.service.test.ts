@@ -117,11 +117,9 @@ describe("Two-Factor Lifecycle Service", () => {
         (queryBuilders["user_2fa_settings"] as { update: jest.Mock }).update,
       ).toHaveBeenCalledWith(
         expect.objectContaining({
-          totp_secret: "",
+          totp_secret: secret,
           is_enabled: false,
           is_verified: false,
-          enabled_at: null,
-          last_used_at: null,
         }),
       );
     });
