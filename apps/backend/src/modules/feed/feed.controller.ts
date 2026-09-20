@@ -24,12 +24,7 @@ import {
   unfollowUserByAlias,
   unblockUserByAlias,
 } from "./feed.service.js";
-import {
-  handleIdempotentRequest,
-  getIdempotencyKey,
-  getRouteTemplate,
-} from "../common/idempotency.helpers.js";
-import { resolveIdempotency, persistIdempotencyResult } from "../common/idempotency.service.js";
+import { handleIdempotentRequest } from "../common/idempotency.helpers.js";
 
 // Removed resolveViewerId - all feed endpoints now require authentication per FR-003 (privacy-by-default)
 // Authentication is enforced via requireAuth middleware in routes
@@ -167,35 +162,21 @@ export async function bookmarkSessionHandler(req: Request, res: Response): Promi
     throw new HttpError(401, "E.UNAUTHENTICATED", "UNAUTHENTICATED");
   }
 
-  // Idempotency support
-  const idempotencyKey = getIdempotencyKey(req);
-  if (idempotencyKey) {
-    const route = getRouteTemplate(req);
-    const resolution = await resolveIdempotency(
-      { userId, method: req.method, route, key: idempotencyKey },
-      { sessionId: req.params.sessionId },
-    );
+  const handled = await handleIdempotentRequest(
+    req,
+    res,
+    userId,
+    { sessionId: req.params.sessionId },
+    async () => {
+      const body = await bookmarkSession(userId, req.params.sessionId);
+      return { status: 200, body };
+    },
+  );
 
-    if (resolution.type === "replay") {
-      res.set("Idempotency-Key", idempotencyKey);
-      res.set("Idempotent-Replayed", "true");
-      res.status(resolution.status).json(resolution.body);
-      return;
-    }
-
-    const result = await bookmarkSession(userId, req.params.sessionId);
-
-    if (resolution.recordId) {
-      await persistIdempotencyResult(resolution.recordId, 200, result);
-    }
-
-    res.set("Idempotency-Key", idempotencyKey);
-    res.status(200).json(result);
-    return;
+  if (!handled) {
+    const body = await bookmarkSession(userId, req.params.sessionId);
+    res.status(200).json(body);
   }
-
-  const result = await bookmarkSession(userId, req.params.sessionId);
-  res.status(200).json(result);
 }
 
 export async function removeBookmarkHandler(req: Request, res: Response): Promise<void> {
@@ -204,35 +185,21 @@ export async function removeBookmarkHandler(req: Request, res: Response): Promis
     throw new HttpError(401, "E.UNAUTHENTICATED", "UNAUTHENTICATED");
   }
 
-  // Idempotency support
-  const idempotencyKey = getIdempotencyKey(req);
-  if (idempotencyKey) {
-    const route = getRouteTemplate(req);
-    const resolution = await resolveIdempotency(
-      { userId, method: req.method, route, key: idempotencyKey },
-      { sessionId: req.params.sessionId },
-    );
+  const handled = await handleIdempotentRequest(
+    req,
+    res,
+    userId,
+    { sessionId: req.params.sessionId },
+    async () => {
+      const body = await removeBookmark(userId, req.params.sessionId);
+      return { status: 200, body };
+    },
+  );
 
-    if (resolution.type === "replay") {
-      res.set("Idempotency-Key", idempotencyKey);
-      res.set("Idempotent-Replayed", "true");
-      res.status(resolution.status).json(resolution.body);
-      return;
-    }
-
-    const result = await removeBookmark(userId, req.params.sessionId);
-
-    if (resolution.recordId) {
-      await persistIdempotencyResult(resolution.recordId, 200, result);
-    }
-
-    res.set("Idempotency-Key", idempotencyKey);
-    res.status(200).json(result);
-    return;
+  if (!handled) {
+    const body = await removeBookmark(userId, req.params.sessionId);
+    res.status(200).json(body);
   }
-
-  const result = await removeBookmark(userId, req.params.sessionId);
-  res.status(200).json(result);
 }
 
 export async function listBookmarksHandler(req: Request, res: Response): Promise<void> {
@@ -304,35 +271,21 @@ export async function deleteCommentHandler(req: Request, res: Response): Promise
     throw new HttpError(401, "E.UNAUTHENTICATED", "UNAUTHENTICATED");
   }
 
-  // Idempotency support
-  const idempotencyKey = getIdempotencyKey(req);
-  if (idempotencyKey) {
-    const route = getRouteTemplate(req);
-    const resolution = await resolveIdempotency(
-      { userId, method: req.method, route, key: idempotencyKey },
-      { commentId: req.params.commentId },
-    );
+  const handled = await handleIdempotentRequest(
+    req,
+    res,
+    userId,
+    { commentId: req.params.commentId },
+    async () => {
+      const body = await deleteComment(userId, req.params.commentId);
+      return { status: 200, body };
+    },
+  );
 
-    if (resolution.type === "replay") {
-      res.set("Idempotency-Key", idempotencyKey);
-      res.set("Idempotent-Replayed", "true");
-      res.status(resolution.status).json(resolution.body);
-      return;
-    }
-
-    const result = await deleteComment(userId, req.params.commentId);
-
-    if (resolution.recordId) {
-      await persistIdempotencyResult(resolution.recordId, 200, result);
-    }
-
-    res.set("Idempotency-Key", idempotencyKey);
-    res.json(result);
-    return;
+  if (!handled) {
+    const body = await deleteComment(userId, req.params.commentId);
+    res.status(200).json(body);
   }
-
-  const result = await deleteComment(userId, req.params.commentId);
-  res.json(result);
 }
 
 export async function blockUserHandler(req: Request, res: Response): Promise<void> {
@@ -341,35 +294,21 @@ export async function blockUserHandler(req: Request, res: Response): Promise<voi
     throw new HttpError(401, "E.UNAUTHENTICATED", "UNAUTHENTICATED");
   }
 
-  // Idempotency support
-  const idempotencyKey = getIdempotencyKey(req);
-  if (idempotencyKey) {
-    const route = getRouteTemplate(req);
-    const resolution = await resolveIdempotency(
-      { userId, method: req.method, route, key: idempotencyKey },
-      { alias: req.params.alias },
-    );
+  const handled = await handleIdempotentRequest(
+    req,
+    res,
+    userId,
+    { alias: req.params.alias },
+    async () => {
+      const body = await blockUserByAlias(userId, req.params.alias);
+      return { status: 200, body };
+    },
+  );
 
-    if (resolution.type === "replay") {
-      res.set("Idempotency-Key", idempotencyKey);
-      res.set("Idempotent-Replayed", "true");
-      res.status(resolution.status).json(resolution.body);
-      return;
-    }
-
-    const result = await blockUserByAlias(userId, req.params.alias);
-
-    if (resolution.recordId) {
-      await persistIdempotencyResult(resolution.recordId, 200, result);
-    }
-
-    res.set("Idempotency-Key", idempotencyKey);
-    res.json(result);
-    return;
+  if (!handled) {
+    const body = await blockUserByAlias(userId, req.params.alias);
+    res.status(200).json(body);
   }
-
-  const result = await blockUserByAlias(userId, req.params.alias);
-  res.json(result);
 }
 
 export async function unblockUserHandler(req: Request, res: Response): Promise<void> {
@@ -378,35 +317,21 @@ export async function unblockUserHandler(req: Request, res: Response): Promise<v
     throw new HttpError(401, "E.UNAUTHENTICATED", "UNAUTHENTICATED");
   }
 
-  // Idempotency support
-  const idempotencyKey = getIdempotencyKey(req);
-  if (idempotencyKey) {
-    const route = getRouteTemplate(req);
-    const resolution = await resolveIdempotency(
-      { userId, method: req.method, route, key: idempotencyKey },
-      { alias: req.params.alias },
-    );
+  const handled = await handleIdempotentRequest(
+    req,
+    res,
+    userId,
+    { alias: req.params.alias },
+    async () => {
+      const body = await unblockUserByAlias(userId, req.params.alias);
+      return { status: 200, body };
+    },
+  );
 
-    if (resolution.type === "replay") {
-      res.set("Idempotency-Key", idempotencyKey);
-      res.set("Idempotent-Replayed", "true");
-      res.status(resolution.status).json(resolution.body);
-      return;
-    }
-
-    const result = await unblockUserByAlias(userId, req.params.alias);
-
-    if (resolution.recordId) {
-      await persistIdempotencyResult(resolution.recordId, 200, result);
-    }
-
-    res.set("Idempotency-Key", idempotencyKey);
-    res.json(result);
-    return;
+  if (!handled) {
+    const body = await unblockUserByAlias(userId, req.params.alias);
+    res.status(200).json(body);
   }
-
-  const result = await unblockUserByAlias(userId, req.params.alias);
-  res.json(result);
 }
 
 export async function reportFeedItemHandler(req: Request, res: Response): Promise<void> {
@@ -421,35 +346,21 @@ export async function reportFeedItemHandler(req: Request, res: Response): Promis
   const reason = typeof reasonValue === "string" ? reasonValue : "";
   const details = typeof detailsValue === "string" ? detailsValue : undefined;
 
-  // Idempotency support
-  const idempotencyKey = getIdempotencyKey(req);
-  if (idempotencyKey) {
-    const route = getRouteTemplate(req);
-    const resolution = await resolveIdempotency(
-      { userId, method: req.method, route, key: idempotencyKey },
-      { feedItemId: req.params.feedItemId, reason, details },
-    );
+  const handled = await handleIdempotentRequest(
+    req,
+    res,
+    userId,
+    { feedItemId: req.params.feedItemId, reason, details },
+    async () => {
+      const body = await reportFeedItem(userId, req.params.feedItemId, reason, details);
+      return { status: 201, body };
+    },
+  );
 
-    if (resolution.type === "replay") {
-      res.set("Idempotency-Key", idempotencyKey);
-      res.set("Idempotent-Replayed", "true");
-      res.status(resolution.status).json(resolution.body);
-      return;
-    }
-
-    const result = await reportFeedItem(userId, req.params.feedItemId, reason, details);
-
-    if (resolution.recordId) {
-      await persistIdempotencyResult(resolution.recordId, 201, result);
-    }
-
-    res.set("Idempotency-Key", idempotencyKey);
-    res.status(201).json(result);
-    return;
+  if (!handled) {
+    const body = await reportFeedItem(userId, req.params.feedItemId, reason, details);
+    res.status(201).json(body);
   }
-
-  const result = await reportFeedItem(userId, req.params.feedItemId, reason, details);
-  res.status(201).json(result);
 }
 
 export async function reportCommentHandler(req: Request, res: Response): Promise<void> {
@@ -464,35 +375,21 @@ export async function reportCommentHandler(req: Request, res: Response): Promise
   const reason = typeof reasonValue === "string" ? reasonValue : "";
   const details = typeof detailsValue === "string" ? detailsValue : undefined;
 
-  // Idempotency support
-  const idempotencyKey = getIdempotencyKey(req);
-  if (idempotencyKey) {
-    const route = getRouteTemplate(req);
-    const resolution = await resolveIdempotency(
-      { userId, method: req.method, route, key: idempotencyKey },
-      { commentId: req.params.commentId, reason, details },
-    );
+  const handled = await handleIdempotentRequest(
+    req,
+    res,
+    userId,
+    { commentId: req.params.commentId, reason, details },
+    async () => {
+      const body = await reportComment(userId, req.params.commentId, reason, details);
+      return { status: 201, body };
+    },
+  );
 
-    if (resolution.type === "replay") {
-      res.set("Idempotency-Key", idempotencyKey);
-      res.set("Idempotent-Replayed", "true");
-      res.status(resolution.status).json(resolution.body);
-      return;
-    }
-
-    const result = await reportComment(userId, req.params.commentId, reason, details);
-
-    if (resolution.recordId) {
-      await persistIdempotencyResult(resolution.recordId, 201, result);
-    }
-
-    res.set("Idempotency-Key", idempotencyKey);
-    res.status(201).json(result);
-    return;
+  if (!handled) {
+    const body = await reportComment(userId, req.params.commentId, reason, details);
+    res.status(201).json(body);
   }
-
-  const result = await reportComment(userId, req.params.commentId, reason, details);
-  res.status(201).json(result);
 }
 
 export async function getLeaderboardHandler(req: Request, res: Response): Promise<void> {
@@ -509,7 +406,10 @@ export async function getLeaderboardHandler(req: Request, res: Response): Promis
   res.json({ leaderboard, scope, period });
 }
 
-export async function cloneSessionFromFeedHandler(req: Request, res: Response): Promise<void> {
+export async function cloneSessionFromFeedHandler(
+  req: Request,
+  res: Response,
+): Promise<void> {
   const userId = req.user?.sub;
   if (!userId) {
     throw new HttpError(401, "E.UNAUTHENTICATED", "UNAUTHENTICATED");
@@ -517,35 +417,21 @@ export async function cloneSessionFromFeedHandler(req: Request, res: Response): 
   const rawBody: unknown = req.body;
   const payload: Record<string, unknown> = isRecord(rawBody) ? rawBody : {};
 
-  // Idempotency support
-  const idempotencyKey = getIdempotencyKey(req);
-  if (idempotencyKey) {
-    const route = getRouteTemplate(req);
-    const resolution = await resolveIdempotency(
-      { userId, method: req.method, route, key: idempotencyKey },
-      { sessionId: req.params.sessionId, ...payload },
-    );
+  const handled = await handleIdempotentRequest(
+    req,
+    res,
+    userId,
+    { sessionId: req.params.sessionId, ...payload },
+    async () => {
+      const body = await cloneSessionFromFeed(userId, req.params.sessionId, payload);
+      return { status: 201, body };
+    },
+  );
 
-    if (resolution.type === "replay") {
-      res.set("Idempotency-Key", idempotencyKey);
-      res.set("Idempotent-Replayed", "true");
-      res.status(resolution.status).json(resolution.body);
-      return;
-    }
-
-    const cloned = await cloneSessionFromFeed(userId, req.params.sessionId, payload);
-
-    if (resolution.recordId) {
-      await persistIdempotencyResult(resolution.recordId, 201, cloned);
-    }
-
-    res.set("Idempotency-Key", idempotencyKey);
-    res.status(201).json(cloned);
-    return;
+  if (!handled) {
+    const body = await cloneSessionFromFeed(userId, req.params.sessionId, payload);
+    res.status(201).json(body);
   }
-
-  const cloned = await cloneSessionFromFeed(userId, req.params.sessionId, payload);
-  res.status(201).json(cloned);
 }
 
 export async function followUserHandler(req: Request, res: Response): Promise<void> {
@@ -554,37 +440,22 @@ export async function followUserHandler(req: Request, res: Response): Promise<vo
     throw new HttpError(401, "E.UNAUTHENTICATED", "UNAUTHENTICATED");
   }
 
-  // Idempotency support
-  const idempotencyKey = getIdempotencyKey(req);
-  if (idempotencyKey) {
-    const route = getRouteTemplate(req);
-    const resolution = await resolveIdempotency(
-      { userId, method: req.method, route, key: idempotencyKey },
-      { alias: req.params.alias },
-    );
+  const handled = await handleIdempotentRequest(
+    req,
+    res,
+    userId,
+    { alias: req.params.alias },
+    async () => {
+      const result = await followUserByAlias(userId, req.params.alias);
+      const body = { followingId: result.followingId };
+      return { status: 200, body };
+    },
+  );
 
-    if (resolution.type === "replay") {
-      res.set("Idempotency-Key", idempotencyKey);
-      res.set("Idempotent-Replayed", "true");
-      res.status(resolution.status).json(resolution.body);
-      return;
-    }
-
+  if (!handled) {
     const result = await followUserByAlias(userId, req.params.alias);
-
-    const response = { followingId: result.followingId };
-
-    if (resolution.recordId) {
-      await persistIdempotencyResult(resolution.recordId, 200, response);
-    }
-
-    res.set("Idempotency-Key", idempotencyKey);
-    res.status(200).json(response);
-    return;
+    res.status(200).json({ followingId: result.followingId });
   }
-
-  const result = await followUserByAlias(userId, req.params.alias);
-  res.status(200).json({ followingId: result.followingId });
 }
 
 export async function unfollowUserHandler(req: Request, res: Response): Promise<void> {
@@ -593,37 +464,22 @@ export async function unfollowUserHandler(req: Request, res: Response): Promise<
     throw new HttpError(401, "E.UNAUTHENTICATED", "UNAUTHENTICATED");
   }
 
-  // Idempotency support
-  const idempotencyKey = getIdempotencyKey(req);
-  if (idempotencyKey) {
-    const route = getRouteTemplate(req);
-    const resolution = await resolveIdempotency(
-      { userId, method: req.method, route, key: idempotencyKey },
-      { alias: req.params.alias },
-    );
+  const handled = await handleIdempotentRequest(
+    req,
+    res,
+    userId,
+    { alias: req.params.alias },
+    async () => {
+      const result = await unfollowUserByAlias(userId, req.params.alias);
+      const body = { unfollowedId: result.unfollowedId };
+      return { status: 200, body };
+    },
+  );
 
-    if (resolution.type === "replay") {
-      res.set("Idempotency-Key", idempotencyKey);
-      res.set("Idempotent-Replayed", "true");
-      res.status(resolution.status).json(resolution.body);
-      return;
-    }
-
+  if (!handled) {
     const result = await unfollowUserByAlias(userId, req.params.alias);
-
-    const response = { unfollowedId: result.unfollowedId };
-
-    if (resolution.recordId) {
-      await persistIdempotencyResult(resolution.recordId, 200, response);
-    }
-
-    res.set("Idempotency-Key", idempotencyKey);
-    res.status(200).json(response);
-    return;
+    res.status(200).json({ unfollowedId: result.unfollowedId });
   }
-
-  const result = await unfollowUserByAlias(userId, req.params.alias);
-  res.status(200).json({ unfollowedId: result.unfollowedId });
 }
 
 export async function listFollowersHandler(req: Request, res: Response): Promise<void> {
@@ -642,33 +498,19 @@ export async function publishSessionHandler(req: Request, res: Response): Promis
     throw new HttpError(401, "E.UNAUTHENTICATED", "UNAUTHENTICATED");
   }
 
-  // Idempotency support
-  const idempotencyKey = getIdempotencyKey(req);
-  if (idempotencyKey) {
-    const route = getRouteTemplate(req);
-    const resolution = await resolveIdempotency(
-      { userId, method: req.method, route, key: idempotencyKey },
-      { sessionId: req.params.sessionId },
-    );
+  const handled = await handleIdempotentRequest(
+    req,
+    res,
+    userId,
+    { sessionId: req.params.sessionId },
+    async () => {
+      const body = await publishSession(userId, req.params.sessionId);
+      return { status: 201, body };
+    },
+  );
 
-    if (resolution.type === "replay") {
-      res.set("Idempotency-Key", idempotencyKey);
-      res.set("Idempotent-Replayed", "true");
-      res.status(resolution.status).json(resolution.body);
-      return;
-    }
-
-    const result = await publishSession(userId, req.params.sessionId);
-
-    if (resolution.recordId) {
-      await persistIdempotencyResult(resolution.recordId, 201, result);
-    }
-
-    res.set("Idempotency-Key", idempotencyKey);
-    res.status(201).json(result);
-    return;
+  if (!handled) {
+    const body = await publishSession(userId, req.params.sessionId);
+    res.status(201).json(body);
   }
-
-  const result = await publishSession(userId, req.params.sessionId);
-  res.status(201).json(result);
 }
