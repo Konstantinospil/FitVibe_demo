@@ -80,7 +80,7 @@ router.post(
 
     await insertAudit({
       actorUserId: req.user?.sub as string,
-      entity: "system",
+      entityType: "system",
       action: "read_only_enabled",
       entityId: "system",
       metadata: {
@@ -131,7 +131,7 @@ router.post(
 
     await insertAudit({
       actorUserId: req.user?.sub as string,
-      entity: "system",
+      entityType: "system",
       action: "read_only_disabled",
       entityId: "system",
       metadata: {
