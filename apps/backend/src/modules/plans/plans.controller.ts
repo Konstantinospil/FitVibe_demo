@@ -29,7 +29,15 @@ function requireUser(req: Request): string {
 export async function listPlansHandler(req: Request, res: Response): Promise<void> {
   const userId = requireUser(req);
 
-  const status = typeof req.query.status === "string" ? req.query.status : undefined;
+  const statusValue = req.query.status;
+  if (
+    statusValue !== undefined &&
+    statusValue !== "active" &&
+    statusValue !== "completed"
+  ) {
+    throw new HttpError(400, "E.PLAN.INVALID_STATUS", "Invalid plan status");
+  }
+  const status = statusValue as "active" | "completed" | undefined;
   const includeArchived = req.query.includeArchived === "true";
   const search = typeof req.query.search === "string" ? req.query.search : undefined;
   const limit = typeof req.query.limit === "string" ? parseInt(req.query.limit, 10) : undefined;
