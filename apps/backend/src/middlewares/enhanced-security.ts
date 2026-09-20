@@ -170,142 +170,54 @@ export function validateForwardedIP(req: Request, res: Response, next: NextFunct
 
 /**
  * Suspicious Pattern Detector
- * Detect common attack patterns in request parameters
  *
- * SECURITY FIX: ReDoS prevention - Using safer string matching with length limits
- * to avoid polynomial backtracking in regex patterns
- *
- * Keys in SENSITIVE_VALUE_KEYS are not checked for command-injection characters
- * (e.g. $, ;, &, |) so that passwords and tokens containing those symbols are allowed.
+ * This middleware only inspects URL-controlled input (query and route params).
+ * Request bodies are validated by route/domain schemas and may legitimately contain
+ * punctuation or text fragments that look suspicious out of context.
  */
 export function detectSuspiciousPatterns(req: Request, res: Response, next: NextFunction) {
-  // Keys whose string values may legitimately contain symbols (passwords, tokens, OTP)
-  // and must not be flagged by the command-injection character check
-  const SENSITIVE_VALUE_KEYS = new Set([
-    "password",
-    "passwordConfirm",
-    "currentPassword",
-    "newPassword",
-    "token",
-    "refreshToken",
-    "code",
-    "totpCode",
-    "otp",
-    "secret",
-  ]);
+  const MAX_CHECK_LENGTH = 10000;
 
-  // SECURITY: Limit input length to prevent ReDoS attacks
-  const MAX_CHECK_LENGTH = 10000; // 10KB max per string
-
-  // Helper to safely check for patterns using string methods instead of regex
   const containsPattern = (text: string, patterns: string[]): boolean => {
     const upperText = text.toUpperCase();
-    for (const pattern of patterns) {
-      if (upperText.includes(pattern)) {
-        return true;
-      }
-    }
-    return false;
+    return patterns.some((pattern) => upperText.includes(pattern));
   };
 
-  // SQL Injection - Use simple string matching instead of regex
-  const sqlPatterns = ["UNION SELECT", "INSERT INTO", "DELETE FROM", "UPDATE SET"];
-
-  // XSS patterns - Check for specific strings
+  const sqlPatterns = ["UNION SELECT", "INSERT INTO", "DELETE FROM"];
   const xssPatterns = ["<SCRIPT", "</SCRIPT>", "JAVASCRIPT:", "<IFRAME"];
 
-  const checkString = (
-    value: unknown,
-    options: { skipCommandInjectionChars?: boolean } = {},
-  ): boolean => {
+  const checkString = (value: unknown): boolean => {
     if (typeof value !== "string") {
       return false;
     }
 
-    // Limit length to prevent ReDoS
-    const trimmed = value.length > MAX_CHECK_LENGTH ? value.substring(0, MAX_CHECK_LENGTH) : value;
-
-    // Check for SQL injection patterns
-    // codeql[js/polynomial-redos] - Using string matching (containsPattern) instead of regex to prevent ReDoS
-    if (containsPattern(trimmed, sqlPatterns)) {
+    const bounded = value.slice(0, MAX_CHECK_LENGTH);
+    if (containsPattern(bounded, sqlPatterns) || containsPattern(bounded, xssPatterns)) {
       return true;
     }
 
-    // Check for XSS patterns
-    if (containsPattern(trimmed, xssPatterns)) {
-      return true;
-    }
-
-    // Check for event handlers (onxxx=) - Use string search only, no regex to prevent ReDoS
-    const lowerText = trimmed.toLowerCase();
+    const lowerText = bounded.toLowerCase();
     const eventHandlerPatterns = [
       "onerror=",
       "onload=",
       "onclick=",
       "onmouseover=",
       "onfocus=",
-      "onblur=",
-      "onchange=",
       "onsubmit=",
-      "onkeydown=",
-      "onkeyup=",
-      "onmousedown=",
-      "onmouseup=",
-      "ondblclick=",
-      "onscroll=",
     ];
     if (eventHandlerPatterns.some((pattern) => lowerText.includes(pattern))) {
       return true;
     }
-    // Check for generic "on" followed by alphanumeric and "=" (simple string check)
-    // Limit scope to prevent ReDoS by only checking first 1000 chars
-    const searchWindow = lowerText.substring(0, Math.min(1000, lowerText.length));
-    for (let i = 0; i < searchWindow.length - 4; i++) {
-      if (searchWindow.substring(i, i + 2) === "on") {
-        // Check next 2-10 chars for alphanumeric followed by =
-        const after = searchWindow.substring(i + 2, Math.min(i + 12, searchWindow.length));
-        let foundAlnum = false;
-        for (let j = 0; j < after.length && j < 10; j++) {
-          const char = after[j];
-          if ((char >= "a" && char <= "z") || (char >= "0" && char <= "9")) {
-            foundAlnum = true;
-          } else if (char === "=" && foundAlnum) {
-            return true;
-          } else if (char !== " ") {
-            break;
-          }
-        }
-      }
-    }
 
-    // Check for path traversal - Simple string check
-    if (trimmed.includes("../") || trimmed.includes("..\\")) {
-      return true;
-    }
-
-    // Check for command injection characters - skip for password/token fields
-    if (!options.skipCommandInjectionChars) {
-      const dangerousChars = [";", "&", "|", "`", "$", "(", ")"];
-      if (dangerousChars.some((char) => trimmed.includes(char))) {
-        return true;
-      }
-    }
-
-    return false;
+    return bounded.includes("../") || bounded.includes("..\\");
   };
 
   const checkObject = (obj: Record<string, unknown>): boolean => {
-    for (const key in obj) {
-      const value = obj[key];
-      if (checkString(key)) {
+    for (const [key, value] of Object.entries(obj)) {
+      if (checkString(key) || checkString(value)) {
         return true;
       }
-      const keyLower = key.toLowerCase();
-      const skipCommandInjection = typeof value === "string" && SENSITIVE_VALUE_KEYS.has(keyLower);
-      if (checkString(value, { skipCommandInjectionChars: skipCommandInjection })) {
-        return true;
-      }
-      if (typeof value === "object" && value !== null) {
+      if (typeof value === "object" && value !== null && !Array.isArray(value)) {
         if (checkObject(value as Record<string, unknown>)) {
           return true;
         }
@@ -314,11 +226,9 @@ export function detectSuspiciousPatterns(req: Request, res: Response, next: Next
     return false;
   };
 
-  // Check query, params, and body
   if (
     checkObject(req.query as Record<string, unknown>) ||
-    checkObject(req.params as Record<string, unknown>) ||
-    checkObject(req.body as Record<string, unknown>)
+    checkObject(req.params as Record<string, unknown>)
   ) {
     logger.warn(
       {
@@ -333,7 +243,7 @@ export function detectSuspiciousPatterns(req: Request, res: Response, next: Next
     return res.status(400).json({
       error: {
         code: "E.SECURITY.SUSPICIOUS_INPUT",
-        message: "Request contains suspicious patterns",
+        message: "Request contains suspicious URL patterns",
       },
     });
   }
