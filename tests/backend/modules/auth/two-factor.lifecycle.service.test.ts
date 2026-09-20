@@ -115,7 +115,15 @@ describe("Two-Factor Lifecycle Service", () => {
       expect(result.secret).toBe(secret);
       expect(
         (queryBuilders["user_2fa_settings"] as { update: jest.Mock }).update,
-      ).toHaveBeenCalled();
+      ).toHaveBeenCalledWith(
+        expect.objectContaining({
+          totp_secret: "",
+          is_enabled: false,
+          is_verified: false,
+          enabled_at: null,
+          last_used_at: null,
+        }),
+      );
     });
 
     it("should throw error when 2FA is already enabled", async () => {
@@ -288,6 +296,32 @@ describe("Two-Factor Lifecycle Service", () => {
       expect(result).toBe(false);
     });
 
+    it("should reject enabled but unverified settings", async () => {
+      const settings = {
+        id: "settings-id",
+        user_id: userId,
+        totp_secret: "secret",
+        is_enabled: true,
+        is_verified: false,
+        recovery_email: null,
+        recovery_phone: null,
+        enabled_at: null,
+        last_used_at: null,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      };
+
+      queryBuilders["user_2fa_settings"] = createMockQueryBuilder(settings);
+      (queryBuilders["user_2fa_settings"] as { first: jest.Mock }).first.mockResolvedValue(
+        settings,
+      );
+
+      const result = await twoFactorService.verify2FACode(userId, "123456");
+
+      expect(result).toBe(false);
+      expect(mockAuthenticator.verify).not.toHaveBeenCalled();
+    });
+
     it("should verify backup code when TOTP fails", async () => {
       const code = "BACKUP-12";
       const settings = {
@@ -331,6 +365,45 @@ describe("Two-Factor Lifecycle Service", () => {
 
       expect(result).toBe(true);
       expect(mockBcrypt.compare).toHaveBeenCalled();
+    });
+
+    it("should reject a backup code when another request consumed it first", async () => {
+      const settings = {
+        id: "settings-id",
+        user_id: userId,
+        totp_secret: "secret",
+        is_enabled: true,
+        is_verified: true,
+        recovery_email: null,
+        recovery_phone: null,
+        enabled_at: new Date().toISOString(),
+        last_used_at: null,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      };
+
+      mockAuthenticator.verify.mockReturnValue(false);
+      mockBcrypt.compare.mockResolvedValue(true as never);
+      queryBuilders["user_2fa_settings"] = createMockQueryBuilder(settings);
+      (queryBuilders["user_2fa_settings"] as { first: jest.Mock }).first.mockResolvedValue(
+        settings,
+      );
+      queryBuilders["backup_codes"] = createMockQueryBuilder([
+        {
+          id: "backup-id",
+          user_id: userId,
+          code_hash: "hashed",
+          is_used: false,
+          used_at: null,
+          generation_batch: 1,
+          created_at: new Date().toISOString(),
+        },
+      ]);
+      (queryBuilders["backup_codes"] as { update: jest.Mock }).update.mockResolvedValue(0);
+
+      const result = await twoFactorService.verify2FACode(userId, "BACKUP-12");
+
+      expect(result).toBe(false);
     });
 
     it("should return false when both TOTP and backup code fail", async () => {
@@ -454,6 +527,28 @@ describe("Two-Factor Lifecycle Service", () => {
       const result = await twoFactorService.is2FAEnabled(userId);
 
       expect(result).toBe(true);
+    });
+
+    it("should return false when 2FA is enabled but not verified", async () => {
+      const settings = {
+        id: "settings-id",
+        user_id: userId,
+        totp_secret: "secret",
+        is_enabled: true,
+        is_verified: false,
+        recovery_email: null,
+        recovery_phone: null,
+        enabled_at: null,
+        last_used_at: null,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      };
+      queryBuilders["user_2fa_settings"] = createMockQueryBuilder(settings);
+      (queryBuilders["user_2fa_settings"] as { first: jest.Mock }).first.mockResolvedValue(
+        settings,
+      );
+
+      expect(await twoFactorService.is2FAEnabled(userId)).toBe(false);
     });
 
     it("should return false when 2FA is not enabled", async () => {
