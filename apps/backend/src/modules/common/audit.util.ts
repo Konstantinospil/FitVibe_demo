@@ -13,8 +13,9 @@ export interface AuditLogPayload {
 }
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-const MAX_ACTOR_FK_RETRIES = 10;
-const RETRY_BASE_DELAY_MS = 100;
+// Keep audit writes responsive while tolerating short transaction-visibility races.
+const MAX_ACTOR_FK_ATTEMPTS = 3;
+const RETRY_BASE_DELAY_MS = 25;
 
 function normalizeActorUserId(actorUserId: string | null): string | null {
   return actorUserId && UUID_PATTERN.test(actorUserId) ? actorUserId : null;
@@ -52,7 +53,7 @@ export async function insertAudit({
     created_at: new Date().toISOString(),
   };
 
-  for (let attempt = 0; attempt < MAX_ACTOR_FK_RETRIES; attempt += 1) {
+  for (let attempt = 0; attempt < MAX_ACTOR_FK_ATTEMPTS; attempt += 1) {
     try {
       await db("audit_log").insert(row);
       return;
@@ -60,7 +61,7 @@ export async function insertAudit({
       const canRetry =
         normalizedActorUserId !== null &&
         isActorForeignKeyVisibilityError(error) &&
-        attempt < MAX_ACTOR_FK_RETRIES - 1;
+        attempt < MAX_ACTOR_FK_ATTEMPTS - 1;
 
       if (!canRetry) {
         logger.error({ err: error, action }, "[AUDIT] insert failed");
