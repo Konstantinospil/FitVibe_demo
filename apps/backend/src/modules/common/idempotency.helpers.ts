@@ -154,25 +154,3 @@ export async function handleIdempotentRequest<T>(
   }
   return true;
 }
-
-/**
- * Wrapper for simple idempotent handlers where authentication is required
- * Combines authentication check and idempotency handling
- *
- * @param req - Express request
- * @param res - Express response
- * @param payload - Request payload
- * @param handler - Handler function that receives userId and returns result
- */
-export async function withIdempotency<T>(
-  req: Request,
-  res: Response,
-  payload: unknown,
-  handler: (userId: string) => Promise<{ status: number; body: T }>,
-): Promise<{ handled: boolean; userId: string }> {
-  const userId = requireAuthenticatedUser(req, res);
-
-  const handled = await handleIdempotentRequest(req, res, userId, payload, () => handler(userId));
-
-  return { handled, userId };
-}
