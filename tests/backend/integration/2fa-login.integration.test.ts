@@ -8,7 +8,7 @@
 
 import { describe, it, expect, beforeEach, afterEach } from "@jest/globals";
 import * as authService from "../../../apps/backend/src/modules/auth/auth.service.js";
-import * as twofaService from "../../../apps/backend/src/modules/auth/twofa.service.js";
+import * as twofaService from "../../../apps/backend/src/modules/auth/two-factor.service.js";
 import * as authRepo from "../../../apps/backend/src/modules/auth/auth.repository.js";
 import * as pending2faRepo from "../../../apps/backend/src/modules/auth/pending-2fa.repository.js";
 import * as bruteforceRepo from "../../../apps/backend/src/modules/auth/bruteforce.repository.js";
@@ -19,7 +19,7 @@ import { getCurrentTermsVersion } from "../../../apps/backend/src/config/terms.j
 
 // Mock dependencies
 jest.mock("../../../apps/backend/src/modules/auth/auth.repository.js");
-jest.mock("../../../apps/backend/src/modules/auth/twofa.service.js");
+jest.mock("../../../apps/backend/src/modules/auth/two-factor.service.js");
 jest.mock("../../../apps/backend/src/modules/auth/pending-2fa.repository.js");
 jest.mock("../../../apps/backend/src/modules/auth/bruteforce.repository.js");
 jest.mock("../../../apps/backend/src/modules/consent/consent.repository.js", () => ({
