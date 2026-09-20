@@ -125,28 +125,54 @@ if (!publicKey && raw.JWT_PUBLIC_KEY_PATH) {
   }
 }
 
-if (!privateKey || !publicKey) {
-  const { privateKey: generatedPrivateKey, publicKey: generatedPublicKey } = generateKeyPairSync(
-    "rsa",
-    {
-      modulusLength: 2048,
-    },
-  );
-  if (!privateKey) {
-    privateKey = generatedPrivateKey.export({ type: "pkcs1", format: "pem" }).toString();
-    logger.warn("[env] JWT_PRIVATE_KEY not provided; generated ephemeral development key.");
-  }
-  if (!publicKey) {
-    publicKey = generatedPublicKey.export({ type: "pkcs1", format: "pem" }).toString();
-    logger.warn("[env] JWT_PUBLIC_KEY not provided; generated ephemeral development key.");
+if (privateKey && !publicKey) {
+  try {
+    publicKey = createPublicKey(privateKey)
+      .export({ type: "spki", format: "pem" })
+      .toString();
+    logger.info("[env] JWT public key derived from configured private key.");
+  } catch (error) {
+    throw new Error("JWT_PRIVATE_KEY is not a valid RSA private key.", { cause: error });
   }
 }
 
-if (!privateKey || !publicKey) {
+if (!privateKey && publicKey) {
   throw new Error(
-    "Unable to resolve RSA key pair for JWT signing. Please set JWT_PRIVATE_KEY/JWT_PUBLIC_KEY.",
+    "JWT_PUBLIC_KEY is configured without a matching JWT_PRIVATE_KEY. " +
+      "Configure the signing private key as well.",
   );
 }
+
+if (!privateKey && !publicKey) {
+  if (raw.NODE_ENV === "production") {
+    throw new Error(
+      "Production requires persistent JWT signing keys. Configure JWT_PRIVATE_KEY/JWT_PUBLIC_KEY " +
+        "or mount JWT_PRIVATE_KEY_PATH/JWT_PUBLIC_KEY_PATH.",
+    );
+  }
+
+  const generated = generateKeyPairSync("rsa", { modulusLength: 2048 });
+  privateKey = generated.privateKey.export({ type: "pkcs1", format: "pem" }).toString();
+  publicKey = generated.publicKey.export({ type: "spki", format: "pem" }).toString();
+  logger.warn("[env] JWT keys not provided; generated an ephemeral non-production key pair.");
+}
+
+if (!privateKey || !publicKey) {
+  throw new Error("Unable to resolve RSA key pair for JWT signing.");
+}
+
+const derivedPublicKey = createPublicKey(privateKey)
+  .export({ type: "spki", format: "pem" })
+  .toString();
+const normalizedPublicKey = createPublicKey(publicKey)
+  .export({ type: "spki", format: "pem" })
+  .toString();
+
+if (derivedPublicKey !== normalizedPublicKey) {
+  throw new Error("JWT_PRIVATE_KEY and JWT_PUBLIC_KEY do not form a matching key pair.");
+}
+
+publicKey = normalizedPublicKey;
 
 const defaultOrigins = [
   normalizeOrigin(raw.FRONTEND_URL),
