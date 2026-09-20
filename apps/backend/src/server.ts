@@ -59,6 +59,13 @@ export async function startServer(): Promise<void> {
     import("./config/env.js"),
   ]);
 
+  if (env.isProduction) {
+    const { checkHealth } = await import("./services/antivirus.service.js");
+    if (!(await checkHealth())) {
+      throw new Error("ClamAV health check failed during production startup");
+    }
+  }
+
   app.listen(env.PORT, () => {
     logger.info({ port: env.PORT }, "FitVibe Backend running");
   });
