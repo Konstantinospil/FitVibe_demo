@@ -146,10 +146,9 @@ export async function createExerciseHandler(req: Request, res: Response): Promis
   const isAdmin = authUser.role === "admin";
 
   const handled = await handleIdempotentRequest(req, res, userId, parsed.data, async () => {
-      const body = await createOne(userId, parsed.data, isAdmin);
-      return { status: 201, body };
-    },
-  );
+    const body = await createOne(userId, parsed.data, isAdmin);
+    return { status: 201, body };
+  });
 
   if (!handled) {
     const body = await createOne(userId, parsed.data, isAdmin);
@@ -172,10 +171,9 @@ export async function updateExerciseHandler(req: Request, res: Response): Promis
   const { id } = req.params;
 
   const handled = await handleIdempotentRequest(req, res, userId, parsed.data, async () => {
-      const body = await updateOne(id, userId, parsed.data, isAdmin);
-      return { status: 200, body };
-    },
-  );
+    const body = await updateOne(id, userId, parsed.data, isAdmin);
+    return { status: 200, body };
+  });
 
   if (!handled) {
     const body = await updateOne(id, userId, parsed.data, isAdmin);
@@ -193,10 +191,9 @@ export async function deleteExerciseHandler(req: Request, res: Response): Promis
   const { id } = req.params;
 
   const handled = await handleIdempotentRequest(req, res, userId, { id }, async () => {
-      await archiveOne(id, userId, isAdmin);
-      return { status: 204, body: null };
-    },
-  );
+    await archiveOne(id, userId, isAdmin);
+    return { status: 204, body: null };
+  });
 
   if (!handled) {
     await archiveOne(id, userId, isAdmin);
