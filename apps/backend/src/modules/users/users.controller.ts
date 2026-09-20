@@ -158,10 +158,9 @@ export async function adminCreateUser(req: Request, res: Response): Promise<void
 
   const scopeUserId = actorId ?? "system";
   const handled = await handleIdempotentRequest(req, res, scopeUserId, parsed.data, async () => {
-      const body = await createUser(actorId, parsed.data);
-      return { status: 201, body };
-    },
-  );
+    const body = await createUser(actorId, parsed.data);
+    return { status: 201, body };
+  });
 
   if (!handled) {
     const body = await createUser(actorId, parsed.data);
@@ -182,10 +181,9 @@ export async function updateMe(req: Request, res: Response): Promise<void> {
   }
 
   const handled = await handleIdempotentRequest(req, res, userId, parsed.data, async () => {
-      const body = await updateProfile(userId, parsed.data);
-      return { status: 200, body };
-    },
-  );
+    const body = await updateProfile(userId, parsed.data);
+    return { status: 200, body };
+  });
 
   if (!handled) {
     const body = await updateProfile(userId, parsed.data);
@@ -334,10 +332,9 @@ export async function requestContactVerificationHandler(
     userId,
     { contactId: parsedParams.data.contactId },
     async () => {
-      const body = await requestContactVerification(userId, parsedParams.data.contactId);
-      return { status: 201, body };
-    },
-  );
+    const body = await requestContactVerification(userId, parsedParams.data.contactId);
+    return { status: 201, body };
+  });
 
   if (!handled) {
     const body = await requestContactVerification(userId, parsedParams.data.contactId);
@@ -358,10 +355,9 @@ export async function updateEmail(req: Request, res: Response): Promise<void> {
   }
 
   const handled = await handleIdempotentRequest(req, res, userId, parsed.data, async () => {
-      const body = await updatePrimaryEmail(userId, parsed.data.email);
-      return { status: 200, body };
-    },
-  );
+    const body = await updatePrimaryEmail(userId, parsed.data.email);
+    return { status: 200, body };
+  });
 
   if (!handled) {
     const body = await updatePrimaryEmail(userId, parsed.data.email);
@@ -439,10 +435,9 @@ export async function verifyContactHandler(req: Request, res: Response): Promise
     userId,
     { contactId: parsedParams.data.contactId, token: verificationToken },
     async () => {
-      const body = await verifyContact(userId, parsedParams.data.contactId, verificationToken);
-      return { status: 200, body };
-    },
-  );
+    const body = await verifyContact(userId, parsedParams.data.contactId, verificationToken);
+    return { status: 200, body };
+  });
 
   if (!handled) {
     const body = await verifyContact(userId, parsedParams.data.contactId, verificationToken);
@@ -469,9 +464,8 @@ export async function removeContactHandler(req: Request, res: Response): Promise
     { contactId: parsed.data.contactId },
     async () => {
       await removeContact(userId, parsed.data.contactId);
-      return { status: 204, body: null };
-    },
-  );
+    return { status: 204, body: null };
+  });
 
   if (!handled) {
     await removeContact(userId, parsed.data.contactId);
@@ -495,10 +489,9 @@ export async function adminChangeStatus(req: Request, res: Response): Promise<vo
     scopeUserId,
     { targetUserId: id, ...parsed.data },
     async () => {
-      const body = await changeStatus(actorId, id, parsed.data.status);
-      return { status: 200, body };
-    },
-  );
+    const body = await changeStatus(actorId, id, parsed.data.status);
+    return { status: 200, body };
+  });
 
   if (!handled) {
     const body = await changeStatus(actorId, id, parsed.data.status);
