@@ -1,405 +1,431 @@
-import { authenticator } from "otplib";
+import crypto from "crypto";
+import { authenticator } from "@otplib/preset-default";
 import QRCode from "qrcode";
-import { randomBytes } from "crypto";
 import bcrypt from "bcryptjs";
-import type { Knex } from "knex";
+import { v4 as uuidv4 } from "uuid";
 import { db } from "../../db/connection.js";
-import { logger } from "../../config/logger.js";
-import { env } from "../../config/index.js";
+import type { Knex } from "knex";
+import { HttpError } from "../../utils/http.js";
 
-/**
- * Two-Factor Authentication Service
- * Implements TOTP-based 2FA with backup codes
- */
-
-export interface TwoFactorSetup {
-  secret: string;
-  qrCodeUrl: string;
-  backupCodes: string[];
-}
-
-export interface BackupCode {
-  id: string;
-  code_hash: string;
-  used: boolean;
-  used_at: string | null;
-  created_at: string;
-}
-
+const APP_NAME = "FitVibe";
 const BACKUP_CODE_COUNT = 10;
 const BACKUP_CODE_LENGTH = 8;
 
+// Configure TOTP settings
+authenticator.options = {
+  window: 1, // Allow 1 step before/after for clock drift
+  step: 30, // 30 second time step
+};
+
+interface User2FASettings {
+  id: string;
+  user_id: string;
+  totp_secret: string;
+  is_enabled: boolean;
+  is_verified: boolean;
+  recovery_email: string | null;
+  recovery_phone: string | null;
+  enabled_at: string | null;
+  last_used_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+interface BackupCode {
+  id: string;
+  user_id: string;
+  code_hash: string;
+  is_used: boolean;
+  used_at: string | null;
+  generation_batch: number;
+  created_at: string;
+}
+
 /**
  * Generate a new TOTP secret for a user
- * @returns Base32-encoded secret
+ * Returns the secret and a QR code data URL for easy setup
  */
-export function generateTotpSecret(): string {
-  return authenticator.generateSecret();
-}
+export async function setupTwoFactor(
+  userId: string,
+  userEmail: string,
+  trx?: Knex.Transaction,
+): Promise<{
+  secret: string;
+  qrCode: string;
+  backupCodes: string[];
+}> {
+  const exec = trx ?? db;
 
-/**
- * Generate QR code URL for TOTP setup
- * @param userEmail - User's email address
- * @param secret - TOTP secret
- * @returns Data URL for QR code image
- */
-export async function generateQRCodeUrl(userEmail: string, secret: string): Promise<string> {
-  const appName = env.appName ?? "FitVibe";
-  const otpauthUrl = authenticator.keyuri(userEmail, appName, secret);
+  // Check if user already has 2FA settings
+  const existing = await exec<User2FASettings>("user_2fa_settings")
+    .where({ user_id: userId })
+    .first();
 
-  try {
-    const qrCodeDataUrl = await QRCode.toDataURL(otpauthUrl);
-    return qrCodeDataUrl;
-  } catch (error) {
-    logger.error({ error, userEmail }, "[2fa] Failed to generate QR code");
-    throw new Error("Failed to generate QR code");
-  }
-}
-
-/**
- * Generate backup codes for account recovery
- * @returns Array of plain-text backup codes (show once to user)
- */
-export function generateBackupCodes(): string[] {
-  const codes: string[] = [];
-
-  for (let i = 0; i < BACKUP_CODE_COUNT; i++) {
-    // Generate cryptographically secure random code
-    const code = randomBytes(BACKUP_CODE_LENGTH)
-      .toString("base64")
-      .replace(/[^a-zA-Z0-9]/g, "")
-      .substring(0, BACKUP_CODE_LENGTH)
-      .toUpperCase();
-
-    codes.push(code);
+  if (existing && existing.is_enabled) {
+    throw new HttpError(400, "2FA_ALREADY_ENABLED", "Two-factor authentication is already enabled");
   }
 
-  return codes;
-}
+  // Generate new TOTP secret
+  const secret = authenticator.generateSecret();
 
-/**
- * Hash backup codes before storing
- * @param codes - Plain-text backup codes
- * @returns Array of hashed codes
- */
-export async function hashBackupCodes(codes: string[]): Promise<string[]> {
-  const saltRounds = 10;
-  const hashedCodes = await Promise.all(codes.map((code) => bcrypt.hash(code, saltRounds)));
-  return hashedCodes;
-}
+  // Generate QR code
+  const otpauthUrl = authenticator.keyuri(userEmail, APP_NAME, secret);
 
-/**
- * Verify a TOTP token against a secret
- * @param token - 6-digit TOTP token from user
- * @param secret - User's TOTP secret
- * @returns True if token is valid
- */
-export function verifyTotpToken(token: string, secret: string): boolean {
-  try {
-    // Allow a window of ±1 step (30 seconds before/after) for clock drift
-    authenticator.options = { window: 1 };
-    return authenticator.verify({ token, secret });
-  } catch (error) {
-    logger.error({ error }, "[2fa] TOTP verification failed");
-    return false;
+  const qrCode: string = await QRCode.toDataURL(otpauthUrl);
+
+  // Generate backup codes
+  const backupCodes = await generateBackupCodes(userId, 1, trx);
+
+  const now = new Date().toISOString();
+
+  if (existing) {
+    // Update existing record
+    await exec("user_2fa_settings").where({ id: existing.id }).update({
+      totp_secret: secret,
+      is_enabled: false,
+      is_verified: false,
+      updated_at: now,
+    });
+  } else {
+    // Create new record
+    await exec("user_2fa_settings").insert({
+      id: uuidv4(),
+      user_id: userId,
+      totp_secret: secret,
+      is_enabled: false,
+      is_verified: false,
+      recovery_email: null,
+      recovery_phone: null,
+      enabled_at: null,
+      last_used_at: null,
+      created_at: now,
+      updated_at: now,
+    });
   }
-}
-
-/**
- * Verify a backup code
- * @param code - Plain-text backup code from user
- * @param codeHash - Stored hash to compare against
- * @returns True if code matches
- */
-export async function verifyBackupCode(code: string, codeHash: string): Promise<boolean> {
-  try {
-    return await bcrypt.compare(code, codeHash);
-  } catch (error) {
-    logger.error({ error }, "[2fa] Backup code verification failed");
-    return false;
-  }
-}
-
-/**
- * Initialize 2FA setup for a user
- * Generates secret, QR code, and backup codes
- * @param userEmail - User's email
- * @returns Setup information (secret, QR code, backup codes)
- */
-export async function initializeTwoFactorSetup(userEmail: string): Promise<TwoFactorSetup> {
-  const secret = generateTotpSecret();
-  const qrCodeUrl = await generateQRCodeUrl(userEmail, secret);
-  const backupCodes = generateBackupCodes();
-
-  logger.info({ userEmail }, "[2fa] Initialized 2FA setup");
 
   return {
     secret,
-    qrCodeUrl,
+    qrCode,
     backupCodes,
   };
 }
 
 /**
- * Enable 2FA for a user after verification
- * Stores secret and backup codes
- * @param userId - User ID
- * @param secret - TOTP secret
- * @param backupCodes - Plain-text backup codes
- * @param ipAddress - Request IP address
- * @param userAgent - Request user agent
- * @param trx - Optional transaction
+ * Verify TOTP code and enable 2FA for the user
  */
-export async function enableTwoFactor(
+export async function verifyAndEnable2FA(
   userId: string,
-  secret: string,
-  backupCodes: string[],
-  ipAddress: string | null,
-  userAgent: string | null,
-  trx?: Knex.Transaction,
-): Promise<void> {
-  const exec = trx ?? db;
-
-  // Hash backup codes
-  const hashedCodes = await hashBackupCodes(backupCodes);
-
-  await exec("user_2fa_settings")
-    .insert({
-      user_id: userId,
-      totp_secret: secret,
-      is_enabled: true,
-      is_verified: true,
-      enabled_at: new Date(),
-      updated_at: new Date(),
-    })
-    .onConflict("user_id")
-    .merge({
-      totp_secret: secret,
-      is_enabled: true,
-      is_verified: true,
-      enabled_at: new Date(),
-      updated_at: new Date(),
-    });
-
-  await exec("backup_codes").where({ user_id: userId }).del();
-  const backupCodeRecords = hashedCodes.map((codeHash) => ({
-    user_id: userId,
-    code_hash: codeHash,
-    is_used: false,
-    created_at: new Date(),
-  }));
-  await exec("backup_codes").insert(backupCodeRecords);
-
-  await exec("audit_log").insert({
-    actor_user_id: userId,
-    entity_type: "auth",
-    action: "2fa_enabled",
-    entity_id: userId,
-    metadata: {
-      backup_codes_count: backupCodes.length,
-      ip_address: ipAddress,
-      user_agent: userAgent,
-    },
-    created_at: new Date(),
-  });
-
-  logger.info({ userId }, "[2fa] Two-factor authentication enabled");
-}
-
-/**
- * Disable 2FA for a user
- * @param userId - User ID
- * @param ipAddress - Request IP address
- * @param userAgent - Request user agent
- * @param trx - Optional transaction
- */
-export async function disableTwoFactor(
-  userId: string,
-  ipAddress: string | null,
-  userAgent: string | null,
-  trx?: Knex.Transaction,
-): Promise<void> {
-  const exec = trx ?? db;
-
-  await exec("user_2fa_settings").where({ user_id: userId }).update({
-    is_enabled: false,
-    totp_secret: "",
-    enabled_at: null,
-    updated_at: new Date(),
-  });
-
-  await exec("backup_codes").where({ user_id: userId }).del();
-
-  await exec("audit_log").insert({
-    actor_user_id: userId,
-    entity_type: "auth",
-    action: "2fa_disabled",
-    entity_id: userId,
-    metadata: { ip_address: ipAddress, user_agent: userAgent },
-    created_at: new Date(),
-  });
-
-  logger.info({ userId }, "[2fa] Two-factor authentication disabled");
-}
-
-/**
- * Verify 2FA token for login
- * Supports both TOTP and backup codes
- * @param userId - User ID
- * @param token - TOTP token or backup code
- * @param ipAddress - Request IP address
- * @param userAgent - Request user agent
- * @param trx - Optional transaction
- * @returns True if verification successful
- */
-export async function verifyTwoFactorToken(
-  userId: string,
-  token: string,
-  ipAddress: string | null,
-  userAgent: string | null,
+  code: string,
   trx?: Knex.Transaction,
 ): Promise<boolean> {
   const exec = trx ?? db;
 
-  const settings = await exec("user_2fa_settings")
+  const settings = await exec<User2FASettings>("user_2fa_settings")
     .where({ user_id: userId })
-    .first<{ totp_secret: string | null; is_enabled: boolean }>();
+    .first();
 
-  if (!settings || !settings.is_enabled || !settings.totp_secret) {
-    logger.warn({ userId }, "[2fa] User does not have 2FA enabled");
+  if (!settings) {
+    throw new HttpError(404, "2FA_NOT_SETUP", "Two-factor authentication has not been set up");
+  }
+
+  if (settings.is_enabled && settings.is_verified) {
+    throw new HttpError(400, "2FA_ALREADY_ENABLED", "Two-factor authentication is already enabled");
+  }
+
+  // Verify the TOTP code
+  const isValid: boolean = authenticator.verify({
+    token: code,
+    secret: settings.totp_secret,
+  });
+
+  if (!isValid) {
+    throw new HttpError(401, "INVALID_2FA_CODE", "Invalid verification code");
+  }
+
+  // Enable 2FA
+  const now = new Date().toISOString();
+  await exec("user_2fa_settings").where({ id: settings.id }).update({
+    is_enabled: true,
+    is_verified: true,
+    enabled_at: now,
+    last_used_at: now,
+    updated_at: now,
+  });
+
+  // Audit log
+  await exec("audit_log").insert({
+    id: uuidv4(),
+    actor_user_id: userId,
+    action: "2fa_enabled",
+    entity_type: "auth",
+    metadata: {},
+    created_at: now,
+  });
+
+  return true;
+}
+
+/**
+ * Verify a TOTP code during login
+ */
+export async function verify2FACode(
+  userId: string,
+  code: string,
+  trx?: Knex.Transaction,
+): Promise<boolean> {
+  const exec = trx ?? db;
+
+  const settings = await exec<User2FASettings>("user_2fa_settings")
+    .where({ user_id: userId, is_enabled: true })
+    .first();
+
+  if (!settings) {
     return false;
   }
 
-  if (verifyTotpToken(token, settings.totp_secret)) {
-    await exec("audit_log").insert({
-      actor_user_id: userId,
-      entity_type: "auth",
-      action: "2fa_verified",
-      entity_id: userId,
-      metadata: { method: "totp", ip_address: ipAddress, user_agent: userAgent },
-      created_at: new Date(),
+  // Try TOTP code first
+  const isValidTOTP = authenticator.verify({
+    token: code,
+    secret: settings.totp_secret,
+  });
+
+  if (isValidTOTP) {
+    // Update last used timestamp
+    await exec("user_2fa_settings").where({ id: settings.id }).update({
+      last_used_at: new Date().toISOString(),
     });
-    logger.info({ userId }, "[2fa] TOTP verification successful");
     return true;
   }
 
-  const backupCodes = await exec("backup_codes")
-    .where({ user_id: userId, is_used: false })
-    .select<BackupCode[]>("*");
-
-  for (const backupCodeRecord of backupCodes) {
-    if (await verifyBackupCode(token, backupCodeRecord.code_hash)) {
-      // Mark backup code as used
-      await exec("backup_codes").where({ id: backupCodeRecord.id }).update({
-        is_used: true,
-        used_at: new Date(),
-      });
-
-      await exec("audit_log").insert({
-        actor_user_id: userId,
-        entity_type: "auth",
-        action: "2fa_backup_code_used",
-        entity_id: userId,
-        metadata: {
-          backup_code_id: backupCodeRecord.id,
-          ip_address: ipAddress,
-          user_agent: userAgent,
-        },
-        created_at: new Date(),
-      });
-
-      logger.info({ userId, backupCodeId: backupCodeRecord.id }, "[2fa] Backup code used");
-      return true;
-    }
+  // Try backup codes
+  const isValidBackup = await verifyBackupCode(userId, code, trx);
+  if (isValidBackup) {
+    return true;
   }
 
-  // Failed verification
-  await exec("audit_log").insert({
-    actor_user_id: userId,
-    entity_type: "auth",
-    action: "2fa_failed_verification",
-    entity_id: userId,
-    metadata: { ip_address: ipAddress, user_agent: userAgent },
-    created_at: new Date(),
-  });
-
-  logger.warn({ userId }, "[2fa] Verification failed");
   return false;
 }
 
 /**
- * Regenerate backup codes for a user
- * Invalidates all existing backup codes
- * @param userId - User ID
- * @param ipAddress - Request IP address
- * @param userAgent - Request user agent
- * @param trx - Optional transaction
- * @returns New plain-text backup codes
+ * Disable 2FA for a user (requires password confirmation)
  */
-export async function regenerateBackupCodes(
+export async function disable2FA(
   userId: string,
-  ipAddress: string | null,
-  userAgent: string | null,
+  password: string,
+  userPasswordHash: string,
   trx?: Knex.Transaction,
-): Promise<string[]> {
+): Promise<boolean> {
+  // Verify password
+  const passwordValid = await bcrypt.compare(password, userPasswordHash);
+  if (!passwordValid) {
+    throw new HttpError(401, "INVALID_PASSWORD", "Invalid password");
+  }
+
   const exec = trx ?? db;
 
-  // Delete old backup codes
-  await exec("backup_codes").where({ user_id: userId }).del();
+  const settings = await exec<User2FASettings>("user_2fa_settings")
+    .where({ user_id: userId })
+    .first();
 
-  const backupCodes = generateBackupCodes();
-  const hashedCodes = await hashBackupCodes(backupCodes);
+  if (!settings || !settings.is_enabled) {
+    throw new HttpError(404, "2FA_NOT_ENABLED", "Two-factor authentication is not enabled");
+  }
 
-  const backupCodeRecords = hashedCodes.map((codeHash) => ({
-    user_id: userId,
-    code_hash: codeHash,
-    is_used: false,
-    created_at: new Date(),
-  }));
-
-  await exec("backup_codes").insert(backupCodeRecords);
-
-  await exec("audit_log").insert({
-    actor_user_id: userId,
-    entity_type: "auth",
-    action: "2fa_backup_codes_generated",
-    entity_id: userId,
-    metadata: {
-      backup_codes_count: backupCodes.length,
-      ip_address: ipAddress,
-      user_agent: userAgent,
-    },
-    created_at: new Date(),
+  // Disable 2FA
+  const now = new Date().toISOString();
+  await exec("user_2fa_settings").where({ id: settings.id }).update({
+    is_enabled: false,
+    enabled_at: null,
+    updated_at: now,
   });
 
-  logger.info({ userId }, "[2fa] Backup codes regenerated");
+  // Invalidate all backup codes
+  await exec("backup_codes").where({ user_id: userId }).del();
 
-  return backupCodes;
+  // Audit log
+  await exec("audit_log").insert({
+    id: uuidv4(),
+    actor_user_id: userId,
+    action: "2fa_disabled",
+    entity_type: "auth",
+    metadata: {},
+    created_at: now,
+  });
+
+  return true;
 }
 
 /**
- * Get backup code statistics for a user
- * @param userId - User ID
- * @param trx - Optional transaction
- * @returns Backup code counts
+ * Check if user has 2FA enabled
  */
-export async function getBackupCodeStats(
+export async function is2FAEnabled(userId: string, trx?: Knex.Transaction): Promise<boolean> {
+  const exec = trx ?? db;
+
+  const settings = await exec<User2FASettings>("user_2fa_settings")
+    .where({ user_id: userId, is_enabled: true })
+    .first();
+
+  return !!settings;
+}
+
+/**
+ * Generate new backup codes (invalidates old ones from same batch)
+ */
+export async function generateBackupCodes(
+  userId: string,
+  batch: number,
+  trx?: Knex.Transaction,
+): Promise<string[]> {
+  const exec = trx ?? db;
+  const codes: string[] = [];
+  const now = new Date().toISOString();
+
+  // Delete old codes from this batch
+  await exec("backup_codes").where({ user_id: userId, generation_batch: batch }).del();
+
+  // Generate new codes
+  for (let i = 0; i < BACKUP_CODE_COUNT; i++) {
+    const code = generateBackupCode();
+    const codeHash = await bcrypt.hash(code, 10);
+
+    await exec("backup_codes").insert({
+      id: uuidv4(),
+      user_id: userId,
+      code_hash: codeHash,
+      is_used: false,
+      used_at: null,
+      generation_batch: batch,
+      created_at: now,
+    });
+
+    codes.push(code);
+  }
+
+  // Audit log
+  await exec("audit_log").insert({
+    id: uuidv4(),
+    actor_user_id: userId,
+    action: "2fa_backup_codes_generated",
+    entity_type: "auth",
+    metadata: { batch, count: BACKUP_CODE_COUNT },
+    created_at: now,
+  });
+
+  return codes;
+}
+
+/**
+ * Verify and consume a backup code
+ */
+async function verifyBackupCode(
+  userId: string,
+  code: string,
+  trx?: Knex.Transaction,
+): Promise<boolean> {
+  const exec = trx ?? db;
+
+  // Get all unused backup codes for this user
+  const backupCodes = await exec<BackupCode>("backup_codes").where({
+    user_id: userId,
+    is_used: false,
+  });
+
+  for (const storedCode of backupCodes) {
+    const isValid = await bcrypt.compare(code, storedCode.code_hash);
+    if (isValid) {
+      // Mark code as used
+      await exec("backup_codes").where({ id: storedCode.id }).update({
+        is_used: true,
+        used_at: new Date().toISOString(),
+      });
+      return true;
+    }
+  }
+
+  return false;
+}
+
+/**
+ * Get remaining backup codes count
+ */
+export async function getRemainingBackupCodesCount(
   userId: string,
   trx?: Knex.Transaction,
-): Promise<{ total: number; used: number; remaining: number }> {
+): Promise<number> {
   const exec = trx ?? db;
 
   const result = await exec("backup_codes")
-    .where({ user_id: userId })
-    .select(exec.raw("COUNT(*) as total, SUM(CASE WHEN is_used THEN 1 ELSE 0 END) as used"))
-    .first<{ total: string; used: string }>();
+    .where({ user_id: userId, is_used: false })
+    .count<{ count: string | number }>("* as count")
+    .first();
 
-  const total = parseInt(result?.total ?? "0", 10);
-  const used = parseInt(result?.used ?? "0", 10);
+  return Number(result?.count ?? 0);
+}
+
+export async function getTwoFactorStatus(
+  userId: string,
+  trx?: Knex.Transaction,
+): Promise<{ enabled: boolean; enabledAt: string | null; backupCodesRemaining: number }> {
+  const exec = trx ?? db;
+  const settings = await exec<User2FASettings>("user_2fa_settings")
+    .where({ user_id: userId })
+    .first();
+
+  if (!settings || !settings.is_enabled) {
+    return {
+      enabled: false,
+      enabledAt: null,
+      backupCodesRemaining: 0,
+    };
+  }
 
   return {
-    total,
-    used,
-    remaining: total - used,
+    enabled: true,
+    enabledAt: settings.enabled_at,
+    backupCodesRemaining: await getRemainingBackupCodesCount(userId, trx),
   };
+}
+
+export async function regenerateBackupCodes(
+  userId: string,
+  trx?: Knex.Transaction,
+): Promise<string[]> {
+  const exec = trx ?? db;
+  const settings = await exec<User2FASettings>("user_2fa_settings")
+    .where({ user_id: userId, is_enabled: true })
+    .first();
+
+  if (!settings) {
+    throw new HttpError(404, "2FA_NOT_ENABLED", "Two-factor authentication is not enabled");
+  }
+
+  const latestBatch = await exec("backup_codes")
+    .where({ user_id: userId })
+    .max<{ max: string | number | null }>("generation_batch as max")
+    .first();
+
+  const nextBatch = Number(latestBatch?.max ?? 0) + 1;
+  await exec("backup_codes").where({ user_id: userId }).del();
+  return generateBackupCodes(userId, nextBatch, trx);
+}
+
+/**
+ * Generate a human-readable backup code
+ * Format: XXXX-XXXX (8 alphanumeric characters with dash)
+ */
+function generateBackupCode(): string {
+  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // Exclude ambiguous characters
+  let code = "";
+
+  for (let i = 0; i < BACKUP_CODE_LENGTH; i++) {
+    const randomIndex = crypto.randomInt(0, chars.length);
+    code += chars[randomIndex];
+
+    // Add dash in the middle
+    if (i === BACKUP_CODE_LENGTH / 2 - 1) {
+      code += "-";
+    }
+  }
+
+  return code;
 }
