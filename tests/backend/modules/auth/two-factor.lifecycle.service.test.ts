@@ -35,7 +35,11 @@ jest.mock("../../../../apps/backend/src/db/connection.js", () => {
       queryBuilders[table] = createMockQueryBuilder();
     }
     return queryBuilders[table];
-  }) as jest.Mock;
+  }) as jest.Mock & { transaction: jest.Mock };
+
+  mockDbFunction.transaction = jest.fn(async (callback: (trx: typeof mockDbFunction) => unknown) =>
+    callback(mockDbFunction),
+  );
 
   return {
     db: mockDbFunction,
@@ -51,6 +55,49 @@ describe("Two-Factor Lifecycle Service", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     Object.keys(queryBuilders).forEach((key) => delete queryBuilders[key]);
+  });
+
+  describe("lifecycle orchestration", () => {
+    it("resolves the primary email before starting setup", async () => {
+      queryBuilders["user_contacts"] = createMockQueryBuilder({ value: userEmail });
+      queryBuilders["user_2fa_settings"] = createMockQueryBuilder(null);
+      queryBuilders["backup_codes"] = createMockQueryBuilder();
+      queryBuilders["audit_log"] = createMockQueryBuilder();
+
+      mockAuthenticator.generateSecret.mockReturnValue("TEST_SECRET");
+      mockAuthenticator.keyuri.mockReturnValue("otpauth://totp/test");
+      mockQRCode.toDataURL.mockResolvedValue("data:image/png;base64,test");
+      mockBcrypt.hash.mockResolvedValue("hashed_code" as never);
+
+      const result = await twoFactorService.beginTwoFactorSetup(userId);
+
+      expect(result.secret).toBe("TEST_SECRET");
+      expect(
+        (queryBuilders["user_contacts"] as { where: jest.Mock }).where,
+      ).toHaveBeenCalledWith({
+        user_id: userId,
+        type: "email",
+        is_primary: true,
+      });
+    });
+
+    it("fails setup when the primary email is missing", async () => {
+      queryBuilders["user_contacts"] = createMockQueryBuilder(null);
+
+      await expect(twoFactorService.beginTwoFactorSetup(userId)).rejects.toMatchObject({
+        code: "E.USER.EMAIL_NOT_FOUND",
+        status: 404,
+      });
+    });
+
+    it("fails disable when the user no longer exists", async () => {
+      queryBuilders["users"] = createMockQueryBuilder(null);
+
+      await expect(twoFactorService.disableTwoFactor(userId, password)).rejects.toMatchObject({
+        code: "E.USER.NOT_FOUND",
+        status: 404,
+      });
+    });
   });
 
   describe("setupTwoFactor", () => {
