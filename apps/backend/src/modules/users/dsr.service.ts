@@ -59,7 +59,7 @@ export async function scheduleAccountDeletion(
 
   await insertAudit({
     actorUserId: userId,
-    entity: "users",
+    entityType: "users",
     action: "delete_scheduled",
     entityId: userId,
     metadata: { ...schedule },
@@ -182,7 +182,7 @@ export async function executeAccountDeletion(userId: string): Promise<void> {
 
   await insertAudit({
     actorUserId: null,
-    entity: "users",
+    entityType: "users",
     action: "account_purged",
     entityId: userId,
     metadata: {
