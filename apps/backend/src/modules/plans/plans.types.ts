@@ -2,7 +2,7 @@ export interface Plan {
   id: string;
   user_id: string;
   name: string;
-  status: "active" | "completed" | "archived";
+  status: "active" | "completed";
   progress_percent: string; // Decimal as string from database
   session_count: number;
   completed_count: number;
@@ -21,7 +21,7 @@ export interface CreatePlanDTO {
 
 export interface UpdatePlanDTO {
   name?: string;
-  status?: "active" | "completed" | "archived";
+  status?: "active" | "completed";
   start_date?: string | null;
   end_date?: string | null;
 }
