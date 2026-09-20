@@ -48,6 +48,12 @@ if (!env.csrf.enabled) {
   logger.warn(warning);
 }
 
+if (env.isProduction && !env.clamav.enabled) {
+  throw new Error(
+    "[security] ClamAV scanning is disabled. Refusing to start production with uploads unscanned.",
+  );
+}
+
 app.set("trust proxy", env.trustProxy);
 app.get("/.well-known/jwks.json", jwksHandler);
 
