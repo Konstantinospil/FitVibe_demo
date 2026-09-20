@@ -1,5 +1,4 @@
 import type { Request, Response } from "express";
-import archiver from "archiver";
 import { z } from "zod";
 import {
   getMe,
@@ -23,6 +22,7 @@ import { getContactById, getUserMetrics } from "./users.repository.js";
 import { passwordPolicy } from "../auth/auth.schemas.js";
 import { getIdempotencyKey, getRouteTemplate } from "../common/idempotency.helpers.js";
 import { resolveIdempotency, persistIdempotencyResult } from "../common/idempotency.service.js";
+import { writeUserDataArchive } from "./user-data-archive.service.js";
 
 const usernameSchema = z
   .string()
@@ -347,10 +347,7 @@ export async function exportData(req: Request, res: Response): Promise<void> {
   res.setHeader("Content-Type", "application/zip");
   res.setHeader("Content-Disposition", 'attachment; filename="fitvibe_user_export.zip"');
 
-  const archive = archiver("zip");
-  archive.pipe(res);
-  archive.append(JSON.stringify(data, null, 2), { name: "user_data.json" });
-  await archive.finalize();
+  await writeUserDataArchive(res, data);
 }
 
 export async function getPrivacy(req: Request, res: Response): Promise<void> {

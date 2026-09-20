@@ -263,9 +263,12 @@ export async function getUserPointsProfile(
 ): Promise<UserPointsProfile> {
   const exec = executor(trx);
   const profile = await exec<ProfileRow & UserMetricsRow>("profiles")
-    .select<
-      Array<ProfileRow & UserMetricsRow>
-    >(["date_of_birth", "gender_code", "fitness_level_code", "training_frequency"])
+    .select<Array<ProfileRow & UserMetricsRow>>([
+      "date_of_birth",
+      "gender_code",
+      "fitness_level_code",
+      "training_frequency",
+    ])
     .where({ user_id: userId })
     .first();
 
@@ -583,9 +586,16 @@ export async function getAllDomainVibeLevels(
   const exec = executor(trx);
   const rows = await exec<DomainVibeLevelRow>("user_domain_vibe_levels")
     .where({ user_id: userId })
-    .select<
-      DomainVibeLevelRow[]
-    >(["user_id", "domain_code", "vibe_level", "rating_deviation", "volatility", "last_updated_at", "created_at", "updated_at"]);
+    .select<DomainVibeLevelRow[]>([
+      "user_id",
+      "domain_code",
+      "vibe_level",
+      "rating_deviation",
+      "volatility",
+      "last_updated_at",
+      "created_at",
+      "updated_at",
+    ]);
 
   const map = new Map<DomainCode, DomainVibeLevel>();
   for (const row of rows) {

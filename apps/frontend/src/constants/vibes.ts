@@ -1,10 +1,5 @@
 export type VibeKey =
-  | "strength"
-  | "agility"
-  | "endurance"
-  | "explosivity"
-  | "intelligence"
-  | "regeneration";
+  "strength" | "agility" | "endurance" | "explosivity" | "intelligence" | "regeneration";
 
 export const VIBE_TYPE_CODE_MAP: Record<VibeKey, string> = {
   strength: "strength",

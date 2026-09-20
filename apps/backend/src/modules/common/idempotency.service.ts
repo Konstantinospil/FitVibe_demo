@@ -13,8 +13,7 @@ export interface IdempotencyContext {
 }
 
 type ResolutionBase =
-  | { type: "new" | "pending"; recordId: string }
-  | { type: "replay"; status: number; body: unknown };
+  { type: "new" | "pending"; recordId: string } | { type: "replay"; status: number; body: unknown };
 
 export interface IdempotencyRow {
   id: string;

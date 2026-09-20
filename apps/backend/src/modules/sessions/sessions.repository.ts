@@ -234,9 +234,24 @@ export async function getSessionWithDetails(
     .leftJoin("planned_exercise_attributes as plan", "plan.session_exercise_id", "se.id")
     .where("se.session_id", id)
     .orderBy("se.order_index", "asc")
-    .select<
-      SessionExerciseRow[]
-    >(["se.id as id", "se.session_id as session_id", "se.exercise_id as exercise_id", "se.exercise_name as exercise_name", "se.order_index as order_index", "se.notes as notes", "se.created_at as created_at", "se.updated_at as updated_at", "plan.sets as planned_sets", "plan.reps as planned_reps", "plan.load as planned_load", "plan.distance as planned_distance", "plan.duration as planned_duration", "plan.rpe as planned_rpe", "plan.rest as planned_rest", "plan.extras as planned_extras"]);
+    .select<SessionExerciseRow[]>([
+      "se.id as id",
+      "se.session_id as session_id",
+      "se.exercise_id as exercise_id",
+      "se.exercise_name as exercise_name",
+      "se.order_index as order_index",
+      "se.notes as notes",
+      "se.created_at as created_at",
+      "se.updated_at as updated_at",
+      "plan.sets as planned_sets",
+      "plan.reps as planned_reps",
+      "plan.load as planned_load",
+      "plan.distance as planned_distance",
+      "plan.duration as planned_duration",
+      "plan.rpe as planned_rpe",
+      "plan.rest as planned_rest",
+      "plan.extras as planned_extras",
+    ]);
 
   const exerciseIds = exerciseRows.map((row) => row.id);
 

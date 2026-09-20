@@ -184,9 +184,13 @@ export async function fetchExerciseBreakdown(
 
 export async function fetchPlansProgress(userId: string): Promise<PlanProgress[]> {
   const rows = await db<PlanProgressRow>("plans")
-    .select<
-      PlanProgressRow[]
-    >(["id", "name", "progress_percent", "session_count", "completed_count"])
+    .select<PlanProgressRow[]>([
+      "id",
+      "name",
+      "progress_percent",
+      "session_count",
+      "completed_count",
+    ])
     .where({ user_id: userId })
     .andWhereNot("status", "archived")
     .orderBy("start_date", "desc");

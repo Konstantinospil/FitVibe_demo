@@ -1,9 +1,5 @@
 export type PointsSourceType =
-  | "session_completed"
-  | "streak_bonus"
-  | "seasonal_event"
-  | "manual_adjustment"
-  | (string & {});
+  "session_completed" | "streak_bonus" | "seasonal_event" | "manual_adjustment" | (string & {});
 
 export interface PointsEventRecord {
   id: string;
@@ -129,12 +125,7 @@ export interface BadgeEvaluationResult {
 // Vibe Level System Types (v2_vibe_lvl algorithm)
 
 export type DomainCode =
-  | "strength"
-  | "agility"
-  | "endurance"
-  | "explosivity"
-  | "intelligence"
-  | "regeneration";
+  "strength" | "agility" | "endurance" | "explosivity" | "intelligence" | "regeneration";
 
 export interface DomainVibeLevel {
   user_id: string;

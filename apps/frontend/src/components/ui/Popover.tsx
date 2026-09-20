@@ -4,7 +4,7 @@ import { Card } from "./Card";
 import { Button } from "./Button";
 
 export interface PopoverProps {
-  trigger: React.ReactElement;
+  trigger: React.ReactElement<React.HTMLAttributes<HTMLElement> & React.RefAttributes<HTMLElement>>;
   children: React.ReactNode;
   title?: string;
   position?: "top" | "bottom" | "left" | "right";

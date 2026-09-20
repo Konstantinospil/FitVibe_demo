@@ -1,8 +1,8 @@
 import type { Request, Response } from "express";
-import archiver from "archiver";
 import * as usersController from "../../../../apps/backend/src/modules/users/users.controller.js";
 import * as usersService from "../../../../apps/backend/src/modules/users/users.service.js";
 import * as usersRepository from "../../../../apps/backend/src/modules/users/users.repository.js";
+import * as userDataArchive from "../../../../apps/backend/src/modules/users/user-data-archive.service.js";
 import * as idempotencyService from "../../../../apps/backend/src/modules/common/idempotency.service.js";
 import * as idempotencyHelpers from "../../../../apps/backend/src/modules/common/idempotency.helpers.js";
 
@@ -11,13 +11,13 @@ jest.mock("../../../../apps/backend/src/modules/users/users.service.js");
 jest.mock("../../../../apps/backend/src/modules/users/users.repository.js");
 jest.mock("../../../../apps/backend/src/modules/common/idempotency.service.js");
 jest.mock("../../../../apps/backend/src/modules/common/idempotency.helpers.js");
-jest.mock("archiver");
+jest.mock("../../../../apps/backend/src/modules/users/user-data-archive.service.js");
 
 const mockUsersService = jest.mocked(usersService);
 const mockUsersRepository = jest.mocked(usersRepository);
 const mockIdempotencyService = jest.mocked(idempotencyService);
 const mockIdempotencyHelpers = jest.mocked(idempotencyHelpers);
-const mockArchiver = jest.mocked(archiver);
+const mockUserDataArchive = jest.mocked(userDataArchive);
 
 describe("Users Controller", () => {
   let mockRequest: Partial<Request>;
@@ -415,14 +415,8 @@ describe("Users Controller", () => {
         exercises: [],
       };
 
-      const mockArchive = {
-        pipe: jest.fn().mockReturnThis(),
-        append: jest.fn().mockReturnThis(),
-        finalize: jest.fn().mockResolvedValue(undefined),
-      };
-
       mockUsersService.collectUserData.mockResolvedValue(mockData);
-      mockArchiver.mockReturnValue(mockArchive as any);
+      mockUserDataArchive.writeUserDataArchive.mockResolvedValue(undefined);
 
       await usersController.exportData(mockRequest as Request, mockResponse as Response);
 
@@ -432,11 +426,7 @@ describe("Users Controller", () => {
         "Content-Disposition",
         'attachment; filename="fitvibe_user_export.zip"',
       );
-      expect(mockArchive.pipe).toHaveBeenCalledWith(mockResponse);
-      expect(mockArchive.append).toHaveBeenCalledWith(JSON.stringify(mockData, null, 2), {
-        name: "user_data.json",
-      });
-      expect(mockArchive.finalize).toHaveBeenCalled();
+      expect(mockUserDataArchive.writeUserDataArchive).toHaveBeenCalledWith(mockResponse, mockData);
     });
 
     it("should return 401 when not authenticated", async () => {
