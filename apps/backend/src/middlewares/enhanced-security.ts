@@ -6,6 +6,7 @@
 import type { Request, Response, NextFunction } from "express";
 import crypto from "crypto";
 import { logger } from "../config/logger.js";
+import { env } from "../config/env.js";
 
 /**
  * Generate a cryptographically secure nonce for CSP
@@ -29,7 +30,7 @@ export function enhancedCSP(req: Request, res: Response, next: NextFunction) {
     "style-src 'self'",
     "img-src 'self' data: https:",
     "font-src 'self'",
-    `connect-src 'self' ${process.env.ALLOWED_ORIGINS || ""}`,
+    `connect-src 'self' ${env.allowedOrigins.join(" ")}`,
     "frame-ancestors 'none'",
     "base-uri 'self'",
     "form-action 'self'",
@@ -267,7 +268,7 @@ export function noCacheHeaders(req: Request, res: Response, next: NextFunction) 
  * Logs all security headers for verification
  */
 export function logSecurityHeaders(req: Request, res: Response, next: NextFunction) {
-  if (process.env.NODE_ENV === "development") {
+  if (env.NODE_ENV === "development") {
     res.on("finish", () => {
       const securityHeaders = [
         "Content-Security-Policy",
