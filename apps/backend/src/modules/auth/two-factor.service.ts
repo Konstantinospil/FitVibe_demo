@@ -41,6 +41,46 @@ interface BackupCode {
   created_at: string;
 }
 
+export async function beginTwoFactorSetup(userId: string): Promise<{
+  secret: string;
+  qrCode: string;
+  backupCodes: string[];
+}> {
+  const email = await db("user_contacts")
+    .where({ user_id: userId, type: "email", is_primary: true })
+    .first<{ value: string }>("value");
+
+  if (!email?.value) {
+    throw new HttpError(404, "E.USER.EMAIL_NOT_FOUND", "Primary email not found");
+  }
+
+  return db.transaction((trx) => setupTwoFactor(userId, email.value, trx));
+}
+
+export async function enableTwoFactor(userId: string, code: string): Promise<void> {
+  await db.transaction(async (trx) => {
+    await verifyAndEnable2FA(userId, code, trx);
+  });
+}
+
+export async function disableTwoFactor(userId: string, password: string): Promise<void> {
+  const user = await db("users")
+    .where({ id: userId })
+    .first<{ password_hash: string }>("password_hash");
+
+  if (!user) {
+    throw new HttpError(404, "E.USER.NOT_FOUND", "User not found");
+  }
+
+  await db.transaction(async (trx) => {
+    await disable2FA(userId, password, user.password_hash, trx);
+  });
+}
+
+export async function regenerateTwoFactorBackupCodes(userId: string): Promise<string[]> {
+  return db.transaction((trx) => regenerateBackupCodes(userId, trx));
+}
+
 /**
  * Generate a new TOTP secret for a user
  * Returns the secret and a QR code data URL for easy setup
