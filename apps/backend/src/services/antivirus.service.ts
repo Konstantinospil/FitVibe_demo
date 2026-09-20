@@ -92,10 +92,7 @@ export async function scanBuffer(buffer: Buffer, filename: string = "upload"): P
 
   if (!env.clamav.enabled) {
     if (env.isProduction) {
-      logger.error(
-        { filename },
-        "[antivirus] Scanning disabled in production - rejecting upload",
-      );
+      logger.error({ filename }, "[antivirus] Scanning disabled in production - rejecting upload");
       return {
         isInfected: true,
         viruses: ["SCAN_DISABLED"],
