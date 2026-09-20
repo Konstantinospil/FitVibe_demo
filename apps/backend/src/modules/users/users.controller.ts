@@ -113,13 +113,13 @@ const createUserSchema = z.object({
   role: z.string().min(1).max(50),
   locale: z.string().max(10).optional(),
   preferredLang: z.string().max(5).optional(),
-  status: z.enum(["pending_verification", "active", "archived"]).optional(),
+  status: z.enum(["pending_verification", "active", "suspended"]).optional(),
 });
 
 export const CreateUserSchema = createUserSchema;
 
 const statusSchema = z.object({
-  status: z.enum(["pending_verification", "active", "archived", "pending_deletion"]),
+  status: z.enum(["pending_verification", "active", "suspended", "banned", "pending_deletion"]),
 });
 
 const deleteAccountSchema = z.object({
