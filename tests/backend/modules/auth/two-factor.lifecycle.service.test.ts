@@ -474,7 +474,15 @@ describe("Two-Factor Lifecycle Service", () => {
       expect(mockBcrypt.compare).toHaveBeenCalledWith(password, passwordHash);
       expect(
         (queryBuilders["user_2fa_settings"] as { update: jest.Mock }).update,
-      ).toHaveBeenCalled();
+      ).toHaveBeenCalledWith(
+        expect.objectContaining({
+          totp_secret: "",
+          is_enabled: false,
+          is_verified: false,
+          enabled_at: null,
+          last_used_at: null,
+        }),
+      );
     });
 
     it("should throw error when password is invalid", async () => {
