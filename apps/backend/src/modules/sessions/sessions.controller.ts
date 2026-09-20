@@ -9,7 +9,7 @@ import {
   cloneOne,
   applyRecurrence,
 } from "./sessions.service.js";
-import { handleIdempotentRequest } from "../common/idempotency.helpers.js";
+import { getIdempotencyKey, handleIdempotentRequest } from "../common/idempotency.helpers.js";
 
 const statusEnum = z.enum(["planned", "in_progress", "completed", "canceled"]);
 const visibilityEnum = z.enum(["private", "public", "link"]);
@@ -185,6 +185,13 @@ export async function createSessionHandler(req: Request, res: Response): Promise
     return;
   }
 
+  getIdempotencyKey(req);
+  const parsed = createSchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.flatten() });
+    return;
+  }
+
   const handled = await handleIdempotentRequest(
     req,
     res,
@@ -230,6 +237,13 @@ export async function cloneSessionHandler(req: Request, res: Response): Promise<
     return;
   }
 
+  getIdempotencyKey(req);
+  const parsed = cloneSchema.safeParse(req.body ?? {});
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.flatten() });
+    return;
+  }
+
   const handled = await handleIdempotentRequest(
     req,
     res,
@@ -250,6 +264,13 @@ export async function cloneSessionHandler(req: Request, res: Response): Promise<
 export async function applyRecurrenceHandler(req: Request, res: Response): Promise<void> {
   const userId = requireUser(req, res);
   if (!userId) {
+    return;
+  }
+
+  getIdempotencyKey(req);
+  const parsed = recurrenceSchema.safeParse(req.body ?? {});
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.flatten() });
     return;
   }
 
