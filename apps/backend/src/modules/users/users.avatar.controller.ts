@@ -18,10 +18,7 @@ import { handleIdempotentRequest } from "../common/idempotency.helpers.js";
 const ALLOWED_MIME = new Set(["image/png", "image/jpeg", "image/webp", "image/jpg"]);
 const MAX_BYTES = 5 * 1024 * 1024; // 5 MB per PRD
 
-export async function uploadAvatarHandler(
-  req: Request,
-  res: Response,
-): Promise<void> {
+export async function uploadAvatarHandler(req: Request, res: Response): Promise<void> {
   const userId = req.user?.sub as string;
   if (!req.file) {
     res.status(400).json({ error: "UPLOAD_NO_FILE" });
@@ -148,10 +145,7 @@ export async function getAvatarHandler(req: Request, res: Response): Promise<voi
   }
 }
 
-export async function deleteAvatarHandler(
-  req: Request,
-  res: Response,
-): Promise<void> {
+export async function deleteAvatarHandler(req: Request, res: Response): Promise<void> {
   const userId = req.user?.sub as string;
 
   const execute = async () => {
