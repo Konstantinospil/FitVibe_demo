@@ -12,8 +12,14 @@ import {
 
 const VerificationSchema = z
   .object({
-    code: z.string().regex(/^\d{6}$/, "Code must be 6 digits").optional(),
-    token: z.string().regex(/^\d{6}$/, "Token must be 6 digits").optional(),
+    code: z
+      .string()
+      .regex(/^\d{6}$/, "Code must be 6 digits")
+      .optional(),
+    token: z
+      .string()
+      .regex(/^\d{6}$/, "Token must be 6 digits")
+      .optional(),
   })
   .refine((value) => Boolean(value.code ?? value.token), {
     message: "Verification code is required",

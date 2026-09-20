@@ -28,11 +28,13 @@ export async function up(knex: Knex): Promise<void> {
     ))
   `);
 
-  await knex("plans").where({ status: "archived" }).update({
-    status: "active",
-    archived_at: knex.raw("COALESCE(archived_at, updated_at, now())"),
-    updated_at: knex.fn.now(),
-  });
+  await knex("plans")
+    .where({ status: "archived" })
+    .update({
+      status: "active",
+      archived_at: knex.raw("COALESCE(archived_at, updated_at, now())"),
+      updated_at: knex.fn.now(),
+    });
 
   await knex.raw(`
     ALTER TABLE plans

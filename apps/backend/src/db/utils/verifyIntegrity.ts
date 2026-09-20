@@ -111,9 +111,7 @@ async function verify(): Promise<void> {
       FROM pg_constraint
       WHERE conname IN ('users_status_check', 'plans_status_check')
     `);
-    const constraintMap = new Map(
-      coreConstraints.rows.map((row) => [row.conname, row.definition]),
-    );
+    const constraintMap = new Map(coreConstraints.rows.map((row) => [row.conname, row.definition]));
     const usersStatus = constraintMap.get("users_status_check") ?? "";
     const plansStatus = constraintMap.get("plans_status_check") ?? "";
     for (const requiredStatus of [

@@ -30,11 +30,7 @@ export async function listPlansHandler(req: Request, res: Response): Promise<voi
   const userId = requireUser(req);
 
   const statusValue = req.query.status;
-  if (
-    statusValue !== undefined &&
-    statusValue !== "active" &&
-    statusValue !== "completed"
-  ) {
+  if (statusValue !== undefined && statusValue !== "active" && statusValue !== "completed") {
     throw new HttpError(400, "E.PLAN.INVALID_STATUS", "Invalid plan status");
   }
   const status = statusValue as "active" | "completed" | undefined;

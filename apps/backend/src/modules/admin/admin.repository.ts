@@ -229,10 +229,7 @@ export async function searchUsers(query: SearchUsersQuery): Promise<UserSearchRe
 /**
  * Update user status (active, suspended, banned)
  */
-export async function updateUserStatus(
-  userId: string,
-  status: UserStatus,
-): Promise<void> {
+export async function updateUserStatus(userId: string, status: UserStatus): Promise<void> {
   await db("users").where("id", userId).update({ status });
 }
 
