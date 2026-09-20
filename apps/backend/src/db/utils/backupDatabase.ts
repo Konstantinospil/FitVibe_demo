@@ -59,9 +59,7 @@ const result = spawnSync(
   ],
   {
     stdio: "inherit",
-    env: connection.password
-      ? { ...process.env, PGPASSWORD: connection.password }
-      : process.env,
+    env: connection.password ? { ...process.env, PGPASSWORD: connection.password } : process.env,
   },
 );
 
