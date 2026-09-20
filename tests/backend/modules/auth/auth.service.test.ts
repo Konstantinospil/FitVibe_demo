@@ -3,7 +3,7 @@ import jwt from "jsonwebtoken";
 import { v4 as uuidv4 } from "uuid";
 import * as authService from "../../../../apps/backend/src/modules/auth/auth.service.js";
 import * as authRepository from "../../../../apps/backend/src/modules/auth/auth.repository.js";
-import * as twofaService from "../../../../apps/backend/src/modules/auth/twofa.service.js";
+import * as twofaService from "../../../../apps/backend/src/modules/auth/two-factor.service.js";
 import * as bruteforceRepo from "../../../../apps/backend/src/modules/auth/bruteforce.repository.js";
 import * as pending2faRepo from "../../../../apps/backend/src/modules/auth/pending-2fa.repository.js";
 import * as mailerService from "../../../../apps/backend/src/services/mailer.service.js";
@@ -18,7 +18,7 @@ import type { AuthUserRecord } from "../../../../apps/backend/src/modules/auth/a
 
 // Mock dependencies
 jest.mock("../../../../apps/backend/src/modules/auth/auth.repository.js");
-jest.mock("../../../../apps/backend/src/modules/auth/twofa.service.js");
+jest.mock("../../../../apps/backend/src/modules/auth/two-factor.service.js");
 jest.mock("../../../../apps/backend/src/modules/auth/bruteforce.repository.js");
 jest.mock("../../../../apps/backend/src/modules/auth/pending-2fa.repository.js");
 jest.mock("../../../../apps/backend/src/services/mailer.service.js", () => ({
