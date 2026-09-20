@@ -62,12 +62,14 @@ import {
 
 const USERNAME_REGEX = /^[a-zA-Z0-9_.-]{3,50}$/;
 const STATUS_TRANSITIONS: Record<UserStatus, UserStatus[]> = {
-  pending_verification: ["active", "archived", "pending_deletion"],
-  active: ["archived", "pending_deletion"],
-  archived: ["active", "pending_deletion"],
+  pending_verification: ["active", "suspended", "banned", "pending_deletion"],
+  active: ["suspended", "banned", "pending_deletion"],
+  suspended: ["active", "banned", "pending_deletion"],
+  banned: ["active", "suspended", "pending_deletion"],
   pending_deletion: [],
+  deleted: [],
 };
-const INITIAL_ALLOWED_STATUSES: UserStatus[] = ["pending_verification", "active", "archived"];
+const INITIAL_ALLOWED_STATUSES: UserStatus[] = ["pending_verification", "active", "suspended"];
 const CONTACT_VERIFICATION_TOKEN_PREFIX = "contact_verify";
 const CONTACT_VERIFICATION_TTL_SEC = env.EMAIL_VERIFICATION_TTL_SEC;
 const CONTACT_VERIFICATION_RESEND_LIMIT = 3;
