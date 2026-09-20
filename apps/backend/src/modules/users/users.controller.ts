@@ -20,8 +20,7 @@ import {
 } from "./users.service.js";
 import { getContactById, getUserMetrics } from "./users.repository.js";
 import { passwordPolicy } from "../auth/auth.schemas.js";
-import { getIdempotencyKey, getRouteTemplate } from "../common/idempotency.helpers.js";
-import { resolveIdempotency, persistIdempotencyResult } from "../common/idempotency.service.js";
+import { handleIdempotentRequest } from "../common/idempotency.helpers.js";
 import { writeUserDataArchive } from "./user-data-archive.service.js";
 
 const usernameSchema = z
@@ -157,37 +156,22 @@ export async function adminCreateUser(req: Request, res: Response): Promise<void
     return;
   }
 
-  // Idempotency support
-  const idempotencyKey = getIdempotencyKey(req);
-  if (idempotencyKey) {
-    const userId = actorId ?? "system";
-    const route = getRouteTemplate(req);
-    const resolution = await resolveIdempotency(
-      { userId, method: req.method, route, key: idempotencyKey },
-      parsed.data,
-    );
+  const scopeUserId = actorId ?? "system";
+  const handled = await handleIdempotentRequest(
+    req,
+    res,
+    scopeUserId,
+    parsed.data,
+    async () => {
+      const body = await createUser(actorId, parsed.data);
+      return { status: 201, body };
+    },
+  );
 
-    if (resolution.type === "replay") {
-      res.set("Idempotency-Key", idempotencyKey);
-      res.set("Idempotent-Replayed", "true");
-      res.status(resolution.status).json(resolution.body);
-      return;
-    }
-
-    const user = await createUser(actorId, parsed.data);
-
-    if (resolution.recordId) {
-      await persistIdempotencyResult(resolution.recordId, 201, user);
-    }
-
-    res.set("Idempotency-Key", idempotencyKey);
-    res.status(201).json(user);
-    return;
+  if (!handled) {
+    const body = await createUser(actorId, parsed.data);
+    res.status(201).json(body);
   }
-
-  const user = await createUser(actorId, parsed.data);
-  res.status(201).json(user);
-  return;
 }
 
 export async function updateMe(req: Request, res: Response): Promise<void> {
@@ -202,36 +186,21 @@ export async function updateMe(req: Request, res: Response): Promise<void> {
     return;
   }
 
-  // Idempotency support
-  const idempotencyKey = getIdempotencyKey(req);
-  if (idempotencyKey) {
-    const route = getRouteTemplate(req);
-    const resolution = await resolveIdempotency(
-      { userId, method: req.method, route, key: idempotencyKey },
-      parsed.data,
-    );
+  const handled = await handleIdempotentRequest(
+    req,
+    res,
+    userId,
+    parsed.data,
+    async () => {
+      const body = await updateProfile(userId, parsed.data);
+      return { status: 200, body };
+    },
+  );
 
-    if (resolution.type === "replay") {
-      res.set("Idempotency-Key", idempotencyKey);
-      res.set("Idempotent-Replayed", "true");
-      res.status(resolution.status).json(resolution.body);
-      return;
-    }
-
-    const user = await updateProfile(userId, parsed.data);
-
-    if (resolution.recordId) {
-      await persistIdempotencyResult(resolution.recordId, 200, user);
-    }
-
-    res.set("Idempotency-Key", idempotencyKey);
-    res.json(user);
-    return;
+  if (!handled) {
+    const body = await updateProfile(userId, parsed.data);
+    res.json(body);
   }
-
-  const user = await updateProfile(userId, parsed.data);
-  res.json(user);
-  return;
 }
 
 export async function changePassword(req: Request, res: Response): Promise<void> {
@@ -246,36 +215,15 @@ export async function changePassword(req: Request, res: Response): Promise<void>
     return;
   }
 
-  // Idempotency support (password not included in payload for security)
-  const idempotencyKey = getIdempotencyKey(req);
-  if (idempotencyKey) {
-    const route = getRouteTemplate(req);
-    const resolution = await resolveIdempotency(
-      { userId, method: req.method, route, key: idempotencyKey },
-      {}, // Don't include passwords in idempotency payload
-    );
-
-    if (resolution.type === "replay") {
-      res.set("Idempotency-Key", idempotencyKey);
-      res.set("Idempotent-Replayed", "true");
-      res.status(resolution.status).send();
-      return;
-    }
-
+  const handled = await handleIdempotentRequest(req, res, userId, {}, async () => {
     await updatePassword(userId, parsed.data);
+    return { status: 204, body: null };
+  });
 
-    if (resolution.recordId) {
-      await persistIdempotencyResult(resolution.recordId, 204, null);
-    }
-
-    res.set("Idempotency-Key", idempotencyKey);
+  if (!handled) {
+    await updatePassword(userId, parsed.data);
     res.status(204).send();
-    return;
   }
-
-  await updatePassword(userId, parsed.data);
-  res.status(204).send();
-  return;
 }
 
 export async function deleteAccount(req: Request, res: Response): Promise<void> {
@@ -285,55 +233,30 @@ export async function deleteAccount(req: Request, res: Response): Promise<void> 
     return;
   }
 
-  // Validate password is provided
   const parsed = deleteAccountSchema.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.flatten() });
     return;
   }
 
-  // Idempotency support (password not included in payload for security)
-  const idempotencyKey = getIdempotencyKey(req);
-  if (idempotencyKey) {
-    const route = getRouteTemplate(req);
-    const resolution = await resolveIdempotency(
-      { userId, method: req.method, route, key: idempotencyKey },
-      {}, // Don't include password in idempotency payload
-    );
-
-    if (resolution.type === "replay") {
-      res.set("Idempotency-Key", idempotencyKey);
-      res.set("Idempotent-Replayed", "true");
-      res.status(resolution.status).json(resolution.body);
-      return;
-    }
-
+  const execute = async () => {
     const schedule = await requestAccountDeletion(userId, parsed.data.password);
-
-    const response = {
+    return {
       status: "pending_deletion",
       scheduledAt: schedule.scheduledAt,
       purgeDueAt: schedule.purgeDueAt,
       backupPurgeDueAt: schedule.backupPurgeDueAt,
     };
+  };
 
-    if (resolution.recordId) {
-      await persistIdempotencyResult(resolution.recordId, 202, response);
-    }
+  const handled = await handleIdempotentRequest(req, res, userId, {}, async () => ({
+    status: 202,
+    body: await execute(),
+  }));
 
-    res.set("Idempotency-Key", idempotencyKey);
-    res.status(202).json(response);
-    return;
+  if (!handled) {
+    res.status(202).json(await execute());
   }
-
-  const schedule = await requestAccountDeletion(userId, parsed.data.password);
-  res.status(202).json({
-    status: "pending_deletion",
-    scheduledAt: schedule.scheduledAt,
-    purgeDueAt: schedule.purgeDueAt,
-    backupPurgeDueAt: schedule.backupPurgeDueAt,
-  });
-  return;
 }
 
 export async function exportData(req: Request, res: Response): Promise<void> {
@@ -415,36 +338,21 @@ export async function requestContactVerificationHandler(
     return;
   }
 
-  // Idempotency support
-  const idempotencyKey = getIdempotencyKey(req);
-  if (idempotencyKey) {
-    const route = getRouteTemplate(req);
-    const resolution = await resolveIdempotency(
-      { userId, method: req.method, route, key: idempotencyKey },
-      { contactId: parsedParams.data.contactId },
-    );
+  const handled = await handleIdempotentRequest(
+    req,
+    res,
+    userId,
+    { contactId: parsedParams.data.contactId },
+    async () => {
+      const body = await requestContactVerification(userId, parsedParams.data.contactId);
+      return { status: 201, body };
+    },
+  );
 
-    if (resolution.type === "replay") {
-      res.set("Idempotency-Key", idempotencyKey);
-      res.set("Idempotent-Replayed", "true");
-      res.status(resolution.status).json(resolution.body);
-      return;
-    }
-
-    const result = await requestContactVerification(userId, parsedParams.data.contactId);
-
-    if (resolution.recordId) {
-      await persistIdempotencyResult(resolution.recordId, 201, result);
-    }
-
-    res.set("Idempotency-Key", idempotencyKey);
-    res.status(201).json(result);
-    return;
+  if (!handled) {
+    const body = await requestContactVerification(userId, parsedParams.data.contactId);
+    res.status(201).json(body);
   }
-
-  const result = await requestContactVerification(userId, parsedParams.data.contactId);
-  res.status(201).json(result);
-  return;
 }
 
 export async function updateEmail(req: Request, res: Response): Promise<void> {
@@ -459,36 +367,21 @@ export async function updateEmail(req: Request, res: Response): Promise<void> {
     return;
   }
 
-  // Idempotency support
-  const idempotencyKey = getIdempotencyKey(req);
-  if (idempotencyKey) {
-    const route = getRouteTemplate(req);
-    const resolution = await resolveIdempotency(
-      { userId, method: req.method, route, key: idempotencyKey },
-      parsed.data,
-    );
+  const handled = await handleIdempotentRequest(
+    req,
+    res,
+    userId,
+    parsed.data,
+    async () => {
+      const body = await updatePrimaryEmail(userId, parsed.data.email);
+      return { status: 200, body };
+    },
+  );
 
-    if (resolution.type === "replay") {
-      res.set("Idempotency-Key", idempotencyKey);
-      res.set("Idempotent-Replayed", "true");
-      res.status(resolution.status).json(resolution.body);
-      return;
-    }
-
-    const profile = await updatePrimaryEmail(userId, parsed.data.email);
-
-    if (resolution.recordId) {
-      await persistIdempotencyResult(resolution.recordId, 200, profile);
-    }
-
-    res.set("Idempotency-Key", idempotencyKey);
-    res.json(profile);
-    return;
+  if (!handled) {
+    const body = await updatePrimaryEmail(userId, parsed.data.email);
+    res.json(body);
   }
-
-  const profile = await updatePrimaryEmail(userId, parsed.data.email);
-  res.json(profile);
-  return;
 }
 
 export async function updatePhone(req: Request, res: Response): Promise<void> {
@@ -503,49 +396,23 @@ export async function updatePhone(req: Request, res: Response): Promise<void> {
     return;
   }
 
-  // Idempotency support
-  const idempotencyKey = getIdempotencyKey(req);
-  if (idempotencyKey) {
-    const route = getRouteTemplate(req);
-    const resolution = await resolveIdempotency(
-      { userId, method: req.method, route, key: idempotencyKey },
-      parsed.data,
-    );
+  const execute = () =>
+    updatePhoneNumber(userId, parsed.data.phone, parsed.data.isRecovery ?? true);
 
-    if (resolution.type === "replay") {
-      res.set("Idempotency-Key", idempotencyKey);
-      res.set("Idempotent-Replayed", "true");
-      res.status(resolution.status).json(resolution.body);
-      return;
-    }
+  const handled = await handleIdempotentRequest(req, res, userId, parsed.data, async () => ({
+    status: 200,
+    body: await execute(),
+  }));
 
-    const profile = await updatePhoneNumber(
-      userId,
-      parsed.data.phone,
-      parsed.data.isRecovery ?? true,
-    );
-
-    if (resolution.recordId) {
-      await persistIdempotencyResult(resolution.recordId, 200, profile);
-    }
-
-    res.set("Idempotency-Key", idempotencyKey);
-    res.json(profile);
-    return;
+  if (!handled) {
+    res.json(await execute());
   }
-
-  const profile = await updatePhoneNumber(
-    userId,
-    parsed.data.phone,
-    parsed.data.isRecovery ?? true,
-  );
-  res.json(profile);
-  return;
 }
 
-export async function verifyContactHandler(req: Request, res: Response): Promise<void> {
-  // SECURITY FIX (CWE-807): Validate authorization BEFORE checking idempotency cache
-  // This prevents cached responses from bypassing current ownership/token validation
+export async function verifyContactHandler(
+  req: Request,
+  res: Response,
+): Promise<void> {
   const userId = req.user?.sub;
   if (!userId) {
     res.status(401).json({ error: "Unauthorized" });
@@ -562,8 +429,6 @@ export async function verifyContactHandler(req: Request, res: Response): Promise
     return;
   }
 
-  // Pre-validate: Check that the contact exists and belongs to the current user
-  // This runs BEFORE any cached response is returned
   const existingContact = await getContactById(parsedParams.data.contactId);
   if (!existingContact || existingContact.user_id !== userId) {
     res.status(403).json({
@@ -575,14 +440,7 @@ export async function verifyContactHandler(req: Request, res: Response): Promise
     return;
   }
 
-  // SECURITY: Token is already validated by Zod schema (verifyContactBodySchema)
-  // which ensures it's a string between 10-256 characters. Additional format validation
-  // ensures it contains only expected characters (base64url-safe alphabet).
-  // This prevents user-controlled input from bypassing security checks.
   const verificationToken = parsedBody.data.token;
-  // Additional validation: ensure token contains only expected characters
-  // Verification tokens are typically base64url encoded (A-Za-z0-9_-)
-  // This format check prevents injection attacks and ensures token integrity
   if (!/^[A-Za-z0-9_-]+$/.test(verificationToken)) {
     res.status(400).json({
       error: {
@@ -593,44 +451,27 @@ export async function verifyContactHandler(req: Request, res: Response): Promise
     return;
   }
 
-  // Idempotency support - safe because:
-  // 1. Authorization is validated (userId matches contact owner)
-  // 2. Token format is validated (length and character set)
-  // 3. Contact ownership is validated before idempotency check
-  const idempotencyKey = getIdempotencyKey(req);
-  if (idempotencyKey) {
-    const route = getRouteTemplate(req);
-    // Token is validated and ownership confirmed - safe to include in idempotency payload
-    const resolution = await resolveIdempotency(
-      { userId, method: req.method, route, key: idempotencyKey },
-      { contactId: parsedParams.data.contactId, token: verificationToken },
-    );
+  const handled = await handleIdempotentRequest(
+    req,
+    res,
+    userId,
+    { contactId: parsedParams.data.contactId, token: verificationToken },
+    async () => {
+      const body = await verifyContact(userId, parsedParams.data.contactId, verificationToken);
+      return { status: 200, body };
+    },
+  );
 
-    if (resolution.type === "replay") {
-      // Safe to replay: we've already validated ownership above
-      res.set("Idempotency-Key", idempotencyKey);
-      res.set("Idempotent-Replayed", "true");
-      res.status(resolution.status).json(resolution.body);
-      return;
-    }
-
-    const contact = await verifyContact(userId, parsedParams.data.contactId, verificationToken);
-
-    if (resolution.recordId) {
-      await persistIdempotencyResult(resolution.recordId, 200, contact);
-    }
-
-    res.set("Idempotency-Key", idempotencyKey);
-    res.json(contact);
-    return;
+  if (!handled) {
+    const body = await verifyContact(userId, parsedParams.data.contactId, verificationToken);
+    res.json(body);
   }
-
-  const contact = await verifyContact(userId, parsedParams.data.contactId, parsedBody.data.token);
-  res.json(contact);
-  return;
 }
 
-export async function removeContactHandler(req: Request, res: Response): Promise<void> {
+export async function removeContactHandler(
+  req: Request,
+  res: Response,
+): Promise<void> {
   const userId = req.user?.sub;
   if (!userId) {
     res.status(401).json({ error: "Unauthorized" });
@@ -642,39 +483,27 @@ export async function removeContactHandler(req: Request, res: Response): Promise
     return;
   }
 
-  // Idempotency support
-  const idempotencyKey = getIdempotencyKey(req);
-  if (idempotencyKey) {
-    const route = getRouteTemplate(req);
-    const resolution = await resolveIdempotency(
-      { userId, method: req.method, route, key: idempotencyKey },
-      { contactId: parsed.data.contactId },
-    );
+  const handled = await handleIdempotentRequest(
+    req,
+    res,
+    userId,
+    { contactId: parsed.data.contactId },
+    async () => {
+      await removeContact(userId, parsed.data.contactId);
+      return { status: 204, body: null };
+    },
+  );
 
-    if (resolution.type === "replay") {
-      res.set("Idempotency-Key", idempotencyKey);
-      res.set("Idempotent-Replayed", "true");
-      res.status(resolution.status).send();
-      return;
-    }
-
+  if (!handled) {
     await removeContact(userId, parsed.data.contactId);
-
-    if (resolution.recordId) {
-      await persistIdempotencyResult(resolution.recordId, 204, null);
-    }
-
-    res.set("Idempotency-Key", idempotencyKey);
     res.status(204).send();
-    return;
   }
-
-  await removeContact(userId, parsed.data.contactId);
-  res.status(204).send();
-  return;
 }
 
-export async function adminChangeStatus(req: Request, res: Response): Promise<void> {
+export async function adminChangeStatus(
+  req: Request,
+  res: Response,
+): Promise<void> {
   const actorId = req.user?.sub ?? null;
   const { id } = req.params;
   const parsed = statusSchema.safeParse(req.body);
@@ -683,37 +512,22 @@ export async function adminChangeStatus(req: Request, res: Response): Promise<vo
     return;
   }
 
-  // Idempotency support
-  const idempotencyKey = getIdempotencyKey(req);
-  if (idempotencyKey) {
-    const userId = actorId ?? "system";
-    const route = getRouteTemplate(req);
-    const resolution = await resolveIdempotency(
-      { userId, method: req.method, route, key: idempotencyKey },
-      { targetUserId: id, ...parsed.data },
-    );
+  const scopeUserId = actorId ?? "system";
+  const handled = await handleIdempotentRequest(
+    req,
+    res,
+    scopeUserId,
+    { targetUserId: id, ...parsed.data },
+    async () => {
+      const body = await changeStatus(actorId, id, parsed.data.status);
+      return { status: 200, body };
+    },
+  );
 
-    if (resolution.type === "replay") {
-      res.set("Idempotency-Key", idempotencyKey);
-      res.set("Idempotent-Replayed", "true");
-      res.status(resolution.status).json(resolution.body);
-      return;
-    }
-
-    const profile = await changeStatus(actorId, id, parsed.data.status);
-
-    if (resolution.recordId) {
-      await persistIdempotencyResult(resolution.recordId, 200, profile);
-    }
-
-    res.set("Idempotency-Key", idempotencyKey);
-    res.json(profile);
-    return;
+  if (!handled) {
+    const body = await changeStatus(actorId, id, parsed.data.status);
+    res.json(body);
   }
-
-  const profile = await changeStatus(actorId, id, parsed.data.status);
-  res.json(profile);
-  return;
 }
 
 export async function getMetrics(req: Request, res: Response): Promise<void> {
