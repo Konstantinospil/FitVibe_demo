@@ -28,6 +28,13 @@ jest.mock("../../../../apps/backend/src/config/env.js", () => ({
     isProduction: false,
     frontendUrl: "http://localhost:3000",
     appBaseUrl: "http://localhost:3000",
+    database: {
+      host: "localhost",
+      port: 5432,
+      name: "fitvibe",
+      user: "fitvibe",
+      password: "fitvibe",
+    },
   },
   JWKS: { keys: [] },
 }));
