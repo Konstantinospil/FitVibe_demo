@@ -1,12 +1,5 @@
 import { config as loadEnv } from "dotenv";
 
-import { logger } from "./config/logger.js";
-import {
-  getDatabaseURL,
-  getJWTKeys,
-  initializeSecretsManager,
-} from "./services/secrets.service.js";
-
 const TRUE_VALUES = new Set(["true", "1", "yes", "y", "on"]);
 
 function isEnabled(value: string | undefined): boolean {
@@ -15,6 +8,11 @@ function isEnabled(value: string | undefined): boolean {
 
 async function bootstrapRuntimeSecrets(): Promise<void> {
   loadEnv();
+
+  const [{ logger }, secrets] = await Promise.all([
+    import("./config/logger.js"),
+    import("./services/secrets.service.js"),
+  ]);
 
   if (!isEnabled(process.env.VAULT_ENABLED)) {
     logger.info("[server] Secrets manager disabled - using environment/files");
@@ -26,7 +24,7 @@ async function bootstrapRuntimeSecrets(): Promise<void> {
     throw new Error("VAULT_ENABLED=true but VAULT_TOKEN is not set");
   }
 
-  initializeSecretsManager({
+  secrets.initializeSecretsManager({
     provider: "vault",
     vault: {
       enabled: true,
@@ -36,7 +34,10 @@ async function bootstrapRuntimeSecrets(): Promise<void> {
     },
   });
 
-  const [jwtKeys, databaseUrl] = await Promise.all([getJWTKeys(), getDatabaseURL()]);
+  const [jwtKeys, databaseUrl] = await Promise.all([
+    secrets.getJWTKeys(),
+    secrets.getDatabaseURL(),
+  ]);
 
   if (!process.env.JWT_PRIVATE_KEY && jwtKeys?.privateKey) {
     process.env.JWT_PRIVATE_KEY = jwtKeys.privateKey;
@@ -54,9 +55,10 @@ async function bootstrapRuntimeSecrets(): Promise<void> {
 export async function startServer(): Promise<void> {
   await bootstrapRuntimeSecrets();
 
-  const [{ default: app }, { env }] = await Promise.all([
+  const [{ default: app }, { env }, { logger }] = await Promise.all([
     import("./app.js"),
     import("./config/env.js"),
+    import("./config/logger.js"),
   ]);
 
   if (env.isProduction) {
@@ -72,7 +74,8 @@ export async function startServer(): Promise<void> {
 }
 
 if (process.env.NODE_ENV !== "test" && !process.env.JEST_WORKER_ID) {
-  void startServer().catch((error: unknown) => {
+  void startServer().catch(async (error: unknown) => {
+    const { logger } = await import("./config/logger.js");
     logger.error({ err: error }, "[server] Failed to start");
     process.exit(1);
   });
