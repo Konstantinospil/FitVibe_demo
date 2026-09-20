@@ -13,6 +13,9 @@ services:
   clamav:
     image: clamav/clamav:latest
     restart: always
+    depends_on:
+      clamav:
+        condition: service_healthy
     security_opt:
       - no-new-privileges:true
     healthcheck:
