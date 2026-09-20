@@ -1,13 +1,12 @@
 import type { NextFunction, Request, Response } from "express";
 import { z } from "zod";
-import { db } from "../../db/connection.js";
 import { HttpError } from "../../utils/http.js";
 import {
-  disable2FA,
+  beginTwoFactorSetup,
+  disableTwoFactor,
+  enableTwoFactor,
   getTwoFactorStatus,
-  regenerateBackupCodes,
-  setupTwoFactor,
-  verifyAndEnable2FA,
+  regenerateTwoFactorBackupCodes,
 } from "./two-factor.service.js";
 
 const VerificationSchema = z
@@ -49,9 +48,7 @@ async function enableFromRequest(req: Request, res: Response): Promise<void> {
     throw new HttpError(400, "E.VALIDATION.FAILED", "Verification code is required");
   }
 
-  await db.transaction(async (trx) => {
-    await verifyAndEnable2FA(userId, code, trx);
-  });
+  await enableTwoFactor(userId, code);
 
   res.json({
     success: true,
@@ -62,15 +59,7 @@ async function enableFromRequest(req: Request, res: Response): Promise<void> {
 export async function setup(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     const userId = requireUserId(req);
-    const email = await db("user_contacts")
-      .where({ user_id: userId, type: "email", is_primary: true })
-      .first<{ value: string }>("value");
-
-    if (!email?.value) {
-      throw new HttpError(404, "E.USER.EMAIL_NOT_FOUND", "Primary email not found");
-    }
-
-    const result = await db.transaction((trx) => setupTwoFactor(userId, email.value, trx));
+    const result = await beginTwoFactorSetup(userId);
 
     res.json({
       secret: result.secret,
@@ -109,16 +98,7 @@ export async function disable(req: Request, res: Response, next: NextFunction): 
       throw new HttpError(400, "E.VALIDATION.FAILED", "Invalid input", parsed.error.flatten());
     }
 
-    const user = await db("users")
-      .where({ id: userId })
-      .first<{ password_hash: string }>("password_hash");
-    if (!user) {
-      throw new HttpError(404, "E.USER.NOT_FOUND", "User not found");
-    }
-
-    await db.transaction(async (trx) => {
-      await disable2FA(userId, parsed.data.password, user.password_hash, trx);
-    });
+    await disableTwoFactor(userId, parsed.data.password);
 
     res.json({
       success: true,
@@ -136,7 +116,7 @@ export async function regenerateBackups(
 ): Promise<void> {
   try {
     const userId = requireUserId(req);
-    const backupCodes = await db.transaction((trx) => regenerateBackupCodes(userId, trx));
+    const backupCodes = await regenerateTwoFactorBackupCodes(userId);
 
     res.json({
       message: "Backup codes regenerated successfully",
