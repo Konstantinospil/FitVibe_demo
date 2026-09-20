@@ -75,10 +75,7 @@ export class BullMQQueueService {
   private startWorkers(): void {
     for (const jobType of SHARED_JOB_TYPES) {
       this.startWorker(jobType, async (job) => {
-        logger.debug(
-          { jobId: job.id, jobType, data: job.data },
-          "[bullmq] Processing shared job",
-        );
+        logger.debug({ jobId: job.id, jobType, data: job.data }, "[bullmq] Processing shared job");
         const payload =
           typeof job.data === "object" && job.data !== null
             ? (job.data as Record<string, unknown>)
