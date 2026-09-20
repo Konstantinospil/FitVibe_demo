@@ -30,8 +30,7 @@ import type { z } from "zod";
 import type { LoginContext } from "./auth.types.js";
 import { HttpError } from "../../utils/http.js";
 import { verifyAccess } from "../../services/tokens.js";
-import { getIdempotencyKey, getRouteTemplate } from "../common/idempotency.helpers.js";
-import { resolveIdempotency, persistIdempotencyResult } from "../common/idempotency.service.js";
+import { handleIdempotentRequest } from "../common/idempotency.helpers.js";
 import { extractClientIp } from "../../utils/ip-extractor.js";
 
 function setRefreshCookie(res: Response, token: string) {
@@ -110,40 +109,17 @@ type LoginInput = z.infer<typeof LoginSchema>;
 type ForgotPasswordInput = z.infer<typeof ForgotPasswordSchema>;
 type ResetPasswordInput = z.infer<typeof ResetPasswordSchema>;
 
-export async function register(req: Request, res: Response, next: NextFunction): Promise<void> {
+export async function register(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> {
   try {
     const payload: RegisterInput = RegisterSchema.parse(req.body);
+    const scopeUserId = `anon:${payload.email}`;
 
-    // Idempotency support for registration
-    const idempotencyKey = getIdempotencyKey(req);
-    if (idempotencyKey) {
-      const userId = `anon:${payload.email}`; // Use email as user scope for unauthenticated operation
-      const route = getRouteTemplate(req);
-
-      let recordId: string | null = null;
-
-      const resolution = await resolveIdempotency(
-        {
-          userId,
-          method: req.method,
-          route,
-          key: idempotencyKey,
-        },
-        payload,
-      );
-
-      if (resolution.type === "replay") {
-        res.set("Idempotency-Key", idempotencyKey);
-        res.set("Idempotent-Replayed", "true");
-        res.status(resolution.status).json(resolution.body);
-        return;
-      }
-
-      recordId = resolution.recordId;
-
-      // Execute registration
+    const execute = async (): Promise<Record<string, unknown>> => {
       const { verificationToken } = await doRegister(payload);
-
       const response: Record<string, unknown> = {
         message: "If the email is valid, a verification link will be sent shortly.",
       };
@@ -151,29 +127,20 @@ export async function register(req: Request, res: Response, next: NextFunction):
         response.debugVerificationToken = verificationToken;
         response.verificationUrl = `${env.frontendUrl}/verify?token=${verificationToken}`;
       }
-
-      // Persist idempotency result
-      if (recordId) {
-        await persistIdempotencyResult(recordId, 202, response);
-      }
-
-      res.set("Idempotency-Key", idempotencyKey);
-      res.status(202).json(response);
-      return;
-    }
-
-    // No idempotency key - proceed normally
-    const { verificationToken } = await doRegister(payload);
-
-    const response: Record<string, unknown> = {
-      message: "If the email is valid, a verification link will be sent shortly.",
+      return response;
     };
-    if (!env.isProduction && verificationToken) {
-      response.debugVerificationToken = verificationToken;
-      response.verificationUrl = `${env.frontendUrl}/verify?token=${verificationToken}`;
+
+    const handled = await handleIdempotentRequest(
+      req,
+      res,
+      scopeUserId,
+      payload,
+      async () => ({ status: 202, body: await execute() }),
+    );
+
+    if (!handled) {
+      res.status(202).json(await execute());
     }
-    res.status(202).json(response);
-    return;
   } catch (error) {
     next(error);
   }
@@ -370,35 +337,9 @@ export async function forgotPassword(
 ): Promise<void> {
   try {
     const payload: ForgotPasswordInput = ForgotPasswordSchema.parse(req.body);
+    const scopeUserId = `anon:${payload.email}`;
 
-    // Idempotency support for password reset request
-    const idempotencyKey = getIdempotencyKey(req);
-    if (idempotencyKey) {
-      const userId = `anon:${payload.email}`; // Use email as user scope
-      const route = getRouteTemplate(req);
-
-      let recordId: string | null = null;
-
-      const resolution = await resolveIdempotency(
-        {
-          userId,
-          method: req.method,
-          route,
-          key: idempotencyKey,
-        },
-        payload,
-      );
-
-      if (resolution.type === "replay") {
-        res.set("Idempotency-Key", idempotencyKey);
-        res.set("Idempotent-Replayed", "true");
-        res.status(resolution.status).json(resolution.body);
-        return;
-      }
-
-      recordId = resolution.recordId;
-
-      // Execute password reset request
+    const execute = async (): Promise<Record<string, unknown>> => {
       const { resetToken } = await requestPasswordReset(payload.email);
       const response: Record<string, unknown> = {
         message: "If the email is registered, a reset link will be sent shortly.",
@@ -407,28 +348,20 @@ export async function forgotPassword(
         response.debugResetToken = resetToken;
         response.resetUrl = `${env.appBaseUrl}/auth/password/reset?token=${resetToken}`;
       }
-
-      // Persist idempotency result
-      if (recordId) {
-        await persistIdempotencyResult(recordId, 202, response);
-      }
-
-      res.set("Idempotency-Key", idempotencyKey);
-      res.status(202).json(response);
-      return;
-    }
-
-    // No idempotency key - proceed normally
-    const { resetToken } = await requestPasswordReset(payload.email);
-    const response: Record<string, unknown> = {
-      message: "If the email is registered, a reset link will be sent shortly.",
+      return response;
     };
-    if (!env.isProduction && resetToken) {
-      response.debugResetToken = resetToken;
-      response.resetUrl = `${env.appBaseUrl}/auth/password/reset?token=${resetToken}`;
+
+    const handled = await handleIdempotentRequest(
+      req,
+      res,
+      scopeUserId,
+      payload,
+      async () => ({ status: 202, body: await execute() }),
+    );
+
+    if (!handled) {
+      res.status(202).json(await execute());
     }
-    res.status(202).json(response);
-    return;
   } catch (error) {
     next(error);
   }
