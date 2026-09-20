@@ -1,6 +1,7 @@
 import { Queue, Worker, type Job, type JobsOptions, type ConnectionOptions } from "bullmq";
 import type { Redis } from "ioredis";
 import { logger } from "../../config/logger.js";
+import { env } from "../../config/env.js";
 import { executeSharedJob, SHARED_JOB_TYPES, type SharedJobType } from "./job.handlers.js";
 
 /**
@@ -26,10 +27,10 @@ export class BullMQQueueService {
       this.connection = redisConnection as ConnectionOptions;
     } else {
       this.connection = {
-        host: process.env.REDIS_HOST ?? "localhost",
-        port: parseInt(process.env.REDIS_PORT ?? "6379", 10),
-        password: process.env.REDIS_PASSWORD,
-        db: parseInt(process.env.REDIS_DB ?? "0", 10),
+        host: env.redis.host,
+        port: env.redis.port,
+        password: env.redis.password,
+        db: env.redis.db,
         maxRetriesPerRequest: null, // Required for BullMQ
       };
     }
@@ -91,10 +92,10 @@ export class BullMQQueueService {
   private startWorker(queueName: string, processor: (job: Job) => Promise<unknown>): void {
     const worker = new Worker(queueName, processor, {
       connection: this.connection,
-      concurrency: parseInt(process.env.BULLMQ_CONCURRENCY ?? "5", 10),
+      concurrency: env.bullmq.concurrency,
       limiter: {
-        max: parseInt(process.env.BULLMQ_RATE_LIMIT_MAX ?? "100", 10),
-        duration: parseInt(process.env.BULLMQ_RATE_LIMIT_DURATION ?? "60000", 10),
+        max: env.bullmq.rateLimitMax,
+        duration: env.bullmq.rateLimitDuration,
       },
     });
 
@@ -290,7 +291,7 @@ let bullMQService: BullMQQueueService | null = null;
  * Only creates if REDIS_ENABLED=true in environment
  */
 export function getBullMQService(): BullMQQueueService | null {
-  if (process.env.REDIS_ENABLED !== "true") {
+  if (!env.redis.enabled) {
     return null;
   }
 
