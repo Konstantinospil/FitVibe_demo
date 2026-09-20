@@ -192,12 +192,7 @@ export async function createSessionHandler(req: Request, res: Response): Promise
     return;
   }
 
-  const handled = await handleIdempotentRequest(
-    req,
-    res,
-    userId,
-    parsed.data,
-    async () => {
+  const handled = await handleIdempotentRequest(req, res, userId, parsed.data, async () => {
       const body = await createOne(userId, parsed.data);
       return { status: 201, body };
     },
