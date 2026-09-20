@@ -48,7 +48,7 @@ if (!env.csrf.enabled) {
   logger.warn(warning);
 }
 
-app.set("trust proxy", 1);
+app.set("trust proxy", env.trustProxy);
 app.get("/.well-known/jwks.json", jwksHandler);
 
 app.use((req, res, next) => {
