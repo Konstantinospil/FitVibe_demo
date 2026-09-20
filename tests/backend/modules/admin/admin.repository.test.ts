@@ -121,4 +121,22 @@ describe("Admin Repository", () => {
       expect(result).toEqual(mockUsers);
     });
   });
+  describe("softDeleteUser", () => {
+    it("marks the user deleted instead of persisting a non-schema ban state", async () => {
+      const dbModule = await import("../../../../apps/backend/src/db/index.js");
+      const dbFn = dbModule.db as jest.Mock;
+      dbFn("users");
+
+      await adminRepository.softDeleteUser(userId);
+
+      expect(queryBuilders["users"]?.where).toHaveBeenCalledWith("id", userId);
+      expect(queryBuilders["users"]?.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          status: "deleted",
+          deleted_at: expect.anything(),
+        }),
+      );
+    });
+  });
+
 });
