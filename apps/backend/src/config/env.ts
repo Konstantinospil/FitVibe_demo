@@ -127,9 +127,7 @@ if (!publicKey && raw.JWT_PUBLIC_KEY_PATH) {
 
 if (privateKey && !publicKey) {
   try {
-    publicKey = createPublicKey(privateKey)
-      .export({ type: "spki", format: "pem" })
-      .toString();
+    publicKey = createPublicKey(privateKey).export({ type: "spki", format: "pem" }).toString();
     logger.info("[env] JWT public key derived from configured private key.");
   } catch (error) {
     throw new Error("JWT_PRIVATE_KEY is not a valid RSA private key.", { cause: error });
