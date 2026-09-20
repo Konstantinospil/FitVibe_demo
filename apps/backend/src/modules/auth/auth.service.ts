@@ -124,6 +124,13 @@ function sanitizeUserAgent(userAgent?: string | null): string | null {
   return userAgent.length > 512 ? userAgent.slice(0, 512) : userAgent;
 }
 
+function isValidUUID(value: string | null): boolean {
+  return Boolean(
+    value &&
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value),
+  );
+}
+
 /**
  * Validates if a string is a valid UUID format
  */
