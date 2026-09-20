@@ -249,6 +249,30 @@ const paths = {
       },
     },
   },
+  "/vibeforms/me": {
+    get: {
+      summary: "Get the current user's normalized Vibeform",
+      tags: ["Vibeforms"],
+      security: [bearerAuth],
+      responses: {
+        200: jsonContent("#/components/schemas/VibeformProfile"),
+        401: jsonContent("#/components/schemas/ErrorResponse"),
+      },
+    },
+  },
+  "/vibeforms/me/preferences": {
+    put: {
+      summary: "Update the current user's Vibeform preferences",
+      tags: ["Vibeforms"],
+      security: [bearerAuth],
+      requestBody: jsonContent("#/components/schemas/UpdateVibeformPreferencesRequest"),
+      responses: {
+        200: jsonContent("#/components/schemas/VibeformPreferences"),
+        400: jsonContent("#/components/schemas/ErrorResponse"),
+        401: jsonContent("#/components/schemas/ErrorResponse"),
+      },
+    },
+  },
   "/health": {
     get: {
       summary: "Liveness probe",
@@ -305,6 +329,72 @@ const schemas = {
     },
     required: ["error"],
   },
+  VibeformPreferences: {
+    type: "object",
+    properties: {
+      templateCode: { type: "string", enum: ["flow"] },
+      templateVersion: { type: "integer", minimum: 1 },
+      bodyProfile: {
+        type: "string",
+        enum: ["shoulder-dominant", "balanced", "hip-dominant"],
+      },
+      motionEnabled: { type: "boolean" },
+    },
+    required: ["templateCode", "templateVersion", "bodyProfile", "motionEnabled"],
+    additionalProperties: false,
+  },
+  UpdateVibeformPreferencesRequest: {
+    type: "object",
+    properties: {
+      templateCode: { type: "string", enum: ["flow"] },
+      bodyProfile: {
+        type: "string",
+        enum: ["shoulder-dominant", "balanced", "hip-dominant"],
+      },
+      motionEnabled: { type: "boolean" },
+    },
+    minProperties: 1,
+    additionalProperties: false,
+  },
+  VibeformMetrics: {
+    type: "object",
+    properties: {
+      intelligence: { type: "number", minimum: 0, maximum: 1 },
+      regeneration: { type: "number", minimum: 0, maximum: 1 },
+      agility: { type: "number", minimum: 0, maximum: 1 },
+      explosivity: { type: "number", minimum: 0, maximum: 1 },
+      endurance: { type: "number", minimum: 0, maximum: 1 },
+      strength: { type: "number", minimum: 0, maximum: 1 },
+      upperBodyLoad: { type: "number", minimum: 0, maximum: 1 },
+      lowerBodyLoad: { type: "number", minimum: 0, maximum: 1 },
+      bmi: { type: ["number", "null"] },
+      heightCm: { type: ["number", "null"] },
+    },
+    required: [
+      "intelligence",
+      "regeneration",
+      "agility",
+      "explosivity",
+      "endurance",
+      "strength",
+      "upperBodyLoad",
+      "lowerBodyLoad",
+      "bmi",
+      "heightCm",
+    ],
+    additionalProperties: false,
+  },
+  VibeformProfile: {
+    type: "object",
+    properties: {
+      preferences: { $ref: "#/components/schemas/VibeformPreferences" },
+      metrics: { $ref: "#/components/schemas/VibeformMetrics" },
+      calculationVersion: { type: "string" },
+      calculatedAt: { type: "string", format: "date-time" },
+    },
+    required: ["preferences", "metrics", "calculationVersion", "calculatedAt"],
+    additionalProperties: false,
+  },
   AuthSuccessResponse: {
     type: "object",
     properties: {
@@ -345,10 +435,17 @@ const schemas = {
         type: "object",
         properties: {
           display_name: { type: "string", minLength: 1, maxLength: 100 },
-          sex: { type: "string", enum: ["man", "woman", "diverse", "na"] },
+          sex: {
+            type: "string",
+            enum: ["man", "woman", "diverse", "prefer_not_to_say"],
+          },
           weight_kg: { type: "number", minimum: 20, maximum: 500 },
-          fitness_level: { type: "string", maxLength: 50 },
-          age: { type: "number", minimum: 13, maximum: 120 },
+          fitness_level: {
+            type: "string",
+            enum: ["beginner", "intermediate", "advanced", "elite", "rehab"],
+          },
+          date_of_birth: { type: "string", format: "date" },
+          age: { type: "integer", minimum: 13, maximum: 120, deprecated: true },
         },
         additionalProperties: false,
       },
@@ -647,6 +744,7 @@ const spec = {
     { name: "Users", description: "User and profile endpoints" },
     { name: "Exercises", description: "Exercise catalog endpoints" },
     { name: "Sessions", description: "Planning and workout sessions" },
+    { name: "Vibeforms", description: "Personalized Vibeform profiles and preferences" },
     { name: "System", description: "Operational endpoints" },
   ],
   paths,

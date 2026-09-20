@@ -111,6 +111,17 @@ function nextSessionExpiry(): string {
   return new Date(Date.now() + SESSION_EXPIRY_MS).toISOString();
 }
 
+function dateOfBirthFromAge(age?: number | null): string | undefined {
+  if (age === undefined || age === null) {
+    return undefined;
+  }
+  const today = new Date();
+  const birthDate = new Date(
+    Date.UTC(today.getUTCFullYear() - age, today.getUTCMonth(), today.getUTCDate()),
+  );
+  return birthDate.toISOString().slice(0, 10);
+}
+
 function sanitizeUserAgent(userAgent?: string | null): string | null {
   if (!userAgent) {
     return null;
@@ -310,6 +321,10 @@ export async function register(
       terms_accepted: true,
       terms_accepted_at: now,
       terms_version: termsVersion,
+      gender_code: dto.profile?.sex,
+      fitness_level_code: dto.profile?.fitness_level ?? undefined,
+      date_of_birth: dto.profile?.date_of_birth ?? dateOfBirthFromAge(dto.profile?.age),
+      weight_kg: dto.profile?.weight_kg ?? undefined,
     });
 
     const verificationToken = await issueAuthToken(

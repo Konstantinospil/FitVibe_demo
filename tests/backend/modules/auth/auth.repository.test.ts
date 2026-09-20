@@ -222,10 +222,22 @@ describe("Auth Repository", () => {
         role_code: "athlete",
         password_hash: "hashed",
         primaryEmail: email,
+        gender_code: "woman",
+        fitness_level_code: "intermediate",
+        date_of_birth: "1990-06-15",
       });
 
       expect(result).toEqual(mockUser);
       expect(newBuilder.insert).toHaveBeenCalled();
+      expect(newBuilder.insert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          user_id: userId,
+          alias: "newuser",
+          gender_code: "woman",
+          fitness_level_code: "intermediate",
+          date_of_birth: "1990-06-15",
+        }),
+      );
       expect(newBuilder.insert).toHaveBeenCalledWith(
         expect.arrayContaining([
           expect.objectContaining({
@@ -252,6 +264,36 @@ describe("Auth Repository", () => {
         "intelligence",
         "regeneration",
       ]);
+    });
+
+    it("should store registration weight in the existing bio attribute history", async () => {
+      const attributeBuilder = createMockQueryBuilder();
+      attributeBuilder.first.mockResolvedValue({ id: "weight-attribute-id" });
+      queryBuilders["bio_attributes"] = attributeBuilder;
+      const valueBuilder = createMockQueryBuilder();
+      queryBuilders["bio_attribute_values"] = valueBuilder;
+      const userBuilder = createMockQueryBuilder();
+      queryBuilders["users as u"] = userBuilder;
+
+      await authRepository.createUser({
+        id: userId,
+        username: "newuser",
+        display_name: "New User",
+        status: "active",
+        role_code: "athlete",
+        password_hash: "hashed",
+        primaryEmail: email,
+        weight_kg: 82.5,
+      });
+
+      expect(attributeBuilder.where).toHaveBeenCalledWith({ key: "weight_kg" });
+      expect(valueBuilder.insert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          user_id: userId,
+          attribute_id: "weight-attribute-id",
+          value_number: 82.5,
+        }),
+      );
     });
 
     it("should reject createUser when alias and username are missing", async () => {

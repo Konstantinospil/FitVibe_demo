@@ -185,6 +185,37 @@ describe("Auth Service", () => {
       expect(mockAuthRepo.createUser).toHaveBeenCalled();
     });
 
+    it("should pass registration profile data to the atomic user create", async () => {
+      const profileDto: RegisterDTO = {
+        ...validRegisterDto,
+        profile: {
+          display_name: "Test Athlete",
+          sex: "prefer_not_to_say",
+          weight_kg: 82.5,
+          fitness_level: "advanced",
+          date_of_birth: "1994-05-12",
+        },
+      };
+      mockAuthRepo.findUserByEmail.mockResolvedValue(null);
+      mockAuthRepo.findUserByUsername.mockResolvedValue(null);
+      mockBcrypt.hash.mockResolvedValue("hashed_password" as never);
+      mockAuthRepo.createUser.mockResolvedValue(undefined);
+      mockAuthRepo.createAuthToken.mockResolvedValue("verification-token");
+      mockAuthRepo.findUserById.mockResolvedValue(undefined);
+
+      await authService.register(profileDto);
+
+      expect(mockAuthRepo.createUser).toHaveBeenCalledWith(
+        expect.objectContaining({
+          display_name: "Test Athlete",
+          gender_code: "prefer_not_to_say",
+          weight_kg: 82.5,
+          fitness_level_code: "advanced",
+          date_of_birth: "1994-05-12",
+        }),
+      );
+    });
+
     it("should throw error when email already exists", async () => {
       const existingUser: AuthUserRecord = {
         id: userId,
