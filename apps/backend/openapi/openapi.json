@@ -1089,8 +1089,8 @@
           "code": {
             "type": "string",
             "minLength": 6,
-            "maxLength": 6,
-            "pattern": "^\\d+$"
+            "maxLength": 9,
+            "pattern": "^(?:\\d{6}|[A-HJ-NP-Z2-9]{4}-[A-HJ-NP-Z2-9]{4})$"
           }
         },
         "required": ["pendingSessionId", "code"]

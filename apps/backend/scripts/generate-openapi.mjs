@@ -493,7 +493,12 @@ const schemas = {
     type: "object",
     properties: {
       pendingSessionId: { type: "string", format: "uuid" },
-      code: { type: "string", minLength: 6, maxLength: 6, pattern: "^\\d+$" },
+      code: {
+        type: "string",
+        minLength: 6,
+        maxLength: 9,
+        pattern: "^(?:\\\\d{6}|[A-HJ-NP-Z2-9]{4}-[A-HJ-NP-Z2-9]{4})$",
+      },
     },
     required: ["pendingSessionId", "code"],
   },

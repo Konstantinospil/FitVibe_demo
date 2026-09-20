@@ -88,9 +88,15 @@ const TwoFactorVerificationLogin: React.FC = () => {
   };
 
   const handleCodeChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const value = event.target.value.replace(/\D/g, "").slice(0, 6);
+    const value = event.target.value
+      .toUpperCase()
+      .replace(/[^A-Z0-9-]/g, "")
+      .slice(0, 9);
     setCode(value);
   };
+
+  const isValidCode =
+    /^\d{6}$/.test(code) || /^[A-HJ-NP-Z2-9]{4}-[A-HJ-NP-Z2-9]{4}$/.test(code);
 
   const handleBackToLogin = () => {
     void navigate("/login", { replace: true });
@@ -129,7 +135,7 @@ const TwoFactorVerificationLogin: React.FC = () => {
           <input
             name="code"
             type="text"
-            inputMode="numeric"
+            inputMode="text"
             placeholder={t("twoFactor.codePlaceholder")}
             className="form-input form-input--code"
             required
@@ -137,7 +143,7 @@ const TwoFactorVerificationLogin: React.FC = () => {
             onChange={handleCodeChange}
             autoComplete="one-time-code"
             disabled={isSubmitting}
-            maxLength={6}
+            maxLength={9}
             autoFocus
           />
           <span className="text-085 text-muted text-center">
@@ -155,7 +161,7 @@ const TwoFactorVerificationLogin: React.FC = () => {
           type="submit"
           fullWidth
           isLoading={isSubmitting}
-          disabled={isSubmitting || code.length !== 6}
+          disabled={isSubmitting || !isValidCode}
         >
           {isSubmitting
             ? t("auth.twoFactor.verifying") || "Verifying..."
