@@ -3,8 +3,7 @@ import { z } from "zod";
 import { getAll, getOne, createOne, updateOne, archiveOne } from "./exercise.service.js";
 import type { ExerciseQuery } from "./exercise.types.js";
 import type { JwtPayload } from "../auth/auth.types.js";
-import { getIdempotencyKey, getRouteTemplate } from "../common/idempotency.helpers.js";
-import { resolveIdempotency, persistIdempotencyResult } from "../common/idempotency.service.js";
+import { handleIdempotentRequest } from "../common/idempotency.helpers.js";
 
 const tagInputSchema = z.union([z.string(), z.array(z.string())]);
 
@@ -146,48 +145,21 @@ export async function createExerciseHandler(req: Request, res: Response): Promis
   const userId = authUser.sub;
   const isAdmin = authUser.role === "admin";
 
-  // Idempotency support for exercise creation
-  const idempotencyKey = getIdempotencyKey(req);
-  if (idempotencyKey) {
-    const route = getRouteTemplate(req);
+  const handled = await handleIdempotentRequest(
+    req,
+    res,
+    userId,
+    parsed.data,
+    async () => {
+      const body = await createOne(userId, parsed.data, isAdmin);
+      return { status: 201, body };
+    },
+  );
 
-    let recordId: string | null = null;
-
-    const resolution = await resolveIdempotency(
-      {
-        userId,
-        method: req.method,
-        route,
-        key: idempotencyKey,
-      },
-      parsed.data,
-    );
-
-    if (resolution.type === "replay") {
-      res.set("Idempotency-Key", idempotencyKey);
-      res.set("Idempotent-Replayed", "true");
-      res.status(resolution.status).json(resolution.body);
-      return;
-    }
-
-    recordId = resolution.recordId;
-
-    // Execute exercise creation
-    const data = await createOne(userId, parsed.data, isAdmin);
-
-    // Persist idempotency result
-    if (recordId) {
-      await persistIdempotencyResult(recordId, 201, data);
-    }
-
-    res.set("Idempotency-Key", idempotencyKey);
-    res.status(201).json(data);
-    return;
+  if (!handled) {
+    const body = await createOne(userId, parsed.data, isAdmin);
+    res.status(201).json(body);
   }
-
-  // No idempotency key - proceed normally
-  const data = await createOne(userId, parsed.data, isAdmin);
-  res.status(201).json(data);
 }
 
 export async function updateExerciseHandler(req: Request, res: Response): Promise<void> {
@@ -204,48 +176,21 @@ export async function updateExerciseHandler(req: Request, res: Response): Promis
   const isAdmin = authUser.role === "admin";
   const { id } = req.params;
 
-  // Idempotency support for exercise update
-  const idempotencyKey = getIdempotencyKey(req);
-  if (idempotencyKey) {
-    const route = getRouteTemplate(req);
+  const handled = await handleIdempotentRequest(
+    req,
+    res,
+    userId,
+    parsed.data,
+    async () => {
+      const body = await updateOne(id, userId, parsed.data, isAdmin);
+      return { status: 200, body };
+    },
+  );
 
-    let recordId: string | null = null;
-
-    const resolution = await resolveIdempotency(
-      {
-        userId,
-        method: req.method,
-        route,
-        key: idempotencyKey,
-      },
-      parsed.data,
-    );
-
-    if (resolution.type === "replay") {
-      res.set("Idempotency-Key", idempotencyKey);
-      res.set("Idempotent-Replayed", "true");
-      res.status(resolution.status).json(resolution.body);
-      return;
-    }
-
-    recordId = resolution.recordId;
-
-    // Execute exercise update
-    const data = await updateOne(id, userId, parsed.data, isAdmin);
-
-    // Persist idempotency result
-    if (recordId) {
-      await persistIdempotencyResult(recordId, 200, data);
-    }
-
-    res.set("Idempotency-Key", idempotencyKey);
-    res.json(data);
-    return;
+  if (!handled) {
+    const body = await updateOne(id, userId, parsed.data, isAdmin);
+    res.json(body);
   }
-
-  // No idempotency key - proceed normally
-  const data = await updateOne(id, userId, parsed.data, isAdmin);
-  res.json(data);
 }
 
 export async function deleteExerciseHandler(req: Request, res: Response): Promise<void> {
@@ -257,46 +202,19 @@ export async function deleteExerciseHandler(req: Request, res: Response): Promis
   const isAdmin = authUser.role === "admin";
   const { id } = req.params;
 
-  // Idempotency support for exercise deletion
-  const idempotencyKey = getIdempotencyKey(req);
-  if (idempotencyKey) {
-    const route = getRouteTemplate(req);
+  const handled = await handleIdempotentRequest(
+    req,
+    res,
+    userId,
+    { id },
+    async () => {
+      await archiveOne(id, userId, isAdmin);
+      return { status: 204, body: null };
+    },
+  );
 
-    let recordId: string | null = null;
-
-    const resolution = await resolveIdempotency(
-      {
-        userId,
-        method: req.method,
-        route,
-        key: idempotencyKey,
-      },
-      { id }, // Include the resource ID in the payload
-    );
-
-    if (resolution.type === "replay") {
-      res.set("Idempotency-Key", idempotencyKey);
-      res.set("Idempotent-Replayed", "true");
-      res.status(resolution.status).send();
-      return;
-    }
-
-    recordId = resolution.recordId;
-
-    // Execute exercise deletion
+  if (!handled) {
     await archiveOne(id, userId, isAdmin);
-
-    // Persist idempotency result
-    if (recordId) {
-      await persistIdempotencyResult(recordId, 204, null);
-    }
-
-    res.set("Idempotency-Key", idempotencyKey);
     res.status(204).send();
-    return;
   }
-
-  // No idempotency key - proceed normally
-  await archiveOne(id, userId, isAdmin);
-  res.status(204).send();
 }
