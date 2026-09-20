@@ -52,7 +52,7 @@ export async function uploadAvatarHandler(
 
       await insertAudit({
         actorUserId: userId,
-        entity: "user_media",
+        entityType: "user_media",
         action: "avatar_upload_rejected",
         entityId: userId,
         metadata: {
@@ -96,7 +96,7 @@ export async function uploadAvatarHandler(
 
     await insertAudit({
       actorUserId: userId,
-      entity: "user_media",
+      entityType: "user_media",
       action: "avatar_upload",
       entityId: record.id,
       metadata: { size: fileMeta.bytes, mime: "image/png" },
@@ -161,7 +161,7 @@ export async function deleteAvatarHandler(
     }
     await insertAudit({
       actorUserId: userId,
-      entity: "user_media",
+      entityType: "user_media",
       action: "avatar_delete",
       entityId: metadata?.id ?? userId,
     });
