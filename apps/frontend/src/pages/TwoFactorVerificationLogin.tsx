@@ -95,8 +95,7 @@ const TwoFactorVerificationLogin: React.FC = () => {
     setCode(value);
   };
 
-  const isValidCode =
-    /^\d{6}$/.test(code) || /^[A-HJ-NP-Z2-9]{4}-[A-HJ-NP-Z2-9]{4}$/.test(code);
+  const isValidCode = /^\d{6}$/.test(code) || /^[A-HJ-NP-Z2-9]{4}-[A-HJ-NP-Z2-9]{4}$/.test(code);
 
   const handleBackToLogin = () => {
     void navigate("/login", { replace: true });
