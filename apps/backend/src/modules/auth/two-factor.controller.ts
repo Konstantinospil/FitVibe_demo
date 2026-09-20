@@ -71,7 +71,8 @@ export async function setup(req: Request, res: Response, next: NextFunction): Pr
       qrCode: result.qrCode,
       backupCodes: result.backupCodes,
       message:
-        "Save your backup codes in a safe place. You will need them if you lose access to your authenticator app.",
+        "Save your backup codes in a safe place. You will need them if you lose access " +
+        "to your authenticator app.",
     });
   } catch (error) {
     next(error);
