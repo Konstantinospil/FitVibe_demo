@@ -69,6 +69,14 @@ const EnvSchema = z.object({
   SMTP_FROM_NAME: z.string().default("FitVibe"),
   SMTP_FROM_EMAIL: z.string().optional(),
   APP_NAME: z.string().default("FitVibe"),
+  REDIS_ENABLED: z.string().optional(),
+  REDIS_HOST: z.string().default("localhost"),
+  REDIS_PORT: z.coerce.number().default(6379),
+  REDIS_PASSWORD: z.string().optional(),
+  REDIS_DB: z.coerce.number().default(0),
+  BULLMQ_CONCURRENCY: z.coerce.number().default(5),
+  BULLMQ_RATE_LIMIT_MAX: z.coerce.number().default(100),
+  BULLMQ_RATE_LIMIT_DURATION: z.coerce.number().default(60000),
   TRUST_PROXY: z.string().optional(),
 });
 
@@ -247,6 +255,18 @@ export const env = {
     namespace: raw.VAULT_NAMESPACE,
   },
   jwtKeyRotationDays: raw.JWT_KEY_ROTATION_DAYS,
+  redis: {
+    enabled: parseBoolean(raw.REDIS_ENABLED, false),
+    host: raw.REDIS_HOST,
+    port: raw.REDIS_PORT,
+    password: raw.REDIS_PASSWORD,
+    db: raw.REDIS_DB,
+  },
+  bullmq: {
+    concurrency: raw.BULLMQ_CONCURRENCY,
+    rateLimitMax: raw.BULLMQ_RATE_LIMIT_MAX,
+    rateLimitDuration: raw.BULLMQ_RATE_LIMIT_DURATION,
+  },
   email: {
     enabled: parseBoolean(raw.EMAIL_ENABLED, false),
     smtp: {
