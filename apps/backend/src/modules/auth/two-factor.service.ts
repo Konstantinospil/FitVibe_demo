@@ -179,7 +179,7 @@ export async function verify2FACode(
     .where({ user_id: userId, is_enabled: true, is_verified: true })
     .first();
 
-  if (!settings) {
+  if (!settings || !settings.is_enabled || !settings.is_verified) {
     return false;
   }
 
@@ -268,7 +268,7 @@ export async function is2FAEnabled(userId: string, trx?: Knex.Transaction): Prom
     .where({ user_id: userId, is_enabled: true })
     .first();
 
-  return !!settings;
+  return Boolean(settings?.is_enabled && settings?.is_verified);
 }
 
 /**
@@ -381,7 +381,7 @@ export async function getTwoFactorStatus(
     .where({ user_id: userId })
     .first();
 
-  if (!settings || !settings.is_enabled) {
+  if (!settings || !settings.is_enabled || !settings.is_verified) {
     return {
       enabled: false,
       enabledAt: null,
