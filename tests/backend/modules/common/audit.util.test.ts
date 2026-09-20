@@ -115,7 +115,7 @@ describe("audit.util", () => {
   });
 
   describe("logAudit", () => {
-    it("should log audit with all fields", async () => {
+    it("should normalize an invalid actor ID while logging all fields", async () => {
       const payload = {
         action: "update",
         entityType: "user",
@@ -130,7 +130,7 @@ describe("audit.util", () => {
 
       expect(mockQueryBuilder.insert).toHaveBeenCalledWith(
         expect.objectContaining({
-          actor_user_id: "actor-123",
+          actor_user_id: null,
           entity_type: "user",
           action: "update",
           entity_id: "11111111-1111-4111-8111-111111111111",
