@@ -80,10 +80,11 @@ describe("csrf middleware internals", () => {
     expect(next).toHaveBeenCalledWith();
   });
 
-  it("rejects missing tokens", async () => {
+  it("rejects missing tokens for browser requests", async () => {
     const { csrfProtection } = await import("../../../apps/backend/src/middlewares/csrf.js");
     const { req, res } = buildReqRes();
     req.method = "POST";
+    req.headers = { origin: "https://fitvibe.dev" };
 
     csrfProtection(req, res, next);
 
