@@ -1,98 +1,40 @@
 import type { Request, Response } from "express";
 import { HttpError } from "../../../../apps/backend/src/utils/http.js";
 import {
-  setup,
-  enable,
   disable,
-  verify,
+  enable,
   regenerateBackups,
+  setup,
   status,
+  verify,
 } from "../../../../apps/backend/src/modules/auth/two-factor.controller.js";
 
-const createQueryBuilder = <T>(result: T | null) => ({
-  where: jest.fn().mockReturnThis(),
-  select: jest.fn().mockReturnThis(),
-  first: jest.fn().mockResolvedValue(result),
-});
-
-const tableMocks: Record<string, ReturnType<typeof createQueryBuilder>> = {};
-
-function createDbProxy() {
-  const mockDb = Object.assign(
-    jest.fn((table: string) => {
-      const builder = tableMocks[table];
-      if (!builder) {
-        throw new Error(`No mock for table ${table}`);
-      }
-      return builder;
-    }),
-    {
-      transaction: jest
-        .fn()
-        .mockImplementation(async (callback: (trx: unknown) => Promise<unknown>) => callback({})),
-    },
-  );
-
-  return Object.assign((...args: Parameters<typeof mockDb>) => mockDb(...(args as [string])), {
-    transaction: (...args: Parameters<typeof mockDb.transaction>) =>
-      mockDb.transaction(...(args as [Parameters<typeof mockDb.transaction>[0]])),
-  });
-}
-
-const dbProxy = createDbProxy();
-const currentDbConnection = dbProxy;
-
-jest.mock("../../../../apps/backend/src/db/connection.js", () => ({
-  get db() {
-    return currentDbConnection;
-  },
-}));
-
 jest.mock("../../../../apps/backend/src/modules/auth/two-factor.service.js", () => ({
-  initializeTwoFactorSetup: jest.fn(),
+  beginTwoFactorSetup: jest.fn(),
   enableTwoFactor: jest.fn(),
   disableTwoFactor: jest.fn(),
-  regenerateBackupCodes: jest.fn(),
-  getBackupCodeStats: jest.fn(),
-  verifyTotpToken: jest.fn(),
-  generateBackupCodes: jest.fn(),
-  verifyTwoFactorToken: jest.fn(),
+  regenerateTwoFactorBackupCodes: jest.fn(),
+  getTwoFactorStatus: jest.fn(),
 }));
+
 const serviceMocks = jest.requireMock(
   "../../../../apps/backend/src/modules/auth/two-factor.service.js",
 );
-
-jest.mock("bcryptjs", () => ({
-  compare: jest.fn().mockResolvedValue(true),
-}));
-const bcrypt = jest.requireMock("bcryptjs");
-
-jest.mock("../../../../apps/backend/src/config/logger.js", () => ({
-  logger: {
-    info: jest.fn(),
-    warn: jest.fn(),
-    error: jest.fn(),
-    debug: jest.fn(),
-  },
-}));
 
 const createResponse = () => {
   const res: Partial<Response> = {
     status: jest.fn().mockReturnThis(),
     json: jest.fn().mockReturnThis(),
-    set: jest.fn().mockReturnThis(),
   };
-  return res as Response & { status: jest.Mock; json: jest.Mock; set: jest.Mock };
+  return res as Response & { status: jest.Mock; json: jest.Mock };
 };
 
 const createRequest = (overrides: Partial<Request> = {}): Request => {
   const req: Partial<Request> = {
-    user: { sub: "user-123", role: "athlete" } as any,
+    user: { sub: "user-123", role: "athlete" } as never,
     body: {},
     params: {},
     query: {},
-    ip: "127.0.0.1",
-    get: jest.fn().mockReturnValue("jest-agent"),
     ...overrides,
   };
   return req as Request;
@@ -101,7 +43,6 @@ const createRequest = (overrides: Partial<Request> = {}): Request => {
 describe("two-factor controller", () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    Object.keys(tableMocks).forEach((key) => delete tableMocks[key]);
   });
 
   describe("setup", () => {
@@ -111,290 +52,151 @@ describe("two-factor controller", () => {
       const next = jest.fn();
 
       await setup(req, res, next);
+
       expect(next).toHaveBeenCalledWith(expect.any(HttpError));
+      expect(serviceMocks.beginTwoFactorSetup).not.toHaveBeenCalled();
     });
 
-    it("handles missing users", async () => {
-      tableMocks.users = createQueryBuilder(null);
-      const req = createRequest();
-      const res = createResponse();
-      const next = jest.fn();
-
-      await setup(req, res, next);
-      expect(next).toHaveBeenCalledWith(expect.any(HttpError));
-    });
-
-    it("returns setup payload when available", async () => {
-      tableMocks.users = createQueryBuilder({
-        email: "test@example.com",
-        two_factor_enabled: false,
-      });
-      serviceMocks.initializeTwoFactorSetup.mockResolvedValue({
+    it("starts setup through the canonical service", async () => {
+      serviceMocks.beginTwoFactorSetup.mockResolvedValue({
         secret: "secret",
-        qrCodeUrl: "qr",
-        backupCodes: ["code-1", "code-2"],
+        qrCode: "qr",
+        backupCodes: ["backup-1", "backup-2"],
       });
       const req = createRequest();
       const res = createResponse();
       const next = jest.fn();
 
       await setup(req, res, next);
+
+      expect(serviceMocks.beginTwoFactorSetup).toHaveBeenCalledWith("user-123");
       expect(res.json).toHaveBeenCalledWith(
-        expect.objectContaining({ secret: "secret", backupCodes: ["code-1", "code-2"] }),
+        expect.objectContaining({
+          secret: "secret",
+          qrCode: "qr",
+          backupCodes: ["backup-1", "backup-2"],
+        }),
       );
       expect(next).not.toHaveBeenCalled();
     });
+  });
 
-    it("rejects requests when 2FA already enabled", async () => {
-      tableMocks.users = createQueryBuilder({
-        email: "test@example.com",
-        two_factor_enabled: true,
-      });
-      const req = createRequest();
+  describe("verify", () => {
+    it("validates the six-digit setup code", async () => {
+      const req = createRequest({ body: { code: "123" } });
       const res = createResponse();
       const next = jest.fn();
 
-      await setup(req, res, next);
+      await verify(req, res, next);
+
       expect(next).toHaveBeenCalledWith(expect.any(HttpError));
+      expect(serviceMocks.enableTwoFactor).not.toHaveBeenCalled();
+    });
+
+    it("verifies the stored secret and enables 2FA", async () => {
+      serviceMocks.enableTwoFactor.mockResolvedValue(true);
+      const req = createRequest({ body: { code: "123456" } });
+      const res = createResponse();
+      const next = jest.fn();
+
+      await verify(req, res, next);
+
+      expect(serviceMocks.enableTwoFactor).toHaveBeenCalledWith("user-123", "123456");
+      expect(res.json).toHaveBeenCalledWith({
+        success: true,
+        message: "Two-factor authentication enabled successfully",
+      });
+      expect(next).not.toHaveBeenCalled();
     });
   });
 
-  describe("enable", () => {
-    it("requires authentication", async () => {
-      const req = createRequest({
-        user: undefined,
-        body: { secret: "x".repeat(16), token: "123456" },
-      });
+  describe("enable compatibility route", () => {
+    it("accepts the legacy token field but uses the canonical enable flow", async () => {
+      serviceMocks.enableTwoFactor.mockResolvedValue(true);
+      const req = createRequest({ body: { token: "654321" } });
       const res = createResponse();
       const next = jest.fn();
 
       await enable(req, res, next);
-      expect(next).toHaveBeenCalledWith(expect.any(HttpError));
-    });
 
-    it("validates input", async () => {
-      const req = createRequest();
-      const res = createResponse();
-      const next = jest.fn();
-
-      await enable(req, res, next);
-      expect(next).toHaveBeenCalledWith(expect.any(HttpError));
-    });
-
-    it("rejects invalid tokens", async () => {
-      const req = createRequest({ body: { secret: "a".repeat(16), token: "123456" } });
-      const res = createResponse();
-      const next = jest.fn();
-      serviceMocks.verifyTotpToken.mockReturnValue(false);
-
-      await enable(req, res, next);
-      expect(next).toHaveBeenCalledWith(expect.any(HttpError));
-    });
-
-    it("enables 2FA when token is valid", async () => {
-      const req = createRequest({ body: { secret: "a".repeat(16), token: "123456" } });
-      const res = createResponse();
-      const next = jest.fn();
-      serviceMocks.verifyTotpToken.mockReturnValue(true);
-      serviceMocks.generateBackupCodes.mockReturnValue(["backup-1", "backup-2"]);
-
-      await enable(req, res, next);
-      expect(serviceMocks.enableTwoFactor).toHaveBeenCalled();
+      expect(serviceMocks.enableTwoFactor).toHaveBeenCalledWith("user-123", "654321");
       expect(res.json).toHaveBeenCalledWith(
-        expect.objectContaining({ backupCodes: ["backup-1", "backup-2"] }),
+        expect.objectContaining({ success: true }),
       );
     });
   });
 
   describe("disable", () => {
-    it("verifies password and token before disabling", async () => {
-      const req = createRequest({
-        body: { password: "StrongPassword123!", token: "654321" },
-      });
-      tableMocks.users = createQueryBuilder({
-        password_hash: "hash",
-        two_factor_enabled: true,
-        two_factor_secret: "secret",
-      });
-      serviceMocks.verifyTotpToken.mockReturnValue(true);
+    it("requires the current password and delegates verification to the service", async () => {
+      serviceMocks.disableTwoFactor.mockResolvedValue();
+      const req = createRequest({ body: { password: "StrongPassword123!" } });
       const res = createResponse();
       const next = jest.fn();
 
       await disable(req, res, next);
-      expect(serviceMocks.disableTwoFactor).toHaveBeenCalled();
-      expect(res.json).toHaveBeenCalledWith(
-        expect.objectContaining({ message: expect.stringContaining("disabled") }),
+
+      expect(serviceMocks.disableTwoFactor).toHaveBeenCalledWith(
+        "user-123",
+        "StrongPassword123!",
       );
-    });
-
-    it("rejects missing users", async () => {
-      tableMocks.users = createQueryBuilder(null);
-      const req = createRequest({ body: { password: "StrongPassword123!", token: "654321" } });
-      const res = createResponse();
-      const next = jest.fn();
-
-      await disable(req, res, next);
-      expect(next).toHaveBeenCalledWith(expect.any(HttpError));
-    });
-
-    it("requires 2FA to be enabled", async () => {
-      tableMocks.users = createQueryBuilder({
-        password_hash: "hash",
-        two_factor_enabled: false,
-        two_factor_secret: "secret",
+      expect(res.json).toHaveBeenCalledWith({
+        success: true,
+        message: "Two-factor authentication disabled successfully",
       });
-      const req = createRequest({ body: { password: "StrongPassword123!", token: "654321" } });
-      const res = createResponse();
-      const next = jest.fn();
-
-      await disable(req, res, next);
-      expect(next).toHaveBeenCalledWith(expect.any(HttpError));
+      expect(next).not.toHaveBeenCalled();
     });
 
-    it("validates password and tokens", async () => {
-      tableMocks.users = createQueryBuilder({
-        password_hash: "hash",
-        two_factor_enabled: true,
-        two_factor_secret: "secret",
-      });
-      bcrypt.compare.mockResolvedValueOnce(false);
-      const req = createRequest({ body: { password: "wrong", token: "654321" } });
-      const res = createResponse();
-      const next = jest.fn();
-
-      await disable(req, res, next);
-      expect(next).toHaveBeenCalledWith(expect.any(HttpError));
-
-      // Restore for next tests
-      bcrypt.compare.mockResolvedValue(true);
-      serviceMocks.verifyTotpToken.mockReturnValueOnce(false);
-      await disable(
-        createRequest({ body: { password: "StrongPassword123!", token: "654321" } }),
-        res,
-        next,
+    it("forwards service errors", async () => {
+      serviceMocks.disableTwoFactor.mockRejectedValue(
+        new HttpError(404, "E.USER.NOT_FOUND", "User not found"),
       );
+      const req = createRequest({ body: { password: "StrongPassword123!" } });
+      const res = createResponse();
+      const next = jest.fn();
+
+      await disable(req, res, next);
+
       expect(next).toHaveBeenCalledWith(expect.any(HttpError));
     });
   });
 
-  describe("verify", () => {
-    it("rejects invalid payloads", async () => {
-      const req = createRequest({ body: {} });
-      const res = createResponse();
-      const next = jest.fn();
-
-      await verify(req, res, next);
-      expect(next).toHaveBeenCalledWith(expect.any(HttpError));
-    });
-
-    it("validates provided token", async () => {
-      const req = createRequest({ body: { token: "654321" } });
-      const res = createResponse();
-      const next = jest.fn();
-      serviceMocks.verifyTwoFactorToken.mockResolvedValue(false);
-
-      await verify(req, res, next);
-      expect(next).toHaveBeenCalledWith(expect.any(HttpError));
-    });
-
-    it("accepts valid tokens", async () => {
-      const req = createRequest({ body: { token: "654321" } });
-      const res = createResponse();
-      const next = jest.fn();
-      serviceMocks.verifyTwoFactorToken.mockResolvedValue(true);
-
-      await verify(req, res, next);
-      expect(res.json).toHaveBeenCalledWith(
-        expect.objectContaining({ message: expect.stringContaining("successful") }),
-      );
-    });
-  });
-
-  describe("regenerateBackups", () => {
-    it("requires authentication", async () => {
-      const req = createRequest({ user: undefined });
-      const res = createResponse();
-      const next = jest.fn();
-
-      await regenerateBackups(req, res, next);
-      expect(next).toHaveBeenCalledWith(expect.any(HttpError));
-    });
-
-    it("requires 2FA to be enabled", async () => {
-      tableMocks.users = createQueryBuilder({ two_factor_enabled: false });
+  describe("backup codes", () => {
+    it("regenerates backup codes through the canonical service", async () => {
+      serviceMocks.regenerateTwoFactorBackupCodes.mockResolvedValue(["code-1", "code-2"]);
       const req = createRequest();
       const res = createResponse();
       const next = jest.fn();
 
       await regenerateBackups(req, res, next);
-      expect(next).toHaveBeenCalledWith(expect.any(HttpError));
-    });
 
-    it("returns new backup codes", async () => {
-      tableMocks.users = createQueryBuilder({ two_factor_enabled: true });
-      serviceMocks.regenerateBackupCodes.mockResolvedValue(["a", "b"]);
-      const req = createRequest();
-      const res = createResponse();
-      const next = jest.fn();
-
-      await regenerateBackups(req, res, next);
-      expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ backupCodes: ["a", "b"] }));
+      expect(serviceMocks.regenerateTwoFactorBackupCodes).toHaveBeenCalledWith("user-123");
+      expect(res.json).toHaveBeenCalledWith({
+        message: "Backup codes regenerated successfully",
+        backupCodes: ["code-1", "code-2"],
+      });
     });
   });
 
   describe("status", () => {
-    it("requires authentication", async () => {
-      const req = createRequest({ user: undefined });
-      const res = createResponse();
-      const next = jest.fn();
-
-      await status(req, res, next);
-      expect(next).toHaveBeenCalledWith(expect.any(HttpError));
-    });
-
-    it("handles missing user records", async () => {
-      tableMocks.users = createQueryBuilder(null);
-      const req = createRequest();
-      const res = createResponse();
-      const next = jest.fn();
-
-      await status(req, res, next);
-      expect(next).toHaveBeenCalledWith(expect.any(HttpError));
-    });
-
-    it("returns status and backup code stats when enabled", async () => {
-      tableMocks.users = createQueryBuilder({
-        two_factor_enabled: true,
-        two_factor_enabled_at: new Date("2024-01-01T00:00:00Z"),
-      });
-      serviceMocks.getBackupCodeStats.mockResolvedValue({ remaining: 5 });
-      const req = createRequest();
-      const res = createResponse();
-      const next = jest.fn();
-
-      await status(req, res, next);
-      expect(res.json).toHaveBeenCalledWith(
-        expect.objectContaining({
-          enabled: true,
-          backupCodes: { remaining: 5 },
-        }),
-      );
-    });
-
-    it("omits backup stats when 2FA disabled", async () => {
-      tableMocks.users = createQueryBuilder({
-        two_factor_enabled: false,
-        two_factor_enabled_at: null,
+    it("returns the persisted 2FA status contract", async () => {
+      serviceMocks.getTwoFactorStatus.mockResolvedValue({
+        enabled: true,
+        enabledAt: "2026-09-20T10:00:00.000Z",
+        backupCodesRemaining: 5,
       });
       const req = createRequest();
       const res = createResponse();
       const next = jest.fn();
 
       await status(req, res, next);
-      expect(serviceMocks.getBackupCodeStats).not.toHaveBeenCalled();
-      expect(res.json).toHaveBeenCalledWith(
-        expect.objectContaining({ enabled: false, backupCodes: null }),
-      );
+
+      expect(serviceMocks.getTwoFactorStatus).toHaveBeenCalledWith("user-123");
+      expect(res.json).toHaveBeenCalledWith({
+        enabled: true,
+        enabledAt: "2026-09-20T10:00:00.000Z",
+        backupCodesRemaining: 5,
+      });
+      expect(next).not.toHaveBeenCalled();
     });
   });
 });

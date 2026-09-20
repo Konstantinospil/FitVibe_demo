@@ -6,6 +6,7 @@ import type {
   PrivacySettings,
   UpdatePrivacyDTO,
   UpdateProfileDTO,
+  UserStatus,
 } from "./users.types.js";
 
 const USERS_TABLE = "users";
@@ -20,7 +21,7 @@ export interface CreateUserRecordInput {
   displayName: string;
   locale?: string;
   preferredLang?: string;
-  status: string;
+  status: UserStatus;
   roleCode: string;
   passwordHash: string;
 }
@@ -31,7 +32,7 @@ export type UserRow = {
   display_name: string;
   locale: string;
   preferred_lang: string;
-  status: string;
+  status: UserStatus;
   role_code: string;
   password_hash: string;
   created_at: string;
@@ -257,7 +258,7 @@ export async function createUserRecord(
 
 export async function setUserStatus(
   userId: string,
-  status: string,
+  status: UserStatus,
   trx?: Knex.Transaction,
 ): Promise<number> {
   return withDb(trx)(USERS_TABLE)

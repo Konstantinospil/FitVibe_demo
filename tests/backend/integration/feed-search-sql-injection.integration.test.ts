@@ -119,13 +119,15 @@ describeWithTestDatabase("Integration: Feed Search SQL Injection Protection", ()
       expect(Array.isArray(response.body.items)).toBe(true);
     }
 
-    // Backtick is treated as command-injection by the security middleware
+    // A lone backtick is valid free-form search text. SQL safety is provided by
+    // parameterized repository queries rather than punctuation-based rejection.
     const backtickResponse = await request(app)
       .get("/api/v1/feed")
       .set("Authorization", `Bearer ${authToken}`)
       .query({ q: "test`query" });
-    expect(backtickResponse.status).toBe(400);
-    expect(backtickResponse.body.error?.code).toBe("E.SECURITY.SUSPICIOUS_INPUT");
+    expect(backtickResponse.status).toBe(200);
+    expect(backtickResponse.body).toHaveProperty("items");
+    expect(Array.isArray(backtickResponse.body.items)).toBe(true);
   });
 
   it("should handle empty and null search queries safely", async () => {

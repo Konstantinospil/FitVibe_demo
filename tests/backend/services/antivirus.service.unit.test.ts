@@ -54,6 +54,16 @@ describe("antivirus.service (unit)", () => {
     expect(version).toBeNull();
   });
 
+  it("fails closed when scanning is disabled in production", async () => {
+    const { scanBuffer, checkHealth } = await loadModule({ enabled: false, production: true });
+
+    const result = await scanBuffer(Buffer.from("data"), "file.txt");
+
+    expect(result.isInfected).toBe(true);
+    expect(result.viruses).toEqual(["SCAN_DISABLED"]);
+    await expect(checkHealth()).resolves.toBe(false);
+  });
+
   it("fails closed in production when scan errors occur", async () => {
     const { scanBuffer } = await loadModule({ enabled: true, production: true, initFails: true });
     const { logger } = await import("../../../apps/backend/src/config/logger.js");

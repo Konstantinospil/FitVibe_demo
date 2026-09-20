@@ -1,13 +1,28 @@
-import * as dotenv from "dotenv";
-import { getSslConfig } from "./ssl-config.js";
+import { env } from "../config/env.js";
+import { getSslConfig, type PgSslConfig } from "./ssl-config.js";
 
-dotenv.config();
+export interface DatabaseConnectionConfig {
+  connectionString?: string;
+  host?: string;
+  port?: number;
+  database?: string;
+  user?: string;
+  password?: string;
+  ssl?: PgSslConfig;
+}
 
-export const DB_CONFIG = {
-  host: process.env.PGHOST ?? "localhost",
-  port: Number(process.env.PGPORT ?? 5432),
-  database: process.env.PGDATABASE ?? "fitvibe",
-  user: process.env.PGUSER ?? "fitvibe",
-  password: process.env.PGPASSWORD ?? "fitvibe",
-  ssl: getSslConfig(process.env),
-} as const;
+const ssl = getSslConfig(process.env);
+
+export const DB_CONFIG: DatabaseConnectionConfig = env.DATABASE_URL
+  ? {
+      connectionString: env.DATABASE_URL,
+      ssl,
+    }
+  : {
+      host: env.database.host,
+      port: env.database.port,
+      database: env.database.name,
+      user: env.database.user,
+      password: env.database.password,
+      ssl,
+    };

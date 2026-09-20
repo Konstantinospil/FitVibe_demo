@@ -4,19 +4,16 @@ import * as usersService from "../../../../apps/backend/src/modules/users/users.
 import * as usersRepository from "../../../../apps/backend/src/modules/users/users.repository.js";
 import * as userDataArchive from "../../../../apps/backend/src/modules/users/user-data-archive.service.js";
 import * as idempotencyService from "../../../../apps/backend/src/modules/common/idempotency.service.js";
-import * as idempotencyHelpers from "../../../../apps/backend/src/modules/common/idempotency.helpers.js";
 
 // Mock dependencies
 jest.mock("../../../../apps/backend/src/modules/users/users.service.js");
 jest.mock("../../../../apps/backend/src/modules/users/users.repository.js");
 jest.mock("../../../../apps/backend/src/modules/common/idempotency.service.js");
-jest.mock("../../../../apps/backend/src/modules/common/idempotency.helpers.js");
 jest.mock("../../../../apps/backend/src/modules/users/user-data-archive.service.js");
 
 const mockUsersService = jest.mocked(usersService);
 const mockUsersRepository = jest.mocked(usersRepository);
 const mockIdempotencyService = jest.mocked(idempotencyService);
-const mockIdempotencyHelpers = jest.mocked(idempotencyHelpers);
 const mockUserDataArchive = jest.mocked(userDataArchive);
 
 describe("Users Controller", () => {
@@ -128,7 +125,6 @@ describe("Users Controller", () => {
 
       mockRequest.body = userData;
       mockRequest.method = "POST";
-      mockIdempotencyHelpers.getIdempotencyKey.mockReturnValue(null);
       mockUsersService.createUser.mockResolvedValue(mockUser);
 
       await usersController.adminCreateUser(mockRequest as Request, mockResponse as Response);
@@ -156,8 +152,6 @@ describe("Users Controller", () => {
       mockRequest.body = userData;
       mockRequest.method = "POST";
       mockRequest.get = jest.fn().mockReturnValue(idempotencyKey);
-      mockIdempotencyHelpers.getIdempotencyKey.mockReturnValue(idempotencyKey);
-      mockIdempotencyHelpers.getRouteTemplate.mockReturnValue("/api/v1/users");
       mockIdempotencyService.resolveIdempotency.mockResolvedValue({
         type: "new",
         recordId: "record-123",
@@ -187,8 +181,6 @@ describe("Users Controller", () => {
       mockRequest.body = userData;
       mockRequest.method = "POST";
       mockRequest.get = jest.fn().mockReturnValue(idempotencyKey);
-      mockIdempotencyHelpers.getIdempotencyKey.mockReturnValue(idempotencyKey);
-      mockIdempotencyHelpers.getRouteTemplate.mockReturnValue("/api/v1/users");
       mockIdempotencyService.resolveIdempotency.mockResolvedValue({
         type: "replay",
         status: 201,
@@ -235,7 +227,6 @@ describe("Users Controller", () => {
 
       mockRequest.body = updateData;
       mockRequest.method = "PATCH";
-      mockIdempotencyHelpers.getIdempotencyKey.mockReturnValue(null);
       mockUsersService.updateProfile.mockResolvedValue(mockUser);
 
       await usersController.updateMe(mockRequest as Request, mockResponse as Response);
@@ -259,8 +250,6 @@ describe("Users Controller", () => {
       mockRequest.body = updateData;
       mockRequest.method = "PATCH";
       mockRequest.get = jest.fn().mockReturnValue(idempotencyKey);
-      mockIdempotencyHelpers.getIdempotencyKey.mockReturnValue(idempotencyKey);
-      mockIdempotencyHelpers.getRouteTemplate.mockReturnValue("/api/v1/users/me");
       mockIdempotencyService.resolveIdempotency.mockResolvedValue({
         type: "new",
         recordId: "record-123",
@@ -302,7 +291,6 @@ describe("Users Controller", () => {
 
       mockRequest.body = passwordData;
       mockRequest.method = "PATCH";
-      mockIdempotencyHelpers.getIdempotencyKey.mockReturnValue(null);
       mockUsersService.updatePassword.mockResolvedValue(undefined);
 
       await usersController.changePassword(mockRequest as Request, mockResponse as Response);
@@ -322,8 +310,6 @@ describe("Users Controller", () => {
       mockRequest.body = passwordData;
       mockRequest.method = "PATCH";
       mockRequest.get = jest.fn().mockReturnValue(idempotencyKey);
-      mockIdempotencyHelpers.getIdempotencyKey.mockReturnValue(idempotencyKey);
-      mockIdempotencyHelpers.getRouteTemplate.mockReturnValue("/api/v1/users/me/password");
       mockIdempotencyService.resolveIdempotency.mockResolvedValue({
         type: "new",
         recordId: "record-123",
@@ -370,7 +356,6 @@ describe("Users Controller", () => {
 
       mockRequest.body = deleteData;
       mockRequest.method = "POST";
-      mockIdempotencyHelpers.getIdempotencyKey.mockReturnValue(null);
       mockUsersService.requestAccountDeletion.mockResolvedValue(mockSchedule);
 
       await usersController.deleteAccount(mockRequest as Request, mockResponse as Response);
@@ -579,7 +564,6 @@ describe("Users Controller", () => {
 
       mockRequest.params = { contactId };
       mockRequest.method = "POST";
-      mockIdempotencyHelpers.getIdempotencyKey.mockReturnValue(null);
       mockUsersService.requestContactVerification.mockResolvedValue(mockResult);
 
       await usersController.requestContactVerificationHandler(
@@ -630,7 +614,6 @@ describe("Users Controller", () => {
 
       mockRequest.body = emailData;
       mockRequest.method = "PATCH";
-      mockIdempotencyHelpers.getIdempotencyKey.mockReturnValue(null);
       mockUsersService.updatePrimaryEmail.mockResolvedValue(mockProfile);
 
       await usersController.updateEmail(mockRequest as Request, mockResponse as Response);
@@ -672,7 +655,6 @@ describe("Users Controller", () => {
 
       mockRequest.body = phoneData;
       mockRequest.method = "PATCH";
-      mockIdempotencyHelpers.getIdempotencyKey.mockReturnValue(null);
       mockUsersService.updatePhoneNumber.mockResolvedValue(mockProfile);
 
       await usersController.updatePhone(mockRequest as Request, mockResponse as Response);
@@ -697,7 +679,6 @@ describe("Users Controller", () => {
 
       mockRequest.body = phoneData;
       mockRequest.method = "PATCH";
-      mockIdempotencyHelpers.getIdempotencyKey.mockReturnValue(null);
       mockUsersService.updatePhoneNumber.mockResolvedValue(mockProfile);
 
       await usersController.updatePhone(mockRequest as Request, mockResponse as Response);
@@ -739,7 +720,6 @@ describe("Users Controller", () => {
       mockRequest.body = { token };
       mockRequest.method = "POST";
       mockUsersRepository.getContactById.mockResolvedValue(mockContact);
-      mockIdempotencyHelpers.getIdempotencyKey.mockReturnValue(null);
       mockUsersService.verifyContact.mockResolvedValue(mockVerifiedContact);
 
       await usersController.verifyContactHandler(mockRequest as Request, mockResponse as Response);
@@ -819,7 +799,6 @@ describe("Users Controller", () => {
     it("should remove contact successfully without idempotency", async () => {
       mockRequest.params = { contactId };
       mockRequest.method = "DELETE";
-      mockIdempotencyHelpers.getIdempotencyKey.mockReturnValue(null);
       mockUsersService.removeContact.mockResolvedValue(undefined);
 
       await usersController.removeContactHandler(mockRequest as Request, mockResponse as Response);
@@ -852,23 +831,22 @@ describe("Users Controller", () => {
     it("should change status successfully without idempotency", async () => {
       const targetUserId = "user-456";
       const statusData = {
-        status: "archived" as const,
+        status: "suspended" as const,
       };
 
       const mockProfile = {
         id: targetUserId,
-        status: "archived",
+        status: "suspended",
       };
 
       mockRequest.params = { id: targetUserId };
       mockRequest.body = statusData;
       mockRequest.method = "PATCH";
-      mockIdempotencyHelpers.getIdempotencyKey.mockReturnValue(null);
       mockUsersService.changeStatus.mockResolvedValue(mockProfile);
 
       await usersController.adminChangeStatus(mockRequest as Request, mockResponse as Response);
 
-      expect(mockUsersService.changeStatus).toHaveBeenCalledWith(userId, targetUserId, "archived");
+      expect(mockUsersService.changeStatus).toHaveBeenCalledWith(userId, targetUserId, "suspended");
       expect(mockResponse.json).toHaveBeenCalledWith(mockProfile);
     });
 

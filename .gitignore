@@ -36,6 +36,9 @@ out/
 .tsup/
 *.tsbuildinfo
 
+# Backend runtime source is TypeScript; emitted JavaScript belongs in dist/.
+/apps/backend/src/**/*.js
+
 # Per-workspace build artifacts
 /apps/backend/dist/
 /apps/frontend/dist/

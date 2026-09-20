@@ -1,4 +1,13 @@
-export type UserStatus = "pending_verification" | "active" | "archived" | "pending_deletion";
+export const USER_STATUSES = [
+  "pending_verification",
+  "active",
+  "suspended",
+  "banned",
+  "pending_deletion",
+  "deleted",
+] as const;
+
+export type UserStatus = (typeof USER_STATUSES)[number];
 
 export interface UserContact {
   id: string;

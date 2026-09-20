@@ -7,7 +7,7 @@ export interface PlanRow {
   id: string;
   user_id: string;
   name: string;
-  status: string;
+  status: "active" | "completed";
   progress_percent: string | number;
   session_count: number;
   completed_count: number;
@@ -22,14 +22,14 @@ export interface CreatePlanInput {
   id: string;
   user_id: string;
   name: string;
-  status?: string;
+  status?: "active" | "completed";
   start_date?: string | null;
   end_date?: string | null;
 }
 
 export interface UpdatePlanInput {
   name?: string;
-  status?: string;
+  status?: "active" | "completed";
   progress_percent?: number;
   session_count?: number;
   completed_count?: number;
@@ -39,7 +39,7 @@ export interface UpdatePlanInput {
 
 export interface ListPlansFilters {
   userId?: string;
-  status?: string;
+  status?: "active" | "completed";
   includeArchived?: boolean;
   search?: string;
 }
@@ -186,10 +186,10 @@ export async function archivePlan(planId: string, trx?: Knex.Transaction): Promi
 }
 
 /**
- * Hard delete a plan
+ * Soft delete a plan
  */
 export async function deletePlan(planId: string, trx?: Knex.Transaction): Promise<number> {
-  return withDb(trx)<PlanRow>(PLANS_TABLE).where({ id: planId }).del();
+  return archivePlan(planId, trx);
 }
 
 /**
@@ -197,7 +197,7 @@ export async function deletePlan(planId: string, trx?: Knex.Transaction): Promis
  */
 export async function countUserPlans(
   userId: string,
-  filters?: { status?: string; includeArchived?: boolean },
+  filters?: { status?: "active" | "completed"; includeArchived?: boolean },
   trx?: Knex.Transaction,
 ): Promise<number> {
   const query = withDb(trx)<PlanRow>(PLANS_TABLE).where({ user_id: userId });

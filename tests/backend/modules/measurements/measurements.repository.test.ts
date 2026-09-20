@@ -124,7 +124,10 @@ describe("measurements repository", () => {
 
     const result = await listLatestAttributeValues("bio", "user-1");
 
-    expect(mockDb.raw).toHaveBeenCalled();
+    expect(mockDb.raw).toHaveBeenCalledWith(
+      expect.stringContaining("deactivated_at IS NULL"),
+      ["user-1"],
+    );
     expect(result).toHaveLength(1);
   });
 

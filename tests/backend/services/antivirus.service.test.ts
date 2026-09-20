@@ -91,6 +91,17 @@ describe("Antivirus Service", () => {
       }
     });
 
+    it("should reject uploads when scanning is disabled in production", async () => {
+      mockEnv.clamav.enabled = false;
+      mockEnv.isProduction = true;
+
+      const result = await scanBuffer(Buffer.from("test content"), "test.jpg");
+
+      expect(result.isInfected).toBe(true);
+      expect(result.viruses).toEqual(["SCAN_DISABLED"]);
+      expect(mockLoggerImpl.error).toHaveBeenCalled();
+    });
+
     it("should scan buffer and return clean result", async () => {
       const buffer = Buffer.from("clean content");
       mockScanner.scanStream.mockResolvedValue({
@@ -175,16 +186,18 @@ describe("Antivirus Service", () => {
   });
 
   describe("checkHealth", () => {
-    it("should return true when scanning is disabled", async () => {
-      const originalEnabled = mockEnv.clamav.enabled;
+    it("should return true when scanning is disabled outside production", async () => {
       mockEnv.clamav.enabled = false;
+      mockEnv.isProduction = false;
 
-      try {
-        const result = await checkHealth();
-        expect(result).toBe(true);
-      } finally {
-        mockEnv.clamav.enabled = originalEnabled;
-      }
+      expect(await checkHealth()).toBe(true);
+    });
+
+    it("should return false when scanning is disabled in production", async () => {
+      mockEnv.clamav.enabled = false;
+      mockEnv.isProduction = true;
+
+      expect(await checkHealth()).toBe(false);
     });
 
     it("should return true when health check succeeds", async () => {

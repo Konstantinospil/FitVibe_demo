@@ -59,7 +59,7 @@ export async function addBodyWeightHandler(req: Request, res: Response): Promise
 
   await insertAudit({
     actorUserId: userId,
-    entity: "body_progress",
+    entityType: "body_progress",
     action: "weight_recorded",
     entityId: entry.id,
     metadata: { measuredAt: entry.measuredAt },
@@ -106,7 +106,7 @@ export async function uploadBodyProgressPhotoHandler(req: Request, res: Response
 
   await insertAudit({
     actorUserId: userId,
-    entity: "body_progress",
+    entityType: "body_progress",
     action: "photo_uploaded",
     entityId: record.id,
     metadata: { bytes: file.bytes, mime: "image/jpeg" },
@@ -160,7 +160,7 @@ export async function deleteBodyProgressPhotoHandler(req: Request, res: Response
   await deleteStorageObject(photo.storageKey).catch(() => undefined);
   await insertAudit({
     actorUserId: userId,
-    entity: "body_progress",
+    entityType: "body_progress",
     action: "photo_deleted",
     entityId: req.params.id,
   });

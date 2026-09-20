@@ -24,11 +24,40 @@ describe("App Configuration", () => {
       }
     });
 
+    it("should throw error when ClamAV is disabled in production", () => {
+      const originalNodeEnv = process.env.NODE_ENV;
+      const originalCsrfEnabled = process.env.CSRF_ENABLED;
+      const originalClamavEnabled = process.env.CLAMAV_ENABLED;
+
+      try {
+        process.env.NODE_ENV = "production";
+        process.env.CSRF_ENABLED = "true";
+        process.env.CLAMAV_ENABLED = "false";
+
+        jest.resetModules();
+        expect(() => {
+          // eslint-disable-next-line @typescript-eslint/no-require-imports
+          require("../../apps/backend/src/app.js");
+        }).toThrow("Refusing to start production with uploads unscanned");
+      } finally {
+        process.env.NODE_ENV = originalNodeEnv;
+        process.env.CSRF_ENABLED = originalCsrfEnabled;
+        process.env.CLAMAV_ENABLED = originalClamavEnabled;
+        jest.resetModules();
+      }
+    });
+
     it("should provide CSRF token route when CSRF is enabled", async () => {
       const response = await request(app).get("/api/v1/csrf-token");
 
       // CSRF might be disabled in test environment, so we check for either success or 404
       expect([200, 404]).toContain(response.status);
+    });
+  });
+
+  describe("Proxy Configuration", () => {
+    it("should honor the configured trust proxy setting", () => {
+      expect(app.get("trust proxy")).toBe(false);
     });
   });
 

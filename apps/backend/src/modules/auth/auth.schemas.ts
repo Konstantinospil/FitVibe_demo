@@ -79,9 +79,14 @@ export const RevokeSessionsSchema = z
     path: ["revokeAll"],
   });
 
+const TWO_FACTOR_CODE_REGEX = /^(?:\d{6}|[A-HJ-NP-Z2-9]{4}-[A-HJ-NP-Z2-9]{4})$/i;
+
 export const Verify2FALoginSchema = z.object({
   pendingSessionId: z.string().uuid(),
-  code: z.string().length(6).regex(/^\d+$/, "Code must be 6 digits"),
+  code: z
+    .string()
+    .trim()
+    .regex(TWO_FACTOR_CODE_REGEX, "Code must be a 6-digit TOTP or XXXX-XXXX backup code"),
 });
 
 export const AcceptTermsSchema = z

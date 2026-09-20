@@ -93,25 +93,22 @@ describe("TwoFactorVerificationLogin", () => {
     ).toBeInTheDocument();
   });
 
-  it("allows only numeric input and limits to 6 digits", () => {
+  it("accepts TOTP and backup-code input", () => {
     renderWithProviders();
 
     const codeInput = screen.getByRole("textbox");
 
-    // Should allow numbers
     fireEvent.change(codeInput, { target: { value: "123456" } });
     expect(codeInput).toHaveValue("123456");
 
-    // Should strip non-numeric characters
-    fireEvent.change(codeInput, { target: { value: "12abc34" } });
-    expect(codeInput).toHaveValue("1234");
+    fireEvent.change(codeInput, { target: { value: "abcd-2345" } });
+    expect(codeInput).toHaveValue("ABCD-2345");
 
-    // Should limit to 6 digits
-    fireEvent.change(codeInput, { target: { value: "1234567890" } });
-    expect(codeInput).toHaveValue("123456");
+    fireEvent.change(codeInput, { target: { value: "ABCD-2345-extra" } });
+    expect(codeInput).toHaveValue("ABCD-2345");
   });
 
-  it("disables submit button when code is not 6 digits", () => {
+  it("enables submit only for a valid TOTP or backup code", () => {
     renderWithProviders();
 
     const submitButton = screen.getByRole("button", { name: /verify and continue/i });
@@ -119,14 +116,39 @@ describe("TwoFactorVerificationLogin", () => {
     // Should be disabled initially
     expect(submitButton).toBeDisabled();
 
-    // Should be disabled with less than 6 digits
     const codeInput = screen.getByRole("textbox");
     fireEvent.change(codeInput, { target: { value: "12345" } });
     expect(submitButton).toBeDisabled();
 
-    // Should be enabled with exactly 6 digits
     fireEvent.change(codeInput, { target: { value: "123456" } });
     expect(submitButton).not.toBeDisabled();
+
+    fireEvent.change(codeInput, { target: { value: "ABCD-2345" } });
+    expect(submitButton).not.toBeDisabled();
+  });
+
+  it("submits a backup code without rewriting it", async () => {
+    vi.mocked(api.verify2FALogin).mockResolvedValue({
+      user: { id: "123", username: "testuser", email: "test@example.com" },
+      session: { id: "session123" },
+    });
+
+    renderWithProviders();
+
+    const codeInput = screen.getByRole("textbox");
+    const form = codeInput.closest("form");
+    fireEvent.change(codeInput, { target: { value: "ABCD-2345" } });
+
+    if (form) {
+      fireEvent.submit(form);
+    }
+
+    await waitFor(() => {
+      expect(api.verify2FALogin).toHaveBeenCalledWith({
+        pendingSessionId: "session123",
+        code: "ABCD-2345",
+      });
+    });
   });
 
   it("handles successful 2FA verification", async () => {

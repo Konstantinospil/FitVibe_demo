@@ -127,7 +127,11 @@ export async function handleIdempotentRequest<T>(
     // Replay previous response
     res.set("Idempotency-Key", key);
     res.set("Idempotent-Replayed", "true");
-    res.status(resolution.status).json(resolution.body);
+    if (resolution.status === 204) {
+      res.status(204).send();
+    } else {
+      res.status(resolution.status).json(resolution.body);
+    }
     return true;
   }
 
@@ -143,28 +147,10 @@ export async function handleIdempotentRequest<T>(
 
   // Send response
   res.set("Idempotency-Key", key);
-  res.status(result.status).json(result.body);
+  if (result.status === 204) {
+    res.status(204).send();
+  } else {
+    res.status(result.status).json(result.body);
+  }
   return true;
-}
-
-/**
- * Wrapper for simple idempotent handlers where authentication is required
- * Combines authentication check and idempotency handling
- *
- * @param req - Express request
- * @param res - Express response
- * @param payload - Request payload
- * @param handler - Handler function that receives userId and returns result
- */
-export async function withIdempotency<T>(
-  req: Request,
-  res: Response,
-  payload: unknown,
-  handler: (userId: string) => Promise<{ status: number; body: T }>,
-): Promise<{ handled: boolean; userId: string }> {
-  const userId = requireAuthenticatedUser(req, res);
-
-  const handled = await handleIdempotentRequest(req, res, userId, payload, () => handler(userId));
-
-  return { handled, userId };
 }

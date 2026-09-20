@@ -90,8 +90,16 @@ export interface ScanResult {
 export async function scanBuffer(buffer: Buffer, filename: string = "upload"): Promise<ScanResult> {
   const startTime = Date.now();
 
-  // If AV scanning is disabled (dev mode), return clean result
   if (!env.clamav.enabled) {
+    if (env.isProduction) {
+      logger.error({ filename }, "[antivirus] Scanning disabled in production - rejecting upload");
+      return {
+        isInfected: true,
+        viruses: ["SCAN_DISABLED"],
+        scannedAt: new Date(),
+      };
+    }
+
     logger.warn(
       { filename },
       "[antivirus] Scanning disabled - skipping malware check (DEVELOPMENT ONLY)",
@@ -176,7 +184,7 @@ export async function scanBuffer(buffer: Buffer, filename: string = "upload"): P
  */
 export async function checkHealth(): Promise<boolean> {
   if (!env.clamav.enabled) {
-    return true; // Consider healthy if disabled
+    return !env.isProduction;
   }
 
   try {

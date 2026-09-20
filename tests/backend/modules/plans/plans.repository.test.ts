@@ -88,7 +88,7 @@ describe("Plans Repository", () => {
         id: planId,
         user_id: userId,
         name: "Archived Plan",
-        status: "archived",
+        status: "completed",
         progress_percent: 100,
         session_count: 10,
         completed_count: 10,
@@ -463,26 +463,34 @@ describe("Plans Repository", () => {
   });
 
   describe("deletePlan", () => {
-    it("should delete a plan", async () => {
+    it("should soft-delete a plan", async () => {
       const newBuilder = createMockQueryBuilder();
       queryBuilders["plans"] = newBuilder;
-      newBuilder.del.mockResolvedValue(1);
+      newBuilder.update.mockResolvedValue(1);
 
       const result = await plansRepository.deletePlan(planId);
 
       expect(result).toBe(1);
       expect(newBuilder.where).toHaveBeenCalledWith({ id: planId });
-      expect(newBuilder.del).toHaveBeenCalled();
+      expect(newBuilder.whereNull).toHaveBeenCalledWith("archived_at");
+      expect(newBuilder.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          archived_at: expect.any(String),
+          updated_at: expect.any(String),
+        }),
+      );
+      expect(newBuilder.del).not.toHaveBeenCalled();
     });
 
-    it("should work with transaction", async () => {
+    it("should soft-delete with transaction", async () => {
       const newBuilder = createMockQueryBuilder();
-      newBuilder.del.mockResolvedValue(1);
+      newBuilder.update.mockResolvedValue(1);
       const mockTrx = ((_table: string) => newBuilder) as any;
 
       await plansRepository.deletePlan(planId, mockTrx);
 
-      expect(newBuilder.del).toHaveBeenCalled();
+      expect(newBuilder.update).toHaveBeenCalled();
+      expect(newBuilder.del).not.toHaveBeenCalled();
     });
   });
 
