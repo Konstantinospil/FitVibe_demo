@@ -1,72 +1,75 @@
-import type { Request, Response, NextFunction } from "express";
+import type { NextFunction, Request, Response } from "express";
 import { z } from "zod";
-import bcrypt from "bcryptjs";
+import { db } from "../../db/connection.js";
 import { HttpError } from "../../utils/http.js";
 import {
-  initializeTwoFactorSetup,
-  enableTwoFactor,
-  disableTwoFactor,
-  verifyTotpToken,
+  disable2FA,
+  getTwoFactorStatus,
   regenerateBackupCodes,
-  getBackupCodeStats,
+  setupTwoFactor,
+  verifyAndEnable2FA,
 } from "./two-factor.service.js";
-import { db } from "../../db/connection.js";
-import { logger } from "../../config/logger.js";
 
-/**
- * Validation schemas
- */
-const EnableTwoFactorSchema = z.object({
-  secret: z.string().min(16),
-  token: z.string().regex(/^\d{6}$/, "Token must be 6 digits"),
-});
-
-const VerifyTwoFactorSchema = z.object({
-  token: z.string().min(6).max(8), // TOTP (6) or backup code (8)
-});
+const VerificationSchema = z
+  .object({
+    code: z.string().regex(/^\d{6}$/, "Code must be 6 digits").optional(),
+    token: z.string().regex(/^\d{6}$/, "Token must be 6 digits").optional(),
+  })
+  .refine((value) => Boolean(value.code ?? value.token), {
+    message: "Verification code is required",
+  });
 
 const DisableTwoFactorSchema = z.object({
   password: z.string().min(1),
-  token: z.string().min(6).max(8), // Require 2FA token to disable
 });
 
-/**
- * Initialize 2FA setup
- * GET /api/v1/auth/2fa/setup
- * Returns secret, QR code, and backup codes
- */
+function requireUserId(req: Request): string {
+  const userId = req.user?.sub;
+  if (!userId) {
+    throw new HttpError(401, "E.UNAUTHENTICATED", "Authentication required");
+  }
+  return userId;
+}
+
+async function enableFromRequest(req: Request, res: Response): Promise<void> {
+  const userId = requireUserId(req);
+  const parsed = VerificationSchema.safeParse(req.body);
+  if (!parsed.success) {
+    throw new HttpError(400, "E.VALIDATION.FAILED", "Invalid input", parsed.error.flatten());
+  }
+
+  const code = parsed.data.code ?? parsed.data.token;
+  if (!code) {
+    throw new HttpError(400, "E.VALIDATION.FAILED", "Verification code is required");
+  }
+
+  await db.transaction(async (trx) => {
+    await verifyAndEnable2FA(userId, code, trx);
+  });
+
+  res.json({
+    success: true,
+    message: "Two-factor authentication enabled successfully",
+  });
+}
+
 export async function setup(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
-    const userId = req.user?.sub;
-    if (!userId) {
-      throw new HttpError(401, "E.UNAUTHENTICATED", "Authentication required");
+    const userId = requireUserId(req);
+    const email = await db("user_contacts")
+      .where({ user_id: userId, type: "email", is_primary: true })
+      .first<{ value: string }>("value");
+
+    if (!email?.value) {
+      throw new HttpError(404, "E.USER.EMAIL_NOT_FOUND", "Primary email not found");
     }
 
-    // Get user email
-    const user = await db("users")
-      .where({ id: userId })
-      .select("email", "two_factor_enabled")
-      .first<{ email: string; two_factor_enabled: boolean }>();
-
-    if (!user) {
-      throw new HttpError(404, "E.USER.NOT_FOUND", "User not found");
-    }
-
-    if (user.two_factor_enabled) {
-      throw new HttpError(
-        400,
-        "E.2FA.ALREADY_ENABLED",
-        "Two-factor authentication already enabled",
-      );
-    }
-
-    // Initialize setup
-    const setup = await initializeTwoFactorSetup(user.email);
+    const result = await db.transaction((trx) => setupTwoFactor(userId, email.value, trx));
 
     res.json({
-      secret: setup.secret,
-      qrCode: setup.qrCodeUrl,
-      backupCodes: setup.backupCodes,
+      secret: result.secret,
+      qrCode: result.qrCode,
+      backupCodes: result.backupCodes,
       message:
         "Save your backup codes in a safe place. You will need them if you lose access to your authenticator app.",
     });
@@ -75,112 +78,43 @@ export async function setup(req: Request, res: Response, next: NextFunction): Pr
   }
 }
 
-/**
- * Enable 2FA after verifying token
- * POST /api/v1/auth/2fa/enable
- * Requires valid TOTP token to confirm setup
- */
 export async function enable(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
-    const userId = req.user?.sub;
-    if (!userId) {
-      throw new HttpError(401, "E.UNAUTHENTICATED", "Authentication required");
-    }
-
-    const parsed = EnableTwoFactorSchema.safeParse(req.body);
-    if (!parsed.success) {
-      throw new HttpError(400, "E.VALIDATION.FAILED", "Invalid input", parsed.error.flatten());
-    }
-
-    const { secret, token } = parsed.data;
-
-    // Verify token before enabling
-    if (!verifyTotpToken(token, secret)) {
-      throw new HttpError(400, "E.2FA.INVALID_TOKEN", "Invalid verification token");
-    }
-
-    // Get backup codes from setup (should be temporarily stored or re-generated)
-    // For simplicity, we'll generate new ones here
-    const { generateBackupCodes } = await import("./two-factor.service.js");
-    const backupCodes = generateBackupCodes();
-
-    const ipAddress = req.ip ?? null;
-    const userAgent = req.get("user-agent") ?? null;
-
-    // Enable 2FA in transaction
-    await db.transaction(async (trx) => {
-      await enableTwoFactor(userId, secret, backupCodes, ipAddress, userAgent, trx);
-    });
-
-    logger.info({ userId }, "[2fa] Two-factor authentication enabled successfully");
-
-    res.json({
-      message: "Two-factor authentication enabled successfully",
-      backupCodes,
-    });
+    await enableFromRequest(req, res);
   } catch (error) {
     next(error);
   }
 }
 
-/**
- * Disable 2FA
- * POST /api/v1/auth/2fa/disable
- * Requires password and 2FA token for security
- */
+export async function verify(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    await enableFromRequest(req, res);
+  } catch (error) {
+    next(error);
+  }
+}
+
 export async function disable(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
-    const userId = req.user?.sub;
-    if (!userId) {
-      throw new HttpError(401, "E.UNAUTHENTICATED", "Authentication required");
-    }
-
+    const userId = requireUserId(req);
     const parsed = DisableTwoFactorSchema.safeParse(req.body);
     if (!parsed.success) {
       throw new HttpError(400, "E.VALIDATION.FAILED", "Invalid input", parsed.error.flatten());
     }
 
-    const { password, token } = parsed.data;
-
-    // Verify password
     const user = await db("users")
       .where({ id: userId })
-      .select("password_hash", "two_factor_enabled", "two_factor_secret")
-      .first<{
-        password_hash: string;
-        two_factor_enabled: boolean;
-        two_factor_secret: string | null;
-      }>();
-
+      .first<{ password_hash: string }>("password_hash");
     if (!user) {
       throw new HttpError(404, "E.USER.NOT_FOUND", "User not found");
     }
 
-    if (!user.two_factor_enabled) {
-      throw new HttpError(400, "E.2FA.NOT_ENABLED", "Two-factor authentication not enabled");
-    }
-
-    const passwordValid = await bcrypt.compare(password, user.password_hash);
-    if (!passwordValid) {
-      throw new HttpError(401, "E.AUTH.INVALID_CREDENTIALS", "Invalid password");
-    }
-
-    // Verify 2FA token
-    if (!user.two_factor_secret || !verifyTotpToken(token, user.two_factor_secret)) {
-      throw new HttpError(400, "E.2FA.INVALID_TOKEN", "Invalid 2FA token");
-    }
-
-    const ipAddress = req.ip ?? null;
-    const userAgent = req.get("user-agent") ?? null;
-
-    // Disable 2FA
     await db.transaction(async (trx) => {
-      await disableTwoFactor(userId, ipAddress, userAgent, trx);
+      await disable2FA(userId, parsed.data.password, user.password_hash, trx);
     });
 
-    logger.info({ userId }, "[2fa] Two-factor authentication disabled");
-
     res.json({
+      success: true,
       message: "Two-factor authentication disabled successfully",
     });
   } catch (error) {
@@ -188,78 +122,14 @@ export async function disable(req: Request, res: Response, next: NextFunction): 
   }
 }
 
-/**
- * Verify 2FA token (used during login)
- * POST /api/v1/auth/2fa/verify
- */
-export async function verify(req: Request, res: Response, next: NextFunction): Promise<void> {
-  try {
-    const userId = req.user?.sub;
-    if (!userId) {
-      throw new HttpError(401, "E.UNAUTHENTICATED", "Authentication required");
-    }
-
-    const parsed = VerifyTwoFactorSchema.safeParse(req.body);
-    if (!parsed.success) {
-      throw new HttpError(400, "E.VALIDATION.FAILED", "Invalid input", parsed.error.flatten());
-    }
-
-    const { token } = parsed.data;
-
-    const ipAddress = req.ip ?? null;
-    const userAgent = req.get("user-agent") ?? null;
-
-    const { verifyTwoFactorToken } = await import("./two-factor.service.js");
-    const valid = await db.transaction(async (trx) => {
-      return verifyTwoFactorToken(userId, token, ipAddress, userAgent, trx);
-    });
-
-    if (!valid) {
-      throw new HttpError(400, "E.2FA.INVALID_TOKEN", "Invalid 2FA token");
-    }
-
-    res.json({
-      message: "2FA verification successful",
-      verified: true,
-    });
-  } catch (error) {
-    next(error);
-  }
-}
-
-/**
- * Regenerate backup codes
- * POST /api/v1/auth/2fa/backup-codes/regenerate
- */
 export async function regenerateBackups(
   req: Request,
   res: Response,
   next: NextFunction,
 ): Promise<void> {
   try {
-    const userId = req.user?.sub;
-    if (!userId) {
-      throw new HttpError(401, "E.UNAUTHENTICATED", "Authentication required");
-    }
-
-    // Check if 2FA is enabled
-    const user = await db("users")
-      .where({ id: userId })
-      .select("two_factor_enabled")
-      .first<{ two_factor_enabled: boolean }>();
-
-    if (!user || !user.two_factor_enabled) {
-      throw new HttpError(400, "E.2FA.NOT_ENABLED", "Two-factor authentication not enabled");
-    }
-
-    const ipAddress = req.ip ?? null;
-    const userAgent = req.get("user-agent") ?? null;
-
-    const backupCodes = await db.transaction(async (trx) => {
-      return regenerateBackupCodes(userId, ipAddress, userAgent, trx);
-    });
-
-    logger.info({ userId }, "[2fa] Backup codes regenerated");
+    const userId = requireUserId(req);
+    const backupCodes = await db.transaction((trx) => regenerateBackupCodes(userId, trx));
 
     res.json({
       message: "Backup codes regenerated successfully",
@@ -270,36 +140,12 @@ export async function regenerateBackups(
   }
 }
 
-/**
- * Get 2FA status and backup code statistics
- * GET /api/v1/auth/2fa/status
- */
 export async function status(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
-    const userId = req.user?.sub;
-    if (!userId) {
-      throw new HttpError(401, "E.UNAUTHENTICATED", "Authentication required");
-    }
+    const userId = requireUserId(req);
+    const result = await getTwoFactorStatus(userId);
 
-    const user = await db("users")
-      .where({ id: userId })
-      .select("two_factor_enabled", "two_factor_enabled_at")
-      .first<{ two_factor_enabled: boolean; two_factor_enabled_at: Date | null }>();
-
-    if (!user) {
-      throw new HttpError(404, "E.USER.NOT_FOUND", "User not found");
-    }
-
-    let backupCodeStats = null;
-    if (user.two_factor_enabled) {
-      backupCodeStats = await getBackupCodeStats(userId);
-    }
-
-    res.json({
-      enabled: user.two_factor_enabled,
-      enabledAt: user.two_factor_enabled_at,
-      backupCodes: backupCodeStats,
-    });
+    res.json(result);
   } catch (error) {
     next(error);
   }
