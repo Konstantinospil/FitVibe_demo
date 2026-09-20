@@ -541,6 +541,7 @@ describe("Plans Service", () => {
   describe("recomputeProgress", () => {
     let mockQueryBuilder: {
       where: jest.Mock;
+      whereNull: jest.Mock;
       select: jest.Mock;
       first: jest.Mock;
     };
@@ -548,6 +549,7 @@ describe("Plans Service", () => {
     beforeEach(() => {
       mockQueryBuilder = {
         where: jest.fn().mockReturnThis(),
+        whereNull: jest.fn().mockReturnThis(),
         select: jest.fn().mockReturnThis(),
         first: jest.fn(),
       };
@@ -569,6 +571,7 @@ describe("Plans Service", () => {
 
       expect(mockedDb).toHaveBeenCalledWith("sessions");
       expect(mockQueryBuilder.where).toHaveBeenCalledWith({ plan_id: "plan-1" });
+      expect(mockQueryBuilder.whereNull).toHaveBeenCalledWith("deleted_at");
       expect(mockedUpdatePlanProgress).toHaveBeenCalledWith("plan-1", 10, 7, undefined);
       expect(mockedDb.raw).toHaveBeenCalled();
     });
@@ -576,6 +579,7 @@ describe("Plans Service", () => {
     it("should work with transaction", async () => {
       const mockTrxQueryBuilder = {
         where: jest.fn().mockReturnThis(),
+        whereNull: jest.fn().mockReturnThis(),
         select: jest.fn().mockReturnThis(),
         first: jest.fn().mockResolvedValue({
           total: "5",
