@@ -9,8 +9,7 @@ import {
   cloneOne,
   applyRecurrence,
 } from "./sessions.service.js";
-import { resolveIdempotency, persistIdempotencyResult } from "../common/idempotency.service.js";
-import { HttpError } from "../../utils/http.js";
+import { handleIdempotentRequest } from "../common/idempotency.helpers.js";
 
 const statusEnum = z.enum(["planned", "in_progress", "completed", "canceled"]);
 const visibilityEnum = z.enum(["private", "public", "link"]);
@@ -141,41 +140,6 @@ const querySchema = z.object({
   offset: z.coerce.number().int().min(0).max(10000).default(0),
 });
 
-function getIdempotencyKey(req: Request): string | null {
-  const header = req.get("Idempotency-Key");
-  if (!header) {
-    return null;
-  }
-  const key = header.trim();
-  if (!key) {
-    throw new HttpError(400, "E.IDEMPOTENCY.INVALID", "IDEMPOTENCY_INVALID");
-  }
-  if (key.length > 200) {
-    throw new HttpError(
-      400,
-      "E.IDEMPOTENCY.INVALID",
-      "Idempotency-Key header must be 200 characters or fewer",
-    );
-  }
-  return key;
-}
-
-function getRouteTemplate(req: Request): string {
-  const base = req.baseUrl ?? "";
-  const routeInfo = req.route as unknown;
-  let path = "";
-  if (routeInfo && typeof routeInfo === "object" && "path" in routeInfo) {
-    const candidate = (routeInfo as { path?: unknown }).path;
-    if (typeof candidate === "string") {
-      path = candidate;
-    }
-  }
-  const combined = `${base}${path}`.replace(/\/{2,}/g, "/");
-  const trimmed =
-    combined.length > 1 && combined.endsWith("/") ? combined.slice(0, -1) : combined || "/";
-  return trimmed || "/";
-}
-
 function requireUser(req: Request, res: Response): string | null {
   const candidate = req.user;
   if (candidate && typeof candidate === "object" && "sub" in candidate) {
@@ -221,46 +185,21 @@ export async function createSessionHandler(req: Request, res: Response): Promise
     return;
   }
 
-  // Validate idempotency key first (before body validation)
-  // This allows us to throw errors for invalid keys early
-  const key = getIdempotencyKey(req);
+  const handled = await handleIdempotentRequest(
+    req,
+    res,
+    userId,
+    parsed.data,
+    async () => {
+      const body = await createOne(userId, parsed.data);
+      return { status: 201, body };
+    },
+  );
 
-  const parsed = createSchema.safeParse(req.body);
-  if (!parsed.success) {
-    res.status(400).json({ error: parsed.error.flatten() });
-    return;
+  if (!handled) {
+    const body = await createOne(userId, parsed.data);
+    res.status(201).json(body);
   }
-
-  let recordId: string | null = null;
-  if (key) {
-    const resolution = await resolveIdempotency(
-      {
-        userId,
-        method: req.method.toUpperCase(),
-        route: getRouteTemplate(req),
-        key,
-      },
-      parsed.data,
-    );
-    if (resolution.type === "replay") {
-      res.set("Idempotency-Key", key);
-      res.set("Idempotent-Replayed", "true");
-      res.status(resolution.status).json(resolution.body);
-      return;
-    }
-    recordId = resolution.recordId;
-  }
-
-  const created = await createOne(userId, parsed.data);
-
-  if (key && recordId) {
-    await persistIdempotencyResult(recordId, 201, created);
-    res.set("Idempotency-Key", key);
-  } else if (key) {
-    res.set("Idempotency-Key", key);
-  }
-
-  res.status(201).json(created);
 }
 
 export async function updateSessionHandler(req: Request, res: Response): Promise<void> {
@@ -291,45 +230,21 @@ export async function cloneSessionHandler(req: Request, res: Response): Promise<
     return;
   }
 
-  // Validate idempotency key first (before body validation)
-  const key = getIdempotencyKey(req);
+  const handled = await handleIdempotentRequest(
+    req,
+    res,
+    userId,
+    { source_id: req.params.id, ...parsed.data },
+    async () => {
+      const body = await cloneOne(userId, req.params.id, parsed.data);
+      return { status: 201, body };
+    },
+  );
 
-  const parsed = cloneSchema.safeParse(req.body ?? {});
-  if (!parsed.success) {
-    res.status(400).json({ error: parsed.error.flatten() });
-    return;
+  if (!handled) {
+    const body = await cloneOne(userId, req.params.id, parsed.data);
+    res.status(201).json(body);
   }
-
-  let recordId: string | null = null;
-  if (key) {
-    const resolution = await resolveIdempotency(
-      {
-        userId,
-        method: req.method.toUpperCase(),
-        route: getRouteTemplate(req),
-        key,
-      },
-      { source_id: req.params.id, ...parsed.data },
-    );
-    if (resolution.type === "replay") {
-      res.set("Idempotency-Key", key);
-      res.set("Idempotent-Replayed", "true");
-      res.status(resolution.status).json(resolution.body);
-      return;
-    }
-    recordId = resolution.recordId;
-  }
-
-  const cloned = await cloneOne(userId, req.params.id, parsed.data);
-
-  if (key && recordId) {
-    await persistIdempotencyResult(recordId, 201, cloned);
-    res.set("Idempotency-Key", key);
-  } else if (key) {
-    res.set("Idempotency-Key", key);
-  }
-
-  res.status(201).json(cloned);
 }
 
 export async function applyRecurrenceHandler(req: Request, res: Response): Promise<void> {
@@ -338,45 +253,21 @@ export async function applyRecurrenceHandler(req: Request, res: Response): Promi
     return;
   }
 
-  // Validate idempotency key first (before body validation)
-  const key = getIdempotencyKey(req);
+  const handled = await handleIdempotentRequest(
+    req,
+    res,
+    userId,
+    { source_id: req.params.id, ...parsed.data },
+    async () => {
+      const sessions = await applyRecurrence(userId, req.params.id, parsed.data);
+      return { status: 201, body: { sessions } };
+    },
+  );
 
-  const parsed = recurrenceSchema.safeParse(req.body ?? {});
-  if (!parsed.success) {
-    res.status(400).json({ error: parsed.error.flatten() });
-    return;
+  if (!handled) {
+    const sessions = await applyRecurrence(userId, req.params.id, parsed.data);
+    res.status(201).json({ sessions });
   }
-
-  let recordId: string | null = null;
-  if (key) {
-    const resolution = await resolveIdempotency(
-      {
-        userId,
-        method: req.method.toUpperCase(),
-        route: getRouteTemplate(req),
-        key,
-      },
-      { source_id: req.params.id, ...parsed.data },
-    );
-    if (resolution.type === "replay") {
-      res.set("Idempotency-Key", key);
-      res.set("Idempotent-Replayed", "true");
-      res.status(resolution.status).json(resolution.body);
-      return;
-    }
-    recordId = resolution.recordId;
-  }
-
-  const sessions = await applyRecurrence(userId, req.params.id, parsed.data);
-
-  if (key && recordId) {
-    await persistIdempotencyResult(recordId, 201, { sessions });
-    res.set("Idempotency-Key", key);
-  } else if (key) {
-    res.set("Idempotency-Key", key);
-  }
-
-  res.status(201).json({ sessions });
 }
 
 export async function deleteSessionHandler(req: Request, res: Response): Promise<void> {
