@@ -36,9 +36,11 @@ jest.mock("../../../../apps/backend/src/db/index.js", () => {
     return queryBuilders[table];
   }) as jest.Mock & {
     raw: jest.Mock;
+    fn: { now: jest.Mock };
   };
 
   mockDbFunction.raw = jest.fn().mockReturnValue({});
+  mockDbFunction.fn = { now: jest.fn(() => "now") };
 
   return {
     default: mockDbFunction,
@@ -133,7 +135,7 @@ describe("Admin Repository", () => {
       expect(queryBuilders["users"]?.update).toHaveBeenCalledWith(
         expect.objectContaining({
           status: "deleted",
-          deleted_at: expect.anything(),
+          deleted_at: "now",
         }),
       );
     });
