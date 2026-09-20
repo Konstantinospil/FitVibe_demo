@@ -96,7 +96,7 @@ export async function createPlanHandler(req: Request, res: Response): Promise<vo
 
 const updatePlanSchema = z.object({
   name: z.string().trim().min(1).max(200).optional(),
-  status: z.enum(["active", "completed", "archived"]).optional(),
+  status: z.enum(["active", "completed"]).optional(),
   start_date: z.string().nullable().optional(),
   end_date: z.string().nullable().optional(),
 });
@@ -140,7 +140,7 @@ export async function archivePlanHandler(req: Request, res: Response): Promise<v
 
 /**
  * DELETE /api/v1/plans/:id
- * Hard delete a plan
+ * Soft delete a plan
  */
 export async function deletePlanHandler(req: Request, res: Response): Promise<void> {
   const userId = requireUser(req);
