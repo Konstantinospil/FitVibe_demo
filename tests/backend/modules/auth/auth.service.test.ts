@@ -34,6 +34,13 @@ jest.mock("../../../../apps/backend/src/config/env.js", () => {
     REFRESH_TOKEN_TTL: 604800,
     EMAIL_VERIFICATION_TTL_SEC: 3600,
     PASSWORD_RESET_TTL_SEC: 3600,
+    database: {
+      host: "localhost",
+      port: 5432,
+      name: "fitvibe",
+      user: "fitvibe",
+      password: "fitvibe",
+    },
   };
   return {
     env: mockEnvInternal,
