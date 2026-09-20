@@ -10,6 +10,13 @@ jest.mock("../../../../apps/backend/src/modules/common/audit.util.js", () => ({
 jest.mock("../../../../apps/backend/src/config/env.js", () => ({
   env: {
     typesCacheTtl: 3600,
+    database: {
+      host: "localhost",
+      port: 5432,
+      name: "fitvibe",
+      user: "fitvibe",
+      password: "fitvibe",
+    },
   },
 }));
 
