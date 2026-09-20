@@ -176,7 +176,7 @@ export async function verify2FACode(
   const exec = trx ?? db;
 
   const settings = await exec<User2FASettings>("user_2fa_settings")
-    .where({ user_id: userId, is_enabled: true })
+    .where({ user_id: userId, is_enabled: true, is_verified: true })
     .first();
 
   if (!settings) {
@@ -234,8 +234,11 @@ export async function disable2FA(
   // Disable 2FA
   const now = new Date().toISOString();
   await exec("user_2fa_settings").where({ id: settings.id }).update({
+    totp_secret: "",
     is_enabled: false,
+    is_verified: false,
     enabled_at: null,
+    last_used_at: null,
     updated_at: now,
   });
 
@@ -333,12 +336,19 @@ async function verifyBackupCode(
   for (const storedCode of backupCodes) {
     const isValid = await bcrypt.compare(code, storedCode.code_hash);
     if (isValid) {
-      // Mark code as used
-      await exec("backup_codes").where({ id: storedCode.id }).update({
-        is_used: true,
-        used_at: new Date().toISOString(),
-      });
-      return true;
+      const consumed = await exec("backup_codes")
+        .where({ id: storedCode.id, is_used: false })
+        .update({
+          is_used: true,
+          used_at: new Date().toISOString(),
+        });
+
+      if (consumed > 0) {
+        await exec("user_2fa_settings").where({ user_id: userId }).update({
+          last_used_at: new Date().toISOString(),
+        });
+        return true;
+      }
     }
   }
 
