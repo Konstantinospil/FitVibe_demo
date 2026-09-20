@@ -311,7 +311,7 @@ describe("Auth Service", () => {
         username,
         password_hash: "hash",
         email_verified: false,
-        status: "pending",
+        status: "pending_verification",
         terms_accepted: true,
         terms_version: "1.0.0",
         created_at: new Date().toISOString(),
