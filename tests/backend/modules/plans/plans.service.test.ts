@@ -628,6 +628,7 @@ describe("Plans Service", () => {
       const existingPlan = createMockPlan();
       const customQueryBuilder = {
         where: jest.fn().mockReturnThis(),
+        whereNull: jest.fn().mockReturnThis(),
         select: jest.fn().mockReturnThis(),
         first: jest.fn().mockResolvedValue({
           completed: "3",
@@ -647,6 +648,7 @@ describe("Plans Service", () => {
       const existingPlan = createMockPlan();
       const customQueryBuilder = {
         where: jest.fn().mockReturnThis(),
+        whereNull: jest.fn().mockReturnThis(),
         select: jest.fn().mockReturnThis(),
         first: jest.fn().mockResolvedValue({
           total: "5",
@@ -666,6 +668,7 @@ describe("Plans Service", () => {
       const existingPlan = createMockPlan();
       const customQueryBuilder = {
         where: jest.fn().mockReturnThis(),
+        whereNull: jest.fn().mockReturnThis(),
         select: jest.fn().mockReturnThis(),
         first: jest.fn().mockResolvedValue({
           total: undefined, // Use undefined to trigger fallback to "0"
@@ -686,6 +689,7 @@ describe("Plans Service", () => {
       const existingPlan = createMockPlan();
       const customQueryBuilder = {
         where: jest.fn().mockReturnThis(),
+        whereNull: jest.fn().mockReturnThis(),
         select: jest.fn().mockReturnThis(),
         first: jest.fn().mockResolvedValue({
           total: "1000",
