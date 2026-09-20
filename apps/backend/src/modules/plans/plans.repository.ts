@@ -186,7 +186,7 @@ export async function archivePlan(planId: string, trx?: Knex.Transaction): Promi
 }
 
 /**
- * Hard delete a plan
+ * Soft delete a plan
  */
 export async function deletePlan(planId: string, trx?: Knex.Transaction): Promise<number> {
   return archivePlan(planId, trx);
