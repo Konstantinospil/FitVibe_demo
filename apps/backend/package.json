@@ -19,7 +19,8 @@
     "db:migrate": "tsx src/db/scripts/migrate.ts",
     "db:seed": "tsx src/db/utils/seedAll.ts",
     "db:check-i18n": "tsx src/db/scripts/check-i18n-db.ts",
-    "db:import-translations": "tsx src/db/scripts/import-translations.ts"
+    "db:import-translations": "tsx src/db/scripts/import-translations.ts",
+    "docs:test-suite": "node scripts/generate-test-suite-doc.js"
   },
   "dependencies": {
     "@aws-sdk/client-secrets-manager": "^3.1125.0",
