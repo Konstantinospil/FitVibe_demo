@@ -124,12 +124,11 @@ function sanitizeUserAgent(userAgent?: string | null): string | null {
 }
 
 function isValidUUID(value: string | null): boolean {
-  return Boolean(value && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value));
+  return Boolean(
+    value && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value),
+  );
 }
 
-/**
- * Validates if a string is a valid UUID format
- */
 async function recordAuditEvent(
   userId: string | null,
   action: string,
