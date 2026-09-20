@@ -197,7 +197,7 @@ export async function deletePlan(planId: string, trx?: Knex.Transaction): Promis
  */
 export async function countUserPlans(
   userId: string,
-  filters?: { status?: string; includeArchived?: boolean },
+  filters?: { status?: "active" | "completed"; includeArchived?: boolean },
   trx?: Knex.Transaction,
 ): Promise<number> {
   const query = withDb(trx)<PlanRow>(PLANS_TABLE).where({ user_id: userId });
