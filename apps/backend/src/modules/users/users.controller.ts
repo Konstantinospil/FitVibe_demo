@@ -157,12 +157,7 @@ export async function adminCreateUser(req: Request, res: Response): Promise<void
   }
 
   const scopeUserId = actorId ?? "system";
-  const handled = await handleIdempotentRequest(
-    req,
-    res,
-    scopeUserId,
-    parsed.data,
-    async () => {
+  const handled = await handleIdempotentRequest(req, res, scopeUserId, parsed.data, async () => {
       const body = await createUser(actorId, parsed.data);
       return { status: 201, body };
     },
@@ -186,12 +181,7 @@ export async function updateMe(req: Request, res: Response): Promise<void> {
     return;
   }
 
-  const handled = await handleIdempotentRequest(
-    req,
-    res,
-    userId,
-    parsed.data,
-    async () => {
+  const handled = await handleIdempotentRequest(req, res, userId, parsed.data, async () => {
       const body = await updateProfile(userId, parsed.data);
       return { status: 200, body };
     },
@@ -367,12 +357,7 @@ export async function updateEmail(req: Request, res: Response): Promise<void> {
     return;
   }
 
-  const handled = await handleIdempotentRequest(
-    req,
-    res,
-    userId,
-    parsed.data,
-    async () => {
+  const handled = await handleIdempotentRequest(req, res, userId, parsed.data, async () => {
       const body = await updatePrimaryEmail(userId, parsed.data.email);
       return { status: 200, body };
     },
@@ -409,10 +394,7 @@ export async function updatePhone(req: Request, res: Response): Promise<void> {
   }
 }
 
-export async function verifyContactHandler(
-  req: Request,
-  res: Response,
-): Promise<void> {
+export async function verifyContactHandler(req: Request, res: Response): Promise<void> {
   const userId = req.user?.sub;
   if (!userId) {
     res.status(401).json({ error: "Unauthorized" });
@@ -468,10 +450,7 @@ export async function verifyContactHandler(
   }
 }
 
-export async function removeContactHandler(
-  req: Request,
-  res: Response,
-): Promise<void> {
+export async function removeContactHandler(req: Request, res: Response): Promise<void> {
   const userId = req.user?.sub;
   if (!userId) {
     res.status(401).json({ error: "Unauthorized" });
@@ -500,10 +479,7 @@ export async function removeContactHandler(
   }
 }
 
-export async function adminChangeStatus(
-  req: Request,
-  res: Response,
-): Promise<void> {
+export async function adminChangeStatus(req: Request, res: Response): Promise<void> {
   const actorId = req.user?.sub ?? null;
   const { id } = req.params;
   const parsed = statusSchema.safeParse(req.body);
