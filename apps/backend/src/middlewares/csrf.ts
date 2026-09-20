@@ -16,8 +16,8 @@ function isBrowserCsrfRequest(req: Request): boolean {
   const csrfCookieName = getCsrfCookieName();
   const hasProtectedCookie = Boolean(
     req.cookies?.[csrfCookieName] ||
-      req.cookies?.[env.ACCESS_COOKIE_NAME] ||
-      req.cookies?.[env.REFRESH_COOKIE_NAME],
+    req.cookies?.[env.ACCESS_COOKIE_NAME] ||
+    req.cookies?.[env.REFRESH_COOKIE_NAME],
   );
 
   return Boolean(req.headers.origin || req.headers.referer || hasProtectedCookie);
