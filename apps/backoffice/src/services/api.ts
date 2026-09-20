@@ -248,13 +248,7 @@ export interface UserRecord {
   displayName?: string | null;
   email: string;
   roleCode: string;
-  status:
-    | "pending_verification"
-    | "active"
-    | "suspended"
-    | "banned"
-    | "pending_deletion"
-    | "deleted";
+  status: "pending_verification" | "active" | "suspended" | "banned" | "pending_deletion" | "deleted";
   createdAt: string;
   deactivatedAt: string | null;
   lastLoginAt: string | null;
