@@ -497,7 +497,7 @@ describe("Users Service", () => {
       expect(mockAuditUtil.insertAudit).toHaveBeenCalledWith(
         expect.objectContaining({
           actorUserId: userId,
-          entity: "users",
+          entityType: "users",
           action: "profile_update",
           entityId: userId,
         }),
