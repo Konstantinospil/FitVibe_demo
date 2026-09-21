@@ -1,0 +1,25 @@
+import { insertAudit } from "../common/audit.util.js";
+import { insertFeedItem } from "./feed.repository.js";
+
+export async function ensureSessionPublished(
+  ownerId: string,
+  sessionId: string,
+): Promise<{ feedItemId: string; created: boolean }> {
+  const result = await insertFeedItem({
+    ownerId,
+    sessionId,
+    visibility: "public",
+  });
+
+  if (result.created) {
+    await insertAudit({
+      actorUserId: ownerId,
+      entityType: "feed_items",
+      action: "feed.publish",
+      entityId: result.row.id,
+      metadata: { session_id: sessionId },
+    });
+  }
+
+  return { feedItemId: result.row.id, created: result.created };
+}
