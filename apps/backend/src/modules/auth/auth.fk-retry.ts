@@ -21,8 +21,7 @@ export async function withUserForeignKeyVisibilityRetry<T>(
       return await operation();
     } catch (error) {
       const retryable =
-        isUserForeignKeyVisibilityError(error, relation) &&
-        attempt < MAX_USER_FK_ATTEMPTS - 1;
+        isUserForeignKeyVisibilityError(error, relation) && attempt < MAX_USER_FK_ATTEMPTS - 1;
       if (!retryable) {
         throw error;
       }
