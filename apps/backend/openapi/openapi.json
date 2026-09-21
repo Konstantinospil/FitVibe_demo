@@ -1286,7 +1286,13 @@
           },
           "preferredLang": {
             "type": "string",
-            "maxLength": 5
+            "enum": [
+              "en",
+              "de",
+              "fr",
+              "es",
+              "el"
+            ]
           },
           "status": {
             "type": "string",
