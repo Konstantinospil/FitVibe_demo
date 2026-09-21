@@ -32,7 +32,6 @@ export async function updateUserPreferences(
 
   if (updates.language !== undefined) {
     patch.preferred_lang = updates.language;
-    patch.locale = updates.language;
   }
   if (updates.measurementSystem !== undefined) {
     patch.units = updates.measurementSystem;
