@@ -15,7 +15,7 @@ export interface CreateUserRecordInput {
   id: string;
   displayName: string;
   locale?: string;
-  preferredLang?: string;
+  preferredLang?: UserLanguage;
   status: UserStatus;
   roleCode: string;
   passwordHash: string;
