@@ -112,6 +112,12 @@ function dateOfBirthFromAge(age?: number | null): string | undefined {
   return birthDate.toISOString().slice(0, 10);
 }
 
+function isValidUUID(value: string | null): boolean {
+  return Boolean(
+    value && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value),
+  );
+}
+
 
 function signAccess(payload: Omit<JwtPayload, "iat" | "exp" | "jti">) {
   return jwt.sign(payload, RSA_KEYS.privateKey, {
