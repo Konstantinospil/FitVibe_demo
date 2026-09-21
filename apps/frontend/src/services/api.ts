@@ -1,6 +1,7 @@
 import type { AxiosError, InternalAxiosRequestConfig } from "axios";
 import axios from "axios";
 import { useAuthStore } from "../store/auth.store";
+import type { SessionStatus, SessionVisibility, UserStatus } from "@fitvibe/contracts";
 
 // Use relative URLs in development (Vite proxy handles /api -> localhost:4000)
 // Use full URL in production or when VITE_API_URL is explicitly set
@@ -1157,8 +1158,7 @@ export async function deleteExercise(exerciseId: string): Promise<void> {
 }
 
 // Sessions API (extending from earlier types)
-export type SessionStatus = "planned" | "in_progress" | "completed" | "canceled";
-export type SessionVisibility = "private" | "followers" | "public" | "link";
+export type { SessionStatus, SessionVisibility };
 
 export interface SessionExerciseAttributes {
   sets?: number | null;
@@ -1536,8 +1536,7 @@ export interface UserRecord {
   username: string;
   email: string;
   roleCode: string;
-  status:
-    "pending_verification" | "active" | "suspended" | "banned" | "pending_deletion" | "deleted";
+  status: UserStatus;
   createdAt: string;
   lastLoginAt: string | null;
   sessionCount: number;
