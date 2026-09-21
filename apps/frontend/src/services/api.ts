@@ -1691,7 +1691,7 @@ export async function updateUserPreferences(
 }
 
 export interface PrivacySettings {
-  defaultVisibility: "private" | "public" | "link" | "followers";
+  defaultVisibility: SessionVisibility;
   allowFollowers: boolean;
   showEmail: boolean;
   showWeight: boolean;
