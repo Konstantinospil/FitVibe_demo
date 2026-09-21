@@ -8,24 +8,25 @@ jest.mock("../../../../apps/backend/src/modules/points/points.repository.js");
 let mockSelectResult: unknown[] = [];
 
 jest.mock("../../../../apps/backend/src/db/connection.js", () => {
-  const createMockQueryBuilder = () => {
-    return {
+  const createMockTransaction = () => {
+    const queryBuilder = {
       where: jest.fn().mockReturnThis(),
-      select: jest.fn().mockImplementation(() => {
-        // Access the outer scope's mockSelectResult
-        return Promise.resolve(mockSelectResult);
-      }),
+      select: jest.fn().mockImplementation(() => Promise.resolve(mockSelectResult)),
     };
+    const trx = jest.fn(() => queryBuilder) as jest.Mock & {
+      raw: jest.Mock;
+      transaction: jest.Mock;
+    };
+    trx.raw = jest.fn().mockResolvedValue({ rows: [{ acquired: true }] });
+    trx.transaction = jest.fn((cb) => Promise.resolve(cb(trx)));
+    return trx;
   };
 
-  const mockDb = jest.fn(() => createMockQueryBuilder()) as jest.Mock & {
+  const mockDb = jest.fn() as jest.Mock & {
     transaction: jest.Mock;
   };
 
-  mockDb.transaction = jest.fn((cb) => {
-    const trx = createMockQueryBuilder();
-    return Promise.resolve(cb(trx));
-  });
+  mockDb.transaction = jest.fn((cb) => Promise.resolve(cb(createMockTransaction())));
 
   return {
     db: mockDb,
@@ -111,6 +112,21 @@ describe("Vibe Level Decay Service", () => {
       await decayService.applyVibeLevelDecay();
 
       expect(mockPointsRepo.updateDomainVibeLevel).not.toHaveBeenCalled();
+    });
+
+    it("should skip when another decay run holds the advisory lock", async () => {
+      mockDb.transaction.mockImplementationOnce((cb) => {
+        const trx = jest.fn() as jest.Mock & { raw: jest.Mock; transaction: jest.Mock };
+        trx.raw = jest.fn().mockResolvedValue({ rows: [{ acquired: false }] });
+        trx.transaction = jest.fn();
+        return Promise.resolve(cb(trx));
+      });
+
+      const result = await decayService.applyVibeLevelDecay();
+
+      expect(result).toEqual({ skipped: true, decayed: 0 });
+      expect(mockPointsRepo.updateDomainVibeLevel).not.toHaveBeenCalled();
+      expect(mockPointsRepo.insertVibeLevelChange).not.toHaveBeenCalled();
     });
 
     it("should cap decay at maximum values", async () => {
