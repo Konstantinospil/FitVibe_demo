@@ -15,7 +15,7 @@ describe("auth.2fa-login.service", () => {
   beforeEach(() => jest.clearAllMocks());
 
   it("rejects a missing or expired pending-login session before issuing credentials", async () => {
-    mockPending.getPending2FASession.mockResolvedValue(undefined);
+    mockPending.getPending2FASession.mockResolvedValue(null);
 
     await expect(
       service.verify2FALogin("missing-session", "123456", {
