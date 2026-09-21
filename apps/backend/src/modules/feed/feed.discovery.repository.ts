@@ -7,6 +7,7 @@ const PROFILES_TABLE = "profiles";
 const FOLLOWERS_TABLE = "followers";
 const FEED_LIKES_TABLE = "feed_likes";
 const USER_BLOCKS_TABLE = "user_blocks";
+const SESSION_EXERCISES_TABLE = "session_exercises";
 
 export type FeedScope = "public" | "me" | "following";
 export type FeedSort = "date" | "popularity" | "relevance";
@@ -205,7 +206,7 @@ export async function countFeedSessions({
   }
 
   if (scope === "public") {
-    query.whereIn(`${FEED_ITEMS_TABLE}.visibility`, ["public", "followers"]);
+    query.where(`${FEED_ITEMS_TABLE}.visibility`, "public");
   } else if (scope === "me") {
     if (!viewerId) {
       return 0;

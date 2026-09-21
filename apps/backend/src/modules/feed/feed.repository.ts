@@ -363,7 +363,7 @@ export async function updateFeedItem(
 }
 
 export async function isFollowing(followerId: string, followingId: string): Promise<boolean> {
-  const row = await db(FOLLOWERS_TABLE)
+  const row = await db<{ following_id: string }>(FOLLOWERS_TABLE)
     .select("following_id")
     .where({ follower_id: followerId, following_id: followingId })
     .first();
