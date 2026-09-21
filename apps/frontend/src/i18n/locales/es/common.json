@@ -604,20 +604,16 @@
     },
     "preferences": {
       "title": "Preferencias",
-      "description": "Establece la visibilidad predeterminada de sesión, unidades e idioma",
-      "defaultVisibility": "Visibilidad Predeterminada de Sesión",
+      "description": "Elige tu idioma y sistema de medida preferidos",
       "units": "Unidades",
       "language": "Idioma",
       "saveSuccess": "¡Preferencias guardadas exitosamente!",
       "saveError": "Error al guardar preferencias. Por favor, inténtalo de nuevo.",
       "saveButton": "Guardar Preferencias",
       "saving": "Guardando...",
-      "visibilityPrivate": "Privado (solo tú)",
-      "visibilityFollowers": "Seguidores",
-      "visibilityLink": "Solo enlace",
-      "visibilityPublic": "Público",
       "unitsMetric": "Métrico (kg, km)",
-      "unitsImperial": "Imperial (lb, mi)"
+      "unitsImperial": "Imperial (lb, mi)",
+      "loadError": "No se pudieron cargar las preferencias. Inténtalo de nuevo."
     },
     "privacy": {
       "title": "Ajustes de privacidad",
