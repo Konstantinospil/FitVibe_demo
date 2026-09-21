@@ -2,6 +2,8 @@ import type {
   MeasurementSystem,
   SessionVisibility,
   UserLanguage,
+  UserPreferences as SharedUserPreferences,
+  UpdateUserPreferences as SharedUpdateUserPreferences,
   UserStatus as SharedUserStatus,
 } from "@fitvibe/contracts";
 
@@ -80,15 +82,9 @@ export interface UpdatePrivacyDTO {
   showFitnessLevel?: boolean;
 }
 
-export interface UserPreferences {
-  language: UserLanguage;
-  measurementSystem: MeasurementSystem;
-}
+export type UserPreferences = SharedUserPreferences;
 
-export interface UpdatePreferencesDTO {
-  language?: UserLanguage;
-  measurementSystem?: MeasurementSystem;
-}
+export type UpdatePreferencesDTO = SharedUpdateUserPreferences;
 
 export interface UpdateProfileDTO {
   username?: string;
