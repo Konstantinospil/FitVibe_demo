@@ -38,31 +38,7 @@ export type UserRow = {
   avatar_bytes?: number | string | null;
 };
 
-export type ContactRow = {
-  id: string;
-  user_id: string;
-  type: "email" | "phone";
-  value: string;
-  is_primary: boolean;
-  is_recovery: boolean;
-  is_verified: boolean;
-  verified_at: string | null;
-  created_at: string;
-};
 
-export type AvatarRow = {
-  id: string;
-  owner_id: string;
-  target_type: string;
-  target_id: string;
-  storage_key: string;
-  file_url: string;
-  mime_type: string | null;
-  media_type: string | null;
-  bytes: number | null;
-  created_at: string;
-  updated_at: string | null;
-};
 
 function withDb(trx?: Knex.Transaction) {
   return trx ?? db;
