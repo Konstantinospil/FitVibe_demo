@@ -1880,7 +1880,7 @@ jobs:
           mkdir -p "$RUNNER_TEMP/fitvibe-jwt"
           openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048             -out "$RUNNER_TEMP/fitvibe-jwt/private.pem"
           openssl pkey -in "$RUNNER_TEMP/fitvibe-jwt/private.pem" -pubout             -out "$RUNNER_TEMP/fitvibe-jwt/public.pem"
-          chmod 600 "$RUNNER_TEMP/fitvibe-jwt/private.pem"
+          chmod 644 "$RUNNER_TEMP/fitvibe-jwt/private.pem"
           chmod 644 "$RUNNER_TEMP/fitvibe-jwt/public.pem"
 
       - name: Set lowercase GHCR image names
