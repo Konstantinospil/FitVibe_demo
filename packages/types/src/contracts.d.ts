@@ -9,3 +9,7 @@ export type UserStatus =
 export type SessionStatus = "planned" | "in_progress" | "completed" | "canceled";
 
 export type SessionVisibility = "private" | "followers" | "link" | "public";
+
+export type UserLanguage = "en" | "de" | "fr" | "es" | "el";
+
+export type MeasurementSystem = "metric" | "imperial";
