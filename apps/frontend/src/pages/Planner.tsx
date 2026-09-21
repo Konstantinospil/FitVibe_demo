@@ -37,7 +37,7 @@ const Planner: React.FC = () => {
   // Session metadata
   const [sessionTitle, setSessionTitle] = useState("");
   const [sessionNotes, setSessionNotes] = useState("");
-  const [sessionVisibility, setSessionVisibility] = useState<"private" | "public" | "link">(
+  const [sessionVisibility, setSessionVisibility] = useState<"private" | "followers" | "public" | "link">(
     "private",
   );
   const [plannedDate, setPlannedDate] = useState(() => {

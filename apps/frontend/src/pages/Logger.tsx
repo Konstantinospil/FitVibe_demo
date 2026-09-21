@@ -44,7 +44,7 @@ const Logger: React.FC = () => {
   const [session, setSession] = useState<SessionWithExercises | null>(null);
   const [exerciseLogs, setExerciseLogs] = useState<ExerciseLog[]>([]);
   const [loading, setLoading] = useState(true);
-  const [sessionVisibility, setSessionVisibility] = useState<"private" | "public" | "link">(
+  const [sessionVisibility, setSessionVisibility] = useState<"private" | "followers" | "public" | "link">(
     "private",
   );
   const [isUpdatingVisibility, setIsUpdatingVisibility] = useState(false);

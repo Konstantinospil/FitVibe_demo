@@ -1,5 +1,5 @@
 export type SessionStatus = "planned" | "in_progress" | "completed" | "canceled";
-export type SessionVisibility = "private" | "public" | "link";
+export type SessionVisibility = "private" | "followers" | "public" | "link";
 
 export interface Session {
   id: string;
