@@ -65,7 +65,6 @@ export interface UserDetail extends UserSafe {
   };
 }
 
-
 export interface PrivacySettings {
   defaultVisibility: SessionVisibility;
   allowFollowers: boolean;
