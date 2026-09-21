@@ -1,7 +1,7 @@
 import crypto from "crypto";
 import { db } from "../../db/connection.js";
 import { logger } from "../../config/logger.js";
-import { persistAuditOutbox } from "./audit-outbox.service.js";
+import { flushAuditOutbox, persistAuditOutbox } from "./audit-outbox.service.js";
 
 export interface AuditLogPayload {
   actorUserId?: string | null;
@@ -57,6 +57,9 @@ export async function insertAudit({
   for (let attempt = 0; attempt < MAX_ACTOR_FK_ATTEMPTS; attempt += 1) {
     try {
       await db("audit_log").insert(row);
+      void flushAuditOutbox(25).catch((outboxError) => {
+        logger.error({ err: outboxError }, "[AUDIT] outbox opportunistic replay failed");
+      });
       return;
     } catch (error) {
       const canRetry =
