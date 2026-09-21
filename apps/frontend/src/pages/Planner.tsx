@@ -321,9 +321,7 @@ const Planner: React.FC = () => {
                 <select
                   id="session-visibility"
                   value={sessionVisibility}
-                  onChange={(e) =>
-                    setSessionVisibility(e.target.value as SessionVisibility)
-                  }
+                  onChange={(e) => setSessionVisibility(e.target.value as SessionVisibility)}
                   className="form-input"
                   style={{ background: "var(--color-surface)" }}
                   aria-label={t("planner.visibilityLabel") || "Session visibility"}
