@@ -75,12 +75,12 @@ jobs:
 
       - name: Commit refreshed baselines
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add tests/frontend/visual/pages/settings.spec.ts-snapshots/settings-ui-*-linux.png
-          if git diff --cached --quiet; then
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git -C "${GITHUB_WORKSPACE}" add tests/frontend/visual/pages/settings.spec.ts-snapshots/settings-ui-*-linux.png
+          if git -C "${GITHUB_WORKSPACE}" diff --cached --quiet; then
             echo "No settings baseline changes produced"
             exit 0
           fi
-          git commit -m "test(phase9): refresh settings visual baselines"
-          git push origin HEAD:${{ github.head_ref }}
+          git -C "${GITHUB_WORKSPACE}" commit -m "test(phase9): refresh settings visual baselines"
+          git -C "${GITHUB_WORKSPACE}" push origin HEAD:${{ github.head_ref }}
