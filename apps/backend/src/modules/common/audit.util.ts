@@ -1,6 +1,7 @@
 import crypto from "crypto";
 import { db } from "../../db/connection.js";
 import { logger } from "../../config/logger.js";
+import { persistAuditOutbox } from "./audit-outbox.service.js";
 
 export interface AuditLogPayload {
   actorUserId?: string | null;
@@ -64,7 +65,15 @@ export async function insertAudit({
         attempt < MAX_ACTOR_FK_ATTEMPTS - 1;
 
       if (!canRetry) {
-        logger.error({ err: error, action }, "[AUDIT] insert failed");
+        logger.error({ err: error, action }, "[AUDIT] insert failed; persisting to outbox");
+        try {
+          await persistAuditOutbox(row, error);
+        } catch (outboxError) {
+          logger.error(
+            { err: outboxError, action, originalError: error },
+            "[AUDIT] outbox persistence failed",
+          );
+        }
         return;
       }
 
