@@ -70,6 +70,8 @@ import {
   changePassword,
   getPrivacySettings,
   updatePrivacySettings,
+  getUserPreferences,
+  updateUserPreferences,
   deleteAccount,
   exportUserData,
   getFeedItemComments,
@@ -1015,6 +1017,18 @@ describe("API Service Functions", () => {
         email: undefined,
         bio: null,
       });
+    });
+
+    it("gets and updates user preferences", async () => {
+      const preferences = { language: "de" as const, measurementSystem: "metric" as const };
+      apiMock.onGet("/api/v1/users/me/preferences").replyOnce(200, preferences);
+      await expect(getUserPreferences()).resolves.toEqual(preferences);
+
+      const updated = { language: "de" as const, measurementSystem: "imperial" as const };
+      apiMock.onPatch("/api/v1/users/me/preferences").replyOnce(200, updated);
+      await expect(updateUserPreferences({ measurementSystem: "imperial" })).resolves.toEqual(
+        updated,
+      );
     });
 
     it("covers contact, terms, privacy, and legal document calls", async () => {
