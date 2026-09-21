@@ -488,20 +488,16 @@
     },
     "preferences": {
       "title": "Präferenzen",
-      "description": "Setze deine Standard-Session-Sichtbarkeit, Einheiten und Sprache",
-      "defaultVisibility": "Standard-Session-Sichtbarkeit",
+      "description": "Wähle deine bevorzugte Sprache und dein Einheitensystem",
       "units": "Einheiten",
       "language": "Sprache",
       "saveSuccess": "Präferenzen erfolgreich gespeichert!",
       "saveError": "Fehler beim Speichern der Präferenzen. Bitte versuche es erneut.",
       "saveButton": "Präferenzen speichern",
       "saving": "Wird gespeichert...",
-      "visibilityPrivate": "Privat (nur du)",
-      "visibilityFollowers": "Follower",
-      "visibilityLink": "Nur Link",
-      "visibilityPublic": "Öffentlich",
       "unitsMetric": "Metrisch (kg, km)",
-      "unitsImperial": "Imperial (lb, mi)"
+      "unitsImperial": "Imperial (lb, mi)",
+      "loadError": "Präferenzen konnten nicht geladen werden. Bitte versuche es erneut."
     },
     "privacy": {
       "title": "Datenschutzeinstellungen",
