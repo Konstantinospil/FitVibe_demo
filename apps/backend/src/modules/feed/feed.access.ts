@@ -1,4 +1,5 @@
 import { HttpError } from "../../utils/http.js";
+import { env } from "../../config/env.js";
 import {
   findFeedItemById,
   findSessionById,
@@ -47,11 +48,7 @@ export async function ensureSessionInteractionAllowed(actorId: string, session: 
 }
 
 export function loadModerationBlocklist(): string[] {
-  const raw = process.env.FEED_BLOCKED_KEYWORDS || "";
-  return raw
-    .split(",")
-    .map((word) => word.trim().toLowerCase())
-    .filter(Boolean);
+  return [...env.feed.blockedKeywords];
 }
 
 export async function fetchStatsForFeedItem(feedItemId: string): Promise<FeedItemStats> {
