@@ -18,14 +18,9 @@ import {
   createAuthSession,
 } from "./auth.repository.js";
 import { attachAnonymousConsents } from "../consent/consent.repository.js";
-import type {
-  JwtPayload,
-  LoginDTO,
-  LoginContext,
-  TokenPair,
-  UserSafe,
-} from "./auth.types.js";
+import type { LoginDTO, LoginContext, TokenPair, UserSafe } from "./auth.types.js";
 import { HttpError } from "../../utils/http.js";
+import { isTermsVersionOutdated } from "../../config/terms.js";
 import {
   getFailedAttempt,
   recordFailedAttempt,
@@ -56,12 +51,6 @@ import {
 } from "./auth.session-tokens.js";
 
 const DUMMY_PASSWORD_HASH = bcrypt.hashSync("fitvibe-placeholder-password", 12);
-
-const SESSION_EXPIRY_MS = REFRESH_TTL * 1000;
-
-function nextSessionExpiry(): string {
-  return new Date(Date.now() + SESSION_EXPIRY_MS).toISOString();
-}
 
 function isValidUUID(value: string | null): boolean {
   return Boolean(

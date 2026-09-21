@@ -46,7 +46,6 @@ export class QueueService {
         await executeSharedJob(jobName, job.payload);
       });
     }
-
   }
 
   /**
