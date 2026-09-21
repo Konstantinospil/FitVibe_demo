@@ -24,6 +24,7 @@ import { insertAudit } from "../common/audit.util.js";
 import { HttpError } from "../../utils/http.js";
 import { findFeedItemBySessionId, insertFeedItem } from "../feed/feed.repository.js";
 import {
+  ensureNonNegativeInteger,
   ensurePlanExists,
   normalizeSessionExercises,
   trimToNull,

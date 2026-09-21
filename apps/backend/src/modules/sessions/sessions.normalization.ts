@@ -34,7 +34,7 @@ function ensureNonNegativeNumber(
   return value;
 }
 
-function ensureNonNegativeInteger(
+export function ensureNonNegativeInteger(
   name: string,
   value: number | null | undefined,
   context: string,
@@ -170,11 +170,7 @@ function normalizeSets(
       throw new HttpError(422, "E.SESSION.INVALID_SET", `${setContext}: order must be >= 1`);
     }
     if (seenOrders.has(order)) {
-      throw new HttpError(
-        422,
-        "E.SESSION.INVALID_SET",
-        `${context}: duplicate set order ${order}`,
-      );
+      throw new HttpError(422, "E.SESSION.INVALID_SET", `${context}: duplicate set order ${order}`);
     }
     seenOrders.add(order);
 
