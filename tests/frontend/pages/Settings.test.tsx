@@ -18,6 +18,7 @@ describe("Settings", () => {
 
     await waitFor(() => {
       expect(mockGetCurrentUser).toHaveBeenCalled();
+      expect(screen.getByTestId("preferences-settings")).toBeInTheDocument();
       expect(screen.getByDisplayValue("Test User")).toBeInTheDocument();
       expect(screen.getByDisplayValue("testalias")).toBeInTheDocument();
     });
