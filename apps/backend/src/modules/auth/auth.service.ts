@@ -18,15 +18,11 @@ import {
   revokeRefreshByHash,
   findUserById,
   createUser,
-  createAuthToken,
   findAuthToken,
   consumeAuthToken,
   revokeRefreshByUserId,
   updateUserStatus,
-  updateUserPassword,
   markAuthTokensConsumed,
-  countAuthTokensSince,
-  purgeAuthTokensOlderThan,
   revokeRefreshBySession,
   findRefreshTokenRaw,
   createAuthSession,
@@ -80,20 +76,12 @@ import {
   recordAuthAuditEvent as recordAuditEvent,
   sanitizeAuthUserAgent as sanitizeUserAgent,
 } from "./auth.audit.js";
+import { issueAuthToken, TOKEN_TYPES } from "./auth.tokens.service.js";
 
 const ACCESS_TTL = env.ACCESS_TOKEN_TTL;
 const REFRESH_TTL = env.REFRESH_TOKEN_TTL;
 const EMAIL_VERIFICATION_TTL = env.EMAIL_VERIFICATION_TTL_SEC;
-const PASSWORD_RESET_TTL = env.PASSWORD_RESET_TTL_SEC;
-const TOKEN_RETENTION_DAYS = 7;
-const RESEND_WINDOW_MS = 60 * 60 * 1000;
-const EMAIL_VERIFICATION_RESEND_LIMIT = 3;
 const DUMMY_PASSWORD_HASH = bcrypt.hashSync("fitvibe-placeholder-password", 12);
-
-const TOKEN_TYPES = {
-  EMAIL_VERIFICATION: "email_verification",
-  PASSWORD_RESET: "password_reset",
-} as const;
 
 const SESSION_EXPIRY_MS = REFRESH_TTL * 1000;
 
@@ -133,40 +121,6 @@ function signRefresh(payload: Pick<RefreshTokenPayload, "sub" | "sid">) {
     expiresIn: REFRESH_TTL,
     jwtid: uuidv4(),
   });
-}
-
-function generateToken(): { raw: string; hash: string } {
-  const raw = crypto.randomBytes(32).toString("base64url");
-  const hash = crypto.createHash("sha256").update(raw).digest("hex");
-  return { raw, hash };
-}
-
-async function issueAuthToken(userId: string, type: string, ttlSeconds: number) {
-  const now = Date.now();
-  const retentionCutoff = new Date(now - TOKEN_RETENTION_DAYS * 24 * 60 * 60 * 1000);
-  await purgeAuthTokensOlderThan(type, retentionCutoff);
-
-  if (type === TOKEN_TYPES.EMAIL_VERIFICATION) {
-    const windowStart = new Date(now - RESEND_WINDOW_MS);
-    const recentAttempts = await countAuthTokensSince(userId, type, windowStart);
-    if (recentAttempts >= EMAIL_VERIFICATION_RESEND_LIMIT) {
-      throw new HttpError(429, "AUTH_TOO_MANY_REQUESTS", "AUTH_TOO_MANY_REQUESTS");
-    }
-  }
-
-  await markAuthTokensConsumed(userId, type);
-  const { raw, hash } = generateToken();
-  const issuedAtIso = new Date(now).toISOString();
-  const expires_at = new Date(now + ttlSeconds * 1000).toISOString();
-  await createAuthToken({
-    id: uuidv4(),
-    user_id: userId,
-    token_type: type,
-    token_hash: hash,
-    expires_at,
-    created_at: issuedAtIso,
-  });
-  return raw;
 }
 
 function toSafeUser(record: AuthUserRecord): UserSafe {
@@ -1095,88 +1049,10 @@ export async function logout(
   });
 }
 
-export async function requestPasswordReset(email: string): Promise<{ resetToken?: string }> {
-  // Start timing for enumeration protection (AC-1.12)
-  const startTime = Date.now();
-
-  try {
-    const normalized = email.toLowerCase();
-    const user = await findUserByEmail(normalized);
-    if (!user || user.status !== "active") {
-      // Do not reveal existence - perform dummy operation to normalize timing
-      await bcrypt.compare("dummy-password", DUMMY_PASSWORD_HASH);
-      return {};
-    }
-
-    const resetToken = await issueAuthToken(
-      user.id,
-      TOKEN_TYPES.PASSWORD_RESET,
-      PASSWORD_RESET_TTL,
-    );
-
-    // Send password reset email
-    if (env.email.enabled) {
-      const resetUrl = `${env.frontendUrl}/reset-password?token=${resetToken}`;
-      await mailerService.send({
-        to: email,
-        subject: "Reset your FitVibe password",
-        html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <h2>Password Reset Request</h2>
-          <p>We received a request to reset your password. Click the link below to create a new password:</p>
-          <p>
-            <a href="${resetUrl}" style="display: inline-block; padding: 12px 24px; background-color: #4F46E5; color: white; text-decoration: none; border-radius: 6px;">
-              Reset Password
-            </a>
-          </p>
-          <p>Or copy and paste this link into your browser:</p>
-          <p style="color: #666; word-break: break-all;">${resetUrl}</p>
-          <p style="color: #999; font-size: 12px; margin-top: 32px;">
-            This link will expire in ${Math.floor(PASSWORD_RESET_TTL / 60)} minutes.
-          </p>
-          <p style="color: #999; font-size: 12px;">
-            If you didn't request this password reset, you can safely ignore this email.
-          </p>
-        </div>
-      `,
-        text: `Password Reset Request\n\nWe received a request to reset your password. Please visit the following link to create a new password:\n\n${resetUrl}\n\nThis link will expire in ${Math.floor(PASSWORD_RESET_TTL / 60)} minutes.\n\nIf you didn't request this password reset, you can safely ignore this email.`,
-      });
-    }
-
-    return { resetToken };
-  } finally {
-    // Normalize timing to prevent user enumeration (AC-1.12)
-    await normalizeAuthTiming(startTime);
-  }
-}
-
-export async function resetPassword(token: string, newPassword: string): Promise<void> {
-  const tokenHash = crypto.createHash("sha256").update(token).digest("hex");
-  const record = await findAuthToken(TOKEN_TYPES.PASSWORD_RESET, tokenHash);
-  if (!record) {
-    throw new HttpError(400, "AUTH_INVALID_TOKEN", "AUTH_INVALID_TOKEN");
-  }
-  if (new Date(record.expires_at).getTime() <= Date.now()) {
-    await consumeAuthToken(record.id);
-    throw new HttpError(400, "AUTH_INVALID_TOKEN", "AUTH_INVALID_TOKEN");
-  }
-
-  const user = await findUserById(record.user_id);
-  if (!user) {
-    throw new HttpError(404, "AUTH_USER_NOT_FOUND", "AUTH_USER_NOT_FOUND");
-  }
-  assertPasswordPolicy(newPassword, {
-    email: user.primary_email ?? undefined,
-    alias: user.username,
-  });
-
-  const password_hash = await bcrypt.hash(newPassword, 12);
-  await updateUserPassword(record.user_id, password_hash);
-  await consumeAuthToken(record.id);
-  await markAuthTokensConsumed(record.user_id, TOKEN_TYPES.PASSWORD_RESET);
-  await revokeRefreshByUserId(record.user_id);
-}
-
+export {
+  requestPasswordReset,
+  resetPassword,
+} from "./auth.password.service.js";
 export { listSessions, revokeSessions } from "./auth.sessions.service.js";
 export {
   acceptTerms,
