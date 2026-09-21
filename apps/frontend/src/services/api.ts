@@ -5,7 +5,9 @@ import type {
   MeasurementSystem,
   SessionStatus,
   SessionVisibility,
+  UpdateUserPreferences,
   UserLanguage,
+  UserPreferences as SharedUserPreferences,
   UserStatus,
 } from "@fitvibe/contracts";
 
@@ -1671,12 +1673,9 @@ export async function changePassword(payload: ChangePasswordRequest): Promise<vo
   await apiClient.post("/api/v1/users/change-password", payload);
 }
 
-export interface UserPreferences {
-  language: UserLanguage;
-  measurementSystem: MeasurementSystem;
-}
+export type UserPreferences = SharedUserPreferences;
 
-export type UpdatePreferencesRequest = Partial<UserPreferences>;
+export type UpdatePreferencesRequest = UpdateUserPreferences;
 
 export async function getUserPreferences(): Promise<UserPreferences> {
   const res = await apiClient.get<UserPreferences>("/api/v1/users/me/preferences");
