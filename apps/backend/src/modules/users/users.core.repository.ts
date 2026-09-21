@@ -38,8 +38,6 @@ export type UserRow = {
   avatar_bytes?: number | string | null;
 };
 
-
-
 function withDb(trx?: Knex.Transaction) {
   return trx ?? db;
 }
