@@ -86,6 +86,8 @@ export async function listUsers(limit = 50, offset = 0): Promise<UserRow[]> {
       `${USERS_TABLE}.display_name`,
       `${USERS_TABLE}.locale`,
       `${USERS_TABLE}.preferred_lang`,
+      `${USERS_TABLE}.default_visibility`,
+      `${USERS_TABLE}.units`,
       `${USERS_TABLE}.status`,
       `${USERS_TABLE}.role_code`,
       `${USERS_TABLE}.created_at`,
