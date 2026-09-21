@@ -10,7 +10,14 @@ const DOMAIN_VIBE_TABLE = "user_domain_vibe_levels";
 const BIO_ATTRIBUTES_TABLE = "bio_attributes";
 const BIO_ATTRIBUTE_VALUES_TABLE = "bio_attribute_values";
 
-const DOMAIN_CODES = ["strength","agility","endurance","explosivity","intelligence","regeneration"] as const;
+const DOMAIN_CODES = [
+  "strength",
+  "agility",
+  "endurance",
+  "explosivity",
+  "intelligence",
+  "regeneration",
+] as const;
 const INITIAL_VIBE_LEVEL = 1000.0;
 const INITIAL_RD = 350.0;
 const INITIAL_VOLATILITY = 0.06;
