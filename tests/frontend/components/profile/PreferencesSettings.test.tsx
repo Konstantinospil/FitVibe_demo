@@ -7,9 +7,10 @@ const updateUserPreferences = vi.fn();
 const loadLanguageTranslations = vi.fn();
 const changeLanguage = vi.fn();
 const showToast = vi.fn();
+const translate = (key: string) => key;
 
 vi.mock("react-i18next", () => ({
-  useTranslation: () => ({ t: (key: string) => key }),
+  useTranslation: () => ({ t: translate }),
 }));
 
 vi.mock("../../src/i18n/config", () => ({
