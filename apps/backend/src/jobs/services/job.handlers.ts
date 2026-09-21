@@ -3,6 +3,7 @@ import { evaluateStreakBonus } from "../../modules/points/streaks.service.js";
 import { evaluateSeasonalEvents } from "../../modules/points/seasonal-events.service.js";
 import db from "../../db/index.js";
 import { flushAuditOutbox } from "../../modules/common/audit-outbox.service.js";
+import { applyVibeLevelDecay } from "./vibe-level-decay.service.js";
 
 export const SHARED_JOB_TYPES = [
   "retention.sweep",
@@ -10,6 +11,7 @@ export const SHARED_JOB_TYPES = [
   "points.streaks.evaluate",
   "points.seasonal_events.evaluate",
   "audit.outbox.flush",
+  "vibe-level.decay",
 ] as const;
 
 export type SharedJobType = (typeof SHARED_JOB_TYPES)[number];
@@ -51,5 +53,7 @@ export async function executeSharedJob(
     }
     case "audit.outbox.flush":
       return { flushed: await flushAuditOutbox() };
+    case "vibe-level.decay":
+      return applyVibeLevelDecay();
   }
 }
