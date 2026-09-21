@@ -443,9 +443,7 @@ const Logger: React.FC = () => {
               </div>
               <select
                 value={sessionVisibility}
-                onChange={(e) =>
-                  void handleVisibilityChange(e.target.value as SessionVisibility)
-                }
+                onChange={(e) => void handleVisibilityChange(e.target.value as SessionVisibility)}
                 disabled={isUpdatingVisibility}
                 className="form-input"
                 style={{
