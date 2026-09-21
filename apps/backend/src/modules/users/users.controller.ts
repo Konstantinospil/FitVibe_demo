@@ -38,8 +38,6 @@ const updateProfileSchema = z.object({
   username: usernameSchema.optional(),
   displayName: z.string().min(1).max(120).optional(),
   bio: z.string().max(500).optional(),
-  locale: z.string().max(10).optional(),
-  preferredLang: z.string().max(5).optional(),
   alias: z
     .string()
     .min(3)
@@ -124,7 +122,7 @@ const createUserSchema = z.object({
   password: passwordPolicy,
   role: z.string().min(1).max(50),
   locale: z.string().max(10).optional(),
-  preferredLang: z.string().max(5).optional(),
+  preferredLang: z.enum(["en", "de", "fr", "es", "el"]).optional(),
   status: z.enum(["pending_verification", "active", "suspended"]).optional(),
 });
 
