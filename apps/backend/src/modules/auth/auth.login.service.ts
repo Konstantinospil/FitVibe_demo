@@ -32,6 +32,7 @@ import type {
   LoginContext,
   RefreshTokenPayload,
   TokenPair,
+  UserSafe,
 } from "./auth.types.js";
 import { env, RSA_KEYS } from "../../config/env.js";
 import { isTermsVersionOutdated } from "../../config/terms.js";
