@@ -1,4 +1,5 @@
 import { db } from "../../db/connection.js";
+import { withUserForeignKeyVisibilityRetry } from "./auth.fk-retry.js";
 
 interface AuthSessionInsert {
   jti: string;
@@ -17,40 +18,9 @@ export interface AuthSessionRecord extends AuthSessionInsert {
 }
 
 export async function createAuthSession(row: AuthSessionInsert): Promise<AuthSessionRecord[]> {
-  // Retry logic to handle transaction visibility issues in test environments
-  // When a user is created in one transaction and login happens immediately after,
-  // the FK constraint might fail if the user isn't visible to the connection pool yet
-  let retries = 0;
-  const maxRetries = 10;
-  const baseDelay = 100; // ms
-
-  while (retries < maxRetries) {
-    try {
-      return await db<AuthSessionRecord>("auth_sessions").insert(row).returning("*");
-    } catch (error: unknown) {
-      const err = error as { code?: string; detail?: string; message?: string };
-      // Check if it's a FK constraint violation for user_id
-      // The detail includes "is not present in table \"users\"" and message includes "auth_sessions"
-      const isFKViolation =
-        err.code === "23503" &&
-        err.detail?.includes('is not present in table "users"') &&
-        (err.message?.includes("auth_sessions") ||
-          err.detail?.includes("auth_sessions_user_id_foreign"));
-
-      if (isFKViolation && retries < maxRetries - 1) {
-        // Wait with exponential backoff before retrying
-        const delay = baseDelay * Math.pow(2, retries);
-        await new Promise((resolve) => setTimeout(resolve, delay));
-        retries++;
-        continue;
-      }
-      // Re-throw if not a retryable error or max retries reached
-      throw error;
-    }
-  }
-
-  // This should never be reached, but TypeScript needs it
-  throw new Error("Failed to create auth session after retries");
+  return withUserForeignKeyVisibilityRetry("auth_sessions", () =>
+    db<AuthSessionRecord>("auth_sessions").insert(row).returning("*"),
+  );
 }
 
 export async function findSessionById(jti: string): Promise<AuthSessionRecord | undefined> {
