@@ -116,10 +116,7 @@ function toVibeLevelChangeRecord(row: VibeLevelChangeRow): VibeLevelChangeRecord
   };
 }
 
-export async function lockVibeLevelsForUser(
-  userId: string,
-  trx: Knex.Transaction,
-): Promise<void> {
+export async function lockVibeLevelsForUser(userId: string, trx: Knex.Transaction): Promise<void> {
   await trx.raw("SELECT pg_advisory_xact_lock(hashtext(?))", [
     `${VIBE_LEVEL_LOCK_PREFIX}:${userId}`,
   ]);
