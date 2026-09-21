@@ -689,4 +689,18 @@ describe("Points Repository", () => {
       );
     });
   });
+  describe("lockVibeLevelsForUser", () => {
+    it("uses a transaction-scoped advisory lock keyed by user", async () => {
+      const trx = {
+        raw: jest.fn().mockResolvedValue({ rows: [] }),
+      };
+
+      await pointsRepository.lockVibeLevelsForUser(userId, trx as any);
+
+      expect(trx.raw).toHaveBeenCalledWith("SELECT pg_advisory_xact_lock(hashtext(?))", [
+        `fitvibe:vibe-level:${userId}`,
+      ]);
+    });
+  });
+
 });

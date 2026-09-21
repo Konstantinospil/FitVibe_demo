@@ -1,5 +1,6 @@
 import * as pointsService from "../../../../apps/backend/src/modules/points/points.service.js";
 import * as pointsRepository from "../../../../apps/backend/src/modules/points/points.repository.js";
+import * as vibeLevelRepository from "../../../../apps/backend/src/modules/points/vibe-level.repository.js";
 import * as badgesService from "../../../../apps/backend/src/modules/points/badges.service.js";
 import * as sessionsRepository from "../../../../apps/backend/src/modules/sessions/sessions.repository.js";
 import { HttpError } from "../../../../apps/backend/src/utils/http.js";
@@ -17,6 +18,7 @@ import type {
 
 // Mock dependencies
 jest.mock("../../../../apps/backend/src/modules/points/points.repository.js");
+jest.mock("../../../../apps/backend/src/modules/points/vibe-level.repository.js");
 jest.mock("../../../../apps/backend/src/modules/points/badges.service.js");
 jest.mock("../../../../apps/backend/src/modules/sessions/sessions.repository.js");
 jest.mock("../../../../apps/backend/src/db/connection.js", () => {
@@ -67,6 +69,7 @@ jest.mock("../../../../apps/backend/src/jobs/services/points-jobs.service.js", (
 }));
 
 const mockPointsRepo = jest.mocked(pointsRepository);
+const mockVibeLevelRepo = jest.mocked(vibeLevelRepository);
 const mockBadgesService = jest.mocked(badgesService);
 const mockSessionsRepo = jest.mocked(sessionsRepository);
 
@@ -106,12 +109,13 @@ describe("Points Service", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     // Default mocks for vibe-level service functions
-    mockPointsRepo.getAllDomainVibeLevels.mockResolvedValue(new Map());
-    mockPointsRepo.getDomainVibeLevel.mockResolvedValue(undefined);
-    mockPointsRepo.updateDomainVibeLevel.mockResolvedValue(undefined);
-    mockPointsRepo.insertVibeLevelChange.mockResolvedValue(
+    mockVibeLevelRepo.getAllDomainVibeLevels.mockResolvedValue(new Map());
+    mockVibeLevelRepo.getDomainVibeLevel.mockResolvedValue(undefined);
+    mockVibeLevelRepo.updateDomainVibeLevel.mockResolvedValue(undefined);
+    mockVibeLevelRepo.insertVibeLevelChange.mockResolvedValue(
       createMockVibeLevelChangeRecord("strength"),
     );
+    mockVibeLevelRepo.lockVibeLevelsForUser.mockResolvedValue(undefined);
   });
 
   describe("getPointsSummary", () => {
@@ -242,8 +246,8 @@ describe("Points Service", () => {
         ["strength", createMockDomainVibeLevel("strength", 1000)],
         ["endurance", createMockDomainVibeLevel("endurance", 1000)],
       ]);
-      mockPointsRepo.getAllDomainVibeLevels.mockResolvedValue(mockVibeLevels);
-      mockPointsRepo.getDomainVibeLevel.mockResolvedValue(
+      mockVibeLevelRepo.getAllDomainVibeLevels.mockResolvedValue(mockVibeLevels);
+      mockVibeLevelRepo.getDomainVibeLevel.mockResolvedValue(
         createMockDomainVibeLevel("strength", 1000),
       );
 
@@ -253,7 +257,7 @@ describe("Points Service", () => {
         totalDistance: 0,
         averageRpe: null,
       });
-      mockPointsRepo.getAllDomainVibeLevels.mockResolvedValue(new Map());
+      mockVibeLevelRepo.getAllDomainVibeLevels.mockResolvedValue(new Map());
       mockPointsRepo.insertPointsEvent.mockResolvedValue({
         id: "event-1",
         user_id: userId,
@@ -306,8 +310,8 @@ describe("Points Service", () => {
 
       // Mock vibe levels for endurance domain (detected from distance)
       const mockVibeLevels = new Map([["endurance", createMockDomainVibeLevel("endurance", 1000)]]);
-      mockPointsRepo.getAllDomainVibeLevels.mockResolvedValue(mockVibeLevels);
-      mockPointsRepo.getDomainVibeLevel.mockResolvedValue(
+      mockVibeLevelRepo.getAllDomainVibeLevels.mockResolvedValue(mockVibeLevels);
+      mockVibeLevelRepo.getDomainVibeLevel.mockResolvedValue(
         createMockDomainVibeLevel("endurance", 1000),
       );
 
@@ -317,7 +321,7 @@ describe("Points Service", () => {
         totalDistance: 5000, // 5km
         averageRpe: 7,
       });
-      mockPointsRepo.getAllDomainVibeLevels.mockResolvedValue(new Map());
+      mockVibeLevelRepo.getAllDomainVibeLevels.mockResolvedValue(new Map());
       mockPointsRepo.insertPointsEvent.mockResolvedValue({
         id: "event-1",
         user_id: userId,
@@ -353,8 +357,8 @@ describe("Points Service", () => {
 
       // Mock vibe levels - calories might detect endurance domain if duration is sufficient
       const mockVibeLevels = new Map([["endurance", createMockDomainVibeLevel("endurance", 1000)]]);
-      mockPointsRepo.getAllDomainVibeLevels.mockResolvedValue(mockVibeLevels);
-      mockPointsRepo.getDomainVibeLevel.mockResolvedValue(
+      mockVibeLevelRepo.getAllDomainVibeLevels.mockResolvedValue(mockVibeLevels);
+      mockVibeLevelRepo.getDomainVibeLevel.mockResolvedValue(
         createMockDomainVibeLevel("endurance", 1000),
       );
 
@@ -364,7 +368,7 @@ describe("Points Service", () => {
         totalDistance: 0,
         averageRpe: null,
       });
-      mockPointsRepo.getAllDomainVibeLevels.mockResolvedValue(new Map());
+      mockVibeLevelRepo.getAllDomainVibeLevels.mockResolvedValue(new Map());
       mockPointsRepo.insertPointsEvent.mockResolvedValue({
         id: "event-1",
         user_id: userId,
