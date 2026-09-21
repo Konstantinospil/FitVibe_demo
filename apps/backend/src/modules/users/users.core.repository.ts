@@ -57,8 +57,11 @@ export async function findUserByEmail(email: string): Promise<UserRow | undefine
     .first();
 }
 
-export async function findUserById(id: string): Promise<UserRow | undefined> {
-  return db<UserRow>(USERS_TABLE)
+export async function findUserById(
+  id: string,
+  trx?: Knex.Transaction,
+): Promise<UserRow | undefined> {
+  return withDb(trx)<UserRow>(USERS_TABLE)
     .leftJoin(PROFILES_TABLE, `${PROFILES_TABLE}.user_id`, `${USERS_TABLE}.id`)
     .select<UserRow[]>(`${USERS_TABLE}.*`, db.raw(`${PROFILES_TABLE}.alias as username`))
     .where(`${USERS_TABLE}.id`, id)
