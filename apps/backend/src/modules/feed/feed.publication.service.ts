@@ -4,11 +4,12 @@ import { insertSessionFeedItemAtomic } from "./feed.repository.js";
 export async function ensureSessionPublished(
   ownerId: string,
   sessionId: string,
+  visibility: "public" | "followers" = "public",
 ): Promise<{ feedItemId: string; created: boolean }> {
   const result = await insertSessionFeedItemAtomic({
     ownerId,
     sessionId,
-    visibility: "public",
+    visibility,
   });
 
   if (result.created) {

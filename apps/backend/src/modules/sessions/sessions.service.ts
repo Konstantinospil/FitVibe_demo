@@ -254,10 +254,10 @@ export async function updateOne(
 
   if (
     updated.status === "completed" &&
-    updated.visibility === "public" &&
+    (updated.visibility === "public" || updated.visibility === "followers") &&
     (statusChanged || visibilityChanged)
   ) {
-    await ensureSessionPublished(userId, id);
+    await ensureSessionPublished(userId, id, updated.visibility);
   }
 
   if (statusChanged || exercisesTouched) {

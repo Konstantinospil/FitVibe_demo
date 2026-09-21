@@ -28,10 +28,14 @@ export async function publishSession(
     throw new HttpError(400, "E.FEED.SESSION_NOT_COMPLETED", "FEED_SESSION_NOT_COMPLETED");
   }
 
-  if (session.visibility !== "public") {
+  if (session.visibility !== "public" && session.visibility !== "followers") {
     throw new HttpError(400, "E.FEED.SESSION_NOT_PUBLIC", "FEED_SESSION_NOT_PUBLIC");
   }
 
-  const published = await ensureSessionPublished(userId, sessionId);
+  const published = await ensureSessionPublished(
+    userId,
+    sessionId,
+    session.visibility as "public" | "followers",
+  );
   return { feedItemId: published.feedItemId };
 }
