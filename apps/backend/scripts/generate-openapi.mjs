@@ -527,6 +527,8 @@ const schemas = {
       email: { type: "string", format: "email", maxLength: 254 },
       password: { type: "string", minLength: 12, maxLength: 128 },
       role: { type: "string", minLength: 1, maxLength: 50 },
+      locale: { type: "string", maxLength: 10 },
+      preferredLang: { type: "string", enum: ["en", "de", "fr", "es", "el"] },
       status: { type: "string", enum: ["pending_verification", "active", "suspended"] },
     },
     required: ["username", "displayName", "email", "password", "role"],
