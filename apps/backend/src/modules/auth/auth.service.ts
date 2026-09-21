@@ -2,6 +2,7 @@ import crypto from "crypto";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 import { v4 as uuidv4 } from "uuid";
+import { db } from "../../db/index.js";
 import { is2FAEnabled, verify2FACode } from "./two-factor.service.js";
 import { normalizeAuthTiming } from "./timing.utils.js";
 import {
@@ -20,7 +21,6 @@ import {
   createUser,
   findAuthToken,
   consumeAuthToken,
-  revokeRefreshByUserId,
   updateUserStatus,
   markAuthTokensConsumed,
   revokeRefreshBySession,
@@ -105,7 +105,6 @@ function isValidUUID(value: string | null): boolean {
     value && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value),
   );
 }
-
 
 function signAccess(payload: Omit<JwtPayload, "iat" | "exp" | "jti">) {
   return jwt.sign(payload, RSA_KEYS.privateKey, {
@@ -1049,10 +1048,7 @@ export async function logout(
   });
 }
 
-export {
-  requestPasswordReset,
-  resetPassword,
-} from "./auth.password.service.js";
+export { requestPasswordReset, resetPassword } from "./auth.password.service.js";
 export { listSessions, revokeSessions } from "./auth.sessions.service.js";
 export {
   acceptTerms,

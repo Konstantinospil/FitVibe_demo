@@ -1,7 +1,6 @@
 import crypto from "crypto";
 import bcrypt from "bcryptjs";
 import { db } from "../../db/connection.js";
-import type { ContactRow, UserRow } from "./users.repository.js";
 import {
   findUserById,
   listUsers as listUserRows,
@@ -29,9 +28,7 @@ import type {
   UserDetail,
   UserStatus,
 } from "./users.types.js";
-import {
-  revokeRefreshByUserId,
-} from "../auth/auth.repository.js";
+import { revokeRefreshByUserId } from "../auth/auth.repository.js";
 import { assertPasswordPolicy } from "../auth/passwordPolicy.js";
 import { HttpError } from "../../utils/http.js";
 import { insertAudit } from "../common/audit.util.js";
