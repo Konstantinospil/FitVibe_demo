@@ -1,13 +1,19 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
+import type { SessionVisibility } from "@fitvibe/contracts";
 
-type VisibilityLevel = "private" | "link" | "public";
+type VisibilityLevel = SessionVisibility;
 
 const STYLE_MAP: Record<VisibilityLevel, { background: string; color: string; border: string }> = {
   private: {
     background: "rgba(248, 113, 113, 0.16)",
     color: "#FFFFFF",
     border: "rgba(248, 113, 113, 0.35)",
+  },
+  followers: {
+    background: "rgba(167, 139, 250, 0.14)",
+    color: "#FFFFFF",
+    border: "rgba(167, 139, 250, 0.3)",
   },
   link: {
     background: "rgba(56, 189, 248, 0.12)",

@@ -3,8 +3,9 @@ import { useTranslation } from "react-i18next";
 import { Button } from "../ui/Button";
 import VisibilityBadge from "../ui/VisibilityBadge";
 import { Eye, EyeOff, Link as LinkIcon } from "lucide-react";
+import type { SessionVisibility } from "@fitvibe/contracts";
 
-export type VisibilityLevel = "private" | "followers" | "link" | "public";
+export type VisibilityLevel = SessionVisibility;
 
 export interface SessionVisibilityToggleProps {
   value: VisibilityLevel;
@@ -64,7 +65,7 @@ export const SessionVisibilityToggle: React.FC<SessionVisibilityToggleProps> = (
           {option.label}
         </Button>
       ))}
-      {value !== "followers" && <VisibilityBadge level={value} />}
+      <VisibilityBadge level={value} />
     </div>
   );
 };

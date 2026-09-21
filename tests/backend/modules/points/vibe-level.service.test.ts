@@ -1,5 +1,5 @@
 import * as vibeLevelService from "../../../../apps/backend/src/modules/points/vibe-level.service.js";
-import * as pointsRepository from "../../../../apps/backend/src/modules/points/points.repository.js";
+import * as vibeLevelRepository from "../../../../apps/backend/src/modules/points/vibe-level.repository.js";
 import type {
   DomainCode,
   DomainImpact,
@@ -9,14 +9,14 @@ import type {
 import type { SessionWithExercises } from "../../../../apps/backend/src/modules/sessions/sessions.types.js";
 
 // Mock dependencies
-jest.mock("../../../../apps/backend/src/modules/points/points.repository.js");
+jest.mock("../../../../apps/backend/src/modules/points/vibe-level.repository.js");
 jest.mock("../../../../apps/backend/src/db/connection.js", () => ({
   db: {
     transaction: jest.fn((cb) => cb({})),
   },
 }));
 
-const mockPointsRepo = jest.mocked(pointsRepository);
+const mockVibeLevelRepo = jest.mocked(vibeLevelRepository);
 
 describe("Vibe Level Service", () => {
   const userId = "user-123";
@@ -756,7 +756,7 @@ describe("Vibe Level Service", () => {
 
       const exerciseMetadata = new Map<string, ExerciseMetadata>();
 
-      mockPointsRepo.getDomainVibeLevel.mockResolvedValue({
+      mockVibeLevelRepo.getDomainVibeLevel.mockResolvedValue({
         user_id: userId,
         domain_code: "strength",
         vibe_level: 1000,
@@ -767,8 +767,8 @@ describe("Vibe Level Service", () => {
         updated_at: new Date().toISOString(),
       });
 
-      mockPointsRepo.updateDomainVibeLevel.mockResolvedValue();
-      mockPointsRepo.insertVibeLevelChange.mockResolvedValue({
+      mockVibeLevelRepo.updateDomainVibeLevel.mockResolvedValue();
+      mockVibeLevelRepo.insertVibeLevelChange.mockResolvedValue({
         id: "change-1",
         user_id: userId,
         domain_code: "strength",
@@ -786,7 +786,7 @@ describe("Vibe Level Service", () => {
         created_at: new Date().toISOString(),
       });
 
-      mockPointsRepo.getAllDomainVibeLevels.mockResolvedValue(
+      mockVibeLevelRepo.getAllDomainVibeLevels.mockResolvedValue(
         new Map([
           [
             "strength",
@@ -812,11 +812,18 @@ describe("Vibe Level Service", () => {
         exerciseMetadata,
       );
 
+      expect(mockVibeLevelRepo.lockVibeLevelsForUser).toHaveBeenCalledWith(
+        userId,
+        expect.anything(),
+      );
+      expect(mockVibeLevelRepo.lockVibeLevelsForUser.mock.invocationCallOrder[0]).toBeLessThan(
+        mockVibeLevelRepo.getDomainVibeLevel.mock.invocationCallOrder[0],
+      );
       expect(result.domain).toBe("strength");
       expect(result.oldVibeLevel).toBe(1000);
       expect(result.newVibeLevel).toBeGreaterThan(1000);
-      expect(mockPointsRepo.updateDomainVibeLevel).toHaveBeenCalled();
-      expect(mockPointsRepo.insertVibeLevelChange).toHaveBeenCalled();
+      expect(mockVibeLevelRepo.updateDomainVibeLevel).toHaveBeenCalled();
+      expect(mockVibeLevelRepo.insertVibeLevelChange).toHaveBeenCalled();
     });
 
     it("should use initial values if domain rating doesn't exist", async () => {
@@ -837,9 +844,9 @@ describe("Vibe Level Service", () => {
 
       const exerciseMetadata = new Map<string, ExerciseMetadata>();
 
-      mockPointsRepo.getDomainVibeLevel.mockResolvedValue(undefined);
-      mockPointsRepo.updateDomainVibeLevel.mockResolvedValue();
-      mockPointsRepo.insertVibeLevelChange.mockResolvedValue({
+      mockVibeLevelRepo.getDomainVibeLevel.mockResolvedValue(undefined);
+      mockVibeLevelRepo.updateDomainVibeLevel.mockResolvedValue();
+      mockVibeLevelRepo.insertVibeLevelChange.mockResolvedValue({
         id: "change-1",
         user_id: userId,
         domain_code: "strength",
@@ -857,7 +864,7 @@ describe("Vibe Level Service", () => {
         created_at: new Date().toISOString(),
       });
 
-      mockPointsRepo.getAllDomainVibeLevels.mockResolvedValue(new Map());
+      mockVibeLevelRepo.getAllDomainVibeLevels.mockResolvedValue(new Map());
 
       await vibeLevelService.updateDomainVibeLevelForSession(
         userId,
@@ -867,7 +874,7 @@ describe("Vibe Level Service", () => {
         exerciseMetadata,
       );
 
-      expect(mockPointsRepo.updateDomainVibeLevel).toHaveBeenCalled();
+      expect(mockVibeLevelRepo.updateDomainVibeLevel).toHaveBeenCalled();
     });
   });
 });

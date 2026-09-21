@@ -1,4 +1,6 @@
 import type { Knex } from "knex";
+
+import { db } from "../../db/connection.js";
 import type { SessionWithExercises } from "../sessions/sessions.types.js";
 import type {
   DomainCode,
@@ -10,9 +12,10 @@ import type {
 import {
   getAllDomainVibeLevels,
   getDomainVibeLevel,
-  updateDomainVibeLevel,
   insertVibeLevelChange,
-} from "./points.repository.js";
+  lockVibeLevelsForUser,
+  updateDomainVibeLevel,
+} from "./vibe-level.repository.js";
 
 // Constants
 const INITIAL_VIBE_LEVEL = 1000.0;
@@ -520,14 +523,16 @@ export async function calculatePointsFromVibeLevel(
 /**
  * Update domain vibe level for a session
  */
-export async function updateDomainVibeLevelForSession(
+async function updateDomainVibeLevelForSessionInTransaction(
   userId: string,
   domain: DomainCode,
   session: SessionWithExercises,
   domainImpact: DomainImpact,
   exerciseMetadata: Map<string, ExerciseMetadata>,
-  trx?: Knex.Transaction,
+  trx: Knex.Transaction,
 ): Promise<VibeLevelUpdateResult> {
+  await lockVibeLevelsForUser(userId, trx);
+
   // Get current vibe level
   const current = await getDomainVibeLevel(userId, domain, trx);
   const currentRating = current?.vibe_level ?? INITIAL_VIBE_LEVEL;
@@ -603,6 +608,37 @@ export async function updateDomainVibeLevelForSession(
     domainImpact: domainImpact.impact,
     pointsAwarded,
   };
+}
+
+export async function updateDomainVibeLevelForSession(
+  userId: string,
+  domain: DomainCode,
+  session: SessionWithExercises,
+  domainImpact: DomainImpact,
+  exerciseMetadata: Map<string, ExerciseMetadata>,
+  trx?: Knex.Transaction,
+): Promise<VibeLevelUpdateResult> {
+  if (trx) {
+    return updateDomainVibeLevelForSessionInTransaction(
+      userId,
+      domain,
+      session,
+      domainImpact,
+      exerciseMetadata,
+      trx,
+    );
+  }
+
+  return db.transaction((transaction: Knex.Transaction) =>
+    updateDomainVibeLevelForSessionInTransaction(
+      userId,
+      domain,
+      session,
+      domainImpact,
+      exerciseMetadata,
+      transaction,
+    ),
+  );
 }
 
 /**

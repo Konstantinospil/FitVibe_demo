@@ -1,8 +1,8 @@
 import bcrypt from "bcryptjs";
 import { login } from "../../../../apps/backend/src/modules/auth/auth.service.js";
-import * as authRepository from "../../../../apps/backend/src/modules/auth/auth.repository.js";
+import * as authRepository from "../../../../apps/backend/src/modules/auth/auth.users.repository.js";
 import * as bruteforceRepository from "../../../../apps/backend/src/modules/auth/bruteforce.repository.js";
-import type { AuthUserRecord } from "../../../../apps/backend/src/modules/auth/auth.repository.js";
+import type { AuthUserRecord } from "../../../../apps/backend/src/modules/auth/auth.users.repository.js";
 
 jest.mock("../../../../apps/backend/src/db/index.js", () => {
   const builder = {
