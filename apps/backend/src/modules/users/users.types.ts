@@ -1,4 +1,9 @@
-import type { UserStatus as SharedUserStatus } from "@fitvibe/contracts";
+import type {
+  MeasurementSystem,
+  SessionVisibility,
+  UserLanguage,
+  UserStatus as SharedUserStatus,
+} from "@fitvibe/contracts";
 
 export type UserStatus = SharedUserStatus;
 
@@ -34,9 +39,9 @@ export interface UserSafe {
   username: string;
   displayName: string;
   locale: string;
-  preferredLang: string;
-  defaultVisibility: string;
-  units: string;
+  preferredLang: UserLanguage;
+  defaultVisibility: SessionVisibility;
+  units: MeasurementSystem;
   role: string;
   status: UserStatus;
   createdAt: string;
@@ -58,7 +63,6 @@ export interface UserDetail extends UserSafe {
   };
 }
 
-export type SessionVisibility = "private" | "followers" | "link" | "public";
 
 export interface PrivacySettings {
   defaultVisibility: SessionVisibility;
@@ -76,14 +80,20 @@ export interface UpdatePrivacyDTO {
   showFitnessLevel?: boolean;
 }
 
+export interface UserPreferences {
+  language: UserLanguage;
+  measurementSystem: MeasurementSystem;
+}
+
+export interface UpdatePreferencesDTO {
+  language?: UserLanguage;
+  measurementSystem?: MeasurementSystem;
+}
+
 export interface UpdateProfileDTO {
   username?: string;
   displayName?: string;
   bio?: string;
-  locale?: string;
-  preferredLang?: string;
-  defaultVisibility?: string;
-  units?: string;
   alias?: string;
   weight?: number;
   weightUnit?: "kg" | "lb";
