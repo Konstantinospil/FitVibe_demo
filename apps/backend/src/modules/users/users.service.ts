@@ -277,3 +277,4 @@ export {
 } from "./users.contacts.service.js";
 export { collectUserData } from "./users.export.service.js";
 export { getPrivacySettings, updatePrivacySettings } from "./users.privacy.service.js";
+export { getUserPreferences, updateUserPreferences } from "./users.preferences.service.js";
