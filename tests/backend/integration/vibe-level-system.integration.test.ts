@@ -322,8 +322,8 @@ describeWithTestDatabase("Integration: Vibe Level System (v2_vibe_lvl)", () => {
     // Decay may or may not create a log entry depending on whether values actually changed
     // If changes exist, verify they match expectations
     if (changes.length > 0) {
-      expect(changes[0].old_vibe_level).toBe(initialVibeLevel);
-      expect(changes[0].new_vibe_level).toBe(decayedLevel?.vibe_level);
+      expect(Number(changes[0].old_vibe_level)).toBe(initialVibeLevel);
+      expect(Number(changes[0].new_vibe_level)).toBe(decayedLevel?.vibe_level);
     }
   });
 
