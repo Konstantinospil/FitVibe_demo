@@ -1089,8 +1089,8 @@
           "code": {
             "type": "string",
             "minLength": 6,
-            "maxLength": 6,
-            "pattern": "^\\d+$"
+            "maxLength": 9,
+            "pattern": "^(?:\\d{6}|[A-HJ-NP-Z2-9]{4}-[A-HJ-NP-Z2-9]{4})$"
           }
         },
         "required": ["pendingSessionId", "code"]
@@ -1148,7 +1148,7 @@
           },
           "status": {
             "type": "string",
-            "enum": ["pending_verification", "active", "archived"]
+            "enum": ["pending_verification", "active", "suspended"]
           }
         },
         "required": ["username", "displayName", "email", "password", "role"]
@@ -1198,7 +1198,7 @@
           },
           "status": {
             "type": "string",
-            "enum": ["pending", "active", "archived"]
+            "enum": ["pending_verification", "active", "suspended", "banned", "pending_deletion", "deleted"]
           },
           "createdAt": {
             "type": "string",

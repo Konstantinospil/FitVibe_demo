@@ -22,6 +22,7 @@ import { usersRouter } from "./api/users.routes.js";
 import { exerciseTypesRouter } from "./api/exerciseTypes.routes.js";
 import { exercisesRouter } from "./api/exercises.routes.js";
 import { sessionsRouter } from "./api/sessions.routes.js";
+import { plansRouter } from "./api/plans.routes.js";
 import { progressRouter } from "./api/progress.routes.js";
 import { pointsRouter } from "./api/points.routes.js";
 import { feedRouter } from "./api/feed.routes.js";
@@ -47,7 +48,13 @@ if (!env.csrf.enabled) {
   logger.warn(warning);
 }
 
-app.set("trust proxy", 1);
+if (env.isProduction && !env.clamav.enabled) {
+  throw new Error(
+    "[security] ClamAV scanning is disabled. Refusing to start production with uploads unscanned.",
+  );
+}
+
+app.set("trust proxy", env.trustProxy);
 app.get("/.well-known/jwks.json", jwksHandler);
 
 app.use((req, res, next) => {
@@ -178,6 +185,7 @@ apiRouter.use("/users", usersRouter);
 apiRouter.use("/exercise-types", exerciseTypesRouter);
 apiRouter.use("/exercises", exercisesRouter);
 apiRouter.use("/sessions", sessionsRouter);
+apiRouter.use("/plans", plansRouter);
 apiRouter.use("/progress", progressRouter);
 apiRouter.use("/points", pointsRouter);
 apiRouter.use("/feed", feedRouter);

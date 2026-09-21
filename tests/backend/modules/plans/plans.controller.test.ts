@@ -73,6 +73,18 @@ describe("Plans Controller", () => {
         plansController.listPlansHandler(mockRequest as Request, mockResponse as Response),
       ).rejects.toThrow(HttpError);
     });
+
+    it("should reject invalid status filter", async () => {
+      mockRequest.query = { status: "archived" };
+
+      await expect(
+        plansController.listPlansHandler(mockRequest as Request, mockResponse as Response),
+      ).rejects.toMatchObject({
+        code: "E.PLAN.INVALID_STATUS",
+        status: 400,
+      });
+      expect(mockPlansService.listUserPlans).not.toHaveBeenCalled();
+    });
   });
 
   describe("getPlanStatsHandler", () => {

@@ -12,6 +12,17 @@ import { HttpError } from "../utils/http.js";
 const tokens = new Tokens();
 const SAFE_METHODS = new Set(["GET", "HEAD", "OPTIONS"]);
 
+function isBrowserCsrfRequest(req: Request): boolean {
+  const csrfCookieName = getCsrfCookieName();
+  const hasProtectedCookie = Boolean(
+    req.cookies?.[csrfCookieName] ||
+    req.cookies?.[env.ACCESS_COOKIE_NAME] ||
+    req.cookies?.[env.REFRESH_COOKIE_NAME],
+  );
+
+  return Boolean(req.headers.origin || req.headers.referer || hasProtectedCookie);
+}
+
 function getCsrfCookieName(): string {
   return env.COOKIE_SECURE ? "__Host-fitvibe-csrf" : "fitvibe-csrf";
 }
@@ -83,25 +94,18 @@ function extractToken(req: Request): string | null {
     return bodyToken;
   }
 
-  if (typeof req.query === "object" && req.query !== null) {
-    const candidate = (req.query as Record<string, unknown>)._csrf;
-    if (typeof candidate === "string") {
-      return candidate;
-    }
-  }
-
   return null;
 }
 
 export function csrfProtection(req: Request, res: Response, next: NextFunction) {
   const csrfReq = req as CsrfRequest;
   const method = req.method.toUpperCase();
-  const secret = ensureSecret(csrfReq, res);
 
-  if (SAFE_METHODS.has(method)) {
+  if (SAFE_METHODS.has(method) || !isBrowserCsrfRequest(req)) {
     return next();
   }
 
+  const secret = ensureSecret(csrfReq, res);
   const token = extractToken(req);
   if (!token || !tokens.verify(secret, token)) {
     return next(new HttpError(403, "CSRF_TOKEN_INVALID", "Invalid CSRF token"));
@@ -122,7 +126,7 @@ export function csrfTokenRoute(req: Request, res: Response) {
 export function validateOrigin(allowedOrigins: string[]) {
   return (req: Request, res: Response, next: NextFunction) => {
     const method = req.method.toUpperCase();
-    if (SAFE_METHODS.has(method)) {
+    if (SAFE_METHODS.has(method) || !isBrowserCsrfRequest(req)) {
       return next();
     }
 

@@ -9,7 +9,7 @@
 import { describe, it, expect, beforeEach, jest } from "@jest/globals";
 import * as authService from "../../../../apps/backend/src/modules/auth/auth.service.js";
 import * as authRepo from "../../../../apps/backend/src/modules/auth/auth.repository.js";
-import * as twofaService from "../../../../apps/backend/src/modules/auth/twofa.service.js";
+import * as twofaService from "../../../../apps/backend/src/modules/auth/two-factor.service.js";
 import * as bruteforceRepo from "../../../../apps/backend/src/modules/auth/bruteforce.repository.js";
 import type { AuthUserRecord } from "../../../../apps/backend/src/modules/auth/auth.repository.js";
 import type {
@@ -19,7 +19,7 @@ import type {
 
 // Mock dependencies
 jest.mock("../../../../apps/backend/src/modules/auth/auth.repository");
-jest.mock("../../../../apps/backend/src/modules/auth/twofa.service.js");
+jest.mock("../../../../apps/backend/src/modules/auth/two-factor.service.js");
 jest.mock("../../../../apps/backend/src/modules/auth/bruteforce.repository.js");
 jest.mock("bcryptjs");
 jest.mock("../../../../apps/backend/src/services/mailer.service.js");

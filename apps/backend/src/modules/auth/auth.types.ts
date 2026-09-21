@@ -1,3 +1,5 @@
+import type { UserStatus } from "../users/users.types.js";
+
 export interface JwtPayload {
   sub: string;
   role: string;
@@ -51,7 +53,7 @@ export interface UserSafe {
   email: string;
   username: string;
   role: string;
-  status: string;
+  status: UserStatus;
   created_at: string;
 }
 

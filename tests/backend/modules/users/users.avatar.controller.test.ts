@@ -5,7 +5,6 @@ import * as avatarRepository from "../../../../apps/backend/src/modules/users/us
 import * as mediaStorageService from "../../../../apps/backend/src/services/mediaStorage.service.js";
 import * as antivirusService from "../../../../apps/backend/src/services/antivirus.service.js";
 import * as auditUtil from "../../../../apps/backend/src/modules/common/audit.util.js";
-import * as idempotencyHelpers from "../../../../apps/backend/src/modules/common/idempotency.helpers.js";
 import * as idempotencyService from "../../../../apps/backend/src/modules/common/idempotency.service.js";
 
 // Mock dependencies
@@ -13,7 +12,6 @@ jest.mock("../../../../apps/backend/src/modules/users/users.avatar.repository.js
 jest.mock("../../../../apps/backend/src/services/mediaStorage.service.js");
 jest.mock("../../../../apps/backend/src/services/antivirus.service.js");
 jest.mock("../../../../apps/backend/src/modules/common/audit.util.js");
-jest.mock("../../../../apps/backend/src/modules/common/idempotency.helpers.js");
 jest.mock("../../../../apps/backend/src/modules/common/idempotency.service.js");
 jest.mock("sharp");
 
@@ -21,7 +19,6 @@ const mockAvatarRepo = jest.mocked(avatarRepository);
 const mockMediaStorage = jest.mocked(mediaStorageService);
 const mockAntivirus = jest.mocked(antivirusService);
 const mockAudit = jest.mocked(auditUtil);
-const mockIdempotencyHelpers = jest.mocked(idempotencyHelpers);
 const mockIdempotencyService = jest.mocked(idempotencyService);
 const mockSharp = jest.mocked(sharp);
 
@@ -56,8 +53,6 @@ describe("Users Avatar Controller", () => {
     jest.clearAllMocks();
 
     // Default mocks
-    mockIdempotencyHelpers.getIdempotencyKey.mockReturnValue(null);
-    mockIdempotencyHelpers.getRouteTemplate.mockReturnValue("/users/avatar");
     mockIdempotencyService.resolveIdempotency.mockResolvedValue({
       type: "new",
       recordId: "rec-1",
@@ -141,7 +136,7 @@ describe("Users Avatar Controller", () => {
 
     it("should handle idempotency replay", async () => {
       const idempotencyKey = "idempotency-key-123";
-      mockIdempotencyHelpers.getIdempotencyKey.mockReturnValue(idempotencyKey);
+      mockRequest.headers = { "idempotency-key": idempotencyKey };
       mockIdempotencyService.resolveIdempotency.mockResolvedValue({
         type: "replay",
         status: 201,
@@ -215,7 +210,7 @@ describe("Users Avatar Controller", () => {
     it("should persist idempotency result on success", async () => {
       const idempotencyKey = "idempotency-key-123";
       const recordId = "rec-1";
-      mockIdempotencyHelpers.getIdempotencyKey.mockReturnValue(idempotencyKey);
+      mockRequest.headers = { "idempotency-key": idempotencyKey };
       mockIdempotencyService.resolveIdempotency.mockResolvedValue({
         type: "new",
         recordId,
@@ -298,7 +293,7 @@ describe("Users Avatar Controller", () => {
 
     it("should handle idempotency replay for delete", async () => {
       const idempotencyKey = "idempotency-key-123";
-      mockIdempotencyHelpers.getIdempotencyKey.mockReturnValue(idempotencyKey);
+      mockRequest.headers = { "idempotency-key": idempotencyKey };
       mockIdempotencyService.resolveIdempotency.mockResolvedValue({
         type: "replay",
         status: 204,
@@ -344,8 +339,7 @@ describe("Users Avatar Controller", () => {
         id: "avatar-123",
         storage_key: "storage-key-123",
       };
-
-      mockIdempotencyHelpers.getIdempotencyKey.mockReturnValue(idempotencyKey);
+      mockRequest.headers = { "idempotency-key": idempotencyKey };
       mockIdempotencyService.resolveIdempotency.mockResolvedValue({
         type: "new",
         recordId,

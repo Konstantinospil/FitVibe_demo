@@ -6,10 +6,11 @@ import { toError } from "../../utils/error.utils.js";
 import { logger } from "../../config/logger.js";
 import { env } from "../../config/env.js";
 import crypto from "node:crypto";
+import type { UserStatus } from "./users.types.js";
 
 type UserRow = {
   id: string;
-  status: string;
+  status: UserStatus;
   deleted_at: string | null;
   purge_scheduled_at: string | null;
   backup_purge_due_at: string | null;
@@ -58,7 +59,7 @@ export async function scheduleAccountDeletion(
 
   await insertAudit({
     actorUserId: userId,
-    entity: "users",
+    entityType: "users",
     action: "delete_scheduled",
     entityId: userId,
     metadata: { ...schedule },
@@ -181,7 +182,7 @@ export async function executeAccountDeletion(userId: string): Promise<void> {
 
   await insertAudit({
     actorUserId: null,
-    entity: "users",
+    entityType: "users",
     action: "account_purged",
     entityId: userId,
     metadata: {

@@ -3,7 +3,7 @@ import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 import { v4 as uuidv4 } from "uuid";
 import { db } from "../../db/index.js";
-import { is2FAEnabled, verify2FACode } from "./twofa.service.js";
+import { is2FAEnabled, verify2FACode } from "./two-factor.service.js";
 import { normalizeAuthTiming } from "./timing.utils.js";
 import {
   createPending2FASession,
@@ -83,7 +83,7 @@ import {
   getMaxIPAttempts,
   getMaxIPDistinctEmails,
 } from "./bruteforce.repository.js";
-import { logger } from "../../config/logger.js";
+import { insertAudit } from "../common/audit.util.js";
 
 const ACCESS_TTL = env.ACCESS_TOKEN_TTL;
 const REFRESH_TTL = env.REFRESH_TOKEN_TTL;
@@ -100,12 +100,6 @@ const TOKEN_TYPES = {
 } as const;
 
 const SESSION_EXPIRY_MS = REFRESH_TTL * 1000;
-
-function asError(err: unknown): Error {
-  return err instanceof Error
-    ? err
-    : new Error(typeof err === "string" ? err : JSON.stringify(err));
-}
 
 function nextSessionExpiry(): string {
   return new Date(Date.now() + SESSION_EXPIRY_MS).toISOString();
@@ -129,73 +123,23 @@ function sanitizeUserAgent(userAgent?: string | null): string | null {
   return userAgent.length > 512 ? userAgent.slice(0, 512) : userAgent;
 }
 
-/**
- * Validates if a string is a valid UUID format
- */
-function isValidUUID(str: string | null): boolean {
-  if (!str) {
-    return false;
-  }
-  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-  return uuidRegex.test(str);
+function isValidUUID(value: string | null): boolean {
+  return Boolean(
+    value && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value),
+  );
 }
 
 async function recordAuditEvent(
   userId: string | null,
   action: string,
   metadata: Record<string, unknown> = {},
-) {
-  try {
-    // Validate userId is a valid UUID or null
-    // Test IDs like "user-123" are not valid UUIDs and will cause database errors
-    const validUserId = userId && isValidUUID(userId) ? userId : null;
-
-    // Use crypto.randomUUID() instead of uuidv4() to avoid conflicts with test mocks
-    const auditId = crypto.randomUUID();
-
-    // Retry logic to handle transaction visibility issues in test environments
-    // When a user is created in one transaction and login happens immediately after,
-    // the FK constraint might fail if the user isn't visible to the connection pool yet
-    let retries = 0;
-    const maxRetries = 10;
-    const baseDelay = 100; // ms
-
-    while (retries < maxRetries) {
-      try {
-        await db("audit_log").insert({
-          id: auditId,
-          actor_user_id: validUserId,
-          action,
-          entity_type: "auth",
-          metadata,
-          created_at: new Date().toISOString(),
-        });
-        return; // Success, exit the retry loop
-      } catch (error: unknown) {
-        const err = error as { code?: string; detail?: string; message?: string };
-        // Check if it's a FK constraint violation for actor_user_id
-        // The detail includes "is not present in table \"users\"" and message includes "audit_log"
-        const isFKViolation =
-          err.code === "23503" &&
-          err.detail?.includes('is not present in table "users"') &&
-          (err.message?.includes("audit_log") ||
-            err.detail?.includes("audit_log_actor_user_id_foreign"));
-
-        if (isFKViolation && retries < maxRetries - 1) {
-          // Wait with exponential backoff before retrying
-          const delay = baseDelay * Math.pow(2, retries);
-          await new Promise((resolve) => setTimeout(resolve, delay));
-          retries++;
-          continue;
-        }
-        // Re-throw if not a retryable error or max retries reached
-        throw error;
-      }
-    }
-  } catch (error: unknown) {
-    const err = asError(error);
-    logger.error({ err, action }, "[audit] failed to record audit event");
-  }
+): Promise<void> {
+  await insertAudit({
+    actorUserId: userId,
+    entityType: "auth",
+    action,
+    metadata,
+  });
 }
 
 function signAccess(payload: Omit<JwtPayload, "iat" | "exp" | "jti">) {

@@ -1,3 +1,5 @@
+import type { UserStatus } from "../users/users.types.js";
+
 /**
  * Admin module types
  */
@@ -23,7 +25,7 @@ export interface UserSearchResult {
   username: string;
   email: string;
   roleCode: string;
-  status: "active" | "suspended" | "banned";
+  status: UserStatus;
   createdAt: string;
   lastLoginAt: string | null;
   sessionCount: number;

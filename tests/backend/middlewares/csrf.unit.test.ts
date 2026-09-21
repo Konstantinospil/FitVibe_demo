@@ -5,6 +5,8 @@ jest.mock("../../../apps/backend/src/config/env.js", () => ({
   env: {
     isProduction: false,
     COOKIE_SECURE: false,
+    ACCESS_COOKIE_NAME: "fitvibe_access",
+    REFRESH_COOKIE_NAME: "fitvibe_refresh",
     csrf: {
       cookieKey: Buffer.alloc(32, 1),
     },
@@ -78,10 +80,11 @@ describe("csrf middleware internals", () => {
     expect(next).toHaveBeenCalledWith();
   });
 
-  it("rejects missing tokens", async () => {
+  it("rejects missing tokens for browser requests", async () => {
     const { csrfProtection } = await import("../../../apps/backend/src/middlewares/csrf.js");
     const { req, res } = buildReqRes();
     req.method = "POST";
+    req.headers = { origin: "https://fitvibe.dev" };
 
     csrfProtection(req, res, next);
 
@@ -151,10 +154,11 @@ describe("validateOrigin", () => {
     });
   });
 
-  it("rejects missing origin and referer", async () => {
+  it("rejects cookie-authenticated requests missing origin and referer", async () => {
     const { validateOrigin } = await import("../../../apps/backend/src/middlewares/csrf.js");
     const { req, res } = buildReqRes();
     req.method = "POST";
+    req.cookies = { fitvibe_access: "cookie-token" };
 
     const middleware = validateOrigin(["https://fitvibe.dev"]);
     middleware(req, res, next);
@@ -163,5 +167,17 @@ describe("validateOrigin", () => {
     expect(res.json).toHaveBeenCalledWith({
       error: { code: "FORBIDDEN", message: "Missing Origin/Referer header" },
     });
+  });
+
+  it("allows cookie-free native API requests without browser headers", async () => {
+    const { validateOrigin } = await import("../../../apps/backend/src/middlewares/csrf.js");
+    const { req, res } = buildReqRes();
+    req.method = "POST";
+    req.headers = { authorization: "Bearer native-token" };
+
+    const middleware = validateOrigin(["https://fitvibe.dev"]);
+    middleware(req, res, next);
+
+    expect(next).toHaveBeenCalledWith();
   });
 });

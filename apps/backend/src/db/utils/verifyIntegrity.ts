@@ -14,29 +14,39 @@ const TABLES = [
   "user_contacts",
   "user_tombstones",
   "user_state_history",
+  "media",
   "auth_sessions",
-  "audit_log",
+  "refresh_tokens",
+  "auth_tokens",
+  "pending_2fa_sessions",
+  "user_2fa_settings",
+  "backup_codes",
+  "failed_login_attempts",
+  "failed_login_attempts_by_ip",
   "exercises",
+  "plans",
   "sessions",
   "session_exercises",
   "exercise_sets",
   "planned_exercise_attributes",
   "personal_records",
-  "user_points",
-  "plans",
-  "badge_catalog",
-  "badges",
   "followers",
-  "media",
   "feed_items",
   "feed_comments",
   "feed_likes",
   "session_bookmarks",
   "user_blocks",
-  "idempotency_keys",
-  "pending_2fa_sessions",
-  "user_2fa_settings",
+  "feed_reports",
+  "user_points",
+  "badge_catalog",
+  "badges",
+  "user_domain_vibe_levels",
+  "vibe_level_changes",
+  "audit_log",
   "cookie_consents",
+  "idempotency_keys",
+  "blacklist",
+  "contact_messages",
   "translations",
   "bio_attributes",
   "bio_attribute_values",
@@ -44,6 +54,7 @@ const TABLES = [
   "perf_attributes",
   "perf_attribute_values",
   "perf_attribute_selections",
+  "user_vibeform_preferences",
 ];
 
 const VIEWS = ["session_summary", "weekly_aggregates", "mv_leaderboard"];
@@ -79,6 +90,46 @@ async function verify(): Promise<void> {
     if (missingTables.length > 0) {
       throw new Error(`Missing required database tables: ${missingTables.join(", ")}`);
     }
+
+    const pointsIndex = await db.raw<{ rows: Array<{ indexdef: string }> }>(`
+      SELECT indexdef
+      FROM pg_indexes
+      WHERE schemaname = current_schema()
+        AND tablename = 'user_points'
+        AND indexname = 'user_points_source_unique_idx'
+    `);
+    const pointsIndexDefinition = pointsIndex.rows[0]?.indexdef ?? "";
+    if (!/^CREATE UNIQUE INDEX\s/i.test(pointsIndexDefinition)) {
+      throw new Error("user_points_source_unique_idx is missing or is not unique");
+    }
+    logger.info("user_points_source_unique_idx verified as unique");
+
+    const coreConstraints = await db.raw<{
+      rows: Array<{ conname: string; definition: string }>;
+    }>(`
+      SELECT conname, pg_get_constraintdef(oid) AS definition
+      FROM pg_constraint
+      WHERE conname IN ('users_status_check', 'plans_status_check')
+    `);
+    const constraintMap = new Map(coreConstraints.rows.map((row) => [row.conname, row.definition]));
+    const usersStatus = constraintMap.get("users_status_check") ?? "";
+    const plansStatus = constraintMap.get("plans_status_check") ?? "";
+    for (const requiredStatus of [
+      "active",
+      "pending_verification",
+      "pending_deletion",
+      "suspended",
+      "banned",
+      "deleted",
+    ]) {
+      if (!usersStatus.includes(requiredStatus)) {
+        throw new Error(`users_status_check is missing status '${requiredStatus}'`);
+      }
+    }
+    if (!plansStatus.includes("active") || !plansStatus.includes("completed")) {
+      throw new Error("plans_status_check does not enforce the canonical plan states");
+    }
+    logger.info("Core status constraints verified");
 
     for (const { table, minCount } of REQUIRED_COUNTS) {
       const count = await countRows(table);

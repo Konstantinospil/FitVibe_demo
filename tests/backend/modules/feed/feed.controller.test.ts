@@ -2,17 +2,14 @@ import type { Request, Response } from "express";
 import * as feedController from "../../../../apps/backend/src/modules/feed/feed.controller.js";
 import * as feedService from "../../../../apps/backend/src/modules/feed/feed.service.js";
 import * as idempotencyService from "../../../../apps/backend/src/modules/common/idempotency.service.js";
-import * as idempotencyHelpers from "../../../../apps/backend/src/modules/common/idempotency.helpers.js";
 import { HttpError } from "../../../../apps/backend/src/utils/http.js";
 
 // Mock dependencies
 jest.mock("../../../../apps/backend/src/modules/feed/feed.service.js");
 jest.mock("../../../../apps/backend/src/modules/common/idempotency.service.js");
-jest.mock("../../../../apps/backend/src/modules/common/idempotency.helpers.js");
 
 const mockFeedService = jest.mocked(feedService);
 const mockIdempotencyService = jest.mocked(idempotencyService);
-const mockIdempotencyHelpers = jest.mocked(idempotencyHelpers);
 
 describe("Feed Controller", () => {
   let mockRequest: Partial<Request>;
@@ -241,7 +238,6 @@ describe("Feed Controller", () => {
     it("should like feed item successfully", async () => {
       mockRequest.params = { feedItemId };
       mockRequest.method = "POST";
-      mockIdempotencyHelpers.handleIdempotentRequest.mockResolvedValue(false);
       const mockResult = { liked: true };
       mockFeedService.likeFeedItem.mockResolvedValue(mockResult);
 
@@ -265,7 +261,6 @@ describe("Feed Controller", () => {
     it("should unlike feed item successfully", async () => {
       mockRequest.params = { feedItemId };
       mockRequest.method = "DELETE";
-      mockIdempotencyHelpers.handleIdempotentRequest.mockResolvedValue(false);
       const mockResult = { liked: false };
       mockFeedService.unlikeFeedItem.mockResolvedValue(mockResult);
 
@@ -291,7 +286,6 @@ describe("Feed Controller", () => {
     it("should bookmark session successfully without idempotency", async () => {
       mockRequest.params = { sessionId };
       mockRequest.method = "POST";
-      mockIdempotencyHelpers.getIdempotencyKey.mockReturnValue(null);
       const mockResult = { bookmarked: true };
       mockFeedService.bookmarkSession.mockResolvedValue(mockResult);
 
@@ -305,8 +299,7 @@ describe("Feed Controller", () => {
     it("should handle idempotency replay", async () => {
       mockRequest.params = { sessionId };
       mockRequest.method = "POST";
-      mockIdempotencyHelpers.getIdempotencyKey.mockReturnValue("idempotency-key");
-      mockIdempotencyHelpers.getRouteTemplate.mockReturnValue("/feed/bookmarks");
+      (mockRequest.get as jest.Mock).mockReturnValue("idempotency-key");
       mockIdempotencyService.resolveIdempotency.mockResolvedValue({
         type: "replay",
         status: 200,
@@ -335,7 +328,6 @@ describe("Feed Controller", () => {
     it("should remove bookmark successfully", async () => {
       mockRequest.params = { sessionId };
       mockRequest.method = "DELETE";
-      mockIdempotencyHelpers.getIdempotencyKey.mockReturnValue(null);
       const mockResult = { bookmarked: false };
       mockFeedService.removeBookmark.mockResolvedValue(mockResult);
 
@@ -413,7 +405,6 @@ describe("Feed Controller", () => {
       mockRequest.params = { feedItemId };
       mockRequest.body = { body: commentBody };
       mockRequest.method = "POST";
-      mockIdempotencyHelpers.handleIdempotentRequest.mockResolvedValue(false);
       const mockComment = { id: "comment-1", body: commentBody };
       mockFeedService.createComment.mockResolvedValue(mockComment);
 
@@ -428,7 +419,6 @@ describe("Feed Controller", () => {
       mockRequest.params = { feedItemId };
       mockRequest.body = { body: 123 };
       mockRequest.method = "POST";
-      mockIdempotencyHelpers.handleIdempotentRequest.mockResolvedValue(false);
       const mockComment = { id: "comment-1", body: "123" };
       mockFeedService.createComment.mockResolvedValue(mockComment);
 
@@ -453,7 +443,6 @@ describe("Feed Controller", () => {
     it("should delete comment successfully", async () => {
       mockRequest.params = { commentId };
       mockRequest.method = "DELETE";
-      mockIdempotencyHelpers.getIdempotencyKey.mockReturnValue(null);
       const mockResult = { deleted: true };
       mockFeedService.deleteComment.mockResolvedValue(mockResult);
 
@@ -479,7 +468,6 @@ describe("Feed Controller", () => {
     it("should block user successfully", async () => {
       mockRequest.params = { alias };
       mockRequest.method = "POST";
-      mockIdempotencyHelpers.getIdempotencyKey.mockReturnValue(null);
       const mockResult = { blocked: true };
       mockFeedService.blockUserByAlias.mockResolvedValue(mockResult);
 
@@ -505,7 +493,6 @@ describe("Feed Controller", () => {
     it("should unblock user successfully", async () => {
       mockRequest.params = { alias };
       mockRequest.method = "DELETE";
-      mockIdempotencyHelpers.getIdempotencyKey.mockReturnValue(null);
       const mockResult = { unblocked: true };
       mockFeedService.unblockUserByAlias.mockResolvedValue(mockResult);
 
@@ -530,7 +517,6 @@ describe("Feed Controller", () => {
       mockRequest.params = { feedItemId };
       mockRequest.body = { reason: "spam", details: "This is spam" };
       mockRequest.method = "POST";
-      mockIdempotencyHelpers.getIdempotencyKey.mockReturnValue(null);
       const mockResult = { reported: true };
       mockFeedService.reportFeedItem.mockResolvedValue(mockResult);
 
@@ -563,7 +549,6 @@ describe("Feed Controller", () => {
       mockRequest.params = { commentId };
       mockRequest.body = { reason: "harassment" };
       mockRequest.method = "POST";
-      mockIdempotencyHelpers.getIdempotencyKey.mockReturnValue(null);
       const mockResult = { reported: true };
       mockFeedService.reportComment.mockResolvedValue(mockResult);
 
@@ -660,7 +645,6 @@ describe("Feed Controller", () => {
       mockRequest.params = { sessionId };
       mockRequest.body = { title: "Cloned Session" };
       mockRequest.method = "POST";
-      mockIdempotencyHelpers.getIdempotencyKey.mockReturnValue(null);
       const mockCloned = { id: "cloned-123", title: "Cloned Session" };
       mockFeedService.cloneSessionFromFeed.mockResolvedValue(mockCloned);
 
@@ -695,7 +679,6 @@ describe("Feed Controller", () => {
     it("should follow user successfully", async () => {
       mockRequest.params = { alias };
       mockRequest.method = "POST";
-      mockIdempotencyHelpers.getIdempotencyKey.mockReturnValue(null);
       const mockResult = { followingId: "following-123" };
       mockFeedService.followUserByAlias.mockResolvedValue(mockResult);
 
@@ -722,7 +705,6 @@ describe("Feed Controller", () => {
     it("should unfollow user successfully", async () => {
       mockRequest.params = { alias };
       mockRequest.method = "DELETE";
-      mockIdempotencyHelpers.getIdempotencyKey.mockReturnValue(null);
       const mockResult = { unfollowedId: "following-123" };
       mockFeedService.unfollowUserByAlias.mockResolvedValue(mockResult);
 

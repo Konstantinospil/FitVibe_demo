@@ -84,6 +84,7 @@ describe("Database Configuration", () => {
       delete process.env.PGDATABASE;
       delete process.env.PGUSER;
       delete process.env.PGPASSWORD;
+      delete process.env.DATABASE_URL;
 
       jest.resetModules();
       const { DB_CONFIG } = await import("../../../apps/backend/src/db/db.config.js");
@@ -95,12 +96,22 @@ describe("Database Configuration", () => {
       expect(DB_CONFIG.password).toBe("fitvibe");
     });
 
+    it("should prefer DATABASE_URL when configured", async () => {
+      process.env.DATABASE_URL = "postgresql://urluser:urlpass@db-url.example.com:5544/url_db";
+
+      jest.resetModules();
+      const { DB_CONFIG } = await import("../../../apps/backend/src/db/db.config.js");
+
+      expect(DB_CONFIG.connectionString).toBe(process.env.DATABASE_URL);
+    });
+
     it("should use environment variables when set", async () => {
       process.env.PGHOST = "db.example.com";
       process.env.PGPORT = "5433";
       process.env.PGDATABASE = "mydb";
       process.env.PGUSER = "myuser";
       process.env.PGPASSWORD = "mypassword";
+      delete process.env.DATABASE_URL;
 
       jest.resetModules();
       const { DB_CONFIG } = await import("../../../apps/backend/src/db/db.config.js");

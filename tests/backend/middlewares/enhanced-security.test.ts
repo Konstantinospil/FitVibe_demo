@@ -12,6 +12,7 @@ import {
   validateForwardedIP,
 } from "../../../apps/backend/src/middlewares/enhanced-security.js";
 import { logger } from "../../../apps/backend/src/config/logger.js";
+import { env } from "../../../apps/backend/src/config/env.js";
 
 jest.mock("../../../apps/backend/src/config/logger.js", () => ({
   logger: {
@@ -220,6 +221,21 @@ describe("enhanced security middleware", () => {
     expect(res.status).not.toHaveBeenCalled();
   });
 
+  it("allows free-form body text that contains ordinary punctuation", () => {
+    const req: TypedRequest = {
+      query: {},
+      params: {},
+      body: { bio: "Running (easy) & cycling; recovery $ matters" },
+    } as unknown as TypedRequest;
+    const res = createMockRes();
+    const next = jest.fn();
+
+    detectSuspiciousPatterns(req as unknown as Request, res, next);
+
+    expect(next).toHaveBeenCalled();
+    expect(res.status).not.toHaveBeenCalled();
+  });
+
   it("applies no-cache headers", () => {
     const res = createMockRes();
     noCacheHeaders({} as TypedRequest as Request, res, jest.fn());
@@ -232,8 +248,9 @@ describe("enhanced security middleware", () => {
   });
 
   it("logs missing security headers in development mode", () => {
-    const originalEnv = process.env.NODE_ENV;
-    process.env.NODE_ENV = "development";
+    const runtimeEnv = env as { NODE_ENV: "development" | "test" | "production" };
+    const originalNodeEnv = runtimeEnv.NODE_ENV;
+    runtimeEnv.NODE_ENV = "development";
     const res = createMockRes();
     const req = { path: "/secure" } as TypedRequest as Request;
 
@@ -251,7 +268,7 @@ describe("enhanced security middleware", () => {
       "[Security] Missing security headers",
     );
 
-    process.env.NODE_ENV = originalEnv;
+    runtimeEnv.NODE_ENV = originalNodeEnv;
     jest.clearAllMocks();
   });
 });

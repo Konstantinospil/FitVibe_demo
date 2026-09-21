@@ -1858,11 +1858,30 @@ jobs:
           --health-interval=10s
           --health-timeout=5s
           --health-retries=5
+      clamav:
+        image: clamav/clamav:latest
+        ports:
+          - 3310:3310
+        env:
+          FRESHCLAM_CHECKS: 0
+        options: >-
+          --health-cmd="clamdscan --version"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     env:
       DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/fitvibe_test
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Generate smoke-test JWT key pair
+        run: |
+          mkdir -p "$RUNNER_TEMP/fitvibe-jwt"
+          openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048             -out "$RUNNER_TEMP/fitvibe-jwt/private.pem"
+          openssl pkey -in "$RUNNER_TEMP/fitvibe-jwt/private.pem" -pubout             -out "$RUNNER_TEMP/fitvibe-jwt/public.pem"
+          chmod 644 "$RUNNER_TEMP/fitvibe-jwt/private.pem"
+          chmod 644 "$RUNNER_TEMP/fitvibe-jwt/public.pem"
 
       - name: Set lowercase GHCR image names
         run: |
@@ -1923,10 +1942,18 @@ jobs:
         run: |
           docker run -d \
             --name test-backend \
+            --add-host=host.docker.internal:host-gateway \
             -p 4100:4100 \
-            -e DATABASE_URL="${{ env.DATABASE_URL }}" \
+            -v "$RUNNER_TEMP/fitvibe-jwt/private.pem:/run/secrets/jwt-private.pem:ro" \
+            -v "$RUNNER_TEMP/fitvibe-jwt/public.pem:/run/secrets/jwt-public.pem:ro" \
+            -e DATABASE_URL="postgresql://postgres:postgres@host.docker.internal:5432/fitvibe_test" \
             -e NODE_ENV=production \
             -e PORT=4100 \
+            -e JWT_PRIVATE_KEY_PATH=/run/secrets/jwt-private.pem \
+            -e JWT_PUBLIC_KEY_PATH=/run/secrets/jwt-public.pem \
+            -e CLAMAV_ENABLED=true \
+            -e CLAMAV_HOST=host.docker.internal \
+            -e CLAMAV_PORT=3310 \
             ${{ env.BACKEND_IMAGE }}:sha-${{ github.sha }}
           echo "Backend container started"
 

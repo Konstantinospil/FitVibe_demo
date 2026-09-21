@@ -30,7 +30,7 @@ export async function getSummary(userId: string, period: number): Promise<Progre
   cache.set(key, res);
   await insertAudit({
     actorUserId: userId,
-    entity: "progress",
+    entityType: "progress",
     action: "summary",
     entityId: userId,
     metadata: { period },
@@ -54,7 +54,7 @@ export async function getTrends(
   cache.set(key, res);
   await insertAudit({
     actorUserId: userId,
-    entity: "progress",
+    entityType: "progress",
     action: "trends",
     entityId: userId,
     metadata: { period, groupBy },
@@ -77,7 +77,7 @@ export async function getExerciseBreakdown(
   cache.set(key, res);
   await insertAudit({
     actorUserId: userId,
-    entity: "progress",
+    entityType: "progress",
     action: "exercises_breakdown",
     entityId: userId,
     metadata: { period },
@@ -96,7 +96,7 @@ export async function getPlans(userId: string): Promise<PlanProgress[]> {
   cache.set(key, data);
   await insertAudit({
     actorUserId: userId,
-    entity: "progress",
+    entityType: "progress",
     action: "plans",
     entityId: userId,
   });
@@ -175,7 +175,7 @@ export async function getVibePoints(userId: string, months: number): Promise<Vib
   cache.set(key, result);
   await insertAudit({
     actorUserId: userId,
-    entity: "progress",
+    entityType: "progress",
     action: "vibe_points",
     entityId: userId,
     metadata: { months },
@@ -230,7 +230,7 @@ export async function buildProgressReport(
 
   await insertAudit({
     actorUserId: userId,
-    entity: "progress",
+    entityType: "progress",
     action: "export_report",
     entityId: userId,
     metadata: { period, groupBy },

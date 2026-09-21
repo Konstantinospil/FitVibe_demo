@@ -1,4 +1,4 @@
-import * as twofaService from "../../../../apps/backend/src/modules/auth/twofa.service.js";
+import * as twoFactorService from "../../../../apps/backend/src/modules/auth/two-factor.service.js";
 import { HttpError } from "../../../../apps/backend/src/utils/http.js";
 import bcrypt from "bcryptjs";
 import { authenticator } from "@otplib/preset-default";
@@ -35,14 +35,18 @@ jest.mock("../../../../apps/backend/src/db/connection.js", () => {
       queryBuilders[table] = createMockQueryBuilder();
     }
     return queryBuilders[table];
-  }) as jest.Mock;
+  }) as jest.Mock & { transaction: jest.Mock };
+
+  mockDbFunction.transaction = jest.fn(async (callback: (trx: typeof mockDbFunction) => unknown) =>
+    callback(mockDbFunction),
+  );
 
   return {
     db: mockDbFunction,
   };
 });
 
-describe("TwoFA Service", () => {
+describe("Two-Factor Lifecycle Service", () => {
   const userId = "user-123";
   const userEmail = "test@example.com";
   const password = "SecureP@ssw0rd123";
@@ -51,6 +55,49 @@ describe("TwoFA Service", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     Object.keys(queryBuilders).forEach((key) => delete queryBuilders[key]);
+  });
+
+  describe("lifecycle orchestration", () => {
+    it("resolves the primary email before starting setup", async () => {
+      queryBuilders["user_contacts"] = createMockQueryBuilder({ value: userEmail });
+      queryBuilders["user_2fa_settings"] = createMockQueryBuilder(null);
+      queryBuilders["backup_codes"] = createMockQueryBuilder();
+      queryBuilders["audit_log"] = createMockQueryBuilder();
+
+      mockAuthenticator.generateSecret.mockReturnValue("TEST_SECRET");
+      mockAuthenticator.keyuri.mockReturnValue("otpauth://totp/test");
+      mockQRCode.toDataURL.mockResolvedValue("data:image/png;base64,test");
+      mockBcrypt.hash.mockResolvedValue("hashed_code" as never);
+
+      const result = await twoFactorService.beginTwoFactorSetup(userId);
+
+      expect(result.secret).toBe("TEST_SECRET");
+      expect(
+        (queryBuilders["user_contacts"] as { where: jest.Mock }).where,
+      ).toHaveBeenCalledWith({
+        user_id: userId,
+        type: "email",
+        is_primary: true,
+      });
+    });
+
+    it("fails setup when the primary email is missing", async () => {
+      queryBuilders["user_contacts"] = createMockQueryBuilder(null);
+
+      await expect(twoFactorService.beginTwoFactorSetup(userId)).rejects.toMatchObject({
+        code: "E.USER.EMAIL_NOT_FOUND",
+        status: 404,
+      });
+    });
+
+    it("fails disable when the user no longer exists", async () => {
+      queryBuilders["users"] = createMockQueryBuilder(null);
+
+      await expect(twoFactorService.disableTwoFactor(userId, password)).rejects.toMatchObject({
+        code: "E.USER.NOT_FOUND",
+        status: 404,
+      });
+    });
   });
 
   describe("setupTwoFactor", () => {
@@ -72,7 +119,7 @@ describe("TwoFA Service", () => {
       queryBuilders["backup_codes"] = createMockQueryBuilder();
       (queryBuilders["backup_codes"] as { insert: jest.Mock }).insert.mockResolvedValue([1]);
 
-      const result = await twofaService.setupTwoFactor(userId, userEmail);
+      const result = await twoFactorService.setupTwoFactor(userId, userEmail);
 
       expect(result.secret).toBe(secret);
       expect(result.qrCode).toBe(qrCode);
@@ -110,12 +157,18 @@ describe("TwoFA Service", () => {
       queryBuilders["backup_codes"] = createMockQueryBuilder();
       (queryBuilders["backup_codes"] as { insert: jest.Mock }).insert.mockResolvedValue([1]);
 
-      const result = await twofaService.setupTwoFactor(userId, userEmail);
+      const result = await twoFactorService.setupTwoFactor(userId, userEmail);
 
       expect(result.secret).toBe(secret);
       expect(
         (queryBuilders["user_2fa_settings"] as { update: jest.Mock }).update,
-      ).toHaveBeenCalled();
+      ).toHaveBeenCalledWith(
+        expect.objectContaining({
+          totp_secret: secret,
+          is_enabled: false,
+          is_verified: false,
+        }),
+      );
     });
 
     it("should throw error when 2FA is already enabled", async () => {
@@ -138,8 +191,8 @@ describe("TwoFA Service", () => {
         existingSettings,
       );
 
-      await expect(twofaService.setupTwoFactor(userId, userEmail)).rejects.toThrow(HttpError);
-      const error = await twofaService.setupTwoFactor(userId, userEmail).catch((e) => e);
+      await expect(twoFactorService.setupTwoFactor(userId, userEmail)).rejects.toThrow(HttpError);
+      const error = await twoFactorService.setupTwoFactor(userId, userEmail).catch((e) => e);
       expect(error).toBeInstanceOf(HttpError);
       expect((error as HttpError).code).toBe("2FA_ALREADY_ENABLED");
     });
@@ -173,7 +226,7 @@ describe("TwoFA Service", () => {
       queryBuilders["audit_log"] = createMockQueryBuilder();
       (queryBuilders["audit_log"] as { insert: jest.Mock }).insert.mockResolvedValue([1]);
 
-      const result = await twofaService.verifyAndEnable2FA(userId, code);
+      const result = await twoFactorService.verifyAndEnable2FA(userId, code);
 
       expect(result).toBe(true);
       expect(mockAuthenticator.verify).toHaveBeenCalledWith({
@@ -189,8 +242,8 @@ describe("TwoFA Service", () => {
       queryBuilders["user_2fa_settings"] = createMockQueryBuilder(null);
       (queryBuilders["user_2fa_settings"] as { first: jest.Mock }).first.mockResolvedValue(null);
 
-      await expect(twofaService.verifyAndEnable2FA(userId, "123456")).rejects.toThrow(HttpError);
-      const error = await twofaService.verifyAndEnable2FA(userId, "123456").catch((e) => e);
+      await expect(twoFactorService.verifyAndEnable2FA(userId, "123456")).rejects.toThrow(HttpError);
+      const error = await twoFactorService.verifyAndEnable2FA(userId, "123456").catch((e) => e);
       expect(error).toBeInstanceOf(HttpError);
       expect((error as HttpError).code).toBe("2FA_NOT_SETUP");
     });
@@ -215,8 +268,8 @@ describe("TwoFA Service", () => {
         settings,
       );
 
-      await expect(twofaService.verifyAndEnable2FA(userId, "123456")).rejects.toThrow(HttpError);
-      const error = await twofaService.verifyAndEnable2FA(userId, "123456").catch((e) => e);
+      await expect(twoFactorService.verifyAndEnable2FA(userId, "123456")).rejects.toThrow(HttpError);
+      const error = await twoFactorService.verifyAndEnable2FA(userId, "123456").catch((e) => e);
       expect((error as HttpError).code).toBe("2FA_ALREADY_ENABLED");
     });
 
@@ -242,8 +295,8 @@ describe("TwoFA Service", () => {
         settings,
       );
 
-      await expect(twofaService.verifyAndEnable2FA(userId, "invalid")).rejects.toThrow(HttpError);
-      const error = await twofaService.verifyAndEnable2FA(userId, "invalid").catch((e) => e);
+      await expect(twoFactorService.verifyAndEnable2FA(userId, "invalid")).rejects.toThrow(HttpError);
+      const error = await twoFactorService.verifyAndEnable2FA(userId, "invalid").catch((e) => e);
       expect((error as HttpError).code).toBe("INVALID_2FA_CODE");
     });
   });
@@ -273,7 +326,7 @@ describe("TwoFA Service", () => {
       );
       (queryBuilders["user_2fa_settings"] as { update: jest.Mock }).update.mockResolvedValue(1);
 
-      const result = await twofaService.verify2FACode(userId, code);
+      const result = await twoFactorService.verify2FACode(userId, code);
 
       expect(result).toBe(true);
       expect(mockAuthenticator.verify).toHaveBeenCalled();
@@ -283,9 +336,35 @@ describe("TwoFA Service", () => {
       queryBuilders["user_2fa_settings"] = createMockQueryBuilder(null);
       (queryBuilders["user_2fa_settings"] as { first: jest.Mock }).first.mockResolvedValue(null);
 
-      const result = await twofaService.verify2FACode(userId, "123456");
+      const result = await twoFactorService.verify2FACode(userId, "123456");
 
       expect(result).toBe(false);
+    });
+
+    it("should reject enabled but unverified settings", async () => {
+      const settings = {
+        id: "settings-id",
+        user_id: userId,
+        totp_secret: "secret",
+        is_enabled: true,
+        is_verified: false,
+        recovery_email: null,
+        recovery_phone: null,
+        enabled_at: null,
+        last_used_at: null,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      };
+
+      queryBuilders["user_2fa_settings"] = createMockQueryBuilder(settings);
+      (queryBuilders["user_2fa_settings"] as { first: jest.Mock }).first.mockResolvedValue(
+        settings,
+      );
+
+      const result = await twoFactorService.verify2FACode(userId, "123456");
+
+      expect(result).toBe(false);
+      expect(mockAuthenticator.verify).not.toHaveBeenCalled();
     });
 
     it("should verify backup code when TOTP fails", async () => {
@@ -327,10 +406,49 @@ describe("TwoFA Service", () => {
       (queryBuilders["backup_codes"] as { where: jest.Mock }).where.mockReturnThis();
       (queryBuilders["backup_codes"] as { update: jest.Mock }).update.mockResolvedValue(1);
 
-      const result = await twofaService.verify2FACode(userId, code);
+      const result = await twoFactorService.verify2FACode(userId, code);
 
       expect(result).toBe(true);
       expect(mockBcrypt.compare).toHaveBeenCalled();
+    });
+
+    it("should reject a backup code when another request consumed it first", async () => {
+      const settings = {
+        id: "settings-id",
+        user_id: userId,
+        totp_secret: "secret",
+        is_enabled: true,
+        is_verified: true,
+        recovery_email: null,
+        recovery_phone: null,
+        enabled_at: new Date().toISOString(),
+        last_used_at: null,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      };
+
+      mockAuthenticator.verify.mockReturnValue(false);
+      mockBcrypt.compare.mockResolvedValue(true as never);
+      queryBuilders["user_2fa_settings"] = createMockQueryBuilder(settings);
+      (queryBuilders["user_2fa_settings"] as { first: jest.Mock }).first.mockResolvedValue(
+        settings,
+      );
+      queryBuilders["backup_codes"] = createMockQueryBuilder([
+        {
+          id: "backup-id",
+          user_id: userId,
+          code_hash: "hashed",
+          is_used: false,
+          used_at: null,
+          generation_batch: 1,
+          created_at: new Date().toISOString(),
+        },
+      ]);
+      (queryBuilders["backup_codes"] as { update: jest.Mock }).update.mockResolvedValue(0);
+
+      const result = await twoFactorService.verify2FACode(userId, "BACKUP-12");
+
+      expect(result).toBe(false);
     });
 
     it("should return false when both TOTP and backup code fail", async () => {
@@ -359,7 +477,7 @@ describe("TwoFA Service", () => {
 
       queryBuilders["backup_codes"] = createMockQueryBuilder([]);
 
-      const result = await twofaService.verify2FACode(userId, code);
+      const result = await twoFactorService.verify2FACode(userId, code);
 
       expect(result).toBe(false);
     });
@@ -395,22 +513,30 @@ describe("TwoFA Service", () => {
       queryBuilders["audit_log"] = createMockQueryBuilder();
       (queryBuilders["audit_log"] as { insert: jest.Mock }).insert.mockResolvedValue([1]);
 
-      const result = await twofaService.disable2FA(userId, password, passwordHash);
+      const result = await twoFactorService.disable2FA(userId, password, passwordHash);
 
       expect(result).toBe(true);
       expect(mockBcrypt.compare).toHaveBeenCalledWith(password, passwordHash);
       expect(
         (queryBuilders["user_2fa_settings"] as { update: jest.Mock }).update,
-      ).toHaveBeenCalled();
+      ).toHaveBeenCalledWith(
+        expect.objectContaining({
+          totp_secret: "",
+          is_enabled: false,
+          is_verified: false,
+          enabled_at: null,
+          last_used_at: null,
+        }),
+      );
     });
 
     it("should throw error when password is invalid", async () => {
       mockBcrypt.compare.mockResolvedValue(false as never);
 
-      await expect(twofaService.disable2FA(userId, "wrong_password", passwordHash)).rejects.toThrow(
+      await expect(twoFactorService.disable2FA(userId, "wrong_password", passwordHash)).rejects.toThrow(
         HttpError,
       );
-      const error = await twofaService
+      const error = await twoFactorService
         .disable2FA(userId, "wrong_password", passwordHash)
         .catch((e) => e);
       expect((error as HttpError).code).toBe("INVALID_PASSWORD");
@@ -422,10 +548,10 @@ describe("TwoFA Service", () => {
       queryBuilders["user_2fa_settings"] = createMockQueryBuilder(null);
       (queryBuilders["user_2fa_settings"] as { first: jest.Mock }).first.mockResolvedValue(null);
 
-      await expect(twofaService.disable2FA(userId, password, passwordHash)).rejects.toThrow(
+      await expect(twoFactorService.disable2FA(userId, password, passwordHash)).rejects.toThrow(
         HttpError,
       );
-      const error = await twofaService.disable2FA(userId, password, passwordHash).catch((e) => e);
+      const error = await twoFactorService.disable2FA(userId, password, passwordHash).catch((e) => e);
       expect((error as HttpError).code).toBe("2FA_NOT_ENABLED");
     });
   });
@@ -451,16 +577,38 @@ describe("TwoFA Service", () => {
         settings,
       );
 
-      const result = await twofaService.is2FAEnabled(userId);
+      const result = await twoFactorService.is2FAEnabled(userId);
 
       expect(result).toBe(true);
+    });
+
+    it("should return false when 2FA is enabled but not verified", async () => {
+      const settings = {
+        id: "settings-id",
+        user_id: userId,
+        totp_secret: "secret",
+        is_enabled: true,
+        is_verified: false,
+        recovery_email: null,
+        recovery_phone: null,
+        enabled_at: null,
+        last_used_at: null,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      };
+      queryBuilders["user_2fa_settings"] = createMockQueryBuilder(settings);
+      (queryBuilders["user_2fa_settings"] as { first: jest.Mock }).first.mockResolvedValue(
+        settings,
+      );
+
+      expect(await twoFactorService.is2FAEnabled(userId)).toBe(false);
     });
 
     it("should return false when 2FA is not enabled", async () => {
       queryBuilders["user_2fa_settings"] = createMockQueryBuilder(null);
       (queryBuilders["user_2fa_settings"] as { first: jest.Mock }).first.mockResolvedValue(null);
 
-      const result = await twofaService.is2FAEnabled(userId);
+      const result = await twoFactorService.is2FAEnabled(userId);
 
       expect(result).toBe(false);
     });
@@ -479,7 +627,7 @@ describe("TwoFA Service", () => {
       queryBuilders["audit_log"] = createMockQueryBuilder();
       (queryBuilders["audit_log"] as { insert: jest.Mock }).insert.mockResolvedValue([1]);
 
-      const result = await twofaService.generateBackupCodes(userId, batch);
+      const result = await twoFactorService.generateBackupCodes(userId, batch);
 
       expect(result).toHaveLength(10);
       expect(mockBcrypt.hash).toHaveBeenCalledTimes(10);
@@ -497,7 +645,7 @@ describe("TwoFA Service", () => {
         count: "5",
       });
 
-      const result = await twofaService.getRemainingBackupCodesCount(userId);
+      const result = await twoFactorService.getRemainingBackupCodesCount(userId);
 
       expect(result).toBe(5);
     });
@@ -509,7 +657,7 @@ describe("TwoFA Service", () => {
         count: "0",
       });
 
-      const result = await twofaService.getRemainingBackupCodesCount(userId);
+      const result = await twoFactorService.getRemainingBackupCodesCount(userId);
 
       expect(result).toBe(0);
     });

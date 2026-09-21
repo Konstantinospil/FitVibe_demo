@@ -16,7 +16,7 @@ The backend follows a **folder-by-module** structure where each module encapsula
 
 ## Module Index
 
-All modules are registered in [`index.ts`](index.ts) and mounted under `/api/v1/`.
+Versioned API routes are composed in [`../app.ts`](../app.ts) and mounted under `/api/v1/`. Domain routers remain in their module folders; `src/api/` provides thin re-exports used by the composition root.
 
 | Module             | Route Prefix      | Purpose                                                      | Status         |
 | ------------------ | ----------------- | ------------------------------------------------------------ | -------------- |
@@ -156,8 +156,9 @@ describe("ExampleService", () => {
 2. **Implement layers**: routes, controller, service, repository, types
 3. **Add validation**: Create Zod schemas
 4. **Write tests**: Unit and integration tests
-5. **Register module**: Add to `modules/index.ts`
-6. **Document**: Update this README
+5. **Expose router**: Add a thin re-export under `src/api/` when the module is part of the versioned API
+6. **Register module**: Mount the router in `src/app.ts`
+7. **Document**: Update this README
 
 ### Module Template
 
@@ -189,7 +190,10 @@ export const exampleController = {
 export const exampleRouter = Router();
 exampleRouter.post("/", requireAuth, exampleController.create);
 
-// 6. Register in modules/index.ts
+// 6. Re-export from src/api/examples.routes.ts
+export { exampleRouter } from "../modules/example/example.routes.js";
+
+// 7. Mount in src/app.ts
 apiRouter.use("/examples", exampleRouter);
 ```
 

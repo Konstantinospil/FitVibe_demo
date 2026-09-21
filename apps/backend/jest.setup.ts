@@ -1,3 +1,5 @@
+import { generateKeyPairSync } from "node:crypto";
+
 process.env.NODE_ENV = "test";
 process.env.READ_ONLY_MODE = "false";
 process.env.DEBUG_AUTH_TOKENS = "true";
@@ -8,6 +10,14 @@ process.env.CSRF_ALLOWED_ORIGINS = process.env.CSRF_ALLOWED_ORIGINS ?? "http://l
 process.env.EMAIL_ENABLED = process.env.EMAIL_ENABLED ?? "false";
 process.env.CLAMAV_ENABLED = process.env.CLAMAV_ENABLED ?? "false";
 process.env.VAULT_ENABLED = process.env.VAULT_ENABLED ?? "false";
+
+const testJwtKeys = generateKeyPairSync("rsa", {
+  modulusLength: 2048,
+  publicKeyEncoding: { type: "spki", format: "pem" },
+  privateKeyEncoding: { type: "pkcs8", format: "pem" },
+});
+process.env.JWT_PRIVATE_KEY = process.env.JWT_PRIVATE_KEY ?? testJwtKeys.privateKey;
+process.env.JWT_PUBLIC_KEY = process.env.JWT_PUBLIC_KEY ?? testJwtKeys.publicKey;
 
 jest.setTimeout(1000 * 30);
 

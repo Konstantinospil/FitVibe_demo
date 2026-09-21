@@ -497,7 +497,7 @@ describe("Users Service", () => {
       expect(mockAuditUtil.insertAudit).toHaveBeenCalledWith(
         expect.objectContaining({
           actorUserId: userId,
-          entity: "users",
+          entityType: "users",
           action: "profile_update",
           entityId: userId,
         }),
@@ -1033,7 +1033,7 @@ describe("Users Service", () => {
       expect(mockUsersRepo.setUserStatus).toHaveBeenCalled();
     });
 
-    it("should change status from active to archived", async () => {
+    it("should change status from active to suspended", async () => {
       mockUsersRepo.findUserById.mockResolvedValue({
         id: userId,
         status: "active",
@@ -1048,13 +1048,13 @@ describe("Users Service", () => {
       mockUsersRepo.fetchUserWithContacts.mockResolvedValue({
         user: {
           id: userId,
-          status: "archived",
+          status: "suspended",
         } as UserRow,
         contacts: [],
         avatar: null,
       });
 
-      await usersService.changeStatus(null, userId, "archived");
+      await usersService.changeStatus(null, userId, "suspended");
 
       expect(mockUsersRepo.setUserStatus).toHaveBeenCalled();
     });

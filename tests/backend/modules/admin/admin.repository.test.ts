@@ -36,9 +36,11 @@ jest.mock("../../../../apps/backend/src/db/index.js", () => {
     return queryBuilders[table];
   }) as jest.Mock & {
     raw: jest.Mock;
+    fn: { now: jest.Mock };
   };
 
   mockDbFunction.raw = jest.fn().mockReturnValue({});
+  mockDbFunction.fn = { now: jest.fn(() => "now") };
 
   return {
     default: mockDbFunction,
@@ -121,4 +123,22 @@ describe("Admin Repository", () => {
       expect(result).toEqual(mockUsers);
     });
   });
+  describe("softDeleteUser", () => {
+    it("marks the user deleted instead of persisting a non-schema ban state", async () => {
+      const dbModule = await import("../../../../apps/backend/src/db/index.js");
+      const dbFn = dbModule.db as jest.Mock;
+      dbFn("users");
+
+      await adminRepository.softDeleteUser(userId);
+
+      expect(queryBuilders["users"]?.where).toHaveBeenCalledWith("id", userId);
+      expect(queryBuilders["users"]?.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          status: "deleted",
+          deleted_at: "now",
+        }),
+      );
+    });
+  });
+
 });

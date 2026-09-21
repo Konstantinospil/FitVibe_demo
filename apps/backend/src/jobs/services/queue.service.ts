@@ -1,9 +1,6 @@
 import { logger } from "../../config/logger.js";
-import { runRetentionSweep } from "../../services/retention.service.js";
-import { evaluateStreakBonus } from "../../modules/points/streaks.service.js";
-import { evaluateSeasonalEvents } from "../../modules/points/seasonal-events.service.js";
 import { applyVibeLevelDecay } from "./vibe-level-decay.service.js";
-import db from "../../db/index.js";
+import { executeSharedJob, SHARED_JOB_TYPES } from "./job.handlers.js";
 
 export interface QueueJob {
   name: string;
@@ -44,88 +41,18 @@ export class QueueService {
    * Register default job handlers for known job types
    */
   private registerDefaultHandlers(): void {
-    // Retention sweep job
-    this.registerHandler("retention.sweep", async (job) => {
-      logger.info({ job }, "[queue] Processing retention sweep");
-      const summary = await runRetentionSweep();
-      logger.info({ summary }, "[queue] Retention sweep completed");
-    });
+    for (const jobName of SHARED_JOB_TYPES) {
+      this.registerHandler(jobName, async (job) => {
+        logger.debug({ job }, "[queue] Processing shared job");
+        await executeSharedJob(jobName, job.payload);
+      });
+    }
 
-    // Leaderboard refresh job
-    this.registerHandler("leaderboard.refresh", async (job) => {
-      logger.info({ job }, "[queue] Processing leaderboard refresh");
-      try {
-        await db.raw("SELECT public.refresh_session_summary(TRUE);");
-        await db.raw("REFRESH MATERIALIZED VIEW mv_leaderboard;");
-        logger.info("[queue] Leaderboard refresh completed");
-      } catch (error) {
-        logger.error({ error, job }, "[queue] Leaderboard refresh failed");
-        throw error;
-      }
-    });
-
-    // Points streak evaluation job
-    this.registerHandler("points.streaks.evaluate", async (job) => {
-      logger.debug({ job }, "[queue] Processing streak evaluation");
-      try {
-        const { userId, sessionId, completedAt } = job.payload;
-
-        if (
-          typeof userId !== "string" ||
-          typeof sessionId !== "string" ||
-          typeof completedAt !== "string"
-        ) {
-          logger.warn({ job }, "[queue] Invalid streak evaluation job payload");
-          return;
-        }
-
-        const result = await evaluateStreakBonus(userId, sessionId, completedAt);
-        logger.info(
-          { userId, sessionId, ...result },
-          "[queue] Streak evaluation completed successfully",
-        );
-      } catch (error) {
-        logger.error({ error, job }, "[queue] Streak evaluation failed");
-        throw error;
-      }
-    });
-
-    // Seasonal events evaluation job
-    this.registerHandler("points.seasonal_events.evaluate", async (job) => {
-      logger.debug({ job }, "[queue] Processing seasonal events evaluation");
-      try {
-        const { userId, sessionId, completedAt } = job.payload;
-
-        if (
-          typeof userId !== "string" ||
-          typeof sessionId !== "string" ||
-          typeof completedAt !== "string"
-        ) {
-          logger.warn({ job }, "[queue] Invalid seasonal events job payload");
-          return;
-        }
-
-        const result = await evaluateSeasonalEvents(userId, sessionId, completedAt);
-        logger.info(
-          { userId, sessionId, ...result },
-          "[queue] Seasonal events evaluation completed successfully",
-        );
-      } catch (error) {
-        logger.error({ error, job }, "[queue] Seasonal events evaluation failed");
-        throw error;
-      }
-    });
-
-    // Vibe level decay job
+    // Deliberately remains local-only until the decay implementation is made concurrency-safe.
     this.registerHandler("vibe-level.decay", async (job) => {
       logger.info({ job }, "[queue] Processing vibe level decay");
-      try {
-        await applyVibeLevelDecay();
-        logger.info("[queue] Vibe level decay completed successfully");
-      } catch (error) {
-        logger.error({ error, job }, "[queue] Vibe level decay failed");
-        throw error;
-      }
+      await applyVibeLevelDecay();
+      logger.info("[queue] Vibe level decay completed successfully");
     });
   }
 

@@ -3,6 +3,7 @@
  */
 
 import { db } from "../../db/index.js";
+import type { UserStatus } from "../users/users.types.js";
 import type {
   FeedReport,
   UserSearchResult,
@@ -228,10 +229,7 @@ export async function searchUsers(query: SearchUsersQuery): Promise<UserSearchRe
 /**
  * Update user status (active, suspended, banned)
  */
-export async function updateUserStatus(
-  userId: string,
-  status: "active" | "suspended" | "banned",
-): Promise<void> {
+export async function updateUserStatus(userId: string, status: UserStatus): Promise<void> {
   await db("users").where("id", userId).update({ status });
 }
 
@@ -241,7 +239,7 @@ export async function updateUserStatus(
 export async function softDeleteUser(userId: string): Promise<void> {
   await db("users").where("id", userId).update({
     deleted_at: db.fn.now(),
-    status: "banned",
+    status: "deleted",
   });
 }
 

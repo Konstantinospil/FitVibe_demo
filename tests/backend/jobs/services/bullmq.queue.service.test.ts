@@ -1,4 +1,5 @@
 import { jest } from "@jest/globals";
+import { env } from "../../../../apps/backend/src/config/env.js";
 import {
   BullMQQueueService,
   getBullMQService,
@@ -234,8 +235,9 @@ describe("BullMQQueueService", () => {
   });
 
   it("manages singleton lifecycle via helper functions", async () => {
-    const original = process.env.REDIS_ENABLED;
-    process.env.REDIS_ENABLED = "true";
+    const redisConfig = env.redis as { enabled: boolean };
+    const original = redisConfig.enabled;
+    redisConfig.enabled = true;
 
     const instanceA = getBullMQService();
     const instanceB = getBullMQService();
@@ -246,6 +248,6 @@ describe("BullMQQueueService", () => {
     expect(getBullMQService()).toBeInstanceOf(BullMQQueueService);
 
     await shutdownBullMQ();
-    process.env.REDIS_ENABLED = original;
+    redisConfig.enabled = original;
   });
 });

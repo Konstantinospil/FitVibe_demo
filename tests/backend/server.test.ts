@@ -1,13 +1,6 @@
-interface VaultConfig {
-  enabled: boolean;
-  token?: string | null;
-  addr: string;
-  namespace?: string | null;
-}
-
 interface EnvMockShape {
   PORT: number;
-  vault: VaultConfig;
+  isProduction: boolean;
 }
 
 const listenMock = jest.fn();
@@ -17,15 +10,13 @@ const loggerMock = {
   error: jest.fn(),
 };
 const initializeSecretsManagerMock = jest.fn();
+const getJWTKeysMock = jest.fn();
+const getDatabaseURLMock = jest.fn();
+const antivirusHealthMock = jest.fn();
 
 const envMock: EnvMockShape = {
   PORT: 5050,
-  vault: {
-    enabled: false,
-    token: "",
-    addr: "https://vault.local",
-    namespace: "root",
-  },
+  isProduction: false,
 };
 
 jest.mock("../../apps/backend/src/app.js", () => ({
@@ -43,57 +34,71 @@ jest.mock("../../apps/backend/src/config/env.js", () => ({
 
 jest.mock("../../apps/backend/src/services/secrets.service.js", () => ({
   initializeSecretsManager: initializeSecretsManagerMock,
+  getJWTKeys: getJWTKeysMock,
+  getDatabaseURL: getDatabaseURLMock,
 }));
 
-const exitSpy = jest.spyOn(process, "exit").mockImplementation(((code?: number) => {
-  throw new Error(`exit:${code}`);
-}) as never);
-
-afterAll(() => {
-  exitSpy.mockRestore();
-});
+jest.mock("../../apps/backend/src/services/antivirus.service.js", () => ({
+  checkHealth: antivirusHealthMock,
+}));
 
 describe("server bootstrap", () => {
+  const originalEnv = { ...process.env };
+
   beforeEach(() => {
     jest.resetModules();
-    listenMock.mockClear();
-    loggerMock.info.mockClear();
-    loggerMock.error.mockClear();
-    initializeSecretsManagerMock.mockClear();
+    jest.clearAllMocks();
+    process.env = { ...originalEnv };
+    process.env.VAULT_ENABLED = "false";
+    delete process.env.VAULT_TOKEN;
     envMock.PORT = 5050;
-    envMock.vault = { ...envMock.vault, enabled: false, token: "" };
+    envMock.isProduction = false;
+    getJWTKeysMock.mockResolvedValue(null);
+    getDatabaseURLMock.mockResolvedValue(null);
+    antivirusHealthMock.mockResolvedValue(true);
+  });
+
+  afterAll(() => {
+    process.env = originalEnv;
   });
 
   const loadServer = () => import("../../apps/backend/src/server.js");
 
-  it("starts the HTTP server when vault is disabled", async () => {
+  it("starts the HTTP server when Vault is disabled", async () => {
     const { startServer } = await loadServer();
     await startServer();
 
-    expect(listenMock).toHaveBeenCalled();
+    expect(initializeSecretsManagerMock).not.toHaveBeenCalled();
+    expect(listenMock).toHaveBeenCalledWith(5050, expect.any(Function));
     expect(loggerMock.info).toHaveBeenCalledWith(
-      "[server] Secrets manager disabled - using environment variables",
+      "[server] Secrets manager disabled - using environment/files",
     );
   });
 
-  it("exits the process when vault is enabled without token", async () => {
-    envMock.vault = { ...envMock.vault, enabled: true, token: "" };
+  it("fails startup when Vault is enabled without a token", async () => {
+    process.env.VAULT_ENABLED = "true";
+    delete process.env.VAULT_TOKEN;
 
     const { startServer } = await loadServer();
-    await expect(startServer()).rejects.toThrow("exit:1");
 
-    expect(loggerMock.error).toHaveBeenCalledWith(
-      "[server] VAULT_ENABLED=true but VAULT_TOKEN is not set",
-    );
+    await expect(startServer()).rejects.toThrow("VAULT_ENABLED=true but VAULT_TOKEN is not set");
+    expect(listenMock).not.toHaveBeenCalled();
   });
 
-  it("initializes the secrets manager when vault is configured", async () => {
-    envMock.vault = {
-      enabled: true,
-      token: "vault-token",
-      addr: "https://secure-vault",
-      namespace: "devops",
-    };
+  it("loads Vault secrets before importing the runtime application", async () => {
+    process.env.VAULT_ENABLED = "true";
+    process.env.VAULT_TOKEN = "vault-token";
+    process.env.VAULT_ADDR = "https://secure-vault";
+    process.env.VAULT_NAMESPACE = "devops";
+    delete process.env.JWT_PRIVATE_KEY;
+    delete process.env.JWT_PUBLIC_KEY;
+    delete process.env.DATABASE_URL;
+
+    getJWTKeysMock.mockResolvedValue({
+      privateKey: "vault-private",
+      publicKey: "vault-public",
+    });
+    getDatabaseURLMock.mockResolvedValue("postgresql://vault/database");
 
     const { startServer } = await loadServer();
     await startServer();
@@ -107,10 +112,23 @@ describe("server bootstrap", () => {
         namespace: "devops",
       },
     });
-    expect(loggerMock.info).toHaveBeenCalledWith(
-      { vaultAddr: "https://secure-vault" },
-      "[server] Secrets manager initialized with Vault",
-    );
+    expect(getJWTKeysMock).toHaveBeenCalled();
+    expect(getDatabaseURLMock).toHaveBeenCalled();
+    expect(process.env.JWT_PRIVATE_KEY).toBe("vault-private");
+    expect(process.env.JWT_PUBLIC_KEY).toBe("vault-public");
+    expect(process.env.DATABASE_URL).toBe("postgresql://vault/database");
     expect(listenMock).toHaveBeenCalledWith(5050, expect.any(Function));
+  });
+
+  it("refuses production startup when ClamAV is unavailable", async () => {
+    envMock.isProduction = true;
+    antivirusHealthMock.mockResolvedValue(false);
+
+    const { startServer } = await loadServer();
+
+    await expect(startServer()).rejects.toThrow(
+      "ClamAV health check failed during production startup",
+    );
+    expect(listenMock).not.toHaveBeenCalled();
   });
 });

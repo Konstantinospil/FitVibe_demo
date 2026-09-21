@@ -40,7 +40,7 @@ export async function getPlanById(userId: string, planId: string): Promise<PlanR
 export async function listUserPlans(
   userId: string,
   options?: {
-    status?: string;
+    status?: "active" | "completed";
     includeArchived?: boolean;
     search?: string;
     limit?: number;
@@ -121,7 +121,7 @@ export async function archiveUserPlan(userId: string, planId: string): Promise<v
 }
 
 /**
- * Hard delete a plan
+ * Soft delete a plan
  */
 export async function deleteUserPlan(userId: string, planId: string): Promise<void> {
   // Verify ownership
@@ -153,6 +153,7 @@ export async function recomputeProgress(
   // Count total sessions and completed sessions for this plan
   const sessionStats = await (trx ?? db)("sessions")
     .where({ plan_id: planId })
+    .whereNull("deleted_at")
     .select(
       db.raw("COUNT(*) as total"),
       db.raw("COUNT(*) FILTER (WHERE status = 'completed') as completed"),

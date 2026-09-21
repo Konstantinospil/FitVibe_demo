@@ -5,6 +5,8 @@ jest.mock("../../../apps/backend/src/config/env.js", () => ({
   env: {
     isProduction: false,
     COOKIE_SECURE: false,
+    ACCESS_COOKIE_NAME: "fitvibe_access",
+    REFRESH_COOKIE_NAME: "fitvibe_refresh",
   },
 }));
 
@@ -129,14 +131,26 @@ describe("CSRF Middleware", () => {
       expect(mockNext).toHaveBeenCalledWith();
     });
 
-    it("should allow request with valid token in query", () => {
+    it("should reject query-string CSRF tokens", () => {
       const { secret, csrfToken } = issueCsrfToken();
       mockRequest.cookies = { [CSRF_COOKIE]: secret };
       mockRequest.query = { _csrf: csrfToken };
 
       csrfProtection(mockRequest as Request, mockResponse as Response, mockNext);
 
+      const error = mockNext.mock.calls[0][0];
+      expect(error).toBeInstanceOf(HttpError);
+      expect((error as HttpError).code).toBe("CSRF_TOKEN_INVALID");
+    });
+
+    it("should allow cookie-free native API mutations without browser headers", () => {
+      mockRequest.headers = { authorization: "Bearer native-token" };
+      mockRequest.cookies = {};
+
+      csrfProtection(mockRequest as Request, mockResponse as Response, mockNext);
+
       expect(mockNext).toHaveBeenCalledWith();
+      expect(mockResponse.cookie).not.toHaveBeenCalled();
     });
 
     it("should reject request with invalid token", () => {
@@ -166,23 +180,14 @@ describe("CSRF Middleware", () => {
       expect((error as HttpError).code).toBe("CSRF_TOKEN_INVALID");
     });
 
-    it("should create new secret if cookie doesn't exist", () => {
+    it("should not create a CSRF cookie for safe middleware-only requests", () => {
       mockRequest.method = "GET";
       mockRequest.cookies = {};
 
       csrfProtection(mockRequest as Request, mockResponse as Response, mockNext);
 
-      expect(mockResponse.cookie).toHaveBeenCalledWith(
-        CSRF_COOKIE,
-        expect.any(String),
-        expect.objectContaining({
-          httpOnly: true,
-          sameSite: "lax",
-          secure: false,
-          path: "/",
-          maxAge: 7 * 24 * 60 * 60 * 1000,
-        }),
-      );
+      expect(mockNext).toHaveBeenCalledWith();
+      expect(mockResponse.cookie).not.toHaveBeenCalled();
     });
 
     it("should use existing secret from cookie", () => {
@@ -194,20 +199,15 @@ describe("CSRF Middleware", () => {
       expect(mockResponse.cookie).not.toHaveBeenCalled();
     });
 
-    it("should use a secure __Host cookie when COOKIE_SECURE is enabled", () => {
+    it("should not issue cookies for safe middleware requests when secure cookies are enabled", () => {
       (env as { COOKIE_SECURE: boolean }).COOKIE_SECURE = true;
       mockRequest.method = "GET";
       mockRequest.cookies = {};
 
       csrfProtection(mockRequest as Request, mockResponse as Response, mockNext);
 
-      expect(mockResponse.cookie).toHaveBeenCalledWith(
-        "__Host-fitvibe-csrf",
-        expect.any(String),
-        expect.objectContaining({
-          secure: true,
-        }),
-      );
+      expect(mockNext).toHaveBeenCalledWith();
+      expect(mockResponse.cookie).not.toHaveBeenCalled();
     });
   });
 
@@ -236,6 +236,21 @@ describe("CSRF Middleware", () => {
       expect(mockResponse.json).toHaveBeenCalledWith({
         csrfToken: expect.any(String),
       });
+    });
+
+    it("should use a secure __Host cookie when COOKIE_SECURE is enabled", () => {
+      (env as { COOKIE_SECURE: boolean }).COOKIE_SECURE = true;
+      mockRequest.cookies = {};
+
+      csrfTokenRoute(mockRequest as Request, mockResponse as Response);
+
+      expect(mockResponse.cookie).toHaveBeenCalledWith(
+        "__Host-fitvibe-csrf",
+        expect.any(String),
+        expect.objectContaining({
+          secure: true,
+        }),
+      );
     });
   });
 
@@ -310,9 +325,10 @@ describe("CSRF Middleware", () => {
       });
     });
 
-    it("should reject request with missing origin and referer", () => {
+    it("should reject cookie-authenticated requests with missing origin and referer", () => {
       mockRequest.method = "POST";
       mockRequest.headers = {};
+      mockRequest.cookies = { fitvibe_access: "cookie-token" };
       const middleware = validateOrigin(allowedOrigins);
 
       middleware(mockRequest as Request, mockResponse as Response, mockNext);
@@ -321,6 +337,17 @@ describe("CSRF Middleware", () => {
       expect(mockResponse.json).toHaveBeenCalledWith({
         error: { code: "FORBIDDEN", message: "Missing Origin/Referer header" },
       });
+    });
+
+    it("should allow cookie-free native API requests without origin or referer", () => {
+      mockRequest.method = "POST";
+      mockRequest.headers = { authorization: "Bearer native-token" };
+      mockRequest.cookies = {};
+      const middleware = validateOrigin(allowedOrigins);
+
+      middleware(mockRequest as Request, mockResponse as Response, mockNext);
+
+      expect(mockNext).toHaveBeenCalledWith();
     });
 
     it("should prioritize origin over referer", () => {

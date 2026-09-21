@@ -1,6 +1,7 @@
 import crypto from "crypto";
 import type { Knex } from "knex";
 import { db } from "../../db/connection.js";
+import type { UserStatus } from "../users/users.types.js";
 
 const USERS_TABLE = "users";
 const CONTACTS_TABLE = "user_contacts";
@@ -72,7 +73,7 @@ export interface AuthUserRecord {
   display_name: string;
   locale: string;
   preferred_lang: string;
-  status: string;
+  status: UserStatus;
   role_code: string;
   password_hash: string;
   created_at: string;
@@ -134,7 +135,7 @@ export async function createUser(input: {
   display_name: string;
   locale?: string;
   preferred_lang?: string;
-  status: string;
+  status: UserStatus;
   role_code: string;
   password_hash: string;
   primaryEmail: string;
@@ -229,7 +230,7 @@ export async function createUser(input: {
   });
 }
 
-export async function updateUserStatus(userId: string, status: string) {
+export async function updateUserStatus(userId: string, status: UserStatus) {
   return db("users").where({ id: userId }).update({ status, updated_at: new Date().toISOString() });
 }
 

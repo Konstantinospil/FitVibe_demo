@@ -143,7 +143,8 @@ export async function listLatestAttributeValues(category: "bio" | "perf", userId
         created_at
       FROM ${table}
       WHERE user_id = ?
-      ORDER BY attribute_id, measured_at DESC
+        AND deactivated_at IS NULL
+      ORDER BY attribute_id, measured_at DESC, created_at DESC
     `,
     [userId],
   );
