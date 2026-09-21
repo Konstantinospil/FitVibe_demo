@@ -217,10 +217,7 @@ export async function fetchVibePointsTrends(
     })
     .whereNotNull("vlc.points_awarded")
     .andWhere("vlc.created_at", ">=", cutoff)
-    .groupBy(
-      "vlc.domain_code",
-      db.raw("to_char(date_trunc('month', vlc.created_at), 'YYYY-MM')"),
-    )
+    .groupBy("vlc.domain_code", db.raw("to_char(date_trunc('month', vlc.created_at), 'YYYY-MM')"))
     .select(
       "vlc.domain_code as type_code",
       db.raw("to_char(date_trunc('month', vlc.created_at), 'YYYY-MM') as month_key"),
