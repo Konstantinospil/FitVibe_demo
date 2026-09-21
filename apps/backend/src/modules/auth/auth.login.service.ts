@@ -19,7 +19,7 @@ import {
   sanitizeAuthUserAgent as sanitizeUserAgent,
 } from "./auth.audit.js";
 import { toSafeUser } from "./auth.mapping.js";
-import { assertLoginAllowed, recordLoginFailure } from "./auth.login-attempt.service.js";
+import { assertLoginAllowed, recordLoginFailure, resetLoginFailures } from "./auth.login-attempt.service.js";
 import {
   accessTokenTtl,
   nextSessionExpiry,
@@ -102,12 +102,7 @@ export async function login(
       });
     }
 
-    // Successful password authentication - reset failed attempts
-    // Use transaction to ensure atomicity between account-level and IP-level reset
-    await db.transaction(async (trx) => {
-      await resetFailedAttempts(identifier, ipAddress, trx);
-      await resetFailedAttemptsByIP(ipAddress, trx);
-    });
+    await resetLoginFailures(identifier, ipAddress);
 
     // Check if user has accepted current terms version
     if (isTermsVersionOutdated(user.terms_version)) {
