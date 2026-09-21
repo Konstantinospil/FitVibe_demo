@@ -80,7 +80,7 @@ export async function login(
       crypto.createHash("sha256").update(dummyRefresh).digest("hex");
       signAccess({ sub: dummyUserId, role: "athlete", sid: dummySessionId });
 
-      await recordLoginFailure({
+      return await recordLoginFailure({
         identifier,
         ipAddress,
         userAgent,
@@ -97,7 +97,7 @@ export async function login(
       crypto.createHash("sha256").update(dummyRefresh).digest("hex");
       signAccess({ sub: user.id, role: user.role_code, sid: dummySessionId });
 
-      await recordLoginFailure({
+      return await recordLoginFailure({
         identifier,
         ipAddress,
         userAgent,
