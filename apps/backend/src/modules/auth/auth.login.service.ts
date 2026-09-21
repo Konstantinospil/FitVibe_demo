@@ -1,5 +1,4 @@
 import crypto from "crypto";
-import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 import { v4 as uuidv4 } from "uuid";
 import { db } from "../../db/index.js";
@@ -15,29 +14,18 @@ import {
   findUserByEmail,
   findUserByUsername,
   insertRefreshToken,
-  getRefreshByHash,
-  revokeRefreshByHash,
   findUserById,
-  revokeRefreshBySession,
-  findRefreshTokenRaw,
   createAuthSession,
-  findSessionById,
-  updateSession,
-  revokeSessionById,
 } from "./auth.repository.js";
 import { attachAnonymousConsents } from "../consent/consent.repository.js";
 import type {
   JwtPayload,
   LoginDTO,
   LoginContext,
-  RefreshTokenPayload,
   TokenPair,
   UserSafe,
 } from "./auth.types.js";
-import { env, RSA_KEYS } from "../../config/env.js";
-import { isTermsVersionOutdated } from "../../config/terms.js";
 import { HttpError } from "../../utils/http.js";
-import { incrementRefreshReuse } from "../../observability/metrics.js";
 import {
   getFailedAttempt,
   recordFailedAttempt,
@@ -60,9 +48,13 @@ import {
   sanitizeAuthUserAgent as sanitizeUserAgent,
 } from "./auth.audit.js";
 import { toSafeUser } from "./auth.mapping.js";
+import {
+  accessTokenTtl,
+  nextSessionExpiry,
+  signAccess,
+  signRefresh,
+} from "./auth.session-tokens.js";
 
-const ACCESS_TTL = env.ACCESS_TOKEN_TTL;
-const REFRESH_TTL = env.REFRESH_TOKEN_TTL;
 const DUMMY_PASSWORD_HASH = bcrypt.hashSync("fitvibe-placeholder-password", 12);
 
 const SESSION_EXPIRY_MS = REFRESH_TTL * 1000;
@@ -75,22 +67,6 @@ function isValidUUID(value: string | null): boolean {
   return Boolean(
     value && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value),
   );
-}
-
-function signAccess(payload: Omit<JwtPayload, "iat" | "exp" | "jti">) {
-  return jwt.sign(payload, RSA_KEYS.privateKey, {
-    algorithm: "RS256",
-    expiresIn: ACCESS_TTL,
-    jwtid: uuidv4(),
-  });
-}
-
-function signRefresh(payload: Pick<RefreshTokenPayload, "sub" | "sid">) {
-  return jwt.sign({ sub: payload.sub, sid: payload.sid, typ: "refresh" }, RSA_KEYS.privateKey, {
-    algorithm: "RS256",
-    expiresIn: REFRESH_TTL,
-    jwtid: uuidv4(),
-  });
 }
 
 export async function login(
@@ -511,7 +487,7 @@ export async function login(
     const tokens: TokenPair = {
       accessToken: signAccess({ sub: user.id, role: user.role_code, sid: sessionId }),
       refreshToken,
-      accessExpiresIn: ACCESS_TTL,
+      accessExpiresIn: accessTokenTtl,
     };
 
     await recordAuditEvent(user.id, "auth.login", {
@@ -637,7 +613,7 @@ export async function verify2FALogin(
   const tokens: TokenPair = {
     accessToken: signAccess({ sub: user.id, role: user.role_code, sid: sessionId }),
     refreshToken,
-    accessExpiresIn: ACCESS_TTL,
+    accessExpiresIn: accessTokenTtl,
   };
 
   await recordAuditEvent(user.id, "auth.login_2fa_success", {
@@ -659,173 +635,4 @@ export async function verify2FALogin(
     tokens,
     session: { id: sessionId, expiresAt: sessionExpiresAt },
   };
-}
-
-export async function refresh(
-  refreshToken: string,
-  context: LoginContext = {},
-): Promise<{ user: UserSafe; newRefresh: string; accessToken: string }> {
-  try {
-    const decoded = jwt.verify(refreshToken, RSA_KEYS.publicKey, {
-      algorithms: ["RS256"],
-    }) as RefreshTokenPayload;
-    if (!decoded?.sid) {
-      throw new HttpError(401, "AUTH_INVALID_REFRESH", "AUTH_INVALID_REFRESH");
-    }
-
-    const token_hash = crypto.createHash("sha256").update(refreshToken).digest("hex");
-    const rec = await getRefreshByHash(token_hash);
-    if (!rec) {
-      try {
-        const historical = await findRefreshTokenRaw(token_hash);
-        if (historical?.session_jti) {
-          await revokeSessionById(historical.session_jti);
-          await revokeRefreshBySession(historical.session_jti);
-          incrementRefreshReuse();
-          await recordAuditEvent(historical.user_id ?? null, "auth.refresh_reuse", {
-            sessionId: historical.session_jti,
-            requestId: context.requestId ?? null,
-            ip: context.ip ?? null,
-            userAgent: sanitizeUserAgent(context.userAgent),
-            outcome: "failure",
-            familyRevoked: true,
-          });
-        }
-      } catch (error: unknown) {
-        if (error instanceof HttpError) {
-          throw error;
-        }
-      }
-      throw new HttpError(401, "AUTH_INVALID_REFRESH", "AUTH_INVALID_REFRESH");
-    }
-
-    if (rec.session_jti !== decoded.sid) {
-      await revokeRefreshByHash(token_hash);
-      await recordAuditEvent(rec.user_id, "auth.refresh_session_mismatch", {
-        tokenId: rec.id,
-        sessionId: decoded.sid,
-        storedSessionId: rec.session_jti,
-        requestId: context.requestId ?? null,
-        outcome: "failure",
-      });
-      throw new HttpError(401, "AUTH_INVALID_REFRESH", "AUTH_INVALID_REFRESH");
-    }
-
-    const session = await findSessionById(decoded.sid);
-    if (!session || session.user_id !== rec.user_id) {
-      await revokeRefreshByHash(token_hash);
-      throw new HttpError(401, "AUTH_INVALID_REFRESH", "AUTH_INVALID_REFRESH");
-    }
-
-    if (session.revoked_at) {
-      await revokeRefreshByHash(token_hash);
-      throw new HttpError(401, "AUTH_SESSION_REVOKED", "AUTH_SESSION_REVOKED");
-    }
-
-    if (new Date(rec.expires_at).getTime() <= Date.now()) {
-      await revokeRefreshByHash(token_hash);
-      await revokeSessionById(session.jti);
-      throw new HttpError(401, "AUTH_REFRESH_EXPIRED", "AUTH_REFRESH_EXPIRED");
-    }
-
-    if (new Date(session.expires_at).getTime() <= Date.now()) {
-      await revokeRefreshBySession(session.jti);
-      await revokeSessionById(session.jti);
-      throw new HttpError(401, "AUTH_REFRESH_EXPIRED", "AUTH_REFRESH_EXPIRED");
-    }
-
-    const user = await findUserById(decoded.sub);
-    if (!user || user.status !== "active") {
-      throw new HttpError(401, "AUTH_USER_NOT_FOUND", "User not found");
-    }
-
-    // Check if user has accepted current terms version
-    if (isTermsVersionOutdated(user.terms_version)) {
-      throw new HttpError(403, "TERMS_VERSION_OUTDATED", "TERMS_VERSION_OUTDATED");
-    }
-
-    await revokeRefreshByHash(token_hash);
-    const newRefresh = signRefresh({ sub: user.id, sid: session.jti });
-    const newHash = crypto.createHash("sha256").update(newRefresh).digest("hex");
-    const newExpiry = nextSessionExpiry();
-
-    await insertRefreshToken({
-      id: uuidv4(),
-      user_id: user.id,
-      token_hash: newHash,
-      session_jti: session.jti,
-      expires_at: newExpiry,
-      created_at: new Date().toISOString(),
-    });
-
-    const patch: {
-      expires_at: string;
-      user_agent?: string | null;
-      ip?: string | null;
-    } = {
-      expires_at: newExpiry,
-    };
-    if (context.userAgent) {
-      patch.user_agent = sanitizeUserAgent(context.userAgent);
-    }
-    if (context.ip) {
-      patch.ip = context.ip;
-    }
-    await updateSession(session.jti, patch);
-
-    await recordAuditEvent(user.id, "auth.refresh", {
-      sessionId: session.jti,
-      previousTokenId: rec.id,
-      requestId: context.requestId ?? null,
-      ip: context.ip ?? null,
-      userAgent: sanitizeUserAgent(context.userAgent),
-    });
-
-    return {
-      user: toSafeUser(user),
-      newRefresh,
-      accessToken: signAccess({
-        sub: user.id,
-        role: user.role_code,
-        sid: session.jti,
-      }),
-    };
-  } catch (error: unknown) {
-    if (error instanceof HttpError) {
-      throw error;
-    }
-    throw new HttpError(401, "AUTH_INVALID_REFRESH", "AUTH_INVALID_REFRESH");
-  }
-}
-
-export async function logout(
-  refreshToken: string | undefined,
-  context: LoginContext = {},
-): Promise<void> {
-  if (!refreshToken) {
-    return;
-  }
-  const token_hash = crypto.createHash("sha256").update(refreshToken).digest("hex");
-  let decoded: RefreshTokenPayload | null = null;
-  try {
-    decoded = jwt.verify(refreshToken, RSA_KEYS.publicKey, {
-      algorithms: ["RS256"],
-    }) as RefreshTokenPayload;
-  } catch {
-    decoded = null;
-  }
-
-  await revokeRefreshByHash(token_hash);
-
-  if (decoded?.sid) {
-    await revokeRefreshBySession(decoded.sid);
-    await revokeSessionById(decoded.sid);
-  }
-
-  await recordAuditEvent(decoded?.sub ?? null, "auth.logout", {
-    sessionId: decoded?.sid ?? null,
-    requestId: context.requestId ?? null,
-    ip: context.ip ?? null,
-    userAgent: sanitizeUserAgent(context.userAgent),
-  });
 }
