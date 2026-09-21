@@ -5,6 +5,7 @@ import {
   findSessionById,
   getFeedItemStats,
   hasBlockRelation,
+  isFollowing,
   type FeedItemStats,
   type SessionRow,
 } from "./feed.repository.js";
@@ -25,9 +26,13 @@ export async function ensureFeedInteractionAllowed(
   if (await hasBlockRelation(actorId, ownerId)) {
     throw new HttpError(403, "E.FEED.BLOCKED", "FEED_BLOCKED");
   }
-  if (ownerId !== actorId && visibility !== "public") {
-    throw new HttpError(403, "E.FEED.NOT_PUBLIC", "FEED_NOT_PUBLIC");
+  if (ownerId === actorId || visibility === "public") {
+    return;
   }
+  if (visibility === "followers" && (await isFollowing(actorId, ownerId))) {
+    return;
+  }
+  throw new HttpError(403, "E.FEED.NOT_PUBLIC", "FEED_NOT_PUBLIC");
 }
 
 export async function loadSessionOrThrow(sessionId: string) {
@@ -42,9 +47,13 @@ export async function ensureSessionInteractionAllowed(actorId: string, session: 
   if (await hasBlockRelation(actorId, session.owner_id)) {
     throw new HttpError(403, "E.FEED.BLOCKED", "FEED_BLOCKED");
   }
-  if (session.owner_id !== actorId && session.visibility !== "public") {
-    throw new HttpError(403, "E.FEED.NOT_PUBLIC", "Session is not public");
+  if (session.owner_id === actorId || session.visibility === "public") {
+    return;
   }
+  if (session.visibility === "followers" && (await isFollowing(actorId, session.owner_id))) {
+    return;
+  }
+  throw new HttpError(403, "E.FEED.NOT_PUBLIC", "Session is not visible to this user");
 }
 
 export function loadModerationBlocklist(): string[] {

@@ -151,7 +151,7 @@ export async function listFeedSessions({
     query.whereIn(`${FEED_ITEMS_TABLE}.owner_id`, (builder) => {
       builder.select("following_id").from(FOLLOWERS_TABLE).where({ follower_id: viewerId });
     });
-    query.where(`${FEED_ITEMS_TABLE}.visibility`, "public");
+    query.whereIn(`${FEED_ITEMS_TABLE}.visibility`, ["public", "followers"]);
   }
 
   return query;
@@ -210,7 +210,7 @@ export async function countFeedSessions({
   }
 
   if (scope === "public") {
-    query.where(`${FEED_ITEMS_TABLE}.visibility`, "public");
+    query.whereIn(`${FEED_ITEMS_TABLE}.visibility`, ["public", "followers"]);
   } else if (scope === "me") {
     if (!viewerId) {
       return 0;
@@ -223,7 +223,7 @@ export async function countFeedSessions({
     query.whereIn(`${FEED_ITEMS_TABLE}.owner_id`, (builder) => {
       builder.select("following_id").from(FOLLOWERS_TABLE).where({ follower_id: viewerId });
     });
-    query.where(`${FEED_ITEMS_TABLE}.visibility`, "public");
+    query.whereIn(`${FEED_ITEMS_TABLE}.visibility`, ["public", "followers"]);
   }
 
   // For count, we need to use distinct on feed_item_id to avoid duplicates from joins
@@ -360,6 +360,14 @@ export async function updateFeedItem(
       ...patch,
       updated_at: new Date().toISOString(),
     });
+}
+
+export async function isFollowing(followerId: string, followingId: string): Promise<boolean> {
+  const row = await db(FOLLOWERS_TABLE)
+    .select("following_id")
+    .where({ follower_id: followerId, following_id: followingId })
+    .first();
+  return Boolean(row);
 }
 
 export async function deleteFollower(followerId: string, followingId: string): Promise<number> {
