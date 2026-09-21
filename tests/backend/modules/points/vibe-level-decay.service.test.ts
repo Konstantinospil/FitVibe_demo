@@ -6,6 +6,7 @@ jest.mock("../../../../apps/backend/src/modules/points/points.repository.js");
 
 // Mock db with proper query builder chaining
 let mockSelectResult: unknown[] = [];
+let lastOuterTransaction: (jest.Mock & { raw: jest.Mock; transaction: jest.Mock }) | null = null;
 
 jest.mock("../../../../apps/backend/src/db/connection.js", () => {
   const createMockTransaction = () => {
@@ -19,6 +20,7 @@ jest.mock("../../../../apps/backend/src/db/connection.js", () => {
     };
     trx.raw = jest.fn().mockResolvedValue({ rows: [{ acquired: true }] });
     trx.transaction = jest.fn((cb) => Promise.resolve(cb(trx)));
+    lastOuterTransaction = trx;
     return trx;
   };
 
@@ -43,6 +45,7 @@ describe("Vibe Level Decay Service", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockSelectResult = [];
+    lastOuterTransaction = null;
   });
 
   describe("applyVibeLevelDecay", () => {
@@ -82,14 +85,15 @@ describe("Vibe Level Decay Service", () => {
 
       await decayService.applyVibeLevelDecay();
 
-      expect(mockDb).toHaveBeenCalledWith("user_domain_vibe_levels");
+      expect(lastOuterTransaction).not.toBeNull();
+      expect(lastOuterTransaction).toHaveBeenCalledWith("user_domain_vibe_levels");
       expect(mockPointsRepo.updateDomainVibeLevel).toHaveBeenCalledWith(
         "user-1",
         "strength",
         1498, // 1500 - 2
         54, // 50 + 4
         expect.any(Number), // volatility
-        expect.any(Object), // transaction
+        expect.any(Function), // transaction
       );
       expect(mockPointsRepo.insertVibeLevelChange).toHaveBeenCalled();
     });
@@ -171,7 +175,7 @@ describe("Vibe Level Decay Service", () => {
         1470, // 1500 - 30 (30 days * 1 point/day, capped at 50 but 30 < 50)
         100, // 50 + 50 (30 days * 2 points/day = 60, but capped at 50, so 50 + 50 = 100)
         expect.any(Number),
-        expect.any(Object),
+        expect.any(Function),
       );
     });
 
@@ -217,7 +221,7 @@ describe("Vibe Level Decay Service", () => {
         100, // Clamped to minimum
         expect.any(Number),
         expect.any(Number),
-        expect.any(Object),
+        expect.any(Function),
       );
     });
 
