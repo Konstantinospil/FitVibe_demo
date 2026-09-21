@@ -13,7 +13,6 @@ import {
   getPointsHistory as fetchPointsHistory,
   getRecentPointsEvents,
   insertPointsEvent,
-  getAllDomainVibeLevels,
   type HistoryCursor,
   type PointsHistoryOptions,
 } from "./points.repository.js";
@@ -345,7 +344,6 @@ export async function awardPointsForSession(
       };
     }
 
-    // Get exercise metadata
     const exerciseMetadata = await getExercisesMetadata(
       session.exercises
         ?.map((exercise) => exercise.exercise_id)
@@ -353,10 +351,8 @@ export async function awardPointsForSession(
       trx,
     );
 
-    // Detect domains trained in this session
     const domainImpacts = detectSessionDomains(session, exerciseMetadata);
 
-    // Update vibe levels and calculate points for each domain
     let totalPoints = 0;
     const vibeLevelUpdates: Array<{
       domain: string;
@@ -384,16 +380,13 @@ export async function awardPointsForSession(
       });
     }
 
-    // Clamp total points to reasonable bounds
     totalPoints = Math.min(Math.max(totalPoints, 5), 500);
 
-    // Calculate metrics for badges
     const metrics = computeSessionMetrics(session, exerciseMetadata);
 
     const awardedAt = new Date(session.completed_at!);
     const createdAt = new Date();
 
-    // Store points event
     const event = await insertPointsEvent(
       {
         id: uuidv4(),
