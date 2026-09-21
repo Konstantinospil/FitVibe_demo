@@ -15,6 +15,7 @@ import {
 import { logger } from "../utils/logger";
 import { useToast } from "../contexts/ToastContext";
 import { ConfirmDialog } from "../components/ConfirmDialog";
+import type { SessionVisibility } from "@fitvibe/contracts";
 
 interface LoggedSet {
   order: number;
@@ -44,9 +45,7 @@ const Logger: React.FC = () => {
   const [session, setSession] = useState<SessionWithExercises | null>(null);
   const [exerciseLogs, setExerciseLogs] = useState<ExerciseLog[]>([]);
   const [loading, setLoading] = useState(true);
-  const [sessionVisibility, setSessionVisibility] = useState<"private" | "followers" | "public" | "link">(
-    "private",
-  );
+  const [sessionVisibility, setSessionVisibility] = useState<SessionVisibility>("private");
   const [isUpdatingVisibility, setIsUpdatingVisibility] = useState(false);
 
   // Timer state
@@ -109,7 +108,7 @@ const Logger: React.FC = () => {
 
         // Set visibility state
         if (data.visibility) {
-          setSessionVisibility(data.visibility as "private" | "public" | "link");
+          setSessionVisibility(data.visibility as SessionVisibility);
         }
 
         // Start session timer if not already started. Use Date.now() so visual
@@ -301,7 +300,7 @@ const Logger: React.FC = () => {
     return `${mins}:${String(secs).padStart(2, "0")}`;
   };
 
-  const handleVisibilityChange = async (newVisibility: "private" | "public" | "link") => {
+  const handleVisibilityChange = async (newVisibility: SessionVisibility) => {
     if (!sessionId || newVisibility === sessionVisibility) {
       return;
     }
@@ -445,7 +444,7 @@ const Logger: React.FC = () => {
               <select
                 value={sessionVisibility}
                 onChange={(e) =>
-                  void handleVisibilityChange(e.target.value as "private" | "public" | "link")
+                  void handleVisibilityChange(e.target.value as SessionVisibility)
                 }
                 disabled={isUpdatingVisibility}
                 className="form-input"
@@ -456,6 +455,7 @@ const Logger: React.FC = () => {
                 aria-label={t("logger.visibilityLabel")}
               >
                 <option value="private">{t("logger.visibilityPrivate")}</option>
+                <option value="followers">{t("visibility.labels.followers")}</option>
                 <option value="link">{t("logger.visibilityLink")}</option>
                 <option value="public">{t("logger.visibilityPublic")}</option>
               </select>

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import type { SessionVisibility } from "@fitvibe/contracts";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { Search, Calendar, Save, Trash2 } from "lucide-react";
@@ -37,9 +38,7 @@ const Planner: React.FC = () => {
   // Session metadata
   const [sessionTitle, setSessionTitle] = useState("");
   const [sessionNotes, setSessionNotes] = useState("");
-  const [sessionVisibility, setSessionVisibility] = useState<"private" | "followers" | "public" | "link">(
-    "private",
-  );
+  const [sessionVisibility, setSessionVisibility] = useState<SessionVisibility>("private");
   const [plannedDate, setPlannedDate] = useState(() => {
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
@@ -323,7 +322,7 @@ const Planner: React.FC = () => {
                   id="session-visibility"
                   value={sessionVisibility}
                   onChange={(e) =>
-                    setSessionVisibility(e.target.value as "private" | "public" | "link")
+                    setSessionVisibility(e.target.value as SessionVisibility)
                   }
                   className="form-input"
                   style={{ background: "var(--color-surface)" }}
@@ -331,6 +330,9 @@ const Planner: React.FC = () => {
                 >
                   <option value="private">
                     {t("planner.visibilityPrivate") || "Private (only you)"}
+                  </option>
+                  <option value="followers">
+                    {t("visibility.labels.followers") || "Followers"}
                   </option>
                   <option value="link">
                     {t("planner.visibilityLink") || "Link only (unlisted)"}
