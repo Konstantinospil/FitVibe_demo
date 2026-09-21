@@ -42,45 +42,6 @@ export async function updateProfile(userId: string, dto: UpdateProfileDTO): Prom
     changes.display_name = { old: user.display_name, next: dto.displayName };
   }
 
-  if (dto.locale && dto.locale !== user.locale) {
-    patch.locale = dto.locale;
-    changes.locale = { old: user.locale, next: dto.locale };
-  }
-
-  if (dto.preferredLang && dto.preferredLang !== user.preferred_lang) {
-    patch.preferredLang = dto.preferredLang;
-    changes.preferred_lang = {
-      old: user.preferred_lang,
-      next: dto.preferredLang,
-    };
-  }
-
-  if (dto.bio !== undefined) {
-    const profile = await getProfileByUserId(userId);
-    const currentBio = profile?.bio ?? null;
-    if (dto.bio !== currentBio) {
-      patch.bio = dto.bio;
-      changes.bio = { old: currentBio, next: dto.bio };
-    }
-  }
-
-  const userWithPrefs = user as { default_visibility?: string; units?: string };
-  if (dto.defaultVisibility && dto.defaultVisibility !== userWithPrefs.default_visibility) {
-    patch.defaultVisibility = dto.defaultVisibility;
-    changes.default_visibility = {
-      old: userWithPrefs.default_visibility,
-      next: dto.defaultVisibility,
-    };
-  }
-
-  if (dto.units && dto.units !== userWithPrefs.units) {
-    patch.units = dto.units;
-    changes.units = {
-      old: userWithPrefs.units,
-      next: dto.units,
-    };
-  }
-
   if (dto.bio !== undefined) {
     const profile = await getProfileByUserId(userId);
     const currentBio = profile?.bio ?? null;
