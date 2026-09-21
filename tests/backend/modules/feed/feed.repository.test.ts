@@ -9,6 +9,7 @@ function createMockQueryBuilder(defaultValue: unknown = []) {
   const builder = Object.assign(Promise.resolve(defaultValue), {
     where: jest.fn().mockReturnThis(),
     whereNull: jest.fn().mockReturnThis(),
+    whereNotNull: jest.fn().mockReturnThis(),
     whereNotExists: jest.fn().mockReturnThis(),
     whereIn: jest.fn().mockReturnThis(),
     leftJoin: jest.fn().mockReturnThis(),
@@ -429,6 +430,41 @@ describe("Feed Repository", () => {
       expect(newBuilder.insert).toHaveBeenCalledWith(
         expect.objectContaining({
           published_at: publishedAt,
+        }),
+      );
+    });
+  });
+
+  describe("insertSessionFeedItemAtomic", () => {
+    it("should reactivate a soft-deleted item after an atomic insert conflict", async () => {
+      const sessionId = "session-soft-deleted";
+      const restored: feedRepository.FeedItemRow = {
+        id: "feed-restored",
+        owner_id: userId,
+        session_id: sessionId,
+        visibility: "followers",
+        published_at: new Date().toISOString(),
+      };
+
+      const builder = createMockQueryBuilder();
+      queryBuilders["feed_items"] = builder;
+      builder.returning.mockResolvedValueOnce([]).mockResolvedValueOnce([restored]);
+      builder.first.mockResolvedValueOnce(undefined);
+      builder.update.mockReturnThis();
+
+      const result = await feedRepository.insertSessionFeedItemAtomic({
+        ownerId: userId,
+        sessionId,
+        visibility: "followers",
+      });
+
+      expect(result).toEqual({ row: restored, created: true });
+      expect(builder.whereNotNull).toHaveBeenCalledWith("deleted_at");
+      expect(builder.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          owner_id: userId,
+          visibility: "followers",
+          deleted_at: null,
         }),
       );
     });
