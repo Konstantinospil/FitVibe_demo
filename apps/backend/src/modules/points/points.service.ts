@@ -356,10 +356,6 @@ export async function awardPointsForSession(
     // Detect domains trained in this session
     const domainImpacts = detectSessionDomains(session, exerciseMetadata);
 
-    // Get current vibe levels for all domains (reserved for future use)
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const _domainVibeLevels = await getAllDomainVibeLevels(session.owner_id, trx);
-
     // Update vibe levels and calculate points for each domain
     let totalPoints = 0;
     const vibeLevelUpdates: Array<{
