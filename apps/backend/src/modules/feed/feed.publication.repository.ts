@@ -83,10 +83,31 @@ export async function insertSessionFeedItemAtomic({
   }
 
   const existing = await findFeedItemBySessionId(sessionId);
-  if (!existing) {
-    throw new Error("Feed item uniqueness conflict without an existing row");
+  if (existing) {
+    return { row: existing, created: false };
   }
-  return { row: existing, created: false };
+
+  const reactivated = await db(FEED_ITEMS_TABLE)
+    .where({ session_id: sessionId })
+    .whereNotNull("deleted_at")
+    .update({
+      owner_id: ownerId,
+      visibility,
+      published_at: db.fn.now(),
+      deleted_at: null,
+      updated_at: new Date().toISOString(),
+    })
+    .returning<FeedItemRow[]>(["id", "owner_id", "session_id", "visibility", "published_at"]);
+
+  if (reactivated.length > 0) {
+    return { row: reactivated[0], created: true };
+  }
+
+  const concurrentlyRestored = await findFeedItemBySessionId(sessionId);
+  if (!concurrentlyRestored) {
+    throw new Error("Feed item uniqueness conflict without an existing or restorable row");
+  }
+  return { row: concurrentlyRestored, created: false };
 }
 
 export async function findFeedItemById(feedItemId: string): Promise<FeedItemRow | undefined> {
