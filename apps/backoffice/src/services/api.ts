@@ -1,4 +1,5 @@
 import axios, { type InternalAxiosRequestConfig } from "axios";
+import type { UserStatus } from "@fitvibe/contracts";
 
 const API_URL =
   import.meta.env.VITE_API_URL || (import.meta.env.DEV ? "" : "http://localhost:4000");
@@ -248,8 +249,7 @@ export interface UserRecord {
   displayName?: string | null;
   email: string;
   roleCode: string;
-  status:
-    "pending_verification" | "active" | "suspended" | "banned" | "pending_deletion" | "deleted";
+  status: UserStatus;
   createdAt: string;
   deactivatedAt: string | null;
   lastLoginAt: string | null;

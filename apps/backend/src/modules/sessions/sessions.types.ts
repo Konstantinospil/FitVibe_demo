@@ -1,5 +1,10 @@
-export type SessionStatus = "planned" | "in_progress" | "completed" | "canceled";
-export type SessionVisibility = "private" | "public" | "link";
+import type {
+  SessionStatus as SharedSessionStatus,
+  SessionVisibility as SharedSessionVisibility,
+} from "@fitvibe/contracts";
+
+export type SessionStatus = SharedSessionStatus;
+export type SessionVisibility = SharedSessionVisibility;
 
 export interface Session {
   id: string;

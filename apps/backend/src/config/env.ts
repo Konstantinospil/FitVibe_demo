@@ -77,6 +77,7 @@ const EnvSchema = z.object({
   BULLMQ_CONCURRENCY: z.coerce.number().default(5),
   BULLMQ_RATE_LIMIT_MAX: z.coerce.number().default(100),
   BULLMQ_RATE_LIMIT_DURATION: z.coerce.number().default(60000),
+  FEED_BLOCKED_KEYWORDS: z.string().optional(),
   TRUST_PROXY: z.string().optional(),
 });
 
@@ -266,6 +267,9 @@ export const env = {
     concurrency: raw.BULLMQ_CONCURRENCY,
     rateLimitMax: raw.BULLMQ_RATE_LIMIT_MAX,
     rateLimitDuration: raw.BULLMQ_RATE_LIMIT_DURATION,
+  },
+  feed: {
+    blockedKeywords: parseList(raw.FEED_BLOCKED_KEYWORDS).map((word) => word.toLowerCase()),
   },
   email: {
     enabled: parseBoolean(raw.EMAIL_ENABLED, false),
