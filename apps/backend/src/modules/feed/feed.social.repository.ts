@@ -25,7 +25,7 @@ export interface FollowingRow {
 }
 
 export async function isFollowing(followerId: string, followingId: string): Promise<boolean> {
-  const row = await db<{ following_id: string }>(FOLLOWERS_TABLE)
+  const row = await db<FollowerLinkRow>(FOLLOWERS_TABLE)
     .select("following_id")
     .where({ follower_id: followerId, following_id: followingId })
     .first();
