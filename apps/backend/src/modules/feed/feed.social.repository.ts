@@ -5,6 +5,11 @@ const PROFILES_TABLE = "profiles";
 const FOLLOWERS_TABLE = "followers";
 const USER_BLOCKS_TABLE = "user_blocks";
 
+type FollowerLinkRow = {
+  follower_id: string;
+  following_id: string;
+};
+
 export interface FollowerRow {
   follower_id: string;
   follower_username: string;
@@ -32,7 +37,7 @@ export async function deleteFollower(followerId: string, followingId: string): P
 }
 
 export async function upsertFollower(followerId: string, followingId: string): Promise<boolean> {
-  const insertQuery = db(FOLLOWERS_TABLE)
+  const insertQuery = db<FollowerLinkRow>(FOLLOWERS_TABLE)
     .insert({
       follower_id: followerId,
       following_id: followingId,
