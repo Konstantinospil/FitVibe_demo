@@ -28,7 +28,7 @@ function createMockQueryBuilder(defaultValue: unknown = []) {
     del: jest.fn().mockResolvedValue(1),
     whereRaw: jest.fn().mockReturnThis(),
     onConflict: jest.fn().mockReturnThis(),
-    ignore: jest.fn().mockResolvedValue([]),
+    ignore: jest.fn().mockReturnThis(),
     raw: jest.fn().mockReturnValue({}),
   });
   // Add db.raw to the builder
