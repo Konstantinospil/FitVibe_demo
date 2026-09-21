@@ -108,7 +108,7 @@ export interface CreateUserDTO {
   password: string;
   role: string;
   locale?: string;
-  preferredLang?: string;
+  preferredLang?: UserLanguage;
   status?: UserStatus;
 }
 
