@@ -9,8 +9,6 @@ type MockTransaction = jest.Mock & {
   transaction: jest.Mock;
 };
 
-let lastOuterTransaction: MockTransaction | null = null;
-
 function createMockTransaction(): MockTransaction {
   const trx = jest.fn() as MockTransaction;
   trx.raw = jest.fn().mockResolvedValue({ rows: [{ acquired: true }] });
@@ -20,10 +18,7 @@ function createMockTransaction(): MockTransaction {
 
 jest.mock("../../../../apps/backend/src/db/connection.js", () => {
   const mockDb = {
-    transaction: jest.fn((callback) => {
-      lastOuterTransaction = createMockTransaction();
-      return Promise.resolve(callback(lastOuterTransaction));
-    }),
+    transaction: jest.fn((callback) => Promise.resolve(callback(createMockTransaction()))),
   };
 
   return { db: mockDb };
@@ -56,7 +51,6 @@ function createRating(overrides: Partial<DomainVibeLevel> = {}): DomainVibeLevel
 describe("Vibe Level Decay Service", () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    lastOuterTransaction = null;
     mockVibeLevelRepo.getStaleDomainVibeLevels.mockResolvedValue([]);
     mockVibeLevelRepo.lockVibeLevelsForUser.mockResolvedValue(undefined);
     mockVibeLevelRepo.getDomainVibeLevel.mockResolvedValue(undefined);
