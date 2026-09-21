@@ -73,7 +73,7 @@ export async function fetchUserWithContacts(
   userId: string,
   trx?: Knex.Transaction,
 ): Promise<{ user: UserRow; contacts: ContactRow[]; avatar: AvatarRow | null } | null> {
-  const user = await findUserById(userId);
+  const user = await findUserById(userId, trx);
   if (!user) {
     return null;
   }
