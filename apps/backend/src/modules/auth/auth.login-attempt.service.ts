@@ -3,12 +3,14 @@ import { HttpError } from "../../utils/http.js";
 import {
   getFailedAttempt,
   recordFailedAttempt,
+  resetFailedAttempts,
   isAccountLocked,
   getRemainingLockoutSeconds,
   getRemainingAccountAttempts,
   getMaxAccountAttempts,
   getFailedAttemptByIP,
   recordFailedAttemptByIP,
+  resetFailedAttemptsByIP,
   isIPLocked,
   getRemainingIPLockoutSeconds,
   getRemainingIPAttempts,
@@ -167,4 +169,14 @@ export async function recordLoginFailure({
     "AUTH_INVALID_CREDENTIALS",
     Object.keys(details).length > 0 ? details : undefined,
   );
+}
+
+export async function resetLoginFailures(
+  identifier: string,
+  ipAddress: string,
+): Promise<void> {
+  await db.transaction(async (trx) => {
+    await resetFailedAttempts(identifier, ipAddress, trx);
+    await resetFailedAttemptsByIP(ipAddress, trx);
+  });
 }
