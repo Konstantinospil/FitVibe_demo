@@ -19,7 +19,11 @@ import {
   sanitizeAuthUserAgent as sanitizeUserAgent,
 } from "./auth.audit.js";
 import { toSafeUser } from "./auth.mapping.js";
-import { assertLoginAllowed, recordLoginFailure, resetLoginFailures } from "./auth.login-attempt.service.js";
+import {
+  assertLoginAllowed,
+  recordLoginFailure,
+  resetLoginFailures,
+} from "./auth.login-attempt.service.js";
 import {
   accessTokenTtl,
   nextSessionExpiry,
