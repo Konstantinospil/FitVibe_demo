@@ -308,6 +308,37 @@ export async function insertFeedItem({
   return row;
 }
 
+export async function insertSessionFeedItemAtomic({
+  ownerId,
+  sessionId,
+  visibility,
+}: {
+  ownerId: string;
+  sessionId: string;
+  visibility: string;
+}): Promise<{ row: FeedItemRow; created: boolean }> {
+  const inserted = await db(FEED_ITEMS_TABLE)
+    .insert({
+      owner_id: ownerId,
+      session_id: sessionId,
+      visibility,
+      published_at: db.fn.now(),
+    })
+    .onConflict("session_id")
+    .ignore()
+    .returning<FeedItemRow[]>(["id", "owner_id", "session_id", "visibility", "published_at"]);
+
+  if (inserted.length > 0) {
+    return { row: inserted[0], created: true };
+  }
+
+  const existing = await findFeedItemBySessionId(sessionId);
+  if (!existing) {
+    throw new Error("Feed item uniqueness conflict without an existing row");
+  }
+  return { row: existing, created: false };
+}
+
 export async function findFeedItemById(feedItemId: string): Promise<FeedItemRow | undefined> {
   return db<FeedItemRow>(FEED_ITEMS_TABLE)
     .select(["id", "owner_id", "session_id", "visibility", "published_at"])

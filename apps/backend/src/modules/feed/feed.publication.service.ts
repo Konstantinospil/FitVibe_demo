@@ -1,11 +1,11 @@
 import { insertAudit } from "../common/audit.util.js";
-import { insertFeedItem } from "./feed.repository.js";
+import { insertSessionFeedItemAtomic } from "./feed.repository.js";
 
 export async function ensureSessionPublished(
   ownerId: string,
   sessionId: string,
 ): Promise<{ feedItemId: string; created: boolean }> {
-  const result = await insertFeedItem({
+  const result = await insertSessionFeedItemAtomic({
     ownerId,
     sessionId,
     visibility: "public",
