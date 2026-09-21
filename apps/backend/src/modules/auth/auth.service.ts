@@ -2,7 +2,6 @@ import crypto from "crypto";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 import { v4 as uuidv4 } from "uuid";
-import { db } from "../../db/index.js";
 import { is2FAEnabled, verify2FACode } from "./two-factor.service.js";
 import { normalizeAuthTiming } from "./timing.utils.js";
 import {
@@ -23,7 +22,6 @@ import {
   findAuthToken,
   consumeAuthToken,
   revokeRefreshByUserId,
-  revokeRefreshByUserExceptSession,
   updateUserStatus,
   updateUserPassword,
   markAuthTokensConsumed,
@@ -33,10 +31,8 @@ import {
   findRefreshTokenRaw,
   createAuthSession,
   findSessionById,
-  listSessionsByUserId,
   updateSession,
   revokeSessionById,
-  revokeSessionsByUserId,
   markEmailVerified,
 } from "./auth.repository.js";
 import { attachAnonymousConsents } from "../consent/consent.repository.js";
@@ -46,9 +42,6 @@ import type {
   LoginContext,
   RefreshTokenPayload,
   RegisterDTO,
-  SessionRevokeOptions,
-  SessionView,
-  SessionRecord,
   TokenPair,
   UserSafe,
 } from "./auth.types.js";
@@ -83,7 +76,10 @@ import {
   getMaxIPAttempts,
   getMaxIPDistinctEmails,
 } from "./bruteforce.repository.js";
-import { insertAudit } from "../common/audit.util.js";
+import {
+  recordAuthAuditEvent as recordAuditEvent,
+  sanitizeAuthUserAgent as sanitizeUserAgent,
+} from "./auth.audit.js";
 
 const ACCESS_TTL = env.ACCESS_TOKEN_TTL;
 const REFRESH_TTL = env.REFRESH_TOKEN_TTL;
@@ -116,31 +112,6 @@ function dateOfBirthFromAge(age?: number | null): string | undefined {
   return birthDate.toISOString().slice(0, 10);
 }
 
-function sanitizeUserAgent(userAgent?: string | null): string | null {
-  if (!userAgent) {
-    return null;
-  }
-  return userAgent.length > 512 ? userAgent.slice(0, 512) : userAgent;
-}
-
-function isValidUUID(value: string | null): boolean {
-  return Boolean(
-    value && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value),
-  );
-}
-
-async function recordAuditEvent(
-  userId: string | null,
-  action: string,
-  metadata: Record<string, unknown> = {},
-): Promise<void> {
-  await insertAudit({
-    actorUserId: userId,
-    entityType: "auth",
-    action,
-    metadata,
-  });
-}
 
 function signAccess(payload: Omit<JwtPayload, "iat" | "exp" | "jti">) {
   return jwt.sign(payload, RSA_KEYS.privateKey, {
@@ -1200,166 +1171,11 @@ export async function resetPassword(token: string, newPassword: string): Promise
   await revokeRefreshByUserId(record.user_id);
 }
 
-export async function listSessions(
-  userId: string,
-  currentSessionId: string | null = null,
-): Promise<SessionView[]> {
-  const sessions = (await listSessionsByUserId(userId)) as SessionRecord[];
-  return sessions.map((session) => ({
-    id: session.jti,
-    userAgent: session.user_agent,
-    ip: session.ip,
-    createdAt: session.created_at,
-    expiresAt: session.expires_at,
-    revokedAt: session.revoked_at,
-    isCurrent: currentSessionId ? session.jti === currentSessionId : false,
-  }));
-}
-
-export async function revokeSessions(
-  userId: string,
-  options: SessionRevokeOptions,
-): Promise<{ revoked: number }> {
-  const { sessionId, revokeAll, revokeOthers, currentSessionId = null, context = {} } = options;
-  const now = new Date().toISOString();
-  let revokedCount = 0;
-
-  if (!sessionId && !revokeAll && !revokeOthers) {
-    throw new HttpError(400, "AUTH_INVALID_SCOPE", "AUTH_INVALID_SCOPE");
-  }
-
-  if (sessionId) {
-    const session = await findSessionById(sessionId);
-    if (!session || session.user_id !== userId) {
-      throw new HttpError(404, "AUTH_SESSION_NOT_FOUND", "AUTH_SESSION_NOT_FOUND");
-    }
-    if (!session.revoked_at) {
-      await revokeSessionById(sessionId);
-      await revokeRefreshBySession(sessionId);
-      revokedCount = 1;
-    }
-    await recordAuditEvent(userId, "auth.session_revoke_single", {
-      sessionId,
-      requestId: context.requestId ?? null,
-      ip: context.ip ?? null,
-      userAgent: sanitizeUserAgent(context.userAgent),
-      at: now,
-    });
-    return { revoked: revokedCount };
-  }
-
-  const sessions = (await listSessionsByUserId(userId)) as SessionRecord[];
-  if (revokeAll) {
-    const targets = sessions.filter((session) => !session.revoked_at);
-    if (targets.length) {
-      await revokeSessionsByUserId(userId);
-      await revokeRefreshByUserId(userId);
-    }
-    revokedCount = targets.length;
-    await recordAuditEvent(userId, "auth.session_revoke_all", {
-      revoked: revokedCount,
-      requestId: context.requestId ?? null,
-      ip: context.ip ?? null,
-      userAgent: sanitizeUserAgent(context.userAgent),
-      at: now,
-    });
-    return { revoked: revokedCount };
-  }
-
-  if (revokeOthers) {
-    if (!currentSessionId) {
-      throw new HttpError(400, "AUTH_INVALID_SCOPE", "Current session id required");
-    }
-    const targets = sessions.filter(
-      (session) => !session.revoked_at && session.jti !== currentSessionId,
-    );
-    if (targets.length) {
-      await revokeSessionsByUserId(userId, currentSessionId);
-      await revokeRefreshByUserExceptSession(userId, currentSessionId);
-    }
-    revokedCount = targets.length;
-    await recordAuditEvent(userId, "auth.session_revoke_others", {
-      revoked: revokedCount,
-      keepSessionId: currentSessionId,
-      requestId: context.requestId ?? null,
-      ip: context.ip ?? null,
-      userAgent: sanitizeUserAgent(context.userAgent),
-      at: now,
-    });
-    return { revoked: revokedCount };
-  }
-
-  return { revoked: revokedCount };
-}
-
-export async function acceptTerms(userId: string): Promise<void> {
-  const now = new Date().toISOString();
-  const termsVersion = getCurrentTermsVersion();
-
-  await db("users").where({ id: userId }).update({
-    terms_accepted: true,
-    terms_accepted_at: now,
-    terms_version: termsVersion,
-    updated_at: now,
-  });
-
-  await recordAuditEvent(userId, "auth.terms_accepted", {
-    termsVersion,
-    acceptedAt: now,
-  });
-}
-
-export async function revokeTerms(userId: string): Promise<void> {
-  const now = new Date().toISOString();
-
-  await db("users").where({ id: userId }).update({
-    terms_accepted: false,
-    terms_accepted_at: null,
-    terms_version: null,
-    updated_at: now,
-  });
-
-  await recordAuditEvent(userId, "auth.terms_revoked", {
-    revokedAt: now,
-  });
-}
-
-export type LegalDocumentStatus = {
-  accepted: boolean;
-  acceptedAt: string | null;
-  acceptedVersion: string | null;
-  currentVersion: string;
-  needsAcceptance: boolean;
-};
-
-export type LegalDocumentsStatus = {
-  terms: LegalDocumentStatus;
-  privacy: LegalDocumentStatus;
-};
-
-export async function getLegalDocumentsStatus(userId: string): Promise<LegalDocumentsStatus> {
-  const user = await findUserById(userId);
-  if (!user) {
-    throw new HttpError(404, "AUTH_USER_NOT_FOUND", "AUTH_USER_NOT_FOUND");
-  }
-
-  const currentTerms = getCurrentTermsVersion();
-  const termsNeedsAcceptance = !user.terms_accepted || isTermsVersionOutdated(user.terms_version);
-
-  return {
-    terms: {
-      accepted: Boolean(user.terms_accepted) && !termsNeedsAcceptance,
-      acceptedAt: user.terms_accepted_at,
-      acceptedVersion: user.terms_version,
-      currentVersion: currentTerms,
-      needsAcceptance: termsNeedsAcceptance,
-    },
-    privacy: {
-      accepted: false,
-      acceptedAt: null,
-      acceptedVersion: null,
-      currentVersion: currentTerms,
-      needsAcceptance: false,
-    },
-  };
-}
+export { listSessions, revokeSessions } from "./auth.sessions.service.js";
+export {
+  acceptTerms,
+  revokeTerms,
+  getLegalDocumentsStatus,
+  type LegalDocumentStatus,
+  type LegalDocumentsStatus,
+} from "./auth.legal.service.js";
