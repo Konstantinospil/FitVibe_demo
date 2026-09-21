@@ -14,10 +14,12 @@ import {
   getBodyProgress,
   getCurrentUser,
   getPrivacySettings,
+  getUserPreferences,
   listAuthSessions,
   revokeAuthSessions,
   setup2FA,
   updatePrivacySettings,
+  updateUserPreferences,
   updateProfile,
   uploadBodyProgressPhoto,
   verify2FA,
@@ -50,6 +52,8 @@ vi.mock("../../src/services/api", () => ({
   revokeAuthSessions: vi.fn(),
   getPrivacySettings: vi.fn(),
   updatePrivacySettings: vi.fn(),
+  getUserPreferences: vi.fn(),
+  updateUserPreferences: vi.fn(),
   exportUserData: vi.fn(),
   deleteAccount: vi.fn(),
   getBodyProgress: vi.fn(),
@@ -132,6 +136,14 @@ export const setupSettingsTests = () => {
   vi.mocked(disable2FA).mockResolvedValue({ success: true, message: "2FA disabled successfully" });
   vi.mocked(listAuthSessions).mockResolvedValue({ sessions: [] });
   vi.mocked(revokeAuthSessions).mockResolvedValue({ revoked: 0 });
+  vi.mocked(getUserPreferences).mockResolvedValue({
+    language: "en",
+    measurementSystem: "metric",
+  });
+  vi.mocked(updateUserPreferences).mockImplementation(async (payload) => ({
+    language: payload.language ?? "en",
+    measurementSystem: payload.measurementSystem ?? "metric",
+  }));
   vi.mocked(getPrivacySettings).mockResolvedValue({
     defaultVisibility: "private",
     allowFollowers: true,
@@ -182,6 +194,7 @@ export const setupSettingsTests = () => {
     mockUpdateProfile: vi.mocked(updateProfile),
     mockGet2FAStatus: vi.mocked(get2FAStatus),
     mockGetPrivacySettings: vi.mocked(getPrivacySettings),
+    mockGetUserPreferences: vi.mocked(getUserPreferences),
     mockGetBodyProgress: vi.mocked(getBodyProgress),
   };
 };
