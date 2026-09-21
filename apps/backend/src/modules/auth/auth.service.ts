@@ -18,18 +18,12 @@ import {
   getRefreshByHash,
   revokeRefreshByHash,
   findUserById,
-  createUser,
-  findAuthToken,
-  consumeAuthToken,
-  updateUserStatus,
-  markAuthTokensConsumed,
   revokeRefreshBySession,
   findRefreshTokenRaw,
   createAuthSession,
   findSessionById,
   updateSession,
   revokeSessionById,
-  markEmailVerified,
 } from "./auth.repository.js";
 import { attachAnonymousConsents } from "../consent/consent.repository.js";
 import type {
@@ -37,24 +31,12 @@ import type {
   LoginDTO,
   LoginContext,
   RefreshTokenPayload,
-  RegisterDTO,
   TokenPair,
-  UserSafe,
 } from "./auth.types.js";
-import type { AuthUserRecord } from "./auth.repository.js";
 import { env, RSA_KEYS } from "../../config/env.js";
-import { getCurrentTermsVersion, isTermsVersionOutdated } from "../../config/terms.js";
+import { isTermsVersionOutdated } from "../../config/terms.js";
 import { HttpError } from "../../utils/http.js";
-import { assertPasswordPolicy } from "./passwordPolicy.js";
 import { incrementRefreshReuse } from "../../observability/metrics.js";
-import { mailerService } from "../../services/mailer.service.js";
-import {
-  generateVerificationEmailHtml,
-  generateVerificationEmailText,
-  generateResendVerificationEmailHtml,
-  generateResendVerificationEmailText,
-  getEmailTranslations,
-} from "../../services/i18n.service.js";
 import {
   getFailedAttempt,
   recordFailedAttempt,
@@ -76,28 +58,16 @@ import {
   recordAuthAuditEvent as recordAuditEvent,
   sanitizeAuthUserAgent as sanitizeUserAgent,
 } from "./auth.audit.js";
-import { issueAuthToken, TOKEN_TYPES } from "./auth.tokens.service.js";
+import { toSafeUser } from "./auth.mapping.js";
 
 const ACCESS_TTL = env.ACCESS_TOKEN_TTL;
 const REFRESH_TTL = env.REFRESH_TOKEN_TTL;
-const EMAIL_VERIFICATION_TTL = env.EMAIL_VERIFICATION_TTL_SEC;
 const DUMMY_PASSWORD_HASH = bcrypt.hashSync("fitvibe-placeholder-password", 12);
 
 const SESSION_EXPIRY_MS = REFRESH_TTL * 1000;
 
 function nextSessionExpiry(): string {
   return new Date(Date.now() + SESSION_EXPIRY_MS).toISOString();
-}
-
-function dateOfBirthFromAge(age?: number | null): string | undefined {
-  if (age === undefined || age === null) {
-    return undefined;
-  }
-  const today = new Date();
-  const birthDate = new Date(
-    Date.UTC(today.getUTCFullYear() - age, today.getUTCMonth(), today.getUTCDate()),
-  );
-  return birthDate.toISOString().slice(0, 10);
 }
 
 function isValidUUID(value: string | null): boolean {
@@ -122,194 +92,11 @@ function signRefresh(payload: Pick<RefreshTokenPayload, "sub" | "sid">) {
   });
 }
 
-function toSafeUser(record: AuthUserRecord): UserSafe {
-  return {
-    id: record.id,
-    email: record.primary_email ?? "",
-    username: record.username,
-    role: record.role_code,
-    status: record.status,
-    created_at: record.created_at,
-  };
-}
-
-export async function register(
-  dto: RegisterDTO,
-): Promise<{ verificationToken?: string; user?: UserSafe }> {
-  // Start timing for enumeration protection (AC-1.12)
-  const startTime = Date.now();
-
-  try {
-    const email = dto.email.toLowerCase();
-    const alias = (dto.alias ?? dto.username ?? "").trim();
-    assertPasswordPolicy(dto.password, { email, alias });
-    const existingByEmail = await findUserByEmail(email);
-    const existingByUsername = await findUserByUsername(alias);
-
-    if (existingByEmail || existingByUsername) {
-      if (existingByEmail && existingByEmail.status === "pending_verification") {
-        const token = await issueAuthToken(
-          existingByEmail.id,
-          TOKEN_TYPES.EMAIL_VERIFICATION,
-          EMAIL_VERIFICATION_TTL,
-        );
-
-        // Resend verification email
-        if (env.email.enabled) {
-          const verificationUrl = `${env.frontendUrl}/verify?token=${token}`;
-          const expiresInMinutes = Math.floor(EMAIL_VERIFICATION_TTL / 60);
-          const locale = existingByEmail.locale;
-          const t = getEmailTranslations(locale);
-
-          await mailerService.send({
-            to: email,
-            subject: t.resend.subject,
-            html: generateResendVerificationEmailHtml(verificationUrl, expiresInMinutes, locale),
-            text: generateResendVerificationEmailText(verificationUrl, expiresInMinutes, locale),
-          });
-        }
-
-        return { verificationToken: token, user: toSafeUser(existingByEmail) };
-      }
-      throw new HttpError(409, "AUTH_CONFLICT", "AUTH_CONFLICT");
-    }
-
-    // Validate terms acceptance
-    if (!dto.terms_accepted) {
-      throw new HttpError(400, "TERMS_ACCEPTANCE_REQUIRED", "TERMS_ACCEPTANCE_REQUIRED");
-    }
-
-    const id = uuidv4();
-    const password_hash = await bcrypt.hash(dto.password, 12);
-    const now = new Date().toISOString();
-    const termsVersion = getCurrentTermsVersion();
-
-    await createUser({
-      id,
-      alias,
-      display_name: dto.profile?.display_name ?? alias,
-      status: "pending_verification",
-      role_code: "athlete",
-      password_hash,
-      primaryEmail: email,
-      terms_accepted: true,
-      terms_accepted_at: now,
-      terms_version: termsVersion,
-      gender_code: dto.profile?.sex,
-      fitness_level_code: dto.profile?.fitness_level ?? undefined,
-      date_of_birth: dto.profile?.date_of_birth ?? dateOfBirthFromAge(dto.profile?.age),
-      weight_kg: dto.profile?.weight_kg ?? undefined,
-    });
-
-    const verificationToken = await issueAuthToken(
-      id,
-      TOKEN_TYPES.EMAIL_VERIFICATION,
-      EMAIL_VERIFICATION_TTL,
-    );
-
-    // Send verification email
-    if (env.email.enabled) {
-      const verificationUrl = `${env.frontendUrl}/verify?token=${verificationToken}`;
-      const expiresInMinutes = Math.floor(EMAIL_VERIFICATION_TTL / 60);
-
-      // Get user's locale if available (for new users, use default)
-      const user = await findUserById(id);
-      const locale = user?.locale;
-      const t = getEmailTranslations(locale);
-
-      await mailerService.send({
-        to: email,
-        subject: t.verification.subject,
-        html: generateVerificationEmailHtml(verificationUrl, expiresInMinutes, locale),
-        text: generateVerificationEmailText(verificationUrl, expiresInMinutes, locale),
-      });
-    }
-
-    const user = await findUserById(id);
-    return { verificationToken, user: user ? toSafeUser(user) : undefined };
-  } finally {
-    // Normalize timing to prevent user enumeration (AC-1.12)
-    await normalizeAuthTiming(startTime);
-  }
-}
-
-export async function resendVerificationEmail(email: string): Promise<void> {
-  // Start timing for enumeration protection (AC-1.12)
-  const startTime = Date.now();
-
-  try {
-    const normalizedEmail = email.toLowerCase();
-    const user = await findUserByEmail(normalizedEmail);
-
-    // Always return success to prevent user enumeration
-    // Only send email if user exists and is pending verification
-    if (user && user.status === "pending_verification") {
-      // Check rate limiting (3 per hour per user)
-      const token = await issueAuthToken(
-        user.id,
-        TOKEN_TYPES.EMAIL_VERIFICATION,
-        EMAIL_VERIFICATION_TTL,
-      );
-
-      // Send verification email
-      if (env.email.enabled) {
-        const verificationUrl = `${env.frontendUrl}/verify?token=${token}`;
-        const expiresInMinutes = Math.floor(EMAIL_VERIFICATION_TTL / 60);
-        const locale = user.locale;
-        const t = getEmailTranslations(locale);
-
-        await mailerService.send({
-          to: normalizedEmail,
-          subject: t.resend.subject,
-          html: generateResendVerificationEmailHtml(verificationUrl, expiresInMinutes, locale),
-          text: generateResendVerificationEmailText(verificationUrl, expiresInMinutes, locale),
-        });
-      }
-    }
-
-    // Always return success to prevent user enumeration
-    // The actual email sending happens asynchronously if conditions are met
-  } finally {
-    // Normalize timing to prevent user enumeration (AC-1.12)
-    await normalizeAuthTiming(startTime);
-  }
-}
-
-export async function verifyEmail(token: string): Promise<UserSafe> {
-  // Start timing for enumeration protection (AC-1.12)
-  const startTime = Date.now();
-
-  try {
-    const tokenHash = crypto.createHash("sha256").update(token).digest("hex");
-    const record = await findAuthToken(TOKEN_TYPES.EMAIL_VERIFICATION, tokenHash);
-    if (!record) {
-      throw new HttpError(400, "AUTH_INVALID_TOKEN", "AUTH_INVALID_TOKEN");
-    }
-    if (new Date(record.expires_at).getTime() <= Date.now()) {
-      await consumeAuthToken(record.id);
-      throw new HttpError(410, "AUTH_TOKEN_EXPIRED", "AUTH_TOKEN_EXPIRED");
-    }
-
-    await consumeAuthToken(record.id);
-    await updateUserStatus(record.user_id, "active");
-    await markAuthTokensConsumed(record.user_id, TOKEN_TYPES.EMAIL_VERIFICATION);
-
-    const user = await findUserById(record.user_id);
-    if (!user) {
-      throw new HttpError(404, "AUTH_USER_NOT_FOUND", "AUTH_USER_NOT_FOUND");
-    }
-
-    // Mark email as verified
-    if (user.primary_email) {
-      await markEmailVerified(record.user_id, user.primary_email);
-    }
-
-    return toSafeUser(user);
-  } finally {
-    // Normalize timing to prevent user enumeration (AC-1.12)
-    await normalizeAuthTiming(startTime);
-  }
-}
+export {
+  register,
+  resendVerificationEmail,
+  verifyEmail,
+} from "./auth.registration.service.js";
 
 export async function login(
   dto: LoginDTO,
