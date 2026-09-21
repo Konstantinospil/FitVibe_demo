@@ -334,7 +334,7 @@ interface UserDetail {
     alias: string | null;
     bio: string | null;
     weight: number | null;
-    weightUnit: string | null;
+    weightUnit: "kg" | "lb" | null;
     fitnessLevel: string | null;
     trainingFrequency: string | null;
   };
