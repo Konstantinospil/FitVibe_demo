@@ -139,4 +139,3 @@ export async function unblockUserByAlias(
 
   return { unblockedId: target.id };
 }
-

@@ -155,4 +155,3 @@ export async function getLeaderboard(
     badges: Number(row.badges_count ?? 0),
   }));
 }
-

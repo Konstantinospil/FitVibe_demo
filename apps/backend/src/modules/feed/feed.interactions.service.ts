@@ -348,4 +348,3 @@ export async function reportComment(
 
   return { reported: true };
 }
-

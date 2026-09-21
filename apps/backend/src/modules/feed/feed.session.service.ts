@@ -1,9 +1,6 @@
 import { HttpError } from "../../utils/http.js";
 import { insertAudit } from "../common/audit.util.js";
-import {
-  findFeedItemBySessionId,
-  insertFeedItem,
-} from "./feed.repository.js";
+import { findFeedItemBySessionId, insertFeedItem } from "./feed.repository.js";
 import { cloneOne } from "../sessions/sessions.service.js";
 import type { SessionWithExercises } from "../sessions/sessions.types.js";
 import { loadSessionOrThrow } from "./feed.access.js";
@@ -61,4 +58,3 @@ export async function publishSession(
 
   return { feedItemId: feedItem.id };
 }
-

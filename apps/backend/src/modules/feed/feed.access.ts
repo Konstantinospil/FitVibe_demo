@@ -16,7 +16,11 @@ export async function loadFeedItemOrThrow(feedItemId: string) {
   return feedItem;
 }
 
-export async function ensureFeedInteractionAllowed(actorId: string, ownerId: string, visibility: string) {
+export async function ensureFeedInteractionAllowed(
+  actorId: string,
+  ownerId: string,
+  visibility: string,
+) {
   if (await hasBlockRelation(actorId, ownerId)) {
     throw new HttpError(403, "E.FEED.BLOCKED", "FEED_BLOCKED");
   }
@@ -76,4 +80,3 @@ export function sanitizeDetails(details?: string | null) {
   }
   return trimmed.slice(0, 500);
 }
-
