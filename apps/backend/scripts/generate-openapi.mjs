@@ -103,6 +103,15 @@ const paths = {
     },
   },
   "/users/me/preferences": {
+    get: {
+      summary: "Get user preferences",
+      tags: ["Users"],
+      security: [bearerAuth],
+      responses: {
+        200: jsonContent("#/components/schemas/UserPreferences"),
+        401: jsonContent("#/components/schemas/ErrorResponse"),
+      },
+    },
     patch: {
       summary: "Update user preferences",
       tags: ["Users"],
@@ -518,8 +527,6 @@ const schemas = {
       email: { type: "string", format: "email", maxLength: 254 },
       password: { type: "string", minLength: 12, maxLength: 128 },
       role: { type: "string", minLength: 1, maxLength: 50 },
-      locale: { type: "string", maxLength: 10 },
-      preferredLang: { type: "string", maxLength: 5 },
       status: { type: "string", enum: ["pending_verification", "active", "suspended"] },
     },
     required: ["username", "displayName", "email", "password", "role"],
@@ -572,11 +579,11 @@ const schemas = {
   UserPreferences: {
     type: "object",
     properties: {
-      measurementSystem: { type: "string", enum: ["metric", "imperial", "mixed"] },
-      locale: { type: "string" },
-      timeZone: { type: "string" },
-      visibility: { type: "string", enum: ["private", "followers", "public"] },
+      language: { type: "string", enum: ["en", "de", "fr", "es", "el"] },
+      measurementSystem: { type: "string", enum: ["metric", "imperial"] },
     },
+    required: ["language", "measurementSystem"],
+    additionalProperties: false,
   },
   UpdateProfileRequest: {
     type: "object",
@@ -599,11 +606,10 @@ const schemas = {
   UpdatePreferencesRequest: {
     type: "object",
     properties: {
-      measurementSystem: { type: "string", enum: ["metric", "imperial", "mixed"] },
-      locale: { type: "string" },
-      timeZone: { type: "string" },
-      visibility: { type: "string", enum: ["private", "followers", "public"] },
+      language: { type: "string", enum: ["en", "de", "fr", "es", "el"] },
+      measurementSystem: { type: "string", enum: ["metric", "imperial"] },
     },
+    additionalProperties: false,
   },
   Exercise: {
     type: "object",
