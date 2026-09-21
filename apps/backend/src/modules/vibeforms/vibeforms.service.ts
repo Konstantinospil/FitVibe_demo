@@ -1,6 +1,6 @@
 import { UpdateVibeformPreferencesSchema } from "./vibeforms.schemas.js";
 import { getLatestBioValuesByKeys } from "../measurements/measurements.repository.js";
-import { getAllDomainVibeLevels } from "../points/points.repository.js";
+import { getAllDomainVibeLevels } from "../points/vibe-level.repository.js";
 import type { DomainCode } from "../points/points.types.js";
 import {
   listRegionalStrengthStimuli,

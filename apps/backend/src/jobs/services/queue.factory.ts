@@ -1,4 +1,5 @@
 import { logger } from "../../config/logger.js";
+import { env } from "../../config/env.js";
 import { queueService as inMemoryQueue } from "./queue.service.js";
 import { getBullMQService, shutdownBullMQ } from "./bullmq.queue.service.js";
 import type { QueueJob } from "./queue.service.js";
@@ -17,7 +18,7 @@ export interface IQueueService {
  * based on environment configuration
  */
 export function getQueueService(): IQueueService {
-  const redisEnabled = process.env.REDIS_ENABLED === "true";
+  const redisEnabled = env.redis.enabled;
 
   if (redisEnabled) {
     logger.info("[queue] Using BullMQ (Redis-backed) queue service");
@@ -41,7 +42,7 @@ export function getQueueService(): IQueueService {
  * Shutdown the active queue service
  */
 export async function shutdownQueue(): Promise<void> {
-  const redisEnabled = process.env.REDIS_ENABLED === "true";
+  const redisEnabled = env.redis.enabled;
 
   if (redisEnabled) {
     await shutdownBullMQ();
