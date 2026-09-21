@@ -171,10 +171,7 @@ export async function recordLoginFailure({
   );
 }
 
-export async function resetLoginFailures(
-  identifier: string,
-  ipAddress: string,
-): Promise<void> {
+export async function resetLoginFailures(identifier: string, ipAddress: string): Promise<void> {
   await db.transaction(async (trx) => {
     await resetFailedAttempts(identifier, ipAddress, trx);
     await resetFailedAttemptsByIP(ipAddress, trx);
