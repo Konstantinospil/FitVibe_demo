@@ -16,7 +16,7 @@
     "preact": "^10.29.8",
     "react": "^19.2.8",
     "react-dom": "19.2.8",
-    "react-router-dom": "^7.13.0",
+    "react-router-dom": "^7.18.4",
     "zustand": "^4.5.3"
   },
   "devDependencies": {
