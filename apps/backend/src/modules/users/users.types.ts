@@ -1,3 +1,7 @@
+import type { UserStatus as SharedUserStatus } from "@fitvibe/contracts";
+
+export type UserStatus = SharedUserStatus;
+
 export const USER_STATUSES = [
   "pending_verification",
   "active",
@@ -5,9 +9,7 @@ export const USER_STATUSES = [
   "banned",
   "pending_deletion",
   "deleted",
-] as const;
-
-export type UserStatus = (typeof USER_STATUSES)[number];
+] as const satisfies readonly UserStatus[];
 
 export interface UserContact {
   id: string;
