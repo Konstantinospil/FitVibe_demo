@@ -23,6 +23,9 @@ export interface SessionExerciseSetUpsert {
   distance_m?: number | null;
   duration_sec?: number | null;
   rpe?: number | null;
+  rest_sec?: number | null;
+  extras?: Record<string, unknown>;
+  recorded_at?: string | null;
   notes?: string | null;
 }
 
@@ -214,6 +217,9 @@ type SessionExerciseSetRow = {
   distance_m: number | null;
   duration_sec: number | null;
   rpe: number | null;
+  rest_sec: number | null;
+  extras: unknown;
+  recorded_at: Date | string | null;
   notes: string | null;
   created_at?: Date | string | null;
 };
@@ -271,6 +277,9 @@ export async function getSessionWithDetails(
           "distance_m",
           "duration_sec",
           "rpe",
+          "rest_sec",
+          "extras",
+          "recorded_at",
           "notes",
           "created_at",
         ])
@@ -287,6 +296,9 @@ export async function getSessionWithDetails(
       distance_m: row.distance_m ?? null,
       duration_sec: row.duration_sec ?? null,
       rpe: row.rpe ?? null,
+      rest_sec: row.rest_sec ?? null,
+      extras: normalizeExtras(row.extras),
+      recorded_at: toDateString(row.recorded_at) ?? null,
       notes: row.notes ?? null,
       created_at: toDateString(row.created_at),
     });
@@ -474,6 +486,9 @@ export async function replaceSessionExercises(
       distance_m: set.distance_m ?? null,
       duration_sec: set.duration_sec ?? null,
       rpe: set.rpe ?? null,
+      rest_sec: set.rest_sec ?? null,
+      extras: set.extras ?? {},
+      recorded_at: set.recorded_at ?? null,
       notes: set.notes ?? null,
       created_at: timestamp,
     })),
@@ -499,6 +514,9 @@ export async function listSessionSets(sessionId: string, trx?: Knex.Transaction)
       "s.distance_m",
       "s.duration_sec",
       "s.rpe",
+      "s.rest_sec",
+      "s.extras",
+      "s.recorded_at",
       "s.notes",
     )
     .where("se.session_id", sessionId)
