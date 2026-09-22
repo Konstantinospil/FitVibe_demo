@@ -23,7 +23,7 @@ describe("session performed-data normalization", () => {
       },
     ]);
 
-    expect(exercise.actual).toBeNull();
+    expect(exercise).not.toHaveProperty("actual");
     expect(exercise.sets).toHaveLength(3);
     expect(exercise.sets.map((set) => [set.reps, set.weight_kg])).toEqual([
       [10, 80],
@@ -74,7 +74,7 @@ describe("session performed-data normalization", () => {
       },
     ]);
 
-    expect(exercise.actual).toBeNull();
+    expect(exercise).not.toHaveProperty("actual");
     expect(exercise.sets[0]).toMatchObject({
       reps: 5,
       weight_kg: 100,
