@@ -12,7 +12,7 @@ import {
 import { getIdempotencyKey, handleIdempotentRequest } from "../common/idempotency.helpers.js";
 
 const statusEnum = z.enum(["planned", "in_progress", "completed", "canceled"]);
-const visibilityEnum = z.enum(["private", "public", "link"]);
+const visibilityEnum = z.enum(["private", "followers", "public", "link"]);
 
 const titleSchema = z
   .string()
