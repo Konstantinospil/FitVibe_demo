@@ -30,7 +30,12 @@ export async function likeFeedItem(
   feedItemId: string,
 ): Promise<{ liked: boolean; stats: FeedItemStats }> {
   const feedItem = await loadFeedItemOrThrow(feedItemId);
-  await ensureFeedInteractionAllowed(userId, feedItem.owner_id, feedItem.visibility, feedItem.session_id);
+  await ensureFeedInteractionAllowed(
+    userId,
+    feedItem.owner_id,
+    feedItem.visibility,
+    feedItem.session_id,
+  );
 
   await upsertFeedLike(feedItemId, userId);
   const stats = await fetchStatsForFeedItem(feedItemId);
@@ -53,7 +58,12 @@ export async function unlikeFeedItem(
   feedItemId: string,
 ): Promise<{ liked: boolean; stats: FeedItemStats }> {
   const feedItem = await loadFeedItemOrThrow(feedItemId);
-  await ensureFeedInteractionAllowed(userId, feedItem.owner_id, feedItem.visibility, feedItem.session_id);
+  await ensureFeedInteractionAllowed(
+    userId,
+    feedItem.owner_id,
+    feedItem.visibility,
+    feedItem.session_id,
+  );
 
   const removed = await deleteFeedLike(feedItemId, userId);
   const stats = await fetchStatsForFeedItem(feedItemId);
@@ -202,7 +212,12 @@ export async function createComment(
   editedAt: string | null;
 }> {
   const feedItem = await loadFeedItemOrThrow(feedItemId);
-  await ensureFeedInteractionAllowed(userId, feedItem.owner_id, feedItem.visibility, feedItem.session_id);
+  await ensureFeedInteractionAllowed(
+    userId,
+    feedItem.owner_id,
+    feedItem.visibility,
+    feedItem.session_id,
+  );
 
   const trimmed = (body ?? "").trim();
   if (trimmed.length === 0) {
