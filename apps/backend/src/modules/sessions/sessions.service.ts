@@ -22,7 +22,8 @@ import { recomputeProgress } from "../plans/plans.service.js";
 import { awardPointsForSession } from "../points/points.service.js";
 import { insertAudit } from "../common/audit.util.js";
 import { HttpError } from "../../utils/http.js";
-import { ensureSessionPublished } from "../feed/feed.publication.service.js";
+import { reconcileSessionPublication } from "../feed/feed.publication.service.js";
+import { ensureSessionInteractionAllowed, loadSessionOrThrow } from "../feed/feed.access.js";
 import {
   ensureNonNegativeInteger,
   ensurePlanExists,
@@ -45,7 +46,10 @@ export async function getAll(
 }
 
 export async function getOne(userId: string, id: string): Promise<SessionWithExercises> {
-  const session = await getSessionWithDetails(id, userId);
+  const accessSession = await loadSessionOrThrow(id);
+  await ensureSessionInteractionAllowed(userId, accessSession);
+
+  const session = await getSessionWithDetails(id, accessSession.owner_id);
   if (!session) {
     throw new HttpError(404, "E.SESSION.NOT_FOUND", "SESSION_NOT_FOUND");
   }
@@ -252,12 +256,8 @@ export async function updateOne(
     }
   }
 
-  if (
-    updated.status === "completed" &&
-    (updated.visibility === "public" || updated.visibility === "followers") &&
-    (statusChanged || visibilityChanged)
-  ) {
-    await ensureSessionPublished(userId, id, updated.visibility);
+  if (statusChanged || visibilityChanged) {
+    await reconcileSessionPublication(userId, id, updated.status, updated.visibility);
   }
 
   if (statusChanged || exercisesTouched) {
@@ -316,6 +316,7 @@ export async function cancelOne(userId: string, id: string): Promise<void> {
     entityId: id,
   });
 
+  await reconcileSessionPublication(userId, id, "canceled", current.visibility);
   await refreshSessionSummary();
 
   if (current.plan_id) {
