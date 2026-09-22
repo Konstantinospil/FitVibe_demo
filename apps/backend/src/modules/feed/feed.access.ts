@@ -23,7 +23,14 @@ export async function ensureFeedInteractionAllowed(
   actorId: string,
   ownerId: string,
   visibility: string,
+  sessionId?: string | null,
 ) {
+  if (sessionId) {
+    const session = await loadSessionOrThrow(sessionId);
+    await ensureSessionInteractionAllowed(actorId, session);
+    return;
+  }
+
   if (await hasBlockRelation(actorId, ownerId)) {
     throw new HttpError(403, "E.FEED.BLOCKED", "FEED_BLOCKED");
   }
