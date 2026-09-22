@@ -278,7 +278,6 @@ export function normalizeSessionExercises(
       order_index: order,
       notes: trimToNull(exercise.notes),
       planned: normalizeAttributesInput(exercise.planned ?? null, `${context} planned`),
-      actual: null,
       sets: performedSets,
     };
   });
