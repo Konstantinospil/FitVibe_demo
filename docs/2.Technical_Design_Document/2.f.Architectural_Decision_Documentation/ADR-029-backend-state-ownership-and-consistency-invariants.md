@@ -71,9 +71,14 @@ External side effects such as queue jobs, telemetry, notifications, and remote p
 - A visibility downgrade immediately prevents new access that is not independently authorized by ownership, an existing bookmark grant, or another explicit access mechanism.
 - Stale feed/index state may affect discoverability latency only if it cannot expose data without one of the authoritative access grants above.
 - A bookmark may be created only while the user currently has legitimate access to the session.
-- Bookmark revocation/owner-override semantics are finalized in Phase 12 before implementation.
+- Once validly created, the bookmark is a durable independent access grant.
+- Unbookmarking removes that bookmark grant immediately; other grants may still provide access.
+- The owner has no dedicated per-user bookmark-revocation control in the current model.
+- Revoking or expiring the link that originally enabled access does not remove an already-created bookmark grant.
+- Blocking is a stronger denial and overrides bookmark, follower, public, and link-based access for the blocked user.
+- Session deletion overrides all grants.
 
-This decision extends the older Public/Link/Private visibility model: visibility remains authoritative for visibility, while access can also be conferred by an explicit durable bookmark capability. Phase 12 will reconcile `followers`, bookmark revocation semantics, and ADR-010.
+This decision extends the older Public/Link/Private visibility model: visibility remains authoritative for visibility, while access can also be conferred by an explicit durable bookmark capability. ADR-010 v1.1 records the full grant-precedence logic, including `followers`, unbookmarking, link revocation, blocking, and deletion.
 
 ### 4. Points, Vibe Levels, and badges
 
@@ -243,3 +248,4 @@ A full transactional outbox is not mandated by this ADR. Phase 16 decides whethe
 | --- | --- | --- | --- |
 | v1.0 | 2026-09-22 | Accepted state ownership and consistency invariants after Phase 11 product-owner interview | FitVibe Engineering / Product Owner |
 | v1.1 | 2026-09-22 | Clarified bookmark as a durable user access grant (key-door capability); detailed revocation semantics deferred to Phase 12 | FitVibe Engineering / Product Owner |
+| v1.2 | 2026-09-22 | Finalized key-door precedence: unbookmark removes grant; no owner per-user bookmark revoke; link revoke preserves existing bookmark; block and deletion override access | FitVibe Engineering / Product Owner |
