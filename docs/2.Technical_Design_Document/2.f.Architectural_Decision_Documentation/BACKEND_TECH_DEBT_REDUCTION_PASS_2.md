@@ -1,7 +1,7 @@
 # Backend Technical-Debt Reduction — Pass 2
 
 **Status:** Active  
-**Current phase:** Phase 11 — State-model and invariant audit  
+**Current phase:** Phase 12 — Session and feed state correctness  
 **Branch:** `dev`  
 **Started:** 2026-09-22
 
@@ -112,7 +112,7 @@ A phase is **Done** only when:
 
 ## Phase 11 — State-model and invariant audit
 
-**Status:** Interviewing
+**Status:** Done
 
 ### Objective
 
@@ -139,21 +139,21 @@ For each domain establish:
 - retry/idempotency semantics;
 - database-level invariants.
 
-### Strategic decisions to interview
+### Strategic decisions
 
-Pending:
-
-1. Completed-session mutability policy.
-2. Whether feed visibility is purely derived from session visibility or may remain materialized with mandatory revalidation.
-3. Whether performed workout data is sets-only as the long-term API/data contract.
-4. Desired consistency model for derived gamification state: synchronous, post-commit retryable, or queued/eventual.
-5. How strict security controls should behave when required backing state is unavailable: fail closed vs selectively degrade.
-6. Whether legal-document versions should become explicit persisted versions rather than derived timestamps.
-7. Whether secrets have a simple string contract or typed/structured secret values.
+All seven Phase 11 decisions were accepted by the product owner on 2026-09-22.
 
 ### Decision log
 
-_No decisions recorded yet._
+1. Completed-session scoring-relevant fields become immutable; editing requires an explicit reopen transition.
+2. `session.visibility` is the visibility authority. Feed visibility may be materialized/indexed, but access must be revalidated from current authoritative state.
+3. `exercise_sets` is the long-term sole source of truth for performed workout data.
+4. Gamification derivation occurs post-commit and must be retryable/idempotent.
+5. Security-critical controls fail closed when their required authoritative backing state cannot be read, unless a later explicit ADR permits degradation.
+6. Legal-document versions become explicit persisted versions rather than timestamp/file-metadata-derived versions.
+7. The application-level secret contract is a simple string value; provider-specific structures remain adapter details.
+
+**Architecture record:** [ADR-029 — Backend State Ownership and Consistency Invariants](./ADR-029-backend-state-ownership-and-consistency-invariants.md)
 
 ### Exit criteria
 
@@ -163,7 +163,7 @@ A compact invariant map exists for all seven domains and provides enough clarity
 
 ## Phase 12 — Session and feed state correctness
 
-**Status:** Not started
+**Status:** Interviewing
 
 ### Objective
 
@@ -533,13 +533,20 @@ CI verifies the intended backend quality model without encouraging superficial c
 | 2026-09-22 | Program | Use this document as the authoritative resumable record for Pass 2. | Avoid reliance on chat history and prevent implementation drift. | This document |
 | 2026-09-22 | Program | Interview product owner before every phase for strategic decisions. | Product semantics must not be invented during AI-assisted refactoring. | This document |
 | 2026-09-22 | Program | Apply the global implementation rules above throughout the pass. | Prevent stale state, false security, fake tests and abstraction residue. | This document |
+| 2026-09-22 | 11 | Completed-session scoring data is immutable unless the session is explicitly reopened. | Prevent completed source state from silently diverging from scoring-derived state. | ADR-029 |
+| 2026-09-22 | 11 | Session visibility is authoritative; feed/index state cannot independently grant access. | Prevent stale derived visibility from causing privacy leaks. | ADR-029 |
+| 2026-09-22 | 11 | Performed workout data converges on `exercise_sets` as the sole long-term representation. | Eliminate contradictory actual-workout representations and silent data loss. | ADR-029 |
+| 2026-09-22 | 11 | Gamification derivation is post-commit, retryable and idempotent. | Keep source transactions narrow while preserving recoverability. | ADR-029 |
+| 2026-09-22 | 11 | Security-critical controls fail closed when authoritative backing state is unavailable. | Avoid silent security weakening. | ADR-029 |
+| 2026-09-22 | 11 | Legal versions become explicit persisted versions. | Create a deliberate legal publication and acceptance boundary. | ADR-029 |
+| 2026-09-22 | 11 | Application secrets use a provider-independent string contract. | Remove provider-specific storage semantics from application code. | ADR-029 |
 
 ## Phase completion record
 
 | Phase | Status | Decision/ADR refs | Implementation commit/PR | Verification |
 | --- | --- | --- | --- | --- |
-| 11 | Interviewing | — | — | — |
-| 12 | Not started | — | — | — |
+| 11 | Done | ADR-029 | 8185deea299be81a02bd891bf334e2e181c3500c | Invariant map documented; no production-code change required |
+| 12 | Interviewing | — | — | — |
 | 13 | Not started | — | — | — |
 | 14 | Not started | — | — | — |
 | 15 | Not started | — | — | — |
