@@ -445,7 +445,6 @@ export async function revokeAuthSessions(
   return res.data;
 }
 
-
 // Two-Factor Authentication API
 export interface TwoFactorSetupResponse {
   secret: string;
