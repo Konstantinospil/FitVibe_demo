@@ -160,6 +160,14 @@ describe("Feed Service", () => {
         session_id: sessionId,
         owner_id: userId,
       });
+      mockFeedRepo.findSessionById.mockResolvedValue({
+        id: sessionId,
+        owner_id: userId,
+        title: "Test Session",
+        planned_at: new Date().toISOString(),
+        status: "completed",
+        visibility: "public",
+      });
       mockFeedRepo.upsertFeedLike.mockResolvedValue(undefined);
       const statsMap = new Map();
       statsMap.set(feedItemId, { likes: 1, comments: 0 });
@@ -183,6 +191,14 @@ describe("Feed Service", () => {
         feed_item_id: feedItemId,
         session_id: sessionId,
         owner_id: userId,
+      });
+      mockFeedRepo.findSessionById.mockResolvedValue({
+        id: sessionId,
+        owner_id: userId,
+        title: "Test Session",
+        planned_at: new Date().toISOString(),
+        status: "completed",
+        visibility: "public",
       });
       mockFeedRepo.deleteFeedLike.mockResolvedValue(1);
       const statsMap = new Map();
