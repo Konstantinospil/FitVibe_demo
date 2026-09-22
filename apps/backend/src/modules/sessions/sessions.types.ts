@@ -151,6 +151,9 @@ export interface SessionExerciseSet {
   distance_m?: number | null;
   duration_sec?: number | null;
   rpe?: number | null;
+  rest_sec?: number | null;
+  extras?: Record<string, unknown>;
+  recorded_at?: string | null;
   notes?: string | null;
   created_at?: string;
 }
