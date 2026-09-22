@@ -295,9 +295,10 @@ export function convertExistingExerciseToInput(
     exercise_id: exercise.exercise_id ?? undefined,
     notes: exercise.notes ?? undefined,
     planned: exercise.planned ?? undefined,
-    actual: includeActual ? (exercise.actual ?? undefined) : null,
+    actual: null,
     sets:
-      exercise.sets?.map((set) => ({
+      includeActual
+        ? (exercise.sets?.map((set) => ({
         order: set.order_index,
         reps: set.reps ?? undefined,
         weight_kg: set.weight_kg ?? undefined,
@@ -307,8 +308,9 @@ export function convertExistingExerciseToInput(
         rest_sec: set.rest_sec ?? undefined,
         extras: set.extras ? { ...set.extras } : undefined,
         recorded_at: set.recorded_at ?? undefined,
-        notes: set.notes ?? undefined,
-      })) ?? [],
+            notes: set.notes ?? undefined,
+          })) ?? [])
+        : [],
   };
 }
 
