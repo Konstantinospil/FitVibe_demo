@@ -163,7 +163,7 @@ A compact invariant map exists for all seven domains and provides enough clarity
 
 ## Phase 12 — Session and feed state correctness
 
-**Status:** Decided
+**Status:** Verifying
 
 ### Objective
 
@@ -218,7 +218,13 @@ allowed =
   )
 ```
 
-**Architecture records:** ADR-029 v1.2 and ADR-010 v1.1.
+**Architecture records:** ADR-029 v1.2 and ADR-010 v1.2.
+
+### Implementation note discovered during Phase 12
+
+The live data design and migration tests explicitly require that `share_links` is **not** recreated. Therefore this phase implements owner/bookmark/public/follower grants and stronger block/deletion denial, but does not invent a replacement link-token store or treat a session UUID as a secret link.
+
+The previously accepted **valid-link** precedence remains the target rule for a future explicit link-grant mechanism. Implementing token issuance/revocation requires a separate architecture/schema decision because doing it implicitly here would violate both the live schema and the no-AI-slop rule.
 
 ### Exit criteria
 
@@ -584,7 +590,7 @@ CI verifies the intended backend quality model without encouraging superficial c
 | Phase | Status | Decision/ADR refs | Implementation commit/PR | Verification |
 | --- | --- | --- | --- | --- |
 | 11 | Done | ADR-029 | 8185deea299be81a02bd891bf334e2e181c3500c | Invariant map documented; no production-code change required |
-| 12 | Decided | ADR-010 v1.1; ADR-029 v1.2 | — | Strategic interview complete; implementation not started |
+| 12 | Verifying | ADR-010 v1.2; ADR-029 v1.2 | PR #237 | CI pending; link-token mechanism explicitly not invented because live schema forbids `share_links` |
 | 13 | Not started | — | — | — |
 | 14 | Not started | — | — | — |
 | 15 | Not started | — | — | — |
