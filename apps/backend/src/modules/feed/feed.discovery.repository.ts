@@ -67,14 +67,16 @@ export async function listFeedSessions({
       `${FEED_ITEMS_TABLE}.owner_id`,
       `${PROFILES_TABLE}.alias as owner_username`,
       `${USERS_TABLE}.display_name as owner_display_name`,
-      `${FEED_ITEMS_TABLE}.visibility`,
+      `${SESSIONS_TABLE}.visibility`,
       `${FEED_ITEMS_TABLE}.published_at`,
       `${SESSIONS_TABLE}.id as session_id`,
       `${SESSIONS_TABLE}.title as session_title`,
       `${SESSIONS_TABLE}.completed_at as session_completed_at`,
       `${SESSIONS_TABLE}.points as session_points`,
     ])
-    .whereNull(`${FEED_ITEMS_TABLE}.deleted_at`);
+    .whereNull(`${FEED_ITEMS_TABLE}.deleted_at`)
+    .whereNull(`${SESSIONS_TABLE}.deleted_at`)
+    .where(`${SESSIONS_TABLE}.status`, "completed");
 
   // Apply search query if provided
   if (searchQuery && searchQuery.trim().length > 0) {
@@ -96,7 +98,7 @@ export async function listFeedSessions({
         `${FEED_ITEMS_TABLE}.owner_id`,
         `${PROFILES_TABLE}.alias`,
         `${USERS_TABLE}.display_name`,
-        `${FEED_ITEMS_TABLE}.visibility`,
+        `${SESSIONS_TABLE}.visibility`,
         `${FEED_ITEMS_TABLE}.published_at`,
         `${SESSIONS_TABLE}.id`,
         `${SESSIONS_TABLE}.title`,
@@ -134,7 +136,7 @@ export async function listFeedSessions({
   }
 
   if (scope === "public") {
-    query.where(`${FEED_ITEMS_TABLE}.visibility`, "public");
+    query.where(`${SESSIONS_TABLE}.visibility`, "public");
   } else if (scope === "me") {
     if (!viewerId) {
       return [];
@@ -147,7 +149,7 @@ export async function listFeedSessions({
     query.whereIn(`${FEED_ITEMS_TABLE}.owner_id`, (builder) => {
       builder.select("following_id").from(FOLLOWERS_TABLE).where({ follower_id: viewerId });
     });
-    query.whereIn(`${FEED_ITEMS_TABLE}.visibility`, ["public", "followers"]);
+    query.whereIn(`${SESSIONS_TABLE}.visibility`, ["public", "followers"]);
   }
 
   return query;
@@ -176,7 +178,10 @@ export async function countFeedSessions({
     );
   }
 
-  query.whereNull(`${FEED_ITEMS_TABLE}.deleted_at`);
+  query
+    .whereNull(`${FEED_ITEMS_TABLE}.deleted_at`)
+    .whereNull(`${SESSIONS_TABLE}.deleted_at`)
+    .where(`${SESSIONS_TABLE}.status`, "completed");
 
   // Apply search query if provided
   if (searchQuery && searchQuery.trim().length > 0) {
@@ -206,7 +211,7 @@ export async function countFeedSessions({
   }
 
   if (scope === "public") {
-    query.where(`${FEED_ITEMS_TABLE}.visibility`, "public");
+    query.where(`${SESSIONS_TABLE}.visibility`, "public");
   } else if (scope === "me") {
     if (!viewerId) {
       return 0;
@@ -219,7 +224,7 @@ export async function countFeedSessions({
     query.whereIn(`${FEED_ITEMS_TABLE}.owner_id`, (builder) => {
       builder.select("following_id").from(FOLLOWERS_TABLE).where({ follower_id: viewerId });
     });
-    query.whereIn(`${FEED_ITEMS_TABLE}.visibility`, ["public", "followers"]);
+    query.whereIn(`${SESSIONS_TABLE}.visibility`, ["public", "followers"]);
   }
 
   // For count, we need to use distinct on feed_item_id to avoid duplicates from joins
