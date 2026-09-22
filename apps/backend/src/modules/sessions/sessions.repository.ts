@@ -4,7 +4,6 @@ import type {
   PaginatedResult,
   Session,
   SessionExercise,
-  SessionExerciseActualAttributes,
   SessionExerciseAttributes,
   SessionExerciseSet,
   SessionQuery,
@@ -119,22 +118,6 @@ function buildAttributes(
   return isAttributesEmpty(candidate) ? null : candidate;
 }
 
-function buildActualAttributes(
-  attributes: SessionExerciseActualAttributes | null | undefined,
-): SessionExerciseActualAttributes | null {
-  if (!attributes) {
-    return null;
-  }
-  const base = buildAttributes(attributes);
-  if (!base) {
-    return null;
-  }
-  return {
-    ...base,
-    recorded_at: attributes.recorded_at ?? null,
-  };
-}
-
 export async function listSessions(
   userId: string,
   q: SessionQuery,
@@ -196,15 +179,6 @@ type SessionExerciseRow = {
   planned_rpe: number | null;
   planned_rest: string | null;
   planned_extras: unknown;
-  actual_sets: number | null;
-  actual_reps: number | null;
-  actual_load: number | string | null;
-  actual_distance: number | string | null;
-  actual_duration: string | null;
-  actual_rpe: number | null;
-  actual_rest: string | null;
-  actual_extras: unknown;
-  actual_recorded_at: Date | string | null;
 };
 
 type SessionExerciseSetRow = {
@@ -316,18 +290,6 @@ export async function getSessionWithDetails(
       extras: normalizeExtras(row.planned_extras),
     });
 
-    const actual: SessionExerciseActualAttributes | null = buildActualAttributes({
-      sets: null,
-      reps: null,
-      load: null,
-      distance: null,
-      duration: null,
-      rpe: null,
-      rest: null,
-      extras: {},
-      recorded_at: null,
-    });
-
     return {
       id: row.id,
       session_id: row.session_id,
@@ -338,7 +300,7 @@ export async function getSessionWithDetails(
       created_at: toDateString(row.created_at),
       updated_at: toDateString(row.updated_at),
       planned,
-      actual,
+      actual: null,
       sets: setsByExercise.get(row.id) ?? [],
     };
   });
