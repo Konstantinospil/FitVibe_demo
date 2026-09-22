@@ -87,7 +87,7 @@ describe("Feed Repository", () => {
 
       expect(result).toEqual(mockRows);
       expect(queryBuilders["feed_items"]?.where).toHaveBeenCalledWith(
-        "feed_items.visibility",
+        "sessions.visibility",
         "public",
       );
     });
@@ -465,6 +465,41 @@ describe("Feed Repository", () => {
           owner_id: userId,
           visibility: "followers",
           deleted_at: null,
+        }),
+      );
+    });
+  });
+
+  describe("insertSessionFeedItemAtomic visibility reconciliation", () => {
+    it("updates an existing active item when authoritative session visibility changes", async () => {
+      const sessionId = "session-existing";
+      const existing: feedRepository.FeedItemRow = {
+        id: "feed-existing",
+        owner_id: userId,
+        session_id: sessionId,
+        visibility: "public",
+        published_at: new Date().toISOString(),
+      };
+      const updated = { ...existing, visibility: "followers" };
+
+      const builder = createMockQueryBuilder();
+      queryBuilders["feed_items"] = builder;
+      builder.returning.mockResolvedValueOnce([]).mockResolvedValueOnce([updated]);
+      builder.first.mockResolvedValueOnce(existing);
+      builder.update.mockReturnThis();
+
+      const result = await feedRepository.insertSessionFeedItemAtomic({
+        ownerId: userId,
+        sessionId,
+        visibility: "followers",
+      });
+
+      expect(result).toEqual({ row: updated, created: false });
+      expect(builder.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          owner_id: userId,
+          visibility: "followers",
+          updated_at: expect.any(String),
         }),
       );
     });
