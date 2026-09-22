@@ -5,6 +5,7 @@ import {
   findSessionById,
   getFeedItemStats,
   hasBlockRelation,
+  hasBookmark,
   isFollowing,
   type FeedItemStats,
   type SessionRow,
@@ -47,7 +48,13 @@ export async function ensureSessionInteractionAllowed(actorId: string, session: 
   if (await hasBlockRelation(actorId, session.owner_id)) {
     throw new HttpError(403, "E.FEED.BLOCKED", "FEED_BLOCKED");
   }
-  if (session.owner_id === actorId || session.visibility === "public") {
+  if (session.owner_id === actorId) {
+    return;
+  }
+  if (await hasBookmark(session.id, actorId)) {
+    return;
+  }
+  if (session.visibility === "public") {
     return;
   }
   if (session.visibility === "followers" && (await isFollowing(actorId, session.owner_id))) {
