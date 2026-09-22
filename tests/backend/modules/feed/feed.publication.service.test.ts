@@ -1,8 +1,8 @@
 import * as publication from "../../../../apps/backend/src/modules/feed/feed.publication.service.js";
-import * as repo from "../../../../apps/backend/src/modules/feed/feed.repository.js";
+import * as repo from "../../../../apps/backend/src/modules/feed/feed.publication.repository.js";
 import * as audit from "../../../../apps/backend/src/modules/common/audit.util.js";
 
-jest.mock("../../../../apps/backend/src/modules/feed/feed.repository.js");
+jest.mock("../../../../apps/backend/src/modules/feed/feed.publication.repository.js");
 jest.mock("../../../../apps/backend/src/modules/common/audit.util.js");
 
 const mockRepo = jest.mocked(repo);
