@@ -1,6 +1,6 @@
 import { describe, expect, it } from "@jest/globals";
 
-import { normalizeSessionExercises } from "../../../../apps/backend/src/modules/sessions/sessions.normalization.js";
+import { convertExistingExerciseToInput, normalizeSessionExercises } from "../../../../apps/backend/src/modules/sessions/sessions.normalization.js";
 
 describe("session performed-data normalization", () => {
   it("converts legacy actual attributes into canonical exercise sets without losing metrics", () => {
@@ -83,4 +83,46 @@ describe("session performed-data normalization", () => {
       recorded_at: recordedAt,
     });
   });
+
+  it("copies performed sets only when include_actual is true", () => {
+    const exercise = {
+      id: "exercise-row-1",
+      session_id: "session-1",
+      exercise_id: "exercise-1",
+      exercise_name: "Squat",
+      order_index: 1,
+      notes: null,
+      planned: { sets: 3, reps: 5, extras: {} },
+      actual: null,
+      sets: [
+        {
+          id: "set-1",
+          order_index: 1,
+          reps: 5,
+          weight_kg: 100,
+          distance_m: null,
+          duration_sec: null,
+          rpe: 8,
+          rest_sec: 120,
+          extras: { tempo: "3-1-1" },
+          recorded_at: "2026-09-22T18:30:00.000Z",
+          notes: null,
+        },
+      ],
+    };
+
+    expect(convertExistingExerciseToInput(exercise, false)).toMatchObject({
+      actual: null,
+      sets: [],
+    });
+    expect(convertExistingExerciseToInput(exercise, true).sets).toEqual([
+      expect.objectContaining({
+        reps: 5,
+        weight_kg: 100,
+        rest_sec: 120,
+        extras: { tempo: "3-1-1" },
+      }),
+    ]);
+  });
+
 });
