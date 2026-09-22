@@ -8,6 +8,7 @@ import {
   BodyProgressSettings,
   DataExportButton,
   PrivacySettings,
+  PreferencesSettings,
   ProfileForm,
   SecuritySettings,
   SettingsTabs,
@@ -66,6 +67,7 @@ const Settings: React.FC = () => {
                   />
                 </CardContent>
               </Card>
+              <PreferencesSettings onUpdate={() => void loadUser()} />
               <ProfileForm onSave={() => void loadUser()} />
             </div>
           }

@@ -17,7 +17,7 @@ describe("Settings - Profile Fields", () => {
     renderSettings();
     const displayName = await screen.findByDisplayValue("Test User");
     fireEvent.change(displayName, { target: { value: "Updated User" } });
-    fireEvent.click(screen.getByRole("button", { name: /save/i }));
+    fireEvent.click(screen.getByRole("button", { name: /^save$/i }));
 
     await waitFor(() => {
       expect(mockUpdateProfile).toHaveBeenCalledWith(

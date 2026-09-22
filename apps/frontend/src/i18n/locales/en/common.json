@@ -509,20 +509,16 @@
     },
     "preferences": {
       "title": "Preferences",
-      "description": "Set your default session visibility, units, and language",
-      "defaultVisibility": "Default Session Visibility",
+      "description": "Choose your preferred language and measurement system",
       "units": "Units",
       "language": "Language",
       "saveSuccess": "Preferences saved successfully!",
       "saveError": "Failed to save preferences. Please try again.",
       "saveButton": "Save Preferences",
       "saving": "Saving...",
-      "visibilityPrivate": "Private (only you)",
-      "visibilityFollowers": "Followers",
-      "visibilityLink": "Link only",
-      "visibilityPublic": "Public",
       "unitsMetric": "Metric (kg, km)",
-      "unitsImperial": "Imperial (lb, mi)"
+      "unitsImperial": "Imperial (lb, mi)",
+      "loadError": "Failed to load preferences. Please try again."
     },
     "privacy": {
       "title": "Privacy Settings",

@@ -2,6 +2,7 @@ import crypto from "crypto";
 import type { Knex } from "knex";
 import { db } from "../../db/connection.js";
 import type { UpdateProfileDTO, UserStatus } from "./users.types.js";
+import type { MeasurementSystem, SessionVisibility, UserLanguage } from "@fitvibe/contracts";
 
 const USERS_TABLE = "users";
 const CONTACTS_TABLE = "user_contacts";
@@ -14,7 +15,7 @@ export interface CreateUserRecordInput {
   id: string;
   displayName: string;
   locale?: string;
-  preferredLang?: string;
+  preferredLang?: UserLanguage;
   status: UserStatus;
   roleCode: string;
   passwordHash: string;
@@ -25,7 +26,9 @@ export type UserRow = {
   username: string;
   display_name: string;
   locale: string;
-  preferred_lang: string;
+  preferred_lang: UserLanguage;
+  default_visibility: SessionVisibility;
+  units: MeasurementSystem;
   status: UserStatus;
   role_code: string;
   password_hash: string;
@@ -83,6 +86,8 @@ export async function listUsers(limit = 50, offset = 0): Promise<UserRow[]> {
       `${USERS_TABLE}.display_name`,
       `${USERS_TABLE}.locale`,
       `${USERS_TABLE}.preferred_lang`,
+      `${USERS_TABLE}.default_visibility`,
+      `${USERS_TABLE}.units`,
       `${USERS_TABLE}.status`,
       `${USERS_TABLE}.role_code`,
       `${USERS_TABLE}.created_at`,
@@ -126,18 +131,6 @@ export async function updateUserProfile(
   const patch: Record<string, unknown> = {};
   if (updates.displayName !== undefined) {
     patch.display_name = updates.displayName;
-  }
-  if (updates.locale !== undefined) {
-    patch.locale = updates.locale;
-  }
-  if (updates.preferredLang !== undefined) {
-    patch.preferred_lang = updates.preferredLang;
-  }
-  if (updates.defaultVisibility !== undefined) {
-    patch.default_visibility = updates.defaultVisibility;
-  }
-  if (updates.units !== undefined) {
-    patch.units = updates.units;
   }
 
   if (!Object.keys(patch).length) {

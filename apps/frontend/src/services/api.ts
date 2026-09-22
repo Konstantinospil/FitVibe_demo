@@ -1,7 +1,15 @@
 import type { AxiosError, InternalAxiosRequestConfig } from "axios";
 import axios from "axios";
 import { useAuthStore } from "../store/auth.store";
-import type { SessionStatus, SessionVisibility, UserStatus } from "@fitvibe/contracts";
+import type {
+  MeasurementSystem,
+  SessionStatus,
+  SessionVisibility,
+  UpdateUserPreferences,
+  UserLanguage,
+  UserPreferences as SharedUserPreferences,
+  UserStatus,
+} from "@fitvibe/contracts";
 
 // Use relative URLs in development (Vite proxy handles /api -> localhost:4000)
 // Use full URL in production or when VITE_API_URL is explicitly set
@@ -269,15 +277,15 @@ export interface UserProfile {
   alias?: string | null;
   avatarUrl?: string | null;
   weight?: number | null;
-  weightUnit?: string | null;
+  weightUnit?: "kg" | "lb" | null;
   fitnessLevel?: string | null;
   trainingFrequency?: string | null;
   locale?: string;
-  preferredLang?: string;
-  defaultVisibility?: string;
-  units?: string;
+  preferredLang?: UserLanguage;
+  defaultVisibility?: SessionVisibility;
+  units?: MeasurementSystem;
   role?: string;
-  status?: string;
+  status?: UserStatus;
   isOwnProfile?: boolean;
   isFollowing?: boolean;
   followersCount?: number;
@@ -294,10 +302,6 @@ export interface UpdateProfileRequest {
   weightUnit?: "kg" | "lb";
   fitnessLevel?: "beginner" | "intermediate" | "advanced" | "elite";
   trainingFrequency?: "rarely" | "1_2_per_week" | "3_4_per_week" | "5_plus_per_week";
-  locale?: string;
-  preferredLang?: string;
-  defaultVisibility?: string;
-  units?: string;
 }
 
 interface UserDetail {
@@ -305,11 +309,11 @@ interface UserDetail {
   username: string;
   displayName: string;
   locale: string;
-  preferredLang: string;
-  defaultVisibility: string;
-  units: string;
+  preferredLang: UserLanguage;
+  defaultVisibility: SessionVisibility;
+  units: MeasurementSystem;
   role: string;
-  status: string;
+  status: UserStatus;
   createdAt: string;
   updatedAt: string;
   primaryEmail: string | null;
@@ -330,7 +334,7 @@ interface UserDetail {
     alias: string | null;
     bio: string | null;
     weight: number | null;
-    weightUnit: string | null;
+    weightUnit: "kg" | "lb" | null;
     fitnessLevel: string | null;
     trainingFrequency: string | null;
   };
@@ -1660,32 +1664,6 @@ export async function get2FAStatus(): Promise<TwoFactorStatusResponse> {
   return res.data;
 }
 
-// User Profile API
-export interface UpdateProfileRequest {
-  displayName?: string;
-  bio?: string;
-  locale?: string;
-  alias?: string;
-  weight?: number;
-  weightUnit?: "kg" | "lb";
-  fitnessLevel?: "beginner" | "intermediate" | "advanced" | "elite";
-  trainingFrequency?: "rarely" | "1_2_per_week" | "3_4_per_week" | "5_plus_per_week";
-}
-
-export interface UserProfileResponse {
-  id: string;
-  username: string;
-  alias: string;
-  displayName?: string;
-  bio?: string;
-  avatarUrl?: string;
-  weight?: number;
-  weightUnit?: "kg" | "lb";
-  fitnessLevel?: "beginner" | "intermediate" | "advanced" | "elite";
-  trainingFrequency?: "rarely" | "1_2_per_week" | "3_4_per_week" | "5_plus_per_week";
-  locale?: string;
-}
-
 export interface ChangePasswordRequest {
   currentPassword: string;
   newPassword: string;
@@ -1695,8 +1673,24 @@ export async function changePassword(payload: ChangePasswordRequest): Promise<vo
   await apiClient.post("/api/v1/users/change-password", payload);
 }
 
+export type UserPreferences = SharedUserPreferences;
+
+export type UpdatePreferencesRequest = UpdateUserPreferences;
+
+export async function getUserPreferences(): Promise<UserPreferences> {
+  const res = await apiClient.get<UserPreferences>("/api/v1/users/me/preferences");
+  return res.data;
+}
+
+export async function updateUserPreferences(
+  payload: UpdatePreferencesRequest,
+): Promise<UserPreferences> {
+  const res = await apiClient.patch<UserPreferences>("/api/v1/users/me/preferences", payload);
+  return res.data;
+}
+
 export interface PrivacySettings {
-  defaultVisibility: "private" | "public" | "link" | "followers";
+  defaultVisibility: SessionVisibility;
   allowFollowers: boolean;
   showEmail: boolean;
   showWeight: boolean;

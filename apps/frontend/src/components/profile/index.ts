@@ -3,6 +3,7 @@ export * from "./SettingsTabs";
 export * from "./ProfileForm";
 export * from "./SecuritySettings";
 export * from "./PrivacySettings";
+export * from "./PreferencesSettings";
 export * from "./AccountDeletionForm";
 export * from "./DataExportButton";
 

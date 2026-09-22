@@ -18,6 +18,8 @@ import {
   getMetrics,
   getPrivacy,
   updatePrivacy,
+  getPreferences,
+  updatePreferences,
 } from "./users.controller.js";
 import { requireAuth } from "./users.middleware.js";
 import { requireRole } from "../common/rbac.middleware.js";
@@ -106,6 +108,18 @@ usersRouter.get(
   requireAuth,
   rateLimit("user_export", 2, 3600),
   asyncHandler(exportData),
+);
+usersRouter.get(
+  "/me/preferences",
+  rateLimit("user_preferences_get", 60, 60),
+  requireAuth,
+  asyncHandler(getPreferences),
+);
+usersRouter.patch(
+  "/me/preferences",
+  rateLimit("user_preferences_update", 20, 60),
+  requireAuth,
+  asyncHandler(updatePreferences),
 );
 usersRouter.get(
   "/me/privacy",

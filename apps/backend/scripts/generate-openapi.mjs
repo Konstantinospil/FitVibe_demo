@@ -103,6 +103,15 @@ const paths = {
     },
   },
   "/users/me/preferences": {
+    get: {
+      summary: "Get user preferences",
+      tags: ["Users"],
+      security: [bearerAuth],
+      responses: {
+        200: jsonContent("#/components/schemas/UserPreferences"),
+        401: jsonContent("#/components/schemas/ErrorResponse"),
+      },
+    },
     patch: {
       summary: "Update user preferences",
       tags: ["Users"],
@@ -519,7 +528,7 @@ const schemas = {
       password: { type: "string", minLength: 12, maxLength: 128 },
       role: { type: "string", minLength: 1, maxLength: 50 },
       locale: { type: "string", maxLength: 10 },
-      preferredLang: { type: "string", maxLength: 5 },
+      preferredLang: { type: "string", enum: ["en", "de", "fr", "es", "el"] },
       status: { type: "string", enum: ["pending_verification", "active", "suspended"] },
     },
     required: ["username", "displayName", "email", "password", "role"],
@@ -549,7 +558,6 @@ const schemas = {
       status: { type: "string", enum: ["pending_verification", "active", "suspended", "banned", "pending_deletion", "deleted"] },
       createdAt: { type: "string", format: "date-time" },
       updatedAt: { type: "string", format: "date-time" },
-      preferences: { $ref: "#/components/schemas/UserPreferences" },
     },
     required: ["id", "email", "alias", "status", "createdAt"],
   },
@@ -572,11 +580,11 @@ const schemas = {
   UserPreferences: {
     type: "object",
     properties: {
-      measurementSystem: { type: "string", enum: ["metric", "imperial", "mixed"] },
-      locale: { type: "string" },
-      timeZone: { type: "string" },
-      visibility: { type: "string", enum: ["private", "followers", "public"] },
+      language: { type: "string", enum: ["en", "de", "fr", "es", "el"] },
+      measurementSystem: { type: "string", enum: ["metric", "imperial"] },
     },
+    required: ["language", "measurementSystem"],
+    additionalProperties: false,
   },
   UpdateProfileRequest: {
     type: "object",
@@ -584,8 +592,6 @@ const schemas = {
       username: { type: "string", minLength: 3, maxLength: 50 },
       displayName: { type: "string", minLength: 1, maxLength: 120 },
       bio: { type: "string", maxLength: 500 },
-      locale: { type: "string", maxLength: 10 },
-      preferredLang: { type: "string", maxLength: 5 },
       alias: { type: "string", minLength: 3, maxLength: 50 },
       weight: { type: "number", minimum: 20, maximum: 500 },
       weightUnit: { type: "string", enum: ["kg", "lb"] },
@@ -599,11 +605,10 @@ const schemas = {
   UpdatePreferencesRequest: {
     type: "object",
     properties: {
-      measurementSystem: { type: "string", enum: ["metric", "imperial", "mixed"] },
-      locale: { type: "string" },
-      timeZone: { type: "string" },
-      visibility: { type: "string", enum: ["private", "followers", "public"] },
+      language: { type: "string", enum: ["en", "de", "fr", "es", "el"] },
+      measurementSystem: { type: "string", enum: ["metric", "imperial"] },
     },
+    additionalProperties: false,
   },
   Exercise: {
     type: "object",

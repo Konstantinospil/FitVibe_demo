@@ -93,7 +93,7 @@ export async function createUser(
   assertPasswordPolicy(dto.password, { email, username });
   const passwordHash = await bcrypt.hash(dto.password, 12);
   const locale = dto.locale?.trim() || undefined;
-  const preferredLang = dto.preferredLang?.trim() || undefined;
+  const preferredLang = dto.preferredLang;
 
   try {
     await db.transaction(async (trx) => {
@@ -277,3 +277,4 @@ export {
 } from "./users.contacts.service.js";
 export { collectUserData } from "./users.export.service.js";
 export { getPrivacySettings, updatePrivacySettings } from "./users.privacy.service.js";
+export { getUserPreferences, updateUserPreferences } from "./users.preferences.service.js";
