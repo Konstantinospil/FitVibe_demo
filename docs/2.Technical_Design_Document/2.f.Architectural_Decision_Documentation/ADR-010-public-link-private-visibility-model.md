@@ -1,4 +1,4 @@
-# ADR-010 — Public/Link/Private Visibility Model
+# ADR-010 — Session Visibility and Access Grant Model
 
 > **File:** docs/2.Technical_Design_Document/2.f.Architectural_Decision_Documentation/ADR-010-public-link-private-visibility-model.md  
 > **Purpose:** Define resource visibility for sessions, plans, and profiles with privacy‑first defaults.
@@ -29,7 +29,7 @@ Use session visibility values **`private` (default)**, **`followers`**, **`link`
 ### Model
 
 - Column: `visibility visibility_enum NOT NULL DEFAULT 'private'`, supporting `private`, `followers`, `link`, and `public`.
-- `link` visibility uses `share_links(resource_id, token, expires_at, revoked_at, created_at)`; tokens are random and **revocable**.
+- `link` remains a first-class visibility value, but the **current live schema intentionally has no `share_links` table**. Tokenized/revocable link grants are target behavior, not current Phase 12 implementation. Reintroducing persistent link-token state requires a separate explicit architecture/schema decision.
 - `public` visibility enables inclusion in public feeds **only if** feature `public_feed_enabled` is on.
 - A bookmark is a durable user-specific access grant created only while that user already has legitimate access to the session.
 - Feed/index visibility is materialized state for query/discovery purposes only and is never an independent authorization grant.
@@ -80,8 +80,7 @@ Feed/index state may be stale for discovery purposes but cannot grant access unl
 
 ### Security & Abuse
 
-- Rate limiting on token endpoints; audit logs for token creation and revocation.
-- Tokens are **single-resource** scoped; cannot escalate privileges.
+- When tokenized link grants are implemented, token endpoints must be rate-limited and audited, and tokens must be single-resource scoped. Phase 12 does not invent a replacement token store.
 - Bookmark creation must validate current legitimate access before persisting the access grant.
 - Blocking is a stronger denial and must be checked before positive grants.
 - Public feeds moderated; report/removal pipeline (Phase 2).
@@ -104,8 +103,8 @@ Feed/index state may be stale for discovery purposes but cannot grant access unl
 
 - Public access works for `public` sessions.
 - Eligible followers can access `followers` sessions; ineligible users cannot unless another grant applies.
-- A valid link grants access while valid.
-- Link revocation blocks new link-based access but leaves an already-created bookmark grant valid.
+- Once a tokenized link-grant mechanism is explicitly implemented, a valid link must grant access while valid and revocation must block new link-based access while preserving an already-created bookmark grant.
+- Until that architecture exists, `link` sessions are non-feed-visible and do not gain an implicit UUID-as-secret bypass.
 - A bookmark can only be created while the user already has legitimate access.
 - A bookmark preserves access after a later visibility downgrade.
 - Unbookmarking removes only the bookmark grant.
@@ -115,9 +114,10 @@ Feed/index state may be stale for discovery purposes but cannot grant access unl
 
 ## Backout Plan
 
-Disable `public_feed_enabled`; fall back to private/link only while preserving tokens.
+Disable `public_feed_enabled`; public discovery can be removed without changing owner/bookmark/follower grants. No token backout applies until a link-token mechanism is explicitly implemented.
 
 ## Change Log
 
 - **1.0 (2025-10-13):** Initial proposal.
 - **1.1 (2026-09-22):** Accepted first-class `followers` visibility and explicit key-door access model: owner/bookmark/public/follower/link grants with block/deletion overrides.
+- **1.2 (2026-09-22):** Reconciled the target link-grant rule with the live schema decision that `share_links` must not be recreated; Phase 12 does not implement an implicit or substitute link-token store.
