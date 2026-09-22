@@ -145,7 +145,6 @@ export async function updateFeedItem(
     });
 }
 
-
 export async function retireSessionFeedItem(sessionId: string): Promise<boolean> {
   const affected = await db(FEED_ITEMS_TABLE)
     .where({ session_id: sessionId })
