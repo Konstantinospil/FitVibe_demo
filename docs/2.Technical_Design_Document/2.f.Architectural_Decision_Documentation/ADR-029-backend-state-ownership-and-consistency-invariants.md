@@ -1,0 +1,241 @@
+# ADR-029: Backend State Ownership and Consistency Invariants
+
+**Date:** 2026-09-22  
+**Status:** Accepted  
+**Author:** FitVibe Engineering / Product Owner  
+**Cross-References:** ADR-002, ADR-007, ADR-010, ADR-013, ADR-024; Backend Technical-Debt Reduction Pass 2
+
+---
+
+## Context
+
+The first backend refactoring pass reduced structural concentration but exposed a more important class of debt: state that can be represented in several places without one clear authority.
+
+Examples found during the second review include stale feed visibility after a session visibility change, performed-workout input that can be accepted and then discarded, completed sessions whose scoring inputs can change without recalculating derived gamification state, authentication counters whose reset semantics blur account and IP state, and legal-document versions derived from mutable metadata.
+
+The second technical-debt pass therefore treats state ownership and invariants as architecture, not implementation detail.
+
+---
+
+## Decision
+
+### 1. General state rule
+
+Every important domain concept has one authoritative persisted representation.
+
+Derived, cached, indexed, denormalized, or externally materialized state:
+
+- must identify its authoritative source;
+- must not override the current authority for privacy, authorization, or security decisions;
+- must have explicit refresh/recovery semantics;
+- must be safe to recompute or reconcile;
+- must not silently become a second independent source of truth.
+
+If two values must succeed or fail together in the database, the service operation must make that atomicity explicit.
+
+External side effects such as queue jobs, telemetry, notifications, and remote provider calls are not part of a database transaction. They occur after commit and must be retry-safe when required.
+
+### 2. Sessions, exercises, and performed workout data
+
+**Authority**
+
+- Session lifecycle and visibility are owned by the session record.
+- Planned exercise structure is owned by the session/exercise planning records.
+- Performed workout data is owned by `exercise_sets`.
+
+**Invariants**
+
+- `exercise_sets` is the long-term sole source of truth for performed reps, load, duration, and other performed-set attributes.
+- A public API must not accept a separate performed-workout representation and then discard it.
+- Compatibility input, if temporarily retained during Phase 12, must be explicitly converted to the authoritative set model and have a removal condition.
+- A completed session's scoring-relevant workout data is immutable.
+- Changing scoring-relevant workout data requires an explicit reopen transition before editing and a subsequent completion transition before scoring again.
+
+**Derived state**
+
+- Session points, feed publication, statistics, streaks, Vibe Level effects, and badge effects are derived from authoritative session/workout state.
+
+### 3. Feed, publication, visibility, and bookmarks
+
+**Authority**
+
+- `session.visibility` is the authority for session visibility.
+- Relationship/ownership state remains authoritative for follower/owner access.
+
+**Invariants**
+
+- Feed rows may materialize/index visibility for query performance, but materialized values never grant access by themselves.
+- Every privacy-sensitive feed/bookmark access path must validate access against current authoritative state.
+- A visibility downgrade takes effect for access decisions immediately after the session change commits.
+- Stale feed/index state may affect discoverability latency only if it cannot expose data that current authority denies.
+- Bookmarks do not preserve access after the underlying session becomes inaccessible.
+
+This decision extends the older Public/Link/Private visibility model: current authoritative resource state governs access. Phase 12 will reconcile the existing `followers` state and update ADR-010 as required.
+
+### 4. Points, Vibe Levels, and badges
+
+**Authority**
+
+- Idempotent points events are the authoritative record of awarded points.
+- Session/workout state is the authority for the facts from which a scoring event is produced.
+
+**Invariants**
+
+- One logical scoring source produces at most one authoritative points event for the relevant scoring lifecycle.
+- Concurrent scoring attempts must converge on the same result rather than create duplicates or surface uniqueness races as application failures.
+- Derived Vibe Level and badge processing occurs after the source transaction commits.
+- Derived processing must be retryable and idempotent.
+- A failed derivation must not cause the source session transaction to be rolled back after commit.
+- Reopening and recompleting a session must follow the explicit scoring policy implemented in Phase 13; historical scoring is not silently mutated.
+
+### 5. Authentication, lockouts, and sessions
+
+**Authority**
+
+- Credential verification state, account security state, auth sessions, account-specific failure state, and aggregate IP failure state are distinct concepts.
+- The database representation for each security control is authoritative for that control.
+
+**Invariants**
+
+- Account/IP and aggregate-IP brute-force state are not interchangeable.
+- Successful authentication for one account must not erase unrelated attack history for other accounts using the same IP.
+- Counter mutation must be atomic under concurrent requests.
+- Security-sensitive state is reset only at the explicitly defined successful-authentication transition.
+- Where a required security control cannot read its authoritative backing state, the protected operation fails closed unless a later ADR explicitly permits degradation.
+- Client IP is security-relevant only when derived through explicitly configured trusted-proxy topology.
+
+Phase 14 defines the detailed authentication transition and reset policy.
+
+### 6. Legal documents and consent
+
+**Authority**
+
+- Legal-document versions will be explicit persisted versions.
+- User acceptance records reference the explicit version accepted.
+
+**Invariants**
+
+- File timestamps, translation row `created_at`, filesystem modification times, and similar metadata are not legal version authorities.
+- Publishing a new version deterministically creates the acceptance state required by policy.
+- Translation changes do not accidentally alter or fail to alter legal acceptance semantics.
+- Existing acceptances must be migrated or mapped deliberately during Phase 17.
+
+This is the target architecture and will supersede the version-calculation approach in ADR-024 when Phase 17 is implemented. ADR-024 remains a description of the current implementation until that migration is completed and documented.
+
+### 7. Measurements and attribute definitions
+
+**Authority**
+
+- Measurement records own measured values.
+- Measurement attribute definitions own the schema/meaning of those values.
+- Translation rows are descriptive/localized metadata for definitions, not an independent measurement authority.
+
+**Invariants**
+
+- Creating a definition and the translation required for that definition is one atomic database operation when both are required for a valid attribute.
+- Partial creation is not an accepted state.
+- Creator/ownership provenance, if required by product policy, must be represented in schema rather than only in comments or implicit context.
+
+### 8. Secrets
+
+**Authority**
+
+- Application code consumes secrets through a string-value contract.
+- AWS, Vault, environment variables, or later providers are adapters to that contract.
+
+**Contract**
+
+```ts
+getSecret(key): Promise<string | null>
+setSecret(key, value: string): Promise<void>
+```
+
+Provider-specific encoding is not visible to consumers.
+
+**Invariants**
+
+- For providers that support writes, a successful `setSecret(key, value)` followed by `getSecret(key)` returns the same string value.
+- Provider precedence and environment fallback are explicit.
+- Provider errors do not silently change a secret value's meaning.
+- Structured provider payloads are adapter concerns, not application-level secret types.
+
+### 9. Consistency classes
+
+FitVibe uses three explicit consistency classes:
+
+1. **Transactional consistency**
+   - state that must be valid together inside Postgres;
+   - examples: required multi-table definition creation, atomic counters, session/exercise writes.
+
+2. **Immediate authority / derived index**
+   - authority commits immediately; indexes/materializations may refresh separately but may never weaken privacy or authorization;
+   - example: feed publication/index rows.
+
+3. **Post-commit retryable derivation**
+   - source state commits first; idempotent derived processing follows and may be retried;
+   - examples: points-derived Vibe Level/badge jobs and similar non-authoritative projections.
+
+A full transactional outbox is not mandated by this ADR. Phase 16 decides whether current failure modes justify one. The default for the current scale is the simplest retry-safe post-commit mechanism that satisfies the invariant.
+
+---
+
+## Consequences
+
+### Positive
+
+- Product behavior is no longer invented independently in controllers, services, repositories, tests, or queue workers.
+- Privacy and security decisions use current authoritative state.
+- Derived state can be repaired or recomputed without redefining product truth.
+- Transaction boundaries can be tested against explicit invariants.
+- AI-assisted changes have a concrete architectural target and are less likely to add compensating wrappers or contradictory models.
+
+### Trade-offs
+
+- Some existing APIs and tests must change because they currently encode contradictory behavior.
+- Compatibility behavior may require temporary migration code, but it must have explicit removal criteria.
+- Post-commit derivation requires retry/idempotency discipline.
+- Explicit legal versioning requires a migration away from the existing ADR-024 implementation.
+
+---
+
+## Alternatives Considered
+
+| Option | Description | Reason Rejected |
+| --- | --- | --- |
+| Preserve multiple mutable representations | Keep session/feed/actual/legal versions independently synchronized | Creates stale-state risk and recurring reconciliation debt |
+| Make all side effects transactional | Hold source transaction open while queues/providers/derivations run | External systems cannot participate reliably in the same DB transaction and would increase failure coupling |
+| Eventual consistency everywhere | Treat all projections and security/privacy state as eventually consistent | Unacceptable for authorization, privacy, and critical security controls |
+| Continue timestamp-derived legal versions | Infer legal version from translation/filesystem metadata | Does not provide a deliberate legal publication/acceptance boundary |
+| Structured secrets throughout application code | Expose provider-specific objects to consumers | Couples application semantics to secret-provider storage formats |
+
+---
+
+## Implementation Mapping
+
+- **Phase 12:** session/feed visibility and performed-workout contract.
+- **Phase 13:** completed-session lifecycle, scoring, pagination, idempotent gamification derivation.
+- **Phase 14:** authentication state machine and brute-force counters.
+- **Phase 15:** ineffective security controls and 2FA hardening.
+- **Phase 16:** transaction/post-commit boundaries.
+- **Phase 17:** explicit legal-document version model; reconcile ADR-024.
+- **Phase 18:** provider-independent string secret contract.
+- **Phases 19–22:** residue removal, test-quality audit, architecture review, and CI enforcement.
+
+---
+
+## References
+
+- [Backend Technical-Debt Reduction — Pass 2](./BACKEND_TECH_DEBT_REDUCTION_PASS_2.md)
+- [ADR-002 — Authentication & Session Strategy](./ADR-002-authentication-token-strategy.md)
+- [ADR-007 — Idempotency Policy for Writes](./ADR-007-idempotency-policy-for-writes.md)
+- [ADR-010 — Public/Link/Private Visibility Model](./ADR-010-public-link-private-visibility-model.md)
+- [ADR-013 — Modular Backend Architecture](./ADR-013-modular-backend-architecture.md)
+- [ADR-024 — Legal Document Version Calculation](./ADR-024-legal-document-version-calculation.md)
+
+---
+
+## Status Log
+
+| Version | Date | Change | Author |
+| --- | --- | --- | --- |
+| v1.0 | 2026-09-22 | Accepted state ownership and consistency invariants after Phase 11 product-owner interview | FitVibe Engineering / Product Owner |
