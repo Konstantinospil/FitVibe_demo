@@ -35,7 +35,6 @@ export interface SessionExerciseUpsertInput {
   order_index: number;
   notes: string | null;
   planned?: SessionExerciseAttributes | null;
-  actual?: SessionExerciseActualAttributes | null;
   sets: SessionExerciseSetUpsert[];
 }
 
