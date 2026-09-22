@@ -84,7 +84,19 @@ export async function insertSessionFeedItemAtomic({
 
   const existing = await findFeedItemBySessionId(sessionId);
   if (existing) {
-    return { row: existing, created: false };
+    if (existing.visibility === visibility) {
+      return { row: existing, created: false };
+    }
+    const [updated] = await db(FEED_ITEMS_TABLE)
+      .where({ id: existing.id })
+      .whereNull("deleted_at")
+      .update({
+        owner_id: ownerId,
+        visibility,
+        updated_at: new Date().toISOString(),
+      })
+      .returning<FeedItemRow[]>(["id", "owner_id", "session_id", "visibility", "published_at"]);
+    return { row: updated ?? existing, created: false };
   }
 
   const reactivated = await db(FEED_ITEMS_TABLE)
@@ -131,4 +143,16 @@ export async function updateFeedItem(
       ...patch,
       updated_at: new Date().toISOString(),
     });
+}
+
+
+export async function retireSessionFeedItem(sessionId: string): Promise<boolean> {
+  const affected = await db(FEED_ITEMS_TABLE)
+    .where({ session_id: sessionId })
+    .whereNull("deleted_at")
+    .update({
+      deleted_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    });
+  return affected > 0;
 }
