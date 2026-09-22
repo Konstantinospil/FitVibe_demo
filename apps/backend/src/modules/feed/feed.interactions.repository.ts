@@ -112,7 +112,7 @@ export async function deleteBookmark(sessionId: string, userId: string): Promise
 }
 
 export async function hasBookmark(sessionId: string, userId: string): Promise<boolean> {
-  const row = await db(SESSION_BOOKMARKS_TABLE)
+  const row = await db<{ session_id: string }>(SESSION_BOOKMARKS_TABLE)
     .select("session_id")
     .where({ session_id: sessionId, user_id: userId })
     .first();
