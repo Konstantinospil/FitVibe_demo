@@ -3,7 +3,7 @@
  * Contains API calls for admin-only operations
  */
 
-import { apiClient } from "./api";
+import { apiClient } from "./httpApi";
 import type { UserStatus } from "@fitvibe/contracts";
 
 // Types
