@@ -4,6 +4,7 @@ import * as sessionsRepository from "../../../../apps/backend/src/modules/sessio
 import * as plansService from "../../../../apps/backend/src/modules/plans/plans.service.js";
 import * as pointsService from "../../../../apps/backend/src/modules/points/points.service.js";
 import * as auditUtil from "../../../../apps/backend/src/modules/common/audit.util.js";
+import * as publicationService from "../../../../apps/backend/src/modules/feed/feed.publication.service.js";
 import { HttpError } from "../../../../apps/backend/src/utils/http.js";
 import type {
   CreateSessionDTO,
@@ -20,11 +21,13 @@ jest.mock("../../../../apps/backend/src/modules/sessions/sessions.repository.js"
 jest.mock("../../../../apps/backend/src/modules/plans/plans.service.js");
 jest.mock("../../../../apps/backend/src/modules/points/points.service.js");
 jest.mock("../../../../apps/backend/src/modules/common/audit.util.js");
+jest.mock("../../../../apps/backend/src/modules/feed/feed.publication.service.js");
 
 const mockSessionsRepo = jest.mocked(sessionsRepository);
 const mockPlansService = jest.mocked(plansService);
 const mockPointsService = jest.mocked(pointsService);
 const mockAuditUtil = jest.mocked(auditUtil);
+const mockPublicationService = jest.mocked(publicationService);
 
 // Mock db
 jest.mock("../../../../apps/backend/src/db/connection.js", () => {
@@ -489,6 +492,73 @@ describe("Sessions Service", () => {
       await sessionsService.updateOne(userId, sessionId, { status: "completed" });
 
       expect(mockPointsService.awardPointsForSession).toHaveBeenCalled();
+    });
+
+    it("publishes a session when completion makes it feed-visible", async () => {
+      const inProgressSession: Session = {
+        ...existingSession,
+        status: "in_progress",
+        visibility: "public",
+        started_at: new Date().toISOString(),
+      };
+
+      const mockUpdated: SessionWithExercises = {
+        ...inProgressSession,
+        status: "completed",
+        completed_at: new Date().toISOString(),
+        exercises: [],
+      } as SessionWithExercises;
+
+      mockSessionsRepo.getSessionById.mockResolvedValue(inProgressSession);
+      mockSessionsRepo.updateSession.mockResolvedValue(1);
+      mockSessionsRepo.getSessionWithDetails.mockResolvedValue(mockUpdated);
+      mockPointsService.awardPointsForSession.mockResolvedValue({
+        pointsAwarded: 100,
+      });
+      mockPublicationService.ensureSessionPublished.mockResolvedValue({
+        feedItemId: "feed-1",
+        created: true,
+      });
+
+      await sessionsService.updateOne(userId, sessionId, { status: "completed" });
+
+      expect(mockPublicationService.ensureSessionPublished).toHaveBeenCalledWith(
+        userId,
+        sessionId,
+        "public",
+      );
+    });
+
+    it("publishes a completed session when visibility changes to followers", async () => {
+      const completedPrivateSession: Session = {
+        ...existingSession,
+        status: "completed",
+        visibility: "private",
+        completed_at: new Date().toISOString(),
+        points: 100,
+      };
+
+      const mockUpdated: SessionWithExercises = {
+        ...completedPrivateSession,
+        visibility: "followers",
+        exercises: [],
+      } as SessionWithExercises;
+
+      mockSessionsRepo.getSessionById.mockResolvedValue(completedPrivateSession);
+      mockSessionsRepo.updateSession.mockResolvedValue(1);
+      mockSessionsRepo.getSessionWithDetails.mockResolvedValue(mockUpdated);
+      mockPublicationService.ensureSessionPublished.mockResolvedValue({
+        feedItemId: "feed-1",
+        created: true,
+      });
+
+      await sessionsService.updateOne(userId, sessionId, { visibility: "followers" });
+
+      expect(mockPublicationService.ensureSessionPublished).toHaveBeenCalledWith(
+        userId,
+        sessionId,
+        "followers",
+      );
     });
 
     it("should validate calories as non-negative integer", async () => {

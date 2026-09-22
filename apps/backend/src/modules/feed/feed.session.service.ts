@@ -1,5 +1,5 @@
 import { HttpError } from "../../utils/http.js";
-import { cloneOne } from "../sessions/sessions.service.js";
+import { cloneOne } from "../sessions/sessions.clone.service.js";
 import type { SessionWithExercises } from "../sessions/sessions.types.js";
 import { loadSessionOrThrow } from "./feed.access.js";
 import { ensureSessionPublished } from "./feed.publication.service.js";

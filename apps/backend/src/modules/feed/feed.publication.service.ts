@@ -1,5 +1,5 @@
 import { insertAudit } from "../common/audit.util.js";
-import { insertSessionFeedItemAtomic } from "./feed.repository.js";
+import { insertSessionFeedItemAtomic } from "./feed.publication.repository.js";
 
 export async function ensureSessionPublished(
   ownerId: string,
