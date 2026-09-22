@@ -570,6 +570,38 @@ describe("Sessions Service", () => {
       );
     });
 
+
+
+    it("retires feed publication when a completed public session becomes private", async () => {
+      const completedPublicSession: Session = {
+        ...existingSession,
+        status: "completed",
+        visibility: "public",
+        completed_at: new Date().toISOString(),
+        points: 100,
+      };
+
+      const mockUpdated: SessionWithExercises = {
+        ...completedPublicSession,
+        visibility: "private",
+        exercises: [],
+      } as SessionWithExercises;
+
+      mockSessionsRepo.getSessionById.mockResolvedValue(completedPublicSession);
+      mockSessionsRepo.updateSession.mockResolvedValue(1);
+      mockSessionsRepo.getSessionWithDetails.mockResolvedValue(mockUpdated);
+      mockPublicationService.reconcileSessionPublication.mockResolvedValue(undefined);
+
+      await sessionsService.updateOne(userId, sessionId, { visibility: "private" });
+
+      expect(mockPublicationService.reconcileSessionPublication).toHaveBeenCalledWith(
+        userId,
+        sessionId,
+        "completed",
+        "private",
+      );
+    });
+
     it("should validate calories as non-negative integer", async () => {
       mockSessionsRepo.getSessionById.mockResolvedValue(existingSession);
 
