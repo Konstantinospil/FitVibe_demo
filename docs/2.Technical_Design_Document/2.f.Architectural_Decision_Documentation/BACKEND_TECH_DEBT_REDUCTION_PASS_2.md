@@ -163,7 +163,7 @@ A compact invariant map exists for all seven domains and provides enough clarity
 
 ## Phase 12 — Session and feed state correctness
 
-**Status:** Interviewing
+**Status:** Decided
 
 ### Objective
 
@@ -194,13 +194,31 @@ Accepted on 2026-09-22:
 3. Retain a controlled compatibility period for legacy top-level `actual` input; accepted legacy input must be converted into the authoritative `exercise_sets` model and then removed after client migration. Silent discard and recreation of the old table are prohibited.
 4. `followers` is a first-class session visibility and must be supported consistently across shared contracts, HTTP validation, access logic, feed behavior, and tests.
 
-Still to decide before implementation:
+Additional decisions accepted on 2026-09-22:
 
-- how a user relinquishes a bookmark access grant;
-- whether the session owner can revoke an individual bookmark grant without deleting the session;
-- whether stronger relationship/security actions (for example blocking a user or revoking an unlisted link) override an existing bookmark grant.
+5. Unbookmarking removes the bookmark-based access grant immediately; other independent grants can still permit access.
+6. The owner does not receive a separate per-user bookmark-revocation mechanism in the current model.
+7. Blocking is a stronger denial and overrides an existing bookmark grant.
+8. Revoking or expiring a link does not invalidate a bookmark that was validly created while link access existed.
+9. Session deletion overrides all positive grants.
 
-**Architecture record:** ADR-029 v1.1.
+Authoritative access rule:
+
+```text
+allowed =
+  notDeleted
+  AND notBlocked
+  AND (
+    isOwner
+    OR hasValidBookmark
+    OR isPublic
+    OR isEligibleFollower
+    OR hasValidLink
+    OR hasAuthorizedRole
+  )
+```
+
+**Architecture records:** ADR-029 v1.2 and ADR-010 v1.1.
 
 ### Exit criteria
 
@@ -556,14 +574,17 @@ CI verifies the intended backend quality model without encouraging superficial c
 | 2026-09-22 | 12 | Feed visibility remains materialized/indexed only and cannot independently authorize access. | Preserve query performance without allowing stale projection state to become an authorization source. | ADR-029 v1.1 |
 | 2026-09-22 | 12 | A valid bookmark is a durable user access grant to that session. | Implement the product's key-door model: bookmarked workouts remain accessible through an explicit grant after later visibility restriction. | ADR-029 v1.1 |
 | 2026-09-22 | 12 | Legacy top-level performed-workout input receives a controlled conversion period into `exercise_sets`. | Avoid silent data loss while converging on one performed-workout model. | This document / ADR-029 |
-| 2026-09-22 | 12 | `followers` is a first-class visibility across API and backend access logic. | Eliminate contract drift and make existing domain behavior explicit. | This document; ADR-010 update required |
+| 2026-09-22 | 12 | `followers` is a first-class visibility across API and backend access logic. | Eliminate contract drift and make existing domain behavior explicit. | ADR-010 v1.1 |
+| 2026-09-22 | 12 | Unbookmarking removes the bookmark grant; the owner has no separate per-user bookmark-revoke control. | Keep the access model simple and avoid adding an undeveloped ACL feature. | ADR-010 v1.1 / ADR-029 v1.2 |
+| 2026-09-22 | 12 | Link revocation does not revoke an already-created bookmark. | The bookmark becomes its own durable grant after legitimate entry. | ADR-010 v1.1 / ADR-029 v1.2 |
+| 2026-09-22 | 12 | Blocking and session deletion override bookmark and other positive grants. | Define explicit stronger-denial semantics. | ADR-010 v1.1 / ADR-029 v1.2 |
 
 ## Phase completion record
 
 | Phase | Status | Decision/ADR refs | Implementation commit/PR | Verification |
 | --- | --- | --- | --- | --- |
 | 11 | Done | ADR-029 | 8185deea299be81a02bd891bf334e2e181c3500c | Invariant map documented; no production-code change required |
-| 12 | Interviewing | — | — | — |
+| 12 | Decided | ADR-010 v1.1; ADR-029 v1.2 | — | Strategic interview complete; implementation not started |
 | 13 | Not started | — | — | — |
 | 14 | Not started | — | — | — |
 | 15 | Not started | — | — | — |
