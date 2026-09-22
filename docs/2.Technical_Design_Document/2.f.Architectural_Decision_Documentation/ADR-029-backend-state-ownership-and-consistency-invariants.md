@@ -59,18 +59,21 @@ External side effects such as queue jobs, telemetry, notifications, and remote p
 
 **Authority**
 
-- `session.visibility` is the authority for session visibility.
-- Relationship/ownership state remains authoritative for follower/owner access.
+- `session.visibility` is the authority for the session's visibility state.
+- Ownership and relationship state remain authoritative for owner/follower access.
+- A bookmark is an explicit durable access grant ("key-door" capability) for the bookmarking user; it is not merely presentation metadata.
 
 **Invariants**
 
 - Feed rows may materialize/index visibility for query performance, but materialized values never grant access by themselves.
-- Every privacy-sensitive feed/bookmark access path must validate access against current authoritative state.
-- A visibility downgrade takes effect for access decisions immediately after the session change commits.
-- Stale feed/index state may affect discoverability latency only if it cannot expose data that current authority denies.
-- Bookmarks do not preserve access after the underlying session becomes inaccessible.
+- Access is decided from current authoritative access state: ownership, applicable visibility/relationship rules, and explicit bookmark grants.
+- A user who validly bookmarks a session retains access through that bookmark even if the owner later changes the session visibility to a state that would otherwise deny that user.
+- A visibility downgrade immediately prevents new access that is not independently authorized by ownership, an existing bookmark grant, or another explicit access mechanism.
+- Stale feed/index state may affect discoverability latency only if it cannot expose data without one of the authoritative access grants above.
+- A bookmark may be created only while the user currently has legitimate access to the session.
+- Bookmark revocation/owner-override semantics are finalized in Phase 12 before implementation.
 
-This decision extends the older Public/Link/Private visibility model: current authoritative resource state governs access. Phase 12 will reconcile the existing `followers` state and update ADR-010 as required.
+This decision extends the older Public/Link/Private visibility model: visibility remains authoritative for visibility, while access can also be conferred by an explicit durable bookmark capability. Phase 12 will reconcile `followers`, bookmark revocation semantics, and ADR-010.
 
 ### 4. Points, Vibe Levels, and badges
 
@@ -239,3 +242,4 @@ A full transactional outbox is not mandated by this ADR. Phase 16 decides whethe
 | Version | Date | Change | Author |
 | --- | --- | --- | --- |
 | v1.0 | 2026-09-22 | Accepted state ownership and consistency invariants after Phase 11 product-owner interview | FitVibe Engineering / Product Owner |
+| v1.1 | 2026-09-22 | Clarified bookmark as a durable user access grant (key-door capability); detailed revocation semantics deferred to Phase 12 | FitVibe Engineering / Product Owner |
