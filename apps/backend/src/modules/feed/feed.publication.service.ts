@@ -1,5 +1,8 @@
 import { insertAudit } from "../common/audit.util.js";
-import { insertSessionFeedItemAtomic, retireSessionFeedItem } from "./feed.publication.repository.js";
+import {
+  insertSessionFeedItemAtomic,
+  retireSessionFeedItem,
+} from "./feed.publication.repository.js";
 
 export async function ensureSessionPublished(
   ownerId: string,
@@ -24,7 +27,6 @@ export async function ensureSessionPublished(
 
   return { feedItemId: result.row.id, created: result.created };
 }
-
 
 export async function reconcileSessionPublication(
   ownerId: string,
