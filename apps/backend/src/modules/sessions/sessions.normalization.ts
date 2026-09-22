@@ -256,16 +256,11 @@ export function normalizeSessionExercises(
           reps: actual.reps,
           weight_kg: actual.load,
           distance_m:
-            setIndex === 0 && actual.distance !== null
-              ? Math.round(actual.distance * 1000)
-              : null,
+            setIndex === 0 && actual.distance !== null ? Math.round(actual.distance * 1000) : null,
           duration_sec:
-            setIndex === 0
-              ? intervalToSeconds(actual.duration, context, "actual.duration")
-              : null,
+            setIndex === 0 ? intervalToSeconds(actual.duration, context, "actual.duration") : null,
           rpe: setIndex === 0 ? actual.rpe : null,
-          rest_sec:
-            setIndex === 0 ? intervalToSeconds(actual.rest, context, "actual.rest") : null,
+          rest_sec: setIndex === 0 ? intervalToSeconds(actual.rest, context, "actual.rest") : null,
           extras: setIndex === 0 ? actual.extras : {},
           recorded_at: setIndex === 0 ? actual.recorded_at : null,
           notes: null,
