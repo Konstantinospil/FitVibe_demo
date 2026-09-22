@@ -665,7 +665,6 @@ describe("Sessions Repository", () => {
             rest: null,
             extras: {},
           },
-          actual: null,
           sets: [],
         },
       ];
@@ -713,7 +712,6 @@ describe("Sessions Repository", () => {
             rest: null,
             extras: {},
           },
-          actual: null,
           sets: [],
         },
       ];
@@ -782,7 +780,6 @@ describe("Sessions Repository", () => {
           order_index: 1,
           notes: null,
           planned: null,
-          actual: null,
           sets: [
             {
               id: "set-1",
@@ -817,7 +814,6 @@ describe("Sessions Repository", () => {
           order_index: 1,
           notes: null,
           planned: null,
-          actual: null,
           sets: [],
         },
       ];
@@ -851,7 +847,6 @@ describe("Sessions Repository", () => {
             rest: null,
             extras: {},
           },
-          actual: null,
           sets: [],
         },
       ];
@@ -865,75 +860,6 @@ describe("Sessions Repository", () => {
       await sessionsRepository.replaceSessionExercises(mockTrx, sessionId, exercises);
 
       // Should only insert session_exercises, not planned_attributes (because it's empty)
-      expect(mockTrxQueryBuilder.insert).toHaveBeenCalledTimes(1);
-    });
-
-    it("should not insert actual attributes when they are null", async () => {
-      const exercises = [
-        {
-          id: "exercise-1",
-          exercise_id: "ex-1",
-          order_index: 1,
-          notes: null,
-          planned: {
-            sets: 3,
-            reps: 10,
-            load: 100,
-            distance: null,
-            duration: null,
-            rpe: null,
-            rest: null,
-            extras: {},
-          },
-          actual: null,
-          sets: [],
-        },
-      ];
-
-      const mockTrxQueryBuilder = createMockQueryBuilder();
-      const mockTrx = ((_table: string) => mockTrxQueryBuilder) as any;
-
-      mockTrxQueryBuilder.del.mockResolvedValue(1);
-      mockTrxQueryBuilder.insert.mockResolvedValue([]);
-
-      await sessionsRepository.replaceSessionExercises(mockTrx, sessionId, exercises);
-
-      // Should insert session_exercises + planned_attributes, but not actual_attributes
-      expect(mockTrxQueryBuilder.insert).toHaveBeenCalledTimes(2);
-    });
-
-    it("should not insert actual attributes when they are empty", async () => {
-      const exercises = [
-        {
-          id: "exercise-1",
-          exercise_id: "ex-1",
-          order_index: 1,
-          notes: null,
-          planned: null,
-          actual: {
-            sets: null,
-            reps: null,
-            load: null,
-            distance: null,
-            duration: null,
-            rpe: null,
-            rest: null,
-            extras: {},
-            recorded_at: null,
-          },
-          sets: [],
-        },
-      ];
-
-      const mockTrxQueryBuilder = createMockQueryBuilder();
-      const mockTrx = ((_table: string) => mockTrxQueryBuilder) as any;
-
-      mockTrxQueryBuilder.del.mockResolvedValue(1);
-      mockTrxQueryBuilder.insert.mockResolvedValue([]);
-
-      await sessionsRepository.replaceSessionExercises(mockTrx, sessionId, exercises);
-
-      // Should only insert session_exercises, not actual_attributes (because it's empty)
       expect(mockTrxQueryBuilder.insert).toHaveBeenCalledTimes(1);
     });
 
@@ -954,7 +880,6 @@ describe("Sessions Repository", () => {
             rest: null,
             extras: {},
           },
-          actual: null,
           sets: [],
         },
       ];
