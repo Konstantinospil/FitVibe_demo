@@ -68,7 +68,7 @@ describe("session key-door access", () => {
   it("denies a private session without another grant", async () => {
     await expect(
       ensureSessionInteractionAllowed("33333333-3333-4333-8333-333333333333", session),
-    ).rejects.toMatchObject({ status: 403 });
+    ).rejects.toThrow("Session is not visible to this user");
   });
 
   it("lets blocking override a bookmark grant", async () => {
@@ -77,7 +77,7 @@ describe("session key-door access", () => {
 
     await expect(
       ensureSessionInteractionAllowed("33333333-3333-4333-8333-333333333333", session),
-    ).rejects.toMatchObject({ status: 403 });
+    ).rejects.toThrow("FEED_BLOCKED");
     expect(mockHasBookmark).not.toHaveBeenCalled();
   });
 });
