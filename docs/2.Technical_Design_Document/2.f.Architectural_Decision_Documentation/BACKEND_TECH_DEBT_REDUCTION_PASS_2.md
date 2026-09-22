@@ -187,11 +187,24 @@ Eliminate stale privacy state and contract drift between sessions, feed publicat
 
 ### Decision log
 
-_Pending Phase 12 interview._
+Accepted on 2026-09-22:
+
+1. Keep `feed_items.visibility` only as materialized/indexed state; current authoritative access must be revalidated and the feed row cannot independently grant access.
+2. A bookmark is a durable access grant ("key-door" capability): a user who validly bookmarks a session retains access even after a later visibility restriction.
+3. Retain a controlled compatibility period for legacy top-level `actual` input; accepted legacy input must be converted into the authoritative `exercise_sets` model and then removed after client migration. Silent discard and recreation of the old table are prohibited.
+4. `followers` is a first-class session visibility and must be supported consistently across shared contracts, HTTP validation, access logic, feed behavior, and tests.
+
+Still to decide before implementation:
+
+- how a user relinquishes a bookmark access grant;
+- whether the session owner can revoke an individual bookmark grant without deleting the session;
+- whether stronger relationship/security actions (for example blocking a user or revoking an unlisted link) override an existing bookmark grant.
+
+**Architecture record:** ADR-029 v1.1.
 
 ### Exit criteria
 
-Current session visibility always governs access; no accepted workout field is silently lost; shared and HTTP visibility contracts agree.
+Access is governed by explicit authoritative grants (ownership, applicable visibility/relationship rules, and bookmark capability), while materialized feed state never independently grants access; bookmark revocation semantics are explicit; no accepted workout field is silently lost; shared and HTTP visibility contracts agree.
 
 ---
 
@@ -540,6 +553,10 @@ CI verifies the intended backend quality model without encouraging superficial c
 | 2026-09-22 | 11 | Security-critical controls fail closed when authoritative backing state is unavailable. | Avoid silent security weakening. | ADR-029 |
 | 2026-09-22 | 11 | Legal versions become explicit persisted versions. | Create a deliberate legal publication and acceptance boundary. | ADR-029 |
 | 2026-09-22 | 11 | Application secrets use a provider-independent string contract. | Remove provider-specific storage semantics from application code. | ADR-029 |
+| 2026-09-22 | 12 | Feed visibility remains materialized/indexed only and cannot independently authorize access. | Preserve query performance without allowing stale projection state to become an authorization source. | ADR-029 v1.1 |
+| 2026-09-22 | 12 | A valid bookmark is a durable user access grant to that session. | Implement the product's key-door model: bookmarked workouts remain accessible through an explicit grant after later visibility restriction. | ADR-029 v1.1 |
+| 2026-09-22 | 12 | Legacy top-level performed-workout input receives a controlled conversion period into `exercise_sets`. | Avoid silent data loss while converging on one performed-workout model. | This document / ADR-029 |
+| 2026-09-22 | 12 | `followers` is a first-class visibility across API and backend access logic. | Eliminate contract drift and make existing domain behavior explicit. | This document; ADR-010 update required |
 
 ## Phase completion record
 
