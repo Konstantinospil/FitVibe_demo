@@ -145,7 +145,6 @@ export async function unfollowUser(userId: string): Promise<void> {
   await apiClient.delete(`/api/v1/users/${userId}/follow`);
 }
 
-
 // Feed Comments API
 export interface Comment {
   id: string;
