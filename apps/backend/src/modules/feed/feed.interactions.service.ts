@@ -100,8 +100,6 @@ export async function removeBookmark(
   sessionId: string,
 ): Promise<{ bookmarked: boolean }> {
   const session = await loadSessionOrThrow(sessionId);
-  await ensureSessionInteractionAllowed(userId, session);
-
   const removed = await deleteBookmark(sessionId, userId);
   if (removed > 0) {
     await insertAudit({
