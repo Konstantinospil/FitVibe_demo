@@ -729,7 +729,7 @@ describe("Sessions Repository", () => {
       expect(mockTrxQueryBuilder.insert).toHaveBeenCalledTimes(2); // session_exercises + planned_attributes
     });
 
-    it("should insert actual attributes", async () => {
+    it("should persist canonical performed-set metadata", async () => {
       const exercises = [
         {
           id: "exercise-1",
@@ -737,18 +737,21 @@ describe("Sessions Repository", () => {
           order_index: 1,
           notes: null,
           planned: null,
-          actual: {
-            sets: 3,
-            reps: 10,
-            load: 100,
-            distance: null,
-            duration: null,
-            rpe: null,
-            rest: null,
-            extras: {},
-            recorded_at: new Date().toISOString(),
-          },
-          sets: [],
+          sets: [
+            {
+              id: "set-1",
+              order_index: 1,
+              reps: 10,
+              weight_kg: 100,
+              distance_m: 5000,
+              duration_sec: 1800,
+              rpe: 7,
+              rest_sec: 120,
+              extras: { source: "legacy-actual" },
+              recorded_at: "2026-09-22T18:30:00.000Z",
+              notes: null,
+            },
+          ],
         },
       ];
 
@@ -760,8 +763,15 @@ describe("Sessions Repository", () => {
 
       await sessionsRepository.replaceSessionExercises(mockTrx, sessionId, exercises);
 
-      // Actual attributes are stored via exercise_sets; the dedicated table was dropped.
-      expect(mockTrxQueryBuilder.insert).toHaveBeenCalledTimes(1);
+      expect(mockTrxQueryBuilder.insert).toHaveBeenCalledTimes(2);
+      expect(mockTrxQueryBuilder.insert).toHaveBeenCalledWith([
+        expect.objectContaining({
+          session_exercise_id: "exercise-1",
+          rest_sec: 120,
+          extras: { source: "legacy-actual" },
+          recorded_at: "2026-09-22T18:30:00.000Z",
+        }),
+      ]);
     });
 
     it("should insert exercise sets", async () => {
@@ -961,7 +971,7 @@ describe("Sessions Repository", () => {
       expect(mockTrxQueryBuilder.insert).toHaveBeenCalledTimes(2);
     });
 
-    it("should handle actual attributes with recorded_at", async () => {
+    it("should preserve recorded_at on canonical exercise sets", async () => {
       const exercises = [
         {
           id: "exercise-1",
@@ -969,18 +979,21 @@ describe("Sessions Repository", () => {
           order_index: 1,
           notes: null,
           planned: null,
-          actual: {
-            sets: 3,
-            reps: 10,
-            load: 100,
-            distance: null,
-            duration: null,
-            rpe: null,
-            rest: null,
-            extras: {},
-            recorded_at: "2024-01-01T00:00:00Z",
-          },
-          sets: [],
+          sets: [
+            {
+              id: "set-1",
+              order_index: 1,
+              reps: 10,
+              weight_kg: 100,
+              distance_m: null,
+              duration_sec: null,
+              rpe: null,
+              rest_sec: null,
+              extras: {},
+              recorded_at: "2024-01-01T00:00:00Z",
+              notes: null,
+            },
+          ],
         },
       ];
 
@@ -992,13 +1005,14 @@ describe("Sessions Repository", () => {
 
       await sessionsRepository.replaceSessionExercises(mockTrx, sessionId, exercises);
 
-      expect(mockTrxQueryBuilder.insert).toHaveBeenCalledTimes(1);
       const recordedAtInsert = mockTrxQueryBuilder.insert.mock.calls.find(
         (call) =>
           Array.isArray(call[0]) &&
-          call[0].some((row: { recorded_at?: string }) => row.recorded_at),
+          call[0].some(
+            (row: { recorded_at?: string }) => row.recorded_at === "2024-01-01T00:00:00Z",
+          ),
       );
-      expect(recordedAtInsert).toBeUndefined();
+      expect(recordedAtInsert).toBeDefined();
     });
   });
 });
