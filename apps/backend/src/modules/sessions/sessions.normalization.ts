@@ -154,6 +154,31 @@ function normalizeActualAttributesInput(
   };
 }
 
+function intervalToSeconds(value: string | null, context: string, field: string): number | null {
+  if (!value) {
+    return null;
+  }
+  const clock = value.match(/^(\d{2}):(\d{2})(?::(\d{2}))?$/);
+  if (clock) {
+    return Number(clock[1]) * 3600 + Number(clock[2]) * 60 + Number(clock[3] ?? 0);
+  }
+
+  const iso = value.match(/^P(?:(\d+)D)?(?:T(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?)?$/);
+  if (!iso) {
+    throw new HttpError(
+      422,
+      "E.SESSION.LEGACY_ACTUAL_UNCONVERTIBLE",
+      `${context}: ${field} cannot be converted losslessly to seconds`,
+    );
+  }
+  return (
+    Number(iso[1] ?? 0) * 86400 +
+    Number(iso[2] ?? 0) * 3600 +
+    Number(iso[3] ?? 0) * 60 +
+    Number(iso[4] ?? 0)
+  );
+}
+
 function normalizeSets(
   sets: SessionExerciseInput["sets"],
   context: string,
@@ -182,6 +207,9 @@ function normalizeSets(
       distance_m: ensureNonNegativeInteger("distance_m", set.distance_m ?? null, setContext),
       duration_sec: ensureNonNegativeInteger("duration_sec", set.duration_sec ?? null, setContext),
       rpe: ensureRpeRange("rpe", set.rpe ?? null, setContext),
+      rest_sec: ensureNonNegativeInteger("rest_sec", set.rest_sec ?? null, setContext),
+      extras: normalizeExtras(set.extras),
+      recorded_at: set.recorded_at ? new Date(set.recorded_at).toISOString() : null,
       notes: trimToNull(set.notes),
     };
   });
@@ -210,14 +238,48 @@ export function normalizeSessionExercises(
     }
     seenOrders.add(order);
 
+    const actual = normalizeActualAttributesInput(exercise.actual ?? null, `${context} actual`);
+    const explicitSets = normalizeSets(exercise.sets, context);
+
+    if (actual && explicitSets.length > 0) {
+      throw new HttpError(
+        422,
+        "E.SESSION.AMBIGUOUS_ACTUAL",
+        `${context}: provide either legacy actual attributes or explicit sets, not both`,
+      );
+    }
+
+    const performedSets: SessionExerciseUpsertInput["sets"] = actual
+      ? Array.from({ length: actual.sets && actual.sets > 0 ? actual.sets : 1 }, (_, setIndex) => ({
+          id: uuidv4(),
+          order_index: setIndex + 1,
+          reps: actual.reps,
+          weight_kg: actual.load,
+          distance_m:
+            setIndex === 0 && actual.distance !== null
+              ? Math.round(actual.distance * 1000)
+              : null,
+          duration_sec:
+            setIndex === 0
+              ? intervalToSeconds(actual.duration, context, "actual.duration")
+              : null,
+          rpe: setIndex === 0 ? actual.rpe : null,
+          rest_sec:
+            setIndex === 0 ? intervalToSeconds(actual.rest, context, "actual.rest") : null,
+          extras: setIndex === 0 ? actual.extras : {},
+          recorded_at: setIndex === 0 ? actual.recorded_at : null,
+          notes: null,
+        }))
+      : explicitSets;
+
     return {
       id: exercise.id ?? uuidv4(),
       exercise_id: exercise.exercise_id ?? null,
       order_index: order,
       notes: trimToNull(exercise.notes),
       planned: normalizeAttributesInput(exercise.planned ?? null, `${context} planned`),
-      actual: normalizeActualAttributesInput(exercise.actual ?? null, `${context} actual`),
-      sets: normalizeSets(exercise.sets, context),
+      actual: null,
+      sets: performedSets,
     };
   });
 
@@ -243,6 +305,9 @@ export function convertExistingExerciseToInput(
         distance_m: set.distance_m ?? undefined,
         duration_sec: set.duration_sec ?? undefined,
         rpe: set.rpe ?? undefined,
+        rest_sec: set.rest_sec ?? undefined,
+        extras: set.extras ? { ...set.extras } : undefined,
+        recorded_at: set.recorded_at ?? undefined,
         notes: set.notes ?? undefined,
       })) ?? [],
   };
