@@ -311,6 +311,55 @@ describe("2-Stage Login Flow (AC-1.6)", () => {
       expect(mockAuthRepo.createAuthSession).not.toHaveBeenCalled();
     });
 
+    it("should exhaust the challenge after the third failed 2FA attempt", async () => {
+      mockPending2faRepo.getPending2FASession
+        .mockResolvedValueOnce({
+          id: pendingSessionId,
+          user_id: "user-123",
+          created_at: new Date().toISOString(),
+          expires_at: new Date(Date.now() + 5 * 60 * 1000).toISOString(),
+          ip: "127.0.0.1",
+          user_agent: "Mozilla/5.0",
+          verified: false,
+          failed_attempts: 2,
+        })
+        .mockResolvedValueOnce({
+          id: pendingSessionId,
+          user_id: "user-123",
+          created_at: new Date().toISOString(),
+          expires_at: new Date(Date.now() + 5 * 60 * 1000).toISOString(),
+          ip: "127.0.0.1",
+          user_agent: "Mozilla/5.0",
+          verified: false,
+          failed_attempts: 3,
+        });
+      mockPending2faRepo.incrementPending2FAFailures.mockResolvedValueOnce({
+        id: pendingSessionId,
+        user_id: "user-123",
+        created_at: new Date().toISOString(),
+        expires_at: new Date(Date.now() + 5 * 60 * 1000).toISOString(),
+        ip: "127.0.0.1",
+        user_agent: "Mozilla/5.0",
+        verified: false,
+        failed_attempts: 3,
+        last_failed_at: new Date().toISOString(),
+      });
+      mockTwofaService.verify2FACode.mockResolvedValueOnce(false);
+
+      await expect(
+        authService.verify2FALogin(pendingSessionId, "123456", loginContext),
+      ).rejects.toThrow("AUTH_VERIFICATION_FAILED");
+
+      jest.clearAllMocks();
+
+      await expect(
+        authService.verify2FALogin(pendingSessionId, "123456", loginContext),
+      ).rejects.toThrow("AUTH_VERIFICATION_FAILED");
+
+      expect(mockTwofaService.verify2FACode).not.toHaveBeenCalled();
+      expect(mockAuthRepo.createAuthSession).not.toHaveBeenCalled();
+    });
+
     it("should throw error when pending session does not exist", async () => {
       // Setup: No pending session
       mockPending2faRepo.getPending2FASession.mockResolvedValue(null);
