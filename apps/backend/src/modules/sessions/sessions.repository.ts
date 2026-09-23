@@ -545,7 +545,6 @@ export async function listRegionalStrengthStimuli(
   }));
 }
 
-
 export async function listCompletedSessionIdsForGamification(
   userId: string,
   trx?: Knex.Transaction,
