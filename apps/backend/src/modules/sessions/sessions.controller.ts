@@ -300,7 +300,6 @@ export async function deleteSessionHandler(req: Request, res: Response): Promise
   res.status(204).send();
 }
 
-
 export async function reopenSessionHandler(req: Request, res: Response): Promise<void> {
   const userId = requireUser(req, res);
   if (!userId) {
