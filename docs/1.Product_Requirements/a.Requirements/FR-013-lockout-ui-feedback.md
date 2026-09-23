@@ -5,18 +5,26 @@
 **Requirement ID**: FR-013  
 **Type**: Functional Requirement  
 **Title**: Lockout UI Feedback & Countdown Timer  
-**Status**: In Progress  
+**Status**: Superseded  
 **Priority**: Medium  
 **Gate**: SILVER  
 **Owner**: ENG/UX  
 **Created**: 2025-11-30  
-**Updated**: 2025-11-30
+**Updated**: 2026-09-23
 
 ---
 
 ## Executive Summary
 
-This functional requirement specifies user interface feedback for brute force protection lockouts. Users must see clear information about lockout status, remaining attempts, and countdown timers.
+> **Superseded by Phase 14 authentication-state hardening (2026-09-23).**
+> Login clients must no longer receive account/IP lockout type, remaining-attempt counters,
+> or countdown metadata because those signals can become an account/password oracle.
+> Temporary throttling remains enforced server-side while the public stage-one response
+> stays an opaque pre-authentication challenge.
+
+This document is retained as historical context for the previous lockout-feedback design.
+
+This functional requirement specified user interface feedback for brute force protection lockouts. Users must see clear information about lockout status, remaining attempts, and countdown timers.
 
 Provide transparent feedback when login attempts are blocked due to brute force protection, including remaining attempts before lockout and countdown timers during lockout periods.
 
@@ -214,5 +222,5 @@ Backend error responses shall follow this structure:
 
 ---
 
-**Last Updated**: 2025-11-30  
+**Last Updated**: 2026-09-23  
 **Next Review**: 2025-12-30
