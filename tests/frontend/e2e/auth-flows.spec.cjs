@@ -112,7 +112,9 @@ test.describe("Authentication Flows (FR-002)", () => {
       await expect(page.getByRole("heading", { name: /choose your vibe/i })).toBeVisible();
     });
 
-    test("should conceal invalid credentials behind an opaque verification challenge", async ({ page }) => {
+    test(
+      "should conceal invalid credentials behind an opaque verification challenge",
+      async ({ page }) => {
       await page.route("**/api/v1/auth/login", async (route) => {
         await route.fulfill(
           jsonResponse({
@@ -130,8 +132,9 @@ test.describe("Authentication Flows (FR-002)", () => {
       await page.getByRole("button", { name: /sign in/i }).click();
 
       await expect(page).toHaveURL(/\/login\/verify-2fa/);
-      await expect(page.getByText(/invalid email or password/i)).toHaveCount(0);
-    });
+        await expect(page.getByText(/invalid email or password/i)).toHaveCount(0);
+      },
+    );
 
     test("should not disclose an internal throttle state", async ({ page }) => {
       await page.route("**/api/v1/auth/login", async (route) => {
