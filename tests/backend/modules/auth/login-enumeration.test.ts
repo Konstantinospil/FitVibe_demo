@@ -70,12 +70,10 @@ describe("Q-11 login enumeration protections", () => {
   it("performs a dummy password comparison when the user does not exist", async () => {
     findUserByEmailSpy.mockResolvedValue(undefined);
 
-    await expect(
-      login({ email: "missing@fitvibe.test", password: "Secret123" }),
-    ).rejects.toMatchObject({
-      status: 401,
-      code: "AUTH_INVALID_CREDENTIALS",
-    });
+    const result = await login({ email: "missing@fitvibe.test", password: "Secret123" });
+
+    expect(result.requires2FA).toBe(true);
+    expect(result.pendingSessionId).toEqual(expect.any(String));
 
     expect(compareSpy).toHaveBeenCalledWith("Secret123", expect.any(String));
     expect(compareSpy).toHaveBeenCalledTimes(1);
@@ -101,12 +99,10 @@ describe("Q-11 login enumeration protections", () => {
     };
     findUserByEmailSpy.mockResolvedValue(inactiveUser);
 
-    await expect(
-      login({ email: "inactive@fitvibe.test", password: "Secret123" }),
-    ).rejects.toMatchObject({
-      status: 401,
-      code: "AUTH_INVALID_CREDENTIALS",
-    });
+    const result = await login({ email: "inactive@fitvibe.test", password: "Secret123" });
+
+    expect(result.requires2FA).toBe(true);
+    expect(result.pendingSessionId).toEqual(expect.any(String));
 
     expect(compareSpy).toHaveBeenCalledWith("Secret123", expect.any(String));
     expect(compareSpy).toHaveBeenCalledTimes(1);
