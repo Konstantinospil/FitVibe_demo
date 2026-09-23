@@ -489,4 +489,3 @@ export async function awardPointsForSession(
 
   return result;
 }
-
