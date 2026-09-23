@@ -132,13 +132,15 @@ export async function recordFailedAttempt(
     const lockedUntil = calculateLockoutDuration(newAttemptCount);
 
     // Update existing record
-    await exec(TABLE).where({ id: existing.id }).update({
-      attempt_count: newAttemptCount,
-      locked_until: lockedUntil,
-      first_attempt_at: windowExpired ? now : existing.first_attempt_at,
-      last_attempt_at: now,
-      updated_at: now,
-    });
+    await exec(TABLE)
+      .where({ id: existing.id })
+      .update({
+        attempt_count: newAttemptCount,
+        locked_until: lockedUntil,
+        first_attempt_at: windowExpired ? now : existing.first_attempt_at,
+        last_attempt_at: now,
+        updated_at: now,
+      });
 
     // Fetch the updated record to ensure we return the correct values
     const updated = await getFailedAttempt(normalizedIdentifier, ipAddress, trx);
@@ -624,14 +626,10 @@ export async function cleanupOldIPAttempts(trx?: Knex.Transaction): Promise<numb
   return deleted;
 }
 
-
 /**
  * Serialize failed-password updates per source IP inside the caller transaction.
  * This prevents lost increments and inconsistent distinct-identifier counts.
  */
-export async function lockLoginAttemptIp(
-  ipAddress: string,
-  trx: Knex.Transaction,
-): Promise<void> {
+export async function lockLoginAttemptIp(ipAddress: string, trx: Knex.Transaction): Promise<void> {
   await trx.raw("SELECT pg_advisory_xact_lock(hashtext(?))", [`fitvibe-auth:${ipAddress}`]);
 }
