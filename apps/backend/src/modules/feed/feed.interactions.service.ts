@@ -30,7 +30,12 @@ export async function likeFeedItem(
   feedItemId: string,
 ): Promise<{ liked: boolean; stats: FeedItemStats }> {
   const feedItem = await loadFeedItemOrThrow(feedItemId);
-  await ensureFeedInteractionAllowed(userId, feedItem.owner_id, feedItem.visibility);
+  await ensureFeedInteractionAllowed(
+    userId,
+    feedItem.owner_id,
+    feedItem.visibility,
+    feedItem.session_id,
+  );
 
   await upsertFeedLike(feedItemId, userId);
   const stats = await fetchStatsForFeedItem(feedItemId);
@@ -53,7 +58,12 @@ export async function unlikeFeedItem(
   feedItemId: string,
 ): Promise<{ liked: boolean; stats: FeedItemStats }> {
   const feedItem = await loadFeedItemOrThrow(feedItemId);
-  await ensureFeedInteractionAllowed(userId, feedItem.owner_id, feedItem.visibility);
+  await ensureFeedInteractionAllowed(
+    userId,
+    feedItem.owner_id,
+    feedItem.visibility,
+    feedItem.session_id,
+  );
 
   const removed = await deleteFeedLike(feedItemId, userId);
   const stats = await fetchStatsForFeedItem(feedItemId);
@@ -100,8 +110,6 @@ export async function removeBookmark(
   sessionId: string,
 ): Promise<{ bookmarked: boolean }> {
   const session = await loadSessionOrThrow(sessionId);
-  await ensureSessionInteractionAllowed(userId, session);
-
   const removed = await deleteBookmark(sessionId, userId);
   if (removed > 0) {
     await insertAudit({
@@ -165,7 +173,12 @@ export async function listComments(
 > {
   const feedItem = await loadFeedItemOrThrow(feedItemId);
   if (options.viewerId) {
-    await ensureFeedInteractionAllowed(options.viewerId, feedItem.owner_id, feedItem.visibility);
+    await ensureFeedInteractionAllowed(
+      options.viewerId,
+      feedItem.owner_id,
+      feedItem.visibility,
+      feedItem.session_id,
+    );
   } else if (feedItem.visibility !== "public") {
     throw new HttpError(403, "E.FEED.NOT_PUBLIC", "FEED_NOT_PUBLIC");
   }
@@ -199,7 +212,12 @@ export async function createComment(
   editedAt: string | null;
 }> {
   const feedItem = await loadFeedItemOrThrow(feedItemId);
-  await ensureFeedInteractionAllowed(userId, feedItem.owner_id, feedItem.visibility);
+  await ensureFeedInteractionAllowed(
+    userId,
+    feedItem.owner_id,
+    feedItem.visibility,
+    feedItem.session_id,
+  );
 
   const trimmed = (body ?? "").trim();
   if (trimmed.length === 0) {

@@ -1,5 +1,8 @@
 import { insertAudit } from "../common/audit.util.js";
-import { insertSessionFeedItemAtomic } from "./feed.publication.repository.js";
+import {
+  insertSessionFeedItemAtomic,
+  retireSessionFeedItem,
+} from "./feed.publication.repository.js";
 
 export async function ensureSessionPublished(
   ownerId: string,
@@ -23,4 +26,17 @@ export async function ensureSessionPublished(
   }
 
   return { feedItemId: result.row.id, created: result.created };
+}
+
+export async function reconcileSessionPublication(
+  ownerId: string,
+  sessionId: string,
+  status: string,
+  visibility: string,
+): Promise<void> {
+  if (status === "completed" && (visibility === "public" || visibility === "followers")) {
+    await ensureSessionPublished(ownerId, sessionId, visibility);
+    return;
+  }
+  await retireSessionFeedItem(sessionId);
 }

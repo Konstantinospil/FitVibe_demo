@@ -12,7 +12,7 @@ import {
 import { getIdempotencyKey, handleIdempotentRequest } from "../common/idempotency.helpers.js";
 
 const statusEnum = z.enum(["planned", "in_progress", "completed", "canceled"]);
-const visibilityEnum = z.enum(["private", "public", "link"]);
+const visibilityEnum = z.enum(["private", "followers", "public", "link"]);
 
 const titleSchema = z
   .string()
@@ -57,6 +57,9 @@ const sessionSetSchema = z
     distance_m: z.number().min(0).nullable().optional(),
     duration_sec: z.number().int().min(0).nullable().optional(),
     rpe: z.number().int().min(1).max(10).nullable().optional(),
+    rest_sec: z.number().int().min(0).nullable().optional(),
+    extras: extrasSchema,
+    recorded_at: z.string().datetime().nullable().optional(),
     notes: z.string().max(500).nullable().optional(),
   })
   .strict();

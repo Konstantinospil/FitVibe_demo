@@ -5,6 +5,7 @@ import * as plansService from "../../../../apps/backend/src/modules/plans/plans.
 import * as pointsService from "../../../../apps/backend/src/modules/points/points.service.js";
 import * as auditUtil from "../../../../apps/backend/src/modules/common/audit.util.js";
 import * as publicationService from "../../../../apps/backend/src/modules/feed/feed.publication.service.js";
+import * as feedAccess from "../../../../apps/backend/src/modules/feed/feed.access.js";
 import { HttpError } from "../../../../apps/backend/src/utils/http.js";
 import type {
   CreateSessionDTO,
@@ -22,12 +23,14 @@ jest.mock("../../../../apps/backend/src/modules/plans/plans.service.js");
 jest.mock("../../../../apps/backend/src/modules/points/points.service.js");
 jest.mock("../../../../apps/backend/src/modules/common/audit.util.js");
 jest.mock("../../../../apps/backend/src/modules/feed/feed.publication.service.js");
+jest.mock("../../../../apps/backend/src/modules/feed/feed.access.js");
 
 const mockSessionsRepo = jest.mocked(sessionsRepository);
 const mockPlansService = jest.mocked(plansService);
 const mockPointsService = jest.mocked(pointsService);
 const mockAuditUtil = jest.mocked(auditUtil);
 const mockPublicationService = jest.mocked(publicationService);
+const mockFeedAccess = jest.mocked(feedAccess);
 
 // Mock db
 jest.mock("../../../../apps/backend/src/db/connection.js", () => {
@@ -116,6 +119,8 @@ describe("Sessions Service", () => {
         exercises: [],
       } as SessionWithExercises;
 
+      mockFeedAccess.loadSessionOrThrow.mockResolvedValue(mockSession);
+      mockFeedAccess.ensureSessionInteractionAllowed.mockResolvedValue(undefined);
       mockSessionsRepo.getSessionWithDetails.mockResolvedValue(mockSession);
 
       const result = await sessionsService.getOne(userId, sessionId);
@@ -125,6 +130,14 @@ describe("Sessions Service", () => {
     });
 
     it("should throw 404 when session not found", async () => {
+      mockFeedAccess.loadSessionOrThrow.mockResolvedValue({
+        id: sessionId,
+        owner_id: userId,
+        status: "planned",
+        visibility: "private",
+        completed_at: null,
+      });
+      mockFeedAccess.ensureSessionInteractionAllowed.mockResolvedValue(undefined);
       mockSessionsRepo.getSessionWithDetails.mockResolvedValue(null);
 
       await expect(sessionsService.getOne(userId, sessionId)).rejects.toThrow(HttpError);
@@ -515,16 +528,14 @@ describe("Sessions Service", () => {
       mockPointsService.awardPointsForSession.mockResolvedValue({
         pointsAwarded: 100,
       });
-      mockPublicationService.ensureSessionPublished.mockResolvedValue({
-        feedItemId: "feed-1",
-        created: true,
-      });
+      mockPublicationService.reconcileSessionPublication.mockResolvedValue(undefined);
 
       await sessionsService.updateOne(userId, sessionId, { status: "completed" });
 
-      expect(mockPublicationService.ensureSessionPublished).toHaveBeenCalledWith(
+      expect(mockPublicationService.reconcileSessionPublication).toHaveBeenCalledWith(
         userId,
         sessionId,
+        "completed",
         "public",
       );
     });
@@ -547,17 +558,47 @@ describe("Sessions Service", () => {
       mockSessionsRepo.getSessionById.mockResolvedValue(completedPrivateSession);
       mockSessionsRepo.updateSession.mockResolvedValue(1);
       mockSessionsRepo.getSessionWithDetails.mockResolvedValue(mockUpdated);
-      mockPublicationService.ensureSessionPublished.mockResolvedValue({
-        feedItemId: "feed-1",
-        created: true,
-      });
+      mockPublicationService.reconcileSessionPublication.mockResolvedValue(undefined);
 
       await sessionsService.updateOne(userId, sessionId, { visibility: "followers" });
 
-      expect(mockPublicationService.ensureSessionPublished).toHaveBeenCalledWith(
+      expect(mockPublicationService.reconcileSessionPublication).toHaveBeenCalledWith(
         userId,
         sessionId,
+        "completed",
         "followers",
+      );
+    });
+
+
+
+    it("retires feed publication when a completed public session becomes private", async () => {
+      const completedPublicSession: Session = {
+        ...existingSession,
+        status: "completed",
+        visibility: "public",
+        completed_at: new Date().toISOString(),
+        points: 100,
+      };
+
+      const mockUpdated: SessionWithExercises = {
+        ...completedPublicSession,
+        visibility: "private",
+        exercises: [],
+      } as SessionWithExercises;
+
+      mockSessionsRepo.getSessionById.mockResolvedValue(completedPublicSession);
+      mockSessionsRepo.updateSession.mockResolvedValue(1);
+      mockSessionsRepo.getSessionWithDetails.mockResolvedValue(mockUpdated);
+      mockPublicationService.reconcileSessionPublication.mockResolvedValue(undefined);
+
+      await sessionsService.updateOne(userId, sessionId, { visibility: "private" });
+
+      expect(mockPublicationService.reconcileSessionPublication).toHaveBeenCalledWith(
+        userId,
+        sessionId,
+        "completed",
+        "private",
       );
     });
 

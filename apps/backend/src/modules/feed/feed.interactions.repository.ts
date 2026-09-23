@@ -111,6 +111,14 @@ export async function deleteBookmark(sessionId: string, userId: string): Promise
   return db(SESSION_BOOKMARKS_TABLE).where({ session_id: sessionId, user_id: userId }).del();
 }
 
+export async function hasBookmark(sessionId: string, userId: string): Promise<boolean> {
+  const row = await db<{ session_id: string; user_id: string }>(SESSION_BOOKMARKS_TABLE)
+    .select("session_id")
+    .where({ session_id: sessionId, user_id: userId })
+    .first();
+  return Boolean(row);
+}
+
 export async function findUserBookmarkedSessions(
   userId: string,
   sessionIds: string[],
@@ -145,11 +153,13 @@ export async function listBookmarkedSessions(
 ): Promise<BookmarkRow[]> {
   return db(SESSION_BOOKMARKS_TABLE)
     .join(SESSIONS_TABLE, `${SESSIONS_TABLE}.id`, `${SESSION_BOOKMARKS_TABLE}.session_id`)
-    .leftJoin(
-      FEED_ITEMS_TABLE,
-      `${FEED_ITEMS_TABLE}.session_id`,
-      `${SESSION_BOOKMARKS_TABLE}.session_id`,
-    )
+    .leftJoin(FEED_ITEMS_TABLE, function joinActiveFeedItem() {
+      this.on(
+        `${FEED_ITEMS_TABLE}.session_id`,
+        "=",
+        `${SESSION_BOOKMARKS_TABLE}.session_id`,
+      ).andOnNull(`${FEED_ITEMS_TABLE}.deleted_at`);
+    })
     .join(USERS_TABLE, `${USERS_TABLE}.id`, `${SESSIONS_TABLE}.owner_id`)
     .join(PROFILES_TABLE, `${PROFILES_TABLE}.user_id`, `${SESSIONS_TABLE}.owner_id`)
     .select<BookmarkRow[]>([
@@ -165,7 +175,7 @@ export async function listBookmarkedSessions(
       `${SESSIONS_TABLE}.points`,
     ])
     .where({ [`${SESSION_BOOKMARKS_TABLE}.user_id`]: userId })
-    .whereNull(`${FEED_ITEMS_TABLE}.deleted_at`)
+    .whereNull(`${SESSIONS_TABLE}.deleted_at`)
     .whereNotExists(
       db(USER_BLOCKS_TABLE)
         .select(1)
