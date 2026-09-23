@@ -163,11 +163,18 @@ export async function getAllDomainVibeLevels(
 export async function getStaleDomainVibeLevels(
   cutoffIso: string,
   trx?: Knex.Transaction,
+  userId?: string,
 ): Promise<DomainVibeLevel[]> {
   const exec = executor(trx);
-  const rows = await exec<DomainVibeLevelRow>("user_domain_vibe_levels")
-    .where("last_updated_at", "<", cutoffIso)
-    .select<DomainVibeLevelRow[]>([
+  const query = exec<DomainVibeLevelRow>("user_domain_vibe_levels").where(
+    "last_updated_at",
+    "<",
+    cutoffIso,
+  );
+  if (userId) {
+    query.andWhere({ user_id: userId });
+  }
+  const rows = await query.select<DomainVibeLevelRow[]>([
       "user_id",
       "domain_code",
       "vibe_level",
