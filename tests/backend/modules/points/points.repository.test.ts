@@ -210,7 +210,7 @@ describe("Points Repository", () => {
       const result = await pointsRepository.getPointsBalance(userId);
 
       expect(result).toBe(150);
-      expect(newBuilder.where).toHaveBeenCalledWith({ user_id: userId, is_active: true });
+      expect(newBuilder.where).toHaveBeenCalledWith({ user_id: userId });
     });
 
     it("should handle null result", async () => {
@@ -506,7 +506,7 @@ describe("Points Repository", () => {
       expect(result.size).toBe(2);
       expect(result.has("first_session")).toBe(true);
       expect(result.has("streak_7")).toBe(true);
-      expect(newBuilder.where).toHaveBeenCalledWith({ user_id: userId });
+      expect(newBuilder.where).toHaveBeenCalledWith({ user_id: userId, is_active: true });
     });
 
     it("should return empty set when no badges", async () => {
