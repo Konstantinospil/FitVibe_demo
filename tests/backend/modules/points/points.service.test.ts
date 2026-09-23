@@ -171,6 +171,55 @@ describe("Points Service", () => {
       expect(mockPointsRepo.getPointsHistory).toHaveBeenCalled();
     });
 
+    it("uses the last returned event as the next cursor", async () => {
+      const awardedAt = "2026-09-23T10:00:00.000Z";
+      const rows = [
+        {
+          id: "event-3",
+          user_id: userId,
+          points: 30,
+          source_type: "session_completed",
+          source_id: "session-3",
+          awarded_at: awardedAt,
+          algorithm_version: "v2_vibe_lvl",
+          calories: null,
+          metadata: {},
+          created_at: awardedAt,
+        },
+        {
+          id: "event-2",
+          user_id: userId,
+          points: 20,
+          source_type: "session_completed",
+          source_id: "session-2",
+          awarded_at: awardedAt,
+          algorithm_version: "v2_vibe_lvl",
+          calories: null,
+          metadata: {},
+          created_at: awardedAt,
+        },
+        {
+          id: "event-1",
+          user_id: userId,
+          points: 10,
+          source_type: "session_completed",
+          source_id: "session-1",
+          awarded_at: awardedAt,
+          algorithm_version: "v2_vibe_lvl",
+          calories: null,
+          metadata: {},
+          created_at: awardedAt,
+        },
+      ];
+
+      mockPointsRepo.getPointsHistory.mockResolvedValue(rows);
+
+      const result = await pointsService.getPointsHistory(userId, { limit: 2 });
+
+      expect(result.items.map((item) => item.id)).toEqual(["event-3", "event-2"]);
+      expect(result.nextCursor).toBe(`${awardedAt}|event-2`);
+    });
+
     it("should decode cursor when provided", async () => {
       const query: PointsHistoryQuery = {
         limit: 20,
