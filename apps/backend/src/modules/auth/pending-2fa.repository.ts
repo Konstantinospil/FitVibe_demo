@@ -17,7 +17,7 @@ export interface Pending2FASession {
 interface CreatePending2FASessionInput {
   id: string;
   user_id: string;
-  identifier: string;
+  identifier?: string;
   expires_at: string;
   ip: string | null;
   user_agent: string | null;
@@ -28,18 +28,20 @@ export async function createPending2FASession(
   trx?: Knex.Transaction,
 ): Promise<Pending2FASession> {
   const conn = trx ?? db;
+  const row: Record<string, unknown> = {
+    id: input.id,
+    user_id: input.user_id,
+    expires_at: input.expires_at,
+    ip: input.ip,
+    user_agent: input.user_agent,
+    verified: false,
+  };
+  if (input.identifier !== undefined) {
+    row.identifier = input.identifier;
+  }
+
   const [session] = await conn<Pending2FASession>("pending_2fa_sessions")
-    .insert({
-      id: input.id,
-      user_id: input.user_id,
-      identifier: input.identifier,
-      expires_at: input.expires_at,
-      ip: input.ip,
-      user_agent: input.user_agent,
-      verified: false,
-      failed_attempts: 0,
-      last_failed_at: null,
-    })
+    .insert(row)
     .returning("*");
   if (!session) {
     throw new Error("Failed to create pending 2FA session");
