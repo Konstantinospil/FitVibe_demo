@@ -1,7 +1,7 @@
 # Backend Technical-Debt Reduction — Pass 2
 
 **Status:** Active  
-**Current phase:** Phase 12 — Session and feed state correctness  
+**Current phase:** Phase 13 — Completed-session and gamification invariants  
 **Branch:** `dev`  
 **Started:** 2026-09-22
 
@@ -163,7 +163,7 @@ A compact invariant map exists for all seven domains and provides enough clarity
 
 ## Phase 12 — Session and feed state correctness
 
-**Status:** Verifying
+**Status:** Done
 
 ### Objective
 
@@ -234,7 +234,7 @@ Access is governed by explicit authoritative grants (ownership, applicable visib
 
 ## Phase 13 — Completed-session and gamification invariants
 
-**Status:** Not started
+**Status:** Interviewing
 
 ### Objective
 
@@ -590,8 +590,8 @@ CI verifies the intended backend quality model without encouraging superficial c
 | Phase | Status | Decision/ADR refs | Implementation commit/PR | Verification |
 | --- | --- | --- | --- | --- |
 | 11 | Done | ADR-029 | 8185deea299be81a02bd891bf334e2e181c3500c | Invariant map documented; no production-code change required |
-| 12 | Verifying | ADR-010 v1.2; ADR-029 v1.2 | PR #237 | CI pending; link-token mechanism explicitly not invented because live schema forbids `share_links` |
-| 13 | Not started | — | — | — |
+| 12 | Done | ADR-010 v1.2; ADR-029 v1.2 | PR #237; merge 2d8c8f734fc01ab3efb811d3f9cd5ad58538117d | Lighthouse rerun passed; backend/frontend/database/integration/API/security/accessibility/visual/coverage gates passed |
+| 13 | Interviewing | — | — | — |
 | 14 | Not started | — | — | — |
 | 15 | Not started | — | — | — |
 | 16 | Not started | — | — | — |
