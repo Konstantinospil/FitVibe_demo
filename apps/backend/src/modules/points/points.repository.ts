@@ -496,7 +496,6 @@ export {
   updateDomainVibeLevel,
 } from "./vibe-level.repository.js";
 
-
 export interface GamificationProjectionState {
   userId: string;
   isStale: boolean;
@@ -530,16 +529,14 @@ export async function getGamificationProjectionState(
   trx?: Knex.Transaction,
 ): Promise<GamificationProjectionState | null> {
   const exec = executor(trx);
-  const row = await exec("user_gamification_projection_state")
-    .where({ user_id: userId })
-    .first<{
-      user_id: string;
-      is_stale: boolean;
-      rebuild_required: boolean;
-      algorithm_version: string | null;
-      stale_since: Date | string | null;
-      last_rebuilt_at: Date | string | null;
-    }>();
+  const row = await exec("user_gamification_projection_state").where({ user_id: userId }).first<{
+    user_id: string;
+    is_stale: boolean;
+    rebuild_required: boolean;
+    algorithm_version: string | null;
+    stale_since: Date | string | null;
+    last_rebuilt_at: Date | string | null;
+  }>();
   if (!row) {
     return null;
   }
