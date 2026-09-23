@@ -6,31 +6,26 @@ import {
   resetFailedAttempts,
   isAccountLocked,
   getRemainingLockoutSeconds,
-  getRemainingAccountAttempts,
   getMaxAccountAttempts,
   getFailedAttemptByIP,
   recordFailedAttemptByIP,
-  resetFailedAttemptsByIP,
   isIPLocked,
   getRemainingIPLockoutSeconds,
-  getRemainingIPAttempts,
   getMaxIPAttempts,
   getMaxIPDistinctEmails,
+  lockLoginAttemptIp,
 } from "./bruteforce.repository.js";
 import { recordAuthAuditEvent as recordAuditEvent } from "./auth.audit.js";
 
 function ipLockError(
-  attempt: {
-    total_attempt_count?: number;
-    distinct_email_count?: number;
-  },
+  attempt: { total_attempt_count?: number; distinct_email_count?: number },
   remainingSeconds: number,
 ): HttpError {
   const remainingMinutes = Math.ceil(remainingSeconds / 60);
   return new HttpError(
     429,
     "AUTH_IP_LOCKED",
-    `IP address temporarily locked due to multiple failed login attempts. Try again in ${remainingMinutes} minute${remainingMinutes === 1 ? "" : "s"}.`,
+    `Authentication temporarily throttled. Try again in ${remainingMinutes} minute${remainingMinutes === 1 ? "" : "s"}.`,
     {
       remainingSeconds,
       lockoutType: "ip",
@@ -50,7 +45,7 @@ function accountLockError(
   return new HttpError(
     429,
     "AUTH_ACCOUNT_LOCKED",
-    `Account temporarily locked due to multiple failed login attempts. Try again in ${remainingMinutes} minute${remainingMinutes === 1 ? "" : "s"}.`,
+    `Authentication temporarily throttled. Try again in ${remainingMinutes} minute${remainingMinutes === 1 ? "" : "s"}.`,
     {
       remainingSeconds,
       lockoutType: "account",
@@ -104,8 +99,9 @@ export async function recordLoginFailure({
   userAgent: string | null;
   actorUserId: string | null;
   requestId: string | null;
-}): Promise<never> {
+}): Promise<void> {
   const attempts = await db.transaction(async (trx) => {
+    await lockLoginAttemptIp(ipAddress, trx);
     const account = await recordFailedAttempt(identifier, ipAddress, userAgent, trx);
     const ip = await recordFailedAttemptByIP(ipAddress, identifier, trx);
     return { account, ip };
@@ -143,37 +139,8 @@ export async function recordLoginFailure({
       requestId,
     });
   }
-
-  const remainingAccountAttempts = getRemainingAccountAttempts(attempts.account);
-  const remainingIPAttempts = getRemainingIPAttempts(attempts.ip);
-  const minRemaining = Math.min(
-    remainingAccountAttempts,
-    remainingIPAttempts.remainingAttempts,
-    remainingIPAttempts.remainingDistinctEmails,
-  );
-
-  const details: Record<string, unknown> = {};
-  if (minRemaining <= 2 && minRemaining > 0) {
-    details.warning = true;
-    details.remainingAccountAttempts = remainingAccountAttempts;
-    details.remainingIPAttempts = remainingIPAttempts.remainingAttempts;
-    details.remainingIPDistinctEmails = remainingIPAttempts.remainingDistinctEmails;
-    details.accountAttemptCount = attempts.account.attempt_count;
-    details.ipTotalAttemptCount = attempts.ip.total_attempt_count;
-    details.ipDistinctEmailCount = attempts.ip.distinct_email_count;
-  }
-
-  throw new HttpError(
-    401,
-    "AUTH_INVALID_CREDENTIALS",
-    "AUTH_INVALID_CREDENTIALS",
-    Object.keys(details).length > 0 ? details : undefined,
-  );
 }
 
 export async function resetLoginFailures(identifier: string, ipAddress: string): Promise<void> {
-  await db.transaction(async (trx) => {
-    await resetFailedAttempts(identifier, ipAddress, trx);
-    await resetFailedAttemptsByIP(ipAddress, trx);
-  });
+  await resetFailedAttempts(identifier, ipAddress);
 }
