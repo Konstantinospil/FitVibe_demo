@@ -138,8 +138,4 @@ If critical issues arise (e.g., widespread RT reuse false-positives), **fallback
 ## Change Log
 
 - **1.0 (2025-10-13):** Initial acceptance.
-
-
-## Change Log
-
 - **1.1 (2026-09-23):** Phase 14 authentication state-machine hardening: opaque pre-auth challenges, three-attempt second-factor exhaustion, separated password/spray reset semantics, failure-history decay, race serialization, timing normalization across both authentication stages, and explicit proxy-peer trust.
