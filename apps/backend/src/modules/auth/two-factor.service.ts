@@ -237,6 +237,12 @@ export async function verify2FACode(
     return true;
   }
 
+  // A numeric TOTP cannot match the human-readable backup-code format.
+  // Avoid unnecessary bcrypt scans and keep invalid-TOTP timing predictable.
+  if (/^\d{6}$/.test(code)) {
+    return false;
+  }
+
   // Try backup codes
   const isValidBackup = await verifyBackupCode(userId, code, trx);
   if (isValidBackup) {
