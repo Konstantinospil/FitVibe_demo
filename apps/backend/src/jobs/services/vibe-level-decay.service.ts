@@ -121,13 +121,21 @@ async function applyDecayForUser(
 
 export async function applyVibeLevelDecayForUser(
   userId: string,
+  trx?: Knex.Transaction,
 ): Promise<{ skipped: boolean; decayed: number }> {
   const oneDayAgo = new Date();
   oneDayAgo.setDate(oneDayAgo.getDate() - 1);
 
-  return db.transaction(async (trx: Knex.Transaction) => ({
+  if (trx) {
+    return {
+      skipped: false,
+      decayed: await applyDecayForUser(trx, oneDayAgo, userId),
+    };
+  }
+
+  return db.transaction(async (activeTrx: Knex.Transaction) => ({
     skipped: false,
-    decayed: await applyDecayForUser(trx, oneDayAgo, userId),
+    decayed: await applyDecayForUser(activeTrx, oneDayAgo, userId),
   }));
 }
 
