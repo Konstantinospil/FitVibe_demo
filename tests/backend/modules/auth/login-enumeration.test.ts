@@ -17,6 +17,7 @@ jest.mock("../../../../apps/backend/src/db/index.js", () => {
         const trx = Object.assign(
           jest.fn(() => builder),
           builder,
+          { raw: jest.fn().mockResolvedValue(undefined) },
         );
         return cb(trx);
       }),
