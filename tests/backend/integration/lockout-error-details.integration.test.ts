@@ -130,8 +130,8 @@ describeWithTestDatabase("Integration: Lockout Error Details", () => {
     });
   });
 
-  describe("Pre-Lockout Warning Details", () => {
-    it("should include warning details in AUTH_INVALID_CREDENTIALS when approaching lockout", async () => {
+  describe("Pre-Lockout Disclosure", () => {
+    it("should not disclose remaining-attempt counters before throttling", async () => {
       const email = "warning@example.com";
       const ipAddress = createTestIp();
 
@@ -168,13 +168,10 @@ describeWithTestDatabase("Integration: Lockout Error Details", () => {
           password: "WrongPassword123!",
         });
 
-      expect(response.status).toBe(401);
-      expect(response.body.error.code).toBe("AUTH_INVALID_CREDENTIALS");
-      expect(response.body.error.details).toBeDefined();
-      expect(response.body.error.details.warning).toBe(true);
-      expect(response.body.error.details.remainingAccountAttempts).toBeGreaterThanOrEqual(0);
-      expect(response.body.error.details.remainingAccountAttempts).toBeLessThanOrEqual(3);
-      expect(response.body.error.details.accountAttemptCount).toBeGreaterThanOrEqual(3);
+      expect(response.status).toBe(200);
+      expect(response.body.requires2FA).toBe(true);
+      expect(response.body.pendingSessionId).toEqual(expect.any(String));
+      expect(response.body.error).toBeUndefined();
     });
 
     it("should not include warning details when not approaching lockout", async () => {
@@ -207,13 +204,10 @@ describeWithTestDatabase("Integration: Lockout Error Details", () => {
           password: "WrongPassword123!",
         });
 
-      expect(response.status).toBe(401);
-      expect(response.body.error.code).toBe("AUTH_INVALID_CREDENTIALS");
-      // Should not have warning details when not approaching lockout (4 remaining attempts)
-      // Warning is shown when <= 3 remaining, so with 4 remaining no warning should appear
-      if (response.body.error.details) {
-        expect(response.body.error.details.warning).not.toBe(true);
-      }
+      expect(response.status).toBe(200);
+      expect(response.body.requires2FA).toBe(true);
+      expect(response.body.pendingSessionId).toEqual(expect.any(String));
+      expect(response.body.error).toBeUndefined();
     });
   });
 });
