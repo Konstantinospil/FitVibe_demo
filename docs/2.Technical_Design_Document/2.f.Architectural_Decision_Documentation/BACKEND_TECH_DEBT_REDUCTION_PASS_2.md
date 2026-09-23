@@ -1,7 +1,7 @@
 # Backend Technical-Debt Reduction — Pass 2
 
 **Status:** Active  
-**Current phase:** Phase 13 — Completed-session and gamification invariants  
+**Current phase:** Phase 14 — Authentication state-machine repair  
 **Branch:** `dev`  
 **Started:** 2026-09-22
 
@@ -234,7 +234,7 @@ Access is governed by explicit authoritative grants (ownership, applicable visib
 
 ## Phase 13 — Completed-session and gamification invariants
 
-**Status:** Verifying
+**Status:** Done
 
 ### Objective
 
@@ -296,15 +296,55 @@ Implemented in PR #238:
 - replaced badge projections use partial uniqueness for the current active badge while retaining superseded history;
 - the queue handler uses a lazy import to avoid a new points/queue/projection module cycle.
 
+### Verification and review
+
+Phase 13 was verified on final PR head `f8ac1a228e4ce7f8272c7ad18ad543291a0b3bef`.
+
+Passed required gates:
+
+- lint and typecheck;
+- backend unit tests;
+- backend integration tests;
+- database migration and seed tests;
+- API contract tests;
+- coverage gate;
+- frontend tests;
+- Lighthouse;
+- accessibility;
+- visual regression;
+- performance budgets;
+- security scans / OWASP ZAP;
+- QA summary;
+- CodeQL.
+
+Final architecture review confirmed:
+
+- no scoring formula was changed by this phase;
+- full replay is deterministic (`completed_at ASC, id ASC`);
+- full replay removes/rebuilds only session-derived point events (`session_completed`, `streak_bonus`, `seasonal_event`), preserving unrelated/manual point events;
+- replaced point calculations are archived with prior algorithm/value metadata;
+- session/decay Vibe changes and session-derived badges are superseded rather than silently overwritten;
+- queue-enqueue failure does not turn successful session completion into failure;
+- known-stale points summary/history and Vibeform reads reconcile before returning current derived state;
+- the read-freshness check was placed at the points HTTP boundary rather than creating a `points.service ↔ gamification-projection.service` cycle.
+
+Deliberately deferred findings:
+
+- `manual_adjustment` remains a permitted Vibe-change schema/type value but no active backend path currently writes such Vibe adjustments; Phase 13 did not invent replay semantics for an unused feature.
+- A pre-existing earned-badges API routing/contract mismatch was observed outside the Phase 13 change set and is deferred to the later API/repository residue and test-quality review rather than being folded into this lifecycle refactor.
+- The pre-existing session-create retry/sleep workaround remains for later transaction/residue cleanup.
+
 ### Exit criteria
 
 The session lifecycle and scoring lifecycle cannot silently diverge; pagination has no gaps/duplicates; concurrent scoring is idempotent.
+
+**Result:** satisfied and merged in PR #238.
 
 ---
 
 ## Phase 14 — Authentication state-machine repair
 
-**Status:** Not started
+**Status:** Interviewing
 
 ### Objective
 
@@ -634,8 +674,8 @@ CI verifies the intended backend quality model without encouraging superficial c
 | --- | --- | --- | --- | --- |
 | 11 | Done | ADR-029 | 8185deea299be81a02bd891bf334e2e181c3500c | Invariant map documented; no production-code change required |
 | 12 | Done | ADR-010 v1.2; ADR-029 v1.2 | PR #237; merge 2d8c8f734fc01ab3efb811d3f9cd5ad58538117d | Lighthouse rerun passed; backend/frontend/database/integration/API/security/accessibility/visual/coverage gates passed |
-| 13 | Verifying | ADR-029 v1.4 | PR #238 | Implementation complete on feature branch; CI verification pending |
-| 14 | Not started | — | — | — |
+| 13 | Done | ADR-029 v1.5 | PR #238; merge 75cb53722a5e0d91417ad8d6b4eca64fcc47fd24 | Final head f8ac1a228e4ce7f8272c7ad18ad543291a0b3bef; CI 35909692358 and CodeQL 35909692342 passed all required gates |
+| 14 | Interviewing | — | — | — |
 | 15 | Not started | — | — | — |
 | 16 | Not started | — | — | — |
 | 17 | Not started | — | — | — |
