@@ -69,10 +69,8 @@ export async function incrementPending2FAFailures(
   const [session] = await conn<Pending2FASession>("pending_2fa_sessions")
     .where({ id: sessionId, verified: false })
     .where("failed_attempts", "<", 3)
-    .update({
-      failed_attempts: conn.raw("failed_attempts + 1"),
-      last_failed_at: now,
-    })
+    .increment("failed_attempts", 1)
+    .update({ last_failed_at: now })
     .returning("*");
   return session ?? null;
 }
