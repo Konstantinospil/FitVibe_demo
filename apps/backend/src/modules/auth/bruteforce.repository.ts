@@ -4,6 +4,7 @@ import { db } from "../../db/index.js";
 
 const TABLE = "failed_login_attempts";
 const IP_TABLE = "failed_login_attempts_by_ip";
+const ACCOUNT_ATTEMPT_WINDOW_MS = 30 * 60 * 1000;
 const IP_ATTEMPT_WINDOW_MS = 30 * 60 * 1000;
 
 export interface FailedLoginAttempt {
@@ -120,18 +121,21 @@ export async function recordFailedAttempt(
   const normalizedIdentifier = identifier.toLowerCase().trim();
   const now = new Date().toISOString();
 
-  // Check if record exists
+  // Check if record exists. Old failure history decays so an account does not
+  // remain permanently one attempt away from a long throttle.
   const existing = await getFailedAttempt(normalizedIdentifier, ipAddress, trx);
 
   if (existing) {
-    // Calculate lockout duration based on attempt count
-    const newAttemptCount = existing.attempt_count + 1;
+    const lastAttemptAt = new Date(existing.last_attempt_at).getTime();
+    const windowExpired = Date.now() - lastAttemptAt >= ACCOUNT_ATTEMPT_WINDOW_MS;
+    const newAttemptCount = windowExpired ? 1 : existing.attempt_count + 1;
     const lockedUntil = calculateLockoutDuration(newAttemptCount);
 
     // Update existing record
     await exec(TABLE).where({ id: existing.id }).update({
       attempt_count: newAttemptCount,
       locked_until: lockedUntil,
+      first_attempt_at: windowExpired ? now : existing.first_attempt_at,
       last_attempt_at: now,
       updated_at: now,
     });
@@ -144,6 +148,7 @@ export async function recordFailedAttempt(
         ...existing,
         attempt_count: newAttemptCount,
         locked_until: lockedUntil,
+        first_attempt_at: windowExpired ? now : existing.first_attempt_at,
         last_attempt_at: now,
         updated_at: now,
       };
