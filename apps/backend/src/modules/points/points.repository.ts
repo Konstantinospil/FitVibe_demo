@@ -338,7 +338,7 @@ export async function getUserBadgeCodes(
 ): Promise<Set<string>> {
   const exec = executor(trx);
   const rows = await exec<BadgeRow>("badges")
-    .where({ user_id: userId })
+    .where({ user_id: userId, is_active: true })
     .select<BadgeRow[]>(["badge_type"]);
   return new Set(rows.map((row) => row.badge_type));
 }
@@ -494,3 +494,182 @@ export {
   lockVibeLevelsForUser,
   updateDomainVibeLevel,
 } from "./vibe-level.repository.js";
+
+
+export interface GamificationProjectionState {
+  userId: string;
+  isStale: boolean;
+  rebuildRequired: boolean;
+  algorithmVersion: string | null;
+  staleSince: string | null;
+  lastRebuiltAt: string | null;
+}
+
+export async function lockPointsSource(
+  userId: string,
+  sourceId: string,
+  trx: Knex.Transaction,
+): Promise<void> {
+  await trx.raw("SELECT pg_advisory_xact_lock(hashtext(?))", [
+    `fitvibe:points-source:${userId}:${sourceId}`,
+  ]);
+}
+
+export async function lockGamificationProjectionForUser(
+  userId: string,
+  trx: Knex.Transaction,
+): Promise<void> {
+  await trx.raw("SELECT pg_advisory_xact_lock(hashtext(?))", [
+    `fitvibe:gamification-projection:${userId}`,
+  ]);
+}
+
+export async function getGamificationProjectionState(
+  userId: string,
+  trx?: Knex.Transaction,
+): Promise<GamificationProjectionState | null> {
+  const exec = executor(trx);
+  const row = await exec("user_gamification_projection_state")
+    .where({ user_id: userId })
+    .first<{
+      user_id: string;
+      is_stale: boolean;
+      rebuild_required: boolean;
+      algorithm_version: string | null;
+      stale_since: Date | string | null;
+      last_rebuilt_at: Date | string | null;
+    }>();
+  if (!row) {
+    return null;
+  }
+  return {
+    userId: row.user_id,
+    isStale: Boolean(row.is_stale),
+    rebuildRequired: Boolean(row.rebuild_required),
+    algorithmVersion: row.algorithm_version ?? null,
+    staleSince: row.stale_since ? toIsoString(row.stale_since) : null,
+    lastRebuiltAt: row.last_rebuilt_at ? toIsoString(row.last_rebuilt_at) : null,
+  };
+}
+
+export async function markGamificationProjectionStale(
+  userId: string,
+  rebuildRequired: boolean,
+  trx?: Knex.Transaction,
+): Promise<void> {
+  const exec = executor(trx);
+  const now = new Date().toISOString();
+  await exec("user_gamification_projection_state")
+    .insert({
+      user_id: userId,
+      is_stale: true,
+      rebuild_required: rebuildRequired,
+      stale_since: now,
+      updated_at: now,
+    })
+    .onConflict("user_id")
+    .merge({
+      is_stale: true,
+      rebuild_required: exec.raw(
+        "user_gamification_projection_state.rebuild_required OR EXCLUDED.rebuild_required",
+      ),
+      stale_since: exec.raw(
+        "COALESCE(user_gamification_projection_state.stale_since, EXCLUDED.stale_since)",
+      ),
+      updated_at: now,
+    });
+}
+
+export async function markGamificationProjectionFresh(
+  userId: string,
+  algorithmVersion: string,
+  trx?: Knex.Transaction,
+): Promise<void> {
+  const exec = executor(trx);
+  const now = new Date().toISOString();
+  await exec("user_gamification_projection_state")
+    .insert({
+      user_id: userId,
+      is_stale: false,
+      rebuild_required: false,
+      algorithm_version: algorithmVersion,
+      stale_since: null,
+      last_rebuilt_at: now,
+      updated_at: now,
+    })
+    .onConflict("user_id")
+    .merge({
+      is_stale: false,
+      rebuild_required: false,
+      algorithm_version: algorithmVersion,
+      stale_since: null,
+      last_rebuilt_at: now,
+      updated_at: now,
+    });
+}
+
+export async function archiveAndDeleteDerivedPoints(
+  userId: string,
+  revisionReason: string,
+  trx: Knex.Transaction,
+): Promise<void> {
+  const sourceTypes = ["session_completed", "streak_bonus", "seasonal_event"];
+  await trx.raw(
+    `
+      INSERT INTO points_event_revisions (
+        points_event_id,
+        user_id,
+        source_type,
+        source_id,
+        algorithm_version,
+        points,
+        calories,
+        metadata,
+        awarded_at,
+        revision_reason,
+        revised_at
+      )
+      SELECT
+        id,
+        user_id,
+        source_type,
+        source_id,
+        algorithm_version,
+        points,
+        calories,
+        metadata,
+        awarded_at,
+        ?,
+        now()
+      FROM user_points
+      WHERE user_id = ?
+        AND source_type = ANY(?::text[])
+    `,
+    [revisionReason, userId, sourceTypes],
+  );
+  await trx(TABLE).where({ user_id: userId }).whereIn("source_type", sourceTypes).del();
+}
+
+export async function supersedeSessionDerivedGamification(
+  userId: string,
+  trx: Knex.Transaction,
+): Promise<void> {
+  const now = new Date().toISOString();
+
+  await trx("vibe_level_changes")
+    .where({ user_id: userId, is_active: true })
+    .whereIn("change_reason", ["session_completed", "decay"])
+    .update({ is_active: false, superseded_at: now });
+
+  await trx("user_domain_vibe_levels").where({ user_id: userId }).del();
+
+  await trx("badges")
+    .where({ user_id: userId, is_active: true })
+    .whereRaw("metadata ? 'session_id'")
+    .update({ is_active: false, superseded_at: now });
+
+  await trx("sessions")
+    .where({ owner_id: userId, status: "completed" })
+    .whereNull("deleted_at")
+    .update({ points: null, updated_at: now });
+}
