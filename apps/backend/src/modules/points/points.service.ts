@@ -31,7 +31,6 @@ import type { SessionWithExercises } from "../sessions/sessions.types.js";
 import { updateSession } from "../sessions/sessions.repository.js";
 import { evaluateBadgesForSession } from "./badges.service.js";
 import { detectSessionDomains, updateDomainVibeLevelForSession } from "./vibe-level.service.js";
-import { ensureGamificationProjectionFresh } from "./gamification-projection.service.js";
 
 export const POINTS_ALGORITHM_VERSION = "v2_vibe_lvl";
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -255,7 +254,6 @@ function computeSessionMetrics(
 }
 
 export async function getPointsSummary(userId: string): Promise<PointsSummary> {
-  await ensureGamificationProjectionFresh(userId);
   const [balance, recent] = await Promise.all([
     getPointsBalance(userId),
     getRecentPointsEvents(userId, DEFAULT_RECENT_LIMIT),
@@ -271,7 +269,6 @@ export async function getPointsHistory(
   userId: string,
   query: PointsHistoryQuery,
 ): Promise<PointsHistoryResult> {
-  await ensureGamificationProjectionFresh(userId);
   const limitInput = query.limit ?? 25;
   if (!Number.isInteger(limitInput) || limitInput < 1) {
     throw new HttpError(400, "E.POINTS.INVALID_LIMIT", "POINTS_INVALID_LIMIT");
