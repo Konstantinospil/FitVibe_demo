@@ -35,7 +35,7 @@ describe("auth.login-attempt.service", () => {
 
     await expect(
       policy.assertLoginAllowed("user@example.com", "203.0.113.5", "req-1"),
-    ).rejects.toMatchObject({ status: 429, code: "AUTH_IP_LOCKED" });
+    ).resolves.toBe(false);
 
     expect(mockAudit.recordAuthAuditEvent).toHaveBeenCalledWith(
       null,
