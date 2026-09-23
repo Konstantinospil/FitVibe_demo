@@ -111,6 +111,11 @@ export async function login(
       return buildOpaqueChallenge();
     }
 
+    await recordAuditEvent(user.id, "auth.password_verified", {
+      ip: ipAddress,
+      requestId: context.requestId ?? null,
+    });
+
     const has2FA = await is2FAEnabled(user.id);
     if (has2FA) {
       const throttled = await hasRecentSecondFactorThrottle(
