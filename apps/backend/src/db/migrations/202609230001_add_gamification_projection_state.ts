@@ -65,6 +65,8 @@ export async function up(knex: Knex): Promise<void> {
 }
 
 export async function down(knex: Knex): Promise<void> {
+  await knex("badges").where({ is_active: false }).del();
+
   await knex.schema.alterTable("sessions", (table) => {
     table.dropColumn("gamification_rebuild_required");
   });
