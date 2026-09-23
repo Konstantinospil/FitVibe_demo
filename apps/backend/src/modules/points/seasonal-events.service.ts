@@ -178,10 +178,11 @@ export async function evaluateSeasonalEvents(
   userId: string,
   sessionId: string,
   completedAt: string | Date,
+  trx?: Knex.Transaction,
 ): Promise<{ eventsEvaluated: number; bonusesAwarded: number; totalPoints: number }> {
   const completedDate = typeof completedAt === "string" ? new Date(completedAt) : completedAt;
 
-  return db.transaction(async (trx) => {
+  const run = async (activeTrx: Knex.Transaction) => {
     const activeEvents = getActiveEvents(completedDate);
 
     if (activeEvents.length === 0) {
@@ -194,7 +195,7 @@ export async function evaluateSeasonalEvents(
 
     for (const event of activeEvents) {
       // Check if user already received completion bonus for this event
-      const alreadyAwarded = await hasReceivedEventBonus(userId, event.code, trx);
+      const alreadyAwarded = await hasReceivedEventBonus(userId, event.code, activeTrx);
       if (alreadyAwarded) {
         logger.debug(
           { userId, eventCode: event.code },
@@ -204,7 +205,7 @@ export async function evaluateSeasonalEvents(
       }
 
       // Count sessions completed during event period
-      const sessionCount = await countEventSessions(userId, event.startDate, event.endDate, trx);
+      const sessionCount = await countEventSessions(userId, event.startDate, event.endDate, activeTrx);
 
       logger.debug(
         { userId, eventCode: event.code, sessionCount, required: event.minSessionsForBonus },
@@ -213,7 +214,7 @@ export async function evaluateSeasonalEvents(
 
       // Award completion bonus if threshold met
       if (sessionCount >= event.minSessionsForBonus) {
-        await awardEventCompletionBonus(userId, sessionId, event, sessionCount, completedDate, trx);
+        await awardEventCompletionBonus(userId, sessionId, event, sessionCount, completedDate, activeTrx);
         bonusesAwarded++;
         totalPoints += event.bonusPoints;
       }
@@ -224,5 +225,7 @@ export async function evaluateSeasonalEvents(
       bonusesAwarded,
       totalPoints,
     };
-  });
+  };
+
+  return trx ? run(trx) : db.transaction(run);
 }
