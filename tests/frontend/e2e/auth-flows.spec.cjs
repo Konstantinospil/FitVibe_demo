@@ -112,18 +112,13 @@ test.describe("Authentication Flows (FR-002)", () => {
       await expect(page.getByRole("heading", { name: /choose your vibe/i })).toBeVisible();
     });
 
-    test("should show error message for invalid credentials", async ({ page }) => {
+    test("should conceal invalid credentials behind an opaque verification challenge", async ({ page }) => {
       await page.route("**/api/v1/auth/login", async (route) => {
         await route.fulfill(
-          jsonResponse(
-            {
-              error: {
-                code: "AUTH_INVALID_CREDENTIALS",
-                message: "Invalid email or password",
-              },
-            },
-            401,
-          ),
+          jsonResponse({
+            requires2FA: true,
+            pendingSessionId: "00000000-0000-4000-8000-000000000999",
+          }),
         );
       });
 
@@ -132,63 +127,31 @@ test.describe("Authentication Flows (FR-002)", () => {
 
       await emailInput(page).fill(testUser.email);
       await passwordInput(page).fill("wrongpassword");
-
       await page.getByRole("button", { name: /sign in/i }).click();
 
-      // Verify error message is displayed
-      await expect(page.getByRole("alert")).toContainText(/invalid/i);
+      await expect(page).toHaveURL(/\/login\/verify-2fa/);
+      await expect(page.getByText(/invalid email or password/i)).toHaveCount(0);
     });
 
-    test("should show lockout message after multiple failed attempts", async ({ page }) => {
-      let attemptCount = 0;
+    test("should not disclose an internal throttle state", async ({ page }) => {
       await page.route("**/api/v1/auth/login", async (route) => {
-        attemptCount++;
-        if (attemptCount >= 10) {
-          await route.fulfill(
-            jsonResponse(
-              {
-                error: {
-                  code: "AUTH_ACCOUNT_LOCKED",
-                  message: "Account temporarily locked due to multiple failed login attempts",
-                  details: {
-                    remainingSeconds: 900,
-                    lockoutType: "account",
-                    attemptCount: 10,
-                    maxAttempts: 10,
-                  },
-                },
-              },
-              429,
-            ),
-          );
-        } else {
-          await route.fulfill(
-            jsonResponse(
-              {
-                error: {
-                  code: "AUTH_INVALID_CREDENTIALS",
-                  message: "Invalid email or password",
-                },
-              },
-              401,
-            ),
-          );
-        }
+        await route.fulfill(
+          jsonResponse({
+            requires2FA: true,
+            pendingSessionId: "00000000-0000-4000-8000-000000000998",
+          }),
+        );
       });
 
       await page.goto("/login");
       await waitForApp(page);
 
-      // Attempt login multiple times
-      for (let i = 0; i < 10; i++) {
-        await emailInput(page).fill(testUser.email);
-        await passwordInput(page).fill("wrongpassword");
-        await page.getByRole("button", { name: /sign in/i }).click();
-        await page.waitForTimeout(100); // Small delay between attempts
-      }
+      await emailInput(page).fill(testUser.email);
+      await passwordInput(page).fill("wrongpassword");
+      await page.getByRole("button", { name: /sign in/i }).click();
 
-      // Verify lockout message
-      await expect(page.getByText(/locked/i)).toBeVisible({ timeout: 5000 });
+      await expect(page).toHaveURL(/\/login\/verify-2fa/);
+      await expect(page.getByText(/locked/i)).toHaveCount(0);
     });
   });
 
