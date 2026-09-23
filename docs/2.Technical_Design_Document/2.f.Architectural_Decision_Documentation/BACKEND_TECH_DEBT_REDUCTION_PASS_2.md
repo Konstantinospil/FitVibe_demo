@@ -344,7 +344,7 @@ The session lifecycle and scoring lifecycle cannot silently diverge; pagination 
 
 ## Phase 14 — Authentication state-machine repair
 
-**Status:** Implementing
+**Status:** Verifying
 
 ### Objective
 
@@ -693,6 +693,11 @@ CI verifies the intended backend quality model without encouraging superficial c
 | 2026-09-23 | 13 | Gamification derivation occurs after completion commit and may fail/retry independently. | Completion is the primary function; derivation is secondary and recoverable. | ADR-029 v1.4 |
 | 2026-09-23 | 13 | Recalculation uses a hybrid stale-projection model with batch rebuild plus on-demand reconciliation. | Avoid permanently stale state without recalculating all history on every read. | ADR-029 v1.4 |
 | 2026-09-23 | 13 | Previous scoring values/versions may be retained as audit metadata while only the latest projection is current. | Preserve explainability without making old gamification authoritative. | ADR-029 v1.4 |
+| 2026-09-23 | 14 | Authentication success means completion of every required factor and policy gate; password verification alone is not authentication. | Prevent partial authentication state from issuing sessions or leaking factor success. | ADR-002 / PR #239 |
+| 2026-09-23 | 14 | Invalid credentials, internal password throttling and real 2FA-required password success share an opaque first-stage challenge shape. | Resist username/password/2FA-enrollment enumeration while preserving the existing two-stage architecture. | ADR-002 / PR #239 |
+| 2026-09-23 | 14 | Aggregate source-IP spray evidence survives successful account authentication and decays within a bounded observation window. | A successful guess must not erase evidence of cross-account password spraying; NAT/shared-IP state must not accumulate forever. | ADR-002 / PR #239 |
+| 2026-09-23 | 14 | A second-factor challenge is exhausted after three failed attempts and recent exhaustion temporarily suppresses challenge cycling. | Bound TOTP/backup-code guessing without permanent account lockout. | ADR-002 / PR #239 |
+| 2026-09-23 | 14 | Forwarded client IPs are accepted only from explicitly configured trusted proxy peers. | Prevent spoofed forwarding headers from bypassing IP-based security controls. | ADR-002 / PR #239 |
 
 ## Phase completion record
 
@@ -701,7 +706,7 @@ CI verifies the intended backend quality model without encouraging superficial c
 | 11 | Done | ADR-029 | 8185deea299be81a02bd891bf334e2e181c3500c | Invariant map documented; no production-code change required |
 | 12 | Done | ADR-010 v1.2; ADR-029 v1.2 | PR #237; merge 2d8c8f734fc01ab3efb811d3f9cd5ad58538117d | Lighthouse rerun passed; backend/frontend/database/integration/API/security/accessibility/visual/coverage gates passed |
 | 13 | Done | ADR-029 v1.5 | PR #238; merge 75cb53722a5e0d91417ad8d6b4eca64fcc47fd24 | Final head f8ac1a228e4ce7f8272c7ad18ad543291a0b3bef; CI 35909692358 and CodeQL 35909692342 passed all required gates |
-| 14 | Interviewing | — | — | — |
+| 14 | Verifying | ADR-002; this document | PR #239; feature branch `phase-14-auth-state-machine` | Implementation and targeted regression fixes complete; final CI verification in progress |
 | 15 | Not started | — | — | — |
 | 16 | Not started | — | — | — |
 | 17 | Not started | — | — | — |
