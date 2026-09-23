@@ -15,7 +15,7 @@ import { describe, it, expect, beforeEach, afterEach, beforeAll } from "@jest/gl
 import bcrypt from "bcryptjs";
 import db from "../../../apps/backend/src/db/index.js";
 import { createUser } from "../../../apps/backend/src/modules/auth/auth.repository.js";
-import { awardPointsForSession } from "../../../apps/backend/src/modules/points/points.service.js";
+import { awardPointsForSession, getPointsHistory } from "../../../apps/backend/src/modules/points/points.service.js";
 import { reconcileGamificationProjection } from "../../../apps/backend/src/modules/points/gamification-projection.service.js";
 import { applyVibeLevelDecay } from "../../../apps/backend/src/jobs/services/vibe-level-decay.service.js";
 import {
@@ -193,6 +193,20 @@ describeWithTestDatabase("Integration: Vibe Level System (v2_vibe_lvl)", () => {
     });
     expect(before).toHaveLength(1);
 
+    const manualEventId = uuidv4();
+    await db("user_points").insert({
+      id: manualEventId,
+      user_id: testUser.id,
+      source_type: "manual_adjustment",
+      source_id: uuidv4(),
+      algorithm_version: "manual",
+      points: 17,
+      calories: null,
+      metadata: { reason: "integration-preserve-manual" },
+      awarded_at: new Date().toISOString(),
+      created_at: new Date().toISOString(),
+    });
+
     const rebuilt = await reconcileGamificationProjection(testUser.id, {
       forceFullRebuild: true,
       reason: "integration_test_rebuild",
@@ -213,11 +227,65 @@ describeWithTestDatabase("Integration: Vibe Level System (v2_vibe_lvl)", () => {
     });
     expect(revisions).toHaveLength(1);
 
+    const preservedManual = await db("user_points").where({ id: manualEventId }).first();
+    expect(preservedManual).toBeDefined();
+    expect(Number(preservedManual.points)).toBe(17);
+
     const projection = await db("user_gamification_projection_state")
       .where({ user_id: testUser.id })
       .first();
     expect(projection.is_stale).toBe(false);
     expect(projection.rebuild_required).toBe(false);
+  });
+
+  it("paginates equal-timestamp point events without gaps or duplicates", async () => {
+    const awardedAt = "2026-09-23T10:00:00.000Z";
+    const rows = [
+      {
+        id: "00000000-0000-4000-8000-000000000003",
+        sourceId: "10000000-0000-4000-8000-000000000003",
+        points: 30,
+      },
+      {
+        id: "00000000-0000-4000-8000-000000000002",
+        sourceId: "10000000-0000-4000-8000-000000000002",
+        points: 20,
+      },
+      {
+        id: "00000000-0000-4000-8000-000000000001",
+        sourceId: "10000000-0000-4000-8000-000000000001",
+        points: 10,
+      },
+    ];
+
+    await db("user_points").insert(
+      rows.map((row) => ({
+        id: row.id,
+        user_id: testUser.id,
+        source_type: "manual_adjustment",
+        source_id: row.sourceId,
+        algorithm_version: "manual",
+        points: row.points,
+        calories: null,
+        metadata: {},
+        awarded_at: awardedAt,
+        created_at: awardedAt,
+      })),
+    );
+
+    const first = await getPointsHistory(testUser.id, { limit: 2 });
+    expect(first.items.map((item) => item.id)).toEqual([rows[0].id, rows[1].id]);
+    expect(first.nextCursor).toBe(awardedAt + "|" + rows[1].id);
+
+    const second = await getPointsHistory(testUser.id, {
+      limit: 2,
+      cursor: first.nextCursor ?? undefined,
+    });
+
+    const allIds = [...first.items, ...second.items].map((item) => item.id);
+    expect(allIds).toEqual(rows.map((row) => row.id));
+    expect(new Set(allIds).size).toBe(rows.length);
+    expect(second.nextCursor).toBeNull();
   });
 
   it("should detect strength domain and update vibe level", async () => {
