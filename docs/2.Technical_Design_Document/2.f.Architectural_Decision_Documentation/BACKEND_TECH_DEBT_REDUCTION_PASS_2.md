@@ -234,7 +234,7 @@ Access is governed by explicit authoritative grants (ownership, applicable visib
 
 ## Phase 13 — Completed-session and gamification invariants
 
-**Status:** Interviewing
+**Status:** Decided
 
 ### Objective
 
@@ -259,21 +259,23 @@ Prevent completed-workout edits, points events, Vibe Levels and badges from drif
 
 Accepted during the Phase 13 interview:
 
-1. **Completed sessions are the primary business fact.** Scoring-relevant fields become immutable after completion; changing them requires an explicit reopen transition.
-2. **Reopen does not casually delete or stack points.** Reopening moves the session back into an editable/unscored lifecycle state. Existing derived scoring records may remain for audit/history during the transition, but they no longer define current truth. Re-completion reconciles/replaces the derived scoring state for that session rather than adding an unrelated second award.
-3. **Historical points may be rewritten.** If the scoring algorithm changes, old completed sessions may be recalculated under the new rules. FitVibe does not treat a previously calculated points value as immutable accounting history.
-4. **Gamification is post-commit derivation.** Session completion commits first. Points, Vibe Levels and badges are ramifications of the completed workout and must be retryable/idempotent.
-5. **Completion is king.** A successfully completed session stays completed even if points/Vibe/badge derivation fails temporarily. Derivation failure is recoverable projection failure, not failure of the primary workout action.
-6. **Points are conceptually recomputable.** They may be stored/materialized for performance, history views and operational efficiency, but authoritative session/workout state plus scoring rules must be sufficient to rebuild them.
+1. **Completed sessions are the primary business fact.** A completed session is stable until the user explicitly reopens it. Reopening is the deliberate transition that permits correction of recorded workout data.
+2. **Correctness of the workout record takes precedence over gamification.** After explicit reopen, the user may correct scoring-relevant performed data (exercise selection, sets, reps, load, distance, duration, RPE and other recorded metadata). Gamification must adapt to the corrected source record; it must never make a recorded workout effectively immutable.
+3. **Reopen does not casually delete or stack points.** Reopening moves the session back into an editable/unscored lifecycle state. Existing derived scoring records may remain for audit/history during the transition, but they no longer define current truth. Re-completion reconciles/replaces the derived scoring state for that session rather than adding an unrelated second award.
+4. **Historical points may be rewritten.** If the scoring algorithm changes, old completed sessions may be recalculated under the new rules. FitVibe does not treat a previously calculated points value as immutable accounting history.
+5. **Gamification is post-commit derivation.** Session completion commits first. Points, Vibe Levels and badges are ramifications of the completed workout and must be retryable/idempotent.
+6. **Completion is king.** A successfully completed session stays completed even if points/Vibe/badge derivation fails temporarily. Derivation failure is recoverable projection failure, not failure of the primary workout action.
+7. **Points are conceptually recomputable.** They may be stored/materialized for performance, history views and operational efficiency, but authoritative session/workout state plus scoring rules must be sufficient to rebuild them.
 
-Still to decide before implementation:
+Additional decisions accepted:
 
-- concurrent completion/scoring behavior;
-- exact list of scoring-relevant fields locked after completion;
-- reopen authorization;
-- whether recomputation after algorithm changes is eager/batch, lazy/on-read, or a hybrid;
-- whether stored point events retain the original calculation/version as audit metadata after a rewrite;
-- points-history pagination correctness is a mandatory technical fix unless explicitly rejected.
+8. Concurrent completion/scoring attempts must converge to one current result and must not create duplicate awards or expose uniqueness races.
+9. Only the session owner may reopen a session through normal product behavior; administrative intervention remains separate.
+10. Recalculation uses a hybrid model: completed sessions are authoritative, stored gamification is materialized state, affected projections can be marked stale and rebuilt asynchronously, and a known-stale value may be recalculated/reconciled on demand rather than served as current.
+11. Rewritten scoring retains prior calculated value and algorithm/version metadata for audit/explainability, but only the latest projection contributes to current totals.
+12. Points-history pagination must be corrected so page concatenation has no gaps or duplicates, including equal timestamps.
+
+No further strategic decision is required before implementation unless code review uncovers a new product-semantic boundary.
 
 ### Exit criteria
 
@@ -600,10 +602,12 @@ CI verifies the intended backend quality model without encouraging superficial c
 | 2026-09-22 | 12 | Unbookmarking removes the bookmark grant; the owner has no separate per-user bookmark-revoke control. | Keep the access model simple and avoid adding an undeveloped ACL feature. | ADR-010 v1.1 / ADR-029 v1.2 |
 | 2026-09-22 | 12 | Link revocation does not revoke an already-created bookmark. | The bookmark becomes its own durable grant after legitimate entry. | ADR-010 v1.1 / ADR-029 v1.2 |
 | 2026-09-22 | 12 | Blocking and session deletion override bookmark and other positive grants. | Define explicit stronger-denial semantics. | ADR-010 v1.1 / ADR-029 v1.2 |
-| 2026-09-23 | 13 | Completed session/workout state is authoritative; points/Vibe/badges are derived ramifications. | Preserve the workout as the primary product action and make gamification recoverable/recomputable. | ADR-029 v1.3 |
-| 2026-09-23 | 13 | Completed scoring inputs are immutable until explicit reopen. | Prevent source workout facts and derived gamification from silently diverging. | ADR-029 v1.3 |
-| 2026-09-23 | 13 | Historical points may be recalculated under newer scoring rules. | Points are a derived interpretation of completed workouts, not immutable accounting history. | ADR-029 v1.3 |
-| 2026-09-23 | 13 | Gamification derivation occurs after completion commit and may fail/retry independently. | Completion is the primary function; derivation is secondary and recoverable. | ADR-029 v1.3 |
+| 2026-09-23 | 13 | Completed session/workout state is authoritative; points/Vibe/badges are derived ramifications. | Preserve the workout as the primary product action and make gamification recoverable/recomputable. | ADR-029 v1.4 |
+| 2026-09-23 | 13 | Recorded workout data may be corrected after explicit reopen, including scoring-relevant fields. | Accuracy of the workout record takes precedence over preserving a previous gamification result. | ADR-029 v1.4 |
+| 2026-09-23 | 13 | Historical points may be recalculated under newer scoring rules. | Points are a derived interpretation of completed workouts, not immutable accounting history. | ADR-029 v1.4 |
+| 2026-09-23 | 13 | Gamification derivation occurs after completion commit and may fail/retry independently. | Completion is the primary function; derivation is secondary and recoverable. | ADR-029 v1.4 |
+| 2026-09-23 | 13 | Recalculation uses a hybrid stale-projection model with batch rebuild plus on-demand reconciliation. | Avoid permanently stale state without recalculating all history on every read. | ADR-029 v1.4 |
+| 2026-09-23 | 13 | Previous scoring values/versions may be retained as audit metadata while only the latest projection is current. | Preserve explainability without making old gamification authoritative. | ADR-029 v1.4 |
 
 ## Phase completion record
 
@@ -611,7 +615,7 @@ CI verifies the intended backend quality model without encouraging superficial c
 | --- | --- | --- | --- | --- |
 | 11 | Done | ADR-029 | 8185deea299be81a02bd891bf334e2e181c3500c | Invariant map documented; no production-code change required |
 | 12 | Done | ADR-010 v1.2; ADR-029 v1.2 | PR #237; merge 2d8c8f734fc01ab3efb811d3f9cd5ad58538117d | Lighthouse rerun passed; backend/frontend/database/integration/API/security/accessibility/visual/coverage gates passed |
-| 13 | Interviewing | — | — | — |
+| 13 | Decided | ADR-029 v1.4 | — | Strategic interview complete; implementation not started |
 | 14 | Not started | — | — | — |
 | 15 | Not started | — | — | — |
 | 16 | Not started | — | — | — |
