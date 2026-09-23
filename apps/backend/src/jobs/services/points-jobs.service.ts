@@ -29,6 +29,21 @@ export class PointsJobsService {
       },
     });
   }
+
+  scheduleProjectionReconciliation(
+    userId: string,
+    sessionId?: string,
+    forceFullRebuild = false,
+  ): void {
+    this.schedule({
+      name: "points.projection.reconcile",
+      payload: {
+        userId,
+        sessionId: sessionId ?? null,
+        forceFullRebuild,
+      },
+    });
+  }
 }
 
 export const pointsJobsService = new PointsJobsService();
