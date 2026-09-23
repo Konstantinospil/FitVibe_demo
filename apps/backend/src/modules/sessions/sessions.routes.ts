@@ -6,6 +6,7 @@ import {
   createSessionHandler,
   updateSessionHandler,
   deleteSessionHandler,
+  reopenSessionHandler,
   cloneSessionHandler,
   applyRecurrenceHandler,
 } from "./sessions.controller.js";
@@ -38,6 +39,12 @@ sessionsRouter.patch(
   rateLimit("sessions_update", 30, 60),
   requireAuth,
   asyncHandler(updateSessionHandler),
+);
+sessionsRouter.post(
+  "/:id/reopen",
+  rateLimit("sessions_reopen", 10, 60),
+  requireAuth,
+  asyncHandler(reopenSessionHandler),
 );
 sessionsRouter.post(
   "/:id/clone",
