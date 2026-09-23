@@ -210,7 +210,7 @@ describe("Points Repository", () => {
       const result = await pointsRepository.getPointsBalance(userId);
 
       expect(result).toBe(150);
-      expect(newBuilder.where).toHaveBeenCalledWith({ user_id: userId });
+      expect(newBuilder.where).toHaveBeenCalledWith({ user_id: userId, is_active: true });
     });
 
     it("should handle null result", async () => {
