@@ -100,12 +100,7 @@ export async function awardStreakBonus(
     return 0;
   }
 
-  const existing = await findPointsEventBySource(
-    userId,
-    "streak_bonus",
-    sessionId,
-    trx,
-  );
+  const existing = await findPointsEventBySource(userId, "streak_bonus", sessionId, trx);
   if (existing) {
     return existing.points;
   }
@@ -162,7 +157,13 @@ export async function evaluateStreakBonus(
     logger.debug({ userId, sessionId, streakLength }, "[streaks] Calculated current streak length");
 
     // Award bonus points if applicable
-    const bonusPoints = await awardStreakBonus(userId, sessionId, streakLength, completedDate, activeTrx);
+    const bonusPoints = await awardStreakBonus(
+      userId,
+      sessionId,
+      streakLength,
+      completedDate,
+      activeTrx,
+    );
 
     return { streakLength, bonusPoints };
   };
