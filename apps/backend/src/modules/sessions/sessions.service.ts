@@ -239,7 +239,9 @@ export async function updateOne(
   }
 
   const completing = targetStatus === "completed" && current.status !== "completed";
-  const fullGamificationRebuild = completing && current.gamification_rebuild_required === true;
+  const fullGamificationRebuild =
+    completing &&
+    (current.gamification_rebuild_required === true || dto.completed_at !== undefined);
 
   await db.transaction(async (trx) => {
     if (dto.plan_id) {
