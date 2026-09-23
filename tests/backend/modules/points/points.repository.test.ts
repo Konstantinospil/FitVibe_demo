@@ -582,6 +582,35 @@ describe("Points Repository", () => {
     });
   });
 
+  describe("supersedeSessionDerivedGamification", () => {
+    it("uses jsonb_exists for session-derived badge supersession", async () => {
+      const builders: Record<string, ReturnType<typeof createMockQueryBuilder>> = {
+        vibe_level_changes: createMockQueryBuilder(),
+        user_domain_vibe_levels: createMockQueryBuilder(),
+        badges: createMockQueryBuilder(),
+        sessions: createMockQueryBuilder(),
+      };
+      const mockTrx = ((table: string) => builders[table]) as any;
+
+      await pointsRepository.supersedeSessionDerivedGamification(userId, mockTrx);
+
+      expect(builders.badges.where).toHaveBeenCalledWith({
+        user_id: userId,
+        is_active: true,
+      });
+      expect(builders.badges.whereRaw).toHaveBeenCalledWith(
+        "jsonb_exists(metadata, ?)",
+        ["session_id"],
+      );
+      expect(builders.badges.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          is_active: false,
+          superseded_at: expect.any(String),
+        }),
+      );
+    });
+  });
+
   describe("countCompletedSessions", () => {
     it("should count completed sessions", async () => {
       const newBuilder = createMockQueryBuilder();
