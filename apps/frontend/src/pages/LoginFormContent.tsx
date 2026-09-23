@@ -179,12 +179,7 @@ const LoginFormContent: React.FC = () => {
           {error}
         </div>
       ) : null}
-      <Button
-        type="submit"
-        fullWidth
-        isLoading={isSubmitting}
-        disabled={isSubmitting}
-      >
+      <Button type="submit" fullWidth isLoading={isSubmitting} disabled={isSubmitting}>
         {isSubmitting ? t("auth.login.submitting") : t("auth.login.submit")}
       </Button>
       <div className="form-links">
