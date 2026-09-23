@@ -7,6 +7,7 @@ import { useAuth } from "../contexts/AuthContext";
 import { login } from "../services/api";
 import { logger } from "../utils/logger.js";
 import { useRequiredFieldValidation } from "../hooks/useRequiredFieldValidation";
+
 const LoginFormContent: React.FC = () => {
   const { signIn } = useAuth();
   const navigate = useNavigate();
