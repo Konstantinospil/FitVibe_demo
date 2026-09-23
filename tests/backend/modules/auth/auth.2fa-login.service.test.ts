@@ -23,11 +23,11 @@ describe("auth.2fa-login.service", () => {
       }),
     ).rejects.toMatchObject({
       status: 401,
-      code: "AUTH_INVALID_2FA_SESSION",
+      code: "AUTH_VERIFICATION_FAILED",
     });
   });
 
-  it("deletes and rejects an already-used pending-login session", async () => {
+  it("conceals and rejects an already-used pending-login session", async () => {
     mockPending.getPending2FASession.mockResolvedValue({
       id: "pending-1",
       user_id: "user-1",
@@ -44,9 +44,9 @@ describe("auth.2fa-login.service", () => {
       }),
     ).rejects.toMatchObject({
       status: 401,
-      code: "AUTH_2FA_SESSION_ALREADY_USED",
+      code: "AUTH_VERIFICATION_FAILED",
     });
 
-    expect(mockPending.deletePending2FASession).toHaveBeenCalledWith("pending-1");
+    expect(mockPending.deletePending2FASession).not.toHaveBeenCalled();
   });
 });
