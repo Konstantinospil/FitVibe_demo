@@ -345,7 +345,6 @@ export async function cancelOne(userId: string, id: string): Promise<void> {
   }
 }
 
-
 export async function reopenOne(userId: string, id: string): Promise<SessionWithExercises> {
   const current = await getSessionById(id, userId);
   if (!current) {
