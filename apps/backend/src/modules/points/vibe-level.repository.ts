@@ -188,9 +188,11 @@ export async function updateDomainVibeLevel(
   ratingDeviation: number,
   volatility: number,
   trx?: Knex.Transaction,
+  effectiveAt?: string,
 ): Promise<void> {
   const exec = executor(trx);
   const now = new Date().toISOString();
+  const lastUpdatedAt = effectiveAt ?? now;
 
   await exec("user_domain_vibe_levels")
     .insert({
@@ -199,7 +201,7 @@ export async function updateDomainVibeLevel(
       vibe_level: vibeLevel,
       rating_deviation: ratingDeviation,
       volatility,
-      last_updated_at: now,
+      last_updated_at: lastUpdatedAt,
       created_at: now,
       updated_at: now,
     })
@@ -208,7 +210,7 @@ export async function updateDomainVibeLevel(
       vibe_level: vibeLevel,
       rating_deviation: ratingDeviation,
       volatility,
-      last_updated_at: now,
+      last_updated_at: lastUpdatedAt,
       updated_at: now,
     });
 }
