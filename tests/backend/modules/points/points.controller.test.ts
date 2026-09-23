@@ -88,10 +88,7 @@ describe("Points Controller", () => {
       expect(mockGamificationProjection.ensureGamificationProjectionFresh).toHaveBeenCalledWith(
         userId,
       );
-      expect(mockPointsService.getPointsHistory).toHaveBeenCalledWith(
-        userId,
-        expect.objectContaining({}),
-      );
+      expect(mockPointsService.getPointsHistory).toHaveBeenCalledWith(userId, {});
       expect(mockResponse.json).toHaveBeenCalledWith(mockHistory);
     });
   });
