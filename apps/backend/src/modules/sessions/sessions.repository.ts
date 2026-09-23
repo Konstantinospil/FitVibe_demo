@@ -544,3 +544,31 @@ export async function listRegionalStrengthStimuli(
     averageRpe: row.average_rpe === null ? null : Number(row.average_rpe),
   }));
 }
+
+
+export async function listCompletedSessionIdsForGamification(
+  userId: string,
+  trx?: Knex.Transaction,
+): Promise<string[]> {
+  const rows = await executor(trx)("sessions")
+    .where({ owner_id: userId, status: "completed" })
+    .whereNull("deleted_at")
+    .whereNotNull("completed_at")
+    .orderBy("completed_at", "asc")
+    .orderBy("id", "asc")
+    .select<Array<{ id: string }>>("id");
+  return rows.map((row) => row.id);
+}
+
+export async function clearCompletedSessionGamificationRebuildFlags(
+  userId: string,
+  trx?: Knex.Transaction,
+): Promise<void> {
+  await executor(trx)("sessions")
+    .where({ owner_id: userId, status: "completed" })
+    .whereNull("deleted_at")
+    .update({
+      gamification_rebuild_required: false,
+      updated_at: new Date().toISOString(),
+    });
+}
