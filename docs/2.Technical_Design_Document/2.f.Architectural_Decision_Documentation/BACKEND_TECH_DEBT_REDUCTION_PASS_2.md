@@ -376,7 +376,7 @@ The Phase 14 interview selected Scenario B with these extensions:
 - identifier+IP password failures and aggregate IP spray evidence are distinct security states;
 - successful authentication clears only the successful identifier+IP failure state; aggregate IP spray evidence survives success;
 - aggregate IP spray evidence uses a rolling 30-minute observation window so shared/NAT addresses do not accumulate failures indefinitely;
-- password throttling remains temporary and progressive; no permanent lockout is introduced;
+- password throttling remains temporary and progressive; no permanent lockout is introduced, and throttle state is not exposed as a distinct stage-one response;
 - a real second-factor challenge allows at most three failed attempts; after the third attempt the challenge is exhausted and recent exhaustion suppresses immediate challenge cycling;
 - second-factor attempts do not reuse password counters;
 - TOTP and existing one-time backup codes remain the second-factor mechanisms; Phase 14 does not introduce an email OTP mechanism;
@@ -387,7 +387,7 @@ Implementation invariants:
 
 1. `password_verified != authentication_succeeded`.
 2. No authenticated session or refresh token is issued before required 2FA succeeds.
-3. Unknown user, wrong password and real 2FA-required password success share one first-stage response shape.
+3. Unknown user, wrong password, internally throttled login and real 2FA-required password success share one first-stage response shape.
 4. Invalid, expired, exhausted, reused and unknown second-factor challenges share one public verification error; detailed reasons remain server-side.
 5. Three failed second-factor attempts exhaust the challenge.
 6. Concurrent password failures from one source IP are serialized before identifier/IP and aggregate-IP counters are updated.
