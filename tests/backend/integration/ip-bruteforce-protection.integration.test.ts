@@ -129,7 +129,7 @@ describeWithTestDatabase("Integration: IP-Based Brute Force Protection", () => {
 
       const firstNine = await failLoginsWithoutAccountLock(ipAddress, 9);
       for (const response of firstNine) {
-        expect([200, 429]).toContain(response.status);
+        expect(response.status).toBe(200);
         if (response.status === 429) {
           expect(response.body.error.code).not.toBe("AUTH_ACCOUNT_LOCKED");
         }
@@ -144,21 +144,14 @@ describeWithTestDatabase("Integration: IP-Based Brute Force Protection", () => {
         expect(attempt9).toBeNull();
       }
 
-      // 10th attempt should trigger IP lockout
+      // 10th attempt triggers internal IP throttling but keeps the public
+      // response indistinguishable from earlier credential attempts.
       const response10 = await postLogin(ipAddress, ACCOUNT_SAFE_EMAILS[1]);
 
-      expect(response10.status).toBe(429);
-      expect(response10.body.error.code).toBe("AUTH_IP_LOCKED");
-      expect(response10.body.error.message).toContain("Authentication temporarily throttled");
-
-      // Verify structured error details are included
-      expect(response10.body.error.details).toBeDefined();
-      expect(response10.body.error.details.remainingSeconds).toBeGreaterThan(0);
-      expect(response10.body.error.details.lockoutType).toBe("ip");
-      expect(response10.body.error.details.totalAttemptCount).toBeGreaterThanOrEqual(10);
-      expect(response10.body.error.details.distinctEmailCount).toBeGreaterThanOrEqual(1);
-      expect(response10.body.error.details.maxAttempts).toBe(10);
-      expect(response10.body.error.details.maxDistinctEmails).toBe(5);
+      expect(response10.status).toBe(200);
+      expect(response10.body.requires2FA).toBe(true);
+      expect(response10.body.pendingSessionId).toEqual(expect.any(String));
+      expect(response10.body.error).toBeUndefined();
 
       // Verify IP is locked
       const attempt10 = await getFailedAttemptByIP(ipAddress);
@@ -179,7 +172,7 @@ describeWithTestDatabase("Integration: IP-Based Brute Force Protection", () => {
             password: "WrongPassword123!",
           });
 
-        expect([200, 429]).toContain(response.status);
+        expect(response.status).toBe(200);
       }
 
       // Check IP is not locked yet
@@ -197,8 +190,9 @@ describeWithTestDatabase("Integration: IP-Based Brute Force Protection", () => {
           password: "WrongPassword123!",
         });
 
-      expect(response5.status).toBe(429);
-      expect(response5.body.error.code).toBe("AUTH_IP_LOCKED");
+      expect(response5.status).toBe(200);
+      expect(response5.body.requires2FA).toBe(true);
+      expect(response5.body.error).toBeUndefined();
 
       // Verify IP is locked
       const attempt5 = await getFailedAttemptByIP(ipAddress);
@@ -245,8 +239,9 @@ describeWithTestDatabase("Integration: IP-Based Brute Force Protection", () => {
           password,
         });
 
-      expect(response.status).toBe(429);
-      expect(response.body.error.code).toBe("AUTH_IP_LOCKED");
+      expect(response.status).toBe(200);
+      expect(response.body.requires2FA).toBe(true);
+      expect(response.body.user).toBeUndefined();
     });
   });
 
@@ -389,9 +384,10 @@ describeWithTestDatabase("Integration: IP-Based Brute Force Protection", () => {
           password: "WrongPassword123!",
         });
 
-      // Should get IP lockout, not account lockout
-      expect(response.status).toBe(429);
-      expect(response.body.error.code).toBe("AUTH_IP_LOCKED");
+      // The IP throttle wins internally, but its reason is not exposed.
+      expect(response.status).toBe(200);
+      expect(response.body.requires2FA).toBe(true);
+      expect(response.body.error).toBeUndefined();
     });
 
     it("should allow account-level lockout when IP is not locked", async () => {
@@ -413,7 +409,8 @@ describeWithTestDatabase("Integration: IP-Based Brute Force Protection", () => {
       expect(ipAttempt?.distinct_email_count).toBe(1);
       expect(isIPLocked(ipAttempt)).toBe(false);
 
-      // Next attempt should trigger account-level lockout
+      // The account-level throttle is internal; the public response remains
+      // the same opaque challenge and discloses no lockout reason.
       const response = await request(app)
         .post("/api/v1/auth/login")
         .set("X-Forwarded-For", ipAddress)
@@ -422,15 +419,9 @@ describeWithTestDatabase("Integration: IP-Based Brute Force Protection", () => {
           password: "WrongPassword123!",
         });
 
-      expect(response.status).toBe(429);
-      expect(response.body.error.code).toBe("AUTH_ACCOUNT_LOCKED");
-
-      // Verify structured error details are included
-      expect(response.body.error.details).toBeDefined();
-      expect(response.body.error.details.remainingSeconds).toBeGreaterThan(0);
-      expect(response.body.error.details.lockoutType).toBe("account");
-      expect(response.body.error.details.attemptCount).toBeGreaterThanOrEqual(5);
-      expect(response.body.error.details.maxAttempts).toBe(5);
+      expect(response.status).toBe(200);
+      expect(response.body.requires2FA).toBe(true);
+      expect(response.body.error).toBeUndefined();
     });
   });
 
@@ -509,7 +500,7 @@ describeWithTestDatabase("Integration: IP-Based Brute Force Protection", () => {
           password: "WrongPassword123!",
         });
 
-      expect([200, 429]).toContain(response.status); // Should not be IP-locked
+      expect(response.status).toBe(200); // Should not be IP-locked
     });
   });
 });
