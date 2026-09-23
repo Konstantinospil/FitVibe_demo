@@ -4,6 +4,7 @@ import { db } from "../../db/index.js";
 
 const TABLE = "failed_login_attempts";
 const IP_TABLE = "failed_login_attempts_by_ip";
+const IP_ATTEMPT_WINDOW_MS = 30 * 60 * 1000;
 
 export interface FailedLoginAttempt {
   id: string;
@@ -333,10 +334,34 @@ export async function recordFailedAttemptByIP(
 ): Promise<FailedLoginAttemptByIP> {
   const exec = withDb(trx);
   const normalizedIdentifier = identifier.toLowerCase().trim();
-  const now = new Date().toISOString();
+  const nowDate = new Date();
+  const now = nowDate.toISOString();
+  const windowStart = new Date(nowDate.getTime() - IP_ATTEMPT_WINDOW_MS).toISOString();
 
-  // Check if record exists
-  const existing = await getFailedAttemptByIP(ipAddress, trx);
+  const existingRow = await exec<FailedLoginByIPRow>(IP_TABLE)
+    .where({ ip_address: ipAddress })
+    .first();
+  let existing = existingRow ? toIPRecord(existingRow) : null;
+
+  if (existing && new Date(existing.last_attempt_at) < new Date(windowStart)) {
+    await exec(IP_TABLE).where({ id: existing.id }).update({
+      distinct_email_count: 0,
+      total_attempt_count: 0,
+      locked_until: null,
+      first_attempt_at: now,
+      last_attempt_at: now,
+      updated_at: now,
+    });
+    existing = {
+      ...existing,
+      distinct_email_count: 0,
+      total_attempt_count: 0,
+      locked_until: null,
+      first_attempt_at: now,
+      last_attempt_at: now,
+      updated_at: now,
+    };
+  }
 
   if (existing) {
     // Count distinct identifiers for this IP in the failed_login_attempts table
@@ -345,6 +370,7 @@ export async function recordFailedAttemptByIP(
     // we count from the database to get the accurate current count
     const distinctCountResult = await exec(TABLE)
       .where({ ip_address: ipAddress })
+      .where("last_attempt_at", ">=", windowStart)
       .countDistinct("identifier as count")
       .first<{ count: string | number }>();
 
@@ -591,4 +617,16 @@ export async function cleanupOldIPAttempts(trx?: Knex.Transaction): Promise<numb
   const deleted = await exec(IP_TABLE).where("last_attempt_at", "<", cutoff.toISOString()).del();
 
   return deleted;
+}
+
+
+/**
+ * Serialize failed-password updates per source IP inside the caller transaction.
+ * This prevents lost increments and inconsistent distinct-identifier counts.
+ */
+export async function lockLoginAttemptIp(
+  ipAddress: string,
+  trx: Knex.Transaction,
+): Promise<void> {
+  await trx.raw("SELECT pg_advisory_xact_lock(hashtext(?))", [`fitvibe-auth:${ipAddress}`]);
 }
