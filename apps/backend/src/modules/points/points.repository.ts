@@ -663,7 +663,7 @@ export async function supersedeSessionDerivedGamification(
 
   await trx("badges")
     .where({ user_id: userId, is_active: true })
-    .whereRaw("metadata ? 'session_id'")
+    .whereRaw("jsonb_exists(metadata, ?)", ["session_id"])
     .update({ is_active: false, superseded_at: now });
 
   await trx("sessions")
