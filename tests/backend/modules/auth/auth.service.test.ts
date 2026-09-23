@@ -404,15 +404,26 @@ describe("Auth Service", () => {
       expect(result.tokens.refreshToken).toBeDefined();
     });
 
-    it("should throw error when user not found", async () => {
-      const dummyUserId = "dummy-user-id";
-      const dummySessionId = "dummy-session-id";
+    it("should conceal a missing user behind an opaque pre-auth challenge", async () => {
       mockAuthRepo.findUserByEmail.mockResolvedValue(null);
+      mockBruteforceRepo.recordFailedAttempt.mockResolvedValue({
+        attempt_count: 1,
+        locked_until: null,
+      } as never);
+      mockBruteforceRepo.recordFailedAttemptByIP.mockResolvedValue({
+        total_attempt_count: 1,
+        distinct_email_count: 1,
+        locked_until: null,
+      } as never);
       mockJwt.sign
         .mockReturnValueOnce("dummy-refresh-token" as never)
         .mockReturnValueOnce("dummy-access-token" as never);
 
-      await expect(authService.login(validLoginDto)).rejects.toThrow(HttpError);
+      const result = await authService.login(validLoginDto);
+
+      expect(result.requires2FA).toBe(true);
+      expect(result.pendingSessionId).toBeDefined();
+      expect(mockAuthRepo.createAuthSession).not.toHaveBeenCalled();
     });
 
     it("should throw error when password incorrect", async () => {
@@ -457,7 +468,11 @@ describe("Auth Service", () => {
         .mockReturnValueOnce("dummy-refresh-token" as never)
         .mockReturnValueOnce("dummy-access-token" as never);
 
-      await expect(authService.login(validLoginDto)).rejects.toThrow(HttpError);
+      const result = await authService.login(validLoginDto);
+
+      expect(result.requires2FA).toBe(true);
+      expect(result.pendingSessionId).toBeDefined();
+      expect(mockAuthRepo.createAuthSession).not.toHaveBeenCalled();
     });
 
     it("should require 2FA when enabled", async () => {
@@ -481,6 +496,7 @@ describe("Auth Service", () => {
       mockBruteforceRepo.getFailedAttemptByIP.mockResolvedValue(null);
       mockBruteforceRepo.resetFailedAttempts.mockResolvedValue(undefined);
       mockBruteforceRepo.resetFailedAttemptsByIP.mockResolvedValue(undefined);
+      mockPending2faRepo.hasRecentSecondFactorThrottle.mockResolvedValue(false);
       mockPending2faRepo.createPending2FASession.mockResolvedValue(undefined);
 
       const result = await authService.login(validLoginDto);
