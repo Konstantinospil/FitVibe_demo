@@ -19,6 +19,7 @@ function createMockQueryBuilder(defaultValue: unknown = null) {
     insert: jest.fn().mockReturnThis(),
     returning: jest.fn().mockResolvedValue([]),
     update: jest.fn().mockResolvedValue(1),
+    del: jest.fn().mockResolvedValue(1),
     onConflict: jest.fn().mockReturnThis(),
     merge: jest.fn().mockReturnThis(),
     ignore: jest.fn().mockReturnThis(),
