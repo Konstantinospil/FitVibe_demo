@@ -84,17 +84,21 @@ This decision extends the older Public/Link/Private visibility model: visibility
 
 **Authority**
 
-- Idempotent points events are the authoritative record of awarded points.
-- Session/workout state is the authority for the facts from which a scoring event is produced.
+- Completed session/workout state is the authoritative business fact.
+- Scoring rules interpret that completed workout.
+- Points, Vibe Levels, badges, point events and materialized totals are derived state. They may be persisted for performance, auditability and history views, but they are not independent sources of product truth.
 
 **Invariants**
 
-- One logical scoring source produces at most one authoritative points event for the relevant scoring lifecycle.
-- Concurrent scoring attempts must converge on the same result rather than create duplicates or surface uniqueness races as application failures.
-- Derived Vibe Level and badge processing occurs after the source transaction commits.
-- Derived processing must be retryable and idempotent.
-- A failed derivation must not cause the source session transaction to be rolled back after commit.
-- Reopening and recompleting a session must follow the explicit scoring policy implemented in Phase 13; historical scoring is not silently mutated.
+- Completion is the primary operation. Once the source transaction commits successfully, a downstream gamification failure does not roll the session completion back.
+- Derived scoring must be retryable and idempotent.
+- Concurrent derivation attempts for the same completed scoring lifecycle must converge rather than create duplicate current scoring state or surface uniqueness races as normal application behavior.
+- A completed session's scoring-relevant workout facts are immutable until an explicit reopen transition.
+- Reopen moves the session back into an editable/unscored lifecycle state. Re-completion reconciles the derived scoring state for that session rather than stacking an unrelated second award.
+- Historical points are not immutable accounting history. When scoring rules change, completed historical sessions may be recalculated and current points may be rewritten.
+- Persisted points/events must therefore be rebuildable from authoritative completed sessions plus scoring rules. If original calculation values or algorithm versions are retained, they are audit metadata rather than current authority.
+- Vibe Level and badge processing occurs after the source transaction commits and follows the same recoverable-derivation principle.
+- Phase 13 defines the exact recomputation strategy, concurrency behavior and audit-retention policy.
 
 ### 5. Authentication, lockouts, and sessions
 
@@ -249,3 +253,4 @@ A full transactional outbox is not mandated by this ADR. Phase 16 decides whethe
 | v1.0 | 2026-09-22 | Accepted state ownership and consistency invariants after Phase 11 product-owner interview | FitVibe Engineering / Product Owner |
 | v1.1 | 2026-09-22 | Clarified bookmark as a durable user access grant (key-door capability); detailed revocation semantics deferred to Phase 12 | FitVibe Engineering / Product Owner |
 | v1.2 | 2026-09-22 | Finalized key-door precedence: unbookmark removes grant; no owner per-user bookmark revoke; link revoke preserves existing bookmark; block and deletion override access | FitVibe Engineering / Product Owner |
+| v1.3 | 2026-09-23 | Corrected gamification authority: completed sessions are primary truth; points/Vibe/badges are recomputable derived state and historical points may be rewritten | FitVibe Engineering / Product Owner |
