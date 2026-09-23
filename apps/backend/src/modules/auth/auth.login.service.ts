@@ -79,7 +79,16 @@ export async function login(
   const userAgent = sanitizeUserAgent(context.userAgent);
 
   try {
-    await assertLoginAllowed(identifier, ipAddress, context.requestId ?? null);
+    const loginAllowed = await assertLoginAllowed(
+      identifier,
+      ipAddress,
+      context.requestId ?? null,
+    );
+    if (!loginAllowed) {
+      await bcrypt.compare(dto.password, DUMMY_PASSWORD_HASH);
+      performDummySuccessfulPath(uuidv4(), "athlete");
+      return buildOpaqueChallenge();
+    }
 
     const user = identifier.includes("@")
       ? await findUserByEmail(identifier)
