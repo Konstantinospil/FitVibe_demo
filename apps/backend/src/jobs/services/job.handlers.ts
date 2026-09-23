@@ -57,9 +57,8 @@ export async function executeSharedJob(
       if (typeof userId !== "string") {
         throw new Error("Invalid gamification projection job payload");
       }
-      const { reconcileGamificationProjection } = await import(
-        "../../modules/points/gamification-projection.service.js"
-      );
+      const { reconcileGamificationProjection } =
+        await import("../../modules/points/gamification-projection.service.js");
       return reconcileGamificationProjection(userId, {
         sessionId: typeof sessionId === "string" ? sessionId : undefined,
         forceFullRebuild: forceFullRebuild === true,
