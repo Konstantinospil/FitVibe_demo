@@ -93,7 +93,7 @@ export async function hasRecentSecondFactorThrottle(
   since: string,
   trx?: Knex.Transaction,
 ): Promise<boolean> {
-  const row = await (trx ?? db)("pending_2fa_sessions")
+  const row = await (trx ?? db)<{ id: string }>("pending_2fa_sessions")
     .where({ user_id: userId, ip, verified: false })
     .where("failed_attempts", ">=", 3)
     .where("last_failed_at", ">=", since)
