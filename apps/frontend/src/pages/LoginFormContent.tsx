@@ -94,8 +94,14 @@ const LoginFormContent: React.FC = () => {
           return;
         }
 
-        // Show specific error message if available
-        if (errorMessage) {
+        const concealableAuthFailure =
+          errorCode === "AUTH_INVALID_CREDENTIALS" ||
+          errorCode === "AUTH_ACCOUNT_LOCKED" ||
+          errorCode === "AUTH_IP_LOCKED";
+
+        if (concealableAuthFailure) {
+          setError(t("auth.login.error") || "Login failed. Please try again.");
+        } else if (errorMessage) {
           setError(errorMessage);
         } else if (errorCode) {
           const translatedError = t(`errors.${errorCode}`);
