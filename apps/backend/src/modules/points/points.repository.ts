@@ -110,6 +110,7 @@ interface BadgeCatalogRow {
 interface BadgeRow {
   user_id: string;
   badge_type: string;
+  is_active: boolean;
 }
 
 interface CompletedSessionRow {
