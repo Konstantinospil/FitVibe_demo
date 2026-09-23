@@ -79,11 +79,7 @@ export async function login(
   const userAgent = sanitizeUserAgent(context.userAgent);
 
   try {
-    const loginAllowed = await assertLoginAllowed(
-      identifier,
-      ipAddress,
-      context.requestId ?? null,
-    );
+    const loginAllowed = await assertLoginAllowed(identifier, ipAddress, context.requestId ?? null);
     if (!loginAllowed) {
       await bcrypt.compare(dto.password, DUMMY_PASSWORD_HASH);
       performDummySuccessfulPath(uuidv4(), "athlete");
