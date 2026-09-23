@@ -32,9 +32,9 @@ import { updateSession } from "../sessions/sessions.repository.js";
 import { evaluateBadgesForSession } from "./badges.service.js";
 import { detectSessionDomains, updateDomainVibeLevelForSession } from "./vibe-level.service.js";
 
-const ALGORITHM_VERSION = "v2_vibe_lvl";
+export const POINTS_POINTS_ALGORITHM_VERSION = "v2_vibe_lvl";
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-const _LEGACY_ALGORITHM_VERSION = "v1"; // Reserved for future use
+const _LEGACY_POINTS_ALGORITHM_VERSION = "v1"; // Reserved for future use
 const DEFAULT_RECENT_LIMIT = 10;
 const MAX_HISTORY_LIMIT = 100;
 
@@ -400,13 +400,13 @@ async function awardPointsForSessionInTransaction(
       user_id: session.owner_id,
       source_type: "session_completed",
       source_id: session.id,
-      algorithm_version: ALGORITHM_VERSION,
+      algorithm_version: POINTS_ALGORITHM_VERSION,
       points: totalPoints,
       calories: session.calories ?? null,
       metadata: {
         session_id: session.id,
         session_title: session.title ?? null,
-        algorithm: ALGORITHM_VERSION,
+        algorithm: POINTS_ALGORITHM_VERSION,
         domain_impacts: domainImpacts.map((di) => ({
           domain: di.domain,
           impact: di.impact,
