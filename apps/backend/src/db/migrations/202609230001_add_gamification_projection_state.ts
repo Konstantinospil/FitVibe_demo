@@ -50,9 +50,23 @@ export async function up(knex: Knex): Promise<void> {
     table.boolean("is_active").notNullable().defaultTo(true);
     table.timestamp("superseded_at", { useTz: true }).nullable();
   });
+
+  await knex.raw("ALTER TABLE badges DROP CONSTRAINT IF EXISTS badges_user_badge_unique_idx");
+  await knex.raw("DROP INDEX IF EXISTS badges_user_badge_unique_idx");
+  await knex.raw(`
+    CREATE UNIQUE INDEX badges_user_badge_active_unique_idx
+    ON badges (user_id, badge_type)
+    WHERE is_active = TRUE
+  `);
 }
 
 export async function down(knex: Knex): Promise<void> {
+  await knex.raw("DROP INDEX IF EXISTS badges_user_badge_active_unique_idx");
+  await knex.raw(`
+    CREATE UNIQUE INDEX badges_user_badge_unique_idx
+    ON badges (user_id, badge_type)
+  `);
+
   await knex.schema.alterTable("badges", (table) => {
     table.dropColumn("superseded_at");
     table.dropColumn("is_active");
