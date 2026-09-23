@@ -202,12 +202,17 @@ describeWithTestDatabase("Integration: Auth → Session Flow", () => {
       password: "WrongPassword123!",
     });
 
-    // Rate limiting (429) is also acceptable as it indicates the request was processed
-    // and the invalid credentials were detected before rate limiting
-    expect([401, 429]).toContain(loginResponse.status);
-    if (loginResponse.status === 401) {
-      expect(loginResponse.body.error).toBeDefined();
-    }
+    // Phase 14: invalid credentials continue into an opaque pre-authentication
+    // challenge so the response does not disclose whether the password was correct
+    // or whether the account uses 2FA. No authenticated state is issued.
+    expect(loginResponse.status).toBe(200);
+    expect(loginResponse.body).toMatchObject({
+      requires2FA: true,
+      pendingSessionId: expect.any(String),
+    });
+    expect(loginResponse.body.user).toBeUndefined();
+    expect(loginResponse.body.session).toBeUndefined();
+    expect(loginResponse.body.tokens).toBeUndefined();
   });
 
   it("should prevent creating session without authentication", async () => {
