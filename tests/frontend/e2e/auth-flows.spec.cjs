@@ -115,23 +115,23 @@ test.describe("Authentication Flows (FR-002)", () => {
     test(
       "should conceal invalid credentials behind an opaque verification challenge",
       async ({ page }) => {
-      await page.route("**/api/v1/auth/login", async (route) => {
-        await route.fulfill(
-          jsonResponse({
-            requires2FA: true,
-            pendingSessionId: "00000000-0000-4000-8000-000000000999",
-          }),
-        );
-      });
+        await page.route("**/api/v1/auth/login", async (route) => {
+          await route.fulfill(
+            jsonResponse({
+              requires2FA: true,
+              pendingSessionId: "00000000-0000-4000-8000-000000000999",
+            }),
+          );
+        });
 
-      await page.goto("/login");
-      await waitForApp(page);
+        await page.goto("/login");
+        await waitForApp(page);
 
-      await emailInput(page).fill(testUser.email);
-      await passwordInput(page).fill("wrongpassword");
-      await page.getByRole("button", { name: /sign in/i }).click();
+        await emailInput(page).fill(testUser.email);
+        await passwordInput(page).fill("wrongpassword");
+        await page.getByRole("button", { name: /sign in/i }).click();
 
-      await expect(page).toHaveURL(/\/login\/verify-2fa/);
+        await expect(page).toHaveURL(/\/login\/verify-2fa/);
         await expect(page.getByText(/invalid email or password/i)).toHaveCount(0);
       },
     );
