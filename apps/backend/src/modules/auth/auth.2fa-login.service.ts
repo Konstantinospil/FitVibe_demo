@@ -73,6 +73,7 @@ export async function verify2FALogin(
       (pendingSession.failed_attempts ?? 0) >= MAX_SECOND_FACTOR_ATTEMPTS ||
       new Date() > expiresAt
     ) {
+      await performDecoySecondFactorWork(code);
       throw invalidVerification();
     }
 
@@ -83,6 +84,7 @@ export async function verify2FALogin(
         actualIp: context.ip ?? null,
         requestId: context.requestId ?? null,
       });
+      await performDecoySecondFactorWork(code);
       throw invalidVerification();
     }
 
