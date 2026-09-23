@@ -41,8 +41,8 @@ describeWithTestDatabase("Integration: Lockout Error Details", () => {
     await truncateAll();
   });
 
-  describe("Account Lockout Error Details", () => {
-    it("should include structured details in AUTH_ACCOUNT_LOCKED error", async () => {
+  describe("Account Throttle Concealment", () => {
+    it("should conceal an active account throttle behind the opaque challenge", async () => {
       const email = "locked@example.com";
       const password = "ValidPassword123!";
       const ipAddress = createTestIp();
@@ -71,7 +71,6 @@ describeWithTestDatabase("Integration: Lockout Error Details", () => {
         });
       }
 
-      // Next attempt should trigger lockout with structured details
       const response = await request(app)
         .post("/api/v1/auth/login")
         .set("X-Forwarded-For", ipAddress)
@@ -80,19 +79,15 @@ describeWithTestDatabase("Integration: Lockout Error Details", () => {
           password: "WrongPassword123!",
         });
 
-      expect(response.status).toBe(429);
-      expect(response.body.error.code).toBe("AUTH_ACCOUNT_LOCKED");
-      expect(response.body.error.details).toBeDefined();
-      expect(response.body.error.details.remainingSeconds).toBeGreaterThan(0);
-      expect(response.body.error.details.lockoutType).toBe("account");
-      expect(response.body.error.details.attemptCount).toBeGreaterThanOrEqual(5);
-      expect(response.body.error.details.maxAttempts).toBe(5);
-      expect(typeof response.body.error.details.remainingSeconds).toBe("number");
+      expect(response.status).toBe(200);
+      expect(response.body.requires2FA).toBe(true);
+      expect(response.body.pendingSessionId).toEqual(expect.any(String));
+      expect(response.body.error).toBeUndefined();
     });
   });
 
-  describe("IP Lockout Error Details", () => {
-    it("should include structured details in AUTH_IP_LOCKED error", async () => {
+  describe("IP Throttle Concealment", () => {
+    it("should conceal an active IP throttle behind the opaque challenge", async () => {
       const ipAddress = createTestIp();
 
       // Make 4 failed attempts with different emails to approach the 5 distinct email limit
@@ -108,7 +103,6 @@ describeWithTestDatabase("Integration: Lockout Error Details", () => {
           });
       }
 
-      // 5th distinct email attempt should trigger IP lockout with structured details
       const response = await request(app)
         .post("/api/v1/auth/login")
         .set("X-Forwarded-For", ipAddress)
@@ -117,16 +111,10 @@ describeWithTestDatabase("Integration: Lockout Error Details", () => {
           password: "WrongPassword123!",
         });
 
-      expect(response.status).toBe(429);
-      expect(response.body.error.code).toBe("AUTH_IP_LOCKED");
-      expect(response.body.error.details).toBeDefined();
-      expect(response.body.error.details.remainingSeconds).toBeGreaterThan(0);
-      expect(response.body.error.details.lockoutType).toBe("ip");
-      expect(response.body.error.details.totalAttemptCount).toBeGreaterThanOrEqual(5);
-      expect(response.body.error.details.distinctEmailCount).toBeGreaterThanOrEqual(5);
-      expect(response.body.error.details.maxAttempts).toBe(10);
-      expect(response.body.error.details.maxDistinctEmails).toBe(5);
-      expect(typeof response.body.error.details.remainingSeconds).toBe("number");
+      expect(response.status).toBe(200);
+      expect(response.body.requires2FA).toBe(true);
+      expect(response.body.pendingSessionId).toEqual(expect.any(String));
+      expect(response.body.error).toBeUndefined();
     });
   });
 
