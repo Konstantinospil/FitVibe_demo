@@ -32,6 +32,7 @@ import { describeWithTestDatabase } from "../../setup/db-availability.js";
 import { v4 as uuidv4 } from "uuid";
 import { getCurrentTermsVersion } from "../../../apps/backend/src/config/terms.js";
 import type { SessionWithExercises } from "../../../apps/backend/src/modules/sessions/sessions.types.js";
+import { listCompletedSessionIdsForGamification } from "../../../apps/backend/src/modules/sessions/sessions.repository.js";
 
 async function persistSession(session: SessionWithExercises): Promise<void> {
   await db("sessions").insert({
@@ -236,6 +237,41 @@ describeWithTestDatabase("Integration: Vibe Level System (v2_vibe_lvl)", () => {
       .first();
     expect(projection.is_stale).toBe(false);
     expect(projection.rebuild_required).toBe(false);
+  });
+
+  it("replays completed sessions in deterministic chronological order", async () => {
+    const sameCompletedAt = "2026-09-23T11:00:00.000Z";
+    const earlier: SessionWithExercises = {
+      id: "00000000-0000-4000-8000-000000000010",
+      owner_id: testUser.id,
+      status: "completed",
+      completed_at: "2026-09-23T10:00:00.000Z",
+      visibility: "private",
+      planned_at: "2026-09-23T09:00:00.000Z",
+      exercises: [],
+    };
+    const sameTimeLowerId: SessionWithExercises = {
+      ...earlier,
+      id: "00000000-0000-4000-8000-000000000011",
+      completed_at: sameCompletedAt,
+    };
+    const sameTimeHigherId: SessionWithExercises = {
+      ...earlier,
+      id: "00000000-0000-4000-8000-000000000012",
+      completed_at: sameCompletedAt,
+    };
+
+    await persistSession(sameTimeHigherId);
+    await persistSession(earlier);
+    await persistSession(sameTimeLowerId);
+
+    const ordered = await listCompletedSessionIdsForGamification(testUser.id);
+
+    expect(ordered).toEqual([
+      earlier.id,
+      sameTimeLowerId.id,
+      sameTimeHigherId.id,
+    ]);
   });
 
   it("paginates equal-timestamp point events without gaps or duplicates", async () => {
