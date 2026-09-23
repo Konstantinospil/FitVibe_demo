@@ -3,6 +3,7 @@ import type { Knex } from "knex";
 import { db } from "../../db/connection.js";
 import { logger } from "../../config/logger.js";
 import { pointsJobsService } from "../../jobs/services/points-jobs.service.js";
+import { applyVibeLevelDecayForUser } from "../../jobs/services/vibe-level-decay.service.js";
 import {
   clearCompletedSessionGamificationRebuildFlags,
   getSessionWithDetails,
@@ -127,6 +128,7 @@ export async function reconcileGamificationProjection(
       );
     }
 
+    await applyVibeLevelDecayForUser(userId, trx);
     await markGamificationProjectionFresh(userId, POINTS_ALGORITHM_VERSION, trx);
     return { rebuilt: true, sessionsProcessed };
   });
