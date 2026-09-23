@@ -4,7 +4,6 @@ import { evaluateSeasonalEvents } from "../../modules/points/seasonal-events.ser
 import db from "../../db/index.js";
 import { flushAuditOutbox } from "../../modules/common/audit-outbox.service.js";
 import { applyVibeLevelDecay } from "./vibe-level-decay.service.js";
-import { reconcileGamificationProjection } from "../../modules/points/gamification-projection.service.js";
 
 export const SHARED_JOB_TYPES = [
   "retention.sweep",
@@ -58,6 +57,9 @@ export async function executeSharedJob(
       if (typeof userId !== "string") {
         throw new Error("Invalid gamification projection job payload");
       }
+      const { reconcileGamificationProjection } = await import(
+        "../../modules/points/gamification-projection.service.js"
+      );
       return reconcileGamificationProjection(userId, {
         sessionId: typeof sessionId === "string" ? sessionId : undefined,
         forceFullRebuild: forceFullRebuild === true,
