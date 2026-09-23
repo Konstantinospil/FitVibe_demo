@@ -175,15 +175,15 @@ export async function getStaleDomainVibeLevels(
     query.andWhere({ user_id: userId });
   }
   const rows = await query.select<DomainVibeLevelRow[]>([
-      "user_id",
-      "domain_code",
-      "vibe_level",
-      "rating_deviation",
-      "volatility",
-      "last_updated_at",
-      "created_at",
-      "updated_at",
-    ]);
+    "user_id",
+    "domain_code",
+    "vibe_level",
+    "rating_deviation",
+    "volatility",
+    "last_updated_at",
+    "created_at",
+    "updated_at",
+  ]);
 
   return rows.map(toDomainVibeLevel);
 }
