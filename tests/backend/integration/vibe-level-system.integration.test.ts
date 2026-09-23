@@ -16,6 +16,7 @@ import bcrypt from "bcryptjs";
 import db from "../../../apps/backend/src/db/index.js";
 import { createUser } from "../../../apps/backend/src/modules/auth/auth.repository.js";
 import { awardPointsForSession } from "../../../apps/backend/src/modules/points/points.service.js";
+import { reconcileGamificationProjection } from "../../../apps/backend/src/modules/points/gamification-projection.service.js";
 import { applyVibeLevelDecay } from "../../../apps/backend/src/jobs/services/vibe-level-decay.service.js";
 import {
   getDomainVibeLevel,
@@ -138,6 +139,85 @@ describeWithTestDatabase("Integration: Vibe Level System (v2_vibe_lvl)", () => {
       expect(level.vibe_level).toBe(1000.0);
       expect(level.rating_deviation).toBe(350.0);
     }
+  });
+
+  it("converges concurrent scoring attempts to one current points event", async () => {
+    const session: SessionWithExercises = {
+      id: uuidv4(),
+      owner_id: testUser.id,
+      status: "completed",
+      completed_at: new Date().toISOString(),
+      started_at: new Date(Date.now() - 30 * 60000).toISOString(),
+      visibility: "private",
+      planned_at: new Date().toISOString(),
+      exercises: [],
+    };
+
+    await persistSession(session);
+
+    const results = await Promise.all([
+      awardPointsForSession(session, { scheduleSecondary: false }),
+      awardPointsForSession(session, { scheduleSecondary: false }),
+    ]);
+
+    expect(results.filter((result) => result.awarded)).toHaveLength(1);
+    expect(new Set(results.map((result) => result.eventId)).size).toBe(1);
+
+    const events = await db("user_points").where({
+      user_id: testUser.id,
+      source_type: "session_completed",
+      source_id: session.id,
+    });
+    expect(events).toHaveLength(1);
+  });
+
+  it("archives replaced scoring and leaves one current event after a full projection rebuild", async () => {
+    const session: SessionWithExercises = {
+      id: uuidv4(),
+      owner_id: testUser.id,
+      status: "completed",
+      completed_at: new Date().toISOString(),
+      started_at: new Date(Date.now() - 30 * 60000).toISOString(),
+      visibility: "private",
+      planned_at: new Date().toISOString(),
+      exercises: [],
+    };
+
+    await persistSession(session);
+    await awardPointsForSession(session, { scheduleSecondary: false });
+
+    const before = await db("user_points").where({
+      user_id: testUser.id,
+      source_type: "session_completed",
+      source_id: session.id,
+    });
+    expect(before).toHaveLength(1);
+
+    const rebuilt = await reconcileGamificationProjection(testUser.id, {
+      forceFullRebuild: true,
+      reason: "integration_test_rebuild",
+    });
+    expect(rebuilt.rebuilt).toBe(true);
+
+    const after = await db("user_points").where({
+      user_id: testUser.id,
+      source_type: "session_completed",
+      source_id: session.id,
+    });
+    expect(after).toHaveLength(1);
+
+    const revisions = await db("points_event_revisions").where({
+      user_id: testUser.id,
+      points_event_id: before[0].id,
+      revision_reason: "integration_test_rebuild",
+    });
+    expect(revisions).toHaveLength(1);
+
+    const projection = await db("user_gamification_projection_state")
+      .where({ user_id: testUser.id })
+      .first();
+    expect(projection.is_stale).toBe(false);
+    expect(projection.rebuild_required).toBe(false);
   });
 
   it("should detect strength domain and update vibe level", async () => {
