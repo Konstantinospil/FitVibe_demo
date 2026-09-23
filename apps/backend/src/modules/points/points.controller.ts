@@ -34,6 +34,7 @@ export async function getPointsSummaryHandler(req: Request, res: Response): Prom
     return;
   }
   await ensureGamificationProjectionFresh(userId);
+  await ensureGamificationProjectionFresh(userId);
   const summary = await getPointsSummary(userId);
   res.json(summary);
 }
@@ -50,6 +51,7 @@ export async function getPointsHistoryHandler(req: Request, res: Response): Prom
     return;
   }
 
+  await ensureGamificationProjectionFresh(userId);
   await ensureGamificationProjectionFresh(userId);
   const history = await getPointsHistory(userId, parsed.data as PointsHistoryQuery);
   res.json(history);
