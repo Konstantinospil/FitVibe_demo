@@ -6,6 +6,7 @@ import {
   createOne,
   updateOne,
   cancelOne,
+  reopenOne,
   cloneOne,
   applyRecurrence,
 } from "./sessions.service.js";
@@ -297,4 +298,21 @@ export async function deleteSessionHandler(req: Request, res: Response): Promise
   const { id } = req.params;
   await cancelOne(userId, id);
   res.status(204).send();
+}
+
+
+export async function reopenSessionHandler(req: Request, res: Response): Promise<void> {
+  const userId = requireUser(req, res);
+  if (!userId) {
+    return;
+  }
+
+  const { id } = req.params;
+  if (!id) {
+    res.status(400).json({ error: "Session ID is required" });
+    return;
+  }
+
+  const reopened = await reopenOne(userId, id);
+  res.json(reopened);
 }
