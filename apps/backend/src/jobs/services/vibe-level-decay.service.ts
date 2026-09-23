@@ -17,11 +17,9 @@ async function applyDecayForUser(
   oneDayAgo: Date,
   userId?: string,
 ): Promise<number> {
-  const staleRatings = await getStaleDomainVibeLevels(
-    oneDayAgo.toISOString(),
-    outerTrx,
-    userId,
-  );
+  const staleRatings = userId
+    ? await getStaleDomainVibeLevels(oneDayAgo.toISOString(), outerTrx, userId)
+    : await getStaleDomainVibeLevels(oneDayAgo.toISOString(), outerTrx);
 
   logger.info(
     { count: staleRatings.length, userId: userId ?? null },
