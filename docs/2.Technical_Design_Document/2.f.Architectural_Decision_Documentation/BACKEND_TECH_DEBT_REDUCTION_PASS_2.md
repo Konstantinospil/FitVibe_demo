@@ -234,7 +234,7 @@ Access is governed by explicit authoritative grants (ownership, applicable visib
 
 ## Phase 13 — Completed-session and gamification invariants
 
-**Status:** Decided
+**Status:** Verifying
 
 ### Objective
 
@@ -276,6 +276,25 @@ Additional decisions accepted:
 12. Points-history pagination must be corrected so page concatenation has no gaps or duplicates, including equal timestamps.
 
 No further strategic decision is required before implementation unless code review uncovers a new product-semantic boundary.
+
+### Implementation record
+
+Implemented in PR #238:
+
+- explicit owner-only `POST /sessions/:id/reopen` lifecycle;
+- completed workout-record fields require reopen before correction;
+- completion/reopen mark the gamification projection stale in the same source transaction;
+- completion schedules post-commit reconciliation instead of scoring synchronously;
+- per-user projection state records stale/full-rebuild requirements and scoring algorithm version;
+- full rebuild archives replaced point events to `points_event_revisions`, supersedes session-derived Vibe/badge records, resets current derived state, and replays authoritative completed sessions chronologically;
+- session points, Vibe changes, streak bonuses, seasonal bonuses and session-derived badges are rebuilt from completed-session state;
+- Vibe replay preserves historical effective timestamps and reapplies current inactivity decay before marking the projection fresh;
+- concurrent source scoring is serialized using advisory transaction locks;
+- known-stale points and Vibeform reads reconcile on demand;
+- explicitly backdated completions force a full chronological rebuild;
+- points-history next cursor is based on the last returned event, removing the page-boundary skip;
+- replaced badge projections use partial uniqueness for the current active badge while retaining superseded history;
+- the queue handler uses a lazy import to avoid a new points/queue/projection module cycle.
 
 ### Exit criteria
 
@@ -615,7 +634,7 @@ CI verifies the intended backend quality model without encouraging superficial c
 | --- | --- | --- | --- | --- |
 | 11 | Done | ADR-029 | 8185deea299be81a02bd891bf334e2e181c3500c | Invariant map documented; no production-code change required |
 | 12 | Done | ADR-010 v1.2; ADR-029 v1.2 | PR #237; merge 2d8c8f734fc01ab3efb811d3f9cd5ad58538117d | Lighthouse rerun passed; backend/frontend/database/integration/API/security/accessibility/visual/coverage gates passed |
-| 13 | Decided | ADR-029 v1.4 | — | Strategic interview complete; implementation not started |
+| 13 | Verifying | ADR-029 v1.4 | PR #238 | Implementation complete on feature branch; CI verification pending |
 | 14 | Not started | — | — | — |
 | 15 | Not started | — | — | — |
 | 16 | Not started | — | — | — |

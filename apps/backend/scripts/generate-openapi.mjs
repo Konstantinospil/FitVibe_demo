@@ -238,6 +238,26 @@ const paths = {
       },
     },
   },
+  "/sessions/{id}/reopen": {
+    post: {
+      summary: "Reopen a completed session for correction",
+      tags: ["Sessions"],
+      security: [bearerAuth],
+      parameters: [
+        {
+          name: "id",
+          in: "path",
+          required: true,
+          schema: { type: "string", format: "uuid" },
+        },
+      ],
+      responses: {
+        200: jsonContent("#/components/schemas/Session"),
+        404: jsonContent("#/components/schemas/ErrorResponse"),
+        409: jsonContent("#/components/schemas/ErrorResponse"),
+      },
+    },
+  },
   "/sessions/{id}/complete": {
     patch: {
       summary: "Mark session complete",

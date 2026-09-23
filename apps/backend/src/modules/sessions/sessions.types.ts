@@ -20,6 +20,7 @@ export interface Session {
   completed_at?: string | null;
   calories?: number | null;
   points?: number | null;
+  gamification_rebuild_required?: boolean;
   deleted_at?: string | null;
   created_at?: string;
   updated_at?: string;

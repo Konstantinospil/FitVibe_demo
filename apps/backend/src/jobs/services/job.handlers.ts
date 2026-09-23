@@ -10,6 +10,7 @@ export const SHARED_JOB_TYPES = [
   "leaderboard.refresh",
   "points.streaks.evaluate",
   "points.seasonal_events.evaluate",
+  "points.projection.reconcile",
   "audit.outbox.flush",
   "vibe-level.decay",
 ] as const;
@@ -50,6 +51,19 @@ export async function executeSharedJob(
     case "points.seasonal_events.evaluate": {
       const { userId, sessionId, completedAt } = requireSessionEvaluationPayload(payload);
       return evaluateSeasonalEvents(userId, sessionId, completedAt);
+    }
+    case "points.projection.reconcile": {
+      const { userId, sessionId, forceFullRebuild } = payload;
+      if (typeof userId !== "string") {
+        throw new Error("Invalid gamification projection job payload");
+      }
+      const { reconcileGamificationProjection } =
+        await import("../../modules/points/gamification-projection.service.js");
+      return reconcileGamificationProjection(userId, {
+        sessionId: typeof sessionId === "string" ? sessionId : undefined,
+        forceFullRebuild: forceFullRebuild === true,
+        reason: "queued_projection_reconciliation",
+      });
     }
     case "audit.outbox.flush":
       return { flushed: await flushAuditOutbox() };

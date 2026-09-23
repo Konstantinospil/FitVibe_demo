@@ -248,6 +248,44 @@ describe("Sessions Controller", () => {
     });
   });
 
+  describe("reopenSessionHandler", () => {
+    it("reopens a completed session", async () => {
+      const reopened = {
+        id: sessionId,
+        owner_id: userId,
+        planned_at: new Date().toISOString(),
+        status: "in_progress",
+        visibility: "private",
+        completed_at: null,
+        points: null,
+        exercises: [],
+      };
+
+      mockRequest.params = { id: sessionId };
+      mockSessionsService.reopenOne.mockResolvedValue(reopened as never);
+
+      await sessionsController.reopenSessionHandler(
+        mockRequest as Request,
+        mockResponse as Response,
+      );
+
+      expect(mockSessionsService.reopenOne).toHaveBeenCalledWith(userId, sessionId);
+      expect(mockResponse.json).toHaveBeenCalledWith(reopened);
+    });
+
+    it("returns 400 when session ID is missing", async () => {
+      mockRequest.params = {};
+
+      await sessionsController.reopenSessionHandler(
+        mockRequest as Request,
+        mockResponse as Response,
+      );
+
+      expect(mockResponse.status).toHaveBeenCalledWith(400);
+      expect(mockSessionsService.reopenOne).not.toHaveBeenCalled();
+    });
+  });
+
   describe("cloneSessionHandler", () => {
     it("should clone session successfully without idempotency", async () => {
       const mockClonedSession = {

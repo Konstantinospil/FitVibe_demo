@@ -2,7 +2,7 @@ import { db } from "../../../../apps/backend/src/db/connection.js";
 import * as sessionsService from "../../../../apps/backend/src/modules/sessions/sessions.service.js";
 import * as sessionsRepository from "../../../../apps/backend/src/modules/sessions/sessions.repository.js";
 import * as plansService from "../../../../apps/backend/src/modules/plans/plans.service.js";
-import * as pointsService from "../../../../apps/backend/src/modules/points/points.service.js";
+import * as gamificationProjection from "../../../../apps/backend/src/modules/points/gamification-projection.service.js";
 import * as auditUtil from "../../../../apps/backend/src/modules/common/audit.util.js";
 import * as publicationService from "../../../../apps/backend/src/modules/feed/feed.publication.service.js";
 import * as feedAccess from "../../../../apps/backend/src/modules/feed/feed.access.js";
@@ -20,14 +20,14 @@ import type {
 // Mock dependencies
 jest.mock("../../../../apps/backend/src/modules/sessions/sessions.repository.js");
 jest.mock("../../../../apps/backend/src/modules/plans/plans.service.js");
-jest.mock("../../../../apps/backend/src/modules/points/points.service.js");
+jest.mock("../../../../apps/backend/src/modules/points/gamification-projection.service.js");
 jest.mock("../../../../apps/backend/src/modules/common/audit.util.js");
 jest.mock("../../../../apps/backend/src/modules/feed/feed.publication.service.js");
 jest.mock("../../../../apps/backend/src/modules/feed/feed.access.js");
 
 const mockSessionsRepo = jest.mocked(sessionsRepository);
 const mockPlansService = jest.mocked(plansService);
-const mockPointsService = jest.mocked(pointsService);
+const mockGamificationProjection = jest.mocked(gamificationProjection);
 const mockAuditUtil = jest.mocked(auditUtil);
 const mockPublicationService = jest.mocked(publicationService);
 const mockFeedAccess = jest.mocked(feedAccess);
@@ -86,6 +86,7 @@ describe("Sessions Service", () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    mockGamificationProjection.markGamificationStale.mockResolvedValue(undefined);
   });
 
   describe("getAll", () => {
@@ -481,7 +482,7 @@ describe("Sessions Service", () => {
       expect(result.status).toBe("in_progress");
     });
 
-    it("should award points when status changes to completed", async () => {
+    it("should mark and schedule gamification reconciliation when status changes to completed", async () => {
       const inProgressSession: Session = {
         ...existingSession,
         status: "in_progress",
@@ -498,13 +499,55 @@ describe("Sessions Service", () => {
       mockSessionsRepo.getSessionById.mockResolvedValue(inProgressSession);
       mockSessionsRepo.updateSession.mockResolvedValue(1);
       mockSessionsRepo.getSessionWithDetails.mockResolvedValue(mockUpdated);
-      mockPointsService.awardPointsForSession.mockResolvedValue({
-        pointsAwarded: 100,
-      });
 
       await sessionsService.updateOne(userId, sessionId, { status: "completed" });
 
-      expect(mockPointsService.awardPointsForSession).toHaveBeenCalled();
+      expect(mockGamificationProjection.markGamificationStale).toHaveBeenCalledWith(
+        userId,
+        false,
+        expect.anything(),
+      );
+      expect(mockGamificationProjection.scheduleGamificationReconciliation).toHaveBeenCalledWith(
+        userId,
+        sessionId,
+        false,
+      );
+    });
+
+    it("forces a full gamification rebuild when a corrected session is recompleted", async () => {
+      const correctedSession: Session = {
+        ...existingSession,
+        status: "in_progress",
+        started_at: new Date().toISOString(),
+        gamification_rebuild_required: true,
+      };
+
+      const mockUpdated: SessionWithExercises = {
+        ...correctedSession,
+        status: "completed",
+        completed_at: "2026-09-23T12:00:00.000Z",
+        exercises: [],
+      } as SessionWithExercises;
+
+      mockSessionsRepo.getSessionById.mockResolvedValue(correctedSession);
+      mockSessionsRepo.updateSession.mockResolvedValue(1);
+      mockSessionsRepo.getSessionWithDetails.mockResolvedValue(mockUpdated);
+
+      await sessionsService.updateOne(userId, sessionId, {
+        status: "completed",
+        completed_at: "2026-09-23T12:00:00.000Z",
+      });
+
+      expect(mockGamificationProjection.markGamificationStale).toHaveBeenCalledWith(
+        userId,
+        true,
+        expect.anything(),
+      );
+      expect(mockGamificationProjection.scheduleGamificationReconciliation).toHaveBeenCalledWith(
+        userId,
+        sessionId,
+        true,
+      );
     });
 
     it("publishes a session when completion makes it feed-visible", async () => {
@@ -525,9 +568,6 @@ describe("Sessions Service", () => {
       mockSessionsRepo.getSessionById.mockResolvedValue(inProgressSession);
       mockSessionsRepo.updateSession.mockResolvedValue(1);
       mockSessionsRepo.getSessionWithDetails.mockResolvedValue(mockUpdated);
-      mockPointsService.awardPointsForSession.mockResolvedValue({
-        pointsAwarded: 100,
-      });
       mockPublicationService.reconcileSessionPublication.mockResolvedValue(undefined);
 
       await sessionsService.updateOne(userId, sessionId, { status: "completed" });
@@ -641,16 +681,22 @@ describe("Sessions Service", () => {
       mockSessionsRepo.getSessionById.mockResolvedValue(existingSession);
       mockSessionsRepo.updateSession.mockResolvedValue(1);
       mockSessionsRepo.getSessionWithDetails.mockResolvedValue(mockUpdated);
-      mockPointsService.awardPointsForSession.mockResolvedValue({
-        pointsAwarded: 100,
-      });
 
       await sessionsService.updateOne(userId, sessionId, {
         status: "completed",
         completed_at: "2024-01-01T00:00:00Z",
       });
 
-      expect(mockPointsService.awardPointsForSession).toHaveBeenCalled();
+      expect(mockGamificationProjection.markGamificationStale).toHaveBeenCalledWith(
+        userId,
+        false,
+        expect.anything(),
+      );
+      expect(mockGamificationProjection.scheduleGamificationReconciliation).toHaveBeenCalledWith(
+        userId,
+        sessionId,
+        false,
+      );
     });
 
     it("should handle status transition to in_progress with existing started_at", async () => {
@@ -746,7 +792,7 @@ describe("Sessions Service", () => {
       expect(mockSessionsRepo.refreshSessionSummary).toHaveBeenCalled();
     });
 
-    it("should award points when status is already completed but points are null", async () => {
+    it("does not rescore a completed session for metadata-only edits", async () => {
       const completedSession: Session = {
         ...existingSession,
         status: "completed",
@@ -761,13 +807,25 @@ describe("Sessions Service", () => {
       mockSessionsRepo.getSessionById.mockResolvedValue(completedSession);
       mockSessionsRepo.updateSession.mockResolvedValue(1);
       mockSessionsRepo.getSessionWithDetails.mockResolvedValue(mockUpdated);
-      mockPointsService.awardPointsForSession.mockResolvedValue({
-        pointsAwarded: 100,
-      });
 
       await sessionsService.updateOne(userId, sessionId, { title: "Updated" });
 
-      expect(mockPointsService.awardPointsForSession).toHaveBeenCalled();
+      expect(mockGamificationProjection.markGamificationStale).not.toHaveBeenCalled();
+      expect(mockGamificationProjection.scheduleGamificationReconciliation).not.toHaveBeenCalled();
+    });
+
+    it("requires reopen before correcting a completed workout", async () => {
+      const completedSession: Session = {
+        ...existingSession,
+        status: "completed",
+        completed_at: new Date().toISOString(),
+        points: 100,
+      };
+      mockSessionsRepo.getSessionById.mockResolvedValue(completedSession);
+
+      await expect(
+        sessionsService.updateOne(userId, sessionId, { calories: 450 }),
+      ).rejects.toThrow("Completed workout records must be reopened before correction.");
     });
 
     it("should handle update when affected rows is 0", async () => {
@@ -780,6 +838,72 @@ describe("Sessions Service", () => {
       await expect(
         sessionsService.updateOne(userId, sessionId, { title: "Updated" }),
       ).rejects.toThrow("SESSION_NOT_FOUND");
+    });
+  });
+
+  describe("reopenOne", () => {
+    it("reopens a completed session and forces full gamification reconciliation", async () => {
+      const completed: Session = {
+        id: sessionId,
+        owner_id: userId,
+        title: "Recorded workout",
+        planned_at: new Date().toISOString(),
+        status: "completed",
+        visibility: "private",
+        completed_at: "2026-09-23T12:00:00.000Z",
+        points: 120,
+      };
+      const reopened: SessionWithExercises = {
+        ...completed,
+        status: "in_progress",
+        completed_at: null,
+        points: null,
+        gamification_rebuild_required: true,
+        exercises: [],
+      } as SessionWithExercises;
+
+      mockSessionsRepo.getSessionById.mockResolvedValue(completed);
+      mockSessionsRepo.updateSession.mockResolvedValue(1);
+      mockSessionsRepo.getSessionWithDetails.mockResolvedValue(reopened);
+
+      const result = await sessionsService.reopenOne(userId, sessionId);
+
+      expect(result.status).toBe("in_progress");
+      expect(mockSessionsRepo.updateSession).toHaveBeenCalledWith(
+        sessionId,
+        userId,
+        expect.objectContaining({
+          status: "in_progress",
+          completed_at: null,
+          points: null,
+          gamification_rebuild_required: true,
+        }),
+        expect.anything(),
+      );
+      expect(mockGamificationProjection.markGamificationStale).toHaveBeenCalledWith(
+        userId,
+        true,
+        expect.anything(),
+      );
+      expect(mockGamificationProjection.scheduleGamificationReconciliation).toHaveBeenCalledWith(
+        userId,
+        undefined,
+        true,
+      );
+    });
+
+    it("rejects reopen for a session that is not completed", async () => {
+      mockSessionsRepo.getSessionById.mockResolvedValue({
+        id: sessionId,
+        owner_id: userId,
+        planned_at: new Date().toISOString(),
+        status: "in_progress",
+        visibility: "private",
+      });
+
+      await expect(sessionsService.reopenOne(userId, sessionId)).rejects.toThrow(
+        "Only completed sessions can be reopened.",
+      );
     });
   });
 

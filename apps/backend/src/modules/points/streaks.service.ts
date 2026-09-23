@@ -2,7 +2,11 @@ import { v4 as uuidv4 } from "uuid";
 import type { Knex } from "knex";
 import { db } from "../../db/connection.js";
 import { logger } from "../../config/logger.js";
-import { getCompletedSessionDatesInRange, insertPointsEvent } from "./points.repository.js";
+import {
+  findPointsEventBySource,
+  getCompletedSessionDatesInRange,
+  insertPointsEvent,
+} from "./points.repository.js";
 
 /**
  * Calculate the current workout streak for a user
@@ -96,6 +100,11 @@ export async function awardStreakBonus(
     return 0;
   }
 
+  const existing = await findPointsEventBySource(userId, "streak_bonus", sessionId, trx);
+  if (existing) {
+    return existing.points;
+  }
+
   // Record the streak bonus points
   const now = new Date();
   await insertPointsEvent(
@@ -137,18 +146,27 @@ export async function evaluateStreakBonus(
   userId: string,
   sessionId: string,
   completedAt: string | Date,
+  trx?: Knex.Transaction,
 ): Promise<{ streakLength: number; bonusPoints: number }> {
   const completedDate = typeof completedAt === "string" ? new Date(completedAt) : completedAt;
 
-  return db.transaction(async (trx) => {
+  const run = async (activeTrx: Knex.Transaction) => {
     // Calculate current streak
-    const streakLength = await calculateCurrentStreak(userId, completedDate, trx);
+    const streakLength = await calculateCurrentStreak(userId, completedDate, activeTrx);
 
     logger.debug({ userId, sessionId, streakLength }, "[streaks] Calculated current streak length");
 
     // Award bonus points if applicable
-    const bonusPoints = await awardStreakBonus(userId, sessionId, streakLength, completedDate, trx);
+    const bonusPoints = await awardStreakBonus(
+      userId,
+      sessionId,
+      streakLength,
+      completedDate,
+      activeTrx,
+    );
 
     return { streakLength, bonusPoints };
-  });
+  };
+
+  return trx ? run(trx) : db.transaction(run);
 }

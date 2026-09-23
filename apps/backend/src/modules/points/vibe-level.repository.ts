@@ -163,20 +163,27 @@ export async function getAllDomainVibeLevels(
 export async function getStaleDomainVibeLevels(
   cutoffIso: string,
   trx?: Knex.Transaction,
+  userId?: string,
 ): Promise<DomainVibeLevel[]> {
   const exec = executor(trx);
-  const rows = await exec<DomainVibeLevelRow>("user_domain_vibe_levels")
-    .where("last_updated_at", "<", cutoffIso)
-    .select<DomainVibeLevelRow[]>([
-      "user_id",
-      "domain_code",
-      "vibe_level",
-      "rating_deviation",
-      "volatility",
-      "last_updated_at",
-      "created_at",
-      "updated_at",
-    ]);
+  const query = exec<DomainVibeLevelRow>("user_domain_vibe_levels").where(
+    "last_updated_at",
+    "<",
+    cutoffIso,
+  );
+  if (userId) {
+    query.andWhere({ user_id: userId });
+  }
+  const rows = await query.select<DomainVibeLevelRow[]>([
+    "user_id",
+    "domain_code",
+    "vibe_level",
+    "rating_deviation",
+    "volatility",
+    "last_updated_at",
+    "created_at",
+    "updated_at",
+  ]);
 
   return rows.map(toDomainVibeLevel);
 }
@@ -188,9 +195,11 @@ export async function updateDomainVibeLevel(
   ratingDeviation: number,
   volatility: number,
   trx?: Knex.Transaction,
+  effectiveAt?: string,
 ): Promise<void> {
   const exec = executor(trx);
   const now = new Date().toISOString();
+  const lastUpdatedAt = effectiveAt ?? now;
 
   await exec("user_domain_vibe_levels")
     .insert({
@@ -199,7 +208,7 @@ export async function updateDomainVibeLevel(
       vibe_level: vibeLevel,
       rating_deviation: ratingDeviation,
       volatility,
-      last_updated_at: now,
+      last_updated_at: lastUpdatedAt,
       created_at: now,
       updated_at: now,
     })
@@ -208,7 +217,7 @@ export async function updateDomainVibeLevel(
       vibe_level: vibeLevel,
       rating_deviation: ratingDeviation,
       volatility,
-      last_updated_at: now,
+      last_updated_at: lastUpdatedAt,
       updated_at: now,
     });
 }

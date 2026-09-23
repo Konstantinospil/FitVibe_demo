@@ -8,6 +8,7 @@ import * as measurementsRepository from "../../../../apps/backend/src/modules/me
 import * as vibeLevelRepository from "../../../../apps/backend/src/modules/points/vibe-level.repository.js";
 import * as sessionsRepository from "../../../../apps/backend/src/modules/sessions/sessions.repository.js";
 import * as repository from "../../../../apps/backend/src/modules/vibeforms/vibeforms.repository.js";
+import * as gamificationProjection from "../../../../apps/backend/src/modules/points/gamification-projection.service.js";
 
 jest.mock("../../../../apps/backend/src/db/connection.js", () => ({
   db: jest.fn(),
@@ -16,11 +17,13 @@ jest.mock("../../../../apps/backend/src/modules/vibeforms/vibeforms.repository.j
 jest.mock("../../../../apps/backend/src/modules/measurements/measurements.repository.js");
 jest.mock("../../../../apps/backend/src/modules/points/vibe-level.repository.js");
 jest.mock("../../../../apps/backend/src/modules/sessions/sessions.repository.js");
+jest.mock("../../../../apps/backend/src/modules/points/gamification-projection.service.js");
 
 const mockedRepository = jest.mocked(repository);
 const mockedMeasurementsRepository = jest.mocked(measurementsRepository);
 const mockedVibeLevelRepository = jest.mocked(vibeLevelRepository);
 const mockedSessionsRepository = jest.mocked(sessionsRepository);
+const mockedGamificationProjection = jest.mocked(gamificationProjection);
 const userId = "c4f6d130-9696-4cb3-8d3e-f8f619ab804d";
 
 describe("Vibeform preference service", () => {
@@ -83,6 +86,7 @@ describe("Vibeform preference service", () => {
 describe("Vibeform profile service", () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockedGamificationProjection.ensureGamificationProjectionFresh.mockResolvedValue(undefined);
     mockedRepository.findVibeformPreferences.mockResolvedValue(null);
   });
 
