@@ -514,6 +514,42 @@ describe("Sessions Service", () => {
       );
     });
 
+    it("forces a full gamification rebuild when a corrected session is recompleted", async () => {
+      const correctedSession: Session = {
+        ...existingSession,
+        status: "in_progress",
+        started_at: new Date().toISOString(),
+        gamification_rebuild_required: true,
+      };
+
+      const mockUpdated: SessionWithExercises = {
+        ...correctedSession,
+        status: "completed",
+        completed_at: "2026-09-23T12:00:00.000Z",
+        exercises: [],
+      } as SessionWithExercises;
+
+      mockSessionsRepo.getSessionById.mockResolvedValue(correctedSession);
+      mockSessionsRepo.updateSession.mockResolvedValue(1);
+      mockSessionsRepo.getSessionWithDetails.mockResolvedValue(mockUpdated);
+
+      await sessionsService.updateOne(userId, sessionId, {
+        status: "completed",
+        completed_at: "2026-09-23T12:00:00.000Z",
+      });
+
+      expect(mockGamificationProjection.markGamificationStale).toHaveBeenCalledWith(
+        userId,
+        true,
+        expect.anything(),
+      );
+      expect(mockGamificationProjection.scheduleGamificationReconciliation).toHaveBeenCalledWith(
+        userId,
+        sessionId,
+        true,
+      );
+    });
+
     it("publishes a session when completion makes it feed-visible", async () => {
       const inProgressSession: Session = {
         ...existingSession,
