@@ -51,7 +51,7 @@ function buildOpaqueChallenge(): { requires2FA: true; pendingSessionId: string }
   };
 }
 
-async function performDummySuccessfulPath(userId: string, role: string): Promise<void> {
+function performDummySuccessfulPath(userId: string, role: string): void {
   const dummySessionId = uuidv4();
   const dummyRefresh = signRefresh({ sub: userId, sid: dummySessionId });
   crypto.createHash("sha256").update(dummyRefresh).digest("hex");
@@ -87,7 +87,7 @@ export async function login(
 
     if (!user || user.status !== "active") {
       await bcrypt.compare(dto.password, DUMMY_PASSWORD_HASH);
-      await performDummySuccessfulPath(uuidv4(), "athlete");
+      performDummySuccessfulPath(uuidv4(), "athlete");
       await recordLoginFailure({
         identifier,
         ipAddress,
@@ -100,7 +100,7 @@ export async function login(
 
     const passwordValid = await bcrypt.compare(dto.password, user.password_hash);
     if (!passwordValid) {
-      await performDummySuccessfulPath(user.id, user.role_code);
+      performDummySuccessfulPath(user.id, user.role_code);
       await recordLoginFailure({
         identifier,
         ipAddress,
