@@ -572,7 +572,15 @@ async function updateDomainVibeLevelForSessionInTransaction(
   );
 
   // Update database
-  await updateDomainVibeLevel(userId, domain, newRating, newRd, newVolatility, trx);
+  await updateDomainVibeLevel(
+    userId,
+    domain,
+    newRating,
+    newRd,
+    newVolatility,
+    trx,
+    session.completed_at ?? undefined,
+  );
 
   // Log change
   await insertVibeLevelChange(
