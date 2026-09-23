@@ -41,6 +41,10 @@ export async function up(knex: Knex): Promise<void> {
     table.timestamp("updated_at", { useTz: true }).notNullable().defaultTo(knex.fn.now());
   });
 
+  await knex.schema.alterTable("sessions", (table) => {
+    table.boolean("gamification_rebuild_required").notNullable().defaultTo(false);
+  });
+
   await knex.schema.alterTable("vibe_level_changes", (table) => {
     table.boolean("is_active").notNullable().defaultTo(true);
     table.timestamp("superseded_at", { useTz: true }).nullable();
@@ -61,6 +65,10 @@ export async function up(knex: Knex): Promise<void> {
 }
 
 export async function down(knex: Knex): Promise<void> {
+  await knex.schema.alterTable("sessions", (table) => {
+    table.dropColumn("gamification_rebuild_required");
+  });
+
   await knex.raw("DROP INDEX IF EXISTS badges_user_badge_active_unique_idx");
   await knex.raw(`
     CREATE UNIQUE INDEX badges_user_badge_unique_idx
