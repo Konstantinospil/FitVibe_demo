@@ -93,12 +93,18 @@ This decision extends the older Public/Link/Private visibility model: visibility
 - Completion is the primary operation. Once the source transaction commits successfully, a downstream gamification failure does not roll the session completion back.
 - Derived scoring must be retryable and idempotent.
 - Concurrent derivation attempts for the same completed scoring lifecycle must converge rather than create duplicate current scoring state or surface uniqueness races as normal application behavior.
-- A completed session's scoring-relevant workout facts are immutable until an explicit reopen transition.
-- Reopen moves the session back into an editable/unscored lifecycle state. Re-completion reconciles the derived scoring state for that session rather than stacking an unrelated second award.
+- A completed session is stable until an explicit reopen transition.
+- Reopen moves the session back into an editable/unscored lifecycle state and may be used to correct any recorded workout fact, including fields used by scoring.
+- Accuracy of the workout record takes precedence over preserving a previous gamification result. Gamification must reconcile to corrected authoritative workout data.
+- Re-completion reconciles the derived scoring state for that session rather than stacking an unrelated second award.
 - Historical points are not immutable accounting history. When scoring rules change, completed historical sessions may be recalculated and current points may be rewritten.
 - Persisted points/events must therefore be rebuildable from authoritative completed sessions plus scoring rules. If original calculation values or algorithm versions are retained, they are audit metadata rather than current authority.
 - Vibe Level and badge processing occurs after the source transaction commits and follows the same recoverable-derivation principle.
-- Phase 13 defines the exact recomputation strategy, concurrency behavior and audit-retention policy.
+- Concurrent completion/scoring attempts must converge on one current derived result and not expose duplicate-award uniqueness races.
+- Normal reopen authority belongs to the session owner; administrative intervention is a separate capability.
+- Scoring recalculation follows a hybrid model: affected projections may be marked stale and rebuilt asynchronously, while a known-stale value may be recalculated/reconciled on demand.
+- Previous calculated values and algorithm/version identifiers may be retained as audit metadata, while only the latest projection contributes to current gamification totals.
+- Points-history pagination must preserve complete ordered traversal with no gaps or duplicates, including rows sharing timestamps.
 
 ### 5. Authentication, lockouts, and sessions
 
@@ -254,3 +260,4 @@ A full transactional outbox is not mandated by this ADR. Phase 16 decides whethe
 | v1.1 | 2026-09-22 | Clarified bookmark as a durable user access grant (key-door capability); detailed revocation semantics deferred to Phase 12 | FitVibe Engineering / Product Owner |
 | v1.2 | 2026-09-22 | Finalized key-door precedence: unbookmark removes grant; no owner per-user bookmark revoke; link revoke preserves existing bookmark; block and deletion override access | FitVibe Engineering / Product Owner |
 | v1.3 | 2026-09-23 | Corrected gamification authority: completed sessions are primary truth; points/Vibe/badges are recomputable derived state and historical points may be rewritten | FitVibe Engineering / Product Owner |
+| v1.4 | 2026-09-23 | Prioritized workout-record correctness: reopened completed sessions may correct scoring-relevant data; defined hybrid recalculation, convergence and audit-retention policy | FitVibe Engineering / Product Owner |
