@@ -19,10 +19,13 @@ import type {
   SessionWithExercises,
 } from "./sessions.types";
 import { recomputeProgress } from "../plans/plans.service.js";
-import { awardPointsForSession } from "../points/points.service.js";
 import { insertAudit } from "../common/audit.util.js";
 import { HttpError } from "../../utils/http.js";
 import { reconcileSessionPublication } from "../feed/feed.publication.service.js";
+import {
+  markGamificationStale,
+  scheduleGamificationReconciliation,
+} from "../points/gamification-projection.service.js";
 import { ensureSessionInteractionAllowed, loadSessionOrThrow } from "../feed/feed.access.js";
 import {
   ensureNonNegativeInteger,
@@ -152,6 +155,22 @@ export async function updateOne(
     throw new HttpError(404, "E.SESSION.NOT_FOUND", "SESSION_NOT_FOUND");
   }
 
+  const correctionFieldsTouched =
+    dto.plan_id !== undefined ||
+    dto.planned_at !== undefined ||
+    dto.started_at !== undefined ||
+    dto.completed_at !== undefined ||
+    dto.calories !== undefined ||
+    dto.exercises !== undefined;
+
+  if (current.status === "completed" && correctionFieldsTouched) {
+    throw new HttpError(
+      409,
+      "E.SESSION.REOPEN_REQUIRED",
+      "Completed workout records must be reopened before correction.",
+    );
+  }
+
   const normalizedExercises = dto.exercises ? normalizeSessionExercises(dto.exercises) : null;
 
   const targetStatus = dto.status;
@@ -219,6 +238,9 @@ export async function updateOne(
     updates.deleted_at = targetDeletedAt;
   }
 
+  const completing = targetStatus === "completed" && current.status !== "completed";
+  const fullGamificationRebuild = completing && current.gamification_rebuild_required === true;
+
   await db.transaction(async (trx) => {
     if (dto.plan_id) {
       await ensurePlanExists(trx, dto.plan_id, userId);
@@ -231,6 +253,10 @@ export async function updateOne(
 
     if (normalizedExercises !== null) {
       await replaceSessionExercises(trx, id, normalizedExercises);
+    }
+
+    if (completing) {
+      await markGamificationStale(userId, fullGamificationRebuild, trx);
     }
   });
 
@@ -245,19 +271,12 @@ export async function updateOne(
   const visibilityChanged =
     dto.visibility !== undefined && current.visibility !== updated.visibility;
 
-  const shouldAwardPoints =
-    updated.status === "completed" &&
-    (statusChanged || current.points === null || current.points === undefined);
-
-  if (shouldAwardPoints) {
-    const awardResult = await awardPointsForSession(updated);
-    if (awardResult.pointsAwarded !== null) {
-      updated.points = awardResult.pointsAwarded;
-    }
-  }
-
   if (statusChanged || visibilityChanged) {
     await reconcileSessionPublication(userId, id, updated.status, updated.visibility);
+  }
+
+  if (completing) {
+    scheduleGamificationReconciliation(userId, id, fullGamificationRebuild);
   }
 
   if (statusChanged || exercisesTouched) {
@@ -322,4 +341,64 @@ export async function cancelOne(userId: string, id: string): Promise<void> {
   if (current.plan_id) {
     await recomputeProgress(userId, current.plan_id);
   }
+}
+
+
+export async function reopenOne(userId: string, id: string): Promise<SessionWithExercises> {
+  const current = await getSessionById(id, userId);
+  if (!current) {
+    throw new HttpError(404, "E.SESSION.NOT_FOUND", "SESSION_NOT_FOUND");
+  }
+  if (current.status !== "completed") {
+    throw new HttpError(
+      409,
+      "E.SESSION.REOPEN_NOT_COMPLETED",
+      "Only completed sessions can be reopened.",
+    );
+  }
+
+  await db.transaction(async (trx) => {
+    const affected = await updateSession(
+      id,
+      userId,
+      {
+        status: "in_progress",
+        completed_at: null,
+        points: null,
+        gamification_rebuild_required: true,
+      },
+      trx,
+    );
+    if (affected === 0) {
+      throw new HttpError(404, "E.SESSION.NOT_FOUND", "SESSION_NOT_FOUND");
+    }
+    await markGamificationStale(userId, true, trx);
+  });
+
+  const reopened = await getSessionWithDetails(id, userId);
+  if (!reopened) {
+    throw new HttpError(500, "E.SESSION.UPDATE_FAILED", "SESSION_UPDATE_FAILED");
+  }
+
+  await reconcileSessionPublication(userId, id, reopened.status, reopened.visibility);
+  await refreshSessionSummary();
+  scheduleGamificationReconciliation(userId, undefined, true);
+
+  await insertAudit({
+    actorUserId: userId,
+    entityType: "sessions",
+    action: "reopen",
+    entityId: id,
+    metadata: {
+      previous_status: current.status,
+      previous_completed_at: current.completed_at ?? null,
+      reason: "workout_record_correction",
+    },
+  });
+
+  if (current.plan_id) {
+    await recomputeProgress(userId, current.plan_id);
+  }
+
+  return reopened;
 }
