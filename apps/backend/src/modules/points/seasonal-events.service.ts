@@ -205,7 +205,12 @@ export async function evaluateSeasonalEvents(
       }
 
       // Count sessions completed during event period
-      const sessionCount = await countEventSessions(userId, event.startDate, event.endDate, activeTrx);
+      const sessionCount = await countEventSessions(
+        userId,
+        event.startDate,
+        event.endDate,
+        activeTrx,
+      );
 
       logger.debug(
         { userId, eventCode: event.code, sessionCount, required: event.minSessionsForBonus },
@@ -214,7 +219,14 @@ export async function evaluateSeasonalEvents(
 
       // Award completion bonus if threshold met
       if (sessionCount >= event.minSessionsForBonus) {
-        await awardEventCompletionBonus(userId, sessionId, event, sessionCount, completedDate, activeTrx);
+        await awardEventCompletionBonus(
+          userId,
+          sessionId,
+          event,
+          sessionCount,
+          completedDate,
+          activeTrx,
+        );
         bonusesAwarded++;
         totalPoints += event.bonusPoints;
       }
