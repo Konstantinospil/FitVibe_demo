@@ -257,7 +257,23 @@ Prevent completed-workout edits, points events, Vibe Levels and badges from drif
 
 ### Decision log
 
-_Pending Phase 13 interview._
+Accepted during the Phase 13 interview:
+
+1. **Completed sessions are the primary business fact.** Scoring-relevant fields become immutable after completion; changing them requires an explicit reopen transition.
+2. **Reopen does not casually delete or stack points.** Reopening moves the session back into an editable/unscored lifecycle state. Existing derived scoring records may remain for audit/history during the transition, but they no longer define current truth. Re-completion reconciles/replaces the derived scoring state for that session rather than adding an unrelated second award.
+3. **Historical points may be rewritten.** If the scoring algorithm changes, old completed sessions may be recalculated under the new rules. FitVibe does not treat a previously calculated points value as immutable accounting history.
+4. **Gamification is post-commit derivation.** Session completion commits first. Points, Vibe Levels and badges are ramifications of the completed workout and must be retryable/idempotent.
+5. **Completion is king.** A successfully completed session stays completed even if points/Vibe/badge derivation fails temporarily. Derivation failure is recoverable projection failure, not failure of the primary workout action.
+6. **Points are conceptually recomputable.** They may be stored/materialized for performance, history views and operational efficiency, but authoritative session/workout state plus scoring rules must be sufficient to rebuild them.
+
+Still to decide before implementation:
+
+- concurrent completion/scoring behavior;
+- exact list of scoring-relevant fields locked after completion;
+- reopen authorization;
+- whether recomputation after algorithm changes is eager/batch, lazy/on-read, or a hybrid;
+- whether stored point events retain the original calculation/version as audit metadata after a rewrite;
+- points-history pagination correctness is a mandatory technical fix unless explicitly rejected.
 
 ### Exit criteria
 
@@ -584,6 +600,10 @@ CI verifies the intended backend quality model without encouraging superficial c
 | 2026-09-22 | 12 | Unbookmarking removes the bookmark grant; the owner has no separate per-user bookmark-revoke control. | Keep the access model simple and avoid adding an undeveloped ACL feature. | ADR-010 v1.1 / ADR-029 v1.2 |
 | 2026-09-22 | 12 | Link revocation does not revoke an already-created bookmark. | The bookmark becomes its own durable grant after legitimate entry. | ADR-010 v1.1 / ADR-029 v1.2 |
 | 2026-09-22 | 12 | Blocking and session deletion override bookmark and other positive grants. | Define explicit stronger-denial semantics. | ADR-010 v1.1 / ADR-029 v1.2 |
+| 2026-09-23 | 13 | Completed session/workout state is authoritative; points/Vibe/badges are derived ramifications. | Preserve the workout as the primary product action and make gamification recoverable/recomputable. | ADR-029 v1.3 |
+| 2026-09-23 | 13 | Completed scoring inputs are immutable until explicit reopen. | Prevent source workout facts and derived gamification from silently diverging. | ADR-029 v1.3 |
+| 2026-09-23 | 13 | Historical points may be recalculated under newer scoring rules. | Points are a derived interpretation of completed workouts, not immutable accounting history. | ADR-029 v1.3 |
+| 2026-09-23 | 13 | Gamification derivation occurs after completion commit and may fail/retry independently. | Completion is the primary function; derivation is secondary and recoverable. | ADR-029 v1.3 |
 
 ## Phase completion record
 
