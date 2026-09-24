@@ -423,7 +423,7 @@ Remove the appearance of security where no enforceable end-to-end control exists
 
 ### Decision log
 
-_Pending Phase 15 interview._
+1. **Retain the email blacklist and make it authoritative.** Registration and any other flow that can establish or restore account access must consult the blacklist. The control must fail closed if authoritative blacklist state cannot be read; database/schema errors may not be interpreted as "not blacklisted". The existing admin/backoffice blacklist feature remains supported rather than being removed.
 
 ### Exit criteria
 
