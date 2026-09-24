@@ -1,7 +1,7 @@
 # Backend Technical-Debt Reduction — Pass 2
 
 **Status:** Active  
-**Current phase:** Phase 15 — Remove ineffective security features  
+**Current phase:** Debt-Confrontation Gate — documentation reconciliation  
 **Branch:** `dev`  
 **Started:** 2026-09-22
 
@@ -403,7 +403,7 @@ Concurrent attempts, multiple accounts per IP, 2FA flows and proxy/direct reques
 
 ## Phase 15 — Remove ineffective security features
 
-**Status:** Interviewing
+**Status:** Implemented; final verification deferred until the debt-confrontation gate is clean
 
 ### Objective
 
@@ -427,9 +427,88 @@ Remove the appearance of security where no enforceable end-to-end control exists
 2. **Encrypt TOTP secrets at rest.** TOTP secrets remain recoverable because verification requires the original secret, but plaintext database storage is not acceptable. Encryption/decryption must be encapsulated behind the authentication storage/service boundary, with key material supplied through the existing application secrets/configuration mechanism rather than persisted alongside the ciphertext. Existing plaintext secrets require a controlled migration to the encrypted representation; mixed-format compatibility, if temporarily required, must have an explicit removal condition.
 3. **Require step-up authentication for sensitive 2FA administration.** Regenerating backup codes requires recent password confirmation plus a current second factor. Disabling 2FA requires password confirmation plus a current second factor. Replacing or restarting 2FA setup requires the same recent step-up. Read-only 2FA status does not require step-up. A stolen authenticated session alone must not be sufficient to replace, weaken or regenerate recovery material for the second factor.
 
+### Implementation record
+
+Implemented and merged in PR #240 (merge `2b3844bbfe35b6c2d9fe283fc350e24e2c5a62b5`):
+
+- email blacklist moved to one authoritative fail-closed repository and enforced on registration, verification, reset/recovery and primary-email establishment flows;
+- persisted TOTP secrets use AES-256-GCM envelopes with application-supplied key material and a migration for existing plaintext secrets;
+- sensitive 2FA administration requires password plus current second factor;
+- first-time 2FA enrollment remains available while replacement/restart requires step-up;
+- frontend contracts and regression tests were updated with the backend behavior.
+
 ### Exit criteria
 
 Every security feature present in the backend is connected to a real flow and tested through externally observable behavior.
+
+Phase 15 is not declared finally Done until the debt-confrontation gate below is satisfied.
+
+---
+
+## Debt-Confrontation Gate — Phases 1–14 baseline and Phase 15 finalization
+
+**Status:** Documentation reconciliation in progress
+
+### Purpose
+
+Before extending the backend plan, restore a trustworthy baseline. This gate is deliberately ordered:
+
+1. documentation debt;
+2. implementation debt;
+3. zero-known-actionable-debt verification;
+4. implementation-creep review of the remaining phases;
+5. final Phase 15 sign-off;
+6. only then proceed to the next justified phase.
+
+“Zero debt” here means zero **known actionable debt attributable to or exposed by the completed work**, not the impossible claim that no future improvement exists.
+
+### Documentation reconciliation
+
+The pre-existing `DOC_CODE_DRIFT.md` is evidence, not current truth. Its 2026-09-01 snapshot predates Phases 11–15 and contains findings already repaired later (for example production TLS verification and parts of authentication hardening). Before code changes are selected from it, every relevant row must be revalidated against current `dev`.
+
+Documentation is considered reconciled only when:
+
+- shipped behavior is represented in requirements/TDD/ADR/runbook documentation;
+- stale claims are corrected rather than layered with contradictory notes;
+- long-lived architectural decisions from Phases 11–15 have an ADR or are explicitly covered by an existing ADR;
+- phase completion records point to actual PRs/commits and verification evidence;
+- backlog requirements are not mislabeled as shipped implementation debt.
+
+### Implementation-debt reconciliation
+
+After documentation is authoritative, review the current backend for:
+
+- TODO/FIXME/stubs/placeholders and obsolete compatibility paths;
+- skipped or weakened tests;
+- duplicated business rules and transitional duplicate implementations;
+- dependency cycles/layering violations;
+- transaction ownership and check-then-write races;
+- schema/migration/runtime contract drift;
+- broad catches and silent security/data fallbacks;
+- stale retry/sleep workarounds;
+- dead security controls;
+- Phase 11–15 residue.
+
+Fix only confirmed debt. Do not redesign healthy code or implement unrelated open product backlog.
+
+### Zero-debt exit gate
+
+The gate passes only when:
+
+- no known material doc/code contradiction remains in the reviewed Phase 1–15 surface;
+- no unexplained production TODO/stub/workaround remains from those phases;
+- no meaningful test is skipped or weakened merely to obtain green CI;
+- migrations, API contracts and documented invariants agree;
+- architectural decisions are traceable;
+- required CI gates pass on the final head.
+
+Any intentionally retained compromise must have an explicit rationale and owner/removal condition where applicable.
+
+### Implementation-creep review
+
+Only after the zero-debt gate passes, reassess Phases 16–22. A remaining phase is retained only if it solves a demonstrated correctness, security, privacy, operability or maintainability problem. Work whose principal justification is architectural sophistication, generic cleanup or hypothetical scale is reduced, merged into a smaller targeted phase, or removed.
+
+The debt-confrontation gate itself is not permission for broad refactoring. Changes remain surgical and fix-forward.
 
 ---
 
@@ -709,7 +788,8 @@ CI verifies the intended backend quality model without encouraging superficial c
 | 12 | Done | ADR-010 v1.2; ADR-029 v1.2 | PR #237; merge 2d8c8f734fc01ab3efb811d3f9cd5ad58538117d | Lighthouse rerun passed; backend/frontend/database/integration/API/security/accessibility/visual/coverage gates passed |
 | 13 | Done | ADR-029 v1.5 | PR #238; merge 75cb53722a5e0d91417ad8d6b4eca64fcc47fd24 | Final head f8ac1a228e4ce7f8272c7ad18ad543291a0b3bef; CI 35909692358 and CodeQL 35909692342 passed all required gates |
 | 14 | Done | ADR-002; this document | PR #239; merge `6438d7b25e79394bfb1c3827f0a792abb3cd4fdf` | CI 1018 and CodeQL 786 passed all required gates |
-| 15 | Interviewing | — | `phase-15-security-controls` | Repository review confirmed all three documented repair targets; strategic decisions pending |
+| 15 | Implemented; debt gate pending | this document | PR #240; merge `2b3844bbfe35b6c2d9fe283fc350e24e2c5a62b5` | Implementation merged; final sign-off waits for debt-confrontation gate |
+| Debt gate | Documentation reconciliation | this document | `debt-confrontation-phase` | Revalidate current documentation before selecting implementation repairs |
 | 16 | Not started | — | — | — |
 | 17 | Not started | — | — | — |
 | 18 | Not started | — | — | — |
