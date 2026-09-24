@@ -51,7 +51,6 @@ export async function getPointsHistoryHandler(req: Request, res: Response): Prom
   }
 
   await ensureGamificationProjectionFresh(userId);
-  await ensureGamificationProjectionFresh(userId);
   const history = await getPointsHistory(userId, parsed.data as PointsHistoryQuery);
   res.json(history);
 }
