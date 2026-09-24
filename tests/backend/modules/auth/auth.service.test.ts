@@ -332,6 +332,7 @@ describe("Auth Service", () => {
       const mockUser: AuthUserRecord = {
         id: userId,
         email,
+        primary_email: email,
         username,
         password_hash: "hash",
         email_verified: false,
@@ -357,6 +358,7 @@ describe("Auth Service", () => {
 
       await authService.verifyEmail(token);
 
+      expect(mockEmailBlacklist.isEmailBlacklisted).toHaveBeenCalledWith(email);
       expect(mockAuthRepo.consumeAuthToken).toHaveBeenCalled();
       expect(mockAuthRepo.updateUserStatus).toHaveBeenCalledWith(userId, "active");
     });
