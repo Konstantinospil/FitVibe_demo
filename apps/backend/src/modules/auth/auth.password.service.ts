@@ -15,6 +15,7 @@ import {
 } from "./auth.repository.js";
 import { assertPasswordPolicy } from "./passwordPolicy.js";
 import { issueAuthToken, TOKEN_TYPES } from "./auth.tokens.service.js";
+import { isEmailBlacklisted } from "../common/email-blacklist.repository.js";
 
 const PASSWORD_RESET_TTL = env.PASSWORD_RESET_TTL_SEC;
 const DUMMY_PASSWORD_HASH = bcrypt.hashSync("fitvibe-placeholder-password", 12);
@@ -24,8 +25,9 @@ export async function requestPasswordReset(email: string): Promise<{ resetToken?
 
   try {
     const normalized = email.toLowerCase();
+    const blocked = await isEmailBlacklisted(normalized);
     const user = await findUserByEmail(normalized);
-    if (!user || user.status !== "active") {
+    if (blocked || !user || user.status !== "active") {
       await bcrypt.compare("dummy-password", DUMMY_PASSWORD_HASH);
       return {};
     }
@@ -85,6 +87,11 @@ export async function resetPassword(token: string, newPassword: string): Promise
   if (!user) {
     throw new HttpError(404, "AUTH_USER_NOT_FOUND", "AUTH_USER_NOT_FOUND");
   }
+  if (!user.primary_email || await isEmailBlacklisted(user.primary_email)) {
+    await consumeAuthToken(record.id);
+    throw new HttpError(400, "AUTH_INVALID_TOKEN", "AUTH_INVALID_TOKEN");
+  }
+
   assertPasswordPolicy(newPassword, {
     email: user.primary_email ?? undefined,
     alias: user.username,
