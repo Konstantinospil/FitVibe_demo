@@ -10,7 +10,7 @@ title: "Authentication & Session Strategy — JWT (RS256) with Refresh Token Rot
 status: "Accepted"
 date: "2025-10-13"
 owners: ["Dr. Konstantinos Pilpilidis"]
-version: "1.1"
+version: "1.2"
 supersedes: []
 links:
 
@@ -74,6 +74,9 @@ Adopt **JWT access tokens (RS256)** with **rotating refresh tokens** and **slidi
 - Admin endpoints require elevated scopes and stricter rate limits.
 
 ### Security Controls
+
+- **Authoritative email deny-list:** an active blacklist entry prevents registration and any flow that can establish or restore account access. The blacklist repository is authoritative and fails closed: storage/schema/read errors are security failures, not equivalent to “not blacklisted”.
+- **Sensitive 2FA administration requires step-up:** disabling 2FA and regenerating recovery codes require the current password plus a current second factor. Replacing/restarting an existing 2FA enrollment requires the same proof; first-time enrollment does not require a factor that does not yet exist. Read-only 2FA status does not require step-up.
 
 - **Pre-authentication state machine:** password verification is not authentication success. For 2FA-protected accounts, tokens are issued only after the second factor succeeds.
 - **Enumeration resistance:** unknown identifiers and wrong passwords perform comparable work and return the same opaque pre-authentication response shape as a real 2FA-required password success. Password and second-factor verification are timing-normalized.
@@ -139,3 +142,4 @@ If critical issues arise (e.g., widespread RT reuse false-positives), **fallback
 
 - **1.0 (2025-10-13):** Initial acceptance.
 - **1.1 (2026-09-23):** Phase 14 authentication state-machine hardening: opaque pre-auth challenges, three-attempt second-factor exhaustion, separated password/spray reset semantics, failure-history decay, race serialization, timing normalization across both authentication stages, and explicit proxy-peer trust.
+- **1.2 (2026-09-24):** Phase 15 security-control closure: authoritative fail-closed email blacklist and password + current-factor step-up for sensitive 2FA administration.
