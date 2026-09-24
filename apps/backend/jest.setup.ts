@@ -10,6 +10,8 @@ process.env.CSRF_ALLOWED_ORIGINS = process.env.CSRF_ALLOWED_ORIGINS ?? "http://l
 process.env.EMAIL_ENABLED = process.env.EMAIL_ENABLED ?? "false";
 process.env.CLAMAV_ENABLED = process.env.CLAMAV_ENABLED ?? "false";
 process.env.VAULT_ENABLED = process.env.VAULT_ENABLED ?? "false";
+process.env.TOTP_ENCRYPTION_KEY =
+  process.env.TOTP_ENCRYPTION_KEY ?? "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef";
 
 const testJwtKeys = generateKeyPairSync("rsa", {
   modulusLength: 2048,
