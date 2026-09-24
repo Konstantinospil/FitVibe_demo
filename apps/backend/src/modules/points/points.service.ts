@@ -19,8 +19,6 @@ import {
 } from "./points.repository.js";
 import type {
   AwardPointsResult,
-  PointsCalculationContext,
-  PointsCalculationResult,
   PointsEventRecord,
   PointsHistoryQuery,
   PointsHistoryResult,
@@ -33,8 +31,6 @@ import { evaluateBadgesForSession } from "./badges.service.js";
 import { detectSessionDomains, updateDomainVibeLevelForSession } from "./vibe-level.service.js";
 
 export const POINTS_ALGORITHM_VERSION = "v2_vibe_lvl";
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const _LEGACY_ALGORITHM_VERSION = "v1"; // Reserved for future use
 const DEFAULT_RECENT_LIMIT = 10;
 const MAX_HISTORY_LIMIT = 100;
 
@@ -49,137 +45,6 @@ function decodeCursor(cursor: string): HistoryCursor {
 
 function encodeCursor(event: PointsEventRecord): string {
   return `${event.awarded_at}|${event.id}`;
-}
-
-function clamp(value: number, min: number, max: number): number {
-  return Math.min(Math.max(value, min), max);
-}
-
-function calculateAgeYears(dateOfBirth?: string | null): number | null {
-  if (!dateOfBirth) {
-    return null;
-  }
-  const dob = new Date(dateOfBirth);
-  if (Number.isNaN(dob.getTime())) {
-    return null;
-  }
-  const now = new Date();
-  let age = now.getUTCFullYear() - dob.getUTCFullYear();
-  const monthDiff = now.getUTCMonth() - dob.getUTCMonth();
-  if (monthDiff < 0 || (monthDiff === 0 && now.getUTCDate() < dob.getUTCDate())) {
-    age -= 1;
-  }
-  return age;
-}
-
-function getFitnessAdjustment(level?: string | null): number {
-  switch (level) {
-    case "beginner":
-      return 12;
-    case "rehab":
-      return 15;
-    case "advanced":
-      return 4;
-    case "elite":
-      return 2;
-    case "intermediate":
-      return 8;
-    default:
-      return 10;
-  }
-}
-
-function getAgeBonus(ageYears: number | null): number {
-  if (ageYears === null) {
-    return 6;
-  }
-  if (ageYears >= 55) {
-    return 15;
-  }
-  if (ageYears >= 45) {
-    return 12;
-  }
-  if (ageYears >= 30) {
-    return 8;
-  }
-  return 5;
-}
-
-function parseFrequency(frequency?: string | null): number | null {
-  if (!frequency) {
-    return null;
-  }
-  const match = frequency.match(/(\d+)/);
-  if (!match) {
-    return null;
-  }
-  const value = Number(match[1]);
-  return Number.isNaN(value) ? null : value;
-}
-
-function getFrequencyMultiplier(frequency?: string | null): number {
-  const sessionsPerWeek = parseFrequency(frequency);
-  if (!sessionsPerWeek || sessionsPerWeek <= 0) {
-    return 1.05;
-  }
-  if (sessionsPerWeek <= 2) {
-    return 1.12;
-  }
-  if (sessionsPerWeek <= 4) {
-    return 1.0;
-  }
-  return 0.94;
-}
-
-function estimateCalories(distanceMeters: number, averageRpe: number | null): number | null {
-  if (!distanceMeters) {
-    return averageRpe ? averageRpe * 18 : null;
-  }
-  const distanceKm = distanceMeters / 1000;
-  const base = distanceKm * 60;
-  if (!averageRpe) {
-    return base;
-  }
-  const modifier = 0.75 + averageRpe / 10;
-  return base * modifier;
-}
-
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-function _calculatePoints(context: PointsCalculationContext): PointsCalculationResult {
-  const caloriesRaw =
-    context.sessionCalories ?? estimateCalories(context.distanceMeters, context.averageRpe);
-  const calories = caloriesRaw === null ? null : clamp(caloriesRaw, 0, 1800);
-  const averageRpe = context.averageRpe ?? 5;
-  const boundedRpe = clamp(averageRpe, 3, 10);
-  const distanceKm = context.distanceMeters / 1000;
-  const ageYears = calculateAgeYears(context.profile.dateOfBirth);
-
-  const base = 42;
-  const caloriesComponent = calories ? calories * 0.05 : 0;
-  const rpeComponent = (boundedRpe - 3) * 5;
-  const distanceComponent = Math.min(distanceKm * 4, 60);
-  const fitnessAdjustment = getFitnessAdjustment(context.profile.fitnessLevelCode ?? null);
-  const ageBonus = getAgeBonus(ageYears);
-  const frequencyMultiplier = getFrequencyMultiplier(context.profile.trainingFrequency ?? null);
-
-  let total =
-    base + caloriesComponent + rpeComponent + distanceComponent + fitnessAdjustment + ageBonus;
-  total *= frequencyMultiplier;
-
-  const rounded = Math.round(total);
-  const points = clamp(rounded, 10, 400);
-
-  return {
-    points,
-    inputs: {
-      calories,
-      averageRpe: context.averageRpe,
-      distanceMeters: context.distanceMeters,
-      ageYears,
-      fitnessLevelCode: context.profile.fitnessLevelCode ?? null,
-      trainingFrequency: context.profile.trainingFrequency ?? null,
-    },
-  };
 }
 
 function computeSessionMetrics(
