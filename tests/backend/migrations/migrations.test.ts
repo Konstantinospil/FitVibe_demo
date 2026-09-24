@@ -348,6 +348,21 @@ describeWithTestDatabase("database migrations", () => {
       expect(indexes.rows.length).toBeGreaterThan(0);
     });
 
+    it("enforces current Phase 15 authentication schema invariants", async () => {
+      const twoFactorColumns = await client("user_2fa_settings").columnInfo();
+      expect(twoFactorColumns.totp_secret).toBeDefined();
+      expect(twoFactorColumns.is_enabled).toBeDefined();
+      expect(twoFactorColumns.is_verified).toBeDefined();
+
+      const blacklistColumns = await client("email_blacklist").columnInfo();
+      expect(blacklistColumns.email_hash).toBeDefined();
+
+      const challengeColumns = await client("auth_challenges").columnInfo();
+      expect(challengeColumns.failed_attempts).toBeDefined();
+      expect(challengeColumns.expires_at).toBeDefined();
+      expect(challengeColumns.consumed_at).toBeDefined();
+    });
+
     it("does not recreate dropped tables or users.username", async () => {
       expect(await client.schema.hasColumn("users", "username")).toBe(false);
       expect(await client.schema.hasTable("user_metrics")).toBe(false);
