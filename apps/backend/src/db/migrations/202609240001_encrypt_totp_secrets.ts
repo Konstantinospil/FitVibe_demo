@@ -56,8 +56,10 @@ export async function up(knex: Knex): Promise<void> {
   });
 }
 
-export async function down(): Promise<void> {
-  throw new Error(
-    "202609240001_encrypt_totp_secrets is intentionally irreversible: plaintext TOTP secrets are not restored",
+export function down(): Promise<void> {
+  return Promise.reject(
+    new Error(
+      "202609240001_encrypt_totp_secrets is intentionally irreversible: plaintext TOTP secrets are not restored",
+    ),
   );
 }
