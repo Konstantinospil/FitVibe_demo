@@ -487,7 +487,7 @@ The audit distinguishes an architectural decision from implementation structure.
 
 The targeted follow-up review is complete:
 
-1. **Phase 9 preference ownership/domain boundary — closed.** Current code confirms a dedicated preferences repository/service over `preferred_lang` and `units`; profile updates do not own these fields, and `locale` remains a separate user attribute. ADR-013 v1.1 now records the durable boundary.
+1. **Phase 9 preference ownership/domain boundary — closed.** Current code confirms a dedicated preferences repository/service over `preferred_lang` and `units`; profile updates do not own these fields, and `locale` remains a separate user attribute. ADR-030 v1.0 now records the durable boundary.
 2. **Phase 7/7.5 audit replay semantics — closed.** Current code confirms a database-backed `audit_outbox`, bounded retry for short actor-FK visibility races, replay using the original event ID, conflict-ignore idempotency, and deletion only after successful/duplicate-safe insertion. ADR-016 v1.1 records that contract and explicitly avoids overstating it as a transactional business/audit outbox.
 3. **Phase 15 — closed.** ADR-002 v1.2 and ADR-026 v1.1 now record the fail-closed blacklist, sensitive-2FA step-up and TOTP field-encryption decisions.
 
