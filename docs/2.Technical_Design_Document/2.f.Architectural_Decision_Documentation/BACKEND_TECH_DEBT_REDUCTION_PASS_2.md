@@ -462,6 +462,36 @@ Before extending the backend plan, restore a trustworthy baseline. This gate is 
 
 “Zero debt” here means zero **known actionable debt attributable to or exposed by the completed work**, not the impossible claim that no future improvement exists.
 
+### Phase-to-ADR traceability audit
+
+The audit distinguishes an architectural decision from implementation structure. A phase does not receive a new ADR merely because it changed code; it must either point to the ADR governing the durable decision or explicitly record that no new architectural decision was introduced.
+
+| Phase | Durable decision(s) | ADR coverage after audit | Documentation action |
+| --- | --- | --- | --- |
+| 1–3 | Early backend cleanup/typing/formatting work predates the numbered pass record available in this document. Current Git history does not provide evidence of a new durable architectural decision unique to those phase labels. | Existing baseline ADRs govern the architecture; no phase-specific ADR evidenced. | Do not invent retrospective decisions. Treat as **no new ADR evidenced** unless older phase records provide contrary evidence. |
+| 4 | Production security/bootstrap configuration: persistent JWT key requirements, environment-owned DB/runtime config, browser CSRF boundary, production AV startup requirement. | ADR-002, ADR-004, ADR-013, ADR-016 and ADR-026 cover the durable policies. | No new ADR required; PR #219 is implementation evidence. |
+| 5 | Canonical cross-cutting idempotency, audit writer/job handlers and runtime configuration rather than duplicate per-module implementations. | ADR-007, ADR-013 and ADR-016 cover the architectural direction. | No new ADR required; PR #220 is implementation evidence. |
+| 6 | Split large auth/user services into cohesive services while retaining Router → Service → Repository direction. | ADR-013. | No new ADR required; structural refactor within accepted modular-monolith architecture. |
+| 7/7.5 | Split feed/auth/user repositories/services, centralize shared contracts/configuration, durable audit replay; preserve dependency direction. | ADR-013, ADR-016 and existing queue/idempotency decisions. | No phase-specific ADR required unless later review finds the durable audit-outbox/replay semantics exceed ADR-016. **Revalidate during implementation-debt audit.** |
+| 8/8.1 | Isolate Vibe-level persistence and serialize concurrent mutation/decay to prevent stale overwrite. | ADR-029 now captures state ownership/concurrency principles, but it was created later. | Covered retrospectively by ADR-029; verify the exact Vibe authority wording remains sufficient. |
+| 9 | Preferences become a canonical object/endpoint separate from profile; persisted language preference remains distinct from locale. | No explicit ADR found that records this domain-boundary decision. | **Documentation gap:** add/update an ADR after confirming current implementation and product intent; do not infer semantics from commit names alone. |
+| 9.5 | Feed/session dependency cleanup uses direct narrow dependencies rather than cyclic service facades. | ADR-013. | No new ADR required; architecture-conformance refactor. |
+| 10 | Frontend monolithic API service split into domain APIs behind a compatibility barrel. | Backend ADR set does not govern this frontend module boundary directly. | Outside the backend debt gate unless a frontend architecture ADR claims a conflicting structure. |
+| 11 | One authority per important backend state; explicit consistency classes. | ADR-029. | Complete. |
+| 12 | Session visibility/access-grant model; bookmark is a durable access grant; performed data authority is `exercise_sets`. | ADR-010 + ADR-029. | Complete. |
+| 13 | Completed workout is primary fact; gamification is rebuildable post-commit derived state; explicit reopen/re-score semantics. | ADR-029. | Complete. |
+| 14 | Opaque pre-auth state machine, separated brute-force states, three-attempt second-factor exhaustion, trusted-proxy boundary. | ADR-002 v1.1 + ADR-029. | Complete. |
+| 15 | Authoritative fail-closed email blacklist; field-level encryption for recoverable TOTP seeds; step-up for sensitive 2FA administration. | ADR-002 v1.2 + ADR-026 v1.1 + ADR-029 general fail-closed rule. | **Gap fixed in debt-confrontation branch.** Previously these decisions lived primarily in the phase log/PR #240. |
+
+### Decisions found insufficiently documented
+
+The audit found two categories that require follow-up rather than invented retrospective prose:
+
+1. **Phase 9 preference ownership/domain boundary** is implemented in Git history but no explicit ADR was found for the durable separation of profile, locale and user preference state. This is a real documentation gap. The current code and requirements must be read before writing the ADR so that the ADR documents actual intended behavior rather than reconstructing intent from commit names.
+2. **Phase 7/7.5 durable audit replay/outbox semantics** may be more specific than ADR-016's generic append-only audit/logging decision. Revalidate the current audit implementation and failure semantics. If replay is merely an implementation mechanism satisfying ADR-016, no new ADR is needed; if it establishes a durable delivery/consistency contract, ADR-016 must be amended or a focused ADR created.
+
+Phase 15's missing architectural record has been repaired by ADR-002 v1.2 and ADR-026 v1.1. Phases 11–14 already have explicit ADR coverage. For Phases 1–8, 9.5 and the backend-relevant part of Phase 10, the available Git evidence does not justify manufacturing one ADR per phase: most changes conform to already accepted architecture rather than create a new architectural choice.
+
 ### Documentation reconciliation
 
 The pre-existing `DOC_CODE_DRIFT.md` is evidence, not current truth. Its 2026-09-01 snapshot predates Phases 11–15 and contains findings already repaired later (for example production TLS verification and parts of authentication hardening). Before code changes are selected from it, every relevant row must be revalidated against current `dev`.
