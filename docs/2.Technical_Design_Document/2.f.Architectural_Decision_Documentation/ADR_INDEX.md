@@ -31,8 +31,8 @@
 | ADR-025 | ADR-025: Lower Lighthouse CI Thresholds by 15%                                                    | Accepted |               | [ADR-025-lighthouse-ci-thresholds.md](./ADR-025-lighthouse-ci-thresholds.md)                               |
 | ADR-026 | ADR-026: Database Encryption (In Transit and At Rest)                                             | Accepted |               | [ADR-026-database-encryption.md](./ADR-026-database-encryption.md)                                         |
 | ADR-027 | Enforce Authentication Wall (pre-login access limited to auth and legal routes)                   | Accepted | 2025-10-26    | [ADR-027-auth-wall.md](./ADR-027-auth-wall.md)                                                             |
-| ADR-029 | Backend State Ownership and Consistency Invariants                                                   | Accepted | 2026-09-22    | [ADR-029-backend-state-ownership-and-consistency-invariants.md](./ADR-029-backend-state-ownership-and-consistency-invariants.md) |
 | ADR-028 | Pin Application Runtime to Node.js 24 LTS                                                         | Accepted | 2026-09-03    | [ADR-028-node-24-runtime.md](./ADR-028-node-24-runtime.md)                                                 |
+| ADR-029 | Backend State Ownership and Consistency Invariants                                                | Accepted | 2026-09-22    | [ADR-029-backend-state-ownership-and-consistency-invariants.md](./ADR-029-backend-state-ownership-and-consistency-invariants.md) |
 
 ## Numbering notes
 
@@ -41,3 +41,4 @@
 - ADR-026 is Database Encryption (formerly a duplicate ADR-023).
 - ADR-027 is the Auth Wall (formerly ADR-0021).
 - ADR-028 pins the application runtime to Node.js 24 LTS (CI, Docker, engines, `@types/node`).
+- ADR-029 records the authoritative backend state-ownership and consistency decisions used by Technical-Debt Reduction Pass 2.
