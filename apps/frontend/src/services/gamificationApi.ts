@@ -69,12 +69,12 @@ export interface UserBadgesResponse {
 }
 
 export async function getUserBadges(): Promise<UserBadgesResponse> {
-  const res = await apiClient.get<UserBadgesResponse>("/api/v1/badges");
+  const res = await apiClient.get<UserBadgesResponse>("/api/v1/points/badges/earned");
   return res.data;
 }
 
 export async function getBadgeCatalog(): Promise<BadgeCatalogResponse> {
-  const res = await apiClient.get<BadgeCatalogResponse>("/api/v1/badges/catalog");
+  const res = await apiClient.get<BadgeCatalogResponse>("/api/v1/points/badges");
   return res.data;
 }
 
