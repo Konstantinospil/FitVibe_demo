@@ -87,7 +87,7 @@ export async function resetPassword(token: string, newPassword: string): Promise
   if (!user) {
     throw new HttpError(404, "AUTH_USER_NOT_FOUND", "AUTH_USER_NOT_FOUND");
   }
-  if (!user.primary_email || await isEmailBlacklisted(user.primary_email)) {
+  if (!user.primary_email || (await isEmailBlacklisted(user.primary_email))) {
     await consumeAuthToken(record.id);
     throw new HttpError(400, "AUTH_INVALID_TOKEN", "AUTH_INVALID_TOKEN");
   }
