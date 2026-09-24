@@ -2,7 +2,9 @@
 
 **Created**: 2026-09-01  
 **Scope**: Product requirements, technical design, design system, policies. Excludes testing plans and security/review folders.  
-**Status**: Decisions filled 2026-09-01 from the qualitative analysis (running app is SSOT for shipped behavior; GOLD/legal leftover UI still `change-code`). **Decision** is the recommended direction, not yet applied to product docs or code except the cheap wiring slice called out in that analysis.
+**Status**: Historical snapshot under revalidation. The register was created before Backend Technical-Debt Reduction Pass 2 Phases 11–15 and must not be treated as a current implementation backlog without checking the live `dev` state. **Decision** records the 2026-09-01 recommendation, not an instruction to change current code.
+
+> **Debt-confrontation rule (2026-09-24):** documentation is reconciled before implementation debt is selected. Rows that describe intentionally open product scope are backlog, not technical debt. Rows already repaired by later phases must be marked superseded rather than reimplemented.
 
 This file is a decision log. Each row is a mismatch between documentation and the current codebase. **Suggested** is the original one-liner; **Decision** is the recommended correction: `update-doc` | `change-code` | `keep-both` | `wont-fix`.
 
@@ -268,6 +270,17 @@ Design-system tokens in `3.b` match `global.css` `--vibe-*`. No row.
 User-flow doc `3.c` (points on complete, progress export) matches code. No row.
 
 ---
+
+## 2026-09-24 revalidation notes
+
+The following snapshot findings are already superseded by later implementation and must not drive duplicate repair work:
+
+- **DRIFT-082** (production PostgreSQL certificate verification): current code owns SSL construction in `apps/backend/src/db/ssl-config.ts`; production enables certificate verification, while relaxed verification is limited to development or explicit configuration. The old row describes the pre-repair `db.config.ts` implementation.
+- **DRIFT-063** (two 2FA services): the current split has distinct responsibilities: login-stage verification and 2FA lifecycle/administration. Do not merge them solely because the historical AC dump called the split debt; only a demonstrated duplicated invariant or dependency problem justifies consolidation.
+- Phase 14 deliberately removed public lockout counters/reasons from the authentication surface to prevent credential/enrollment disclosure. Historical lockout-UI rows and ACs must therefore be reconciled to the opaque-challenge contract rather than used to restore those disclosures.
+- Phase 15 made the email blacklist authoritative/fail-closed, encrypted persisted TOTP secrets, and added step-up authentication to sensitive 2FA administration. Any earlier row or policy statement claiming those controls are absent requires revalidation against PR #240.
+
+Open feature scope such as planner activation/DnD, GPX/FIT import, offline sync, coach units, comprehensive observability channels, or automated backup scheduling remains product backlog unless a completed phase or accepted requirement explicitly claims it is shipped. The debt-confrontation pass will not implement such scope merely to make this historical register reach zero rows.
 
 ## Suggested review order
 
