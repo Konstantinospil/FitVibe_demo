@@ -10,7 +10,7 @@ title: "Authentication & Session Strategy — JWT (RS256) with Refresh Token Rot
 status: "Accepted"
 date: "2025-10-13"
 owners: ["Dr. Konstantinos Pilpilidis"]
-version: "1.0"
+version: "1.1"
 supersedes: []
 links:
 
@@ -75,6 +75,12 @@ Adopt **JWT access tokens (RS256)** with **rotating refresh tokens** and **slidi
 
 ### Security Controls
 
+- **Pre-authentication state machine:** password verification is not authentication success. For 2FA-protected accounts, tokens are issued only after the second factor succeeds.
+- **Enumeration resistance:** unknown identifiers and wrong passwords perform comparable work and return the same opaque pre-authentication response shape as a real 2FA-required password success. Password and second-factor verification are timing-normalized.
+- **Second-factor retry boundary:** a pending 2FA challenge is exhausted after three failed verification attempts. Recent exhausted challenges temporarily suppress issuance of a fresh real challenge.
+- **Brute-force separation:** identifier+IP password failures and aggregate IP spray evidence are separate. Full authentication clears only identifier+IP state; aggregate spray evidence survives success and decays on its own observation window.
+- **Temporary throttling:** password-failure history decays after inactivity; no permanent account lock is introduced. An active password/IP throttle suppresses real credential verification but still returns the opaque pre-authentication response, avoiding a throttle-based password oracle.
+- **Proxy trust:** forwarding headers are honored only when proxy mode is explicitly enabled and the immediate TCP peer is allowlisted.
 - **Rate limiting** on `/auth/*` and login by IP + account.
 - **Device/session management UI**: List & revoke sessions per device.
 - **Anomaly detection**: Alert on RT reuse, impossible travel, excessive refreshes.
@@ -132,3 +138,4 @@ If critical issues arise (e.g., widespread RT reuse false-positives), **fallback
 ## Change Log
 
 - **1.0 (2025-10-13):** Initial acceptance.
+- **1.1 (2026-09-23):** Phase 14 authentication state-machine hardening: opaque pre-auth challenges, three-attempt second-factor exhaustion, separated password/spray reset semantics, failure-history decay, race serialization, timing normalization across both authentication stages, and explicit proxy-peer trust.

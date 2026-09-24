@@ -79,6 +79,7 @@ const EnvSchema = z.object({
   BULLMQ_RATE_LIMIT_DURATION: z.coerce.number().default(60000),
   FEED_BLOCKED_KEYWORDS: z.string().optional(),
   TRUST_PROXY: z.string().optional(),
+  TRUSTED_PROXY_IPS: z.string().optional(),
 });
 
 const raw = EnvSchema.parse(process.env);
@@ -285,9 +286,10 @@ export const env = {
       email: raw.SMTP_FROM_EMAIL || raw.SMTP_USER,
     },
   },
-  // Trust X-Forwarded-For header when behind a reverse proxy (default: true in production)
-  // Set to false if not behind a proxy to prevent IP spoofing attacks
-  trustProxy: parseBoolean(raw.TRUST_PROXY, raw.NODE_ENV === "production"),
+  // Forwarded client IPs are trusted only when proxy mode is explicitly enabled
+  // and the immediate TCP peer is explicitly allowlisted.
+  trustProxy: parseBoolean(raw.TRUST_PROXY, false),
+  trustedProxyIps: parseList(raw.TRUSTED_PROXY_IPS),
 } as const;
 
 export const RSA_KEYS = {

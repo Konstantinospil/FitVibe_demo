@@ -35,7 +35,7 @@ describe("auth.login-attempt.service", () => {
 
     await expect(
       policy.assertLoginAllowed("user@example.com", "203.0.113.5", "req-1"),
-    ).rejects.toMatchObject({ status: 429, code: "AUTH_IP_LOCKED" });
+    ).resolves.toBe(false);
 
     expect(mockAudit.recordAuthAuditEvent).toHaveBeenCalledWith(
       null,
@@ -44,7 +44,7 @@ describe("auth.login-attempt.service", () => {
     );
   });
 
-  it("records account and IP failures atomically and preserves warning details", async () => {
+  it("records account and IP failures atomically without disclosing counters", async () => {
     const account = { attempt_count: 3, locked_until: null } as never;
     const ip = { total_attempt_count: 3, distinct_email_count: 1 } as never;
     mockDb.transaction.mockImplementation(async (callback) =>
@@ -52,12 +52,6 @@ describe("auth.login-attempt.service", () => {
     );
     mockBruteForce.recordFailedAttempt.mockResolvedValue(account);
     mockBruteForce.recordFailedAttemptByIP.mockResolvedValue(ip);
-    mockBruteForce.getRemainingAccountAttempts.mockReturnValue(2);
-    mockBruteForce.getRemainingIPAttempts.mockReturnValue({
-      remainingAttempts: 10,
-      remainingDistinctEmails: 9,
-    });
-
     await expect(
       policy.recordLoginFailure({
         identifier: "user@example.com",
@@ -66,15 +60,9 @@ describe("auth.login-attempt.service", () => {
         actorUserId: "11111111-1111-4111-8111-111111111111",
         requestId: "req-2",
       }),
-    ).rejects.toMatchObject({
-      status: 401,
-      code: "AUTH_INVALID_CREDENTIALS",
-      details: expect.objectContaining({
-        warning: true,
-        remainingAccountAttempts: 2,
-      }),
-    });
+    ).resolves.toBeUndefined();
 
+    expect(mockBruteForce.lockLoginAttemptIp).toHaveBeenCalled();
     expect(mockBruteForce.recordFailedAttempt).toHaveBeenCalled();
     expect(mockBruteForce.recordFailedAttemptByIP).toHaveBeenCalled();
     expect(mockAudit.recordAuthAuditEvent).toHaveBeenCalledWith(

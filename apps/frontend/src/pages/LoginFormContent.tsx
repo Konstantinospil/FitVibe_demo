@@ -7,22 +7,6 @@ import { useAuth } from "../contexts/AuthContext";
 import { login } from "../services/api";
 import { logger } from "../utils/logger.js";
 import { useRequiredFieldValidation } from "../hooks/useRequiredFieldValidation";
-import { LockoutTimer } from "../components/LockoutTimer";
-import { AttemptCounter } from "../components/AttemptCounter";
-
-type LockoutState = {
-  remainingSeconds: number;
-  lockoutType: "account" | "ip";
-};
-
-type AttemptWarningState = {
-  remainingAccountAttempts: number;
-  remainingIPAttempts: number;
-  remainingIPDistinctEmails: number;
-  accountAttemptCount: number;
-  ipTotalAttemptCount: number;
-  ipDistinctEmailCount: number;
-};
 
 const LoginFormContent: React.FC = () => {
   const { signIn } = useAuth();
@@ -44,8 +28,6 @@ const LoginFormContent: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [lockout, setLockout] = useState<LockoutState | null>(null);
-  const [attemptWarning, setAttemptWarning] = useState<AttemptWarningState | null>(null);
 
   const showPasswordLabel = t("auth.login.showPassword", {
     defaultValue: t("auth.showPassword", { defaultValue: "Show password" }),
@@ -65,8 +47,6 @@ const LoginFormContent: React.FC = () => {
 
     setIsSubmitting(true);
     setError(null);
-    setLockout(null);
-    setAttemptWarning(null);
 
     try {
       const response = await login({ email: email.trim(), password });
@@ -103,68 +83,26 @@ const LoginFormContent: React.FC = () => {
               error?: {
                 code?: string;
                 message?: string;
-                details?: {
-                  remainingSeconds?: number;
-                  lockoutType?: "account" | "ip";
-                  attemptCount?: number;
-                  totalAttemptCount?: number;
-                  distinctEmailCount?: number;
-                  maxAttempts?: number;
-                  warning?: boolean;
-                  remainingAccountAttempts?: number;
-                  remainingIPAttempts?: number;
-                  remainingIPDistinctEmails?: number;
-                  accountAttemptCount?: number;
-                  ipTotalAttemptCount?: number;
-                  ipDistinctEmailCount?: number;
-                };
+                details?: Record<string, unknown>;
               };
             };
           };
         };
         const errorCode = axiosError.response?.data?.error?.code;
         const errorMessage = axiosError.response?.data?.error?.message;
-        const errorDetails = axiosError.response?.data?.error?.details;
-
         if (errorCode === "TERMS_VERSION_OUTDATED") {
           void navigate("/terms-reacceptance", { replace: true });
           return;
         }
 
-        // Handle lockout errors with timer
-        if (
-          (errorCode === "AUTH_ACCOUNT_LOCKED" || errorCode === "AUTH_IP_LOCKED") &&
-          errorDetails?.remainingSeconds !== undefined &&
-          errorDetails?.lockoutType
-        ) {
-          setLockout({
-            remainingSeconds: errorDetails.remainingSeconds,
-            lockoutType: errorDetails.lockoutType,
-          });
-          setError(errorMessage || t("auth.lockout.locked", { defaultValue: "Account locked" }));
-          return;
-        }
+        const concealableAuthFailure =
+          errorCode === "AUTH_INVALID_CREDENTIALS" ||
+          errorCode === "AUTH_ACCOUNT_LOCKED" ||
+          errorCode === "AUTH_IP_LOCKED";
 
-        // Handle warning for approaching lockout
-        if (
-          errorCode === "AUTH_INVALID_CREDENTIALS" &&
-          errorDetails?.warning &&
-          errorDetails.remainingAccountAttempts !== undefined &&
-          errorDetails.remainingIPAttempts !== undefined &&
-          errorDetails.remainingIPDistinctEmails !== undefined
-        ) {
-          setAttemptWarning({
-            remainingAccountAttempts: errorDetails.remainingAccountAttempts,
-            remainingIPAttempts: errorDetails.remainingIPAttempts,
-            remainingIPDistinctEmails: errorDetails.remainingIPDistinctEmails,
-            accountAttemptCount: errorDetails.accountAttemptCount ?? 0,
-            ipTotalAttemptCount: errorDetails.ipTotalAttemptCount ?? 0,
-            ipDistinctEmailCount: errorDetails.ipDistinctEmailCount ?? 0,
-          });
-        }
-
-        // Show specific error message if available
-        if (errorMessage) {
+        if (concealableAuthFailure) {
+          setError(t("auth.login.error") || "Login failed. Please try again.");
+        } else if (errorMessage) {
           setError(errorMessage);
         } else if (errorCode) {
           const translatedError = t(`errors.${errorCode}`);
@@ -205,7 +143,7 @@ const LoginFormContent: React.FC = () => {
           value={email}
           onChange={(event) => setEmail(event.target.value)}
           autoComplete="username"
-          disabled={isSubmitting || Boolean(lockout)}
+          disabled={isSubmitting}
         />
       </label>
       <div className="form-label">
@@ -223,41 +161,25 @@ const LoginFormContent: React.FC = () => {
             value={password}
             onChange={(event) => setPassword(event.target.value)}
             autoComplete="current-password"
-            disabled={isSubmitting || Boolean(lockout)}
+            disabled={isSubmitting}
           />
           <button
             type="button"
             onClick={() => setShowPassword(!showPassword)}
             className="form-password-toggle"
             aria-label={showPassword ? hidePasswordLabel : showPasswordLabel}
-            disabled={isSubmitting || Boolean(lockout)}
+            disabled={isSubmitting}
           >
             {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
           </button>
         </div>
       </div>
-      {lockout ? (
-        <LockoutTimer
-          remainingSeconds={lockout.remainingSeconds}
-          lockoutType={lockout.lockoutType}
-          onExpired={() => {
-            setLockout(null);
-            setError(null);
-          }}
-        />
-      ) : null}
-      {attemptWarning ? <AttemptCounter {...attemptWarning} /> : null}
       {error ? (
         <div role="alert" className="form-error">
           {error}
         </div>
       ) : null}
-      <Button
-        type="submit"
-        fullWidth
-        isLoading={isSubmitting}
-        disabled={isSubmitting || Boolean(lockout)}
-      >
+      <Button type="submit" fullWidth isLoading={isSubmitting} disabled={isSubmitting}>
         {isSubmitting ? t("auth.login.submitting") : t("auth.login.submit")}
       </Button>
       <div className="form-links">

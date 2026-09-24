@@ -3,7 +3,10 @@ import bcrypt from "bcryptjs";
 import { v4 as uuidv4 } from "uuid";
 import { is2FAEnabled } from "./two-factor.service.js";
 import { normalizeAuthTiming } from "./timing.utils.js";
-import { createPending2FASession } from "./pending-2fa.repository.js";
+import {
+  createPending2FASession,
+  hasRecentSecondFactorThrottle,
+} from "./pending-2fa.repository.js";
 import {
   findUserByEmail,
   findUserByUsername,
@@ -32,11 +35,27 @@ import {
 } from "./auth.session-tokens.js";
 
 const DUMMY_PASSWORD_HASH = bcrypt.hashSync("fitvibe-placeholder-password", 12);
+const PENDING_2FA_TTL_MS = 5 * 60 * 1000;
+const SECOND_FACTOR_COOLDOWN_MS = 5 * 60 * 1000;
 
 function isValidUUID(value: string | null): boolean {
   return Boolean(
     value && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value),
   );
+}
+
+function buildOpaqueChallenge(): { requires2FA: true; pendingSessionId: string } {
+  return {
+    requires2FA: true,
+    pendingSessionId: uuidv4(),
+  };
+}
+
+function performDummySuccessfulPath(userId: string, role: string): void {
+  const dummySessionId = uuidv4();
+  const dummyRefresh = signRefresh({ sub: userId, sid: dummySessionId });
+  crypto.createHash("sha256").update(dummyRefresh).digest("hex");
+  signAccess({ sub: userId, role, sid: dummySessionId });
 }
 
 export async function login(
@@ -54,79 +73,80 @@ export async function login(
       pendingSessionId: string;
     }
 > {
-  // Start timing for enumeration protection (AC-1.12)
   const startTime = Date.now();
-
   const identifier = dto.email.trim().toLowerCase();
   const ipAddress = context.ip ?? "unknown";
   const userAgent = sanitizeUserAgent(context.userAgent);
 
   try {
-    await assertLoginAllowed(identifier, ipAddress, context.requestId ?? null);
+    const loginAllowed = await assertLoginAllowed(identifier, ipAddress, context.requestId ?? null);
+    if (!loginAllowed) {
+      await bcrypt.compare(dto.password, DUMMY_PASSWORD_HASH);
+      performDummySuccessfulPath(uuidv4(), "athlete");
+      return buildOpaqueChallenge();
+    }
 
     const user = identifier.includes("@")
       ? await findUserByEmail(identifier)
       : await findUserByUsername(identifier);
+
     if (!user || user.status !== "active") {
       await bcrypt.compare(dto.password, DUMMY_PASSWORD_HASH);
-
-      // Perform dummy operations to match timing of valid user path (AC-1.12)
-      // This prevents timing-based user enumeration
-      const dummySessionId = uuidv4();
-      const dummyUserId = uuidv4();
-
-      // Dummy JWT signing operations (same as valid path)
-      const dummyRefresh = signRefresh({ sub: dummyUserId, sid: dummySessionId });
-      crypto.createHash("sha256").update(dummyRefresh).digest("hex");
-      signAccess({ sub: dummyUserId, role: "athlete", sid: dummySessionId });
-
-      return await recordLoginFailure({
+      performDummySuccessfulPath(uuidv4(), "athlete");
+      await recordLoginFailure({
         identifier,
         ipAddress,
         userAgent,
         actorUserId: null,
         requestId: context.requestId ?? null,
       });
+      return buildOpaqueChallenge();
     }
 
-    const ok = await bcrypt.compare(dto.password, user.password_hash);
-    if (!ok) {
-      // Perform dummy operations to match timing of valid user path (AC-1.12)
-      const dummySessionId = uuidv4();
-      const dummyRefresh = signRefresh({ sub: user.id, sid: dummySessionId });
-      crypto.createHash("sha256").update(dummyRefresh).digest("hex");
-      signAccess({ sub: user.id, role: user.role_code, sid: dummySessionId });
-
-      return await recordLoginFailure({
+    const passwordValid = await bcrypt.compare(dto.password, user.password_hash);
+    if (!passwordValid) {
+      performDummySuccessfulPath(user.id, user.role_code);
+      await recordLoginFailure({
         identifier,
         ipAddress,
         userAgent,
         actorUserId: user.id,
         requestId: context.requestId ?? null,
       });
+      return buildOpaqueChallenge();
     }
 
-    await resetLoginFailures(identifier, ipAddress);
+    await recordAuditEvent(user.id, "auth.password_verified", {
+      ip: ipAddress,
+      requestId: context.requestId ?? null,
+    });
 
-    // Check if user has accepted current terms version
-    if (isTermsVersionOutdated(user.terms_version)) {
-      throw new HttpError(403, "TERMS_VERSION_OUTDATED", "TERMS_VERSION_OUTDATED");
-    }
-
-    // Check if user has 2FA enabled
     const has2FA = await is2FAEnabled(user.id);
     if (has2FA) {
-      // Create pending 2FA session (expires in 5 minutes)
+      const throttled = await hasRecentSecondFactorThrottle(
+        user.id,
+        context.ip ?? null,
+        new Date(Date.now() - SECOND_FACTOR_COOLDOWN_MS).toISOString(),
+      );
+
+      if (throttled) {
+        await recordAuditEvent(user.id, "auth.login_2fa_throttled", {
+          ip: ipAddress,
+          requestId: context.requestId ?? null,
+        });
+        return buildOpaqueChallenge();
+      }
+
       const pendingSessionId = uuidv4();
-      const now = new Date();
-      const expiresAt = new Date(now.getTime() + 5 * 60 * 1000); // 5 minutes
+      const expiresAt = new Date(Date.now() + PENDING_2FA_TTL_MS);
 
       await createPending2FASession({
         id: pendingSessionId,
         user_id: user.id,
+        identifier,
         expires_at: expiresAt.toISOString(),
         ip: context.ip ?? null,
-        user_agent: sanitizeUserAgent(context.userAgent),
+        user_agent: userAgent,
       });
 
       await recordAuditEvent(user.id, "auth.login_2fa_required", {
@@ -135,14 +155,18 @@ export async function login(
         requestId: context.requestId ?? null,
       });
 
-      // Return 2FA requirement
       return {
         requires2FA: true,
         pendingSessionId,
       };
     }
 
-    // No 2FA required - issue tokens immediately
+    if (isTermsVersionOutdated(user.terms_version)) {
+      throw new HttpError(403, "TERMS_VERSION_OUTDATED", "TERMS_VERSION_OUTDATED");
+    }
+
+    await resetLoginFailures(identifier, ipAddress);
+
     const sessionId = uuidv4();
     const issuedAtIso = new Date().toISOString();
     const sessionExpiresAt = nextSessionExpiry();
@@ -150,7 +174,7 @@ export async function login(
     await createAuthSession({
       jti: sessionId,
       user_id: user.id,
-      user_agent: sanitizeUserAgent(context.userAgent),
+      user_agent: userAgent,
       ip: context.ip ?? null,
       created_at: issuedAtIso,
       expires_at: sessionExpiresAt,
@@ -176,7 +200,7 @@ export async function login(
 
     await recordAuditEvent(user.id, "auth.login", {
       sessionId,
-      userAgent: sanitizeUserAgent(context.userAgent),
+      userAgent,
       ip: context.ip ?? null,
       requestId: context.requestId ?? null,
     });
@@ -191,11 +215,6 @@ export async function login(
       session: { id: sessionId, expiresAt: sessionExpiresAt },
     };
   } finally {
-    // Normalize timing to prevent user enumeration (AC-1.12)
     await normalizeAuthTiming(startTime);
   }
 }
-
-/**
- * Verify 2FA code and complete login (Stage 2 of 2-stage login)
- */
