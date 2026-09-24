@@ -193,6 +193,13 @@ describe("2-Stage Login Flow (AC-1.6)", () => {
       }
       expect(mockTwofaService.is2FAEnabled).toHaveBeenCalledWith("user-123");
       expect(mockPending2faRepo.createPending2FASession).toHaveBeenCalled();
+      const pendingSession = mockPending2faRepo.createPending2FASession.mock.calls[0]?.[0];
+      expect(new Date(pendingSession.expires_at).getTime() - Date.now()).toBeGreaterThanOrEqual(
+        29 * 60 * 1000,
+      );
+      expect(new Date(pendingSession.expires_at).getTime() - Date.now()).toBeLessThanOrEqual(
+        30 * 60 * 1000,
+      );
       expect(mockAuthRepo.createAuthSession).not.toHaveBeenCalled(); // No session created yet
     });
 
