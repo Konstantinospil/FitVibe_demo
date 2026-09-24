@@ -17,6 +17,9 @@ import type {
 import type { AuthUserRecord } from "../../../../apps/backend/src/modules/auth/auth.repository.js";
 
 // Mock dependencies
+jest.mock("../../../../apps/backend/src/modules/common/email-blacklist.repository.js", () => ({
+  isEmailBlacklisted: jest.fn().mockResolvedValue(false),
+}));
 jest.mock("../../../../apps/backend/src/modules/auth/auth.repository.js");
 jest.mock("../../../../apps/backend/src/modules/auth/two-factor.service.js");
 jest.mock("../../../../apps/backend/src/modules/auth/bruteforce.repository.js");
