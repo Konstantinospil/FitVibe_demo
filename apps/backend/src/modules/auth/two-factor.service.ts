@@ -47,9 +47,15 @@ export async function beginTwoFactorSetup(userId: string): Promise<{
   qrCode: string;
   backupCodes: string[];
 }> {
-  const existing = await db<User2FASettings>("user_2fa_settings").where({ user_id: userId }).first();
+  const existing = await db<User2FASettings>("user_2fa_settings")
+    .where({ user_id: userId })
+    .first();
   if (existing) {
-    throw new HttpError(409, "2FA_SETUP_RESTART_REQUIRES_STEP_UP", "Step-up authentication required");
+    throw new HttpError(
+      409,
+      "2FA_SETUP_RESTART_REQUIRES_STEP_UP",
+      "Step-up authentication required",
+    );
   }
 
   const email = await db("user_contacts")
@@ -76,8 +82,16 @@ export async function restartTwoFactorSetup(
   }
 
   return db.transaction(async (trx) => {
-    const settings = await trx<User2FASettings>("user_2fa_settings").where({ user_id: userId }).first();
-    await assertStepUp(userId, password, code, Boolean(settings?.is_enabled && settings?.is_verified), trx);
+    const settings = await trx<User2FASettings>("user_2fa_settings")
+      .where({ user_id: userId })
+      .first();
+    await assertStepUp(
+      userId,
+      password,
+      code,
+      Boolean(settings?.is_enabled && settings?.is_verified),
+      trx,
+    );
     return setupTwoFactor(userId, email.value, trx, true);
   });
 }
@@ -88,7 +102,11 @@ export async function enableTwoFactor(userId: string, code: string): Promise<voi
   });
 }
 
-export async function disableTwoFactor(userId: string, password: string, code: string): Promise<void> {
+export async function disableTwoFactor(
+  userId: string,
+  password: string,
+  code: string,
+): Promise<void> {
   await db.transaction(async (trx) => {
     await assertStepUp(userId, password, code, true, trx);
     await disable2FA(userId, trx);
@@ -146,12 +164,14 @@ export async function setupTwoFactor(
 
   if (existing) {
     // Update existing record
-    await exec("user_2fa_settings").where({ id: existing.id }).update({
-      totp_secret: encryptTotpSecret(secret),
-      is_enabled: false,
-      is_verified: false,
-      updated_at: now,
-    });
+    await exec("user_2fa_settings")
+      .where({ id: existing.id })
+      .update({
+        totp_secret: encryptTotpSecret(secret),
+        is_enabled: false,
+        is_verified: false,
+        updated_at: now,
+      });
   } else {
     // Create new record
     await exec("user_2fa_settings").insert({
@@ -281,10 +301,7 @@ export async function verify2FACode(
 /**
  * Disable 2FA after step-up has already succeeded.
  */
-export async function disable2FA(
-  userId: string,
-  trx?: Knex.Transaction,
-): Promise<boolean> {
+export async function disable2FA(userId: string, trx?: Knex.Transaction): Promise<boolean> {
   const exec = trx ?? db;
   const settings = await exec<User2FASettings>("user_2fa_settings")
     .where({ user_id: userId })
@@ -325,7 +342,9 @@ async function assertStepUp(
   requireSecondFactor: boolean,
   trx: Knex.Transaction,
 ): Promise<void> {
-  const user = await trx("users").where({ id: userId }).first<{ password_hash: string }>("password_hash");
+  const user = await trx("users")
+    .where({ id: userId })
+    .first<{ password_hash: string }>("password_hash");
   if (!user) {
     throw new HttpError(404, "E.USER.NOT_FOUND", "User not found");
   }
