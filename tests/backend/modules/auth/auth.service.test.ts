@@ -284,6 +284,7 @@ describe("Auth Service", () => {
       const pendingUser: AuthUserRecord = {
         id: userId,
         email,
+        primary_email: email,
         username,
         password_hash: "hash",
         email_verified: false,
@@ -637,6 +638,7 @@ describe("Auth Service", () => {
       const mockUser: AuthUserRecord = {
         id: userId,
         email,
+        primary_email: email,
         username,
         password_hash: "old_hash",
         email_verified: true,
