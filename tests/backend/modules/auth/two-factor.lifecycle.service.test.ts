@@ -526,11 +526,13 @@ describe("Two-Factor Lifecycle Service", () => {
         (queryBuilders["user_2fa_settings"] as { update: jest.Mock }).update,
       ).toHaveBeenCalledWith(
         expect.objectContaining({
-          totp_secret: "",
           is_enabled: false,
           is_verified: false,
         }),
       );
+      expect(
+        (queryBuilders["user_2fa_settings"] as { update: jest.Mock }).update,
+      ).not.toHaveBeenCalledWith(expect.objectContaining({ totp_secret: "" }));
     });
 
     it("rejects a wrong password before the second factor is evaluated", async () => {
