@@ -357,10 +357,10 @@ describeWithTestDatabase("database migrations", () => {
       const blacklistColumns = await client("email_blacklist").columnInfo();
       expect(blacklistColumns.email_hash).toBeDefined();
 
-      const challengeColumns = await client("auth_challenges").columnInfo();
+      const challengeColumns = await client("pending_2fa_sessions").columnInfo();
       expect(challengeColumns.failed_attempts).toBeDefined();
+      expect(challengeColumns.last_failed_at).toBeDefined();
       expect(challengeColumns.expires_at).toBeDefined();
-      expect(challengeColumns.consumed_at).toBeDefined();
     });
 
     it("does not recreate dropped tables or users.username", async () => {
