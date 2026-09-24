@@ -424,6 +424,7 @@ Remove the appearance of security where no enforceable end-to-end control exists
 ### Decision log
 
 1. **Retain the email blacklist and make it authoritative.** Registration and any other flow that can establish or restore account access must consult the blacklist. The control must fail closed if authoritative blacklist state cannot be read; database/schema errors may not be interpreted as "not blacklisted". The existing admin/backoffice blacklist feature remains supported rather than being removed.
+2. **Encrypt TOTP secrets at rest.** TOTP secrets remain recoverable because verification requires the original secret, but plaintext database storage is not acceptable. Encryption/decryption must be encapsulated behind the authentication storage/service boundary, with key material supplied through the existing application secrets/configuration mechanism rather than persisted alongside the ciphertext. Existing plaintext secrets require a controlled migration to the encrypted representation; mixed-format compatibility, if temporarily required, must have an explicit removal condition.
 
 ### Exit criteria
 
