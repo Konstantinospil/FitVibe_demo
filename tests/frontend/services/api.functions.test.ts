@@ -720,7 +720,7 @@ describe("API Service Functions", () => {
       const mockResponse = { success: true, message: "2FA disabled" };
       apiMock.onPost("/api/v1/auth/2fa/disable").reply(200, mockResponse);
 
-      const result = await disable2FA("password123");
+      const result = await disable2FA({ password: "password123", code: "123456" });
 
       expect(result).toEqual(mockResponse);
     });
