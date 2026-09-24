@@ -6,6 +6,7 @@ import {
   getPointsHistoryHandler,
   getPointsSummaryHandler,
   getBadgeCatalogHandler,
+  getUserBadgesHandler,
 } from "./points.controller.js";
 import { rateLimit } from "../common/rateLimiter.js";
 
@@ -13,6 +14,7 @@ export const pointsRouter = Router();
 
 pointsRouter.get("/", requireAuth, asyncHandler(getPointsSummaryHandler));
 pointsRouter.get("/history", requireAuth, asyncHandler(getPointsHistoryHandler));
+pointsRouter.get("/badges/earned", requireAuth, asyncHandler(getUserBadgesHandler));
 pointsRouter.get(
   "/badges",
   rateLimit("badges_catalog", 60, 60),
