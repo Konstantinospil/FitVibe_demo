@@ -88,6 +88,7 @@ describe("Two-Factor Lifecycle Service", () => {
     });
 
     it("fails setup when the primary email is missing", async () => {
+      queryBuilders["user_2fa_settings"] = createMockQueryBuilder(null);
       queryBuilders["user_contacts"] = createMockQueryBuilder(null);
 
       await expect(twoFactorService.beginTwoFactorSetup(userId)).rejects.toMatchObject({
