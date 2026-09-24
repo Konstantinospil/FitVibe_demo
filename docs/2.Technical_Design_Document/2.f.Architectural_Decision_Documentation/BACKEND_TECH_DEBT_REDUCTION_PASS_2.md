@@ -514,6 +514,7 @@ Documentation is considered reconciled only when:
 - removed duplicate calls to `ensureGamificationProjectionFresh` in both points summary and points-history handlers. Each request now performs one reconciliation check;
 - revalidated the historical points-repository TODO finding against the current branch: the TODO is no longer present and therefore is not current debt;
 - repository search found no backend `FIXME`, `it.skip`, `test.skip` or `describe.skip` matches in the indexed current code.
+- Phase 15 TOTP-at-rest revalidation found and repaired two invariant gaps: disabling 2FA no longer writes an empty plaintext sentinel into `totp_secret`, and the encryption migration now requires `TOTP_ENCRYPTION_KEY` even when all existing secrets are already encrypted. This prevents a replayed/partially configured deployment from silently passing the migration without the runtime key.
 
 This is an intermediate repair record, **not** a zero-debt declaration. Remaining high-signal implementation surfaces still require inspection before the exit gate can pass: Phase 15 security-control implementation/migration behavior, dependency/lazy-import cycles, broad catches/silent fallbacks, migration/runtime drift, and the historical earned-badges API finding.
 
