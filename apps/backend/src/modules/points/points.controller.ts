@@ -3,7 +3,7 @@ import { z } from "zod";
 
 import { getPointsHistory, getPointsSummary } from "./points.service.js";
 import type { PointsHistoryQuery } from "./points.types.js";
-import { getBadgeCatalog } from "./points.repository.js";
+import { getBadgeCatalog, getUserBadges } from "./points.repository.js";
 import { ensureGamificationProjectionFresh } from "./gamification-projection.service.js";
 
 const historyQuerySchema = z.object({
@@ -59,4 +59,15 @@ export async function getBadgeCatalogHandler(_req: Request, res: Response): Prom
   const catalog = await getBadgeCatalog();
   const badges = Array.from(catalog.values());
   res.json({ badges });
+}
+
+export async function getUserBadgesHandler(req: Request, res: Response): Promise<void> {
+  const userId = requireUser(req, res);
+  if (!userId) {
+    return;
+  }
+
+  await ensureGamificationProjectionFresh(userId);
+  const badges = await getUserBadges(userId);
+  res.json({ badges, total: badges.length });
 }
