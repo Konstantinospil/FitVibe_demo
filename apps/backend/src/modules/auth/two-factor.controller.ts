@@ -81,11 +81,7 @@ export async function setup(req: Request, res: Response, next: NextFunction): Pr
   }
 }
 
-export async function restartSetup(
-  req: Request,
-  res: Response,
-  next: NextFunction,
-): Promise<void> {
+export async function restartSetup(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     const userId = requireUserId(req);
     const parsed = RestartSetupSchema.safeParse(req.body);
