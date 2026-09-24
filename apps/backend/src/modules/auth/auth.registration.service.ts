@@ -28,6 +28,7 @@ import {
 import type { RegisterDTO, UserSafe } from "./auth.types.js";
 import { issueAuthToken, TOKEN_TYPES } from "./auth.tokens.service.js";
 import { toSafeUser } from "./auth.mapping.js";
+import { isEmailBlacklisted } from "../common/email-blacklist.repository.js";
 
 const EMAIL_VERIFICATION_TTL = env.EMAIL_VERIFICATION_TTL_SEC;
 
@@ -50,6 +51,9 @@ export async function register(
   try {
     const email = dto.email.toLowerCase();
     const alias = (dto.alias ?? dto.username ?? "").trim();
+    if (await isEmailBlacklisted(email)) {
+      throw new HttpError(403, "AUTH_EMAIL_BLOCKED", "AUTH_EMAIL_BLOCKED");
+    }
     assertPasswordPolicy(dto.password, { email, alias });
     const existingByEmail = await findUserByEmail(email);
     const existingByUsername = await findUserByUsername(alias);
@@ -141,6 +145,9 @@ export async function resendVerificationEmail(email: string): Promise<void> {
 
   try {
     const normalizedEmail = email.toLowerCase();
+    if (await isEmailBlacklisted(normalizedEmail)) {
+      return;
+    }
     const user = await findUserByEmail(normalizedEmail);
 
     if (user && user.status === "pending_verification") {
@@ -181,6 +188,12 @@ export async function verifyEmail(token: string): Promise<UserSafe> {
     if (new Date(record.expires_at).getTime() <= Date.now()) {
       await consumeAuthToken(record.id);
       throw new HttpError(410, "AUTH_TOKEN_EXPIRED", "AUTH_TOKEN_EXPIRED");
+    }
+
+    const preActivationUser = await findUserById(record.user_id);
+    if (!preActivationUser?.primary_email || await isEmailBlacklisted(preActivationUser.primary_email)) {
+      await consumeAuthToken(record.id);
+      throw new HttpError(400, "AUTH_INVALID_TOKEN", "AUTH_INVALID_TOKEN");
     }
 
     await consumeAuthToken(record.id);
