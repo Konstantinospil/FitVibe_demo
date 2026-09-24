@@ -779,6 +779,10 @@ CI verifies the intended backend quality model without encouraging superficial c
 | 2026-09-23 | 14 | Aggregate source-IP spray evidence survives successful account authentication and decays within a bounded observation window. | A successful guess must not erase evidence of cross-account password spraying; NAT/shared-IP state must not accumulate forever. | ADR-002 / PR #239 |
 | 2026-09-23 | 14 | A second-factor challenge is exhausted after three failed attempts and recent exhaustion temporarily suppresses challenge cycling. | Bound TOTP/backup-code guessing without permanent account lockout. | ADR-002 / PR #239 |
 | 2026-09-23 | 14 | Forwarded client IPs are accepted only from explicitly configured trusted proxy peers. | Prevent spoofed forwarding headers from bypassing IP-based security controls. | ADR-002 / PR #239 |
+| 2026-09-24 | 15 | Retain the email blacklist as an authoritative fail-closed access control. | A configured security control must not silently degrade or be bypassed by alternate account-access flows. | PR #240 / Phase 15 decision log |
+| 2026-09-24 | 15 | Encrypt persisted TOTP secrets with application-held key material. | TOTP verification requires recoverability, but plaintext persistence is not acceptable. | PR #240 / ADR-026 security context |
+| 2026-09-24 | 15 | Sensitive 2FA administration requires password plus current second factor. | A stolen authenticated session must not be sufficient to weaken or replace the second factor. | PR #240 / Phase 15 decision log |
+| 2026-09-24 | Program | Insert a debt-confrontation gate before final Phase 15 sign-off and later phases. | Documentation must become authoritative before implementation debt is selected; later phases must be justified against a clean baseline. | This document |
 
 ## Phase completion record
 
