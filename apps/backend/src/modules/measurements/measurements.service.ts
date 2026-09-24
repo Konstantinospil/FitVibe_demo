@@ -312,9 +312,9 @@ export async function createMeasurementAttribute(
     throw new HttpError(500, "MEASUREMENT_CREATE_FAILED", "Failed to create attribute");
   }
   return toAttribute(created);
-}
   });
 }
+
 export async function addMeasurementValue(
   category: "bio" | "perf",
   userId: string,
