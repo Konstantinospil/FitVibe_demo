@@ -6,6 +6,7 @@ import * as authRepository from "../../../../apps/backend/src/modules/auth/auth.
 import * as twofaService from "../../../../apps/backend/src/modules/auth/two-factor.service.js";
 import * as bruteforceRepo from "../../../../apps/backend/src/modules/auth/bruteforce.repository.js";
 import * as pending2faRepo from "../../../../apps/backend/src/modules/auth/pending-2fa.repository.js";
+import * as emailBlacklistRepository from "../../../../apps/backend/src/modules/common/email-blacklist.repository.js";
 import * as mailerService from "../../../../apps/backend/src/services/mailer.service.js";
 import { HttpError } from "../../../../apps/backend/src/utils/http.js";
 import type {
@@ -76,6 +77,7 @@ const mockAuthRepo = jest.mocked(authRepository);
 const mockTwofaService = jest.mocked(twofaService);
 const mockBruteforceRepo = jest.mocked(bruteforceRepo);
 const mockPending2faRepo = jest.mocked(pending2faRepo);
+const mockEmailBlacklist = jest.mocked(emailBlacklistRepository);
 const mockMailerService = jest.mocked(mailerService);
 const mockBcrypt = jest.mocked(bcrypt);
 const mockJwt = jest.mocked(jwt);
@@ -137,6 +139,7 @@ describe("Auth Service", () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    mockEmailBlacklist.isEmailBlacklisted.mockResolvedValue(false);
     process.env.EMAIL_ENABLED = "false";
     process.env.ACCESS_TOKEN_TTL = "3600";
     process.env.REFRESH_TOKEN_TTL = "604800";
@@ -164,6 +167,16 @@ describe("Auth Service", () => {
       password,
       terms_accepted: true,
     };
+
+    it("rejects an authoritative blacklisted email before account creation", async () => {
+      mockEmailBlacklist.isEmailBlacklisted.mockResolvedValue(true);
+
+      await expect(authService.register(validRegisterDto)).rejects.toMatchObject({
+        code: "AUTH_EMAIL_BLOCKED",
+        status: 403,
+      });
+      expect(mockAuthRepo.createUser).not.toHaveBeenCalled();
+    });
 
     it("should register a new user successfully", async () => {
       const mockUser: AuthUserRecord = {
