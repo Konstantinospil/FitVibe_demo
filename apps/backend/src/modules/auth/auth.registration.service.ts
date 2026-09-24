@@ -191,7 +191,10 @@ export async function verifyEmail(token: string): Promise<UserSafe> {
     }
 
     const preActivationUser = await findUserById(record.user_id);
-    if (!preActivationUser?.primary_email || await isEmailBlacklisted(preActivationUser.primary_email)) {
+    if (
+      !preActivationUser?.primary_email ||
+      (await isEmailBlacklisted(preActivationUser.primary_email))
+    ) {
       await consumeAuthToken(record.id);
       throw new HttpError(400, "AUTH_INVALID_TOKEN", "AUTH_INVALID_TOKEN");
     }
