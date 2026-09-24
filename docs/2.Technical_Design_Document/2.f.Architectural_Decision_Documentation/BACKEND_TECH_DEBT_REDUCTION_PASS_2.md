@@ -1,7 +1,7 @@
 # Backend Technical-Debt Reduction — Pass 2
 
 **Status:** Active  
-**Current phase:** Phase 15 — Remove ineffective security features  
+**Current phase:** Phase 16 — Transaction boundary cleanup  
 **Branch:** `dev`  
 **Started:** 2026-09-22
 
@@ -403,7 +403,7 @@ Concurrent attempts, multiple accounts per IP, 2FA flows and proxy/direct reques
 
 ## Phase 15 — Remove ineffective security features
 
-**Status:** Interviewing
+**Status:** Done
 
 ### Objective
 
@@ -435,7 +435,7 @@ Every security feature present in the backend is connected to a real flow and te
 
 ## Phase 16 — Transaction boundary cleanup
 
-**Status:** Not started
+**Status:** Implementing
 
 ### Objective
 
@@ -455,7 +455,12 @@ Make atomicity and post-commit side effects deliberate rather than accidental.
 
 ### Decision log
 
-_Pending Phase 16 interview._
+1. **Core domain data commits atomically.** Required writes that represent one domain operation share a database transaction and roll back together.
+2. **Audit is durable post-commit.** Audit emission must not roll back a successful business operation; the existing audit outbox is the recovery mechanism when direct persistence fails.
+3. **User-visible derived state follows correctness needs.** Same-database state that would otherwise leave the application inconsistent is transactional; cross-boundary derived work uses durable/retryable post-commit execution when loss matters.
+4. **Background jobs start after source commit.** Correctness-critical jobs must be durable and idempotent; maintenance jobs may use retryable best-effort execution.
+5. **Metrics and logging are best-effort post-commit.** Observability failures never invalidate a successful user action.
+6. **No generic event bus/outbox expansion.** Use ordinary database transactions first, the existing audit outbox where durability matters, and simple post-commit execution elsewhere.
 
 ### Exit criteria
 
@@ -709,8 +714,8 @@ CI verifies the intended backend quality model without encouraging superficial c
 | 12 | Done | ADR-010 v1.2; ADR-029 v1.2 | PR #237; merge 2d8c8f734fc01ab3efb811d3f9cd5ad58538117d | Lighthouse rerun passed; backend/frontend/database/integration/API/security/accessibility/visual/coverage gates passed |
 | 13 | Done | ADR-029 v1.5 | PR #238; merge 75cb53722a5e0d91417ad8d6b4eca64fcc47fd24 | Final head f8ac1a228e4ce7f8272c7ad18ad543291a0b3bef; CI 35909692358 and CodeQL 35909692342 passed all required gates |
 | 14 | Done | ADR-002; this document | PR #239; merge `6438d7b25e79394bfb1c3827f0a792abb3cd4fdf` | CI 1018 and CodeQL 786 passed all required gates |
-| 15 | Interviewing | — | `phase-15-security-controls` | Repository review confirmed all three documented repair targets; strategic decisions pending |
-| 16 | Not started | — | — | — |
+| 15 | Done | Phase 15 decision log | PR #240; merge `2b3844bbfe35b6c2d9fe283fc350e24e2c5a62b5` | CI 1034 and CodeQL 802 passed |
+| 16 | Implementing | Phase 16 decision log | `phase-16-transaction-boundaries` | Transaction and race cleanup in progress |
 | 17 | Not started | — | — | — |
 | 18 | Not started | — | — | — |
 | 19 | Not started | — | — | — |
