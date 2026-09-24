@@ -35,7 +35,7 @@ import {
 } from "./auth.session-tokens.js";
 
 const DUMMY_PASSWORD_HASH = bcrypt.hashSync("fitvibe-placeholder-password", 12);
-const PENDING_2FA_TTL_MS = 5 * 60 * 1000;
+const PENDING_2FA_TTL_MS = 30 * 60 * 1000;
 const SECOND_FACTOR_COOLDOWN_MS = 5 * 60 * 1000;
 
 function isValidUUID(value: string | null): boolean {
