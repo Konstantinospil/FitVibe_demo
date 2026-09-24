@@ -41,11 +41,23 @@ export async function up(knex: Knex): Promise<void> {
     .whereNot("totp_secret", "")
     .whereNot("totp_secret", "like", `${PREFIX}:%`);
 
-  if (rows.length === 0) {
+  const encryptedSecrets = await knex<{ id: string }>("user_2fa_settings")
+    .select("id")
+    .where("totp_secret", "like", `${PREFIX}:%`)
+    .limit(1);
+
+  if (rows.length === 0 && encryptedSecrets.length === 0) {
     return;
   }
 
+  // The runtime refuses plaintext secrets. Require the key whenever TOTP
+  // material exists, including when this migration is replayed after the
+  // secrets were already encrypted.
   const key = keyFromEnvironment();
+
+  if (rows.length === 0) {
+    return;
+  }
 
   await knex.transaction(async (trx) => {
     for (const row of rows) {
