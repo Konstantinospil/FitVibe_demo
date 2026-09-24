@@ -108,9 +108,11 @@ interface BadgeCatalogRow {
 }
 
 interface BadgeRow {
+  id: string;
   user_id: string;
   badge_type: string;
   is_active: boolean;
+  awarded_at: Date | string | number | null;
 }
 
 interface CompletedSessionRow {
@@ -342,6 +344,26 @@ export async function getUserBadgeCodes(
     .where({ user_id: userId, is_active: true })
     .select<BadgeRow[]>(["badge_type"]);
   return new Set(rows.map((row) => row.badge_type));
+}
+
+export async function getUserBadges(
+  userId: string,
+  trx?: Knex.Transaction,
+): Promise<Array<BadgeCatalogEntry & { id: string; earnedAt: string }>> {
+  const exec = executor(trx);
+  const rows = await exec<BadgeRow>("badges")
+    .where({ user_id: userId, is_active: true })
+    .select<BadgeRow[]>(["id", "badge_type", "awarded_at"])
+    .orderBy("awarded_at", "desc");
+  const catalog = await getBadgeCatalog(trx);
+
+  return rows.flatMap((row) => {
+    const definition = catalog.get(row.badge_type);
+    if (!definition) {
+      return [];
+    }
+    return [{ ...definition, id: row.id, earnedAt: toIsoString(row.awarded_at) }];
+  });
 }
 
 export async function insertBadgeAward(
