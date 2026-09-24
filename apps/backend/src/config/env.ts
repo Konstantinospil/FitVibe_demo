@@ -80,6 +80,7 @@ const EnvSchema = z.object({
   FEED_BLOCKED_KEYWORDS: z.string().optional(),
   TRUST_PROXY: z.string().optional(),
   TRUSTED_PROXY_IPS: z.string().optional(),
+  TOTP_ENCRYPTION_KEY: z.string().optional(),
 });
 
 const raw = EnvSchema.parse(process.env);
@@ -290,6 +291,7 @@ export const env = {
   // and the immediate TCP peer is explicitly allowlisted.
   trustProxy: parseBoolean(raw.TRUST_PROXY, false),
   trustedProxyIps: parseList(raw.TRUSTED_PROXY_IPS),
+  totpEncryptionKey: raw.TOTP_ENCRYPTION_KEY,
 } as const;
 
 export const RSA_KEYS = {

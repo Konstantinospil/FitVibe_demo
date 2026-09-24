@@ -95,12 +95,18 @@ export const SecuritySettings: React.FC<SecuritySettingsProps> = ({ onUpdate }) 
     if (!password) {
       return;
     }
+    const code = prompt(
+      t("settings.security.enter2FAToDisable") || "Enter your current 2FA or backup code:",
+    );
+    if (!code) {
+      return;
+    }
 
     setIsDisabling2FA(true);
     setError(null);
 
     try {
-      await disable2FA(password);
+      await disable2FA({ password, code });
       setTwoFactorEnabled(false);
       showToast({
         variant: "success",
@@ -113,7 +119,7 @@ export const SecuritySettings: React.FC<SecuritySettingsProps> = ({ onUpdate }) 
     } catch {
       setError(
         t("settings.security.2FADisableFailed") ||
-          "Failed to disable 2FA. Please check your password.",
+          "Failed to disable 2FA. Check your password and current 2FA code.",
       );
     } finally {
       setIsDisabling2FA(false);

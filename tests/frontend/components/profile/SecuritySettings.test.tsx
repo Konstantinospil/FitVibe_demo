@@ -112,12 +112,12 @@ describe("SecuritySettings", () => {
 
   it("disables 2FA when already enabled", async () => {
     get2FAStatus.mockResolvedValue({ enabled: true, backupCodesRemaining: 8 });
-    vi.spyOn(window, "prompt").mockReturnValue("secret");
+    vi.spyOn(window, "prompt").mockReturnValueOnce("secret").mockReturnValueOnce("123456");
     render(<SecuritySettings />);
 
     expect(await screen.findByText("settings.security.2FAEnabled")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "settings.security.disable2FA" }));
-    await waitFor(() => expect(disable2FA).toHaveBeenCalledWith("secret"));
+    await waitFor(() => expect(disable2FA).toHaveBeenCalledWith({ password: "secret", code: "123456" }));
   });
 
   it("ignores 2FA disable when the password prompt is cancelled", async () => {

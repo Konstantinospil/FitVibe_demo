@@ -1,7 +1,7 @@
 # Backend Technical-Debt Reduction — Pass 2
 
 **Status:** Active  
-**Current phase:** Phase 14 — Authentication state-machine repair  
+**Current phase:** Phase 15 — Remove ineffective security features  
 **Branch:** `dev`  
 **Started:** 2026-09-22
 
@@ -344,7 +344,7 @@ The session lifecycle and scoring lifecycle cannot silently diverge; pagination 
 
 ## Phase 14 — Authentication state-machine repair
 
-**Status:** Verifying
+**Status:** Done
 
 ### Objective
 
@@ -403,7 +403,7 @@ Concurrent attempts, multiple accounts per IP, 2FA flows and proxy/direct reques
 
 ## Phase 15 — Remove ineffective security features
 
-**Status:** Not started
+**Status:** Interviewing
 
 ### Objective
 
@@ -423,7 +423,9 @@ Remove the appearance of security where no enforceable end-to-end control exists
 
 ### Decision log
 
-_Pending Phase 15 interview._
+1. **Retain the email blacklist and make it authoritative.** Registration and any other flow that can establish or restore account access must consult the blacklist. The control must fail closed if authoritative blacklist state cannot be read; database/schema errors may not be interpreted as "not blacklisted". The existing admin/backoffice blacklist feature remains supported rather than being removed.
+2. **Encrypt TOTP secrets at rest.** TOTP secrets remain recoverable because verification requires the original secret, but plaintext database storage is not acceptable. Encryption/decryption must be encapsulated behind the authentication storage/service boundary, with key material supplied through the existing application secrets/configuration mechanism rather than persisted alongside the ciphertext. Existing plaintext secrets require a controlled migration to the encrypted representation; mixed-format compatibility, if temporarily required, must have an explicit removal condition.
+3. **Require step-up authentication for sensitive 2FA administration.** Regenerating backup codes requires recent password confirmation plus a current second factor. Disabling 2FA requires password confirmation plus a current second factor. Replacing or restarting 2FA setup requires the same recent step-up. Read-only 2FA status does not require step-up. A stolen authenticated session alone must not be sufficient to replace, weaken or regenerate recovery material for the second factor.
 
 ### Exit criteria
 
@@ -706,8 +708,8 @@ CI verifies the intended backend quality model without encouraging superficial c
 | 11 | Done | ADR-029 | 8185deea299be81a02bd891bf334e2e181c3500c | Invariant map documented; no production-code change required |
 | 12 | Done | ADR-010 v1.2; ADR-029 v1.2 | PR #237; merge 2d8c8f734fc01ab3efb811d3f9cd5ad58538117d | Lighthouse rerun passed; backend/frontend/database/integration/API/security/accessibility/visual/coverage gates passed |
 | 13 | Done | ADR-029 v1.5 | PR #238; merge 75cb53722a5e0d91417ad8d6b4eca64fcc47fd24 | Final head f8ac1a228e4ce7f8272c7ad18ad543291a0b3bef; CI 35909692358 and CodeQL 35909692342 passed all required gates |
-| 14 | Verifying | ADR-002; this document | PR #239; feature branch `phase-14-auth-state-machine` | Implementation and targeted regression fixes complete; final CI verification in progress |
-| 15 | Not started | — | — | — |
+| 14 | Done | ADR-002; this document | PR #239; merge `6438d7b25e79394bfb1c3827f0a792abb3cd4fdf` | CI 1018 and CodeQL 786 passed all required gates |
+| 15 | Interviewing | — | `phase-15-security-controls` | Repository review confirmed all three documented repair targets; strategic decisions pending |
 | 16 | Not started | — | — | — |
 | 17 | Not started | — | — | — |
 | 18 | Not started | — | — | — |

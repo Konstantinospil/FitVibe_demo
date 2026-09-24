@@ -26,6 +26,7 @@ import { HttpError } from "../../utils/http.js";
 import { insertAudit } from "../common/audit.util.js";
 import { primaryEmail, toUserDetail, toUserSafe } from "./users.mapping.js";
 import { ensureUsernameAvailable, ensureUsernameFormat } from "./users.username.js";
+import { isEmailBlacklisted } from "../common/email-blacklist.repository.js";
 import {
   scheduleAccountDeletion,
   executeAccountDeletion,
@@ -81,6 +82,9 @@ export async function createUser(
   }
   if (!email) {
     throw new HttpError(422, "USER_EMAIL_INVALID", "USER_EMAIL_INVALID");
+  }
+  if (await isEmailBlacklisted(email)) {
+    throw new HttpError(403, "USER_EMAIL_BLOCKED", "USER_EMAIL_BLOCKED");
   }
   if (!roleCode) {
     throw new HttpError(422, "USER_ROLE_INVALID", "USER_ROLE_INVALID");

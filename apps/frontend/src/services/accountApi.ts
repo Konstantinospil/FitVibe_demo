@@ -471,11 +471,35 @@ export async function verify2FA(code: string): Promise<{ success: boolean; messa
   return res.data;
 }
 
-export async function disable2FA(password: string): Promise<{ success: boolean; message: string }> {
+export interface TwoFactorStepUpRequest {
+  password: string;
+  code: string;
+}
+
+export async function disable2FA(
+  payload: TwoFactorStepUpRequest,
+): Promise<{ success: boolean; message: string }> {
   const res = await apiClient.post<{ success: boolean; message: string }>(
     "/api/v1/auth/2fa/disable",
-    { password },
+    payload,
   );
+  return res.data;
+}
+
+export async function regenerate2FABackupCodes(
+  payload: TwoFactorStepUpRequest,
+): Promise<{ message: string; backupCodes: string[] }> {
+  const res = await apiClient.post<{ message: string; backupCodes: string[] }>(
+    "/api/v1/auth/2fa/backup-codes/regenerate",
+    payload,
+  );
+  return res.data;
+}
+
+export async function restart2FASetup(
+  payload: TwoFactorStepUpRequest,
+): Promise<TwoFactorSetupResponse> {
+  const res = await apiClient.post<TwoFactorSetupResponse>("/api/v1/auth/2fa/setup", payload);
   return res.data;
 }
 

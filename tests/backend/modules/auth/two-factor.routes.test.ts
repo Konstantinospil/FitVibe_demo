@@ -17,6 +17,7 @@ jest.mock("../../../../apps/backend/src/utils/async-handler.js", () => ({
 
 jest.mock("../../../../apps/backend/src/modules/auth/two-factor.controller.js", () => ({
   setup: jest.fn(),
+  restartSetup: jest.fn(),
   enable: jest.fn(),
   disable: jest.fn(),
   verify: jest.fn(),
@@ -35,6 +36,16 @@ describe("Two-Factor Authentication Routes", () => {
       (layer) =>
         layer.route?.path === "/setup" &&
         (layer.route as { methods?: { get?: boolean } })?.methods?.get,
+    );
+    expect(setupRoute).toBeDefined();
+  });
+
+  it("should register POST /setup route for step-up replacement", () => {
+    const routes = twoFactorRouter.stack;
+    const setupRoute = routes.find(
+      (layer) =>
+        layer.route?.path === "/setup" &&
+        (layer.route as { methods?: { post?: boolean } })?.methods?.post,
     );
     expect(setupRoute).toBeDefined();
   });

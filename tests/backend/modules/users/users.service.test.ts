@@ -20,6 +20,9 @@ import type {
 import type { DeleteSchedule } from "../../../../apps/backend/src/modules/users/dsr.service.js";
 
 // Mock dependencies
+jest.mock("../../../../apps/backend/src/modules/common/email-blacklist.repository.js", () => ({
+  isEmailBlacklisted: jest.fn().mockResolvedValue(false),
+}));
 jest.mock("../../../../apps/backend/src/modules/users/users.repository.js");
 jest.mock("../../../../apps/backend/src/modules/auth/auth.repository.js");
 jest.mock("../../../../apps/backend/src/modules/users/dsr.service.js");

@@ -20,6 +20,7 @@ import {
 } from "../auth/auth.repository.js";
 import { toContact, toUserDetail } from "./users.mapping.js";
 import type { UserContact, UserDetail } from "./users.types.js";
+import { isEmailBlacklisted } from "../common/email-blacklist.repository.js";
 
 const CONTACT_VERIFICATION_TOKEN_PREFIX = "contact_verify";
 const CONTACT_VERIFICATION_TTL_SEC = env.EMAIL_VERIFICATION_TTL_SEC;
@@ -106,6 +107,9 @@ export async function updatePrimaryEmail(userId: string, email: string): Promise
   const trimmed = email.trim().toLowerCase();
   if (!trimmed) {
     throw new HttpError(422, "USER_EMAIL_INVALID", "USER_EMAIL_INVALID");
+  }
+  if (await isEmailBlacklisted(trimmed)) {
+    throw new HttpError(403, "USER_EMAIL_BLOCKED", "USER_EMAIL_BLOCKED");
   }
 
   try {
