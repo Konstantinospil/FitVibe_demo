@@ -112,30 +112,12 @@ export async function createOne(
     await recomputeProgress(userId, row.plan_id);
   }
 
-  // Retry logic for transaction visibility (especially in test environments)
-  let created: SessionWithExercises | undefined;
-  let retries = 0;
-  const maxRetries = 5;
-  while (!created && retries < maxRetries) {
-    if (retries > 0) {
-      // Small delay to allow transaction to be fully committed and visible
-      await new Promise((resolve) => setTimeout(resolve, 50 * retries));
-    }
-    created = await getSessionWithDetails(sessionId, userId);
-    retries++;
-  }
-
+  const created = await getSessionWithDetails(sessionId, userId);
   if (!created) {
-    // Log additional context for debugging
-    const sessionExists = (await db("sessions").where({ id: sessionId }).first()) as
-      { owner_id: string } | undefined;
-    const errorDetails: Record<string, unknown> = {
+    throw new HttpError(500, "E.SESSION.CREATE_FAILED", "SESSION_CREATE_FAILED", {
       sessionId,
       userId,
-      sessionExists: !!sessionExists,
-      ownerMatches: sessionExists?.owner_id === userId,
-    };
-    throw new HttpError(500, "E.SESSION.CREATE_FAILED", "SESSION_CREATE_FAILED", errorDetails);
+    });
   }
 
   if (normalizedExercises.length > 0 || created.status === "completed") {
