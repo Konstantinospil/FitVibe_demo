@@ -507,6 +507,17 @@ Documentation is considered reconciled only when:
 
 ### Implementation-debt reconciliation
 
+**Repair pass started 2026-09-24. Confirmed residue repaired on the debt-confrontation branch:**
+
+- removed the session-create post-commit sleep/retry loop. A committed PostgreSQL transaction is visible to the following read on the same primary database; masking a missing read with up to five sleeps made test/environment defects look like consistency semantics;
+- removed the unused pre-v2 points calculation implementation and reserved legacy algorithm constant. The active scoring path remains the v2 domain/Vibe calculation; dead alternate scoring logic was an unnecessary second representation of product rules;
+- removed duplicate calls to `ensureGamificationProjectionFresh` in both points summary and points-history handlers. Each request now performs one reconciliation check;
+- revalidated the historical points-repository TODO finding against the current branch: the TODO is no longer present and therefore is not current debt;
+- repository search found no backend `FIXME`, `it.skip`, `test.skip` or `describe.skip` matches in the indexed current code.
+
+This is an intermediate repair record, **not** a zero-debt declaration. Remaining high-signal implementation surfaces still require inspection before the exit gate can pass: Phase 15 security-control implementation/migration behavior, dependency/lazy-import cycles, broad catches/silent fallbacks, migration/runtime drift, and the historical earned-badges API finding.
+
+
 After documentation is authoritative, review the current backend for:
 
 - TODO/FIXME/stubs/placeholders and obsolete compatibility paths;
