@@ -1,4 +1,6 @@
 import crypto from "node:crypto";
+import fs from "node:fs";
+import path from "node:path";
 import { HttpError } from "../../utils/http.js";
 import { insertAudit } from "../common/audit.util.js";
 import {
@@ -70,26 +72,64 @@ function normalizeEffectiveAt(value?: string): string {
 
 function setNestedValue(
   target: Record<string, unknown>,
-  path: string[],
-  value: string,
+  pathParts: string[],
+  value: unknown,
 ): void {
   let current = target;
-  for (let index = 0; index < path.length - 1; index += 1) {
-    const key = path[index];
+  for (let index = 0; index < pathParts.length - 1; index += 1) {
+    const key = pathParts[index];
     const existing = current[key];
     if (!existing || typeof existing !== "object" || Array.isArray(existing)) {
       current[key] = {};
     }
     current = current[key] as Record<string, unknown>;
   }
-  current[path[path.length - 1]] = value;
+  current[pathParts[pathParts.length - 1]] = value;
+}
+
+function loadAuthoringDocument(
+  documentType: LegalDocumentType,
+  language: string,
+): Record<string, unknown> | null {
+  const candidates = [
+    path.resolve(process.cwd(), "apps", "frontend", "src", "i18n", "locales", language, `${documentType}.json`),
+    path.resolve(process.cwd(), "..", "frontend", "src", "i18n", "locales", language, `${documentType}.json`),
+  ];
+
+  for (const candidate of candidates) {
+    try {
+      if (!fs.existsSync(candidate)) {
+        continue;
+      }
+      const parsed = JSON.parse(fs.readFileSync(candidate, "utf8")) as unknown;
+      if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+        return parsed as Record<string, unknown>;
+      }
+    } catch {
+      // Try the next candidate. Publication will fail below if no source is available.
+    }
+  }
+  return null;
+}
+
+function cloneDocument(value: Record<string, unknown>): Record<string, unknown> {
+  return JSON.parse(JSON.stringify(value)) as Record<string, unknown>;
 }
 
 function buildSnapshots(
   documentType: LegalDocumentType,
   rows: Array<{ language: string; key_path: string; value: string }>,
 ): Map<string, Record<string, unknown>> {
+  const languages = new Set(["en", "de", "es", "fr", "el", ...rows.map((row) => row.language)]);
   const snapshots = new Map<string, Record<string, unknown>>();
+
+  for (const language of languages) {
+    const base = loadAuthoringDocument(documentType, language);
+    if (base) {
+      snapshots.set(language, cloneDocument(base));
+    }
+  }
+
   for (const row of rows) {
     const content = snapshots.get(row.language) ?? {};
     const prefix = `${documentType}.`;
