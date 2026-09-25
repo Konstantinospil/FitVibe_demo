@@ -53,10 +53,7 @@ const ProtectedRoute: React.FC = () => {
     return null;
   }
 
-  if (
-    termsAcceptanceRequired &&
-    !TERMS_GATE_ALLOWED_PATHS.has(location.pathname)
-  ) {
+  if (termsAcceptanceRequired && !TERMS_GATE_ALLOWED_PATHS.has(location.pathname)) {
     return <Navigate to="/terms-reacceptance" replace state={{ from: location }} />;
   }
 
