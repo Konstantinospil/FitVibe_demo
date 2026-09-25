@@ -156,6 +156,7 @@ describe("legal publication invariants", () => {
       "accept",
       expect.any(String),
       "registration",
+      undefined,
     );
   });
 
