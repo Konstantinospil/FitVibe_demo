@@ -7,6 +7,7 @@ import {
   getLatestAcceptanceForDocument,
   getLatestRequiredLegalVersion,
   getLegalSnapshot,
+  getLegalVersionById,
   getVersionStringsByPrefix,
   insertLegalSnapshot,
   insertLegalVersion,
@@ -322,6 +323,27 @@ export async function getLegalActionStatus(
     requiredAction: required.user_action,
     needsAction: !acceptedRequiredOrNewer,
   };
+}
+
+export async function acceptLegalDocumentVersion(
+  userId: string,
+  versionId: string,
+  source = "application",
+): Promise<LegalDocumentVersionRow> {
+  const version = await getLegalVersionById(versionId);
+  if (!version) {
+    throw new HttpError(404, "LEGAL_VERSION_NOT_FOUND", "Legal version not found");
+  }
+  const action: Exclude<LegalUserAction, "none"> =
+    version.user_action === "none"
+      ? version.document_type === "cookie"
+        ? "renew_consent"
+        : version.document_type === "privacy"
+          ? "acknowledge"
+          : "accept"
+      : version.user_action;
+  await recordLegalAcceptance(userId, version.id, action, new Date().toISOString(), source);
+  return version;
 }
 
 export async function acceptCurrentLegalDocument(
