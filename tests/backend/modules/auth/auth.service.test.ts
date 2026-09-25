@@ -9,6 +9,7 @@ import * as pending2faRepo from "../../../../apps/backend/src/modules/auth/pendi
 import * as emailBlacklistRepository from "../../../../apps/backend/src/modules/common/email-blacklist.repository.js";
 import * as mailerService from "../../../../apps/backend/src/services/mailer.service.js";
 import {
+  acceptCurrentLegalDocument,
   acceptLegalDocumentVersion,
   getCurrentLegalPublication,
 } from "../../../../apps/backend/src/modules/legal/legal.service.js";
@@ -92,6 +93,7 @@ const mockEmailBlacklist = jest.mocked(emailBlacklistRepository);
 const mockMailerService = jest.mocked(mailerService);
 const mockGetCurrentLegalPublication = jest.mocked(getCurrentLegalPublication);
 const mockAcceptLegalDocumentVersion = jest.mocked(acceptLegalDocumentVersion);
+const mockAcceptCurrentLegalDocument = jest.mocked(acceptCurrentLegalDocument);
 const mockBcrypt = jest.mocked(bcrypt);
 const mockJwt = jest.mocked(jwt);
 
@@ -153,6 +155,7 @@ jest.mock("../../../../apps/backend/src/db/connection.js", () => {
       whereNull: jest.fn().mockReturnThis(),
       select: jest.fn().mockReturnThis(),
       orderBy: jest.fn().mockReturnThis(),
+      limit: jest.fn().mockReturnThis(),
       first: jest.fn().mockResolvedValue(undefined),
       insert: jest.fn().mockReturnThis(),
       update: jest.fn().mockResolvedValue(1),
@@ -202,6 +205,18 @@ describe("Auth Service", () => {
       created_at: "2024-06-01T00:00:00.000Z",
     });
     mockAcceptLegalDocumentVersion.mockResolvedValue({
+      id: "11111111-1111-1111-1111-111111111111",
+      document_type: "terms",
+      version: "1.0.0",
+      change_class: "legacy",
+      user_action: "accept",
+      effective_at: "2024-06-01T00:00:00.000Z",
+      published_at: "2024-06-01T00:00:00.000Z",
+      published_by: null,
+      source: "legacy_migration",
+      created_at: "2024-06-01T00:00:00.000Z",
+    });
+    mockAcceptCurrentLegalDocument.mockResolvedValue({
       id: "11111111-1111-1111-1111-111111111111",
       document_type: "terms",
       version: "1.0.0",
