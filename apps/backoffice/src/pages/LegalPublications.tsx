@@ -16,8 +16,7 @@ const ACTIONS_BY_DOCUMENT: Record<LegalDocumentType, LegalUserAction[]> = {
 const LegalPublicationsPage: React.FC = () => {
   const queryClient = useQueryClient();
   const [documentType, setDocumentType] = useState<LegalDocumentType>("terms");
-  const [changeClass, setChangeClass] =
-    useState<Exclude<LegalChangeClass, "legacy">>("editorial");
+  const [changeClass, setChangeClass] = useState<Exclude<LegalChangeClass, "legacy">>("editorial");
   const [userAction, setUserAction] = useState<LegalUserAction>("none");
   const [effectiveAt, setEffectiveAt] = useState("");
   const [error, setError] = useState<string | null>(null);
