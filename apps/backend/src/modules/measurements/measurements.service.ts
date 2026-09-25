@@ -236,82 +236,93 @@ export async function createMeasurementAttribute(
   input: MeasurementAttributeCreateInput,
 ): Promise<MeasurementAttribute> {
   return withMeasurementTransaction(async (trx) => {
-  // Note: userId is validated but not currently stored in the database.
-  // If we need to track attribute creators, we would need to:
-  // 1. Add a migration to add created_by_user_id column to bio_attributes and perf_attributes tables
-  // 2. Update the insertAttribute repository function to accept and store userId
-  const label = input.label.trim();
-  if (!label) {
-    throw new HttpError(400, "MEASUREMENT_LABEL_REQUIRED", "Label is required");
-  }
-  const normalizedLabel = normalizeLabel(label);
-  const existing = await getAttributeByNormalizedKey(category, normalizedLabel, trx);
-  if (existing) {
-    throw new HttpError(409, "MEASUREMENT_DUPLICATE", "Attribute already exists");
-  }
-  if (
-    typeof input.minValue === "number" &&
-    typeof input.maxValue === "number" &&
-    input.minValue > input.maxValue
-  ) {
-    throw new HttpError(400, "MEASUREMENT_RANGE_INVALID", "Minimum exceeds maximum");
-  }
-  if (input.derivedOperator && (!input.derivedFromAId || !input.derivedFromBId)) {
-    throw new HttpError(400, "MEASUREMENT_DERIVED_INVALID", "Derived sources required");
-  }
-  if (input.derivedOperator && input.derivedFromAId === input.derivedFromBId) {
-    throw new HttpError(400, "MEASUREMENT_DERIVED_INVALID", "Derived sources must be different");
-  }
-  if (input.derivedOperator) {
-    const [sourceA, sourceB] = await Promise.all([
-      getAttributeById(category, input.derivedFromAId!, trx),
-      getAttributeById(category, input.derivedFromBId!, trx),
-    ]);
-    if (!sourceA || !sourceB) {
-      throw new HttpError(400, "MEASUREMENT_DERIVED_INVALID", "Derived sources not found");
+    // Note: userId is validated but not currently stored in the database.
+    // If we need to track attribute creators, we would need to:
+    // 1. Add a migration to add created_by_user_id column to bio_attributes and perf_attributes tables
+    // 2. Update the insertAttribute repository function to accept and store userId
+    const label = input.label.trim();
+    if (!label) {
+      throw new HttpError(400, "MEASUREMENT_LABEL_REQUIRED", "Label is required");
     }
-  }
+    const normalizedLabel = normalizeLabel(label);
+    const existing = await getAttributeByNormalizedKey(category, normalizedLabel, trx);
+    if (existing) {
+      throw new HttpError(409, "MEASUREMENT_DUPLICATE", "Attribute already exists");
+    }
+    if (
+      typeof input.minValue === "number" &&
+      typeof input.maxValue === "number" &&
+      input.minValue > input.maxValue
+    ) {
+      throw new HttpError(400, "MEASUREMENT_RANGE_INVALID", "Minimum exceeds maximum");
+    }
+    if (input.derivedOperator && (!input.derivedFromAId || !input.derivedFromBId)) {
+      throw new HttpError(400, "MEASUREMENT_DERIVED_INVALID", "Derived sources required");
+    }
+    if (input.derivedOperator && input.derivedFromAId === input.derivedFromBId) {
+      throw new HttpError(
+        400,
+        "MEASUREMENT_DERIVED_INVALID",
+        "Derived sources must be different",
+      );
+    }
+    if (input.derivedOperator) {
+      const [sourceA, sourceB] = await Promise.all([
+        getAttributeById(category, input.derivedFromAId!, trx),
+        getAttributeById(category, input.derivedFromBId!, trx),
+      ]);
+      if (!sourceA || !sourceB) {
+        throw new HttpError(400, "MEASUREMENT_DERIVED_INVALID", "Derived sources not found");
+      }
+    }
 
-  const key = input.key?.trim() ? slugifyKey(input.key) : slugifyKey(label);
-  const normalizedKey = normalizedLabel;
-  const range = normalizeRange(
-    input.unitType,
-    input.measurementSystem,
-    input.granularity,
-    input.minValue ?? null,
-    input.maxValue ?? null,
-  );
+    const key = input.key?.trim() ? slugifyKey(input.key) : slugifyKey(label);
+    const normalizedKey = normalizedLabel;
+    const range = normalizeRange(
+      input.unitType,
+      input.measurementSystem,
+      input.granularity,
+      input.minValue ?? null,
+      input.maxValue ?? null,
+    );
 
-  const id = await insertAttribute(category, {
-    key,
-    normalized_key: normalizedKey,
-    label,
-    description: input.description ?? null,
-    unit_type: input.unitType,
-    granularity: input.granularity,
-    measurement_system: input.measurementSystem,
-    min_value_metric: range.minMetric,
-    max_value_metric: range.maxMetric,
-    min_value_imperial: range.minImperial,
-    max_value_imperial: range.maxImperial,
-    is_default: false,
-    derived_from_a_id: input.derivedFromAId ?? null,
-    derived_from_b_id: input.derivedFromBId ?? null,
-    derived_operator: input.derivedOperator ?? null, 
-  }, trx);
+    const id = await insertAttribute(
+      category,
+      {
+        key,
+        normalized_key: normalizedKey,
+        label,
+        description: input.description ?? null,
+        unit_type: input.unitType,
+        granularity: input.granularity,
+        measurement_system: input.measurementSystem,
+        min_value_metric: range.minMetric,
+        max_value_metric: range.maxMetric,
+        min_value_imperial: range.minImperial,
+        max_value_imperial: range.maxImperial,
+        is_default: false,
+        derived_from_a_id: input.derivedFromAId ?? null,
+        derived_from_b_id: input.derivedFromBId ?? null,
+        derived_operator: input.derivedOperator ?? null,
+      },
+      trx,
+    );
 
-  await upsertTranslation({
-    namespace: "user_attributes",
-    key_path: `user_attributes.${key}`,
-    language: DEFAULT_TRANSLATION_LANGUAGE,
-    value: label,
-  }, trx);
+    await upsertTranslation(
+      {
+        namespace: "user_attributes",
+        key_path: `user_attributes.${key}`,
+        language: DEFAULT_TRANSLATION_LANGUAGE,
+        value: label,
+      },
+      trx,
+    );
 
-  const created = await getAttributeById(category, id, trx);
-  if (!created) {
-    throw new HttpError(500, "MEASUREMENT_CREATE_FAILED", "Failed to create attribute");
-  }
-  return toAttribute(created);
+    const created = await getAttributeById(category, id, trx);
+    if (!created) {
+      throw new HttpError(500, "MEASUREMENT_CREATE_FAILED", "Failed to create attribute");
+    }
+    return toAttribute(created);
   });
 }
 
