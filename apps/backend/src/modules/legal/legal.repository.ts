@@ -192,7 +192,6 @@ export async function getLatestAcceptanceForDocument(
   return row ?? null;
 }
 
-
 export async function revokeLegalAcceptances(
   userId: string,
   documentType: LegalDocumentType,
@@ -203,9 +202,6 @@ export async function revokeLegalAcceptances(
   return exec(ACCEPTANCE_TABLE)
     .where({ user_id: userId })
     .whereNull("revoked_at")
-    .whereIn(
-      "version_id",
-      exec(VERSION_TABLE).select("id").where({ document_type: documentType }),
-    )
+    .whereIn("version_id", exec(VERSION_TABLE).select("id").where({ document_type: documentType }))
     .update({ revoked_at: revokedAt });
 }
