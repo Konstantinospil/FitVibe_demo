@@ -197,13 +197,15 @@ export async function revokeLegalAcceptances(
   userId: string,
   documentType: LegalDocumentType,
   revokedAt: string,
+  trx?: Knex.Transaction,
 ): Promise<number> {
-  return db(ACCEPTANCE_TABLE)
+  const exec = trx ?? db;
+  return exec(ACCEPTANCE_TABLE)
     .where({ user_id: userId })
     .whereNull("revoked_at")
     .whereIn(
       "version_id",
-      db(VERSION_TABLE).select("id").where({ document_type: documentType }),
+      exec(VERSION_TABLE).select("id").where({ document_type: documentType }),
     )
     .update({ revoked_at: revokedAt });
 }
