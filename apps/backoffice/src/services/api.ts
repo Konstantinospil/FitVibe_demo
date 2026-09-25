@@ -164,7 +164,6 @@ export interface TranslationMetadataResponse {
   };
 }
 
-
 export type LegalDocumentType = "terms" | "privacy" | "cookie";
 export type LegalChangeClass = "legacy" | "editorial" | "material";
 export type LegalUserAction = "none" | "acknowledge" | "accept" | "renew_consent";
@@ -422,9 +421,12 @@ export const translationsApi = {
 
 export const legalPublicationsApi = {
   list: async (documentType?: LegalDocumentType) => {
-    const response = await apiClient.get<LegalPublicationListResponse>("/api/v1/legal/publications", {
-      params: documentType ? { documentType } : undefined,
-    });
+    const response = await apiClient.get<LegalPublicationListResponse>(
+      "/api/v1/legal/publications",
+      {
+        params: documentType ? { documentType } : undefined,
+      },
+    );
     return response.data;
   },
   publish: async (
@@ -442,7 +444,6 @@ export const legalPublicationsApi = {
     return response.data;
   },
 };
-
 
 export async function getHealthStatus(): Promise<HealthStatusResponse> {
   const res = await apiClient.get<HealthStatusResponse>("/health");
