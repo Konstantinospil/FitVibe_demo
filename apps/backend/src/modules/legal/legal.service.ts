@@ -462,6 +462,7 @@ export async function revokeLegalDocumentAcceptances(
   userId: string,
   documentType: LegalDocumentType,
   revokedAt = new Date().toISOString(),
+  trx?: Knex.Transaction,
 ): Promise<void> {
-  await revokeLegalAcceptances(userId, documentType, revokedAt);
+  await revokeLegalAcceptances(userId, documentType, revokedAt, trx);
 }
