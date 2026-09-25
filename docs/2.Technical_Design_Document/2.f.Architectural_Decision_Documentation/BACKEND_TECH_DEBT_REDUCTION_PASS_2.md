@@ -681,7 +681,20 @@ The remaining product-owner decisions are:
 
 ### Decision log
 
-_Phase 17 interview opened on 2026-09-25. The explicit-persisted-version choice is inherited from Phase 11; the remaining decisions above are pending product-owner confirmation._
+Phase 17 interview opened on 2026-09-25. The explicit-persisted-version choice is inherited from Phase 11.
+
+Accepted on 2026-09-25:
+
+1. Terms changes that require renewed acceptance block ordinary authenticated application use until accepted; legal-document viewing, logout, account/security access and account deletion remain available.
+2. Privacy-policy changes require acknowledgement/re-acceptance when the change materially affects processing or legal basis; ordinary informational changes are non-blocking unless fresh consent is specifically required.
+3. Cookie-policy publication does not create a generic legal-acceptance gate. Cookie consent is renewed when consent-relevant purposes/categories change.
+4. Existing recorded acceptances are preserved as historical evidence and mapped to explicit legacy versions. Phase 17 must not manufacture acceptance for a document where no acceptance was actually recorded.
+5. Legal publication must be an explicit Backoffice action. Editing translation text alone must not implicitly create the authoritative current legal version.
+6. The publication data model must distinguish editorial/minor changes from changes that alter user acknowledgement/acceptance/consent requirements. The exact persisted classification and publication model are being finalized before implementation.
+
+Pending implementation-model decision:
+
+- define the smallest publication/version schema that can represent draft versus published state, immutable published content, effective dates, and acceptance/consent impact without coupling authority to translation timestamps.
 
 ### Exit criteria
 
