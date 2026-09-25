@@ -149,9 +149,9 @@ Statuses summarize the canonical story files. Canonical lifecycle: Open / Progre
 
 | ID      | Title                             | Epic                                      | Status | Story Points | File                                                                       |
 | ------- | --------------------------------- | ----------------------------------------- | ------ | ------------ | -------------------------------------------------------------------------- |
-| US-19.1 | Publish Legal Document Snapshots  | [E19](../b.Epics/E19-terms-and-conditions.md) | Open | 5 | [US-19.1-legal-publication.md](./US-19.1-legal-publication.md) |
-| US-19.2 | Terms Acceptance at Registration  | [E19](../b.Epics/E19-terms-and-conditions.md) | Open | 3 | [US-19.2-registration-terms-acceptance.md](./US-19.2-registration-terms-acceptance.md) |
-| US-19.3 | Terms Re-Acceptance               | [E19](../b.Epics/E19-terms-and-conditions.md) | Open | 3 | [US-19.3-terms-reacceptance.md](./US-19.3-terms-reacceptance.md) |
+| US-19.1 | Publish Legal Document Snapshots  | [E19](../b.Epics/E19-terms-and-conditions.md) | Done | 5 | [US-19.1-legal-publication.md](./US-19.1-legal-publication.md) |
+| US-19.2 | Terms Acceptance at Registration  | [E19](../b.Epics/E19-terms-and-conditions.md) | Done | 3 | [US-19.2-registration-terms-acceptance.md](./US-19.2-registration-terms-acceptance.md) |
+| US-19.3 | Terms Re-Acceptance               | [E19](../b.Epics/E19-terms-and-conditions.md) | Done | 3 | [US-19.3-terms-reacceptance.md](./US-19.3-terms-reacceptance.md) |
 
 ### Epic 20: Database Encryption
 
