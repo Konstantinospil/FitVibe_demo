@@ -16,7 +16,7 @@
 
 ## Description
 
-Update FitVibe's accessibility compliance from WCAG 2.1 AA to WCAG 2.2 AA by implementing the 9 new success criteria introduced in WCAG 2.2 (released October 2023). This epic enhances the existing accessibility work in Epic 8 with the latest standards.
+Update FitVibe's accessibility target from WCAG 2.1 AA to WCAG 2.2 AA. WCAG 2.2 introduced nine new success criteria in total; this epic requires the new A/AA criteria relevant to WCAG 2.2 AA conformance and may track AAA criteria separately as non-blocking guidance. It also aligns related accessibility documentation and verification with the current standard.
 
 ## Business Value
 
@@ -67,7 +67,7 @@ E13-A11 (test updates) and E13-A12 (compliance validation) are verification acti
 
 ## Success Criteria
 
-- WCAG 2.2 AA conformance is verified criterion-by-criterion using automated and manual evidence as appropriate
+- WCAG 2.2 AA conformance is verified criterion-by-criterion for all applicable A/AA success criteria using automated and manual evidence as appropriate
 - 0 critical or serious violations in axe-core reports for covered flows/components
 - Lighthouse accessibility score remains ≥ 90 as a regression indicator; Lighthouse does not by itself prove WCAG conformance
 - All documentation updated and accurate
