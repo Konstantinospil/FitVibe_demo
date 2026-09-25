@@ -84,21 +84,37 @@ Items that are already materially implemented should appear as verification/docu
 
 ## Post-Phase-17 execution plan
 
-Phase 17 (E19 legal publication) is complete. Remaining verified work is sequenced as follows; these phases organize existing canonical backlog items and do not replace their acceptance criteria.
+Phase 17 (E19 legal publication) is complete. The complete vNext sequence is defined in `VNEXT_DELIVERY_ROADMAP.md`. The former product-only Phase 18–22 numbering has been corrected so the previously retained engineering-quality Phases 18–22 are not overwritten.
 
-1. **Phase 18 — Measurements Completion** — finish E21 profile measurement UI, ownership/history semantics, derived behavior and verification. Tracking: #260; stories #256–#259.
-2. **Phase 19 — Planner Completion** — finish E4 plan management, activation/session generation, calendar/mobile scheduling and workflow verification. Tracking: #261; stories #84–#88.
-3. **Phase 20 — Logging & Import Expansion** — reconcile manual logging and, subject to an explicit scope-retention decision, implement GPX/FIT/derived-track/offline capabilities. Tracking: #262; stories #89–#94.
-4. **Phase 21 — Coach & Training Unit Workflows** — subject to an explicit scope-retention decision, implement canonical E12 consent-based coach/athlete and training-unit workflows. Tracking: #263; stories #247–#250.
-5. **Phase 22 — Production Readiness Closure** — close evidence gaps across privacy/GDPR, performance, accessibility, observability, availability/DR and encryption without rebuilding already-present infrastructure. Tracking: #264; existing story issues plus #254–#255.
+### Engineering baseline
+
+1. **Phase 18 — Secrets contract repair** — tracking #265.
+2. **Phase 19 — Repository/API residue quality pass** — tracking #266.
+3. **Phase 20 — Cross-stack test quality and flakiness audit** — tracking #267.
+4. **Phase 21 — Architecture and documentation conformance review** — tracking #268.
+5. **Phase 22 — CI quality gate and deployment-contract enforcement** — tracking #269; concrete production Compose/ClamAV work #270.
+
+### Product completion
+
+6. **Phase 23 — Measurements Completion** — tracking #260; stories #256–#259; Vibeform integration #271.
+7. **Phase 24 — Planner Completion** — tracking #261; stories #84–#88.
+8. **Phase 25 — Logging & Import Expansion** — tracking #262; stories #89–#94; GPX/FIT/offline scope requires explicit retention/defer decisions.
+9. **Phase 26 — Coach & Training Unit Workflows** — tracking #263; stories #247–#250; E12 requires explicit retention/defer decision.
+10. **Phase 27 — Production Readiness Closure** — tracking #264; privacy, performance, accessibility, observability, availability/DR and encryption closure plus #270.
+
+### Design/integration and release
+
+11. **Phase 28 — Design and Product Integration Closure** — tracking #274; Vibeform #271, design system #272, kudos mark #273 if retained.
+12. **Phase 29 — vNext Release Candidate Gate** — tracking #275. No new application version/tag/release is created before this gate passes.
 
 ### Sequencing rules
 
-- Each phase begins from current `dev`; implementation presence is not completion without canonical acceptance-criterion evidence.
-- Phase 20 and Phase 21 contain explicit product-scope decision gates because the alignment review identified functionality that is documented but not materially implemented.
-- Phase 22 is primarily a verification/operational-evidence phase. Missing behavior may be implemented, but existing infrastructure must not be rewritten merely to satisfy an issue title.
+- Each phase begins from current `dev`; implementation presence is not completion without canonical acceptance-criterion evidence where canonical ACs apply.
+- Engineering issues are not given fabricated product Epics or GOLD/SILVER gates merely to fit Project metadata.
+- Product phases may overlap engineering phases only when the engineering work does not affect the same contract/module/test boundary.
 - CI/test gates must not be weakened to make a phase pass. Fix forward only.
 - Scope expansion discovered during a phase must be documented and assessed before implementation.
+- Phase 29 is the release boundary, not another implementation phase.
 
 ## Historical GitHub issues
 
