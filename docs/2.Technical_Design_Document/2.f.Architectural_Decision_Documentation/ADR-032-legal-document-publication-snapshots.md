@@ -35,18 +35,18 @@ Published snapshots are immutable. Corrections create a new snapshot.
 
 ### 2. Publication classification distinguishes legal effect
 
-Snapshots are classified as:
+Every published snapshot is authoritative content. Publications are classified by change impact:
 
-- **minor** — editorial/translation correction that does not change the legal acceptance contract;
-- **authoritative** — publication that establishes a new acceptance version and may require user re-acceptance according to the relevant requirement.
+- **editorial** — editorial/translation correction that does not invalidate existing acceptance or consent;
+- **material** — substantive change that requires an explicit user effect.
 
-The distinction is stored with the snapshot rather than inferred later from changed translation rows.
+The user effect is persisted independently as `none`, `acknowledge`, `accept`, or `renew_consent`. This avoids incorrectly treating authority and acceptance impact as the same boolean distinction.
 
 ### 3. Acceptance refers to an authoritative snapshot
 
-User acceptance records refer to the authoritative publication/version that was accepted. A later authoritative publication can make an earlier acceptance outdated.
+User acceptance records refer to the exact published version acted upon. A later material publication can require renewed action according to its persisted user effect.
 
-Minor publications remain part of publication history but do not independently advance the acceptance contract.
+Editorial publications remain part of publication history and become the current authoritative text without independently invalidating a still-satisfied material acceptance requirement.
 
 ### 4. Backoffice is the publication surface
 
@@ -93,4 +93,4 @@ Before implementation backlog is created, live `dev` must be compared against th
 
 | Version | Date | Change |
 | --- | --- | --- |
-| v1.0 | 2026-09-25 | Adopt immutable Backoffice publication snapshots with minor/authoritative classification |
+| v1.0 | 2026-09-25 | Adopt immutable Backoffice publication snapshots with editorial/material classification with explicit user effect |
