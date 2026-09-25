@@ -142,18 +142,9 @@ export async function recordFailedAttempt(
         updated_at: now,
       });
 
-    // Fetch the updated record to ensure we return the correct values
     const updated = await getFailedAttempt(normalizedIdentifier, ipAddress, trx);
     if (!updated) {
-      // Fallback to constructing the return value if fetch fails
-      return {
-        ...existing,
-        attempt_count: newAttemptCount,
-        locked_until: lockedUntil,
-        first_attempt_at: windowExpired ? now : existing.first_attempt_at,
-        last_attempt_at: now,
-        updated_at: now,
-      };
+      throw new Error("Failed login attempt disappeared immediately after update");
     }
     return updated;
   }
@@ -421,19 +412,9 @@ export async function recordFailedAttemptByIP(
       updated_at: now,
     });
 
-    // Fetch the updated record to ensure we return correct values
-    // This matches the pattern used in recordFailedAttempt
     const updated = await getFailedAttemptByIP(ipAddress, trx);
     if (!updated) {
-      // Fallback to constructing the return value if fetch fails
-      return {
-        ...existing,
-        distinct_email_count: newDistinctEmailCount,
-        total_attempt_count: newTotalAttemptCount,
-        locked_until: finalLockedUntil,
-        last_attempt_at: now,
-        updated_at: now,
-      };
+      throw new Error("IP login-attempt aggregate disappeared immediately after update");
     }
     return updated;
   }

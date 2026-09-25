@@ -17,6 +17,7 @@ import {
   listLatestAttributeValues,
   listSelections,
   upsertSelection,
+  withMeasurementTransaction,
 } from "./measurements.repository.js";
 import { upsertTranslation } from "../translations/translations.repository.js";
 
@@ -234,6 +235,7 @@ export async function createMeasurementAttribute(
   userId: string,
   input: MeasurementAttributeCreateInput,
 ): Promise<MeasurementAttribute> {
+  return withMeasurementTransaction(async (trx) => {
   // Note: userId is validated but not currently stored in the database.
   // If we need to track attribute creators, we would need to:
   // 1. Add a migration to add created_by_user_id column to bio_attributes and perf_attributes tables
@@ -243,7 +245,7 @@ export async function createMeasurementAttribute(
     throw new HttpError(400, "MEASUREMENT_LABEL_REQUIRED", "Label is required");
   }
   const normalizedLabel = normalizeLabel(label);
-  const existing = await getAttributeByNormalizedKey(category, normalizedLabel);
+  const existing = await getAttributeByNormalizedKey(category, normalizedLabel, trx);
   if (existing) {
     throw new HttpError(409, "MEASUREMENT_DUPLICATE", "Attribute already exists");
   }
@@ -262,8 +264,8 @@ export async function createMeasurementAttribute(
   }
   if (input.derivedOperator) {
     const [sourceA, sourceB] = await Promise.all([
-      getAttributeById(category, input.derivedFromAId!),
-      getAttributeById(category, input.derivedFromBId!),
+      getAttributeById(category, input.derivedFromAId!, trx),
+      getAttributeById(category, input.derivedFromBId!, trx),
     ]);
     if (!sourceA || !sourceB) {
       throw new HttpError(400, "MEASUREMENT_DERIVED_INVALID", "Derived sources not found");
@@ -295,21 +297,22 @@ export async function createMeasurementAttribute(
     is_default: false,
     derived_from_a_id: input.derivedFromAId ?? null,
     derived_from_b_id: input.derivedFromBId ?? null,
-    derived_operator: input.derivedOperator ?? null,
-  });
+    derived_operator: input.derivedOperator ?? null, 
+  }, trx);
 
   await upsertTranslation({
     namespace: "user_attributes",
     key_path: `user_attributes.${key}`,
     language: DEFAULT_TRANSLATION_LANGUAGE,
     value: label,
-  });
+  }, trx);
 
-  const created = await getAttributeById(category, id);
+  const created = await getAttributeById(category, id, trx);
   if (!created) {
     throw new HttpError(500, "MEASUREMENT_CREATE_FAILED", "Failed to create attribute");
   }
   return toAttribute(created);
+  });
 }
 
 export async function addMeasurementValue(

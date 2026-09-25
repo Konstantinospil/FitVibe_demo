@@ -313,7 +313,9 @@ export async function disable2FA(userId: string, trx?: Knex.Transaction): Promis
 
   const now = new Date().toISOString();
   await exec("user_2fa_settings").where({ id: settings.id }).update({
-    totp_secret: "",
+    // Keep the encrypted secret at rest while disabling. An empty string would
+    // bypass the encryption-at-rest invariant and is unnecessary because the
+    // enabled/verified flags make the secret unusable.
     is_enabled: false,
     is_verified: false,
     enabled_at: null,

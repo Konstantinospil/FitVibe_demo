@@ -1,7 +1,7 @@
 # Backend Technical-Debt Reduction — Pass 2
 
 **Status:** Active  
-**Current phase:** Phase 15 — Remove ineffective security features  
+**Current phase:** Phase 16 — Transaction boundary cleanup  
 **Branch:** `dev`  
 **Started:** 2026-09-22
 
@@ -427,17 +427,185 @@ Remove the appearance of security where no enforceable end-to-end control exists
 2. **Encrypt TOTP secrets at rest.** TOTP secrets remain recoverable because verification requires the original secret, but plaintext database storage is not acceptable. Encryption/decryption must be encapsulated behind the authentication storage/service boundary, with key material supplied through the existing application secrets/configuration mechanism rather than persisted alongside the ciphertext. Existing plaintext secrets require a controlled migration to the encrypted representation; mixed-format compatibility, if temporarily required, must have an explicit removal condition.
 3. **Require step-up authentication for sensitive 2FA administration.** Regenerating backup codes requires recent password confirmation plus a current second factor. Disabling 2FA requires password confirmation plus a current second factor. Replacing or restarting 2FA setup requires the same recent step-up. Read-only 2FA status does not require step-up. A stolen authenticated session alone must not be sufficient to replace, weaken or regenerate recovery material for the second factor.
 
+### Implementation record
+
+Implemented and merged in PR #240 (merge `2b3844bbfe35b6c2d9fe283fc350e24e2c5a62b5`):
+
+- email blacklist moved to one authoritative fail-closed repository and enforced on registration, verification, reset/recovery and primary-email establishment flows;
+- persisted TOTP secrets use AES-256-GCM envelopes with application-supplied key material and a migration for existing plaintext secrets;
+- sensitive 2FA administration requires password plus current second factor;
+- first-time 2FA enrollment remains available while replacement/restart requires step-up;
+- frontend contracts and regression tests were updated with the backend behavior.
+
 **Architecture record:** [ADR-030 — Authoritative Account-Security Controls](./ADR-030-account-security-controls.md)
 
 ### Exit criteria
 
 Every security feature present in the backend is connected to a real flow and tested through externally observable behavior.
 
+Phase 15 finalization was completed in PR #243 after the debt-confrontation repairs were reconciled with the authoritative `dev` baseline.
+
+---
+
+## Debt-Confrontation Gate — Phases 1–14 baseline and Phase 15 finalization
+
+**Status:** Historical gate record; Phase 15 finalization completed in PR #243
+
+### Purpose
+
+Before extending the backend plan, restore a trustworthy baseline. This gate is deliberately ordered:
+
+1. documentation debt;
+2. implementation debt;
+3. zero-known-actionable-debt verification;
+4. implementation-creep review of the remaining phases;
+5. final Phase 15 sign-off;
+6. only then proceed to the next justified phase.
+
+“Zero debt” here means zero **known actionable debt attributable to or exposed by the completed work**, not the impossible claim that no future improvement exists.
+
+### Phase-to-ADR traceability audit
+
+The audit distinguishes an architectural decision from implementation structure. A phase does not receive a new ADR merely because it changed code; it must either point to the ADR governing the durable decision or explicitly record that no new architectural decision was introduced.
+
+| Phase | Durable decision(s) | ADR coverage after audit | Documentation action |
+| --- | --- | --- | --- |
+| 1–3 | Early backend cleanup/typing/formatting work predates the numbered pass record available in this document. Current Git history does not provide evidence of a new durable architectural decision unique to those phase labels. | Existing baseline ADRs govern the architecture; no phase-specific ADR evidenced. | Do not invent retrospective decisions. Treat as **no new ADR evidenced** unless older phase records provide contrary evidence. |
+| 4 | Production security/bootstrap configuration: persistent JWT key requirements, environment-owned DB/runtime config, browser CSRF boundary, production AV startup requirement. | ADR-002, ADR-004, ADR-013, ADR-016 and ADR-026 cover the durable policies. | No new ADR required; PR #219 is implementation evidence. |
+| 5 | Canonical cross-cutting idempotency, audit writer/job handlers and runtime configuration rather than duplicate per-module implementations. | ADR-007, ADR-013 and ADR-016 cover the architectural direction. | No new ADR required; PR #220 is implementation evidence. |
+| 6 | Split large auth/user services into cohesive services while retaining Router → Service → Repository direction. | ADR-013. | No new ADR required; structural refactor within accepted modular-monolith architecture. |
+| 7/7.5 | Split feed/auth/user repositories/services, centralize shared contracts/configuration, durable audit replay; preserve dependency direction. | ADR-013 + ADR-016 v1.1. | **Closed:** code review confirmed a durable database-backed audit outbox with bounded FK-race retry and idempotent replay by event ID. ADR-016 now records the actual guarantee and explicitly does not claim atomic business/audit commit. |
+| 8/8.1 | Isolate Vibe-level persistence and serialize concurrent mutation/decay to prevent stale overwrite. | ADR-029 now captures state ownership/concurrency principles, but it was created later. | Covered retrospectively by ADR-029; verify the exact Vibe authority wording remains sufficient. |
+| 9 | Preferences become a canonical object/endpoint separate from profile; persisted language preference remains distinct from locale. | ADR-013 v1.1. | **Closed:** code review confirmed dedicated preferences repository/service ownership over `preferred_lang` and `units`, while `locale` remains a separate user attribute. ADR-013 now records this boundary without changing product semantics. |
+| 9.5 | Feed/session dependency cleanup uses direct narrow dependencies rather than cyclic service facades. | ADR-013. | No new ADR required; architecture-conformance refactor. |
+| 10 | Frontend monolithic API service split into domain APIs behind a compatibility barrel. | Backend ADR set does not govern this frontend module boundary directly. | Outside the backend debt gate unless a frontend architecture ADR claims a conflicting structure. |
+| 11 | One authority per important backend state; explicit consistency classes. | ADR-029. | Complete. |
+| 12 | Session visibility/access-grant model; bookmark is a durable access grant; performed data authority is `exercise_sets`. | ADR-010 + ADR-029. | Complete. |
+| 13 | Completed workout is primary fact; gamification is rebuildable post-commit derived state; explicit reopen/re-score semantics. | ADR-029. | Complete. |
+| 14 | Opaque pre-auth state machine, separated brute-force states, three-attempt second-factor exhaustion, trusted-proxy boundary. | ADR-002 v1.1 + ADR-029. | Complete. |
+| 15 | Authoritative fail-closed email blacklist; field-level encryption for recoverable TOTP seeds; step-up for sensitive 2FA administration. | ADR-002 v1.2 + ADR-026 v1.1 + ADR-029 general fail-closed rule. | **Gap fixed in debt-confrontation branch.** Previously these decisions lived primarily in the phase log/PR #240. |
+
+### Decisions found insufficiently documented
+
+The targeted follow-up review is complete:
+
+1. **Phase 9 preference ownership/domain boundary — closed.** Current code confirms a dedicated preferences repository/service over `preferred_lang` and `units`; profile updates do not own these fields, and `locale` remains a separate user attribute. ADR-031 v1.0 now records the durable boundary.
+2. **Phase 7/7.5 audit replay semantics — closed.** Current code confirms a database-backed `audit_outbox`, bounded retry for short actor-FK visibility races, replay using the original event ID, conflict-ignore idempotency, and deletion only after successful/duplicate-safe insertion. ADR-016 v1.1 records that contract and explicitly avoids overstating it as a transactional business/audit outbox.
+3. **Phase 15 — closed.** ADR-002 v1.2 and ADR-026 v1.1 now record the fail-closed blacklist, sensitive-2FA step-up and TOTP field-encryption decisions.
+
+No remaining **known architectural-decision documentation gap** has been identified for Phases 1–15 from the Git evidence reviewed. This statement is deliberately narrower than “all documentation is correct”: the next documentation-reconciliation pass must still test TDD/API/operations prose against the implemented architecture and remove stale or contradictory descriptions.
+
+### Phase 1–15 scope-creep audit
+
+**Audit date:** 2026-09-25  
+**Evidence basis:** Git history, Phase PR descriptions, changed-file lists and targeted patches from the Phase 1–15 development range through the Phase 15 merge (`2b3844bbfe35b6c2d9fe283fc350e24e2c5a62b5`).
+
+The purpose of this audit is to distinguish legitimate cross-cutting repair from implementation creep. A large file count is not by itself scope creep: a change is considered in scope when the touched module is required to implement, verify or document the stated phase invariant. A change is considered scope bleed when it changes a separate contract or behavior without being required by the declared phase objective.
+
+The aggregate comparison is intentionally **not** treated as phase attribution by itself. The development range also contains Dependabot/Snyk work and `main` → `dev` synchronization commits, and some PRs were stacked on earlier phase branches. Those inherited/external changes must be excluded before judging a phase.
+
+| Phase / PR | Scope review | Finding |
+| --- | --- | --- |
+| 1–2 | Early backend cleanup covered generated-source removal, canonical user/status state, plans/measurements consistency, database constraints and 2FA consolidation. | Broad, but evidence reviewed ties the touched modules to the initial debt/canonical-state cleanup. No unrelated product feature was identified. |
+| 3 / PR #218 | Declared as Prettier/formatting validation. Three service-file changes were formatting-only, but `apps/backend/src/modules/plans/plans.repository.ts` narrowed `status?: string` to `status?: "active" \| "completed"`. | **Confirmed scope-boundary violation.** The change is a reasonable type-contract correction and does not appear to add runtime functionality, but it was not a formatting change and was therefore carried under an inaccurate PR scope. Do not revert it solely to clean history; preserve it as scope-governance evidence. |
+| 4 / PR #219 | Security/bootstrap hardening across runtime config, DB config, CSRF, startup, AV readiness and deployment wiring. | Cross-cutting but directly required by the stated security/bootstrap objective. No unrelated module touch identified. |
+| 5 / PR #220 | Shared idempotency, audit writer, queue handlers and suspicious-input handling adopted by many consuming modules. | High blast radius, but intentionally cross-cutting. Module breadth follows from consolidating shared infrastructure rather than adding unrelated behavior. |
+| 6–7.5 | Auth/users/feed/session decomposition, shared contracts/configuration, audit outbox and concurrency repairs. | Broad architectural repair within the modularity/dependency objectives. No unrelated feature addition identified. |
+| 8 / 8.1 | Vibe-level persistence, decay, progress derivation and concurrency serialization. | Focused on the documented Vibe/points consistency problem. |
+| 9 / PR #234 | Preference ownership, Settings UI, language/units contracts, OpenAPI/shared types and tests. | Focused. |
+| 9.5 / PR #235 | Direct feed/session dependency cleanup across five files. | Focused. |
+| 10 / PR #236 | Frontend API-service decomposition. The PR changed-file view also contains backend feed/session files inherited from the stacked Phase 9.5 branch. | **Not scope creep.** Stacked-branch inheritance must not be attributed to Phase 10. |
+| 11 | State/invariant audit; no production-code implementation was required. | No implementation creep. |
+| 12 / PR #237 | Session/feed access authority, bookmark grants, performed-set compatibility, API contract and tests. | Focused on the declared state-correctness objective. |
+| 13 / PR #238 | Sessions, points, Vibe levels, jobs and Vibeforms for authoritative completed-workout/gamification reconciliation. | Cross-module by necessity. Jobs and Vibeforms are direct consumers of the repaired derived-state invariant, not unrelated expansion. |
+| 14 / PR #239 | Authentication state machine, brute-force state, 2FA, client-IP/proxy handling, login UI and tests. | Focused on the declared authentication-hardening objective. |
+| 15 / PR #240 | Auth plus common/admin/users/frontend security surfaces for authoritative blacklist enforcement, TOTP encryption and 2FA step-up. | Focused. Admin/users touches are required because the blacklist must be canonical across account-establishment and email-change paths. |
+
+#### Scope-creep conclusion
+
+The reviewed Phase 1–15 work shows **no evidence of broad implementation creep into unrelated product functionality**. The large cumulative diff is principally explained by deliberately cross-cutting debt repair, module decomposition, tests/contracts, dependency updates and branch synchronization.
+
+One concrete scope-governance defect is recorded: **Phase 3 / PR #218 included a non-formatting Plans type-contract change inside a formatting-validation PR.** This is scope bleed in the declared change boundary even though the change itself appears valid and should not be reverted merely for historical purity.
+
+Accordingly:
+
+- Phases 1–15 are **not** classified as having generated systemic scope creep.
+- PR #218 remains a documented exception and evidence that PR scope must match the actual semantic change.
+- Stacked PRs must be audited against their true base; inherited files are not automatically attributed to the later phase.
+- Dependency/security-bot and branch-synchronization commits must be separated from phase implementation evidence.
+- Future phases must keep unrelated correctness discoveries out of the active phase unless they are required to restore an invariant broken by that phase; otherwise they become a separately documented debt item or follow-up change.
+- A phase may be cross-cutting, but every touched production module must have a traceable reason connecting it to the phase objective.
+
+### Documentation reconciliation
+
+The pre-existing `DOC_CODE_DRIFT.md` is evidence, not current truth. Its 2026-09-01 snapshot predates Phases 11–15 and contains findings already repaired later (for example production TLS verification and parts of authentication hardening). Before code changes are selected from it, every relevant row must be revalidated against current `dev`.
+
+Documentation is considered reconciled only when:
+
+- shipped behavior is represented in requirements/TDD/ADR/runbook documentation;
+- stale claims are corrected rather than layered with contradictory notes;
+- long-lived architectural decisions from Phases 11–15 have an ADR or are explicitly covered by an existing ADR;
+- phase completion records point to actual PRs/commits and verification evidence;
+- backlog requirements are not mislabeled as shipped implementation debt.
+
+### Implementation-debt reconciliation
+
+**Repair pass started 2026-09-24. Confirmed residue repaired on the debt-confrontation branch:**
+
+- removed the session-create post-commit sleep/retry loop. A committed PostgreSQL transaction is visible to the following read on the same primary database; masking a missing read with up to five sleeps made test/environment defects look like consistency semantics;
+- removed the unused pre-v2 points calculation implementation and reserved legacy algorithm constant. The active scoring path remains the v2 domain/Vibe calculation; dead alternate scoring logic was an unnecessary second representation of product rules;
+- removed duplicate calls to `ensureGamificationProjectionFresh` in both points summary and points-history handlers. Each request now performs one reconciliation check;
+- revalidated the historical points-repository TODO finding against the current branch: the TODO is no longer present and therefore is not current debt;
+- repository search found no backend `FIXME`, `it.skip`, `test.skip` or `describe.skip` matches in the indexed current code.
+- Phase 15 TOTP-at-rest revalidation found and repaired two invariant gaps: disabling 2FA no longer writes an empty plaintext sentinel into `totp_secret`, and the encryption migration now requires `TOTP_ENCRYPTION_KEY` even when all existing secrets are already encrypted. This prevents a replayed/partially configured deployment from silently passing the migration without the runtime key.
+- dependency/fallback review found no current service-cycle lazy import requiring repair: the remaining dynamic imports are deliberate runtime-secret bootstrap/production health-check boundaries or the documented CommonJS-to-ESM Archiver interop boundary. Redis-to-memory fallback is explicit, logged cache degradation rather than a silent correctness fallback.
+- repaired the historical earned-badges API contract drift: earned badges now have an authenticated backend projection/route distinct from the public catalog, and the frontend client targets the actual points badge routes. The projection is sourced from active badge awards plus the authoritative badge catalog rather than inventing a second badge model.
+- migration/runtime reconciliation added migration-contract coverage for the Phase 15 authentication tables and exposed a Phase 14 drift: the implemented pending second-factor challenge still expired after 5 minutes despite the authoritative 30-minute decision. Runtime TTL is now 30 minutes and the integration test locks that policy.
+- removed two silent brute-force repository fallbacks that fabricated an updated attempt record when a just-updated database row could not be re-read. Such disappearance is now treated as an invariant failure instead of returning state that is not known to exist.
+- exit-gate CI exposed repair-induced contract failures. Frontend badge API tests still asserted the obsolete routes and were updated to the repaired contract. The initial pending-2FA schema diagnosis was corrected after CI showed that `202609230002_harden_auth_state_machine.ts` already owns `identifier`, `failed_attempts`, and `last_failed_at`; duplicating those columns in the base auth migration broke the migration chain. The base migration change was removed and the migration-contract test now verifies the final schema produced by the existing additive hardening migration. Password-reset unit tests now explicitly mock the authoritative blacklist dependency instead of accidentally querying a real table.
+
+This is an intermediate repair record, **not** a zero-debt declaration. Remaining high-signal implementation surfaces still require inspection before the exit gate can pass: Phase 15 security-control implementation/migration behavior, dependency/lazy-import cycles, broad catches/silent fallbacks, migration/runtime drift, and the historical earned-badges API finding.
+
+
+After documentation is authoritative, review the current backend for:
+
+- TODO/FIXME/stubs/placeholders and obsolete compatibility paths;
+- skipped or weakened tests;
+- duplicated business rules and transitional duplicate implementations;
+- dependency cycles/layering violations;
+- transaction ownership and check-then-write races;
+- schema/migration/runtime contract drift;
+- broad catches and silent security/data fallbacks;
+- stale retry/sleep workarounds;
+- dead security controls;
+- Phase 11–15 residue.
+
+Fix only confirmed debt. Do not redesign healthy code or implement unrelated open product backlog.
+
+### Zero-debt exit gate
+
+The gate passes only when:
+
+- no known material doc/code contradiction remains in the reviewed Phase 1–15 surface;
+- no unexplained production TODO/stub/workaround remains from those phases;
+- no meaningful test is skipped or weakened merely to obtain green CI;
+- migrations, API contracts and documented invariants agree;
+- architectural decisions are traceable;
+- required CI gates pass on the final head.
+
+Any intentionally retained compromise must have an explicit rationale and owner/removal condition where applicable.
+
+### Implementation-creep review
+
+Only after the zero-debt gate passes, reassess Phases 16–22. A remaining phase is retained only if it solves a demonstrated correctness, security, privacy, operability or maintainability problem. Work whose principal justification is architectural sophistication, generic cleanup or hypothetical scale is reduced, merged into a smaller targeted phase, or removed.
+
+The debt-confrontation gate itself is not permission for broad refactoring. Changes remain surgical and fix-forward.
+
 ---
 
 ## Phase 16 — Transaction boundary cleanup
 
-**Status:** Not started
+**Status:** Verifying
 
 ### Objective
 
@@ -457,7 +625,12 @@ Make atomicity and post-commit side effects deliberate rather than accidental.
 
 ### Decision log
 
-_Pending Phase 16 interview._
+1. **Core domain data commits atomically.** Required writes that represent one domain operation share a database transaction and roll back together.
+2. **Audit is durable post-commit.** Audit emission must not roll back a successful business operation; the existing audit outbox is the recovery mechanism when direct persistence fails.
+3. **User-visible derived state follows correctness needs.** Same-database state that would otherwise leave the application inconsistent is transactional; cross-boundary derived work uses durable/retryable post-commit execution when loss matters.
+4. **Background jobs start after source commit.** Correctness-critical jobs must be durable and idempotent; maintenance jobs may use retryable best-effort execution.
+5. **Metrics and logging are best-effort post-commit.** Observability failures never invalidate a successful user action.
+6. **No generic event bus/outbox expansion.** Use ordinary database transactions first, the existing audit outbox where durability matters, and simple post-commit execution elsewhere.
 
 ### Exit criteria
 
@@ -702,9 +875,11 @@ CI verifies the intended backend quality model without encouraging superficial c
 | 2026-09-23 | 14 | Aggregate source-IP spray evidence survives successful account authentication and decays within a bounded observation window. | A successful guess must not erase evidence of cross-account password spraying; NAT/shared-IP state must not accumulate forever. | ADR-002 / PR #239 |
 | 2026-09-23 | 14 | A second-factor challenge is exhausted after three failed attempts and recent exhaustion temporarily suppresses challenge cycling. | Bound TOTP/backup-code guessing without permanent account lockout. | ADR-002 / PR #239 |
 | 2026-09-23 | 14 | Forwarded client IPs are accepted only from explicitly configured trusted proxy peers. | Prevent spoofed forwarding headers from bypassing IP-based security controls. | ADR-002 / PR #239 |
-| 2026-09-24 | 15 | Email blacklist is authoritative and fails closed when backing state is unavailable. | Remove silent security degradation from account-establishment and recovery flows. | ADR-030 / PR #240 |
-| 2026-09-24 | 15 | TOTP secrets are encrypted at the application boundary with AES-256-GCM and external key material. | Limit impact of database-only disclosure while preserving TOTP verification. | ADR-030 / PR #240 |
-| 2026-09-24 | 15 | Sensitive 2FA administration requires password plus current second factor. | A stolen authenticated session must not be enough to disable/replace 2FA or regenerate recovery material. | ADR-030 / PR #240 |
+| 2026-09-24 | 15 | Retain the email blacklist as an authoritative fail-closed access control. | A configured security control must not silently degrade or be bypassed by alternate account-access flows. | PR #240 / Phase 15 decision log |
+| 2026-09-24 | 15 | Encrypt persisted TOTP secrets with application-held key material. | TOTP verification requires recoverability, but plaintext persistence is not acceptable. | PR #240 / ADR-026 security context |
+| 2026-09-24 | 15 | Sensitive 2FA administration requires password plus current second factor. | A stolen authenticated session must not be sufficient to weaken or replace the second factor. | PR #240 / Phase 15 decision log |
+| 2026-09-24 | Program | Insert a debt-confrontation gate before final Phase 15 sign-off and later phases. | Documentation must become authoritative before implementation debt is selected; later phases must be justified against a clean baseline. | This document |
+| 2026-09-25 | Program | Record the Phase 1–15 scope-creep audit and retain PR #218 as the sole confirmed scope-boundary violation found in the reviewed phase history. | Distinguish legitimate cross-cutting repair from unrelated implementation creep and prevent cumulative diff size or stacked PR inheritance from being misclassified as phase scope. | Debt-Confrontation Gate — Phase 1–15 scope-creep audit |
 
 ## Phase completion record
 
@@ -714,7 +889,8 @@ CI verifies the intended backend quality model without encouraging superficial c
 | 12 | Done | ADR-010 v1.2; ADR-029 v1.2 | PR #237; merge 2d8c8f734fc01ab3efb811d3f9cd5ad58538117d | Lighthouse rerun passed; backend/frontend/database/integration/API/security/accessibility/visual/coverage gates passed |
 | 13 | Done | ADR-029 v1.5 | PR #238; merge 75cb53722a5e0d91417ad8d6b4eca64fcc47fd24 | Final head f8ac1a228e4ce7f8272c7ad18ad543291a0b3bef; CI 35909692358 and CodeQL 35909692342 passed all required gates |
 | 14 | Done | ADR-002; this document | PR #239; merge `6438d7b25e79394bfb1c3827f0a792abb3cd4fdf` | CI 1018 and CodeQL 786 passed all required gates |
-| 15 | Done | ADR-030; Phase 15 decision log | PR #240; merge `2b3844bbfe35b6c2d9fe283fc350e24e2c5a62b5` | Final head `b63cdfa6e82fd4b15ef141d8a58b73e22f747cf5`; CI 1034 and CodeQL 802 passed |
+| 15 | Done | ADR-030; Phase 15 decision log | PR #240; merge `2b3844bbfe35b6c2d9fe283fc350e24e2c5a62b5`; final docs PR #243 | Final implementation CI 1034 and CodeQL 802 passed; documentation finalized in PR #243 |
+| Debt gate | Documentation reconciliation | this document | `debt-confrontation-phase` | Revalidate current documentation before selecting implementation repairs |
 | 16 | Not started | — | — | — |
 | 17 | Not started | — | — | — |
 | 18 | Not started | — | — | — |

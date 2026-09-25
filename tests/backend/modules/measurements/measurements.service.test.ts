@@ -15,6 +15,7 @@ import {
   listLatestAttributeValues,
   listSelections,
   upsertSelection,
+  withMeasurementTransaction,
 } from "../../../../apps/backend/src/modules/measurements/measurements.repository.js";
 import { upsertTranslation } from "../../../../apps/backend/src/modules/translations/translations.repository.js";
 
@@ -27,6 +28,9 @@ jest.mock("../../../../apps/backend/src/modules/measurements/measurements.reposi
   listLatestAttributeValues: jest.fn(),
   listSelections: jest.fn(),
   upsertSelection: jest.fn(),
+  withMeasurementTransaction: jest.fn(async (work: (trx: unknown) => Promise<unknown>) =>
+    work({}),
+  ),
 }));
 
 jest.mock("../../../../apps/backend/src/modules/translations/translations.repository.js", () => ({
@@ -36,6 +40,7 @@ jest.mock("../../../../apps/backend/src/modules/translations/translations.reposi
 describe("measurements service", () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    jest.mocked(withMeasurementTransaction).mockImplementation(async (work) => work({} as never));
   });
 
   afterEach(() => {
@@ -196,12 +201,15 @@ describe("measurements service", () => {
     });
 
     expect(created.id).toBe("attr-1");
-    expect(upsertTranslation).toHaveBeenCalledWith({
-      namespace: "user_attributes",
-      key_path: "user_attributes.height",
-      language: "en",
-      value: "Height",
-    });
+    expect(upsertTranslation).toHaveBeenCalledWith(
+      {
+        namespace: "user_attributes",
+        key_path: "user_attributes.height",
+        language: "en",
+        value: "Height",
+      },
+      expect.anything(),
+    );
   });
 
   it("rejects derived measurements without valid sources", async () => {

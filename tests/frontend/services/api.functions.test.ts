@@ -1141,9 +1141,9 @@ describe("API Service Functions", () => {
       await expect(getPointsHistory({ limit: 10 })).resolves.toMatchObject({ entries: [] });
       await expect(getPointsHistory()).resolves.toMatchObject({ entries: [] });
 
-      apiMock.onGet("/api/v1/badges").reply(200, { badges: [], total: 0 });
+      apiMock.onGet("/api/v1/points/badges/earned").reply(200, { badges: [], total: 0 });
       await expect(getUserBadges()).resolves.toEqual({ badges: [], total: 0 });
-      apiMock.onGet("/api/v1/badges/catalog").reply(200, { badges: [], total: 0 });
+      apiMock.onGet("/api/v1/points/badges").reply(200, { badges: [], total: 0 });
       await expect(getBadgeCatalog()).resolves.toEqual({ badges: [], total: 0 });
       apiMock.onGet("/api/v1/leaderboards").reply(200, { entries: [], total: 0 });
       await expect(getLeaderboard({ type: "global", period: "week" })).resolves.toMatchObject({
