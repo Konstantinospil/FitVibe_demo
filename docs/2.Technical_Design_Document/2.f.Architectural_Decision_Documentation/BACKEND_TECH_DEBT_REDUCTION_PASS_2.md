@@ -655,7 +655,7 @@ Atomic multi-table operations are transactional; external side effects have expl
 
 ## Phase 17 — Legal/version state consolidation
 
-**Status:** Interviewing
+**Status:** Done
 
 ### Objective
 
@@ -695,6 +695,35 @@ Accepted on 2026-09-25:
 Pending implementation-model decision:
 
 - define the smallest publication/version schema that can represent draft versus published state, immutable published content, effective dates, and acceptance/consent impact without coupling authority to translation timestamps.
+
+### Implementation and verification record
+
+Phase 17 is implemented and verified on `phase17/finalize` at commit `9f1cd8bd1e4f8dd3a829282a7137cd734a084de8`.
+
+Implemented outcomes:
+
+- authoritative legal publications are explicit persisted versions;
+- Backoffice publication creates immutable per-language full-document snapshots;
+- published snapshots, not mutable translation rows or timestamps, are the runtime/legal authority;
+- publications distinguish `editorial` from `material` change impact and persist an explicit user effect: `none`, `acknowledge`, `accept`, or `renew_consent`;
+- Terms, Privacy and Cookie state are linked to explicit legal publication IDs/versions;
+- existing recorded acceptances are migrated into the authoritative ledger without inventing missing acceptance;
+- acceptance revocation is preserved historically through revocation state rather than deleting evidence;
+- current authoritative text and latest acceptance-requiring publication are modeled separately;
+- frontend legal pages render from immutable snapshots;
+- Terms re-acceptance blocks ordinary authenticated use while legal/account routes remain accessible;
+- Privacy acknowledgement-only changes remain non-blocking, while explicit acceptance/renewal requirements can gate ordinary routes;
+- legal-status lookup fails closed for ordinary authenticated routes;
+- cookie consent renewal is tied to the applicable authoritative Cookie publication;
+- ADR-032 and E19 documentation are aligned with the implemented publication model.
+
+Verification:
+
+- GitHub Actions CI run `36181357392` passed completely on the exact Phase 17 head;
+- CodeQL run `36181357644` passed on the same head;
+- lint/typecheck, backend tests, frontend tests, database tests, backend integration, API contracts, coverage, security, accessibility, Lighthouse, performance, E2E smoke and visual regression all passed;
+- visual regression passed without changing baselines after repairing the missing authenticated legal-status fixture;
+- dedicated route tests separately verify Terms gating, Privacy blocking/non-blocking semantics and fail-closed behavior, so the visual fixture does not substitute for product-behavior coverage.
 
 ### Exit criteria
 
@@ -924,7 +953,7 @@ CI verifies the intended backend quality model without encouraging superficial c
 | 15 | Done | ADR-030; Phase 15 decision log | PR #240; merge `2b3844bbfe35b6c2d9fe283fc350e24e2c5a62b5`; final docs PR #243 | Final implementation CI 1034 and CodeQL 802 passed; documentation finalized in PR #243 |
 | Debt gate | Documentation reconciliation | this document | `debt-confrontation-phase` | Revalidate current documentation before selecting implementation repairs |
 | 16 | Not started | — | — | — |
-| 17 | Not started | — | — | — |
+| 17 | Done | ADR-032; E19/US-19.1–19.3 | PR #246; final head `9f1cd8bd1e4f8dd3a829282a7137cd734a084de8` | CI `36181357392` and CodeQL `36181357644` passed all required gates |
 | 18 | Not started | — | — | — |
 | 19 | Not started | — | — | — |
 | 20 | Not started | — | — | — |
