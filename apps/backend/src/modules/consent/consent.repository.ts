@@ -50,6 +50,7 @@ export async function upsertConsent(
   ipAddress: string,
   input: CreateCookieConsentInput | UpdateCookieConsentInput,
   userId?: string | null,
+  legalVersionId?: string | null,
 ): Promise<CookieConsent> {
   const now = new Date().toISOString();
   const isCreateInput = "consentVersion" in input && "essentialCookies" in input;
@@ -66,6 +67,7 @@ export async function upsertConsent(
         ? input.legalVersionId
         : (input.legalVersionId ?? previous?.legalVersionId ?? null),
       source: userId ? "authenticated" : "banner",
+      legal_version_id: legalVersionId ?? null,
       essential_cookies: isCreateInput
         ? input.essentialCookies
         : (input.essentialCookies ?? previous?.essentialCookies ?? true),
