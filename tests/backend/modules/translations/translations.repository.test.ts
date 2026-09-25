@@ -233,11 +233,14 @@ describe("Translations Repository", () => {
       created_by: "admin-1",
     });
 
+    expect(updateBuilder.where).toHaveBeenCalledWith({
+      id: "t-3",
+      deleted_at: null,
+    });
     expect(updateBuilder.update).toHaveBeenCalledWith(
       expect.objectContaining({
         value: "Hello updated",
         updated_by: "admin-1",
-        deleted_at: null,
       }),
     );
     expect(result).toEqual(updatedRecord);
