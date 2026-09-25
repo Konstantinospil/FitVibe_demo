@@ -53,8 +53,8 @@ The lifecycle for delivery artifacts is `Open → Progressing → Done`, with `S
 ## Status Summary
 
 - **Done**: 11
-- **Progressing**: 7
-- **Open**: 4
+- **Progressing**: 10
+- **Open**: 1
 - **Superseded**: 1
 - **Total**: 23
 
