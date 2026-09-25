@@ -457,7 +457,6 @@ export async function acceptCurrentLegalDocument(
   return version;
 }
 
-
 export async function revokeLegalDocumentAcceptances(
   userId: string,
   documentType: LegalDocumentType,
