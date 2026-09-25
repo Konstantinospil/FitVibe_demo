@@ -75,8 +75,6 @@ export async function up(knex: Knex): Promise<void> {
     table.text("ip").nullable();
     table.text("user_agent").nullable();
     table.boolean("verified").notNullable().defaultTo(false);
-    table.integer("failed_attempts").notNullable().defaultTo(0);
-    table.timestamp("last_failed_at", { useTz: true }).nullable();
     table.index(["user_id"], "pending_2fa_sessions_user_idx");
     table.index(["expires_at"], "pending_2fa_sessions_expires_idx");
   });
