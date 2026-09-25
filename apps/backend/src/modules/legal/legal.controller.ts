@@ -1,6 +1,5 @@
 import type { Request, Response } from "express";
 import { HttpError } from "../../utils/http.js";
-import { getAuthenticatedUser } from "../auth/auth.middleware.js";
 import {
   getCurrentLegalDocument,
   getCurrentLegalVersions,
@@ -37,7 +36,7 @@ export async function listLegalPublicationsHandler(req: Request, res: Response):
 }
 
 export async function publishLegalDocumentHandler(req: Request, res: Response): Promise<void> {
-  const authUser = getAuthenticatedUser(req);
+  const authUser = req.user ?? null;
   if (!authUser?.sub) {
     throw new HttpError(401, "UNAUTHENTICATED", "UNAUTHENTICATED");
   }
