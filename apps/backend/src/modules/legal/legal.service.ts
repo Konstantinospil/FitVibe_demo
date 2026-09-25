@@ -2,7 +2,6 @@ import crypto from "node:crypto";
 import { HttpError } from "../../utils/http.js";
 import { insertAudit } from "../common/audit.util.js";
 import {
-  getAcceptanceForVersion,
   getActiveLegalTranslationRows,
   getCurrentLegalVersion,
   getLatestAcceptanceForDocument,
