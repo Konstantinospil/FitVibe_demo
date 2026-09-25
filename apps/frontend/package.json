@@ -16,7 +16,9 @@
     "lint:check": "turbo run lint -- --max-warnings=0",
     "typecheck": "tsc --noEmit && node -e \"const fs=require('fs');const path=require('path');const testsDir=path.join(__dirname,'tests');if(fs.existsSync(testsDir)){const files=fs.readdirSync(testsDir,{recursive:true});if(files.some(f=>/\\\\.(ts|tsx)$/.test(f))){require('child_process').execSync('tsc --noEmit -p tsconfig.test.json',{stdio:'inherit'});}}\"",
     "test": "node ./scripts/run-vitest.mjs",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "gallery": "pnpm dlx @ladle/react@5.1.1 serve",
+    "gallery:build": "pnpm dlx @ladle/react@5.1.1 build"
   },
   "dependencies": {
     "@fontsource-variable/inter": "^5.3.0",
