@@ -2,7 +2,7 @@
 
 **Baseline date:** 2026-09-25  
 **Branch:** `dev`  
-**Purpose:** Authoritative mapping from reconciled product documentation to the GitHub issues that represent current implementation/verification work.
+**Purpose:** Authoritative mapping from reconciled product documentation and the vNext engineering/design roadmap to GitHub execution issues.
 
 ## Rules
 
@@ -15,7 +15,7 @@
 
 ## Recommended GitHub Project
 
-**Project name:** FitVibe — Current Product Backlog
+**Project name:** FitVibe — vNext Delivery Roadmap
 
 ### Status field
 
@@ -30,10 +30,10 @@
 
 - **Canonical ID** — e.g. US-19.1
 - **Epic** — E4, E5, E6, …
-- **Work type** — Feature / Verification / Operations / Documentation
+- **Work type** — Feature / Verification / Operations / Documentation / Engineering / Design / Roadmap
 - **Priority** — High / Medium / Low
 - **Gate** — GOLD / SILVER
-- **Workstream** — one of the sections below
+- **Workstream** — one of the sections below, including Engineering Quality, Deployment & Release, Design & Product Integration, and Roadmap Coordination
 - **Dependency** — optional blocking story/decision
 
 ### Recommended views
@@ -148,15 +148,51 @@
 - [#258](https://github.com/Konstantinospil/FitVibe_demo/issues/258) — US-21.3 Measurement Discovery & Profile Presentation
 - [#259](https://github.com/Konstantinospil/FitVibe_demo/issues/259) — US-21.4 Derived Measurements
 
+## vNext engineering, design and roadmap work
+
+The canonical product-story catalogue is supplemented by the following current delivery issues. They are part of the vNext Project but do not invent product requirements or Epics.
+
+### Roadmap Coordination
+
+- [#260](https://github.com/Konstantinospil/FitVibe_demo/issues/260) — Phase 23 Measurements Completion
+- [#261](https://github.com/Konstantinospil/FitVibe_demo/issues/261) — Phase 24 Planner Completion
+- [#262](https://github.com/Konstantinospil/FitVibe_demo/issues/262) — Phase 25 Logging & Import Expansion
+- [#263](https://github.com/Konstantinospil/FitVibe_demo/issues/263) — Phase 26 Coach & Training Unit Workflows
+- [#264](https://github.com/Konstantinospil/FitVibe_demo/issues/264) — Phase 27 Production Readiness Closure
+- [#274](https://github.com/Konstantinospil/FitVibe_demo/issues/274) — Phase 28 Design and Product Integration Closure
+- [#275](https://github.com/Konstantinospil/FitVibe_demo/issues/275) — Phase 29 vNext Release Candidate Gate
+
+### Engineering Quality
+
+- [#265](https://github.com/Konstantinospil/FitVibe_demo/issues/265) — Phase 18 Secrets contract repair
+- [#266](https://github.com/Konstantinospil/FitVibe_demo/issues/266) — Phase 19 Repository/API residue quality pass
+- [#267](https://github.com/Konstantinospil/FitVibe_demo/issues/267) — Phase 20 Cross-stack test quality and flakiness audit
+- [#268](https://github.com/Konstantinospil/FitVibe_demo/issues/268) — Phase 21 Architecture and documentation conformance review
+- [#269](https://github.com/Konstantinospil/FitVibe_demo/issues/269) — Phase 22 CI quality gate and deployment-contract enforcement
+
+### Deployment & Release
+
+- [#270](https://github.com/Konstantinospil/FitVibe_demo/issues/270) — Production Compose and ClamAV deployment-contract cleanup
+
+### Design & Product Integration
+
+- [#271](https://github.com/Konstantinospil/FitVibe_demo/issues/271) — Mount Vibeform in the user-facing profile experience
+- [#272](https://github.com/Konstantinospil/FitVibe_demo/issues/272) — Close FitVibe design-system implementation gaps
+- [#273](https://github.com/Konstantinospil/FitVibe_demo/issues/273) — Define and integrate the FitVibe kudos "respectful nod" mark
+
+The complete sequencing and release gate are defined in [VNEXT_DELIVERY_ROADMAP.md](./VNEXT_DELIVERY_ROADMAP.md).
+
 ## Current/open issue invariant
 
-At the time this manifest was created:
+At the current vNext baseline:
 
-- Open issues: **61**
-- Open issues marked `[Current]`: **61**
-- Unmarked historical open issues: **0**
+- Open canonical `[Current]` product-story issues: **61**
+- Open roadmap/engineering/design delivery issues: **16** (#260–#275)
+- Total open vNext delivery issues: **77**
+- Completed E19 issues retained in the Project for traceability: **3** (#251–#253)
+- Historical obsolete issues are not part of the Project.
 
-Any future issue added to the Project should reference its canonical requirement/story/AC and should state whether it is new implementation or verification/closure work.
+Future product issues must reference canonical requirement/story/AC scope. Engineering, design and roadmap issues must reference the concrete verified gap or phase they close and must not fabricate a product Epic solely for Project metadata.
 
 ## Historical issue handling
 
