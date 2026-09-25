@@ -31,6 +31,7 @@ export interface LegalDocumentAcceptanceRow {
   action: Exclude<LegalUserAction, "none">;
   source: string;
   accepted_at: string;
+  revoked_at: string | null;
   created_at: string;
 }
 
