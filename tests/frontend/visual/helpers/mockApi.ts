@@ -413,6 +413,34 @@ export async function mockPrivacySettings(
   });
 }
 
+export async function mockLegalDocumentsStatus(page: Page) {
+  await page.route("**/api/v1/auth/legal-documents/status", async (route) => {
+    if (route.request().method() !== "GET") {
+      return route.fallback();
+    }
+    return fulfillJson(route, {
+      terms: {
+        accepted: true,
+        acceptedAt: "2025-10-01T12:00:00.000Z",
+        acceptedVersion: "2025-10-01.1",
+        currentVersion: "2025-10-01.1",
+        requiredVersion: "2025-10-01.1",
+        requiredAction: "accept",
+        needsAcceptance: false,
+      },
+      privacy: {
+        accepted: true,
+        acceptedAt: "2025-10-01T12:00:00.000Z",
+        acceptedVersion: "2025-10-01.1",
+        currentVersion: "2025-10-01.1",
+        requiredVersion: null,
+        requiredAction: "none",
+        needsAcceptance: false,
+      },
+    });
+  });
+}
+
 export async function mockCookieConsent(page: Page) {
   await page.route("**/api/v1/consent/cookie-status", async (route) => {
     if (route.request().method() !== "GET") {
@@ -694,6 +722,7 @@ export async function installDefaultMocks(page: Page): Promise<void> {
   await mockAuthSessions(page);
   await mockAuthRefresh(page);
   await mock2FAStatus(page, false);
+  await mockLegalDocumentsStatus(page);
   await mockPrivacySettings(page);
   await mockCookieConsent(page);
   await mockFeed(page);
