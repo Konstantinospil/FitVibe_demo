@@ -20,7 +20,11 @@ const PublishLegalDocumentSchema = z.object({
 
 export const legalRouter = Router();
 
-legalRouter.get("/versions", rateLimit("legal_versions", 60, 60), asyncHandler(getLegalVersionsHandler));
+legalRouter.get(
+  "/versions",
+  rateLimit("legal_versions", 60, 60),
+  asyncHandler(getLegalVersionsHandler),
+);
 legalRouter.get(
   "/documents/:documentType",
   rateLimit("legal_document", 60, 60),
