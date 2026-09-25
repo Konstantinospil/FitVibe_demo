@@ -5,7 +5,7 @@
 **Epic ID**: E21  
 **Requirement ID**: [FR-014](../a.Requirements/FR-014-profile-measurements.md)  
 **Title**: Profile Measurements  
-**Status**: Open  
+**Status**: Progressing  
 **Priority**: High  
 **Gate**: SILVER  
 **Estimated Total Effort**: To be re-estimated after implementation comparison  
