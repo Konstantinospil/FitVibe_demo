@@ -17,13 +17,16 @@ import type {
   AuthUserRecord,
 } from "../../../../apps/backend/src/modules/auth/auth.repository.js";
 import { HttpError } from "../../../../apps/backend/src/utils/http.js";
+import * as emailBlacklistRepo from "../../../../apps/backend/src/modules/common/email-blacklist.repository.js";
 
 // Mock dependencies
 jest.mock("../../../../apps/backend/src/modules/auth/auth.repository");
 jest.mock("bcryptjs");
 jest.mock("../../../../apps/backend/src/services/mailer.service.js");
+jest.mock("../../../../apps/backend/src/modules/common/email-blacklist.repository.js");
 
 const mockAuthRepo = authRepo as jest.Mocked<typeof authRepo>;
+const mockEmailBlacklistRepo = emailBlacklistRepo as jest.Mocked<typeof emailBlacklistRepo>;
 
 describe("AC-1.9: Password Reset Security", () => {
   const mockUser: AuthUserRecord = {
@@ -56,6 +59,7 @@ describe("AC-1.9: Password Reset Security", () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    mockEmailBlacklistRepo.isEmailBlacklisted.mockResolvedValue(false);
   });
 
   describe("Single-Use Enforcement", () => {
