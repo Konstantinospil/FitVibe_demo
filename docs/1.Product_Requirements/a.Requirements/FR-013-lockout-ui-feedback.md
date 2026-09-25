@@ -24,6 +24,8 @@
 
 This document is retained as historical context for the previous lockout-feedback design.
 
+**Lifecycle note:** `Superseded` is a terminal documentation status. The embedded historical labels `US-13.1`–`US-13.3` below are not canonical user-story identifiers and must not be used for future work. The `US-13.*` namespace belongs to E13 (WCAG 2.2 Compliance Update).
+
 This functional requirement specified user interface feedback for brute force protection lockouts. Users must see clear information about lockout status, remaining attempts, and countdown timers.
 
 Provide transparent feedback when login attempts are blocked due to brute force protection, including remaining attempts before lockout and countdown timers during lockout periods.
@@ -223,4 +225,4 @@ Backend error responses shall follow this structure:
 ---
 
 **Last Updated**: 2026-09-23  
-**Next Review**: 2025-12-30
+**Next Review**: N/A (superseded)

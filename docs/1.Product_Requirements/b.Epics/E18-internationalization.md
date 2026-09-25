@@ -10,7 +10,7 @@
 **Gate**: SILVER  
 **Estimated Total Effort**: 8-12 story points  
 **Created**: 2025-01-21  
-**Updated**: 2025-01-21
+**Updated**: 2026-09-25
 
 ---
 
@@ -28,7 +28,7 @@ Expands platform accessibility to international users. Improves user experience 
 
 ## Related User Stories
 
-{Note: User stories will be created and linked here as they are defined}
+This is a **legacy-completed epic** that predates the current story-level traceability discipline. The completed scope remains historical product documentation. Do not create retrospective backlog stories solely to populate this section; future extensions require new canonical scope and are evaluated independently.
 
 ## Dependencies
 
@@ -52,5 +52,5 @@ Expands platform accessibility to international users. Improves user experience 
 
 ---
 
-**Last Updated**: 2025-01-21  
-**Next Review**: 2025-02-21
+**Last Updated**: 2026-09-25  
+**Next Review**: N/A (legacy-completed epic)
