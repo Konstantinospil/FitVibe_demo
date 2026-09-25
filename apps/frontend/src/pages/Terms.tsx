@@ -33,10 +33,14 @@ const Terms: React.FC = () => {
     let cancelled = false;
     void getLegalDocumentsStatus()
       .then((result) => {
-        if (!cancelled) setStatus(result.terms);
+        if (!cancelled) {
+          setStatus(result.terms);
+        }
       })
       .catch(() => {
-        if (!cancelled) setStatus(null);
+        if (!cancelled) {
+          setStatus(null);
+        }
       });
     return () => {
       cancelled = true;
