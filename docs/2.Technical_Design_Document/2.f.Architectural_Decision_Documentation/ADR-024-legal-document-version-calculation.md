@@ -1,11 +1,13 @@
 # ADR-024: Legal Document Version Calculation from Multi-Language Translations
 
 **Date:** 2025-12-22  
-**Status:** Accepted  
+**Status:** Superseded by ADR-032  
 **Author:** FitVibe Engineering Team  
 **Cross-References:** REQ-2025-01-20-001 (Terms and Conditions), E19 (Terms and Conditions Epic)
 
 ---
+
+> **Superseded 2026-09-25:** Phase 17 replaced timestamp/file-metadata-derived legal versions with explicit Backoffice publications and immutable snapshots. See [ADR-032](./ADR-032-legal-publication-snapshots.md). This ADR remains as historical context only.
 
 ## Context
 
