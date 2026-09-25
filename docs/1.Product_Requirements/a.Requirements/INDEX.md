@@ -2,7 +2,7 @@
 
 **Last Updated**: 2026-09-25
 
-Statuses follow the schema: Open, Progressing, Done.
+Statuses follow the schema: Open, Progressing, Done, Superseded.
 
 ## Functional Requirements (FR)
 
