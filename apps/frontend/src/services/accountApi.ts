@@ -341,7 +341,6 @@ export async function getLegalDocumentVersions(): Promise<LegalDocumentVersions>
   return res.data;
 }
 
-
 export interface PublishedLegalDocumentContent {
   documentType: "terms" | "privacy" | "cookie";
   version: string;
