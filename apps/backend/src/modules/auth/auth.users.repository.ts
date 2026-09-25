@@ -82,27 +82,30 @@ export async function findUserById(id: string): Promise<AuthUserRecord | undefin
   return userQuery().where("u.id", id).first<AuthUserRecord>();
 }
 
-export async function createUser(input: {
-  id: string;
-  alias?: string;
-  /** Accepted as an alias of `alias` so existing callers keep working. */
-  username?: string;
-  display_name: string;
-  locale?: string;
-  preferred_lang?: string;
-  status: UserStatus;
-  role_code: string;
-  password_hash: string;
-  primaryEmail: string;
-  emailVerified?: boolean;
-  terms_accepted?: boolean;
-  terms_accepted_at?: string;
-  terms_version?: string;
-  gender_code?: "man" | "woman" | "diverse" | "prefer_not_to_say";
-  fitness_level_code?: "beginner" | "intermediate" | "advanced" | "elite" | "rehab";
-  date_of_birth?: string;
-  weight_kg?: number;
-}, trx?: Knex.Transaction): Promise<AuthUserRecord | undefined> {
+export async function createUser(
+  input: {
+    id: string;
+    alias?: string;
+    /** Accepted as an alias of `alias` so existing callers keep working. */
+    username?: string;
+    display_name: string;
+    locale?: string;
+    preferred_lang?: string;
+    status: UserStatus;
+    role_code: string;
+    password_hash: string;
+    primaryEmail: string;
+    emailVerified?: boolean;
+    terms_accepted?: boolean;
+    terms_accepted_at?: string;
+    terms_version?: string;
+    gender_code?: "man" | "woman" | "diverse" | "prefer_not_to_say";
+    fitness_level_code?: "beginner" | "intermediate" | "advanced" | "elite" | "rehab";
+    date_of_birth?: string;
+    weight_kg?: number;
+  },
+  trx?: Knex.Transaction,
+): Promise<AuthUserRecord | undefined> {
   const alias = (input.alias ?? input.username ?? "").trim();
   if (!alias) {
     throw new Error("createUser requires a non-empty alias");
