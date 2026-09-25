@@ -354,8 +354,10 @@ describeWithTestDatabase("database migrations", () => {
       expect(twoFactorColumns.is_enabled).toBeDefined();
       expect(twoFactorColumns.is_verified).toBeDefined();
 
-      const blacklistColumns = await client("email_blacklist").columnInfo();
-      expect(blacklistColumns.email_hash).toBeDefined();
+      const blacklistColumns = await client("blacklist").columnInfo();
+      expect(blacklistColumns.email).toBeDefined();
+      expect(blacklistColumns.active_from).toBeDefined();
+      expect(blacklistColumns.active_to).toBeDefined();
 
       const challengeColumns = await client("pending_2fa_sessions").columnInfo();
       expect(challengeColumns.failed_attempts).toBeDefined();
