@@ -303,14 +303,25 @@ export async function getLegalActionStatus(
     };
   }
 
-  const acceptance = await getAcceptanceForVersion(userId, required.id);
+  const latestAcceptedEffectiveAt = latestAcceptance
+    ? new Date(latestAcceptance.version_effective_at).getTime()
+    : Number.NEGATIVE_INFINITY;
+  const requiredEffectiveAt = new Date(required.effective_at).getTime();
+
+  const acceptedRequiredOrNewer =
+    latestAcceptedEffectiveAt > requiredEffectiveAt ||
+    (latestAcceptedEffectiveAt === requiredEffectiveAt &&
+      latestAcceptance !== null &&
+      new Date(latestAcceptance.version_published_at).getTime() >=
+        new Date(required.published_at).getTime());
+
   return {
     currentVersion: current.version,
     requiredVersion: required.version,
     acceptedVersion: latestAcceptance?.version ?? null,
     acceptedAt: latestAcceptance?.accepted_at ?? null,
     requiredAction: required.user_action,
-    needsAction: acceptance === null,
+    needsAction: !acceptedRequiredOrNewer,
   };
 }
 
