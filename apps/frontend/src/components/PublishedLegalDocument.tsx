@@ -188,6 +188,7 @@ export const PublishedLegalDocument: React.FC<PublishedLegalDocumentProps> = ({ 
   const [publication, setPublication] = useState<PublishedLegalDocumentContent | null>(null);
   const [legacyContent, setLegacyContent] = useState<Record<string, unknown> | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loadFailed, setLoadFailed] = useState(false);
 
   const language = useMemo(() => i18n.language.split("-")[0] || "en", [i18n.language]);
 
@@ -196,6 +197,7 @@ export const PublishedLegalDocument: React.FC<PublishedLegalDocumentProps> = ({ 
 
     const load = async () => {
       setLoading(true);
+      setLoadFailed(false);
       try {
         const current = await getPublishedLegalDocument(documentType, language);
         if (cancelled) return;
@@ -208,6 +210,12 @@ export const PublishedLegalDocument: React.FC<PublishedLegalDocumentProps> = ({ 
           setLegacyContent(isRecord(bundle) ? bundle : null);
         } else {
           setLegacyContent(null);
+        }
+      } catch {
+        if (!cancelled) {
+          setPublication(null);
+          setLegacyContent(null);
+          setLoadFailed(true);
         }
       } finally {
         if (!cancelled) {
@@ -227,7 +235,7 @@ export const PublishedLegalDocument: React.FC<PublishedLegalDocumentProps> = ({ 
   }
 
   const content = publication?.content ?? legacyContent;
-  if (!content) {
+  if (loadFailed || !content) {
     return <p role="alert">{t("common.error", { defaultValue: "Document unavailable." })}</p>;
   }
 
