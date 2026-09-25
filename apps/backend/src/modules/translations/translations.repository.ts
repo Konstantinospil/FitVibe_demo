@@ -217,9 +217,7 @@ export async function updateTranslation(
       });
 
     if (retired !== 1) {
-      throw new Error(
-        `Translation changed concurrently for ${namespace}.${keyPath} (${language})`,
-      );
+      throw new Error(`Translation changed concurrently for ${namespace}.${keyPath} (${language})`);
     }
 
     const [newRecord] = (await transaction(TRANSLATIONS_TABLE)
