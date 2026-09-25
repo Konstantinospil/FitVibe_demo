@@ -114,7 +114,12 @@ describe("Terms page", () => {
     expect(screen.getByText("5. Health and safety notice")).toBeInTheDocument();
     expect(screen.getByText("legal@fitvibe.example.com")).toBeInTheDocument();
     expect(
-      screen.getByText((_, element) => element?.textContent?.includes("2026-09-25.1") === true),
+      screen.getByText(
+        (_, element) =>
+          element?.tagName === "DIV" &&
+          element.classList.contains("text-muted") &&
+          element.textContent?.includes("2026-09-25.1") === true,
+      ),
     ).toBeInTheDocument();
   });
 
