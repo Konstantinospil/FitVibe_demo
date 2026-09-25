@@ -26,6 +26,7 @@ import {
 import { describeWithTestDatabase } from "../../setup/db-availability.js";
 import { v4 as uuidv4 } from "uuid";
 import { getCurrentTermsVersion } from "../../../apps/backend/src/config/terms.js";
+import { seed as seedLegalPublications } from "../../../apps/backend/src/db/seeds/005_legal_publications.js";
 
 describeWithTestDatabase("Integration: Auth → Session Flow", () => {
   beforeAll(async () => {
@@ -41,6 +42,10 @@ describeWithTestDatabase("Integration: Auth → Session Flow", () => {
 
       // Clean up any existing test data
       await truncateAll();
+      // Registration requires an explicit authoritative Terms publication.
+      // Keep the integration fixture aligned with a fresh deployed database:
+      // schema migration first, then deterministic catalog/legal seeds.
+      await seedLegalPublications(db);
       // Ensure roles are seeded before creating users
       await ensureRolesSeeded();
     }, "beforeEach");
