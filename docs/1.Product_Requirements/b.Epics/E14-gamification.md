@@ -24,7 +24,7 @@ Increases user engagement and retention by providing rewards and recognition for
 
 ## Related Activities
 
-{Note: Activities will be created and linked here as they are defined}
+This is legacy-completed scope that predates the current activity-level traceability discipline. No retrospective activities will be fabricated solely to populate historical documentation. Future extensions must be represented as new canonical scope.
 
 ## Related User Stories
 
