@@ -2,7 +2,7 @@ import crypto from "crypto";
 import bcrypt from "bcryptjs";
 import { v4 as uuidv4 } from "uuid";
 import { env } from "../../config/env.js";
-import { getCurrentTermsVersion } from "../../config/terms.js";
+import { acceptCurrentLegalDocument, getCurrentLegalPublication } from "../legal/legal.service.js";
 import { HttpError } from "../../utils/http.js";
 import { mailerService } from "../../services/mailer.service.js";
 import {
@@ -92,7 +92,7 @@ export async function register(
     const id = uuidv4();
     const password_hash = await bcrypt.hash(dto.password, 12);
     const now = new Date().toISOString();
-    const termsVersion = getCurrentTermsVersion();
+    const currentTerms = await getCurrentLegalPublication("terms");
 
     await createUser({
       id,
@@ -104,12 +104,17 @@ export async function register(
       primaryEmail: email,
       terms_accepted: true,
       terms_accepted_at: now,
-      terms_version: termsVersion,
+      terms_version: currentTerms.version,
       gender_code: dto.profile?.sex,
       fitness_level_code: dto.profile?.fitness_level ?? undefined,
       date_of_birth: dto.profile?.date_of_birth ?? dateOfBirthFromAge(dto.profile?.age),
       weight_kg: dto.profile?.weight_kg ?? undefined,
     });
+
+    const acceptedTerms = await acceptCurrentLegalDocument(id, "terms", "registration");
+    if (acceptedTerms.id !== currentTerms.id) {
+      throw new Error("Terms publication changed during registration; retry registration");
+    }
 
     const verificationToken = await issueAuthToken(
       id,
