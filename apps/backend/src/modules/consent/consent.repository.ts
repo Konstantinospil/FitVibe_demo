@@ -63,11 +63,12 @@ export async function upsertConsent(
       consent_version: isCreateInput
         ? input.consentVersion
         : (input.consentVersion ?? previous?.consentVersion ?? "2024-06-01"),
-      legal_version_id: isCreateInput
-        ? input.legalVersionId
-        : (input.legalVersionId ?? previous?.legalVersionId ?? null),
+      legal_version_id:
+        legalVersionId ??
+        (isCreateInput
+          ? input.legalVersionId
+          : (input.legalVersionId ?? previous?.legalVersionId ?? null)),
       source: userId ? "authenticated" : "banner",
-      legal_version_id: legalVersionId ?? null,
       essential_cookies: isCreateInput
         ? input.essentialCookies
         : (input.essentialCookies ?? previous?.essentialCookies ?? true),
