@@ -731,9 +731,31 @@ A legal-document change deterministically produces the intended acceptance state
 
 ---
 
+## vNext phase-number reconciliation
+
+**Recorded:** 2026-09-26
+
+The engineering-quality Phases 18–22 in this document remain active and retain their original numbering. A later product-only roadmap temporarily reused Phase numbers 18–22; that collision has been corrected.
+
+The vNext product sequence now starts at Phase 23 and is defined in `docs/1.Product_Requirements/VNEXT_DELIVERY_ROADMAP.md`:
+
+- Phase 23 Measurements Completion — #260
+- Phase 24 Planner Completion — #261
+- Phase 25 Logging & Import Expansion — #262
+- Phase 26 Coach & Training Unit Workflows — #263
+- Phase 27 Production Readiness Closure — #264
+- Phase 28 Design and Product Integration Closure — #274
+- Phase 29 vNext Release Candidate Gate — #275
+
+No application version is created until Phase 29 passes.
+
+---
+
 ## Phase 18 — Secrets contract repair
 
 **Status:** Not started
+
+**Tracking issue:** #265
 
 ### Objective
 
@@ -765,6 +787,8 @@ Provider-independent contract tests prove that supported write/read operations r
 ## Phase 19 — Repository/API quality pass
 
 **Status:** Not started
+
+**Tracking issue:** #266
 
 ### Objective
 
@@ -803,6 +827,8 @@ Remaining exceptions are intentional, justified and small; obsolete code is dele
 
 **Status:** Not started
 
+**Tracking issue:** #267
+
 ### Objective
 
 Ensure tests defend intended invariants instead of freezing defects.
@@ -836,6 +862,8 @@ Breaking a core invariant reliably fails a meaningful test. Tests are not weaken
 
 **Status:** Not started
 
+**Tracking issue:** #268
+
 ### Objective
 
 Repeat the structural review after behavior repairs and detect remaining debt.
@@ -868,6 +896,8 @@ No known high-severity correctness/privacy/security debt from this pass remains 
 ## Phase 22 — CI quality gate
 
 **Status:** Not started
+
+**Tracking issue:** #269
 
 ### Objective
 
