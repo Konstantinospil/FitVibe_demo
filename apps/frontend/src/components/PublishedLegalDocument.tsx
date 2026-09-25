@@ -1,10 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { ensureLegalTranslationsLoaded } from "../i18n/config";
-import {
-  getPublishedLegalDocument,
-  type PublishedLegalDocumentContent,
-} from "../services/api";
+import { getPublishedLegalDocument, type PublishedLegalDocumentContent } from "../services/api";
 
 type LegalDocumentType = "terms" | "privacy" | "cookie";
 
@@ -13,10 +10,13 @@ interface PublishedLegalDocumentProps {
 }
 
 function naturalKeyParts(value: string): Array<string | number> {
-  return value.split(/(\d+)/).filter(Boolean).map((part) => {
-    const numeric = Number(part);
-    return Number.isNaN(numeric) ? part : numeric;
-  });
+  return value
+    .split(/(\d+)/)
+    .filter(Boolean)
+    .map((part) => {
+      const numeric = Number(part);
+      return Number.isNaN(numeric) ? part : numeric;
+    });
 }
 
 function compareNatural(a: string, b: string): number {
@@ -27,10 +27,18 @@ function compareNatural(a: string, b: string): number {
   for (let index = 0; index < length; index += 1) {
     const l = left[index];
     const r = right[index];
-    if (l === undefined) return -1;
-    if (r === undefined) return 1;
-    if (l === r) continue;
-    if (typeof l === "number" && typeof r === "number") return l - r;
+    if (l === undefined) {
+      return -1;
+    }
+    if (r === undefined) {
+      return 1;
+    }
+    if (l === r) {
+      continue;
+    }
+    if (typeof l === "number" && typeof r === "number") {
+      return l - r;
+    }
     return String(l).localeCompare(String(r));
   }
   return 0;
@@ -200,12 +208,16 @@ export const PublishedLegalDocument: React.FC<PublishedLegalDocumentProps> = ({ 
       setLoadFailed(false);
       try {
         const current = await getPublishedLegalDocument(documentType, language);
-        if (cancelled) return;
+        if (cancelled) {
+          return;
+        }
         setPublication(current);
 
         if (current.legacyWithoutSnapshot || !current.content) {
           await ensureLegalTranslationsLoaded();
-          if (cancelled) return;
+          if (cancelled) {
+            return;
+          }
           const bundle = i18n.getResourceBundle(language, documentType) as unknown;
           setLegacyContent(isRecord(bundle) ? bundle : null);
         } else {
