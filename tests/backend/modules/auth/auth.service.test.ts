@@ -8,6 +8,11 @@ import * as bruteforceRepo from "../../../../apps/backend/src/modules/auth/brute
 import * as pending2faRepo from "../../../../apps/backend/src/modules/auth/pending-2fa.repository.js";
 import * as emailBlacklistRepository from "../../../../apps/backend/src/modules/common/email-blacklist.repository.js";
 import * as mailerService from "../../../../apps/backend/src/services/mailer.service.js";
+import {
+  acceptCurrentLegalDocument,
+  acceptLegalDocumentVersion,
+  getCurrentLegalPublication,
+} from "../../../../apps/backend/src/modules/legal/legal.service.js";
 import { HttpError } from "../../../../apps/backend/src/utils/http.js";
 import type {
   RegisterDTO,
@@ -25,6 +30,13 @@ jest.mock("../../../../apps/backend/src/modules/auth/auth.repository.js");
 jest.mock("../../../../apps/backend/src/modules/auth/two-factor.service.js");
 jest.mock("../../../../apps/backend/src/modules/auth/bruteforce.repository.js");
 jest.mock("../../../../apps/backend/src/modules/auth/pending-2fa.repository.js");
+jest.mock("../../../../apps/backend/src/modules/legal/legal.service.js", () => ({
+  getCurrentLegalPublication: jest.fn(),
+  acceptLegalDocumentVersion: jest.fn(),
+  acceptCurrentLegalDocument: jest.fn(),
+  getLegalActionStatus: jest.fn(),
+  getCurrentLegalVersions: jest.fn(),
+}));
 jest.mock("../../../../apps/backend/src/services/mailer.service.js", () => ({
   mailerService: {
     send: jest.fn().mockResolvedValue(undefined),
@@ -79,6 +91,9 @@ const mockBruteforceRepo = jest.mocked(bruteforceRepo);
 const mockPending2faRepo = jest.mocked(pending2faRepo);
 const mockEmailBlacklist = jest.mocked(emailBlacklistRepository);
 const mockMailerService = jest.mocked(mailerService);
+const mockGetCurrentLegalPublication = jest.mocked(getCurrentLegalPublication);
+const mockAcceptLegalDocumentVersion = jest.mocked(acceptLegalDocumentVersion);
+const mockAcceptCurrentLegalDocument = jest.mocked(acceptCurrentLegalDocument);
 const mockBcrypt = jest.mocked(bcrypt);
 const mockJwt = jest.mocked(jwt);
 
@@ -131,6 +146,43 @@ jest.mock("../../../../apps/backend/src/db/index.js", () => {
   };
 });
 
+jest.mock("../../../../apps/backend/src/db/connection.js", () => {
+  const builders: Record<string, unknown> = {};
+
+  const createBuilder = () => {
+    const builder = Object.assign(Promise.resolve([]), {
+      where: jest.fn().mockReturnThis(),
+      whereNull: jest.fn().mockReturnThis(),
+      select: jest.fn().mockReturnThis(),
+      orderBy: jest.fn().mockReturnThis(),
+      limit: jest.fn().mockReturnThis(),
+      first: jest.fn().mockResolvedValue(undefined),
+      insert: jest.fn().mockReturnThis(),
+      update: jest.fn().mockResolvedValue(1),
+      delete: jest.fn().mockResolvedValue(1),
+      onConflict: jest.fn().mockReturnThis(),
+      ignore: jest.fn().mockResolvedValue(undefined),
+      merge: jest.fn().mockResolvedValue(undefined),
+    });
+    return builder;
+  };
+
+  const db = jest.fn((table: string) => {
+    if (!builders[table]) {
+      builders[table] = createBuilder();
+    }
+    return builders[table];
+  }) as jest.Mock & {
+    transaction: jest.Mock;
+  };
+
+  db.transaction = jest.fn(async (callback: (trx: unknown) => Promise<unknown>) =>
+    callback(db),
+  );
+
+  return { db };
+});
+
 describe("Auth Service", () => {
   const userId = "user-123";
   const email = "test@example.com";
@@ -140,6 +192,42 @@ describe("Auth Service", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockEmailBlacklist.isEmailBlacklisted.mockResolvedValue(false);
+    mockGetCurrentLegalPublication.mockResolvedValue({
+      id: "11111111-1111-1111-1111-111111111111",
+      document_type: "terms",
+      version: "1.0.0",
+      change_class: "legacy",
+      user_action: "accept",
+      effective_at: "2024-06-01T00:00:00.000Z",
+      published_at: "2024-06-01T00:00:00.000Z",
+      published_by: null,
+      source: "legacy_migration",
+      created_at: "2024-06-01T00:00:00.000Z",
+    });
+    mockAcceptLegalDocumentVersion.mockResolvedValue({
+      id: "11111111-1111-1111-1111-111111111111",
+      document_type: "terms",
+      version: "1.0.0",
+      change_class: "legacy",
+      user_action: "accept",
+      effective_at: "2024-06-01T00:00:00.000Z",
+      published_at: "2024-06-01T00:00:00.000Z",
+      published_by: null,
+      source: "legacy_migration",
+      created_at: "2024-06-01T00:00:00.000Z",
+    });
+    mockAcceptCurrentLegalDocument.mockResolvedValue({
+      id: "11111111-1111-1111-1111-111111111111",
+      document_type: "terms",
+      version: "1.0.0",
+      change_class: "legacy",
+      user_action: "accept",
+      effective_at: "2024-06-01T00:00:00.000Z",
+      published_at: "2024-06-01T00:00:00.000Z",
+      published_by: null,
+      source: "legacy_migration",
+      created_at: "2024-06-01T00:00:00.000Z",
+    });
     process.env.EMAIL_ENABLED = "false";
     process.env.ACCESS_TOKEN_TTL = "3600";
     process.env.REFRESH_TOKEN_TTL = "604800";
@@ -236,6 +324,7 @@ describe("Auth Service", () => {
           fitness_level_code: "advanced",
           date_of_birth: "1994-05-12",
         }),
+        expect.anything(),
       );
     });
 
