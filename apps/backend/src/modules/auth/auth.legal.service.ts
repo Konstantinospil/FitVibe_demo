@@ -3,7 +3,8 @@ import { HttpError } from "../../utils/http.js";
 import { findUserById } from "./auth.repository.js";
 import { recordAuthAuditEvent } from "./auth.audit.js";
 import {
-  acceptCurrentLegalDocument,
+  acceptLegalDocumentVersion,
+  getCurrentLegalPublication,
   getCurrentLegalVersions,
   getLegalActionStatus,
   revokeLegalDocumentAcceptances,
@@ -26,13 +27,16 @@ export type LegalDocumentsStatus = {
 
 export async function acceptTerms(userId: string): Promise<void> {
   const now = new Date().toISOString();
-  const version = await acceptCurrentLegalDocument(userId, "terms");
+  const version = await getCurrentLegalPublication("terms");
 
-  await db("users").where({ id: userId }).update({
-    terms_accepted: true,
-    terms_accepted_at: now,
-    terms_version: version.version,
-    updated_at: now,
+  await db.transaction(async (trx) => {
+    await acceptLegalDocumentVersion(userId, version.id, "application", trx);
+    await trx("users").where({ id: userId }).update({
+      terms_accepted: true,
+      terms_accepted_at: now,
+      terms_version: version.version,
+      updated_at: now,
+    });
   });
 
   await recordAuthAuditEvent(userId, "auth.terms_accepted", {
@@ -44,13 +48,14 @@ export async function acceptTerms(userId: string): Promise<void> {
 export async function revokeTerms(userId: string): Promise<void> {
   const now = new Date().toISOString();
 
-  await revokeLegalDocumentAcceptances(userId, "terms", now);
-
-  await db("users").where({ id: userId }).update({
-    terms_accepted: false,
-    terms_accepted_at: null,
-    terms_version: null,
-    updated_at: now,
+  await db.transaction(async (trx) => {
+    await revokeLegalDocumentAcceptances(userId, "terms", now, trx);
+    await trx("users").where({ id: userId }).update({
+      terms_accepted: false,
+      terms_accepted_at: null,
+      terms_version: null,
+      updated_at: now,
+    });
   });
 
   await recordAuthAuditEvent(userId, "auth.terms_revoked", {
@@ -60,13 +65,16 @@ export async function revokeTerms(userId: string): Promise<void> {
 
 export async function acceptPrivacyPolicy(userId: string): Promise<void> {
   const now = new Date().toISOString();
-  const version = await acceptCurrentLegalDocument(userId, "privacy");
+  const version = await getCurrentLegalPublication("privacy");
 
-  await db("users").where({ id: userId }).update({
-    privacy_policy_accepted: true,
-    privacy_policy_accepted_at: now,
-    privacy_policy_version: version.version,
-    updated_at: now,
+  await db.transaction(async (trx) => {
+    await acceptLegalDocumentVersion(userId, version.id, "application", trx);
+    await trx("users").where({ id: userId }).update({
+      privacy_policy_accepted: true,
+      privacy_policy_accepted_at: now,
+      privacy_policy_version: version.version,
+      updated_at: now,
+    });
   });
 
   await recordAuthAuditEvent(userId, "auth.privacy_policy_accepted", {
@@ -78,13 +86,14 @@ export async function acceptPrivacyPolicy(userId: string): Promise<void> {
 export async function revokePrivacyPolicy(userId: string): Promise<void> {
   const now = new Date().toISOString();
 
-  await revokeLegalDocumentAcceptances(userId, "privacy", now);
-
-  await db("users").where({ id: userId }).update({
-    privacy_policy_accepted: false,
-    privacy_policy_accepted_at: null,
-    privacy_policy_version: null,
-    updated_at: now,
+  await db.transaction(async (trx) => {
+    await revokeLegalDocumentAcceptances(userId, "privacy", now, trx);
+    await trx("users").where({ id: userId }).update({
+      privacy_policy_accepted: false,
+      privacy_policy_accepted_at: null,
+      privacy_policy_version: null,
+      updated_at: now,
+    });
   });
 
   await recordAuthAuditEvent(userId, "auth.privacy_policy_revoked", {
