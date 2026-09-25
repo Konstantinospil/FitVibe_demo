@@ -22,6 +22,7 @@ function toCookieConsent(row: CookieConsentRow): CookieConsent {
     id: row.id,
     ipAddress: row.client_key,
     consentVersion: row.consent_version,
+    legalVersionId: row.legal_version_id,
     essentialCookies: row.essential_cookies,
     preferencesCookies: row.preferences_cookies,
     analyticsCookies: row.analytics_cookies,
@@ -61,6 +62,9 @@ export async function upsertConsent(
       consent_version: isCreateInput
         ? input.consentVersion
         : (input.consentVersion ?? previous?.consentVersion ?? "2024-06-01"),
+      legal_version_id: isCreateInput
+        ? input.legalVersionId
+        : (input.legalVersionId ?? previous?.legalVersionId ?? null),
       source: userId ? "authenticated" : "banner",
       essential_cookies: isCreateInput
         ? input.essentialCookies
