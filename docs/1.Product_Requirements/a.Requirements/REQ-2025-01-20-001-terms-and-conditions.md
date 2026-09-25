@@ -5,7 +5,7 @@
 **Requirement ID**: REQ-2025-01-20-001  
 **Type**: Functional Requirement  
 **Title**: Terms and Conditions Acceptance  
-**Status**: Open  
+**Status**: Progressing  
 **Priority**: High  
 **Gate**: GOLD  
 **Owner**: Legal/ENG  
