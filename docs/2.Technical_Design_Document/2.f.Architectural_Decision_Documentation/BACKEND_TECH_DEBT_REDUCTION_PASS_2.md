@@ -1,7 +1,7 @@
 # Backend Technical-Debt Reduction — Pass 2
 
 **Status:** Active  
-**Current phase:** Phase 16 — Transaction boundary cleanup  
+**Current phase:** Phase 17 — Legal/version state consolidation  
 **Branch:** `dev`  
 **Started:** 2026-09-22
 
@@ -605,7 +605,7 @@ The debt-confrontation gate itself is not permission for broad refactoring. Chan
 
 ## Phase 16 — Transaction boundary cleanup
 
-**Status:** Verifying
+**Status:** Done
 
 ### Objective
 
@@ -632,6 +632,21 @@ Make atomicity and post-commit side effects deliberate rather than accidental.
 5. **Metrics and logging are best-effort post-commit.** Observability failures never invalidate a successful user action.
 6. **No generic event bus/outbox expansion.** Use ordinary database transactions first, the existing audit outbox where durability matters, and simple post-commit execution elsewhere.
 
+### Implementation and verification record
+
+Phase 16 is implemented on `dev` and verified at commit `8f12d21bf351d0d3b3932e9abc16fb7add703b09`.
+
+Repository evidence at that head:
+
+- measurement attribute creation and its default translation share one database transaction;
+- translation create/update/upsert paths serialize competing writes per translation key and perform coupled measurement-label changes in the same transaction;
+- audit emission remains outside the business transaction and therefore follows the existing durable post-commit audit policy;
+- invariant-focused tests cover the transaction/concurrency changes, including the active-row upsert guard;
+- GitHub Actions CI run `36115789198` completed successfully for the exact head, including lint/typecheck, backend tests, database tests and frontend tests;
+- CodeQL run `36115789202` also completed successfully for the exact head.
+
+No broader generic event bus or outbox abstraction was introduced.
+
 ### Exit criteria
 
 Atomic multi-table operations are transactional; external side effects have explicit post-commit and recovery semantics.
@@ -640,7 +655,7 @@ Atomic multi-table operations are transactional; external side effects have expl
 
 ## Phase 17 — Legal/version state consolidation
 
-**Status:** Not started
+**Status:** Interviewing
 
 ### Objective
 
@@ -655,14 +670,18 @@ Replace competing legal-version concepts with one authoritative model.
 
 ### Strategic interview topics
 
-- explicit persisted versions vs timestamp/content-hash derivation;
-- which legal documents require renewed acceptance;
-- effective-date/publishing behavior;
-- migration treatment of existing user acceptances.
+The first architectural question is already settled by Phase 11: legal-document versions are explicit persisted versions. Phase 17 must not reopen timestamp/file-metadata-derived versioning without contrary evidence.
+
+The remaining product-owner decisions are:
+
+- which legal documents require renewed user acceptance, acknowledgement, or only notification when a new version is published;
+- whether a newly published acceptance-requiring version blocks normal application use immediately or from an explicit effective date;
+- how existing Terms acceptances and cookie-consent versions are mapped into the first authoritative persisted versions without inventing acceptance that was never recorded;
+- whether legal publication is one global version across all languages, with translation edits attached to that published version, or whether translation corrections can occur without creating a new acceptance-requiring publication.
 
 ### Decision log
 
-_Pending Phase 17 interview._
+_Phase 17 interview opened on 2026-09-25. The explicit-persisted-version choice is inherited from Phase 11; the remaining decisions above are pending product-owner confirmation._
 
 ### Exit criteria
 
