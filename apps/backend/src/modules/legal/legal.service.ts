@@ -93,8 +93,27 @@ function loadAuthoringDocument(
   language: string,
 ): Record<string, unknown> | null {
   const candidates = [
-    path.resolve(process.cwd(), "apps", "frontend", "src", "i18n", "locales", language, `${documentType}.json`),
-    path.resolve(process.cwd(), "..", "frontend", "src", "i18n", "locales", language, `${documentType}.json`),
+    path.resolve(process.cwd(), "legal-authoring-locales", language, `${documentType}.json`),
+    path.resolve(
+      process.cwd(),
+      "apps",
+      "frontend",
+      "src",
+      "i18n",
+      "locales",
+      language,
+      `${documentType}.json`,
+    ),
+    path.resolve(
+      process.cwd(),
+      "..",
+      "frontend",
+      "src",
+      "i18n",
+      "locales",
+      language,
+      `${documentType}.json`,
+    ),
   ];
 
   for (const candidate of candidates) {
