@@ -22,7 +22,7 @@
 | [E16](./E16-admin-and-rbac.md)                  | Admin & RBAC                   | FR-008                 | Done        | High     | GOLD   | 15-20 story points |
 | [E17](./E17-security.md)                        | Security                       | NFR-001                | Done        | High     | GOLD   | 10-15 story points |
 | [E18](./E18-internationalization.md)            | Internationalization           | NFR-006                | Done        | Medium   | SILVER | 8-12 story points  |
-| [E19](./E19-terms-and-conditions.md)            | Terms and Conditions           | REQ-2025-01-20-001     | Progressing | High     | GOLD   | 3-5 story points   |
+| [E19](./E19-terms-and-conditions.md)            | Terms and Conditions           | REQ-2025-01-20-001     | Done        | High     | GOLD   | 3-5 story points   |
 | [E20](./E20-database-encryption.md)             | Database Encryption            | NFR-008                | Progressing | High     | GOLD   | 8-12 story points  |
 | [E21](./E21-profile-measurements.md)             | Profile Measurements           | FR-014                 | Progressing | High     | SILVER | Re-estimate after code comparison |
 
