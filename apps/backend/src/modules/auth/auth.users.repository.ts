@@ -102,15 +102,15 @@ export async function createUser(input: {
   fitness_level_code?: "beginner" | "intermediate" | "advanced" | "elite" | "rehab";
   date_of_birth?: string;
   weight_kg?: number;
-}): Promise<AuthUserRecord | undefined> {
+}, trx?: Knex.Transaction): Promise<AuthUserRecord | undefined> {
   const alias = (input.alias ?? input.username ?? "").trim();
   if (!alias) {
     throw new Error("createUser requires a non-empty alias");
   }
 
   const now = new Date().toISOString();
-  return db.transaction(async (trx) => {
-    await trx(USERS_TABLE).insert({
+  const work = async (transaction: Knex.Transaction): Promise<AuthUserRecord | undefined> => {
+    await transaction(USERS_TABLE).insert({
       id: input.id,
       display_name: input.display_name,
       locale: input.locale ?? "en-US",
@@ -125,7 +125,7 @@ export async function createUser(input: {
       updated_at: now,
     });
 
-    await trx(CONTACTS_TABLE).insert({
+    await transaction(CONTACTS_TABLE).insert({
       id: crypto.randomUUID(),
       user_id: input.id,
       type: "email",
@@ -137,7 +137,7 @@ export async function createUser(input: {
       created_at: now,
     });
 
-    await trx(PROFILES_TABLE).insert({
+    await transaction(PROFILES_TABLE).insert({
       user_id: input.id,
       alias,
       // Signup assigns the initial alias; the 30-day change window starts on first edit
@@ -151,14 +151,14 @@ export async function createUser(input: {
     });
 
     if (input.weight_kg !== undefined) {
-      const attribute = await trx(BIO_ATTRIBUTES_TABLE)
+      const attribute = await transaction(BIO_ATTRIBUTES_TABLE)
         .where({ key: "weight_kg" })
         .first<{ id: string }>();
       if (!attribute) {
         throw new Error("Required bio attribute weight_kg is not configured");
       }
 
-      await trx(BIO_ATTRIBUTE_VALUES_TABLE).insert({
+      await transaction(BIO_ATTRIBUTE_VALUES_TABLE).insert({
         id: crypto.randomUUID(),
         user_id: input.id,
         attribute_id: attribute.id,
@@ -168,7 +168,7 @@ export async function createUser(input: {
       });
     }
 
-    await trx(DOMAIN_VIBE_TABLE).insert(
+    await transaction(DOMAIN_VIBE_TABLE).insert(
       DOMAIN_CODES.map((domainCode) => ({
         user_id: input.id,
         domain_code: domainCode,
@@ -181,8 +181,10 @@ export async function createUser(input: {
       })),
     );
 
-    return userQuery().transacting(trx).where("u.id", input.id).first<AuthUserRecord>();
-  });
+    return userQuery().transacting(transaction).where("u.id", input.id).first<AuthUserRecord>();
+  };
+
+  return trx ? work(trx) : db.transaction(work);
 }
 
 export async function updateUserStatus(userId: string, status: UserStatus) {
