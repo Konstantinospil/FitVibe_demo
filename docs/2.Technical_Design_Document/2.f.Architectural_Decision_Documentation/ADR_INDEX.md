@@ -35,6 +35,7 @@
 | ADR-029 | Backend State Ownership and Consistency Invariants                                                | Accepted | 2026-09-22    | [ADR-029-backend-state-ownership-and-consistency-invariants.md](./ADR-029-backend-state-ownership-and-consistency-invariants.md) |
 | ADR-030 | Authoritative Account-Security Controls                                                          | Accepted | 2026-09-24    | [ADR-030-account-security-controls.md](./ADR-030-account-security-controls.md)                             |
 | ADR-031 | User Preference Ownership and Locale Separation                                                  | Accepted | 2026-09-24    | [ADR-031-user-preference-ownership.md](./ADR-031-user-preference-ownership.md)                             |
+| ADR-032 | Legal Document Publication Uses Immutable Snapshots                                                | Accepted | 2026-09-25    | [ADR-032-legal-document-publication-snapshots.md](./ADR-032-legal-document-publication-snapshots.md)       |
 
 ## Numbering notes
 
@@ -46,3 +47,4 @@
 - ADR-029 records the authoritative backend state-ownership and consistency decisions used by Technical-Debt Reduction Pass 2.
 - ADR-030 records the authoritative Phase 15 account-security controls.
 - ADR-031 records the Phase 9 ownership boundary between explicit language/measurement preferences and locale.
+- ADR-032 makes immutable Backoffice publication snapshots authoritative for published legal-document versions.
