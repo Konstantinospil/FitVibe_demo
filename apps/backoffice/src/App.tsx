@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import Login from "./pages/Login";
 import TranslationsPage from "./pages/Translations";
+import LegalPublicationsPage from "./pages/LegalPublications";
 import MessagesPage from "./pages/Messages";
 import AuditLogsPage from "./pages/AuditLogs";
 import SettingsPage from "./pages/Settings";
@@ -149,6 +150,7 @@ const App: React.FC = () => {
             >
               <Route index element={<Navigate to="/translations" replace />} />
               <Route path="translations" element={<TranslationsPage />} />
+              <Route path="legal-publications" element={<LegalPublicationsPage />} />
               <Route path="messages" element={<MessagesPage />} />
               <Route path="audit-logs" element={<AuditLogsPage />} />
               <Route path="settings" element={<SettingsPage />} />
