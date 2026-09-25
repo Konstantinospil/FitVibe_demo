@@ -130,11 +130,11 @@
 - [#249](https://github.com/Konstantinospil/FitVibe_demo/issues/249) — US-12.3 Exercise Parameter Modification
 - [#250](https://github.com/Konstantinospil/FitVibe_demo/issues/250) — US-12.4 Coach-Athlete Relationship Management
 
-### Legal Publication (E19)
+### Legal Publication (E19) — completed in Phase 17
 
-- [#251](https://github.com/Konstantinospil/FitVibe_demo/issues/251) — US-19.1 Publish Legal Document Snapshots
-- [#252](https://github.com/Konstantinospil/FitVibe_demo/issues/252) — US-19.2 Terms Acceptance at Registration
-- [#253](https://github.com/Konstantinospil/FitVibe_demo/issues/253) — US-19.3 Terms Re-Acceptance
+- [#251](https://github.com/Konstantinospil/FitVibe_demo/issues/251) — US-19.1 Publish Legal Document Snapshots — **completed**
+- [#252](https://github.com/Konstantinospil/FitVibe_demo/issues/252) — US-19.2 Terms Acceptance at Registration — **completed**
+- [#253](https://github.com/Konstantinospil/FitVibe_demo/issues/253) — US-19.3 Terms Re-Acceptance — **completed**
 
 ### Database Encryption (E20)
 
@@ -152,8 +152,8 @@
 
 At the time this manifest was created:
 
-- Open issues: **64**
-- Open issues marked `[Current]`: **64**
+- Open issues: **61**
+- Open issues marked `[Current]`: **61**
 - Unmarked historical open issues: **0**
 
 Any future issue added to the Project should reference its canonical requirement/story/AC and should state whether it is new implementation or verification/closure work.
