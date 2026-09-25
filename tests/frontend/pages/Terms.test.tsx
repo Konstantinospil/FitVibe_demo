@@ -113,7 +113,9 @@ describe("Terms page", () => {
     expect(screen.getByText("1. Eligibility and account registration")).toBeInTheDocument();
     expect(screen.getByText("5. Health and safety notice")).toBeInTheDocument();
     expect(screen.getByText("legal@fitvibe.example.com")).toBeInTheDocument();
-    expect(screen.getByText("2026-09-25.1")).toBeInTheDocument();
+    expect(
+      screen.getByText((_, element) => element?.textContent?.includes("2026-09-25.1") === true),
+    ).toBeInTheDocument();
   });
 
   it("accepts the required published Terms version", async () => {
