@@ -525,9 +525,9 @@ Only files that exist on disk are listed. Individual AC files are canonical; thi
 
 | AC ID | Story | Status | Test Method | File |
 | --- | --- | --- | --- | --- |
-| US-19.1-AC01 | [US-19.1](../d.User_stories/US-19.1-legal-publication.md) | Approved | Integration + E2E + audit | [US-19.1-AC01.md](./US-19.1-AC01.md) |
-| US-19.2-AC01 | [US-19.2](../d.User_stories/US-19.2-registration-terms-acceptance.md) | Approved | Integration + E2E + audit | [US-19.2-AC01.md](./US-19.2-AC01.md) |
-| US-19.3-AC01 | [US-19.3](../d.User_stories/US-19.3-terms-reacceptance.md) | Approved | Integration + E2E + audit | [US-19.3-AC01.md](./US-19.3-AC01.md) |
+| US-19.1-AC01 | [US-19.1](../d.User_stories/US-19.1-legal-publication.md) | Verified | Integration + E2E + audit | [US-19.1-AC01.md](./US-19.1-AC01.md) |
+| US-19.2-AC01 | [US-19.2](../d.User_stories/US-19.2-registration-terms-acceptance.md) | Verified | Integration + E2E + audit | [US-19.2-AC01.md](./US-19.2-AC01.md) |
+| US-19.3-AC01 | [US-19.3](../d.User_stories/US-19.3-terms-reacceptance.md) | Verified | Integration + E2E + audit | [US-19.3-AC01.md](./US-19.3-AC01.md) |
 
 ### Epic 21: Profile Measurements
 
