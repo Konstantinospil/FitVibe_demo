@@ -75,8 +75,6 @@ export async function saveCookiePreferences(
     userAgent: userAgent ?? null,
   };
 
-  const currentCookiePolicy = await getCurrentLegalPublication("cookie");
-  input.consentVersion = currentCookiePolicy.version;
   const consent = await upsertConsent(ipAddress, input, null, currentCookiePolicy.id);
 
   // Audit log consent change
