@@ -275,6 +275,33 @@ export async function listLegalPublications(
   );
 }
 
+export async function legalVersionSatisfiesCurrentRequirement(
+  documentType: LegalDocumentType,
+  versionId: string | null | undefined,
+): Promise<boolean> {
+  if (!versionId) {
+    return false;
+  }
+  const [version, required] = await Promise.all([
+    getLegalVersionById(versionId),
+    getLatestRequiredLegalVersion(documentType),
+  ]);
+  if (!version || version.document_type !== documentType) {
+    return false;
+  }
+  if (!required) {
+    return true;
+  }
+
+  const versionEffectiveAt = new Date(version.effective_at).getTime();
+  const requiredEffectiveAt = new Date(required.effective_at).getTime();
+  return (
+    versionEffectiveAt > requiredEffectiveAt ||
+    (versionEffectiveAt === requiredEffectiveAt &&
+      new Date(version.published_at).getTime() >= new Date(required.published_at).getTime())
+  );
+}
+
 export async function getLegalActionStatus(
   userId: string,
   documentType: LegalDocumentType,
