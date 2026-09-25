@@ -1,6 +1,6 @@
 # Epics Index
 
-**Last Updated**: 2026-08-30
+**Last Updated**: 2026-09-25
 
 | Epic ID                                         | Title                          | Requirement            | Status      | Priority | Gate   | Effort             |
 | ----------------------------------------------- | ------------------------------ | ---------------------- | ----------- | -------- | ------ | ------------------ |
@@ -24,12 +24,14 @@
 | [E18](./E18-internationalization.md)            | Internationalization           | NFR-006                | Done        | Medium   | SILVER | 8-12 story points  |
 | [E19](./E19-terms-and-conditions.md)            | Terms and Conditions           | REQ-2025-01-20-001     | Open        | High     | GOLD   | 3-5 story points   |
 | [E20](./E20-database-encryption.md)             | Database Encryption            | NFR-008                | Progressing | High     | GOLD   | 8-12 story points  |
+| [E21](./E21-profile-measurements.md)             | Profile Measurements           | FR-014                 | Open        | High     | SILVER | Re-estimate after code comparison |
 
 ## By Status
 
 ### Open
 
 - E12: Coach Training Unit Assignment
+- E21: Profile Measurements
 - E19: Terms and Conditions
 - E9: Observability
 
@@ -61,6 +63,7 @@
 ### High
 
 - E10: Availability & Backups
+- E21: Profile Measurements
 - E11: Authentication & Registration
 - E12: Coach Training Unit Assignment
 - E13: WCAG 2.2 Compliance Update
@@ -102,6 +105,7 @@
 ### SILVER
 
 - E1: Profile & Settings
+- E21: Profile Measurements
 - E10: Availability & Backups
 - E12: Coach Training Unit Assignment
 - E14: Gamification
@@ -112,4 +116,4 @@
 - E5: Logging & Import
 - E9: Observability
 
-**Total Epics**: 20
+**Total Epics**: 21
