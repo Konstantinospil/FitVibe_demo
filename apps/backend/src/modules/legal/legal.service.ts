@@ -277,7 +277,11 @@ export async function getCurrentLegalPublication(
 ): Promise<LegalDocumentVersionRow> {
   const version = await getCurrentLegalVersion(documentType);
   if (!version) {
-    throw new HttpError(503, "LEGAL_VERSION_UNAVAILABLE", "No effective legal version is published");
+    throw new HttpError(
+      503,
+      "LEGAL_VERSION_UNAVAILABLE",
+      "No effective legal version is published",
+    );
   }
   return version;
 }
