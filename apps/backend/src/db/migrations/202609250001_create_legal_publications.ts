@@ -1,7 +1,5 @@
 import type { Knex } from "knex";
 
-const LEGAL_DOCUMENTS = ["terms", "privacy", "cookie"] as const;
-
 export async function up(knex: Knex): Promise<void> {
   await knex.schema.createTable("legal_document_versions", (table) => {
     table.uuid("id").primary().defaultTo(knex.raw("gen_random_uuid()"));
@@ -69,8 +67,6 @@ export async function up(knex: Knex): Promise<void> {
     CREATE INDEX legal_document_acceptances_user_idx
     ON legal_document_acceptances (user_id, accepted_at DESC)
   `);
-
-
 }
 
 export async function down(knex: Knex): Promise<void> {
