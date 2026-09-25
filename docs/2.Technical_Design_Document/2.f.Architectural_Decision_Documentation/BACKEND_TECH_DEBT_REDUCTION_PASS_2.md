@@ -655,7 +655,7 @@ Atomic multi-table operations are transactional; external side effects have expl
 
 ## Phase 17 — Legal/version state consolidation
 
-**Status:** Interviewing
+**Status:** Implementing
 
 ### Objective
 
@@ -690,11 +690,12 @@ Accepted on 2026-09-25:
 3. Cookie-policy publication does not create a generic legal-acceptance gate. Cookie consent is renewed when consent-relevant purposes/categories change.
 4. Existing recorded acceptances are preserved as historical evidence and mapped to explicit legacy versions. Phase 17 must not manufacture acceptance for a document where no acceptance was actually recorded.
 5. Legal publication must be an explicit Backoffice action. Editing translation text alone must not implicitly create the authoritative current legal version.
-6. The publication data model must distinguish editorial/minor changes from changes that alter user acknowledgement/acceptance/consent requirements. The exact persisted classification and publication model are being finalized before implementation.
+6. The publication data model distinguishes `editorial` from `material` changes and stores the required user effect separately as `none`, `acknowledge`, `accept`, or `renew_consent`.
+7. Publishing is performed from Backoffice and freezes complete per-language document snapshots; published content is not reconstructed from mutable translation rows.
+8. Full-document snapshot storage is the authoritative historical evidence model. Translation JSON plus database overrides are the drafting source only.
+9. Published snapshots are rendered directly by the frontend; pre-Phase-17 legacy versions without trustworthy snapshots may use a bounded localized-source fallback and are explicitly marked as legacy.
 
-Pending implementation-model decision:
-
-- define the smallest publication/version schema that can represent draft versus published state, immutable published content, effective dates, and acceptance/consent impact without coupling authority to translation timestamps.
+**Architecture record:** [ADR-032 — Authoritative Legal Publications and Immutable Snapshots](./ADR-032-legal-publication-snapshots.md). ADR-024 is superseded.
 
 ### Exit criteria
 
