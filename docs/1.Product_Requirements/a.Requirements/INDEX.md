@@ -40,7 +40,7 @@ Statuses follow the schema: Open, Progressing, Done, Superseded.
 
 | ID                 | Title                           | Status | Priority | Gate | File                                                                                       |
 | ------------------ | ------------------------------- | ------ | -------- | ---- | ------------------------------------------------------------------------------------------ |
-| REQ-2025-01-20-001 | Terms and Conditions Acceptance | Progressing | High     | GOLD | [REQ-2025-01-20-001-terms-and-conditions.md](./REQ-2025-01-20-001-terms-and-conditions.md) |
+| REQ-2025-01-20-001 | Terms and Conditions Acceptance | Done | High     | GOLD | [REQ-2025-01-20-001-terms-and-conditions.md](./REQ-2025-01-20-001-terms-and-conditions.md) |
 
 ---
 
