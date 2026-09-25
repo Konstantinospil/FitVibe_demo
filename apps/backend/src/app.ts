@@ -30,6 +30,7 @@ import { adminRouter } from "./api/admin.routes.js";
 import { contactRouter } from "./api/contact.routes.js";
 import { translationsRouter } from "./api/translations.routes.js";
 import { measurementsRouter } from "./api/measurements.routes.js";
+import { legalRouter } from "./api/legal.routes.js";
 import { vibeformsRouter } from "./api/vibeforms.routes.js";
 import healthRouter from "./modules/health/health.router.js";
 import systemRouter from "./modules/system/system.routes.js";
@@ -196,6 +197,7 @@ apiRouter.use("/logs", logsRouter);
 apiRouter.use("/system", systemRouter);
 apiRouter.use("/consent", consentRouter);
 apiRouter.use("/translations", translationsRouter);
+apiRouter.use("/legal", legalRouter);
 apiRouter.use("/measurements", measurementsRouter);
 apiRouter.use("/vibeforms", vibeformsRouter);
 

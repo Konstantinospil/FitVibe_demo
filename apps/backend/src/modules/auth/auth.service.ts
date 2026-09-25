@@ -7,7 +7,10 @@ export { listSessions, revokeSessions } from "./auth.sessions.service.js";
 export {
   acceptTerms,
   revokeTerms,
+  acceptPrivacyPolicy,
+  revokePrivacyPolicy,
   getLegalDocumentsStatus,
+  getLegalDocumentVersions,
   type LegalDocumentStatus,
   type LegalDocumentsStatus,
 } from "./auth.legal.service.js";

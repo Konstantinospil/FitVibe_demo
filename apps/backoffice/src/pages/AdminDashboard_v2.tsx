@@ -7,6 +7,7 @@ import {
   Languages,
   Mail,
   ListChecks,
+  FileCheck2,
 } from "lucide-react";
 
 const AdminDashboardV2: React.FC = () => {
@@ -49,6 +50,12 @@ const AdminDashboardV2: React.FC = () => {
       label: "Translation",
       icon: <Languages size={20} />,
       description: "Maintain language keys and content consistency.",
+    },
+    {
+      path: "/legal-publications",
+      label: "Legal Publications",
+      icon: <FileCheck2 size={20} />,
+      description: "Publish immutable legal document versions from reviewed translations.",
     },
   ];
 

@@ -310,6 +310,8 @@ export interface LegalDocumentsStatus {
     acceptedAt: string | null;
     acceptedVersion: string | null;
     currentVersion: string;
+    requiredVersion: string | null;
+    requiredAction: "none" | "acknowledge" | "accept" | "renew_consent";
     needsAcceptance: boolean;
   };
   privacy: {
@@ -317,6 +319,8 @@ export interface LegalDocumentsStatus {
     acceptedAt: string | null;
     acceptedVersion: string | null;
     currentVersion: string;
+    requiredVersion: string | null;
+    requiredAction: "none" | "acknowledge" | "accept" | "renew_consent";
     needsAcceptance: boolean;
   };
 }
@@ -334,6 +338,29 @@ export interface LegalDocumentVersions {
 
 export async function getLegalDocumentVersions(): Promise<LegalDocumentVersions> {
   const res = await apiClient.get<LegalDocumentVersions>("/api/v1/auth/legal-documents/versions");
+  return res.data;
+}
+
+export interface PublishedLegalDocumentContent {
+  documentType: "terms" | "privacy" | "cookie";
+  version: string;
+  changeClass: "legacy" | "editorial" | "material";
+  userAction: "none" | "acknowledge" | "accept" | "renew_consent";
+  effectiveAt: string;
+  publishedAt: string;
+  language: string;
+  content: Record<string, unknown> | null;
+  legacyWithoutSnapshot: boolean;
+}
+
+export async function getPublishedLegalDocument(
+  documentType: "terms" | "privacy" | "cookie",
+  language: string,
+): Promise<PublishedLegalDocumentContent> {
+  const res = await rawHttpClient.get<PublishedLegalDocumentContent>(
+    `/api/v1/legal/documents/${documentType}`,
+    { params: { language } },
+  );
   return res.data;
 }
 
