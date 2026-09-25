@@ -67,6 +67,30 @@ async function installCommonMocks(page) {
   await page.route("**/api/v1/auth/2fa/status", async (route) => {
     await route.fulfill(jsonResponse({ enabled: false }));
   });
+  await page.route("**/api/v1/auth/legal-documents/status", async (route) => {
+    await route.fulfill(
+      jsonResponse({
+        terms: {
+          accepted: true,
+          acceptedAt: "2026-09-25T00:00:00.000Z",
+          acceptedVersion: "2026-09-25.1",
+          currentVersion: "2026-09-25.1",
+          requiredVersion: "2026-09-25.1",
+          requiredAction: "accept",
+          needsAcceptance: false,
+        },
+        privacy: {
+          accepted: true,
+          acceptedAt: "2026-09-25T00:00:00.000Z",
+          acceptedVersion: "2026-09-25.1",
+          currentVersion: "2026-09-25.1",
+          requiredVersion: null,
+          requiredAction: "none",
+          needsAcceptance: false,
+        },
+      }),
+    );
+  });
   await page.route("**/api/v1/users/me", async (route) => {
     if (route.request().method() !== "GET") {
       await route.fallback();
