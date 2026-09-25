@@ -6,6 +6,7 @@ import {
   acceptCurrentLegalDocument,
   getCurrentLegalVersions,
   getLegalActionStatus,
+  revokeLegalDocumentAcceptances,
 } from "../legal/legal.service.js";
 
 export type LegalDocumentStatus = {
@@ -43,6 +44,8 @@ export async function acceptTerms(userId: string): Promise<void> {
 export async function revokeTerms(userId: string): Promise<void> {
   const now = new Date().toISOString();
 
+  await revokeLegalDocumentAcceptances(userId, "terms", now);
+
   await db("users").where({ id: userId }).update({
     terms_accepted: false,
     terms_accepted_at: null,
@@ -74,6 +77,8 @@ export async function acceptPrivacyPolicy(userId: string): Promise<void> {
 
 export async function revokePrivacyPolicy(userId: string): Promise<void> {
   const now = new Date().toISOString();
+
+  await revokeLegalDocumentAcceptances(userId, "privacy", now);
 
   await db("users").where({ id: userId }).update({
     privacy_policy_accepted: false,
