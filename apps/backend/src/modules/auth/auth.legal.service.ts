@@ -87,7 +87,9 @@ export async function revokePrivacyPolicy(userId: string): Promise<void> {
   });
 }
 
-function toDocumentStatus(status: Awaited<ReturnType<typeof getLegalActionStatus>>): LegalDocumentStatus {
+function toDocumentStatus(
+  status: Awaited<ReturnType<typeof getLegalActionStatus>>,
+): LegalDocumentStatus {
   return {
     accepted: !status.needsAction,
     acceptedAt: status.acceptedAt,
