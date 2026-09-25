@@ -18,6 +18,7 @@ import {
   listSnapshotLanguages,
   lockLegalDocument,
   recordLegalAcceptance,
+  revokeLegalAcceptances,
   withLegalTransaction,
 } from "./legal.repository.js";
 import type {
@@ -454,4 +455,13 @@ export async function acceptCurrentLegalDocument(
       : version.user_action;
   await recordLegalAcceptance(userId, version.id, action, new Date().toISOString(), source);
   return version;
+}
+
+
+export async function revokeLegalDocumentAcceptances(
+  userId: string,
+  documentType: LegalDocumentType,
+  revokedAt = new Date().toISOString(),
+): Promise<void> {
+  await revokeLegalAcceptances(userId, documentType, revokedAt);
 }
