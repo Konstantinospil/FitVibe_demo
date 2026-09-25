@@ -146,6 +146,7 @@ describe("legal publication invariants", () => {
       "user-1",
       materialTerms.id,
       "registration",
+      undefined,
     );
 
     expect(result).toEqual(materialTerms);
