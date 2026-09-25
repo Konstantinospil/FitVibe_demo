@@ -1,6 +1,6 @@
 # Requirements Index
 
-**Last Updated**: 2026-08-30
+**Last Updated**: 2026-09-25
 
 Statuses follow the schema: Open, Progressing, Done.
 
@@ -20,7 +20,8 @@ Statuses follow the schema: Open, Progressing, Done.
 | FR-010 | Exercise Library                      | Done        | Medium   | SILVER | [FR-010-exercise-library.md](./FR-010-exercise-library.md)                             |
 | FR-011 | Sharing & Community                   | Done        | Medium   | SILVER | [FR-011-sharing-and-community.md](./FR-011-sharing-and-community.md)                   |
 | FR-012 | Coach Training Unit Assignment        | Open        | High     | SILVER | [FR-012-coach-training-unit-assignment.md](./FR-012-coach-training-unit-assignment.md) |
-| FR-013 | Lockout UI Feedback & Countdown Timer | Progressing | Medium   | SILVER | [FR-013-lockout-ui-feedback.md](./FR-013-lockout-ui-feedback.md)                       |
+| FR-013 | Lockout UI Feedback & Countdown Timer | Superseded | Medium   | SILVER | [FR-013-lockout-ui-feedback.md](./FR-013-lockout-ui-feedback.md)                       |
+| FR-014 | Profile Measurements                   | Open       | High     | SILVER | [FR-014-profile-measurements.md](./FR-014-profile-measurements.md)                     |
 
 ## Non-Functional Requirements (NFR)
 
@@ -43,4 +44,4 @@ Statuses follow the schema: Open, Progressing, Done.
 
 ---
 
-- **FR:** 13 · **NFR:** 8 · **Other:** 1
+- **FR:** 14 · **NFR:** 8 · **Other:** 1
