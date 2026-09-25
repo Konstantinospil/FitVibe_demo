@@ -1,6 +1,7 @@
 import crypto from "node:crypto";
 import * as fs from "node:fs";
 import * as path from "node:path";
+import type { Knex } from "knex";
 import { HttpError } from "../../utils/http.js";
 import { insertAudit } from "../common/audit.util.js";
 import {
@@ -396,8 +397,9 @@ export async function acceptLegalDocumentVersion(
   userId: string,
   versionId: string,
   source = "application",
+  trx?: Knex.Transaction,
 ): Promise<LegalDocumentVersionRow> {
-  const version = await getLegalVersionById(versionId);
+  const version = await getLegalVersionById(versionId, trx);
   if (!version) {
     throw new HttpError(404, "LEGAL_VERSION_NOT_FOUND", "Legal version not found");
   }
@@ -409,7 +411,7 @@ export async function acceptLegalDocumentVersion(
           ? "acknowledge"
           : "accept"
       : version.user_action;
-  await recordLegalAcceptance(userId, version.id, action, new Date().toISOString(), source);
+  await recordLegalAcceptance(userId, version.id, action, new Date().toISOString(), source, trx);
   return version;
 }
 
