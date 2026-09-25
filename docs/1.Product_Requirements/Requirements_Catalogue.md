@@ -48,12 +48,12 @@ The lifecycle for delivery artifacts is `Open → Progressing → Done`, with `S
 
 | ID | Title | Status | Priority | Gate | Canonical file |
 | --- | --- | --- | --- | --- | --- |
-| REQ-2025-01-20-001  | Terms and Conditions Acceptance | Progressing | High | GOLD | [REQ-2025-01-20-001-terms-and-conditions.md](a.Requirements/REQ-2025-01-20-001-terms-and-conditions.md) |
+| REQ-2025-01-20-001  | Terms and Conditions Acceptance | Done | High | GOLD | [REQ-2025-01-20-001-terms-and-conditions.md](a.Requirements/REQ-2025-01-20-001-terms-and-conditions.md) |
 
 ## Status Summary
 
-- **Done**: 11
-- **Progressing**: 10
+- **Done**: 12
+- **Progressing**: 9
 - **Open**: 1
 - **Superseded**: 1
 - **Total**: 23
