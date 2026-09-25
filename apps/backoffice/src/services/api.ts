@@ -164,6 +164,26 @@ export interface TranslationMetadataResponse {
   };
 }
 
+export type LegalDocumentType = "terms" | "privacy" | "cookie";
+export type LegalChangeClass = "legacy" | "editorial" | "material";
+export type LegalUserAction = "none" | "acknowledge" | "accept" | "renew_consent";
+
+export interface LegalPublication {
+  id: string;
+  documentType: LegalDocumentType;
+  version: string;
+  changeClass: LegalChangeClass;
+  userAction: LegalUserAction;
+  effectiveAt: string;
+  publishedAt: string;
+  publishedBy: string | null;
+  languages: string[];
+}
+
+export interface LegalPublicationListResponse {
+  data: LegalPublication[];
+}
+
 // Contact message types
 export interface ContactMessage {
   id: string;
@@ -394,6 +414,32 @@ export const translationsApi = {
   metadata: async () => {
     const response = await apiClient.get<TranslationMetadataResponse>(
       "/api/v1/translations/metadata",
+    );
+    return response.data;
+  },
+};
+
+export const legalPublicationsApi = {
+  list: async (documentType?: LegalDocumentType) => {
+    const response = await apiClient.get<LegalPublicationListResponse>(
+      "/api/v1/legal/publications",
+      {
+        params: documentType ? { documentType } : undefined,
+      },
+    );
+    return response.data;
+  },
+  publish: async (
+    documentType: LegalDocumentType,
+    data: {
+      changeClass: Exclude<LegalChangeClass, "legacy">;
+      userAction: LegalUserAction;
+      effectiveAt?: string;
+    },
+  ) => {
+    const response = await apiClient.post<LegalPublication>(
+      `/api/v1/legal/publications/${documentType}`,
+      data,
     );
     return response.data;
   },
