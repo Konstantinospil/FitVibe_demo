@@ -2,6 +2,7 @@ import crypto from "crypto";
 import bcrypt from "bcryptjs";
 import { v4 as uuidv4 } from "uuid";
 import { env } from "../../config/env.js";
+import { db } from "../../db/connection.js";
 import { acceptLegalDocumentVersion, getCurrentLegalPublication } from "../legal/legal.service.js";
 import { HttpError } from "../../utils/http.js";
 import { mailerService } from "../../services/mailer.service.js";
@@ -94,24 +95,29 @@ export async function register(
     const now = new Date().toISOString();
     const currentTerms = await getCurrentLegalPublication("terms");
 
-    await createUser({
-      id,
-      alias,
-      display_name: dto.profile?.display_name ?? alias,
-      status: "pending_verification",
-      role_code: "athlete",
-      password_hash,
-      primaryEmail: email,
-      terms_accepted: true,
-      terms_accepted_at: now,
-      terms_version: currentTerms.version,
-      gender_code: dto.profile?.sex,
-      fitness_level_code: dto.profile?.fitness_level ?? undefined,
-      date_of_birth: dto.profile?.date_of_birth ?? dateOfBirthFromAge(dto.profile?.age),
-      weight_kg: dto.profile?.weight_kg ?? undefined,
-    });
+    await db.transaction(async (trx) => {
+      await createUser(
+        {
+          id,
+          alias,
+          display_name: dto.profile?.display_name ?? alias,
+          status: "pending_verification",
+          role_code: "athlete",
+          password_hash,
+          primaryEmail: email,
+          terms_accepted: true,
+          terms_accepted_at: now,
+          terms_version: currentTerms.version,
+          gender_code: dto.profile?.sex,
+          fitness_level_code: dto.profile?.fitness_level ?? undefined,
+          date_of_birth: dto.profile?.date_of_birth ?? dateOfBirthFromAge(dto.profile?.age),
+          weight_kg: dto.profile?.weight_kg ?? undefined,
+        },
+        trx,
+      );
 
-    await acceptLegalDocumentVersion(id, currentTerms.id, "registration");
+      await acceptLegalDocumentVersion(id, currentTerms.id, "registration", trx);
+    });
 
     const verificationToken = await issueAuthToken(
       id,
