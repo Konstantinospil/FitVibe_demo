@@ -13,7 +13,10 @@ import {
   revokeSessions,
   acceptTerms,
   revokeTerms,
+  acceptPrivacyPolicy,
+  revokePrivacyPolicy,
   getLegalDocumentsStatus,
+  getLegalDocumentVersions,
   jwksHandler,
 } from "./auth.controller.js";
 // Removed twofa.controller imports - using two-factor.controller via two-factor.routes.ts instead
@@ -27,6 +30,7 @@ import {
   ResetPasswordSchema,
   RevokeSessionsSchema,
   AcceptTermsSchema,
+  AcceptPrivacyPolicySchema,
   ResendVerificationSchema,
 } from "./auth.schemas.js";
 import { requireAccessToken } from "./auth.middleware.js";
@@ -100,6 +104,24 @@ authRouter.post(
   rateLimit("auth_terms_revoke", 5, 60),
   requireAccessToken,
   asyncHandler(revokeTerms),
+);
+authRouter.post(
+  "/privacy/accept",
+  rateLimit("auth_privacy_accept", 5, 60),
+  requireAccessToken,
+  validate(AcceptPrivacyPolicySchema),
+  asyncHandler(acceptPrivacyPolicy),
+);
+authRouter.post(
+  "/privacy/revoke",
+  rateLimit("auth_privacy_revoke", 5, 60),
+  requireAccessToken,
+  asyncHandler(revokePrivacyPolicy),
+);
+authRouter.get(
+  "/legal-documents/versions",
+  rateLimit("auth_legal_versions", 60, 60),
+  asyncHandler(getLegalDocumentVersions),
 );
 authRouter.get(
   "/legal-documents/status",
