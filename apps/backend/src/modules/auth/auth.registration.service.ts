@@ -2,7 +2,7 @@ import crypto from "crypto";
 import bcrypt from "bcryptjs";
 import { v4 as uuidv4 } from "uuid";
 import { env } from "../../config/env.js";
-import { acceptCurrentLegalDocument, getCurrentLegalPublication } from "../legal/legal.service.js";
+import { acceptLegalDocumentVersion, getCurrentLegalPublication } from "../legal/legal.service.js";
 import { HttpError } from "../../utils/http.js";
 import { mailerService } from "../../services/mailer.service.js";
 import {
@@ -111,10 +111,7 @@ export async function register(
       weight_kg: dto.profile?.weight_kg ?? undefined,
     });
 
-    const acceptedTerms = await acceptCurrentLegalDocument(id, "terms", "registration");
-    if (acceptedTerms.id !== currentTerms.id) {
-      throw new Error("Terms publication changed during registration; retry registration");
-    }
+    await acceptLegalDocumentVersion(id, currentTerms.id, "registration");
 
     const verificationToken = await issueAuthToken(
       id,
