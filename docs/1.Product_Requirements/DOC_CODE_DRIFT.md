@@ -27,6 +27,29 @@ Matching ACs are omitted. Only failing ACs, status/wording mismatches, missing a
 
 ---
 
+## 2026-09-25 Documentation Reconciliation Baseline
+
+The following documentation decisions have now been made and incorporated into canonical artifacts. They are no longer open documentation-design questions:
+
+- delivery lifecycle uses Open / Progressing / Done / Superseded; ACs keep Proposed / Approved / Verified / Rejected;
+- individual canonical artifacts outrank indexes/catalogues; `docs/6.Implementation/` and GitHub issues are not product SSOT;
+- FR-013 lockout feedback is Superseded by Phase-14 opaque authentication controls and no longer owns `US-13.*`;
+- E13 owns `US-13.*` and has eight canonical product stories; E13-A11/A12 remain verification activities;
+- Profile Measurements no longer reopens E1/FR-009; it is FR-014 / E21, while US-1.4 is Superseded;
+- E14–E18 are legacy-completed scope; missing retrospective stories are not future backlog;
+- FR-008/E16 explicitly recognize product administration plus the dedicated Backoffice surface and canonical roles `athlete`, `coach`, `support`, `admin`;
+- NFR-001 removes CAPTCHA/puzzle authentication from target scope and follows ADR-030;
+- NFR-004 uses WCAG 2.2 AA as normative scope; Lighthouse is a regression indicator rather than proof of conformance;
+- NFR-005 standardizes quarterly full restore drills with automated backup/integrity evidence between drills;
+- NFR-006/E18 define the canonical five-locale set: EN/DE/EL/ES/FR with English fallback;
+- legal publication authority is an immutable Backoffice publication snapshot under ADR-032; mutable translation/Markdown sources cannot redefine a published version;
+- E19 now has canonical publication, registration-acceptance, and re-acceptance stories;
+- E20 verification reports are historical evidence and must be revalidated against live `dev` before backlog derivation.
+
+**Next step:** compare this contradiction-reduced target documentation against live implementation. Rows in this historical register must be reclassified from live evidence before any GitHub Project/backlog is created.
+
+---
+
 ## Summary
 
 | Type         |  Count |
