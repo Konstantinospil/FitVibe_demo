@@ -5,7 +5,7 @@
 **Requirement ID**: FR-014  
 **Type**: Functional Requirement  
 **Title**: Profile Measurements  
-**Status**: Open  
+**Status**: Progressing  
 **Priority**: High  
 **Gate**: SILVER  
 **Owner**: ENG/UX  
