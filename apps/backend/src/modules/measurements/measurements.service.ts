@@ -260,11 +260,7 @@ export async function createMeasurementAttribute(
       throw new HttpError(400, "MEASUREMENT_DERIVED_INVALID", "Derived sources required");
     }
     if (input.derivedOperator && input.derivedFromAId === input.derivedFromBId) {
-      throw new HttpError(
-        400,
-        "MEASUREMENT_DERIVED_INVALID",
-        "Derived sources must be different",
-      );
+      throw new HttpError(400, "MEASUREMENT_DERIVED_INVALID", "Derived sources must be different");
     }
     if (input.derivedOperator) {
       const [sourceA, sourceB] = await Promise.all([
