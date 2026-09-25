@@ -38,10 +38,10 @@ This is a **legacy-completed epic** that predates the current story-level tracea
 
 ## Success Criteria
 
-- English and German translations are available
+- English, German, Greek, Spanish, and French translations are supported
 - Language preference persists across sessions
 - Locale formatting works correctly (dates, numbers, etc.)
-- UI supports multiple languages seamlessly
+- UI supports the canonical five-locale set with English fallback
 
 ## Risks & Mitigation
 
