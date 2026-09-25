@@ -152,7 +152,7 @@ export async function recordLegalAcceptance(
       accepted_at: acceptedAt,
     })
     .onConflict(["user_id", "version_id"])
-    .merge({ action, source, accepted_at: acceptedAt });
+    .merge({ action, source, accepted_at: acceptedAt, revoked_at: null });
 }
 
 export async function getAcceptanceForVersion(
@@ -161,6 +161,7 @@ export async function getAcceptanceForVersion(
 ): Promise<LegalDocumentAcceptanceRow | null> {
   const row = await db<LegalDocumentAcceptanceRow>(ACCEPTANCE_TABLE)
     .where({ user_id: userId, version_id: versionId })
+    .whereNull("revoked_at")
     .first();
   return row ?? null;
 }
@@ -179,6 +180,7 @@ export async function getLatestAcceptanceForDocument(
     .join(`${VERSION_TABLE} as v`, "v.id", "a.version_id")
     .where("a.user_id", userId)
     .andWhere("v.document_type", documentType)
+    .whereNull("a.revoked_at")
     .select(
       "a.*",
       "v.version",
@@ -188,4 +190,20 @@ export async function getLatestAcceptanceForDocument(
     .orderBy("a.accepted_at", "desc")
     .first<LegalAcceptanceWithVersion>();
   return row ?? null;
+}
+
+
+export async function revokeLegalAcceptances(
+  userId: string,
+  documentType: LegalDocumentType,
+  revokedAt: string,
+): Promise<number> {
+  return db(ACCEPTANCE_TABLE)
+    .where({ user_id: userId })
+    .whereNull("revoked_at")
+    .whereIn(
+      "version_id",
+      db(VERSION_TABLE).select("id").where({ document_type: documentType }),
+    )
+    .update({ revoked_at: revokedAt });
 }
