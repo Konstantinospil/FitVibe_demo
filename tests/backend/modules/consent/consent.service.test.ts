@@ -142,6 +142,8 @@ describe("Consent Service", () => {
           marketingCookies: true,
           userAgent: "UA",
         }),
+        null,
+        "legal-cookie-1",
       );
       expect(mockInsertAudit).toHaveBeenCalledWith(
         expect.objectContaining({
