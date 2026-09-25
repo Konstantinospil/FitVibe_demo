@@ -85,10 +85,7 @@ const ProtectedRoute: React.FC = () => {
     (legalStatus.privacy.requiredAction === "accept" ||
       legalStatus.privacy.requiredAction === "renew_consent");
 
-  if (
-    privacyRequiresBlockingAction &&
-    !PRIVACY_GATE_ALLOWED_PATHS.has(location.pathname)
-  ) {
+  if (privacyRequiresBlockingAction && !PRIVACY_GATE_ALLOWED_PATHS.has(location.pathname)) {
     return <Navigate to="/privacy" replace state={{ from: location }} />;
   }
 
