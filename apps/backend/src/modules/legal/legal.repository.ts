@@ -175,7 +175,7 @@ export async function getLatestAcceptanceForDocument(
   userId: string,
   documentType: LegalDocumentType,
 ): Promise<LegalAcceptanceWithVersion | null> {
-  const row = await db<LegalAcceptanceWithVersion>(`${ACCEPTANCE_TABLE} as a`)
+  const row = await db(`${ACCEPTANCE_TABLE} as a`)
     .join(`${VERSION_TABLE} as v`, "v.id", "a.version_id")
     .where("a.user_id", userId)
     .andWhere("v.document_type", documentType)
@@ -186,6 +186,6 @@ export async function getLatestAcceptanceForDocument(
       "v.published_at as version_published_at",
     )
     .orderBy("a.accepted_at", "desc")
-    .first();
+    .first<LegalAcceptanceWithVersion>();
   return row ?? null;
 }
