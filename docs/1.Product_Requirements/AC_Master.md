@@ -1,8 +1,10 @@
-# FitVibe — AC Master (Expanded)
+# FitVibe — AC Master (Legacy Aggregate)
 
-_Date: 2025-10-29_
+_Last authority review: 2026-09-25_
 
 > NOTE: Complex ACs are decomposed into parts (A, B, C …). IDs remain stable across iterations.
+
+> **Authority notice (2026-09-25):** This file is a legacy aggregate retained for reference and may contain stale status/scope rows. It is not an acceptance-criteria source of truth and must not be used to generate backlog items. Canonical ACs live as individual files under `e.Acceptance_Criteria/`; the folder `INDEX.md` is the current navigation summary. Where this aggregate conflicts with an individual AC, story, requirement, or accepted ADR, the canonical artifact wins.
 
 | Type | Requirement ID | Requirement Title | AC ID | Acceptance Criteria (SMART) | Test Method | Evidence | Owner | Priority | Gate | Status | Trace → PRD | Trace → TDD |
 | :--- | :------------- | :---------------- | :---- | :-------------------------- | :---------- | :------- | :---- | :------- | :--- | :----- | :---------- | :---------- |
