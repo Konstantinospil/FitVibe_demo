@@ -45,6 +45,7 @@ export async function up(knex: Knex): Promise<void> {
     table.string("action", 20).notNullable();
     table.string("source", 30).notNullable().defaultTo("application");
     table.timestamp("accepted_at", { useTz: true }).notNullable();
+    table.timestamp("revoked_at", { useTz: true }).nullable();
     table.timestamp("created_at", { useTz: true }).notNullable().defaultTo(knex.fn.now());
     table.unique(["user_id", "version_id"], "legal_document_acceptances_user_version_unique");
     table.check("action IN ('acknowledge','accept','renew_consent')");
