@@ -5,7 +5,7 @@
 **Epic ID**: E19  
 **Requirement ID**: [REQ-2025-01-20-001](../a.Requirements/REQ-2025-01-20-001-terms-and-conditions.md)  
 **Title**: Terms and Conditions  
-**Status**: Progressing  
+**Status**: Done  
 **Priority**: High  
 **Gate**: GOLD  
 **Estimated Total Effort**: 3-5 story points  
