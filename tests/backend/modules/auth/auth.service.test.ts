@@ -32,6 +32,7 @@ jest.mock("../../../../apps/backend/src/modules/auth/pending-2fa.repository.js")
 jest.mock("../../../../apps/backend/src/modules/legal/legal.service.js", () => ({
   getCurrentLegalPublication: jest.fn(),
   acceptLegalDocumentVersion: jest.fn(),
+  acceptCurrentLegalDocument: jest.fn(),
   getLegalActionStatus: jest.fn(),
   getCurrentLegalVersions: jest.fn(),
 }));
@@ -144,10 +145,39 @@ jest.mock("../../../../apps/backend/src/db/index.js", () => {
 });
 
 jest.mock("../../../../apps/backend/src/db/connection.js", () => {
-  const transaction = jest.fn(async (callback: (trx: unknown) => Promise<unknown>) =>
-    callback({}),
+  const builders: Record<string, unknown> = {};
+
+  const createBuilder = () => {
+    const builder = Object.assign(Promise.resolve([]), {
+      where: jest.fn().mockReturnThis(),
+      whereNull: jest.fn().mockReturnThis(),
+      select: jest.fn().mockReturnThis(),
+      orderBy: jest.fn().mockReturnThis(),
+      first: jest.fn().mockResolvedValue(undefined),
+      insert: jest.fn().mockReturnThis(),
+      update: jest.fn().mockResolvedValue(1),
+      delete: jest.fn().mockResolvedValue(1),
+      onConflict: jest.fn().mockReturnThis(),
+      ignore: jest.fn().mockResolvedValue(undefined),
+      merge: jest.fn().mockResolvedValue(undefined),
+    });
+    return builder;
+  };
+
+  const db = jest.fn((table: string) => {
+    if (!builders[table]) {
+      builders[table] = createBuilder();
+    }
+    return builders[table];
+  }) as jest.Mock & {
+    transaction: jest.Mock;
+  };
+
+  db.transaction = jest.fn(async (callback: (trx: unknown) => Promise<unknown>) =>
+    callback(db),
   );
-  return { db: { transaction } };
+
+  return { db };
 });
 
 describe("Auth Service", () => {
