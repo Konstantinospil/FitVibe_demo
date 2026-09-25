@@ -28,10 +28,14 @@ const Privacy: React.FC = () => {
     let cancelled = false;
     void getLegalDocumentsStatus()
       .then((result) => {
-        if (!cancelled) setStatus(result.privacy);
+        if (!cancelled) {
+          setStatus(result.privacy);
+        }
       })
       .catch(() => {
-        if (!cancelled) setStatus(null);
+        if (!cancelled) {
+          setStatus(null);
+        }
       });
     return () => {
       cancelled = true;
@@ -45,7 +49,9 @@ const Privacy: React.FC = () => {
       const next = await getLegalDocumentsStatus();
       setStatus(next.privacy);
     } catch {
-      toast.error(t("privacy.consent.acceptError", { defaultValue: "Could not save acknowledgement." }));
+      toast.error(
+        t("privacy.consent.acceptError", { defaultValue: "Could not save acknowledgement." }),
+      );
     } finally {
       setIsWorking(false);
     }
@@ -58,7 +64,9 @@ const Privacy: React.FC = () => {
       const next = await getLegalDocumentsStatus();
       setStatus(next.privacy);
     } catch {
-      toast.error(t("privacy.consent.revokeError", { defaultValue: "Could not revoke acknowledgement." }));
+      toast.error(
+        t("privacy.consent.revokeError", { defaultValue: "Could not revoke acknowledgement." }),
+      );
     } finally {
       setIsWorking(false);
     }
