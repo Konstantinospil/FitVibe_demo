@@ -33,7 +33,7 @@ export async function seed(knex: Knex): Promise<void> {
     .where("effective_at", "<=", now)
     .orderBy("effective_at", "desc")
     .orderBy("published_at", "desc")
-    .first<{ version: string }>("version");
+    .first<{ id: string; version: string }>("id", "version");
   if (!currentTerms) {
     throw new Error("Cannot seed administrator without a published Terms version");
   }
@@ -57,6 +57,19 @@ export async function seed(knex: Knex): Promise<void> {
       },
     ])
     .onConflict("id")
+    .ignore();
+
+  await knex("legal_document_acceptances")
+    .insert({
+      user_id: ADMIN_ID,
+      version_id: currentTerms.id,
+      action: "accept",
+      source: "bootstrap_seed",
+      accepted_at: now,
+      revoked_at: null,
+      created_at: now,
+    })
+    .onConflict(["user_id", "version_id"])
     .ignore();
 
   await knex("user_contacts")
