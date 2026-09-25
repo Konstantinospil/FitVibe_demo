@@ -493,6 +493,47 @@ The targeted follow-up review is complete:
 
 No remaining **known architectural-decision documentation gap** has been identified for Phases 1–15 from the Git evidence reviewed. This statement is deliberately narrower than “all documentation is correct”: the next documentation-reconciliation pass must still test TDD/API/operations prose against the implemented architecture and remove stale or contradictory descriptions.
 
+### Phase 1–15 scope-creep audit
+
+**Audit date:** 2026-09-25  
+**Evidence basis:** Git history, Phase PR descriptions, changed-file lists and targeted patches from the Phase 1–15 development range through the Phase 15 merge (`2b3844bbfe35b6c2d9fe283fc350e24e2c5a62b5`).
+
+The purpose of this audit is to distinguish legitimate cross-cutting repair from implementation creep. A large file count is not by itself scope creep: a change is considered in scope when the touched module is required to implement, verify or document the stated phase invariant. A change is considered scope bleed when it changes a separate contract or behavior without being required by the declared phase objective.
+
+The aggregate comparison is intentionally **not** treated as phase attribution by itself. The development range also contains Dependabot/Snyk work and `main` → `dev` synchronization commits, and some PRs were stacked on earlier phase branches. Those inherited/external changes must be excluded before judging a phase.
+
+| Phase / PR | Scope review | Finding |
+| --- | --- | --- |
+| 1–2 | Early backend cleanup covered generated-source removal, canonical user/status state, plans/measurements consistency, database constraints and 2FA consolidation. | Broad, but evidence reviewed ties the touched modules to the initial debt/canonical-state cleanup. No unrelated product feature was identified. |
+| 3 / PR #218 | Declared as Prettier/formatting validation. Three service-file changes were formatting-only, but `apps/backend/src/modules/plans/plans.repository.ts` narrowed `status?: string` to `status?: "active" \| "completed"`. | **Confirmed scope-boundary violation.** The change is a reasonable type-contract correction and does not appear to add runtime functionality, but it was not a formatting change and was therefore carried under an inaccurate PR scope. Do not revert it solely to clean history; preserve it as scope-governance evidence. |
+| 4 / PR #219 | Security/bootstrap hardening across runtime config, DB config, CSRF, startup, AV readiness and deployment wiring. | Cross-cutting but directly required by the stated security/bootstrap objective. No unrelated module touch identified. |
+| 5 / PR #220 | Shared idempotency, audit writer, queue handlers and suspicious-input handling adopted by many consuming modules. | High blast radius, but intentionally cross-cutting. Module breadth follows from consolidating shared infrastructure rather than adding unrelated behavior. |
+| 6–7.5 | Auth/users/feed/session decomposition, shared contracts/configuration, audit outbox and concurrency repairs. | Broad architectural repair within the modularity/dependency objectives. No unrelated feature addition identified. |
+| 8 / 8.1 | Vibe-level persistence, decay, progress derivation and concurrency serialization. | Focused on the documented Vibe/points consistency problem. |
+| 9 / PR #234 | Preference ownership, Settings UI, language/units contracts, OpenAPI/shared types and tests. | Focused. |
+| 9.5 / PR #235 | Direct feed/session dependency cleanup across five files. | Focused. |
+| 10 / PR #236 | Frontend API-service decomposition. The PR changed-file view also contains backend feed/session files inherited from the stacked Phase 9.5 branch. | **Not scope creep.** Stacked-branch inheritance must not be attributed to Phase 10. |
+| 11 | State/invariant audit; no production-code implementation was required. | No implementation creep. |
+| 12 / PR #237 | Session/feed access authority, bookmark grants, performed-set compatibility, API contract and tests. | Focused on the declared state-correctness objective. |
+| 13 / PR #238 | Sessions, points, Vibe levels, jobs and Vibeforms for authoritative completed-workout/gamification reconciliation. | Cross-module by necessity. Jobs and Vibeforms are direct consumers of the repaired derived-state invariant, not unrelated expansion. |
+| 14 / PR #239 | Authentication state machine, brute-force state, 2FA, client-IP/proxy handling, login UI and tests. | Focused on the declared authentication-hardening objective. |
+| 15 / PR #240 | Auth plus common/admin/users/frontend security surfaces for authoritative blacklist enforcement, TOTP encryption and 2FA step-up. | Focused. Admin/users touches are required because the blacklist must be canonical across account-establishment and email-change paths. |
+
+#### Scope-creep conclusion
+
+The reviewed Phase 1–15 work shows **no evidence of broad implementation creep into unrelated product functionality**. The large cumulative diff is principally explained by deliberately cross-cutting debt repair, module decomposition, tests/contracts, dependency updates and branch synchronization.
+
+One concrete scope-governance defect is recorded: **Phase 3 / PR #218 included a non-formatting Plans type-contract change inside a formatting-validation PR.** This is scope bleed in the declared change boundary even though the change itself appears valid and should not be reverted merely for historical purity.
+
+Accordingly:
+
+- Phases 1–15 are **not** classified as having generated systemic scope creep.
+- PR #218 remains a documented exception and evidence that PR scope must match the actual semantic change.
+- Stacked PRs must be audited against their true base; inherited files are not automatically attributed to the later phase.
+- Dependency/security-bot and branch-synchronization commits must be separated from phase implementation evidence.
+- Future phases must keep unrelated correctness discoveries out of the active phase unless they are required to restore an invariant broken by that phase; otherwise they become a separately documented debt item or follow-up change.
+- A phase may be cross-cutting, but every touched production module must have a traceable reason connecting it to the phase objective.
+
 ### Documentation reconciliation
 
 The pre-existing `DOC_CODE_DRIFT.md` is evidence, not current truth. Its 2026-09-01 snapshot predates Phases 11–15 and contains findings already repaired later (for example production TLS verification and parts of authentication hardening). Before code changes are selected from it, every relevant row must be revalidated against current `dev`.
@@ -831,6 +872,7 @@ CI verifies the intended backend quality model without encouraging superficial c
 | 2026-09-24 | 15 | Encrypt persisted TOTP secrets with application-held key material. | TOTP verification requires recoverability, but plaintext persistence is not acceptable. | PR #240 / ADR-026 security context |
 | 2026-09-24 | 15 | Sensitive 2FA administration requires password plus current second factor. | A stolen authenticated session must not be sufficient to weaken or replace the second factor. | PR #240 / Phase 15 decision log |
 | 2026-09-24 | Program | Insert a debt-confrontation gate before final Phase 15 sign-off and later phases. | Documentation must become authoritative before implementation debt is selected; later phases must be justified against a clean baseline. | This document |
+| 2026-09-25 | Program | Record the Phase 1–15 scope-creep audit and retain PR #218 as the sole confirmed scope-boundary violation found in the reviewed phase history. | Distinguish legitimate cross-cutting repair from unrelated implementation creep and prevent cumulative diff size or stacked PR inheritance from being misclassified as phase scope. | Debt-Confrontation Gate — Phase 1–15 scope-creep audit |
 
 ## Phase completion record
 
