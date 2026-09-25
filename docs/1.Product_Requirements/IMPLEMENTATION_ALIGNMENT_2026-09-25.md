@@ -82,6 +82,24 @@ The future project must not import old issues wholesale. Its initial work items 
 
 Items that are already materially implemented should appear as verification/documentation work only where evidence is missing, not as feature implementation stories.
 
+## Post-Phase-17 execution plan
+
+Phase 17 (E19 legal publication) is complete. Remaining verified work is sequenced as follows; these phases organize existing canonical backlog items and do not replace their acceptance criteria.
+
+1. **Phase 18 — Measurements Completion** — finish E21 profile measurement UI, ownership/history semantics, derived behavior and verification. Tracking: #260; stories #256–#259.
+2. **Phase 19 — Planner Completion** — finish E4 plan management, activation/session generation, calendar/mobile scheduling and workflow verification. Tracking: #261; stories #84–#88.
+3. **Phase 20 — Logging & Import Expansion** — reconcile manual logging and, subject to an explicit scope-retention decision, implement GPX/FIT/derived-track/offline capabilities. Tracking: #262; stories #89–#94.
+4. **Phase 21 — Coach & Training Unit Workflows** — subject to an explicit scope-retention decision, implement canonical E12 consent-based coach/athlete and training-unit workflows. Tracking: #263; stories #247–#250.
+5. **Phase 22 — Production Readiness Closure** — close evidence gaps across privacy/GDPR, performance, accessibility, observability, availability/DR and encryption without rebuilding already-present infrastructure. Tracking: #264; existing story issues plus #254–#255.
+
+### Sequencing rules
+
+- Each phase begins from current `dev`; implementation presence is not completion without canonical acceptance-criterion evidence.
+- Phase 20 and Phase 21 contain explicit product-scope decision gates because the alignment review identified functionality that is documented but not materially implemented.
+- Phase 22 is primarily a verification/operational-evidence phase. Missing behavior may be implemented, but existing infrastructure must not be rewritten merely to satisfy an issue title.
+- CI/test gates must not be weakened to make a phase pass. Fix forward only.
+- Scope expansion discovered during a phase must be documented and assessed before implementation.
+
 ## Historical GitHub issues
 
 - Issues #2–#66: historical closed first import.
