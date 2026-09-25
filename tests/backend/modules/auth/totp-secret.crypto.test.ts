@@ -22,7 +22,11 @@ describe("TOTP secret encryption", () => {
 
   it("detects ciphertext tampering", () => {
     const encrypted = encryptTotpSecret("JBSWY3DPEHPK3PXP");
-    const tampered = encrypted.slice(0, -1) + (encrypted.endsWith("A") ? "B" : "A");
+    const parts = encrypted.split(":");
+    const ciphertext = Buffer.from(parts[4], "base64url");
+    ciphertext[0] ^= 0x01;
+    parts[4] = ciphertext.toString("base64url");
+    const tampered = parts.join(":");
 
     expect(() => decryptTotpSecret(tampered)).toThrow();
   });
