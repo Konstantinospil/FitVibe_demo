@@ -15,7 +15,6 @@ import {
 } from "./auth.repository.js";
 import { attachAnonymousConsents } from "../consent/consent.repository.js";
 import type { LoginDTO, LoginContext, TokenPair, UserSafe } from "./auth.types.js";
-import { HttpError } from "../../utils/http.js";
 import { assertTermsRequirementSatisfied } from "./auth.legal-gate.js";
 import {
   recordAuthAuditEvent as recordAuditEvent,
