@@ -7,7 +7,11 @@ import {
   createPending2FASession,
   hasRecentSecondFactorThrottle,
 } from "./pending-2fa.repository.js";
-import { createSessionWithRefresh, findUserByEmail, findUserByUsername } from "./auth.repository.js";
+import {
+  createSessionWithRefresh,
+  findUserByEmail,
+  findUserByUsername,
+} from "./auth.repository.js";
 import { attachAnonymousConsents } from "../consent/consent.repository.js";
 import type { LoginDTO, LoginContext, TokenPair, UserSafe } from "./auth.types.js";
 import { assertTermsRequirementSatisfied } from "./auth.legal-gate.js";
@@ -168,20 +172,20 @@ export async function login(
 
     await createSessionWithRefresh(
       {
-      jti: sessionId,
-      user_id: user.id,
-      user_agent: userAgent,
-      ip: context.ip ?? null,
-      created_at: issuedAtIso,
-      expires_at: sessionExpiresAt,
+        jti: sessionId,
+        user_id: user.id,
+        user_agent: userAgent,
+        ip: context.ip ?? null,
+        created_at: issuedAtIso,
+        expires_at: sessionExpiresAt,
       },
       {
-      id: uuidv4(),
-      user_id: user.id,
-      token_hash,
-      session_jti: sessionId,
-      expires_at: sessionExpiresAt,
-      created_at: issuedAtIso,
+        id: uuidv4(),
+        user_id: user.id,
+        token_hash,
+        session_jti: sessionId,
+        expires_at: sessionExpiresAt,
+        created_at: issuedAtIso,
       },
     );
 
