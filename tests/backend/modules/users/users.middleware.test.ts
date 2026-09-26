@@ -1,9 +1,9 @@
 import type { NextFunction, Request, Response } from "express";
 import { requireAuth } from "../../../../apps/backend/src/modules/users/users.middleware.js";
-import * as tokensService from "../../../../apps/backend/src/services/tokens.js";
+import * as tokensService from "../../../../apps/backend/src/modules/auth/auth.session-tokens.js";
 
 // Mock dependencies
-jest.mock("../../../../apps/backend/src/services/tokens.js");
+jest.mock("../../../../apps/backend/src/modules/auth/auth.session-tokens.js");
 
 const mockTokensService = jest.mocked(tokensService);
 
