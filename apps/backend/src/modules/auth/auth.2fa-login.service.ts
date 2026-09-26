@@ -130,20 +130,20 @@ export async function verify2FALogin(
 
     await createSessionWithRefresh(
       {
-      jti: sessionId,
-      user_id: user.id,
-      user_agent: userAgent,
-      ip: context.ip ?? null,
-      created_at: issuedAtIso,
-      expires_at: sessionExpiresAt,
+        jti: sessionId,
+        user_id: user.id,
+        user_agent: userAgent,
+        ip: context.ip ?? null,
+        created_at: issuedAtIso,
+        expires_at: sessionExpiresAt,
       },
       {
-      id: uuidv4(),
-      user_id: user.id,
-      token_hash,
-      session_jti: sessionId,
-      expires_at: sessionExpiresAt,
-      created_at: issuedAtIso,
+        id: uuidv4(),
+        user_id: user.id,
+        token_hash,
+        session_jti: sessionId,
+        expires_at: sessionExpiresAt,
+        created_at: issuedAtIso,
       },
     );
 
