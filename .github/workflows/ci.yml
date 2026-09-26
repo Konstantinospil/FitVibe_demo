@@ -383,12 +383,12 @@ jobs:
       - name: Run database migration tests
         timeout-minutes: 10
         run: |
-          pnpm --filter @fitvibe/backend exec jest migrations/migrations.test.ts --maxWorkers=1 --forceExit
+          pnpm --filter @fitvibe/backend exec jest migrations/migrations.test.ts --maxWorkers=1
 
       - name: Run database seed tests
         timeout-minutes: 10
         run: |
-          pnpm --filter @fitvibe/backend exec jest seeds/seeds.test.ts --maxWorkers=1 --forceExit
+          pnpm --filter @fitvibe/backend exec jest seeds/seeds.test.ts --maxWorkers=1
 
       - name: Force close database connections
         if: always()
@@ -808,7 +808,7 @@ jobs:
         timeout-minutes: 10
         env:
           CI: "true"
-        run: pnpm --filter @fitvibe/backend exec jest tests/backend/db/utils/scripts.test.ts --maxWorkers=1 --forceExit
+        run: pnpm --filter @fitvibe/backend exec jest tests/backend/db/utils/scripts.test.ts --maxWorkers=1
 
       - name: Run integration tests
         timeout-minutes: 20
@@ -817,7 +817,7 @@ jobs:
           CI: "true"
         # maxWorkers=1: these suites truncate a shared Postgres DB and IP-keyed
         # brute-force counters collide when two workers run in parallel.
-        run: mkdir -p apps/backend/coverage && pnpm --filter @fitvibe/backend exec jest --maxWorkers=1 --testMatch="**/integration/**/*.integration.test.ts" --testPathIgnorePatterns="/node_modules/|verification-resend-limit\\.test\\.ts$|login-enumeration\\.test\\.ts$" --forceExit --json --outputFile=coverage/jest-integration.json
+        run: mkdir -p apps/backend/coverage && pnpm --filter @fitvibe/backend exec jest --maxWorkers=1 --testMatch="**/integration/**/*.integration.test.ts" --testPathIgnorePatterns="/node_modules/" --json --outputFile=coverage/jest-integration.json
 
       - name: Fail on unexpected skipped tests
         if: always()

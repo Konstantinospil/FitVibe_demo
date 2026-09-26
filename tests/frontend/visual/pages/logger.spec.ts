@@ -7,7 +7,7 @@ test.describe("Logger Page Visual Tests", () => {
       viewports: ["sm", "md"],
     });
     await capturePageScreenshot(page, testInfo, "logger", {
-      waitFor: "text=Session Visibility",
+      waitFor: "text=Leg Day Circuit",
     });
   });
 });
