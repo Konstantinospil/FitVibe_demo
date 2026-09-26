@@ -506,8 +506,8 @@ describe("Auth Service", () => {
       mockAuthRepo.findUserByEmail.mockResolvedValue(mockUser);
       mockBcrypt.compare.mockResolvedValue(true as never);
       mockTwofaService.is2FAEnabled.mockResolvedValue(false);
-      mockAuthRepo.createAuthSession.mockResolvedValue(undefined);
-      mockAuthRepo.insertRefreshToken.mockResolvedValue(undefined);
+      mockAuthRepo.createSessionWithRefresh.mockResolvedValue(undefined);
+      
       mockBruteforceRepo.getFailedAttempt.mockResolvedValue(null);
       mockBruteforceRepo.getFailedAttemptByIP.mockResolvedValue(null);
       mockBruteforceRepo.resetFailedAttempts.mockResolvedValue(undefined);
@@ -541,7 +541,7 @@ describe("Auth Service", () => {
 
       expect(result.requires2FA).toBe(true);
       expect(result.pendingSessionId).toBeDefined();
-      expect(mockAuthRepo.createAuthSession).not.toHaveBeenCalled();
+      expect(mockAuthRepo.createSessionWithRefresh).not.toHaveBeenCalled();
     });
 
     it("should throw error when password incorrect", async () => {
@@ -590,7 +590,7 @@ describe("Auth Service", () => {
 
       expect(result.requires2FA).toBe(true);
       expect(result.pendingSessionId).toBeDefined();
-      expect(mockAuthRepo.createAuthSession).not.toHaveBeenCalled();
+      expect(mockAuthRepo.createSessionWithRefresh).not.toHaveBeenCalled();
     });
 
     it("should require 2FA when enabled", async () => {
@@ -677,7 +677,7 @@ describe("Auth Service", () => {
       mockJwt.sign
         .mockReturnValueOnce("new_refresh_token" as never)
         .mockReturnValueOnce("new_access_token" as never);
-      mockAuthRepo.insertRefreshToken.mockResolvedValue(undefined);
+      
 
       const result = await authService.refresh(refreshToken);
 
