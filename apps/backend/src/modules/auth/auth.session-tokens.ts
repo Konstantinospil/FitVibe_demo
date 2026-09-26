@@ -27,4 +27,20 @@ export function signRefresh(payload: Pick<RefreshTokenPayload, "sub" | "sid">): 
   });
 }
 
+export function verifyAccess(token: string): JwtPayload {
+  const decoded = jwt.verify(token, RSA_KEYS.publicKey, { algorithms: ["RS256"] });
+  if (typeof decoded === "string") {
+    return JSON.parse(decoded) as JwtPayload;
+  }
+  return decoded as JwtPayload;
+}
+
+export function verifyRefresh(token: string): RefreshTokenPayload {
+  const decoded = jwt.verify(token, RSA_KEYS.publicKey, { algorithms: ["RS256"] });
+  if (typeof decoded === "string") {
+    return JSON.parse(decoded) as RefreshTokenPayload;
+  }
+  return decoded as RefreshTokenPayload;
+}
+
 export const accessTokenTtl = ACCESS_TTL;
