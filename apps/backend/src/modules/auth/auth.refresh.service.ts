@@ -114,7 +114,10 @@ export async function refresh(
       expires_at: newExpiry,
     };
     if (context.userAgent) {
-      patch.user_agent = sanitizeUserAgent(context.userAgent);
+      const sanitizedUserAgent = sanitizeUserAgent(context.userAgent);
+      if (sanitizedUserAgent !== null && sanitizedUserAgent !== undefined) {
+        patch.user_agent = sanitizedUserAgent;
+      }
     }
     if (context.ip) {
       patch.ip = context.ip;
