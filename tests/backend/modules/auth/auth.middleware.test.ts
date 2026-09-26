@@ -1,12 +1,12 @@
 import type { NextFunction, Request, Response } from "express";
 import * as authMiddleware from "../../../../apps/backend/src/modules/auth/auth.middleware.js";
 import * as tokensService from "../../../../apps/backend/src/modules/auth/auth.session-tokens.js";
-import * as authRepository from "../../../../apps/backend/src/modules/auth/auth.repository.js";
+import * as authStateRepository from "../../../../apps/backend/src/modules/auth/auth.state.repository.js";
 import { HttpError } from "../../../../apps/backend/src/utils/http.js";
 
 // Mock dependencies
 jest.mock("../../../../apps/backend/src/modules/auth/auth.session-tokens.js");
-jest.mock("../../../../apps/backend/src/modules/auth/auth.repository.js");
+jest.mock("../../../../apps/backend/src/modules/auth/auth.state.repository.js");
 jest.mock("../../../../apps/backend/src/config/env.js", () => ({
   env: {
     ACCESS_COOKIE_NAME: "access_token",
@@ -14,7 +14,7 @@ jest.mock("../../../../apps/backend/src/config/env.js", () => ({
 }));
 
 const mockTokensService = jest.mocked(tokensService);
-const mockAuthRepository = jest.mocked(authRepository);
+const mockAuthStateRepository = jest.mocked(authStateRepository);
 
 describe("Auth Middleware", () => {
   let mockRequest: Partial<Request>;
@@ -23,7 +23,7 @@ describe("Auth Middleware", () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    mockAuthRepository.isSessionActiveForUser.mockResolvedValue(true);
+    mockAuthStateRepository.isSessionActiveForUser.mockResolvedValue(true);
 
     mockRequest = {
       headers: {},
@@ -48,7 +48,7 @@ describe("Auth Middleware", () => {
       mockRequest.cookies = { access_token: token };
       mockTokensService.verifyAccess.mockReturnValue(payload as never);
 
-      await authMiddleware.requireAccessToken(
+      await authMiddleware.authenticateAccessToken(
         mockRequest as Request,
         mockResponse as Response,
         mockNext,
@@ -71,7 +71,7 @@ describe("Auth Middleware", () => {
       mockRequest.headers = { authorization: "Bearer access-token" };
       mockTokensService.verifyAccess.mockReturnValue(payload as never);
 
-      await authMiddleware.requireAccessToken(
+      await authMiddleware.authenticateAccessToken(
         mockRequest as Request,
         mockResponse as Response,
         mockNext,
@@ -95,7 +95,7 @@ describe("Auth Middleware", () => {
       mockRequest.headers = { authorization: `Bearer ${headerToken}` };
       mockTokensService.verifyAccess.mockReturnValue(payload as never);
 
-      await authMiddleware.requireAccessToken(
+      await authMiddleware.authenticateAccessToken(
         mockRequest as Request,
         mockResponse as Response,
         mockNext,
@@ -109,7 +109,7 @@ describe("Auth Middleware", () => {
       mockRequest.cookies = {};
       mockRequest.headers = {};
 
-      await authMiddleware.requireAccessToken(
+      await authMiddleware.authenticateAccessToken(
         mockRequest as Request,
         mockResponse as Response,
         mockNext,
@@ -132,7 +132,7 @@ describe("Auth Middleware", () => {
         throw new Error("Invalid token");
       });
 
-      await authMiddleware.requireAccessToken(
+      await authMiddleware.authenticateAccessToken(
         mockRequest as Request,
         mockResponse as Response,
         mockNext,
@@ -159,7 +159,7 @@ describe("Auth Middleware", () => {
       mockRequest.headers = { authorization: "bearer access-token" };
       mockTokensService.verifyAccess.mockReturnValue(payload as never);
 
-      await authMiddleware.requireAccessToken(
+      await authMiddleware.authenticateAccessToken(
         mockRequest as Request,
         mockResponse as Response,
         mockNext,
@@ -169,20 +169,19 @@ describe("Auth Middleware", () => {
       expect(mockRequest.user).toEqual(payload);
     });
 
-
     it("should reject a valid JWT whose backing session is revoked or expired", async () => {
       const payload = { sub: "user-123", role: "athlete", sid: "session-123" };
       mockRequest.cookies = { access_token: "access-token" };
       mockTokensService.verifyAccess.mockReturnValue(payload as never);
-      mockAuthRepository.isSessionActiveForUser.mockResolvedValue(false);
+      mockAuthStateRepository.isSessionActiveForUser.mockResolvedValue(false);
 
-      await authMiddleware.requireAccessToken(
+      await authMiddleware.authenticateAccessToken(
         mockRequest as Request,
         mockResponse as Response,
         mockNext,
       );
 
-      expect(mockAuthRepository.isSessionActiveForUser).toHaveBeenCalledWith(
+      expect(mockAuthStateRepository.isSessionActiveForUser).toHaveBeenCalledWith(
         "session-123",
         "user-123",
       );
@@ -196,7 +195,7 @@ describe("Auth Middleware", () => {
       mockRequest.headers = { authorization: "InvalidFormat token" };
       mockRequest.cookies = {};
 
-      await authMiddleware.requireAccessToken(
+      await authMiddleware.authenticateAccessToken(
         mockRequest as Request,
         mockResponse as Response,
         mockNext,
@@ -214,7 +213,7 @@ describe("Auth Middleware", () => {
       mockRequest.headers = { authorization: "Bearer" };
       mockRequest.cookies = {};
 
-      await authMiddleware.requireAccessToken(
+      await authMiddleware.authenticateAccessToken(
         mockRequest as Request,
         mockResponse as Response,
         mockNext,
