@@ -4,6 +4,7 @@ import * as authRepository from "../../../../apps/backend/src/modules/auth/auth.
 import * as metrics from "../../../../apps/backend/src/observability/metrics.js";
 import * as audit from "../../../../apps/backend/src/modules/auth/auth.audit.js";
 import * as legalGate from "../../../../apps/backend/src/modules/auth/auth.legal-gate.js";
+import { HttpError } from "../../../../apps/backend/src/utils/http.js";
 
 jest.mock("jsonwebtoken");
 jest.mock("../../../../apps/backend/src/modules/auth/auth.repository.js");
@@ -44,7 +45,7 @@ describe("auth.refresh.service", () => {
     });
     mockRepository.findUserById.mockResolvedValue({ id: "user-1", status: "active", role_code: "athlete" } as never);
     mockLegalGate.assertTermsRequirementSatisfied.mockRejectedValue(
-      Object.assign(new Error("TERMS_VERSION_OUTDATED"), { status: 403, code: "TERMS_VERSION_OUTDATED" }),
+      new HttpError(403, "TERMS_VERSION_OUTDATED", "TERMS_VERSION_OUTDATED"),
     );
 
     await expect(service.refresh("refresh-token")).rejects.toMatchObject({ code: "TERMS_VERSION_OUTDATED" });
