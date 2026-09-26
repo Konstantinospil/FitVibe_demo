@@ -7,7 +7,7 @@
 
 import { Router } from "express";
 import { asyncHandler } from "../../utils/async-handler.js";
-import { requireAuth } from "../users/users.middleware.js";
+import { requireAccessToken } from "../auth/auth.middleware.js";
 import { requireRole } from "../common/rbac.middleware.js";
 import { rateLimit } from "../common/rateLimiter.js";
 import { listLogsHandler, recentActivityHandler } from "./logs.controller.js";
@@ -15,7 +15,7 @@ import { listLogsHandler, recentActivityHandler } from "./logs.controller.js";
 export const logsRouter = Router();
 
 // All logs routes require authentication and admin role
-logsRouter.use(requireAuth);
+logsRouter.use(requireAccessToken);
 logsRouter.use(requireRole("admin"));
 
 /**
