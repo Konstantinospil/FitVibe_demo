@@ -464,9 +464,9 @@ describe("Vibe Level Service", () => {
     });
   });
 
-  describe("updateGlicko2Rating", () => {
+  describe("updateVibeProgression", () => {
     it("should update rating for good performance", () => {
-      const result = vibeLevelService.updateGlicko2Rating(
+      const result = vibeLevelService.updateVibeProgression(
         1000, // Current rating
         350, // Current RD
         0.06, // Current volatility
@@ -483,7 +483,7 @@ describe("Vibe Level Service", () => {
     });
 
     it("should update rating for poor performance", () => {
-      const result = vibeLevelService.updateGlicko2Rating(
+      const result = vibeLevelService.updateVibeProgression(
         1000,
         350,
         0.06,
@@ -500,8 +500,8 @@ describe("Vibe Level Service", () => {
     });
 
     it("should apply domain impact multiplier", () => {
-      const resultFull = vibeLevelService.updateGlicko2Rating(1000, 350, 0.06, 0.8, 1.0);
-      const resultPartial = vibeLevelService.updateGlicko2Rating(1000, 350, 0.06, 0.8, 0.5);
+      const resultFull = vibeLevelService.updateVibeProgression(1000, 350, 0.06, 0.8, 1.0);
+      const resultPartial = vibeLevelService.updateVibeProgression(1000, 350, 0.06, 0.8, 0.5);
 
       // Partial impact should result in smaller rating change
       const changeFull = resultFull.newRating - 1000;
@@ -510,7 +510,7 @@ describe("Vibe Level Service", () => {
     });
 
     it("should clamp rating values to valid ranges", () => {
-      const result = vibeLevelService.updateGlicko2Rating(100, 350, 0.06, 0.0, 1.0);
+      const result = vibeLevelService.updateVibeProgression(100, 350, 0.06, 0.0, 1.0);
 
       expect(result.newRating).toBeGreaterThanOrEqual(100);
       expect(result.newRating).toBeLessThanOrEqual(3000);
