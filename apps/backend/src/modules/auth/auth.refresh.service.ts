@@ -2,7 +2,7 @@ import crypto from "crypto";
 import jwt from "jsonwebtoken";
 import { v4 as uuidv4 } from "uuid";
 import { RSA_KEYS } from "../../config/env.js";
-import { isTermsVersionOutdated } from "../../config/terms.js";
+import { assertTermsRequirementSatisfied } from "./auth.legal-gate.js";
 import { HttpError } from "../../utils/http.js";
 import { incrementRefreshReuse } from "../../observability/metrics.js";
 import {
@@ -98,9 +98,7 @@ export async function refresh(
     if (!user || user.status !== "active") {
       throw new HttpError(401, "AUTH_USER_NOT_FOUND", "User not found");
     }
-    if (isTermsVersionOutdated(user.terms_version)) {
-      throw new HttpError(403, "TERMS_VERSION_OUTDATED", "TERMS_VERSION_OUTDATED");
-    }
+    await assertTermsRequirementSatisfied(user.id);
 
     await revokeRefreshByHash(tokenHash);
     const newRefresh = signRefresh({ sub: user.id, sid: session.jti });

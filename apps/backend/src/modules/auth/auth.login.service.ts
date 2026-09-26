@@ -15,8 +15,7 @@ import {
 } from "./auth.repository.js";
 import { attachAnonymousConsents } from "../consent/consent.repository.js";
 import type { LoginDTO, LoginContext, TokenPair, UserSafe } from "./auth.types.js";
-import { HttpError } from "../../utils/http.js";
-import { isTermsVersionOutdated } from "../../config/terms.js";
+import { assertTermsRequirementSatisfied } from "./auth.legal-gate.js";
 import {
   recordAuthAuditEvent as recordAuditEvent,
   sanitizeAuthUserAgent as sanitizeUserAgent,
@@ -161,9 +160,7 @@ export async function login(
       };
     }
 
-    if (isTermsVersionOutdated(user.terms_version)) {
-      throw new HttpError(403, "TERMS_VERSION_OUTDATED", "TERMS_VERSION_OUTDATED");
-    }
+    await assertTermsRequirementSatisfied(user.id);
 
     await resetLoginFailures(identifier, ipAddress);
 

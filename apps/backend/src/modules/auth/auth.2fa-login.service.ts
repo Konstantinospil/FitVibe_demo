@@ -1,7 +1,7 @@
 import crypto from "crypto";
 import bcrypt from "bcryptjs";
 import { v4 as uuidv4 } from "uuid";
-import { isTermsVersionOutdated } from "../../config/terms.js";
+import { assertTermsRequirementSatisfied } from "./auth.legal-gate.js";
 import { HttpError } from "../../utils/http.js";
 import { attachAnonymousConsents } from "../consent/consent.repository.js";
 import { verify2FACode } from "./two-factor.service.js";
@@ -114,9 +114,7 @@ export async function verify2FALogin(
       throw invalidVerification();
     }
 
-    if (isTermsVersionOutdated(user.terms_version)) {
-      throw new HttpError(403, "TERMS_VERSION_OUTDATED", "TERMS_VERSION_OUTDATED");
-    }
+    await assertTermsRequirementSatisfied(user.id);
 
     await resetLoginFailures(
       pendingSession.identifier ?? user.primary_email ?? user.username,

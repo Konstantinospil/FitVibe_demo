@@ -1,4 +1,6 @@
-# ADR-024: Legal Document Version Calculation from Multi-Language Translations
+# ADR-024: Legal Document Version Calculation
+
+> **Superseded by ADR-035 (2026-09-26).** Translation/database timestamps are no longer a runtime legal authority. Persisted legal publications and acceptances are authoritative.
 
 **Date:** 2025-12-22  
 **Status:** Accepted  
