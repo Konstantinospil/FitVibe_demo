@@ -1,6 +1,6 @@
 import type { NextFunction, Request, Response } from "express";
 
-import { verifyAccess } from "../services/tokens.js";
+import { verifyAccess } from "../modules/auth/auth.session-tokens.js";
 
 export function authenticate(req: Request, res: Response, next: NextFunction) {
   const auth = req.headers.authorization;

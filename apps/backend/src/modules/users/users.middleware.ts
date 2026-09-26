@@ -1,6 +1,6 @@
 import type { NextFunction, Request, Response, RequestHandler } from "express";
 
-import { verifyAccess } from "../../services/tokens.js";
+import { verifyAccess } from "../auth/auth.session-tokens.js";
 
 export const requireAuth: RequestHandler = (req: Request, res: Response, next: NextFunction) => {
   const header = req.headers.authorization;

@@ -1,10 +1,10 @@
 import type { NextFunction, Request, Response } from "express";
 import * as authMiddleware from "../../../../apps/backend/src/modules/auth/auth.middleware.js";
-import * as tokensService from "../../../../apps/backend/src/services/tokens.js";
+import * as tokensService from "../../../../apps/backend/src/modules/auth/auth.session-tokens.js";
 import { HttpError } from "../../../../apps/backend/src/utils/http.js";
 
 // Mock dependencies
-jest.mock("../../../../apps/backend/src/services/tokens.js");
+jest.mock("../../../../apps/backend/src/modules/auth/auth.session-tokens.js");
 jest.mock("../../../../apps/backend/src/config/env.js", () => ({
   env: {
     ACCESS_COOKIE_NAME: "access_token",

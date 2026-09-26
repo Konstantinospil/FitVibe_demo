@@ -37,6 +37,7 @@
 | ADR-031 | User Preference Ownership and Locale Separation                                                  | Accepted | 2026-09-24    | [ADR-031-user-preference-ownership.md](./ADR-031-user-preference-ownership.md)                             |
 | ADR-032 | Legal Document Publication Uses Immutable Snapshots                                                | Accepted | 2026-09-25    | [ADR-032-legal-document-publication-snapshots.md](./ADR-032-legal-document-publication-snapshots.md)       |
 | ADR-033 | Secrets Provider Contract                                                                          | Accepted | 2026-09-26    | [ADR-033-secrets-provider-contract.md](./ADR-033-secrets-provider-contract.md)                             |
+| ADR-034 | Endogenous Vibe Progression and Derived Gamification Recovery                                    | Accepted | 2026-09-26    | [ADR-034-endogenous-vibe-progression-and-derived-gamification.md](./ADR-034-endogenous-vibe-progression-and-derived-gamification.md) |
 
 ## Numbering notes
 
@@ -50,3 +51,4 @@
 - ADR-031 records the Phase 9 ownership boundary between explicit language/measurement preferences and locale.
 - ADR-032 makes immutable Backoffice publication snapshots authoritative for published legal-document versions.
 - ADR-033 defines provider selection, round-trip semantics, and environment fallback for application secrets.
+- ADR-034 records the endogenous FitVibe progression model, derived gamification recovery, and canonical JWT contract.

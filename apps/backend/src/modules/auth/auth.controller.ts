@@ -33,7 +33,7 @@ import {
 import type { z } from "zod";
 import type { LoginContext } from "./auth.types.js";
 import { HttpError } from "../../utils/http.js";
-import { verifyAccess } from "../../services/tokens.js";
+import { verifyAccess } from "./auth.session-tokens.js";
 import { handleIdempotentRequest } from "../common/idempotency.helpers.js";
 import { extractClientIp } from "../../utils/ip-extractor.js";
 
