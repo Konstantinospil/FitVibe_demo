@@ -1,0 +1,35 @@
+import Contact from "../pages/Contact";
+import Cookie from "../pages/Cookie";
+import ForgotPassword from "../pages/ForgotPassword";
+import Home from "../pages/Home";
+import Impressum from "../pages/Impressum";
+import Login from "../pages/Login";
+import LoginFormContent from "../pages/LoginFormContent";
+import Maintenance from "../pages/Maintenance";
+import NotFound from "../pages/NotFound";
+import Privacy from "../pages/Privacy";
+import Register from "../pages/Register";
+import ResetPassword from "../pages/ResetPassword";
+import Terms from "../pages/Terms";
+import TermsReacceptance from "../pages/TermsReacceptance";
+import TwoFactorVerificationLogin from "../pages/TwoFactorVerificationLogin";
+import VerifyEmail from "../pages/VerifyEmail";
+
+export default { title: "Pages/Public" };
+
+export const HomePage = () => <Home />;
+export const LoginPage = () => <Login />;
+export const LoginFormContentPage = () => <LoginFormContent />;
+export const RegisterPage = () => <Register />;
+export const ForgotPasswordPage = () => <ForgotPassword />;
+export const ResetPasswordPage = () => <ResetPassword />;
+export const VerifyEmailPage = () => <VerifyEmail />;
+export const TwoFactorVerificationPage = () => <TwoFactorVerificationLogin />;
+export const TermsReacceptancePage = () => <TermsReacceptance />;
+export const ContactPage = () => <Contact />;
+export const TermsPage = () => <Terms />;
+export const PrivacyPage = () => <Privacy />;
+export const CookiePage = () => <Cookie />;
+export const ImpressumPage = () => <Impressum />;
+export const MaintenancePage = () => <Maintenance />;
+export const NotFoundPage = () => <NotFound />;
