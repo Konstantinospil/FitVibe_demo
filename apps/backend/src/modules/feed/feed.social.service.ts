@@ -1,6 +1,11 @@
 import { HttpError } from "../../utils/http.js";
+import { logger } from "../../config/logger.js";
 import { insertAudit } from "../common/audit.util.js";
 import { evaluateBadgesForFollow } from "../points/badges.service.js";
+import {
+  markGamificationStale,
+  scheduleGamificationReconciliation,
+} from "../points/gamification-projection.service.js";
 import {
   upsertFollower,
   deleteFollower,
@@ -26,8 +31,21 @@ export async function followUserByAlias(
   await upsertFollower(followerId, targetUser.id);
   try {
     await evaluateBadgesForFollow(followerId);
-  } catch {
-    // Follow succeeds even if badge evaluation fails.
+  } catch (error) {
+    // The follow is authoritative; badges are a derived projection and must not roll it back.
+    logger.error(
+      { err: error, userId: followerId },
+      "[feed] Follow badge evaluation failed; scheduling gamification reconciliation",
+    );
+    try {
+      await markGamificationStale(followerId, true);
+      scheduleGamificationReconciliation(followerId, undefined, true);
+    } catch (reconciliationError) {
+      logger.error(
+        { err: reconciliationError, userId: followerId },
+        "[feed] Failed to schedule gamification reconciliation after badge evaluation failure",
+      );
+    }
   }
 
   return { followingId: targetUser.id };
