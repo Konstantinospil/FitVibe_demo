@@ -2,7 +2,7 @@ import type { NextFunction, Request, Response } from "express";
 
 import { env } from "../../config/env.js";
 import { HttpError } from "../../utils/http.js";
-import { verifyAccess } from "../../services/tokens.js";
+import { verifyAccess } from "./auth.session-tokens.js";
 
 function bearerToken(header?: string | null): string | null {
   if (!header) {
