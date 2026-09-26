@@ -53,7 +53,9 @@ const ENV_SECRET_ALIASES: Record<string, string> = {
 function getEnvironmentSecret(key: string, field?: string): string | null {
   const alias = ENV_SECRET_ALIASES[`${key}:${field ?? ""}`];
   const genericName = ["FITVIBE_SECRET", key, field]
-    .filter((part): part is string => Boolean(part))
+    .filter((part): part is string => {
+      return Boolean(part);
+    })
     .join("_")
     .replace(/[^A-Za-z0-9]+/g, "_")
     .replace(/^_+|_+$/g, "")
@@ -65,7 +67,9 @@ function getEnvironmentSecret(key: string, field?: string): string | null {
 function readStructuredField(serialized: string, field: string): string | null {
   try {
     const parsed = JSON.parse(serialized) as unknown;
-    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return null;
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+      return null;
+    }
     const value = (parsed as Record<string, unknown>)[field];
     return typeof value === "string" ? value : null;
   } catch {
@@ -146,30 +150,39 @@ export async function getSecret(key: string, field?: string): Promise<string | n
         const secretData = result.data.data || result.data;
         if (field) {
           const value = secretData[field];
-          if (typeof value === "string") return value;
+          if (typeof value === "string") {
+            return value;
+          }
         } else if (typeof secretData === "string") {
           return secretData;
-        } else if (
-          Object.keys(secretData).length === 1 &&
-          typeof secretData.value === "string"
-        ) {
+        } else if (Object.keys(secretData).length === 1 && typeof secretData.value === "string") {
           return secretData.value;
         } else {
           return JSON.stringify(secretData);
         }
       }
-      logger.warn({ key, field }, "[secrets] Secret not found in Vault; trying environment fallback");
+      logger.warn(
+        { key, field },
+        "[secrets] Secret not found in Vault; trying environment fallback",
+      );
     } catch (error) {
-      logger.error({ err: error, key, field }, "[secrets] Vault read failed; trying environment fallback");
+      logger.error(
+        { err: error, key, field },
+        "[secrets] Vault read failed; trying environment fallback",
+      );
     }
   } else if (config.provider === "aws" && config.aws?.enabled && awsClient) {
     try {
       const command = new GetSecretValueCommand({ SecretId: key });
       const result = await awsClient.send(command);
       if (result.SecretString !== undefined) {
-        if (!field) return result.SecretString;
+        if (!field) {
+          return result.SecretString;
+        }
         const value = readStructuredField(result.SecretString, field);
-        if (value !== null) return value;
+        if (value !== null) {
+          return value;
+        }
       }
       logger.warn({ key, field }, "[secrets] Secret not found in AWS; trying environment fallback");
     } catch (error) {
