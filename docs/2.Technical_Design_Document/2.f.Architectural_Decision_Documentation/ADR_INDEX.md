@@ -36,6 +36,7 @@
 | ADR-030 | Authoritative Account-Security Controls                                                          | Accepted | 2026-09-24    | [ADR-030-account-security-controls.md](./ADR-030-account-security-controls.md)                             |
 | ADR-031 | User Preference Ownership and Locale Separation                                                  | Accepted | 2026-09-24    | [ADR-031-user-preference-ownership.md](./ADR-031-user-preference-ownership.md)                             |
 | ADR-032 | Legal Document Publication Uses Immutable Snapshots                                                | Accepted | 2026-09-25    | [ADR-032-legal-document-publication-snapshots.md](./ADR-032-legal-document-publication-snapshots.md)       |
+| ADR-033 | Secrets Provider Contract                                                                          | Accepted | 2026-09-26    | [ADR-033-secrets-provider-contract.md](./ADR-033-secrets-provider-contract.md)                             |
 
 ## Numbering notes
 
@@ -48,3 +49,4 @@
 - ADR-030 records the authoritative Phase 15 account-security controls.
 - ADR-031 records the Phase 9 ownership boundary between explicit language/measurement preferences and locale.
 - ADR-032 makes immutable Backoffice publication snapshots authoritative for published legal-document versions.
+- ADR-033 defines provider selection, round-trip semantics, and environment fallback for application secrets.
