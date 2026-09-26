@@ -1,9 +1,9 @@
 import type { NextFunction, Request, Response } from "express";
 import { authenticate } from "../../../apps/backend/src/middlewares/auth.guard.js";
-import * as tokens from "../../../apps/backend/src/services/tokens.js";
+import * as tokens from "../../../apps/backend/src/modules/auth/auth.session-tokens.js";
 import type { JwtPayload } from "../../../apps/backend/src/modules/auth/auth.types.js";
 
-jest.mock("../../../apps/backend/src/services/tokens");
+jest.mock("../../../apps/backend/src/modules/auth/auth.session-tokens");
 
 describe("authenticate middleware", () => {
   let mockRequest: Partial<Request>;
