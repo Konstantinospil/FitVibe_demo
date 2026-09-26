@@ -4,7 +4,7 @@
  * Tests the cross-module flow:
  * 1. User completes a session
  * 2. Domains are detected from session metrics
- * 3. Vibe levels are updated using Glicko-2
+ * 3. Vibe levels are updated using the endogenous FitVibe progression model
  * 4. Points are calculated and awarded
  * 5. Rating decay is applied for inactive domains
  *
