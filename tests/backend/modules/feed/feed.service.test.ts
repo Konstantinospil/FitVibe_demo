@@ -2,6 +2,8 @@ import * as feedService from "../../../../apps/backend/src/modules/feed/feed.ser
 import * as feedRepository from "../../../../apps/backend/src/modules/feed/feed.repository.js";
 import * as sessionsCloneService from "../../../../apps/backend/src/modules/sessions/sessions.clone.service.js";
 import * as usersRepository from "../../../../apps/backend/src/modules/users/users.repository.js";
+import * as badgesService from "../../../../apps/backend/src/modules/points/badges.service.js";
+import * as projectionService from "../../../../apps/backend/src/modules/points/gamification-projection.service.js";
 import { HttpError } from "../../../../apps/backend/src/utils/http.js";
 
 // Mock dependencies
@@ -14,10 +16,16 @@ jest.mock("../../../../apps/backend/src/modules/common/audit.util.js", () => ({
 jest.mock("../../../../apps/backend/src/modules/points/badges.service.js", () => ({
   evaluateBadgesForFollow: jest.fn().mockResolvedValue([]),
 }));
+jest.mock("../../../../apps/backend/src/modules/points/gamification-projection.service.js", () => ({
+  markGamificationStale: jest.fn().mockResolvedValue(undefined),
+  scheduleGamificationReconciliation: jest.fn(),
+}));
 
 const mockFeedRepo = jest.mocked(feedRepository);
 const mockSessionsCloneService = jest.mocked(sessionsCloneService);
 const mockUsersRepo = jest.mocked(usersRepository);
+const mockBadgesService = jest.mocked(badgesService);
+const mockProjectionService = jest.mocked(projectionService);
 
 describe("Feed Service", () => {
   const userId = "user-123";
@@ -128,6 +136,24 @@ describe("Feed Service", () => {
       await feedService.followUserByAlias(userId, "targetuser");
 
       expect(mockFeedRepo.upsertFollower).toHaveBeenCalledWith(userId, targetUser.id);
+    });
+
+    it("should keep the follow and schedule existing reconciliation when badge evaluation fails", async () => {
+      const targetUser = { id: "target-user", username: "targetuser" };
+      mockUsersRepo.findUserByUsername.mockResolvedValue(targetUser);
+      mockFeedRepo.upsertFollower.mockResolvedValue(undefined);
+      mockBadgesService.evaluateBadgesForFollow.mockRejectedValueOnce(new Error("badge failure"));
+
+      await expect(feedService.followUserByAlias(userId, "targetuser")).resolves.toEqual({
+        followingId: targetUser.id,
+      });
+
+      expect(mockProjectionService.markGamificationStale).toHaveBeenCalledWith(userId, true);
+      expect(mockProjectionService.scheduleGamificationReconciliation).toHaveBeenCalledWith(
+        userId,
+        undefined,
+        true,
+      );
     });
 
     it("should throw 404 when user not found", async () => {
