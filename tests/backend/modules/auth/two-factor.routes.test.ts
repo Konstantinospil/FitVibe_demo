@@ -7,8 +7,8 @@ import type { Request, Response, NextFunction } from "express";
 import twoFactorRouter from "../../../../apps/backend/src/modules/auth/two-factor.routes.js";
 
 // Mock dependencies
-jest.mock("../../../../apps/backend/src/modules/users/users.middleware.js", () => ({
-  requireAuth: jest.fn((req: Request, res: Response, next: NextFunction) => next()),
+jest.mock("../../../../apps/backend/src/modules/auth/auth.middleware.js", () => ({
+  requireAccessToken: jest.fn((req: Request, res: Response, next: NextFunction) => next()),
 }));
 
 jest.mock("../../../../apps/backend/src/utils/async-handler.js", () => ({

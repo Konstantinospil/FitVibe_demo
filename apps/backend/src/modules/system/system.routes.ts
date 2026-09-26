@@ -8,7 +8,7 @@ import type { Request, Response } from "express";
 import { Router } from "express";
 import pkg from "../../../package.json";
 import { env } from "../../config/env.js";
-import { requireAuth } from "../users/users.middleware.js";
+import { requireAccessToken } from "../auth/auth.middleware.js";
 import { requireRole } from "../common/rbac.middleware.js";
 import { asyncHandler } from "../../utils/async-handler.js";
 import { insertAudit } from "../common/audit.util.js";
@@ -58,7 +58,7 @@ router.get(
  */
 router.post(
   "/read-only/enable",
-  requireAuth,
+  requireAccessToken,
   requireRole("admin"),
   asyncHandler(async (req: Request, res: Response) => {
     const previousState = env.readOnlyMode;
@@ -111,7 +111,7 @@ router.post(
  */
 router.post(
   "/read-only/disable",
-  requireAuth,
+  requireAccessToken,
   requireRole("admin"),
   asyncHandler(async (req: Request, res: Response) => {
     const previousState = env.readOnlyMode;

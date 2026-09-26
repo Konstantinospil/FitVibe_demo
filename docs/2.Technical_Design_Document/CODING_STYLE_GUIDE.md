@@ -273,14 +273,14 @@ const Sessions = lazy(() => import("../pages/Sessions"));
 ```typescript
 // ✅ Good: Route definition
 import { Router } from "express";
-import { requireAuth } from "../users/users.middleware.js";
+import { requireAccessToken } from "../auth/auth.middleware.js";
 import { requireRole } from "../common/rbac.middleware.js";
 import { asyncHandler } from "../../utils/async-handler.js";
 import * as controller from "./logs.controller.js";
 
 export const logsRouter = Router();
 
-logsRouter.use(requireAuth);
+logsRouter.use(requireAccessToken);
 logsRouter.use(requireRole("admin"));
 
 logsRouter.get("/", asyncHandler(controller.listLogsHandler));
@@ -324,7 +324,7 @@ export async function listLogsHandler(req: Request, res: Response): Promise<void
 // ✅ Good: Middleware pattern
 import type { Request, Response, NextFunction, RequestHandler } from "express";
 
-export const requireAuth: RequestHandler = (req: Request, res: Response, next: NextFunction) => {
+export const requireAccessToken: RequestHandler = (req: Request, res: Response, next: NextFunction) => {
   const header = req.headers.authorization;
   if (!header || !header.startsWith("Bearer ")) {
     return res.status(401).json({ error: "Missing token" });
@@ -583,7 +583,7 @@ const result = await service.createUser({
 });
 
 // ✅ Good: Aligned parameters
-router.post("/", requireAuth, requireRole("admin"), asyncHandler(createUserHandler));
+router.post("/", requireAccessToken, requireRole("admin"), asyncHandler(createUserHandler));
 ```
 
 ### Comments
@@ -739,13 +739,13 @@ router.post("/", validate(createUserSchema), asyncHandler(createUserHandler));
 
 ### Authentication & Authorization
 
-- **Use `requireAuth` middleware** for protected routes
+- **Use `requireAccessToken` middleware** for protected routes
 - **Use `requireRole` middleware** for role-based access
 - **Never trust client data** - validate on server
 
 ```typescript
 // ✅ Good: Protected routes
-router.use(requireAuth);
+router.use(requireAccessToken);
 router.use(requireRole("admin"));
 router.get("/", asyncHandler(listLogsHandler));
 ```

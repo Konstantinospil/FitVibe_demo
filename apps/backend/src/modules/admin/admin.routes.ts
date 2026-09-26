@@ -4,7 +4,7 @@
 
 import { Router } from "express";
 import { asyncHandler } from "../../utils/async-handler.js";
-import { requireAuth } from "../users/users.middleware.js";
+import { requireAccessToken } from "../auth/auth.middleware.js";
 import { requireRole } from "../common/rbac.middleware.js";
 import { rateLimit } from "../common/rateLimiter.js";
 import {
@@ -17,7 +17,7 @@ import {
 export const adminRouter = Router();
 
 // All admin routes require authentication and admin role
-adminRouter.use(requireAuth);
+adminRouter.use(requireAccessToken);
 adminRouter.use(requireRole("admin"));
 
 // Content Reports Management
