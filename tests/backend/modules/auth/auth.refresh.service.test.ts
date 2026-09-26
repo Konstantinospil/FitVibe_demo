@@ -54,6 +54,7 @@ describe("auth.refresh.service", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockLegalGate.assertTermsRequirementSatisfied.mockResolvedValue(undefined);
+    mockAudit.sanitizeAuthUserAgent.mockImplementation((value) => value ?? null);
     mockJwt.verify.mockReturnValue({
       sub: "user-1",
       sid: "session-1",
