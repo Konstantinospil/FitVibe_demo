@@ -27,7 +27,7 @@ import {
 import { handleIdempotentRequest } from "../common/idempotency.helpers.js";
 
 // Removed resolveViewerId - all feed endpoints now require authentication per FR-003 (privacy-by-default)
-// Authentication is enforced via requireAuth middleware in routes
+// Authentication is enforced via requireAccessToken middleware in routes
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
