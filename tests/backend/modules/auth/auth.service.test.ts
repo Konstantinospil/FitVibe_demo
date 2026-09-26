@@ -672,8 +672,7 @@ describe("Auth Service", () => {
         expires_at: futureDate,
         revoked_at: null,
       });
-      mockAuthRepo.revokeRefreshByHash.mockResolvedValue(undefined);
-      mockAuthRepo.updateSession.mockResolvedValue(undefined);
+      mockAuthRepo.rotateRefreshAtomic.mockResolvedValue(true);
       mockJwt.sign
         .mockReturnValueOnce("new_refresh_token" as never)
         .mockReturnValueOnce("new_access_token" as never);
@@ -761,14 +760,16 @@ describe("Auth Service", () => {
       });
       mockAuthRepo.findUserById.mockResolvedValue(mockUser);
       mockBcrypt.hash.mockResolvedValue("new_hashed_password" as never);
-      mockAuthRepo.updateUserPassword.mockResolvedValue(undefined);
-      mockAuthRepo.consumeAuthToken.mockResolvedValue(undefined);
-      mockAuthRepo.revokeRefreshByUserId.mockResolvedValue(undefined);
+      mockAuthRepo.resetPasswordAtomic.mockResolvedValue(true);
 
       await authService.resetPassword(token, newPassword);
 
-      expect(mockAuthRepo.updateUserPassword).toHaveBeenCalled();
-      expect(mockAuthRepo.consumeAuthToken).toHaveBeenCalled();
+      expect(mockAuthRepo.resetPasswordAtomic).toHaveBeenCalledWith(
+        userId,
+        "new_hashed_password",
+        "token-id",
+        "password_reset",
+      );
     });
 
     it("should throw error when token not found", async () => {
@@ -784,19 +785,16 @@ describe("Auth Service", () => {
     it("should logout successfully", async () => {
       const refreshToken = "refresh_token";
 
-      mockAuthRepo.getRefreshByHash.mockResolvedValue({
-        id: "refresh-id",
-        user_id: userId,
-        token_hash: "hash",
-        revoked: false,
-        expires_at: new Date(Date.now() + 3600000).toISOString(),
-        created_at: new Date().toISOString(),
-      });
-      mockAuthRepo.revokeRefreshByHash.mockResolvedValue(undefined);
+      mockJwt.verify.mockReturnValue({
+        sub: userId,
+        sid: "session-id",
+        typ: "refresh",
+      } as never);
+      mockAuthRepo.revokeSessionFamilyAtomic.mockResolvedValue(undefined);
 
       await authService.logout(refreshToken);
 
-      expect(mockAuthRepo.revokeRefreshByHash).toHaveBeenCalled();
+      expect(mockAuthRepo.revokeSessionFamilyAtomic).toHaveBeenCalledWith("session-id");
     });
   });
 
