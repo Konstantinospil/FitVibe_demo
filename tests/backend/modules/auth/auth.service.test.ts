@@ -12,6 +12,7 @@ import {
   acceptCurrentLegalDocument,
   acceptLegalDocumentVersion,
   getCurrentLegalPublication,
+  getLegalActionStatus,
 } from "../../../../apps/backend/src/modules/legal/legal.service.js";
 import { HttpError } from "../../../../apps/backend/src/utils/http.js";
 import type {
@@ -92,6 +93,7 @@ const mockPending2faRepo = jest.mocked(pending2faRepo);
 const mockEmailBlacklist = jest.mocked(emailBlacklistRepository);
 const mockMailerService = jest.mocked(mailerService);
 const mockGetCurrentLegalPublication = jest.mocked(getCurrentLegalPublication);
+const mockGetLegalActionStatus = jest.mocked(getLegalActionStatus);
 const mockAcceptLegalDocumentVersion = jest.mocked(acceptLegalDocumentVersion);
 const mockAcceptCurrentLegalDocument = jest.mocked(acceptCurrentLegalDocument);
 const mockBcrypt = jest.mocked(bcrypt);
@@ -192,6 +194,14 @@ describe("Auth Service", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockEmailBlacklist.isEmailBlacklisted.mockResolvedValue(false);
+    mockGetLegalActionStatus.mockResolvedValue({
+      currentVersion: "1.0.0",
+      requiredVersion: "1.0.0",
+      acceptedVersion: "1.0.0",
+      acceptedAt: "2024-06-01T00:00:00.000Z",
+      requiredAction: "accept",
+      needsAction: false,
+    });
     mockGetCurrentLegalPublication.mockResolvedValue({
       id: "11111111-1111-1111-1111-111111111111",
       document_type: "terms",
