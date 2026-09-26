@@ -36,10 +36,10 @@ export async function rotateRefreshAtomic(
   sessionPatch: { expires_at: string; user_agent?: string | null; ip?: string | null },
 ): Promise<boolean> {
   return db.transaction(async (trx) => {
-    const current = await trx("refresh_tokens")
+    const current = await trx<{ revoked_at: string | null }>("refresh_tokens")
       .where({ token_hash: oldTokenHash, session_jti: sessionJti })
       .forUpdate()
-      .first<{ revoked_at: string | null }>("revoked_at");
+      .first("revoked_at");
 
     if (!current || current.revoked_at) {
       return false;
@@ -138,7 +138,7 @@ export async function resetPasswordAtomic(
 }
 
 export async function isSessionActiveForUser(sessionJti: string, userId: string): Promise<boolean> {
-  const row = await db("auth_sessions")
+  const row = await db<{ jti: string }>("auth_sessions")
     .where({ jti: sessionJti, user_id: userId })
     .whereNull("revoked_at")
     .andWhere("expires_at", ">", new Date().toISOString())
