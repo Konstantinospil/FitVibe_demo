@@ -6,7 +6,7 @@ import {
   updateType,
   deleteType,
 } from "./exerciseTypes.controller.js";
-import { requireAuth } from "../users/users.middleware.js";
+import { requireAccessToken } from "../auth/auth.middleware.js";
 import { requireRole } from "../common/rbac.middleware.js";
 import { rateLimit } from "../common/rateLimiter.js";
 import { asyncHandler } from "../../utils/async-handler.js";
@@ -20,21 +20,21 @@ exerciseTypesRouter.get("/:code", rateLimit("types_get", 60, 60), asyncHandler(g
 exerciseTypesRouter.post(
   "/",
   rateLimit("types_create", 10, 60),
-  requireAuth,
+  requireAccessToken,
   requireRole("admin"),
   asyncHandler(createType),
 );
 exerciseTypesRouter.patch(
   "/:code",
   rateLimit("types_update", 10, 60),
-  requireAuth,
+  requireAccessToken,
   requireRole("admin"),
   asyncHandler(updateType),
 );
 exerciseTypesRouter.delete(
   "/:code",
   rateLimit("types_delete", 10, 60),
-  requireAuth,
+  requireAccessToken,
   requireRole("admin"),
   asyncHandler(deleteType),
 );
