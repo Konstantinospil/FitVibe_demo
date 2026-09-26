@@ -10,7 +10,7 @@ import { v4 as uuidv4 } from "uuid";
 import bcrypt from "bcryptjs";
 import app from "../../../apps/backend/src/app.js";
 import { createUser } from "../../../apps/backend/src/modules/auth/auth.repository.js";
-import { getCurrentLegalPublication, acceptLegalDocumentVersion } from "../../../apps/backend/src/modules/legal/legal.service.js";
+import { acceptLegalDocumentVersion } from "../../../apps/backend/src/modules/legal/legal.service.js";
 import {
   truncateAll,
   ensureRolesSeeded,
@@ -38,7 +38,24 @@ describeWithTestDatabase("Performance: Feed Endpoint", () => {
     const hashedPassword = await bcrypt.hash(password, 10);
     const now = new Date().toISOString();
 
-    const currentTerms = await getCurrentLegalPublication("terms");
+    const currentTerms = {
+      id: uuidv4(),
+      version: "performance-test.1",
+      effectiveAt: new Date(Date.now() - 60_000).toISOString(),
+      publishedAt: new Date(Date.now() - 60_000).toISOString(),
+    };
+    await dbModule.default("legal_document_versions").insert({
+      id: currentTerms.id,
+      document_type: "terms",
+      version: currentTerms.version,
+      change_class: "legacy",
+      user_action: "accept",
+      effective_at: currentTerms.effectiveAt,
+      published_at: currentTerms.publishedAt,
+      published_by: null,
+      source: "test_fixture",
+    });
+
     const user = await createUser({
       id: uuidv4(),
       username: testUsername,
