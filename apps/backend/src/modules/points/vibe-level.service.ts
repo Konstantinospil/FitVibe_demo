@@ -434,13 +434,7 @@ export function updateVibeProgression(
   const delta = v * g * (outcome - E);
 
   // Step 5: Compute new volatility
-  const newVolatility = updateVolatility(
-    currentVolatility,
-    delta,
-    phi,
-    v,
-    VOLATILITY_ADAPTATION,
-  );
+  const newVolatility = updateVolatility(currentVolatility, delta, phi, v, VOLATILITY_ADAPTATION);
 
   // Step 6: Update φ' (new RD)
   const phiStar = Math.sqrt(phi ** 2 + newVolatility ** 2);
